@@ -1076,6 +1076,14 @@ end if
 		jne   .13done
 	       imul   edx, edx
 	       imul   edx, -35
+
+		add   edx, -399
+	if .PvNode eq 1
+		add   edx, dword[.beta]
+		sub   edx, dword[.alpha]
+		sub   edx, 1
+	end if
+
 	       call   SeeTest
 	       test   eax, eax
 		 jz   .MovePickLoop
@@ -1172,9 +1180,6 @@ end if
 		mov   ecx, dword[.move]
 		cmp   ecx, MOVE_TYPE_PROM shl 12
 		jae   .15skipA
-		lea   eax, [r15d-Pawn]
-	       test   eax, 7
-		 jz   .15skipA
 		mov   r9d, r12d
 		mov   r8d, r13d
 		xor   edx, edx

@@ -119,7 +119,7 @@ match =Rook, Pt \{
 match =Queen, Pt \{
 	KingAttackWeight equ 11
 	MobilityBonus	 equ MobilityBonus_Queen
-	WeakQueen	 equ ((35 shl 16) + (  0))
+	WeakQueen	 equ ((50 shl 16) + ( 10))
 \}
 
 
@@ -314,20 +314,6 @@ else if Pt eq Rook
 		sub   eax, 4
 		xor   ecx, eax
 		 js   ..NoTrappedByKing
-		mov   eax, r8d
-		shr   eax, 3
-		mov   ecx, r14d
-		shr   ecx, 3
-		cmp   eax, ecx
-		 je   @f
-	if Us eq White
-		cmp   r8d, SQ_A2
-		jae   ..NoTrappedByKing
-	else if Us eq Black
-		cmp   r8d, SQ_A8
-		 jb   ..NoTrappedByKing
-	end if
-	@@:
 		mov   ecx, r8d
 		and   ecx, 7
 		mov   edx, ecx
@@ -866,6 +852,7 @@ macro EvalThreats Us {
 
 local ..SafeThreatsDone, ..SafeThreatsLoop, ..WeakDone
 local ..ThreatMinorLoop, ..ThreatMinorDone, ..ThreatRookLoop, ..ThreatRookDone
+local ..ThreatMinorSkipPawn, ..ThreatRookSkipPawn
 
 match =White, Us
 \{
@@ -908,6 +895,7 @@ match =Black, Us
 	Hanging 		equ ((48 shl 16) + ( 27))
 	ThreatByPawnPush	equ ((38 shl 16) + ( 22))
 	PawnlessFlank		equ ((20 shl 16) + ( 80))
+	ThreatByRank		equ ((16 shl 16) + (  3))
 
 
 		mov   rax, AttackedByUs
@@ -976,8 +964,18 @@ match =Black, Us
 		 jz   ..ThreatMinorDone
 ..ThreatMinorLoop:
 		bsf   rax, r8
-	      movzx   eax, byte[rbp+Pos.board+rax]
-	     addsub   esi, dword[Threat_Minor+4*rax]
+	      movzx   ecx, byte[rbp+Pos.board+rax]
+	     addsub   esi, dword[Threat_Minor+4*rcx]
+	        and   ecx, 7
+	        cmp   ecx, Pawn
+	         je   ..ThreatMinorSkipPawn
+		shr   eax, 3
+if Us eq White
+		xor   eax, Them*7
+end if
+	       imul   eax, ThreatByRank
+	     addsub   esi, eax
+..ThreatMinorSkipPawn:
 	       blsr   r8, r8, rcx
 		jnz   ..ThreatMinorLoop
 ..ThreatMinorDone:
@@ -989,8 +987,18 @@ match =Black, Us
 		 jz   ..ThreatRookDone
 ..ThreatRookLoop:
 		bsf   rax, rdx
-	      movzx   eax, byte[rbp+Pos.board+rax]
-	     addsub   esi, dword[Threat_Rook+4*rax]
+	      movzx   ecx, byte[rbp+Pos.board+rax]
+	     addsub   esi, dword[Threat_Rook+4*rcx]
+	        and   ecx, 7
+	        cmp   ecx, Pawn
+	         je   ..ThreatRookSkipPawn
+		shr   eax, 3
+if Us eq White
+		xor   eax, Them*7
+end if
+	       imul   eax, ThreatByRank
+	     addsub   esi, eax
+..ThreatRookSkipPawn:
 	       blsr   rdx, rdx, rcx
 		jnz   ..ThreatRookLoop
 ..ThreatRookDone:
