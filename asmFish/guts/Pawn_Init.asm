@@ -9,7 +9,7 @@ Pawn_Init:; Function begin
 	push	rbx					; 0C89 _ 53
 	xor	r14d, r14d				; 0C8A _ 45: 31. F6
 	mov	r10d, 2 				; 0C8D _ 41: BA, 00000002
-	mov	r9d, 8					; 0C93 _ 41: B9, 00000008
+	mov	r9d, 4
 	lea	rbp, [._2745]				; 0C99 _ 48: 8D. 2D, 00000764(rel)
 	lea	r13, [Connected]			; 0CA0 _ 4C: 8D. 2D, 0042D780(rel)
 ._0056: lea	r12, [r14*4]				; 0CA7 _ 4E: 8D. 24 B5, 00000000
@@ -38,7 +38,11 @@ Pawn_Init:; Function begin
 	cdq						; 0CF0 _ 99
 	idiv	r10d					; 0CF1 _ 41: F7. FA
 ._0061: add	edi, eax				; 0CF4 _ 01. C1
-	lea	eax, [rdi+rdi*4]			; 0CF6 _ 8D. 04 89
+	mov	eax, edi
+	mov	edx, r8d
+	shr	edx, 2
+	sub	edx, 1
+	mul	edx
 	shl	edi, 16 				; 0CF9 _ C1. E1, 10
 	cdq						; 0CFC _ 99
 	idiv	r9d					; 0CFD _ 41: F7. F9
