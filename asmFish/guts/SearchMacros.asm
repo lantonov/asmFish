@@ -1180,9 +1180,6 @@ end if
 		mov   ecx, dword[.move]
 		cmp   ecx, MOVE_TYPE_PROM shl 12
 		jae   .15skipA
-		lea   eax, [r15d-Pawn]
-	       test   eax, 7
-		 jz   .15skipA
 		mov   r9d, r12d
 		mov   r8d, r13d
 		xor   edx, edx
