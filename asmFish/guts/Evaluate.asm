@@ -314,20 +314,6 @@ else if Pt eq Rook
 		sub   eax, 4
 		xor   ecx, eax
 		 js   ..NoTrappedByKing
-		mov   eax, r8d
-		shr   eax, 3
-		mov   ecx, r14d
-		shr   ecx, 3
-		cmp   eax, ecx
-		 je   @f
-	if Us eq White
-		cmp   r8d, SQ_A2
-		jae   ..NoTrappedByKing
-	else if Us eq Black
-		cmp   r8d, SQ_A8
-		 jb   ..NoTrappedByKing
-	end if
-	@@:
 		mov   ecx, r8d
 		and   ecx, 7
 		mov   edx, ecx
