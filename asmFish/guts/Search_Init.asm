@@ -6,7 +6,6 @@ Search_Init:
 		xor   ebp, ebp				      ; 0A1C _ 31. ED
 		xor   ebx, ebx				      ; 0A1E _ 31. DB
 	     vmovsd   xmm6, qword[._2729]		      ; 0A20 _ F2: 0F 10. 35, 00001AB0(rel)
-	     vmovsd   xmm8, qword[._2730]		      ; 0A28 _ F2 44: 0F 10. 05, 00001AB8(rel)
 ._0048: 	mov   rax, rbp				      ; 0A31 _ 48: 89. E8
 		mov   esi, ebp				      ; 0A34 _ 89. EE
 		mov   edi, 1				      ; 0A36 _ BF, 00000001
@@ -27,8 +26,6 @@ Search_Init:
 	     vmulsd   xmm1, xmm1, xmm6				    ; 0A7A _ F2: 0F 59. CE
 		xor   r8d, r8d
 		lea   rcx, [r13*4]			      ; 0A89 _ 4A: 8D. 0C AD, 00000000
-	    vcomisd   xmm8, xmm1			      ; 0A7E _ 66 44: 0F 2E. C1
-		 ja   ._0051				      ; 0A83 _ 77, 3D
 	     vaddsd   xmm1, xmm1, xmm6				    ; 0A85 _ F2: 0F 58. CE
 	 vcvttsd2si   r8d, xmm1 			    ; 0A91 _ F2 44: 0F 2C. C1
 		lea   r9d, [r8-1H]			      ; 0A96 _ 45: 8D. 48, FF
@@ -110,7 +107,6 @@ Search_Init:
 align 8
 ._2729: dq 3FE0000000000000H				; 1AB0 _ 0.5
 ._2736: dq 4007333333333333H				; 1AE8 _ 2.9
-._2730: dq 3FE999999999999AH				; 1AB8 _ 0.8
 ._2731: dq 3FFCCCCCCCCCCCCDH				; 1AC0 _ 1.8
 ._2732: dq 3FE8BC6A7EF9DB23H				; 1AC8 _ 0.773
 ._2733: dq 4003333333333333H				; 1AD0 _ 2.4
