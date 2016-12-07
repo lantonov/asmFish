@@ -1076,6 +1076,15 @@ end if
 		jne   .13done
 	       imul   edx, edx
 	       imul   edx, -35
+
+		mov   eax, dword[rbx+State.staticEval]
+		cmp   eax, VALUE_NONE
+		 je   .13skip_value_none
+		add   edx, eax
+	        sub   edx, dword[.alpha]
+		sub   edx, 200
+.13skip_value_none:
+
 	       call   SeeTest
 	       test   eax, eax
 		 jz   .MovePickLoop
