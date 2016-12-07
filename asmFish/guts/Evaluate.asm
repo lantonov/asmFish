@@ -119,7 +119,7 @@ match =Rook, Pt \{
 match =Queen, Pt \{
 	KingAttackWeight equ 11
 	MobilityBonus	 equ MobilityBonus_Queen
-	WeakQueen	 equ ((35 shl 16) + (  0))
+	WeakQueen	 equ ((50 shl 16) + ( 10))
 \}
 
 
