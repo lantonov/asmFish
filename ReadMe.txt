@@ -1,3 +1,10 @@
+Deep_asmFish for quick analysis
+
+Removed steps 6,8,9 as in DeepFish MZ.
+But not cut 7, 10 and 13 steps.
+Deep_asmFish search mate in #24 very quickly (20 sec) in this position
+5kB1/3p1P2/7K/2Pp1P1P/p6p/4P3/7P/8 w - - 0 1
+
 ******** introduction ********
 Welcome to the project of converting stockfish into x86-64!
 The executables can be found in the Windows folder.
