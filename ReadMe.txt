@@ -5,7 +5,7 @@ But not cut 7, 10 and 13 (Futility pruning, Internal iterative deepening, Prunin
 Deep_asmFish search mate in #24 very quickly (20 sec on 1 core of i5-3570) in this position
 5kB1/3p1P2/7K/2Pp1P1P/p6p/4P3/7P/8 w - - 0 1
 
-Results of tournament 40/10s vs Stockfish development version 16120518:
+Results of tournament 40/10s vs Stockfish development version 16120518 (see dasm_sf8d.pgn):
 
 Score of deepAsmFishW_071216_popcnt vs stockfish_16120518: 6 - 13 - 30 [0.429]
 ELO difference: -49.98 +/- 60.75
