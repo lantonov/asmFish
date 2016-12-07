@@ -866,6 +866,7 @@ macro EvalThreats Us {
 
 local ..SafeThreatsDone, ..SafeThreatsLoop, ..WeakDone
 local ..ThreatMinorLoop, ..ThreatMinorDone, ..ThreatRookLoop, ..ThreatRookDone
+local ..ThreatMinorSkipPawn, ..ThreatRookSkipPawn
 
 match =White, Us
 \{
@@ -908,6 +909,7 @@ match =Black, Us
 	Hanging 		equ ((48 shl 16) + ( 27))
 	ThreatByPawnPush	equ ((38 shl 16) + ( 22))
 	PawnlessFlank		equ ((20 shl 16) + ( 80))
+	ThreatByRank		equ ((16 shl 16) + (  3))
 
 
 		mov   rax, AttackedByUs
@@ -976,8 +978,18 @@ match =Black, Us
 		 jz   ..ThreatMinorDone
 ..ThreatMinorLoop:
 		bsf   rax, r8
-	      movzx   eax, byte[rbp+Pos.board+rax]
-	     addsub   esi, dword[Threat_Minor+4*rax]
+	      movzx   ecx, byte[rbp+Pos.board+rax]
+	     addsub   esi, dword[Threat_Minor+4*rcx]
+	        and   ecx, 7
+	        cmp   ecx, Pawn
+		 je   ..ThreatMinorSkipPawn
+		shr   eax, 3
+if Us eq White
+		xor   eax, Them*7
+end if
+	       imul   eax, ThreatByRank
+	     addsub   esi, eax
+..ThreatMinorSkipPawn:
 	       blsr   r8, r8, rcx
 		jnz   ..ThreatMinorLoop
 ..ThreatMinorDone:
@@ -989,8 +1001,18 @@ match =Black, Us
 		 jz   ..ThreatRookDone
 ..ThreatRookLoop:
 		bsf   rax, rdx
-	      movzx   eax, byte[rbp+Pos.board+rax]
-	     addsub   esi, dword[Threat_Rook+4*rax]
+	      movzx   ecx, byte[rbp+Pos.board+rax]
+	     addsub   esi, dword[Threat_Rook+4*rcx]
+	        and   ecx, 7
+	        cmp   ecx, Pawn
+		 je   ..ThreatRookSkipPawn
+		shr   eax, 3
+if Us eq White
+		xor   eax, Them*7
+end if
+	       imul   eax, ThreatByRank
+	     addsub   esi, eax
+..ThreatRookSkipPawn:
 	       blsr   rdx, rdx, rcx
 		jnz   ..ThreatRookLoop
 ..ThreatRookDone:
@@ -1119,7 +1141,7 @@ match =Black, Us
 	Up	equ DELTA_S
 \}
 
-	HinderPassedPawn	equ ((7 shl 16) + (0))
+	HinderPassedPawn	equ (( 7 shl 16) + (0))
 
 
 ;                mov   r15, qword[rdi+PawnEntry.passedPawns+8*Us]
