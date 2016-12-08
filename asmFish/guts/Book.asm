@@ -286,7 +286,8 @@ end virtual
 
 
 
-
+; Routine to convert Cerebellum (polyglot-incompatible book with Brainfish) 
+; into polyglot-compatible book
 
 Brain2Polyglot:
 	; in: rsi string to parse
