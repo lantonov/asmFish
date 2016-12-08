@@ -103,7 +103,7 @@ align 8
 Weakness_PickMove:
 	; in: rbp address of position  root moves vector is assumed to be sorted
 	;     weakness.averageCpLoss  is weakness level
-	;     weakness.muliPv         is max moves to consider
+	;     weakness.multiPv         is max moves to consider
 	; out: the root moves vector will have the top move swapped with a lower one
 
 
