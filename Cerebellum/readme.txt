@@ -6,8 +6,9 @@ The algorithm for making polyglot-compatible Cerebellum is the following (thanks
 4. On line (24) "USE_BOOK equ 0" change "USE_BOOK equ 1". This is the enabling. 
 5. In a command prompt enter the following: fasm pedantFishW_popcnt.asm pedantFishW_popcnt.exe
 6. Open the newly compiled pedantFishW_popcnt.exe with enabled book handling functions and then you are ready to execute generating.
-7. Example: brain2polyglot depth 1024 in "Cerebellum_light.bin" out "polybook.bin" 
+7. Example: brain2polyglot depth 1024 in "Cerebellum_light.bin" out "polybook.bin"
 
+Some of the asmFish / pedantFish versions have a depth limit of 100, and others have unlimited depth. I intend to include here a couple of engines with unlimited depth book enabled (one for Windows, one for Linux), which will eliminate the need for most of the above steps. I cannot include the Cerebellum-polyglot books themselves because their size is > 78 MB, and the maximal size that GitHub allows for upload is 25 MB.
 
 C:\Users\lanto\Documents\asmFish>pedantFishW_popcnt.exe
 pedantFishW_2016-12-07_popcnt
