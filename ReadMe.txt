@@ -42,6 +42,23 @@ A: It is 99.9% official stockfish as there are some inconsequential functional d
 
 
 ******** updates ********
+
+2016-12-05 Pawn flank attacks  …
+    - This patch tweaks some pawn values to favor flank attacks. The first part of the patch increases the midgame psqt values of             external pawns to launch more attacks (credits to user GuardianRM for this idea), while the second part increases the endgame           connection values for pawns on upper ranks.
+2016-12-04 Remove piece condition in decrease lmr reduction check
+2016-12-02 Simplify pruning rule
+2016-12-01 WeakQueen Parameter tweak
+    - New tuned values.
+2016-11-27 TrappedRook simplification
+    - Just remove rank checks for rook and king for TrappedRook evaluation.
+2016-11-19 Rank based threats
+2016-11-19 Pawn shelter and pawn storm tuned
+    - Based on SPSA tuned values
+2016-11-05 Non-quiet pruning tweak 
+    - Count in the difference of static evaluation and alpha for pruning threshold.
+2016-11-05 Reduction Simplification
+    - Simplify reduction formula by removing a parameter.
+=========================================================     
 2016-11-04: "stockfish 8"
   - summary of extra features in all versions by default
     - NodeAffinity:
