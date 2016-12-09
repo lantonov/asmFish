@@ -38,7 +38,7 @@ A: It is 99.9% official stockfish as there are some inconsequential functional d
    official that were deemed too silly to put into asmFish. Piece lists are the prime offender
    here. You can get 100% official stockfish in deterministic searches by setting
    PEDANTIC equ 1 compile option. The changes can be viewed at
-   https://github.com/tthsqe12/asm/search?q=PEDANTIC
+   https://github.com/lantonov/asmFish/search?q=PEDANTIC
 
 
 ******** updates ********
