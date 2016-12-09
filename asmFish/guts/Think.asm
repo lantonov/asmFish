@@ -423,8 +423,13 @@ GD_NewLine
 		mov   edx, dword[rbp+Pos.gamePly]
 	       call   TimeMng_Init
 
+		mov   eax, dword[options.contempt]
+		cdq
+	       imul   eax, PawnValueEg
+		mov   ecx, 100
+	       idiv   ecx
+		mov   ecx, eax
 		mov   eax, dword[rbp+Pos.sideToMove]
-		mov   ecx, dword[options.contempt]
 		neg   ecx
 		mov   dword[DrawValue+4*rax], ecx
 		xor   eax, 1
