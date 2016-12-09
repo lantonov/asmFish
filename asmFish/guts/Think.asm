@@ -423,6 +423,13 @@ GD_NewLine
 		mov   edx, dword[rbp+Pos.gamePly]
 	       call   TimeMng_Init
 
+; int contempt = Options["Contempt"] * PawnValueEg / 100; // From centipawns
+                mov   ecx, PawnValueEg			
+		mov   edx, 100
+		mov   eax, dword[options.contempt]
+	       imul   ecx
+	       idiv   edx
+		mov   ecx, eax
 		mov   eax, dword[rbp+Pos.sideToMove]
 		mov   ecx, dword[options.contempt]
 		neg   ecx
