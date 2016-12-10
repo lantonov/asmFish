@@ -43,7 +43,9 @@ A: It is 99.9% official stockfish as there are some inconsequential functional d
 
 ******** updates ********
 
-2016-12-05 Pawn flank attacks  …
+2016-12-10 Fix contempt scale
+    - A bug noted by Stefan Pohl. At contempt 15 asmFish gave a value -0.06 compared to -0.14 in Stockfish. This patch rescales to correct contempt values.
+2016-12-05 Pawn flank attacks 
     - This patch tweaks some pawn values to favor flank attacks. The first part of the patch increases the midgame psqt values of external pawns to launch more attacks, while the second part increases the endgame connection values for pawns on upper ranks.
 2016-12-04 Remove piece condition in decrease lmr reduction check
 2016-12-02 Simplify pruning rule
