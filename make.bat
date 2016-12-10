@@ -10,3 +10,4 @@
 "asmFish\fasm.exe" "asmFish\pedantFishL_base.asm"   -m 50000 "Linux\Deep_pedantFishL_%DATE%_base"
 "asmFish\fasm.exe" "asmFish\pedantFishL_popcnt.asm" -m 50000 "Linux\Deep_pedantFishL_%DATE%_popcnt"
 "asmFish\fasm.exe" "asmFish\pedantFishL_bmi2.asm"   -m 50000 "Linux\Deep_pedantFishL_%DATE%_bmi2"
+pause
