@@ -1601,25 +1601,20 @@ ED_NewLine
 	EvalThreats   Black
 	EvalThreats   White
 
-
-    Unstoppable  equ ((0 shl 16) + (20))
+    Unstoppable  equ ((0 shl 16) + (45))
 		mov   eax, dword[rbx+State.npMaterial+2*0]
 	       test   eax, eax
 		jnz   .SkipUnstoppable
 		mov   rcx, qword[rdi+PawnEntry.passedPawns+8*White]
 		mov   rdx, qword[rdi+PawnEntry.passedPawns+8*Black]
-		mov   eax, 0
-		bsr   rcx, rcx
-	      cmovz   ecx, eax
-		shr   ecx, 3
-		mov   eax, 7*8
-		bsf   rdx, rdx
-	      cmovz   edx, eax
-		shr   edx, 3
-		xor   edx, 7
-		sub   ecx, edx
-	       imul   ecx, Unstoppable
-		add   esi, ecx
+		mov   eax, esi
+		add   esi, Unstoppable
+		cmp   rcx, 0
+	      cmove   esi, eax
+		mov   eax, esi
+		sub   esi, Unstoppable
+		cmp   rdx, 0
+	      cmove   esi, eax
 .SkipUnstoppable:
 
 
