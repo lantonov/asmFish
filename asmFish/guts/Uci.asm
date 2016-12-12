@@ -104,7 +104,7 @@ UciNextCmdFromCmdLine:
 		mov   rsi, r15
 	       test   r15, r15
 		jnz   UciChoose
-		jmp   UciGetInput
+		jmp   UciQuit
 
 UciWriteOut_NewLine:
        PrintNewLine
