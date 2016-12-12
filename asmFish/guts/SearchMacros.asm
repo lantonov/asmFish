@@ -1077,11 +1077,10 @@ end if
 	       imul   edx, edx
 	       imul   edx, -35
 
-		add   edx, -399
 	if .PvNode eq 1
-		add   edx, dword[.beta]
-		sub   edx, dword[.alpha]
-		sub   edx, 1
+		sub   edx, 300
+	else
+		sub   edx, 400
 	end if
 
 	       call   SeeTest
