@@ -43,6 +43,8 @@ A: It is 99.9% official stockfish as there are some inconsequential functional d
 
 ******** updates ********
 
+2016-12-11 Simplify unstoppable condition
+    - Remove rank dependence
 2016-12-10 Fix contempt scale
     - A bug noted by Stefan Pohl. At contempt 15 asmFish gave a value -0.06 compared to -0.14 in Stockfish. This patch rescales to correct contempt values.
 2016-12-05 Pawn flank attacks 
