@@ -43,7 +43,7 @@ A: It is 99.9% official stockfish as there are some inconsequential functional d
 
 ******** updates ********
 
-2016-12-11 Simplify pruning
+2016-12-12 Simplify pruning
     - Don't take into account alpha and beta limits
 2016-12-11 Simplify unstoppable condition
     - Remove rank dependence
