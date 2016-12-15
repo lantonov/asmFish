@@ -235,7 +235,7 @@ end if
 if USE_BOOK
 	db 'option name OwnBook type check default false'
 	NewLineData
-	db 'option name BookPath type string default <empty>'
+	db 'option name BookFile type string default <empty>'
 	NewLineData
 end if
 
