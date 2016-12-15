@@ -43,6 +43,8 @@ A: It is 99.9% official stockfish as there are some inconsequential functional d
 
 ******** updates ********
 
+2016-12-12 Fix own book loading
+    - Own book didn't load under Fritz and Arena. Patch changes BookPath to BookFile and some USE_BOOK flags
 2016-12-12 Simplify pruning
     - Don't take into account alpha and beta limits
 2016-12-11 Simplify unstoppable condition
