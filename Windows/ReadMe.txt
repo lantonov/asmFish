@@ -1,4 +1,4 @@
-In an effort to reduce size, previous versions of asmFish are now in my asmFishBuilds repo.
+In an effort to reduce size, previous versions of asmFish are now in branch "executables".
 
 If you observe a crash in asmFish, please raise an issue here and give me the following information:
   - name of the executable that crashed
