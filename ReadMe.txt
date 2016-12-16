@@ -39,6 +39,9 @@ A: It is 99.9% official stockfish as there are some inconsequential functional d
    here. You can get 100% official stockfish in deterministic searches by setting
    PEDANTIC equ 1 compile option. The changes can be viewed at
    https://github.com/lantonov/asmFish/search?q=PEDANTIC
+   
+Q: Where can I find the executable files of the old versions ?
+A: All older versions of asmFish are in the branch https://github.com/lantonov/asmFish/tree/executables
 
 
 ******** updates ********
