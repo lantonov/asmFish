@@ -41,7 +41,7 @@ A: It is 99.9% official stockfish as there are some inconsequential functional d
    https://github.com/lantonov/asmFish/search?q=PEDANTIC
    
 Q: Where can I find the executable files of the old versions ?
-A: All older versions of asmFish are in the branch https://github.com/lantonov/asmFish/tree/executables
+A: All older versions of asmFish/pedantFish are in the branch https://github.com/lantonov/asmFish/tree/executables
 
 
 ******** updates ********
