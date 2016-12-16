@@ -46,7 +46,7 @@ A: All older versions of asmFish are in the branch https://github.com/lantonov/a
 
 ******** updates ********
 
-2016-12-12 Fix own book loading
+2016-12-15 Fix own book loading
     - Own book didn't load under Fritz and Arena. Patch changes BookPath to BookFile and some USE_BOOK flags
 2016-12-12 Simplify pruning
     - Don't take into account alpha and beta limits
