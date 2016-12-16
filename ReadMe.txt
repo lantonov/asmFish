@@ -1,9 +1,9 @@
 ******** introduction ********
 Welcome to the project of converting stockfish into x86-64!
-The executables can be found in the Windows folder.
-The source files can be found in the asmFish folder.
+The newest executables can be found in the master branch while executables from older versions are in branch "executables".
+The source files can be found in the asmFish folder on the master branch.
   - run fasm on asmFishW_base[_popcnt,_bmi2].asm to produce executables for windows
-  - run fasm on asmFish_base[_popcnt,_bmi2].asm to produce executables for linux
+  - run fasm on asmFishL_base[_popcnt,_bmi2].asm to produce executables for linux
 For more information on this project see the asmFish/asmReadMe.txt.
 Run make.bat to automatically assemble the windows/linux sources for the three capabilities
   - base: should run on any 64bit x86 cpu
@@ -12,15 +12,15 @@ Run make.bat to automatically assemble the windows/linux sources for the three c
 Besides the three cpu capabilities, this project now comes in two flavours
   - asmFish: trim off the cruft in official stockfish and make a lean and mean chess engine
   - pedantFish: match bench signature of official stockfish to catch search/eval bugs more easily
-More flavors are planned for the future, including mateFish and hybridFish.
+More flavors are planned for the future, including mateFish and hybridFish (provided Mohammed takes up the project again).
   
 If you observe a crash/misbehaviour in asmFish, please raise an issue here and give me the following information:
   - name of the executable that crashed/misbehaved
   - exception code and exception offset in the case of a crash
   - a log of the commands that were sent to asmFish by your gui before the crash
 Simply stating that asmFish crashed in your gui is useless information by itself.
-asmFish is known to have problems in the fritz15 gui, while it plays much better in the
-fritz11 gui. Any help with this issue would be appreciated.
+asmFish is known to have problems in the fritz15 gui, while it plays much better in the fritz11 gui.
+Any help with this issue would be appreciated.
 
 
 ******** FAQ ********
