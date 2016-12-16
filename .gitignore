@@ -43,12 +43,12 @@ Temporary Items
 .apdisk
 
 # Directories with executable files
-Cerebellum
-Linux
-Windows
+# Cerebellum
+# Linux
+# Windows
 
 # Executables
-asmFishL_2*
-asmFishW_2*
-pedantFishL_2*
-pedantFishW_2*
+# asmFishL_2*
+# asmFishW_2*
+# pedantFishL_2*
+# pedantFishW_2*
