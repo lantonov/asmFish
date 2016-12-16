@@ -1,5 +1,5 @@
 VERSION_OS	 fix 'W'
-VERSION_PRE	 fix 'pedantFish'
+VERSION_PRE	 fix 'Deep_pedantFish'
 VERSION_POST	 fix 'popcnt'
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; cpu options 0 or 1

@@ -1,5 +1,5 @@
 VERSION_OS	 fix 'W'
-VERSION_PRE	 fix 'asmFish'
+VERSION_PRE	 fix 'Deep_asmFish'
 VERSION_POST	 fix 'bmi2'
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; cpu options 0 or 1

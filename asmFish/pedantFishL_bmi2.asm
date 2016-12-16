@@ -1,5 +1,5 @@
 VERSION_OS	 fix 'L'
-VERSION_PRE	 fix 'pedantFish'
+VERSION_PRE	 fix 'Deep_pedantFish'
 VERSION_POST	 fix 'bmi2'
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; cpu options 0 or 1

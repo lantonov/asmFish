@@ -1,5 +1,5 @@
 VERSION_OS	 fix 'L'
-VERSION_PRE	 fix 'asmFish'
+VERSION_PRE	 fix 'Deep_asmFish'
 VERSION_POST	 fix 'popcnt'
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; cpu options 0 or 1

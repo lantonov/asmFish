@@ -350,11 +350,13 @@ end if
 	       test   al, al
 		jnz   .moves_loop
 
-
 	; Step 6. Razoring (skipped when in check)
     if .PvNode eq 0
 		mov   edx, dword[.depth]
 		cmp   edx, 4*ONE_PLY
+    
+		;jmp   .6skip
+    
 		jge   .6skip
 		mov   eax, dword[.ttMove]
 	       test   eax, eax
@@ -384,13 +386,15 @@ end if
     end if
 
 
-
 	; Step 7. Futility pruning: child node (skipped when in check)
-    if .RootNode eq 0
+    if .PvNode eq 0
 		mov   edx, dword[.depth]
 		mov   ecx, dword[rbp+Pos.sideToMove]
 		cmp   edx, 7*ONE_PLY
-		jge   .7skip
+    
+		;jmp   .7skip
+		
+    jge   .7skip
 	       imul   edx, -150
 		mov   eax, dword[.eval]
 		cmp   eax, VALUE_KNOWN_WIN
@@ -404,9 +408,7 @@ end if
 .7skip:
     end if
 
-
-
-	; Step 8. Null move search with verification search (is omitted in PV nodes)
+; Step 8. Null move search with verification search (is omitted in PV nodes)
     if .PvNode eq 0
 		mov   edx, dword[.depth]
 	       imul   eax, edx, 35
@@ -414,7 +416,10 @@ end if
 		mov   esi, dword[.beta]
 		mov   ecx, dword[rbp+Pos.sideToMove]
 		cmp   esi, dword[.eval]
-		 jg   .8skip
+		
+    jmp   .8skip ;
+     
+     jg   .8skip
 	      movzx   ecx, word[rbx+State.npMaterial+2*rcx]
 		add   esi, 35*6
 	       test   ecx, ecx
@@ -507,7 +512,10 @@ end if
     if .PvNode eq 0
 		mov   eax, dword[.depth]
 		cmp   eax, 5*ONE_PLY
-		 jl   .9skip
+		
+    ;jmp   .9skip
+      
+     jl   .9skip
 		mov   eax, dword[.beta]
 		add   eax, VALUE_MATE_IN_MAX_PLY-1
 		cmp   eax, 2*(VALUE_MATE_IN_MAX_PLY-1)
@@ -620,6 +628,9 @@ SD_NewLine
 		mov   r8d, dword[.depth]
 		mov   ecx, dword[.ttMove]
 	       test   ecx, ecx
+         
+		;jmp   .10skip
+    
 		jnz   .10skip
 		cmp   r8d, 6*ONE_PLY
 		 jl   .10skip
@@ -882,7 +893,10 @@ end if
 		sub   edx, 16*ONE_PLY
 		and   edx, ecx
 		sar   edx, 31
-		mov   byte[.moveCountPruning], dl
+    
+    ;mov edx,0 ;
+		
+    mov   byte[.moveCountPruning], dl
 
 ;SD_String 'mcp='
 ;SD_Bool8 rdx
@@ -974,7 +988,7 @@ end if
 
 	; edx = depth
 
-    if .RootNode eq 0
+    if .PvNode eq 0   ;
 
 		mov   ecx, dword[.bestValue]
 		cmp   ecx, VALUE_MATED_IN_MAX_PLY
@@ -982,6 +996,9 @@ end if
 
 		mov   al, byte[.captureOrPromotion]
 		 or   al, byte[.givesCheck]
+		
+    jmp   .13else ;
+    
 		jnz   .13else
 		mov   eax, dword[rbp+Pos.sideToMove]
 		lea   ecx, [8*rax+Pawn]
@@ -1126,8 +1143,10 @@ end if
 	; Step 15. Reduced depth search (LMR)
 		mov   edx, dword[.depth]
 		mov   ecx, dword[.moveCount]
-		cmp   edx, 3*ONE_PLY
-		 jl   .15skip
+		
+    cmp   edx, 7*ONE_PLY  ;
+		
+     jl   .15skip
 		cmp   ecx, 1
 		jbe   .15skip
 		mov   r8l, byte[.captureOrPromotion]
@@ -1201,7 +1220,7 @@ end if
 		add   rax, qword[rbp+Pos.fromTo]
 		mov   eax, dword[rax+4*rcx]
 		add   eax, dword[r8+4*rdx]
-		sub   eax, 8000
+    sub   eax, 8000
 
 		mov   ecx, dword[rbx-2*sizeof.State+State.history]
 
