@@ -45,7 +45,11 @@ A: All older versions of asmFish/pedantFish are in the branch https://github.com
 
 
 ******** updates ********
-
+2016-12-17 Another simplification for SEE pruning
+    - Use pawn value when pruning moves with negative SEE
+2016-12-17 Fix: quit after completing command line options
+    - Removing a bug that prevented running tests using scripts like BuildTester from software.farseer.org.
+http://www.talkchess.com/forum/viewtopic.php?topic_view=threads&p=698075&t=62416
 2016-12-15 Fix own book loading
     - Own book didn't load under Fritz and Arena. Patch changes BookPath to BookFile and some USE_BOOK flags
 2016-12-12 Simplify pruning
