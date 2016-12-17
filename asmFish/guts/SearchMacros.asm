@@ -1074,14 +1074,7 @@ end if
 		jge   .13done
 		cmp   byte[.extension], 0
 		jne   .13done
-	       imul   edx, edx
-	       imul   edx, -35
-
-	if .PvNode eq 1
-		sub   edx, 300
-	else
-		sub   edx, 400
-	end if
+	       imul   edx, -PawnValueEg
 
 	       call   SeeTest
 	       test   eax, eax
