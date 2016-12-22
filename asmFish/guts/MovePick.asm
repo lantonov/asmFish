@@ -346,7 +346,6 @@ MovePick_PROBCUT_2:
 		cmp   ecx, dword[rbx+State.ttMove]
 		 je   MovePick_PROBCUT_2
 		mov   edx, dword[rbx+State.threshold]
-		add   edx, 1
 	       call   SeeTest
 	       test   eax, eax
 		 jz   MovePick_PROBCUT_2

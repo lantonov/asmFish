@@ -554,7 +554,6 @@ SD_NewLine
 		 jz   .9NoTTMove
 		mov   ecx, dword[.ttMove]
 		mov   edx, dword[rbx+State.threshold]
-		add   edx, 1
 	       call   SeeTest
 	       test   eax, eax
 		 jz   .9NoTTMove
