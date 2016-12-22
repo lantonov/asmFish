@@ -1221,6 +1221,7 @@ Position_PrintFen:
 		adc   rdi, 0
 		mov   eax, 'KQkq'
 		mov   edx, dword[rbp-Thread.rootPos+Thread.castling_rfrom]
+		and   edx, 0x07070707
 		add   edx, 'AAaa'
 		cmp   byte[rbp+Pos.chess960], 0
 	     cmovne   eax, edx
