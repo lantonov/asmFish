@@ -1,3 +1,4 @@
+<a href="https://codeclimate.com/github/lantonov/asmFish"><img src="https://codeclimate.com/github/lantonov/asmFish/badges/issue_count.svg" /></a>
 ******** introduction ********
 Welcome to the project of translating Stockfish in assembly language!
 The newest executables can be found in the master branch while executables from older versions are in branch "executables".
