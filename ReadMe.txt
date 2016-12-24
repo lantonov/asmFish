@@ -1,5 +1,5 @@
 ******** introduction ********
-Welcome to the project of converting stockfish into x86-64!
+Welcome to the project of translating Stockfish in assembly language!
 The newest executables can be found in the master branch while executables from older versions are in branch "executables".
 The source files can be found in the asmFish folder on the master branch.
   - run fasm on asmFishW_base[_popcnt,_bmi2].asm to produce executables for windows
