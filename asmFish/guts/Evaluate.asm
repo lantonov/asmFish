@@ -1259,6 +1259,11 @@ ED_NewLine
 	       imul   eax, 0x00010001
 	     addsub   esi, eax
 ..Continue:
+		mov   edx, dword[rbx+State.npMaterial+2*0]
+		mov   eax, esi
+	     addsub   esi, 20
+	        cmp   edx, 0
+	     cmovne   esi, eax
 	       test   r15, r15
 		jnz   ..NextPawn
 
@@ -1600,23 +1605,6 @@ ED_NewLine
 		mov   r11, qword[.ei.attackedBy+8*(8*Black+0)]
 	EvalThreats   Black
 	EvalThreats   White
-
-    Unstoppable  equ ((0 shl 16) + (45))
-		mov   eax, dword[rbx+State.npMaterial+2*0]
-	       test   eax, eax
-		jnz   .SkipUnstoppable
-		mov   rcx, qword[rdi+PawnEntry.passedPawns+8*White]
-		mov   rdx, qword[rdi+PawnEntry.passedPawns+8*Black]
-		mov   eax, esi
-		add   esi, Unstoppable
-		cmp   rcx, 0
-	      cmove   esi, eax
-		mov   eax, esi
-		sub   esi, Unstoppable
-		cmp   rdx, 0
-	      cmove   esi, eax
-.SkipUnstoppable:
-
 
 	      movzx   eax, word[rbx+State.npMaterial+2*0]
 	      movzx   ecx, word[rbx+State.npMaterial+2*1]
