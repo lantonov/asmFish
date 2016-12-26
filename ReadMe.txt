@@ -45,6 +45,8 @@ A: All older versions of asmFish/pedantFish are in the branch https://github.com
 
 
 ******** updates ********
+2016-12-25 Further simplify unstoppable
+2016-12-25 Fix psqt format and use smaller numbers in king psqt
 2016-12-22 Fix printing of castling rights in debug output
     - Castling in Chess960 FEN was shifted with 56 char 
 2016-12-22 Simplify threshold handling for probcut
