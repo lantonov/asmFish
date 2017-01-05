@@ -441,11 +441,10 @@ match =Black, Us
 \}
 
 	QueenContactCheck equ 997
-	QueenCheck  equ 695
-	RookCheck   equ 638
-	BishopCheck equ 538
-	KnightCheck equ 874
-	SafeCheck  equ	((20 shl 16) + (20))
+	QueenCheck  equ 745
+	RookCheck   equ 688
+	BishopCheck equ 588
+	KnightCheck equ 924
 	OtherCheck equ	((10 shl 16) + (10))
 
 		mov   rdi, qword[.ei.pi]
@@ -543,7 +542,7 @@ ED_Int rsi
 	; r11 = b1 = pos.attacks_from<BISHOP>(ksq)
 
 	; Enemy queen safe checks
-		mov   rcx, ((-SafeCheck) shl 32) + QueenCheck
+		mov   rcx, QueenCheck
 		mov   rax, r10
 		 or   rax, r11
 		and   rax, qword[.ei.attackedBy+8*(8*Them+Queen)]
@@ -564,7 +563,7 @@ ED_Int rsi
 
 	; Enemy rooks safe and other checks
 		and   r10, qword[.ei.attackedBy+8*(8*Them+Rook)]
-		mov   rcx, ((-SafeCheck) shl 32) + RookCheck
+		mov   rcx, RookCheck
 		mov   rax, r8
 		and   rax, r10
 		neg   rax
@@ -582,7 +581,7 @@ ED_Int rsi
 
 	; Enemy bishops safe and other checks
 		and   r11, qword[.ei.attackedBy+8*(8*Them+Bishop)]
-		mov   rcx, ((-SafeCheck) shl 32) + BishopCheck
+		mov   rcx, BishopCheck
 		mov   rax, r8
 		and   rax, r11
 		neg   rax
@@ -602,7 +601,7 @@ ED_Int rsi
 		mov   edx, dword[.ei.ksq+4*Us]
 		mov   r12, qword[KnightAttacks+8*rdx]
 		and   r12, qword[.ei.attackedBy+8*(8*Them+Knight)]
-		mov   rcx, ((-SafeCheck) shl 32) + KnightCheck
+		mov   rcx, KnightCheck
 		mov   rax, r8
 		and   rax, r12
 		neg   rax
