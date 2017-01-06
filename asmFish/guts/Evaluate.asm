@@ -1258,7 +1258,7 @@ ED_NewLine
 	       imul   eax, 0x00010001
 	     addsub   esi, eax
 ..Continue:
-		mov   edx, dword[rbx+State.npMaterial+2*0]
+	      movzx   edx, word[rbx+State.npMaterial+2*Them]
 		mov   eax, esi
 	     addsub   esi, 20
 	        cmp   edx, 0
