@@ -45,6 +45,7 @@ A: All older versions of asmFish/pedantFish are in the branch https://github.com
 
 
 ******** updates ********
+2017-01-06 Remove SafeCheck (#946)
 2016-12-25 Further simplify unstoppable
 2016-12-25 Fix psqt format and use smaller numbers in king psqt
 2016-12-22 Fix printing of castling rights in debug output
