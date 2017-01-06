@@ -441,10 +441,10 @@ match =Black, Us
 \}
 
 	QueenContactCheck equ 997
-	QueenCheck  equ 695
-	RookCheck   equ 638
-	BishopCheck equ 538
-	KnightCheck equ 874
+	QueenCheck  equ 745
+	RookCheck   equ 688
+	BishopCheck equ 588
+	KnightCheck equ 924
 	OtherCheck equ	((10 shl 16) + (10))
 
 		mov   rdi, qword[.ei.pi]
