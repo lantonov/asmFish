@@ -521,7 +521,7 @@ if USE_WEAKNESS
 end if
 
 	; find best thread  index esi, best score in r9d
-		xor   esi, esi
+		xor   esi, esi	;check if there are threads with a better score than main thread
 		mov   r10, qword[threadPool.threadTable+8*rsi]
 		mov   r8d, dword[r10+Thread.completedDepth]
 		mov   r9, qword[r10+Thread.rootPos+Pos.rootMovesVec+RootMovesVec.table]
@@ -541,9 +541,9 @@ end if
 		cmp   edi, dword[threadPool.threadCnt]
 		jae   .workers_done3
 		mov   r10, qword[threadPool.threadTable+8*rdi]
-		mov   eax, dword[r10+Thread.completedDepth]
+		mov   eax, dword[r10+Thread.completedDepth]	;depthDiff
 		mov   rcx, qword[r10+Thread.rootPos+Pos.rootMovesVec+RootMovesVec.table]
-		mov   ecx, dword[rcx+0*sizeof.RootMove+RootMove.score]
+		mov   ecx, dword[rcx+0*sizeof.RootMove+RootMove.score]	;scoreDiff
 		cmp   eax, r8d
 		jle   .next_worker3
 		cmp   ecx, r9d

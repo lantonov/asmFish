@@ -1459,21 +1459,6 @@ end if
 		mov   dword[.bestMove], ecx
 
     if .PvNode eq 1
-		cmp   dword[rbp-Thread.rootPos+Thread.idx], 0
-		jne   .18skipeasy
-		mov   rcx, qword[rbx+State.key]
-	       call   EasyMoveMng_Get
-	       test   eax, eax
-		 jz   .18skipeasy
-		cmp   eax, dword[.move]
-		jne   .18easy
-.18easy:
-	       call   EasyMoveMng_Clear
-
-.18skipeasy:
-    end if
-
-    if .PvNode eq 1
     if .RootNode eq 0
 
 		mov   ecx, dword[.move]
