@@ -5,6 +5,9 @@ ehthumbs.db
 # Folder config file
 Desktop.ini
 
+# Readme files
+ReadMe.txt
+
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
 
@@ -44,8 +47,8 @@ Temporary Items
 
 # Directories with executable files
 # Cerebellum
-# Linux
-# Windows
+Linux
+Windows
 
 # Executables
 # asmFishL_2*

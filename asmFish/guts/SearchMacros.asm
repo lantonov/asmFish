@@ -1467,8 +1467,6 @@ end if
 		 jz   .18skipeasy
 		cmp   eax, dword[.move]
 		jne   .18easy
-		cmp   dword[.moveCount], 1
-		jbe   .18skipeasy
 .18easy:
 	       call   EasyMoveMng_Clear
 
