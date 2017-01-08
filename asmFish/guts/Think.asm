@@ -545,9 +545,16 @@ end if
 		mov   rcx, qword[r10+Thread.rootPos+Pos.rootMovesVec+RootMovesVec.table]
 		mov   ecx, dword[rcx+0*sizeof.RootMove+RootMove.score]	;scoreDiff
 		cmp   eax, r8d
-		jle   .next_worker3
+		jl    .next_worker
+		jg    @f
 		cmp   ecx, r9d
 		jle   .next_worker3
+		jg    .setbestThread
+	@@:
+		cmp   ecx, r9d
+		jl    .next_worker3
+	.setbestThread:
+	
 		mov   r8d, eax
 		mov   r9d, ecx
 		mov   esi, edi
