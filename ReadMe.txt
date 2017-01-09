@@ -45,6 +45,8 @@ A: All older versions of asmFish/pedantFish are in the branch https://github.com
 
 
 ******** updates ********
+2017-01-09 Simplified select best thread (#958) 
+    - 2017-01-09 Implemented in Stockfish. Basically revert to Tweak best thread selection logic
 2017-01-08 Tweak best thread selection logic
     - 2017-01-01 Implemented in Stockfish
 2017-01-08 Don't clear EasyMove in search()
