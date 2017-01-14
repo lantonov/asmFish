@@ -8,13 +8,13 @@ Move_GivesCheck:
 
 ProfileInc Move_GivesCheck
 
-		mov   r8d, ecx
-		shr   r8d, 6
-		and   r8d, 63	; r8d = from
-		mov   r9d, ecx
-		and   r9d, 63	; r9d = to
-		mov   r11, qword[rbx+State.dcCandidates]
-	      movzx   r10d, byte[rbp+Pos.board+r8]     ; r10 = FROM PIECE
+	    mov   r8d, ecx
+	    shr   r8d, 6
+	    and   r8d, 63	; r8d = from
+	    mov   r9d, ecx
+	    and   r9d, 63	; r9d = to
+	    mov   r11, qword[rbx+State.dcCandidates]
+	  movzx   r10d, byte[rbp+Pos.board+r8]     ; r10 = FROM PIECE
 		and   r10d, 7
 
 		 or   eax, -1
@@ -56,16 +56,38 @@ ProfileInc Move_GivesCheck
 
 	      align   8
 .Castling:
-		mov   eax, r9d
-		and   eax, 7
-		cmp   eax, 4
+;            CORRECTION BY MOHA
+; *********** start of correction *************
+;  esi starts as
+;  esi=0 if we are white
+;  esi=1 if we are black
+;  we are supposed to get into esi the following number
+;  esi=0 if white and O-O
+;  esi=1 if white and O-O-O
+;  esi=2 if black and O-O
+;  esi=3 if black and O-O-O
+;  r9d contains to square   (square of rook)
+;  r8d contains from square (square of king)
+;
+;  this code is incorrect as it assumes
+;  O-O   if r9 is on files E,F,G,H
+;  O-O-O if r9 is on files A,B,C,D
+;                mov   eax, r9d
+;                and   eax, 7
+;                cmp   eax, 4
+;                adc   esi, esi
+;
+;  since we assume that only one of the four possible castling moves have been passed in,
+;  this can be corrected by comparing the rook square to the king square
+		cmp   r9d, r8d
 		adc   esi, esi
-	      movzx   eax, byte[rbp-Thread.rootPos+Thread.castling_rfrom+rsi]
-	      movzx   r11d, byte[rbp-Thread.rootPos+Thread.castling_rto+rsi]
+; *********** end of correction *************
+	  movzx   eax, byte[rbp-Thread.rootPos+Thread.castling_rfrom+rsi]
+	  movzx   r11d, byte[rbp-Thread.rootPos+Thread.castling_rto+rsi]
 		btr   rdx, rax
 		bts   rdx, r11
 		bts   rdx, r9  ; set king again if nec
-	RookAttacks   rax, r11, rdx, r10
+      RookAttacks   rax, r11, rdx, r10
 		 bt   rax, rdi
 		sbb   eax, eax
 		pop   rdi rsi
@@ -74,7 +96,7 @@ ProfileInc Move_GivesCheck
 	      align   8
 .PromQueen:
       BishopAttacks   r8, r9, rdx, r10
-	RookAttacks   rax, r9, rdx, r10
+      RookAttacks   rax, r9, rdx, r10
 		 or   rax, r8
 		 bt   rax, rdi
 		sbb   eax, eax
@@ -89,7 +111,7 @@ ProfileInc Move_GivesCheck
 		mov   r9, qword[rbp+Pos.typeBB+8*Rook]
 		btr   rdx, rcx
       BishopAttacks   rax, rdi, rdx, r10
-	RookAttacks   r11, rdi, rdx, r10
+	  RookAttacks   r11, rdi, rdx, r10
 		mov   r10, qword[rbp+Pos.typeBB+8*Queen]
 		 or   r8, r10
 		 or   r9, r10
@@ -112,7 +134,7 @@ ProfileInc Move_GivesCheck
 
 	      align   8
 .PromRook:
-	RookAttacks   rax, r9, rdx, r10
+	  RookAttacks   rax, r9, rdx, r10
 		 bt   rax, rdi
 		sbb   eax, eax
 		pop   rdi rsi
@@ -128,8 +150,8 @@ ProfileInc Move_GivesCheck
 
 	      align   8
 .DiscoveredCheck:
-	       push   rsi rdi
-	      movzx   edi, byte[rbx+State.ksq]
+	   push   rsi rdi
+	  movzx   edi, byte[rbx+State.ksq]
 		mov   eax, ecx
 		and   eax, 64*64-1
 		mov   rax, qword[LineBB+8*rax]

@@ -45,6 +45,30 @@ A: All older versions of asmFish/pedantFish are in the branch https://github.com
 
 
 ******** updates ********
+2017-01-14 Correct a buggy "GivesCheck" function -- a patch by Moha himself!
+    -  esi starts as
+	   esi=0 if we are white
+	   esi=1 if we are black
+	  we are supposed to get into esi the following number
+	   esi=0 if white and O-O
+	   esi=1 if white and O-O-O
+	   esi=2 if black and O-O
+	   esi=3 if black and O-O-O
+	   r9d contains to square   (square of rook)
+	   r8d contains from square (square of king)
+
+	  this code is incorrect as it assumes
+	   O-O   if r9 is on files E,F,G,H
+	   O-O-O if r9 is on files A,B,C,D
+					mov   eax, r9d
+					and   eax, 7
+					cmp   eax, 4
+					adc   esi, esi
+
+	  since we assume that only one of the four possible castling moves have been passed in,
+	  this can be corrected by comparing the rook square to the king square
+			        cmp   r9d, r8d
+		            adc   esi, esi
 2017-01-09 Simplified select best thread (#958) 
     - 2017-01-09 Implemented in Stockfish. Basically revert to Tweak best thread selection logic
 2017-01-08 Tweak best thread selection logic
