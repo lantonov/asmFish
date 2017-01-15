@@ -46,7 +46,8 @@ A: All older versions of asmFish/pedantFish are in the branch https://github.com
 
 ******** updates ********
 2017-01-14 Correct a buggy "GivesCheck" function -- a patch by Moha himself!
-    -  esi starts as
+    - fixes the crashes of asmFish in Fisher Random Chess
+	   esi starts as
 	   esi=0 if we are white
 	   esi=1 if we are black
 	  we are supposed to get into esi the following number
