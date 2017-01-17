@@ -1,5 +1,4 @@
 
-
 macro QSearch NT, InCheck {
 	; in:
 	;  rbp: address of Pos struct in thread struct
@@ -154,38 +153,30 @@ pop r15 r14 r13 r9 r8 rdx rcx
 		mov   dword[.beta], edx
 		mov   dword[.depth], r8d
 
-	      movzx   edx, byte[rbx-1*sizeof.State+State._ply]
-		add   edx, 1
-		xor   eax, eax
+	      movzx   eax, byte[rbx-1*sizeof.State+State.ply]
+		add   eax, 1
+		xor   edx, edx
 	if .PvNode eq 1
 		lea   r8, [._pv]
 		mov   r9, qword[rbx+State.pv]
 		mov   dword[.oldAlpha], ecx
 		mov   qword[rbx+1*sizeof.State+State.pv], r8
-		mov   dword[r9], eax
+		mov   dword[r9], edx
 	end if
-		mov   dword[.bestMove], eax
-		mov   dword[rbx+State.currentMove], eax
-		mov   byte[rbx+State._ply], dl
+		mov   dword[.bestMove], edx
+		mov   dword[rbx+State.currentMove], edx
+		mov   byte[rbx+State.ply], al
 
 	; check for instant draw or max ply
-	      movzx   eax, word[rbx+State.rule50]
-	      movzx   r8d, word[rbx+State.pliesFromNull]
-		mov   r9, qword[rbx+State.key]
-		cmp   edx, MAX_PLY
+	      movzx   edx, word[rbx+State.rule50]
+	      movzx   rcx, word[rbx+State.pliesFromNull]
+		mov   r8, qword[rbx+State.key]
+		cmp   eax, MAX_PLY
 		jae   .AbortSearch_PlyBigger
-		cmp   eax, 100
-		jae   .CheckDrawBy50
-		cmp   eax, r8d
-	      cmova   eax, r8d
-		shr   eax, 1
-		 jz   .NoDrawBy50
-	       imul   rax, -2*sizeof.State
-     @@:	cmp   r9, qword[rbx+rax+State.key]
-		 je   .AbortSearch_PlySmaller
-		add   rax, 2*sizeof.State
-		jnz   @b
-     .NoDrawBy50:
+
+	; ss->ply < MAX_PLY holds at this point, so if we should
+	;   go to .AbortSearch_PlySmaller if a draw is detected
+	  PosIsDraw   .AbortSearch_PlySmaller, .CheckDraw_Cold, .CheckDraw_ColdRet
 
 	if InCheck eq 1
 		mov   r12d, DEPTH_QS_CHECKS
@@ -540,7 +531,7 @@ SD_String '|'
 		jmp   .ReturnD
 
 .FailHighValueToTT:
-	      movzx   edx, byte[rbx+State._ply]
+	      movzx   edx, byte[rbx+State.ply]
 		mov   eax, edi
 		sar   eax, 31
 		xor   edx, eax
@@ -556,7 +547,7 @@ SD_String '|'
 		lea   ecx, [rdi+VALUE_MATE_IN_MAX_PLY]
 
 	if InCheck eq 1
-	      movzx   eax, byte[rbx+State._ply]
+	      movzx   eax, byte[rbx+State.ply]
 		sub   eax, VALUE_MATE
 		cmp   edi, -VALUE_INFINITE
 		 je   .ReturnE
@@ -700,7 +691,7 @@ pop r15 r14 r13 rax
 	      align   8
 .ContinueFromFutilityBase:
 		mov   edx, 1
-	       call   SeeTest
+	       call   SeeTestGe
 		mov   ecx, dword[.move]
 		mov   edx, r12d
 	       test   eax, eax
@@ -748,7 +739,7 @@ pop r15 r14 r13 rax
 		jmp   .ReturnC
 
  .ReturnStaticValue_ValueToTT:
-	      movzx   ecx, byte[rbx+State._ply]
+	      movzx   ecx, byte[rbx+State.ply]
 		mov   eax, edx
 		sar   eax, 31
 		xor   ecx, eax
@@ -760,7 +751,7 @@ pop r15 r14 r13 rax
 	      align   8
 .ValueFromTT:
 	; value in edi is not VALUE_NONE
-	      movzx   r8d, byte[rbx+State._ply]
+	      movzx   r8d, byte[rbx+State.ply]
 		mov   r9d, edi
 		sar   r9d, 31
 		xor   r8d, r9d
@@ -774,7 +765,7 @@ pop r15 r14 r13 rax
 
 	      align   8
 .ValueToTT:
-	      movzx   edx, byte[rbx+State._ply]
+	      movzx   edx, byte[rbx+State.ply]
 		mov   eax, edi
 		sar   eax, 31
 		xor   edx, eax
@@ -784,9 +775,8 @@ pop r15 r14 r13 rax
 
 
 	      align   8
-.CheckDrawBy50:
-   PosIsDrawCheck50   .AbortSearch_PlySmaller, r8
-		jmp   .NoDrawBy50
+.CheckDraw_Cold:
+     PosIsDraw_Cold   .AbortSearch_PlySmaller, .CheckDraw_ColdRet
 
 
 }

@@ -628,7 +628,7 @@ _ParseCommandLine:
 		cmp   ebx, dword[rbp+8*0]
 		jae   .ArgDone1
 		mov   rcx, qword[rbp+8*1+8*rbx]
-	       call   strlen
+	       call   StringLength
 		add   edi, eax
 		jmp   .NextArg1
     .ArgDone1:
@@ -1334,7 +1334,7 @@ _ErrorBox:
 	; this may be called from a leaf with no stack allignment 
 	; one purpose is a hard exit on failure
 		mov   rcx, rdi
-	       call   strlen
+	       call   StringLength
 	       push   rdi rsi rbx 
 		mov   rsi, rdi 
 		mov   edi, stderr 

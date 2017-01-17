@@ -199,8 +199,8 @@ add	dword[rbp+Pos.gamePly], 1	  ; gamePly is only used by search to init the tim
 		and   r9d, 63	; r9d = to
 		shr   ecx, 12
 
-ProfileInc Move_Do
 ProfileInc moveUnpack
+ProfileInc Move_Do
 
 	      movzx   r10d, byte[rbp+Pos.board+r8]     ; r10 = FROM PIECE
 	      movzx   r11d, byte[rbp+Pos.board+r9]     ; r11 = TO PIECE
@@ -258,11 +258,9 @@ ProfileInc moveUnpack
 		xor   qword[rbp+Pos.typeBB+8*rax], rdx
 		xor   qword[rbp+Pos.typeBB+8*rsi], rdx
 if PEDANTIC
-	       push   rax
 	      movzx   eax, byte[rbp+Pos.pieceIdx+r8]
 		mov   byte[rbp+Pos.pieceList+rax], r9l
 		mov   byte[rbp+Pos.pieceIdx+r9], al
-		pop   rax
 end if
 
 	      movsx   rax, byte[IsPawnMasks+r10]
@@ -777,4 +775,3 @@ lea	rdi, [Output]
 call	_ErrorBox
 int3
 }
-

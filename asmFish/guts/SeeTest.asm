@@ -64,12 +64,11 @@
 
 
 
-	      align   16, SeeTest.HaveFromTo
-SeeTest:
+	      align   16, SeeTestGe.HaveFromTo
+SeeTestGe:
 	; in: rbp address of Pos
 	;     rbx address of State
-	;     ecx = capture move (preserved)
-	;            type = 0 or MOVE_TYPE_EPCAP
+	;     ecx capture move
 	;     edx value
 	; out: eax = 1 if  see >= edx
 	;      eax = 0 if  see <  edx
@@ -376,4 +375,3 @@ restore bb
 restore stmAttackers
 restore swap
 restore res
-

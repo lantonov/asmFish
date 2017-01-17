@@ -42,7 +42,7 @@ align 64
 	db 20H, 74H, 6FH, 6FH, 20H, 6CH, 6FH, 77H	; 0092 _  too low
 	db 21H, 00H					; 009A _ !.
 
-?_345:							; byte
+sz_emptyfile:
 	db 3CH, 65H, 6DH, 70H, 74H, 79H, 3EH, 00H	; 009C _ <empty>.
 
 ?_346:							; byte
@@ -350,64 +350,59 @@ _ZL4pchr:						; byte
 
 
 
-_ZN13TablebaseCore14MaxCardinalityE:			; dword
-	resd	16					; 00000000
+_ZN13TablebaseCore14MaxCardinalityE:
+	rd    16
 
-_ZL7pfactor:						; byte
-	resb	128					; 00000040
+_ZL7pfactor:
+	rb    128
 
-_ZL7pawnidx:						; byte
-	resb	512					; 000000C0
+_ZL7pawnidx:
+	rb    512
 
-_ZL8binomial:						; byte
-	resb	1280					; 000002C0
+_ZL8binomial:
+	rb    1280
 
-_ZL9DTZ_table:						; qword
-	resq	1					; 000007C0
+_ZL9DTZ_table:
+	rq    1
 
-?_333:	resq	1					; 000007C8
+?_333:	rq    1
 
-?_334:	resq	184					; 000007D0
+?_334:	rq    184
 
-?_335:							; byte
-	resb	24					; 00000D90
+?_335:
+	rb    24
 
-?_336:							; byte
-	resb	16					; 00000DA8
+?_336:
+	rb    16
 
-?_337:	resq	1					; 00000DB8
+?_337:	rq    1
 
-_ZL7TB_hash:						; byte
-	resb	81920					; 00000DC0
+_ZL7TB_hash:
+	rb    81920
 
-_ZL7TB_pawn:						; byte
-	resb	98304					; 00014DC0
+_ZL7TB_pawn:
+	rb    98304
 
-_ZL8TB_piece:						; byte
-	resb	30480					; 0002CDC0
+_ZL8TB_piece:
+	rb    30480
 
-_ZL10TBnum_pawn:					; dword
-	resd	1					; 000344D0
+_ZL10TBnum_pawn:
+	rd    1
 
-_ZL11TBnum_piece:					; dword
-	resd	1					; 000344D4
+_ZL11TBnum_piece:
+	rd    1
 
-_ZL5paths:						; qword
-	resq	1					; 000344D8
+_ZL5paths:
+	rq    1
 
-_ZL11path_string:					; qword
-	resq	1					; 000344E0
+_ZL11path_string:
+	rq    1
 
-_ZL9num_paths:						; dword
-	resd	1					; 000344E8
+_ZL9num_paths:
+	rd    1
 
-_ZL11initialized:					; byte
-	resb	4					; 000344EC
+_ZL11initialized:
+	rb    4
 
-_ZL8TB_mutex:						; qword
-	resq	6					; 000344F0
-
-
-
-
-
+_ZL8TB_mutex:
+	rq    6

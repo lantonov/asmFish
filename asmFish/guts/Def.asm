@@ -90,7 +90,11 @@ SEP_CHAR equ ':'
 
 ; values for evaluation
  Eval_Tempo equ 20
+ LazyEval equ 1500
+
+; values from stats tables
  HistoryStats_Max equ 268435456
+
 
  VALUE_ZERO	 = 0
  VALUE_DRAW	 = 0
@@ -183,7 +187,7 @@ EndgameScale_KPKP_index    equ 13 ; KP vs KP
 ENDGAME_SCALE_MAX_INDEX equ 16
 
 
-RANK_8 equ 8
+RANK_8 equ 7
 RANK_7 equ 6
 RANK_6 equ 5
 RANK_5 equ 4
@@ -272,5 +276,4 @@ SQ_E8 equ (4+8*7)
 SQ_F8 equ (5+8*7)
 SQ_G8 equ (6+8*7)
 SQ_H8 equ (7+8*7)
-
 

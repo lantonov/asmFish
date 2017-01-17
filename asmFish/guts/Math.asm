@@ -1,5 +1,4 @@
 
-
 Math_Rand_i:
 	; in: rcx address of Prng
 	; out: rax  integer in [0,2^64)
@@ -201,14 +200,3 @@ Math_Power_d_dd:
 		pop   rbx
 		pop   rsi
 		ret
-
-
-
-
-
-
-
-
-
-
-

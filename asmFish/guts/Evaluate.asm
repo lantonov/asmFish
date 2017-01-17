@@ -48,6 +48,7 @@ match =Black, Us
 ..NotUsed:
 		mov   qword[.ei.kingRing+8*Them], r8
 		mov   dword[.ei.kingAttackersCount+4*Us], r9d
+
 }
 
 
@@ -66,6 +67,13 @@ macro EvalPieces Us, Pt {
 	; in: r13 all pieces
 	;     r12 pieces of type Pt ( qword[rbp+Pos.typeBB+8*Pt])
 	;     r15 should be zero  for dirty trick
+
+local sign, addsub, subadd
+local Them, OutpostRanks
+
+local MinorBehindPawn, BishopPawns, RookOnPawn, RookOnFile0, RookOnFile1, TrappedRook
+local Outpost0, Outpost1, ReachableOutpost0, ReachableOutpost1, KingAttackWeight
+local MobilityBonus, WeakQueen
 
 local ..NextPiece, ..NoPinned, ..NoKingRing, ..AllDone
 local ..OutpostElse, ..OutpostDone, ..NoBehindPawnBonus
@@ -137,6 +145,7 @@ if PEDANTIC
 		add   r15, 1
 
 else
+	     Assert   e, r15, 0, 'assertion r15=0 failed in EvalPieces'
 	; use the fact that r15 is zero
 		mov   qword[.ei.attackedBy+8*(8*Us+Pt)], r15
 
@@ -400,22 +409,6 @@ ED_String '>: '
 ED_Score rsi
 ED_NewLine
 
-
-restore Them
-restore OutpostRanks
-restore MinorBehindPawn
-restore BishopPawns
-restore RookOnPawn
-restore RookOnFile0
-restore RookOnFile1
-restore TrappedRook
-restore Outpost0
-restore Outpost1
-restore ReachableOutpost0
-restore ReachableOutpost1
-restore KingAttackWeight
-restore MobilityBonus
-
 }
 
 
@@ -424,6 +417,12 @@ macro EvalKing Us {
 	; in  rbp address of Pos struct
 	;     rbx address of State struct
 	;     rsp address of evaluation info
+	; io  esi accumulated score
+
+local Them, Up
+
+local QueenContactCheck, QueenCheck, RookCheck, BishopCheck, KnightCheck, OtherCheck
+
 local ..AllDone, ..KingSafetyDone, ..DoKingSafety, ..KingSafetyDoneRet
 local ..NoQueenContactCheck
 local ..NoKingSide, ..NoQueenSide, ..kingRingLoop, ..NoPawns
@@ -849,6 +848,8 @@ macro EvalThreats Us {
 	;     rsp evaluation info
 	; io: esi score accumulated
 
+local LooseEnemies, ThreatByHangingPawn, ThreatByKing0, ThreatByKing1
+local Hanging, ThreatByPawnPush, PawnlessFlank, ThreatByRank
 local ..SafeThreatsDone, ..SafeThreatsLoop, ..WeakDone
 local ..ThreatMinorLoop, ..ThreatMinorDone, ..ThreatRookLoop, ..ThreatRookDone
 local ..ThreatMinorSkipPawn, ..ThreatRookSkipPawn
@@ -965,16 +966,33 @@ match =Black, Us
 		bsf   rax, r8
 	      movzx   ecx, byte[rbp+Pos.board+rax]
 	     addsub   esi, dword[Threat_Minor+4*rcx]
-	        and   ecx, 7
-	        cmp   ecx, Pawn
-		 je   ..ThreatMinorSkipPawn
+
+; there is an array "IsNotPawnMasks" for doing this without a branch
+;               and   ecx, 7
+;               cmp   ecx, Pawn
+;                je   ..ThreatMinorSkipPawn
+;               shr   eax, 3
+;if Us eq White
+;               xor   eax, Them*7
+;end if
+;              imul   eax, ThreatByRank
+;            addsub   esi, eax
+;..ThreatMinorSkipPawn:
+;
+; like this
+
+
 		shr   eax, 3
-if Us eq White
+    if Us eq White
 		xor   eax, Them*7
-end if
+    end if
+	; tricky: we want only the lower byte of the memory here,
+	;  but the upper 3 bytes of eax are zero anyways
+		and   eax, dword[IsNotPawnMasks+rcx]
 	       imul   eax, ThreatByRank
 	     addsub   esi, eax
-..ThreatMinorSkipPawn:
+
+
 	       blsr   r8, r8, rcx
 		jnz   ..ThreatMinorLoop
 ..ThreatMinorDone:
@@ -988,16 +1006,28 @@ end if
 		bsf   rax, rdx
 	      movzx   ecx, byte[rbp+Pos.board+rax]
 	     addsub   esi, dword[Threat_Rook+4*rcx]
-	        and   ecx, 7
-	        cmp   ecx, Pawn
-		 je   ..ThreatRookSkipPawn
+
+; same here
+;               and   ecx, 7
+;               cmp   ecx, Pawn
+;                je   ..ThreatRookSkipPawn
+;               shr   eax, 3
+;if Us eq White
+;               xor   eax, Them*7
+;end if
+;              imul   eax, ThreatByRank
+;            addsub   esi, eax
+;..ThreatRookSkipPawn:
+
+
 		shr   eax, 3
-if Us eq White
+    if Us eq White
 		xor   eax, Them*7
-end if
+    end if
+		and   eax, dword[IsNotPawnMasks+rcx]
 	       imul   eax, ThreatByRank
 	     addsub   esi, eax
-..ThreatRookSkipPawn:
+
 	       blsr   rdx, rdx, rcx
 		jnz   ..ThreatRookLoop
 ..ThreatRookDone:
@@ -1106,8 +1136,11 @@ macro EvalPassedPawns Us {
 	; in: rbp position
 	;     rbx state
 	;     rsp evaluation info
+	;     r15 qword[rdi+PawnEntry.passedPawns+8*Us]
 	; io  esi accumulated score
 
+local addsub, subadd
+local Them, Up, HinderPassedPawn
 local ..NextPawn, ..AllDone, ..AddBonus, ..Continue
 
 match =White, Us
@@ -1126,13 +1159,11 @@ match =Black, Us
 	Up	equ DELTA_S
 \}
 
-	HinderPassedPawn	equ (( 7 shl 16) + (0))
+	HinderPassedPawn equ (( 7 shl 16) + (0))
 
 
-;                mov   r15, qword[rdi+PawnEntry.passedPawns+8*Us]
-;                xor   esi, esi
-;               test   r15, r15
-;                 jz   ..AllDone
+	     Assert   ne, r15, 0, "assertion r15!=0 failed in EvalPassedPawns"
+
 ..NextPawn:
 		bsf   rcx, r15
 	       blsr   r15, r15, rax
@@ -1257,21 +1288,18 @@ ED_NewLine
 ..AddBonus:
 	       imul   eax, 0x00010001
 	     addsub   esi, eax
-..Continue:
-	      movzx   edx, word[rbx+State.npMaterial+2*Them]
-		mov   eax, esi
-	     addsub   esi, 20
-	        cmp   edx, 0
-	     cmovne   esi, eax
+
+..Continue:		
+
+	; Assign a small bonus when the opponent has no pieces left
+		lea   eax, [esi+20*(1-2*Us)]
+	       test   dword[rbx+State.npMaterial], 0x0FFFF shl (16*Them)
+	      cmovz   esi, eax
+
 	       test   r15, r15
 		jnz   ..NextPawn
 
 ..AllDone:
-      ;  if Us eq White
-      ;          add   dword[.ei.score], esi
-      ;  else if Us eq Black
-      ;          sub   dword[.ei.score], esi
-      ;  end if
 
 
 ED_String ' evaluate_passed_pawns<'
@@ -1279,7 +1307,6 @@ ED_Int Us
 ED_String '>: '
 ED_Score rsi
 ED_NewLine
-
 
 }
 
@@ -1320,7 +1347,6 @@ match =Black, Us
 	PiecesAll      equ r13
 	PiecesUs       equ r15
 	PiecesThem     equ r14
-
 
 	Them  equ White
 	SpaceMask  equ ((FileCBB or FileDBB or FileEBB or FileFBB) \
@@ -1425,6 +1451,32 @@ end virtual
 		jmp   Evaluate.DoPawnEvalReturn
 
 
+.ReturnLazyEval:
+
+ProfileInc EvaluateLazy
+
+	      movsx   eax, word[.ei.score+0]
+	      movsx   edx, word[.ei.score+2]
+		 bt   eax, 15
+		adc   eax, edx
+		cdq
+		mov   ecx, 2
+	       idiv   ecx
+		sub   eax, r8d
+		cdq
+		mov   ecx, 4
+	       idiv   ecx
+		add   eax, r8d
+		mov   ecx, dword[rbp+Pos.sideToMove]
+		neg   ecx
+		xor   eax, ecx
+		sub   eax, ecx
+		
+		add   rsp, sizeof.EvalInfo
+		pop   r15 r14 r13 r12 rdi rsi rbx
+		ret
+
+
 	      align   16
 ShelterStorm0:
 	ShelterStorm White
@@ -1443,6 +1495,8 @@ Evaluate:
 	; in  rbp address of Pos struct
 	;     rbx address of State struct
 	; out eax evaluation
+
+ProfileInc Evaluate
 
 	       push   rbx rsi rdi r12 r13 r14 r15
 		sub   rsp, sizeof.EvalInfo
@@ -1506,7 +1560,6 @@ ED_NewLine
 
 
 
-
 		mov   rsi, qword[rbx+State.materialKey]
 		and   esi, MATERIAL_HASH_ENTRY_COUNT-1
 	       imul   esi, sizeof.MaterialEntry
@@ -1528,7 +1581,26 @@ ED_NewLine
 		cmp   r15, qword[rbx+State.pawnKey]
 		jne   Evaluate_Cold.DoPawnEval	 ; 6.34%
 .DoPawnEvalReturn:
-		add   dword[.ei.score], eax
+		add   eax, dword[.ei.score]
+		mov   dword[.ei.score], eax
+
+
+	; We have taken into account all cheap evaluation terms.
+	; If score exceeds a threshold return a lazy evaluation.
+	;  lazy eval is called about 5% of the time
+
+	; checking if the components of a score (mg,eg) are BOTH >= 0 can be
+	;  done by testing the sign bits in the packed representation.
+	;  this is correct
+		sub   eax, 0x00010001 * (LazyEval+1)
+		mov   edx, 0x00010001 * ((-2*LazyEval)-2)
+		mov   r8d, LazyEval
+	       test   eax, 0x80008000
+		 jz   Evaluate_Cold.ReturnLazyEval
+		sub   edx, eax
+		neg   r8d
+	       test   edx, 0x80008000
+		 jz   Evaluate_Cold.ReturnLazyEval
 
 
 	   EvalInit   White
@@ -2193,4 +2265,3 @@ match =Black, Us \{
 		add   rsp, 8*16
 		pop   r15 r14 r13 r12
 		jmp   Evaluate.DoMaterialEvalReturn
-

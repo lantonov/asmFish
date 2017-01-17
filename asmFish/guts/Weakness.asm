@@ -208,6 +208,3 @@ align 16
  dq 3125.0,  13.0	; houdini 1.5a
  dq 3300.0,   0.1
 .TableEnd:
-
-
-

@@ -1194,18 +1194,3 @@ ret
 
 		pop   r15 rdi rsi
 		ret
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

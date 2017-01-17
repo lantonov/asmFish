@@ -1,4 +1,5 @@
-	      align  16
+
+	      align   16
 Move_Undo:
 	; in: rbp  address of Pos
 	;     rbx  address of State

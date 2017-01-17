@@ -1,3 +1,4 @@
+
 Position_SetState:
 	; in:  rbp  address of Pos
 	; set information in state struct
@@ -19,7 +20,7 @@ Position_SetState:
 		xor   r15, qword[Zobrist_Ep+8*rcx]
 		@@:
 
-		xor   r14, r14
+		mov   r14, [Zobrist_noPawns]
 		xor   r13, r13
 
 	      vpxor   xmm0, xmm0, xmm0	; npMaterial
@@ -950,6 +951,12 @@ Position_ParseFEN:
 		cmp   al, ' '
 		jne   .NextCastlingChar
 
+
+ ;   4) En passant target square (in algebraic notation). If there's no en passant
+ ;      target square, this is "-". If a pawn has just made a 2-square move, this
+ ;      is the position "behind" the pawn. This is recorded only if there is a pawn
+ ;      in position to make an en passant capture, and if there really is a pawn
+ ;      that might have advanced two squares.
 .EpSquare:
 	       call   SkipSpaces
 	       call   ParseSquare
@@ -958,13 +965,44 @@ Position_ParseFEN:
 		 je   .FiftyMoves
 		 ja   .Failed
 
-		mov   rdx, qword[rbp+Pos.typeBB+8*Pawn]
-		mov   ecx, dword[rbp+Pos.sideToMove]
-		and   rdx, qword[rbp+Pos.typeBB+8*rcx]
-		xor   ecx, 1
+		mov   edx, dword[rbp+Pos.sideToMove]
+		mov   r9, qword[rbp+Pos.typeBB+8*rdx]	; r9 = our pieces
+		xor   edx, 1
+
+	; make sure ep square is on our 6th rank
+		lea   ecx, [RANK_3+(RANK_6-RANK_3)*rdx]
+		 bt   qword[RankBB+8*rcx], rax
+		jnc   .EpSquareBad
+
+	; make sure ep square and square above is empty
+		mov   r8, qword[rbp+Pos.typeBB+8*rdx]
+		mov   r10, r8				; r10 = their pieces
+		 or   r8, r9
+		 bt   r8, rax
+		 jc   .EpSquareBad
+		lea   ecx, [8*rdx-4]
+		lea   rcx, [rax+2*rcx]
+		 bt   r8, rcx
+		 jc   .EpSquareBad
+
+	; make sure our pawn is in position to attack ep square
+		mov   ecx, edx
 		shl   ecx, 6+3
-	       test   rdx, qword[PawnAttacks+rcx+8*rax]
-		jnz   .FiftyMoves			  ; or .Failed
+		and   r9, qword[rbp+Pos.typeBB+8*Pawn]
+	       test   r9, qword[PawnAttacks+rcx+8*rax]
+		 jz   .EpSquareBad    
+
+	; make sure square below has their pawn
+		and   r10, qword[rbp+Pos.typeBB+8*Pawn]
+		xor   edx, 1
+		lea   ecx, [8*rdx-4]
+		lea   rcx, [rax+2*rcx]
+		 bt   r10, rcx
+		jnc   .EpSquareBad
+
+		jmp   .FiftyMoves
+.EpSquareBad:
+	; we can either fail here or set it to SQ_NONE
 		mov   byte[rbx+State.epSquare], 64
 
 .FiftyMoves:
@@ -1452,5 +1490,4 @@ Position_SetExtraCapacity:
 	       call   _VirtualFree
 		pop   rdi rsi rbx
 		ret
-
 

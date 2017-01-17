@@ -1,10 +1,13 @@
-
 ; generate<QUIET_CHECKS> generates all pseudo-legal non-captures and knight
 ; underpromotions that give check. Returns a pointer to the end of the move list.
 
 
 	      align  16
 Gen_QuietChecks:
+	; in rbp address of position
+	;    rbx address of state
+	; io rdi address to write moves
+
 	       push   rsi r12 r13 r14 r15
 
 		mov   r15, qword[rbp+Pos.typeBB+8*White]
@@ -111,4 +114,3 @@ Gen_QuietChecks_Jmp:
 		 or   rsi, rdx
 	       andn   rsi, r15, rsi
 		jmp   Gen_QuietChecks.AttacksFromRet
-

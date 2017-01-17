@@ -1,3 +1,4 @@
+
 	      align   16
 CheckTime:
 ; out eax = 0 if a lot of time has passed
@@ -36,13 +37,6 @@ CheckTime:
 		ret
 
 .stop:
-
-match =1, VERBOSE {
-push   rax
-GD_String 'setting signals.stop in CheckTime'
-GD_NewLine
-pop   rax
-}
 		 or   eax, -1
 		mov   byte[signals.stop], al
 		pop   rcx

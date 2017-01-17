@@ -1,29 +1,3 @@
-;PrintPV:
-;        ; in: rcx address of start
-;        ;     rdx address of end
-;        ;     rbp address of position
-;
-;               push   r12 r13
-;                mov   r12, rcx
-;                mov   r13, rdx
-;.loop:
-;                cmp   r12, r13
-;                jae   .done
-;                mov   ecx, [r12]
-;                add   r12, 4
-;                mov   edx, dword[rbp+Pos.chess960]
-;               call   PrintUciMoveLong
-;                mov   al, ' '
-;              stosb
-;                jmp   .loop
-;
-;.done:          int3
-;                pop   r13 r12
-;                ret
-
-
-
-
 
 RootMovesVec_Create:
 	; in: rcx address of RootMovesVec struct
@@ -251,6 +225,5 @@ RootMovesVec_StableSort:
 ;.InsertPvDone:
 ;                pop   r15 r14 r13 r12 rdi rsi rbx
 ;                ret
-
 
 

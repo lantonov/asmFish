@@ -1,6 +1,3 @@
-;;;;;;;;;;;;;;;;;;
-;  IsMoveLegal   ;
-;;;;;;;;;;;;;;;;;;
 
 	      align   16
 Move_IsLegal:
@@ -34,9 +31,7 @@ ProfileInc Move_IsLegal
 		and   ecx, 63
 	; ecx = source square
 
-match =1, PROFILE {
-lock inc qword[profile.moveUnpack]
-}
+ProfileInc moveUnpack
 
 	; pseudo legal castling moves are always legal
 	; ep captures require special attention

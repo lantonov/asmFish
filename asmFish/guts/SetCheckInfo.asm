@@ -1,4 +1,5 @@
-	    align   16, SetCheckInfo.go
+
+	      align   16, SetCheckInfo.go
 SetCheckInfo:
 	; in: rbp  address of Pos
 	;     rbx  address of State
@@ -132,16 +133,3 @@ ProfileInc SetCheckInfo
 ;                and   rsi, r13
 ;                mov   qword[rbx+State.dcCandidates], rsi
 ;                jmp   .dcCandidatesRet
-
-
-
-
-
-
-
-
-
-
-
-
-

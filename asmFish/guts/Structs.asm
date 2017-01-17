@@ -50,12 +50,8 @@ struct PawnEntry	; 80 bytes
 		rb 1
 ends
 
-struct FromToStats
- rd 2*64*64
-ends
-
 struct HistoryStats
- rd 16*64
+ rd 2*64*64
 ends
 
 struct MoveStats
@@ -147,8 +143,7 @@ match =1, DEBUG {
  stateTable	rq 1 ; the beginning of the vector of State structs
  stateEnd	rq 1 ; the end of
  counterMoveHistory  rq 1	 ; these structs hold addresses
- fromTo 	rq 1		 ; of tables used by the search
- history	rq 1		 ;
+ history 	rq 1		 ; of tables used by the search
  counterMoves	rq 1		 ;
  materialTable	rq 1		 ;
  pawnTable	rq 1		 ;
@@ -192,7 +187,7 @@ _stack_start rb 0
  moveCount	  rd 1
  staticEval	  rd 1
  history	  rd 1
- _ply		   rb 1
+ ply		   rb 1
  skipEarlyPruning rb 1
 		  rb 2
 _stack_end rb 0
@@ -211,7 +206,7 @@ _movepick_start rb 0
 _movepick_end rb 0
 ends
 
-if sizeof.State and 15
+if (sizeof.State and 15)
  err
 end if
 
@@ -463,9 +458,10 @@ struct Book
  aktAnzPieces	rd 1
  searchCounter	rd 1
  entryCount	rd 1
- skipSearch rb 1
- use	    rb 1
-	    rb 14
+ skipSearch   rb 1
+ use	      rb 1
+ bestBookMove rb 1
+	      rb 13
 ends
 
 struct Brain
@@ -520,4 +516,3 @@ struct BookEntry
  move	rw 1
  weight rw 1
 ends
-

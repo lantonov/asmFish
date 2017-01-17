@@ -92,14 +92,12 @@ UpdateStats:
 		jae   .BonusTooBig
 
 
-		mov   rsi, qword[rbp+Pos.history]
-	apply_bonus   rsi+4*r9, r11d, r10d, 324
 
 		mov   eax, r12d
 		and   eax, 64*64-1
 		mov   esi, dword[rbp+Pos.sideToMove]
 		shl   esi, 12+2
-		add   rsi, qword[rbp+Pos.fromTo]
+		add   rsi, qword[rbp+Pos.history]
 		lea   rsi, [rsi+4*rax]
 	apply_bonus   rsi, r11d, r10d, 324
 
@@ -146,14 +144,14 @@ UpdateStats:
 		shl   eax, 6
 		lea   r9d, [rax+rcx]
 
-		mov   rsi, qword[rbp+Pos.history]
-	apply_bonus   rsi+4*r9, r11d, r10d, 324
+;               mov   rsi, qword[rbp+Pos.history]
+;       apply_bonus   rsi+4*r9, r11d, r10d, 324
 
 		mov   eax, dword[r8+4*rdi]
 		and   eax, 64*64-1
 		mov   esi, dword[rbp+Pos.sideToMove]
 		shl   esi, 12+2
-		add   rsi, qword[rbp+Pos.fromTo]
+		add   rsi, qword[rbp+Pos.history]
 		lea   rsi, [rsi+4*rax]
 	apply_bonus   rsi, r11d, r10d, 324
 

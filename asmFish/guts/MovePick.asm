@@ -1,3 +1,4 @@
+
 	      align   8
 MovePick_MAIN_SEARCH:
 		mov   r15, qword[rbx-1*sizeof.State+State.endMoves]
@@ -133,7 +134,7 @@ MovePick_QUIET_GEN:
 		mov   r12, rdi
 	       call   Gen_Quiets
 		mov   r15, rdi
-	ScoreQuiets   r12, rdi, r13
+	ScoreQuiets   r12, rdi
 		mov   r12, r14
 		mov   r13, r15
 		mov   eax, dword[rbx+State.depth]
@@ -194,7 +195,7 @@ MovePick_ALL_EVASIONS:
 	       call   Gen_Evasions
 		mov   r15, rdi
 		mov   r12, r14
-      ScoreEvasions   r12, r15, r13
+      ScoreEvasions   r12, r15
 		lea   rdx, [MovePick_REMAINING]
 		mov   qword[rbx+State.stage], rdx
 		jmp   MovePick_REMAINING
@@ -346,7 +347,7 @@ MovePick_PROBCUT_2:
 		cmp   ecx, dword[rbx+State.ttMove]
 		 je   MovePick_PROBCUT_2
 		mov   edx, dword[rbx+State.threshold]
-	       call   SeeTest
+	       call   SeeTestGe
 	       test   eax, eax
 		 jz   MovePick_PROBCUT_2
 		mov   eax, edi
@@ -354,4 +355,3 @@ MovePick_PROBCUT_2:
     .WhileDone:
 		xor   eax, eax
 		ret
-

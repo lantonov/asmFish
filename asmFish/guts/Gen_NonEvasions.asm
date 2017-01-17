@@ -3,6 +3,10 @@
 
 	      align   16
 Gen_NonEvasions:
+	; in rbp address of position
+	;    rbx address of state
+	; io rdi address to write moves
+
 	       push   rsi r12 r13 r14 r15
 		mov   eax, dword[rbp+Pos.sideToMove]
 		mov   r15, qword[rbp+Pos.typeBB+8*rax]
@@ -23,4 +27,3 @@ Gen_NonEvasions_Black:
 		pop   r15 r14 r13 r12 rsi
 		ret
        generate_jmp   Black, NON_EVASIONS
-

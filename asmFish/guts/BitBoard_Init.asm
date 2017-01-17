@@ -213,4 +213,3 @@ Init_SquareDistance_DistanceRingBB:
 
 
 
-

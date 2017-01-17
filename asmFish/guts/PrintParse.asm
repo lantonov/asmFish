@@ -1,6 +1,14 @@
 ; printing and parsing stuff
 ; string functions
 
+StringLength:
+	; in rcx addres of string
+	; out eax length of string
+		 or   eax, -1
+	@@:	inc   eax
+		cmp   byte[rcx+rax], 0
+		jne   @b
+		ret
 
 ;;;;;;;;;;;;;;;;;; scores ;;;;;;;;;;;;;;;;;;;
 

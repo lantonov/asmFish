@@ -1,14 +1,7 @@
 ; Search::clear() resets search state to zero, to obtain reproducible results
+
 Search_Clear:
 	       push   rbx rsi rdi
-
-GD_String 'entered Search_Clear'
-GD_NewLine
-
-GD_String 'threadPool.nodeCnt = '
-GD_Int qword[threadPool.nodeCnt]
-GD_NewLine
-
 
 	       call   MainHash_Clear
 		mov   byte[mainHash.date], 0
@@ -24,8 +17,8 @@ GD_NewLine
 		mov   dword[rbx+Thread.previousScore], VALUE_INFINITE
 
 	; clear thread stats
-		mov   rdi, qword[rbx+Thread.rootPos.fromTo]
-		mov   ecx, (sizeof.FromToStats + sizeof.HistoryStats + sizeof.MoveStats)/4
+		mov   rdi, qword[rbx+Thread.rootPos.history]
+		mov   ecx, (sizeof.HistoryStats + sizeof.MoveStats)/4
 		xor   eax, eax
 	  rep stosd
 

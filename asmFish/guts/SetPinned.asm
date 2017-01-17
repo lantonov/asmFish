@@ -1,3 +1,4 @@
+
 	      align   16
 SetPinned:	
 	; in: rbp  address of Pos

@@ -1,3 +1,4 @@
+
 Thread_Think:
 	; in: rcx address of Thread struct
 
@@ -581,12 +582,29 @@ end if
 
 if USE_BOOK
 .PlayBookMove:
+	; eax is move
+	; edx is weight
+		mov   esi, eax
+
 		lea   rdi, [Output]
-		mov   ecx, eax
+		mov   rax, 'info dep'
+	      stosq
+		mov   rax, 'th 0 sco'
+	      stosq
+		mov   rax, 're cp '
+	      stosq
+		sub   rdi, 2
+		mov   eax, edx
+	       call   PrintUnsignedInteger
+       PrintNewLine
+	       call   _WriteOut_Output
+
+		lea   rdi, [Output]
 		mov   rax, 'bestmove'
 	      stosq
 		mov   al, ' '
 	      stosb
+		mov   ecx, esi
 	      movzx   edx, byte[rbp+Pos.chess960]
 	       call   PrintUciMove
        PrintNewLine

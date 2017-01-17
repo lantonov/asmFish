@@ -1,3 +1,4 @@
+
 ThreadIdxToNode:
 ; in: ecx index (n) of thread
 ; out: rax address of numa noda
@@ -12,7 +13,7 @@ ThreadIdxToNode:
 		cmp   r8d, 1
 		 je   .Return
 		cmp   ecx, r8d
-		jae   .MoreThreadThanCores
+		jae   .MoreThreadsThanCores
 	       imul   ecx, r9d, sizeof.NumaNode
 .NextNode:	sub   edx, dword[r10+rax+NumaNode.coreCnt]
 		 js   .Return
@@ -26,7 +27,7 @@ ThreadIdxToNode:
 		add   rax, r10
 		ret
 
-.MoreThreadThanCores:
+.MoreThreadsThanCores:
 		mov   eax, edx
 		xor   edx, edx
 		div   r9d
@@ -84,14 +85,12 @@ Thread_Create:
 	       call   RootMovesVec_Create
 
 	; allocate stats
-		mov   ecx, sizeof.FromToStats + sizeof.HistoryStats + sizeof.MoveStats
+		mov   ecx, sizeof.HistoryStats + sizeof.MoveStats
 		mov   edx, r15d
 	       call   _VirtualAllocNuma
-		mov   qword[rbx+Thread.rootPos+Pos.fromTo], rax
-		add   rax, sizeof.FromToStats
-		mov   qword[rbx+Thread.rootPos+Pos.history], rax
+		mov   qword[rbx+Thread.rootPos.history], rax
 		add   rax, sizeof.HistoryStats
-		mov   qword[rbx+Thread.rootPos+Pos.counterMoves], rax
+		mov   qword[rbx+Thread.rootPos.counterMoves], rax
 
 	; allocate pawn hash
 		mov   ecx, PAWN_HASH_ENTRY_COUNT*sizeof.PawnEntry
@@ -187,11 +186,10 @@ Thread_Delete:
 		mov   qword[rbx+Thread.rootPos.pawnTable], rax
 
 	; free stats
-		mov   rcx, qword[rbx+Thread.rootPos.fromTo]
-		mov   edx, sizeof.FromToStats + sizeof.HistoryStats + sizeof.MoveStats
+		mov   rcx, qword[rbx+Thread.rootPos.history]
+		mov   edx, sizeof.HistoryStats + sizeof.MoveStats
 	       call   _VirtualFree
 		xor   eax, eax
-		mov   qword[rbx+Thread.rootPos.fromTo], rax
 		mov   qword[rbx+Thread.rootPos.history], rax
 		mov   qword[rbx+Thread.rootPos.counterMoves], rax
 

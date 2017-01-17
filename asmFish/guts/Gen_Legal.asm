@@ -1,5 +1,11 @@
+; Generate all legal moves. Not used in time critical sections.
+
 	      align   16
 Gen_Legal:
+	; in rbp address of position
+	;    rbx address of state
+	; io rdi address to write moves
+
 	       push   rsi r12 r13 r14 r15
 
 	; generate moves

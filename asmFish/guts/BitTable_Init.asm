@@ -1,7 +1,4 @@
 
-
-
-
 BitTable_Init:
 		       push  rbx rsi rdi r12 r13 r14 r15
 
@@ -67,19 +64,6 @@ macro KPKEndgameTableOffset res,TN,WP,WK,BK {
    .BlackKingLoop:
 
 KPKEndgameTableOffset	rbx, tn, wp, wk, bk
-
-
-;cmp   wk, SQ_D5
-;jne @f
-;cmp   bk, SQ_D7
-;jne @f
-;cmp   wp, SQ_G4
-;jne @f
-;cmp   tn, 1
-;jne @f
-;int3
-;@@:
-
 
 		cmp   byte[rbx], 0
 		jne   .Continue
@@ -260,21 +244,3 @@ KPKEndgameTableOffset	rcx, tn, to, wk, bk
 	       call   _VirtualFree
 		pop   r15 r14 r13 r12 rdi rsi rbx
 		ret
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

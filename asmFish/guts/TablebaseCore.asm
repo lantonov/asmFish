@@ -232,12 +232,6 @@ strcpy:
 	       test   al, al
 		jne   strcpy
 		ret
-strlen:
-		 or   eax, -1
-	@@:	inc   eax
-		cmp   byte[rcx+rax], 0
-		jne   @b
-		ret
 
 
 
@@ -1920,7 +1914,7 @@ _ZN13TablebaseCore4initEPKc:
 	mov	byte [ _ZL11initialized], 1
 
 ?_195:
-	mov	rax, qword[?_345]
+	mov	rax, qword[sz_emptyfile]
 	cmp	rax, qword[rbx]
 	je	?_233
 	xor	eax, eax				

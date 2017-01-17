@@ -73,10 +73,13 @@ if PROFILE > 0
    .SeeTest	dq 0
    .SetCheckInfo  dq 0
    .SetCheckInfo2 dq 0
+   .Evaluate	  dq 0
+   .EvaluateLazy  dq 0
 
    .moveUnpack dq 0
    .moveStore  dq 0
    .moveRetrieve dq 0
+
    .ender rb 0
 end if
 
@@ -185,7 +188,7 @@ szGreetingEnd:
 	NewLineData
 	db 'option name NodeAffinity type string default all'
 	NewLineData
-	db 'option name Priority type combo default normal var normal var low var idle'
+	db 'option name Priority type combo default none var none var normal var low var idle'
 	NewLineData
 
 	db 'option name TTFile type string default <empty>'
@@ -237,6 +240,8 @@ if USE_BOOK
 	NewLineData
 	db 'option name BookFile type string default <empty>'
 	NewLineData
+	db 'option name BestBookMove type check default false'
+	NewLineData
 end if
 
 
@@ -255,7 +260,6 @@ szCPUError	db 'Error: processor does not support',0
 szStartFEN	db 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',0
 PieceToChar	db '.?PNBRQK??pnbrqk'
 
-sz_Info 	   db 'info string processed cmd line command: ',0
 sz_error_think	   db 'error: setoption called while thinking',0
 sz_error_value	   db 'error: setoption has no value',0
 sz_error_name	   db 'error: setoption has no name',0
@@ -270,6 +274,7 @@ sz_all			db 'all',0
 sz_low			db 'low',0
 sz_uci			db 'uci',0
 sz_fen			db 'fen',0
+sz_wait 		db 'wait',0
 sz_quit 		db 'quit',0
 sz_none 		db 'none',0
 sz_winc 		db 'winc',0
@@ -330,6 +335,7 @@ end if
 if USE_BOOK
 sz_ownbook		db 'ownbook',0
 sz_bookfile		db 'bookfile',0
+sz_bestbookmove 	db 'bestbookmove',0
 end if
 
 BenchFens: ;fens must be separated by one or more space char
@@ -510,6 +516,7 @@ Zobrist_Pieces:    rq 16*64
 Zobrist_Castling:  rq 16
 Zobrist_Ep:	   rq 8
 Zobrist_side:	   rq 1
+Zobrist_noPawns:   rq 1
 PieceValue_MG:	  rd 16
 PieceValue_EG:	  rd 16
 
@@ -759,7 +766,7 @@ match =0, VERBOSE {
 		xor   ecx, ecx
 	       call   ThreadPool_Create
 if USE_SYZYGY
-		lea   rcx, [?_345]     ; this is the <empty> string
+		lea   rcx, [sz_emptyfile]
 	       call   TableBase_Init
 end if
 if USE_BOOK
@@ -782,7 +789,7 @@ if USE_BOOK
 	       call   Book_Destroy
 end if
 if USE_SYZYGY
-		lea   rcx, [?_345]
+		lea   rcx, [sz_emptyfile]
 	       call   TableBase_Init
 end if
 	       call   ThreadPool_Destroy

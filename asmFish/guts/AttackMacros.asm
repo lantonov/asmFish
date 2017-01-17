@@ -1,13 +1,6 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;                                                 ;
-; sliding attack functions                        ;
-;     note:  ecx must be clobbered without bmi2   ;
-;                                                 ;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; x = bitboard of pseudo legal moves for a piece on sq with occ pieces occluding its movement on the board
 
 macro RookAttacks x,sq,occ,t {
+; x = bitboard of pseudo legal moves for a piece on sq with occ pieces occluding its movement on the board
 local ..skip
  match =1, CPU_HAS_BMI2 \{
 		mov   x#d, dword[RookAttacksMOFF+4*(sq)]
@@ -20,7 +13,6 @@ local ..skip
 		mov   x#d, dword[RookAttacksMOFF+4*(sq)]
 	       imul   t, qword[RookAttacksIMUL+8*(sq)]
 		shr   t, 64-12
-		xor   ecx, ecx
 		mov   x, qword[x+8*t]
  \}
 }

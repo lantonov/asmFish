@@ -7,7 +7,7 @@ macro SliderBlockers result, sliders, s, pinners,\
 local ..YesPinners, ..NoPinners, ..MoreThanOne
 
 	     Assert   e, result, 0, 'Assertion result=0 failed in slider_blockers'
-	     Assert   e, pinners, 0, 'Assertion result=0 failed in slider_blockers'
+	     Assert   e, pinners, 0, 'Assertion pinners=0 failed in slider_blockers'
 
 		mov   snipers, qword[rbp+Pos.typeBB+8*Queen]
 		mov   b, snipers
@@ -50,7 +50,7 @@ local ..YesPinners, ..NoPinners, ..MoreThanOne
 ;local ..YesPinners, ..NoPinners, ..Skip
 ;
 ;             Assert   e, result, 0, 'Assertion result=0 failed in slider_blockers'
-;             Assert   e, pinners, 0, 'Assertion result=0 failed in slider_blockers'
+;             Assert   e, pinners, 0, 'Assertion pinners=0 failed in slider_blockers'
 ;
 ;                mov   snipers, qword[rbp+Pos.typeBB+8*Queen]
 ;                mov   b, snipers

@@ -1,10 +1,12 @@
-
-
 ; generate_CAPTURES generates all pseudo-legal captures and queen
 ; promotions. Returns a pointer to the end of the move list.
 
 	      align  16
 Gen_Captures:
+	; in rbp address of position
+	;    rbx address of state
+	; io rdi address to write moves
+
 	       push  rsi r12 r13 r14 r15
 		mov   r14, qword[rbp+Pos.typeBB+8*White]
 		 or   r14, qword[rbp+Pos.typeBB+8*Black]
@@ -23,43 +25,3 @@ Gen_Captures_Black:
 		pop  r15 r14 r13 r12 rsi
 		ret
        generate_jmp  Black, CAPTURES
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

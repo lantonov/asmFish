@@ -250,7 +250,7 @@ local ..Positive
 		 bt   r10, rdx
 		jnc   JmpTo
 		xor   edx, edx
-	       call   SeeTest.HaveFromTo
+	       call   SeeTestGe.HaveFromTo
 }
 
 
@@ -282,50 +282,70 @@ local ..WhileLoop, ..Done
 
 
 
-macro ScoreQuiets start, ender, t {
-local ..Loop, ..Done
-		mov   r8, qword[rbp+Pos.history]
-		mov   r9, qword[rbx-1*sizeof.State+State.counterMoves]
-		mov   r10, qword[rbx-2*sizeof.State+State.counterMoves]
-		mov   r11, qword[rbx-4*sizeof.State+State.counterMoves]
+macro ScoreQuiets start, ender {
+
+local cmh, fmh, fmh2, history_get_c
+local ..Loop, ..Done, ..TestLoop
+
+	cmh  equ r9
+	fmh  equ r10
+	fmh2 equ r11
+
+		mov   cmh, qword[rbx-1*sizeof.State+State.counterMoves]
+		mov   fmh, qword[rbx-2*sizeof.State+State.counterMoves]
+		mov   fmh2, qword[rbx-4*sizeof.State+State.counterMoves]
 		mov   rax, qword[rbp+Pos.counterMoveHistory]
-		lea   rax, [rax+4*(64*16)*(64*8)]
-	       test   r9, r9
-	      cmovz   r9, rax
-	       test   r10, r10
-	      cmovz   r10, rax
-	       test   r11, r11
-	      cmovz   r11, rax
-		mov   t#d, dword[rbp+Pos.sideToMove]
-		shl   t#d, 12+2
-		add   t, qword[rbp+Pos.fromTo]
+		add   rax, 4*(64*16)*(64*8)
+
+match =1, DEBUG \{
+; we are using a dead spot of the cmh table
+; make sure that the entries really are zero
+xor ecx, ecx
+..TestLoop:
+Assert e, dword[rax+4*rcx], 0, 'cmh dead spot is not really dead in ScoreQuiets'
+add ecx, 1
+cmp ecx, 64*16
+jb ..TestLoop
+\}
+
+	       test   cmh, cmh
+	      cmovz   cmh, rax
+	       test   fmh, fmh
+	      cmovz   fmh, rax
+	       test   fmh2, fmh2
+	      cmovz   fmh2, rax
+		mov   r8d, dword[rbp+Pos.sideToMove]
+		shl   r8d, 12+2
+		add   r8, qword[rbp+Pos.history]
+
+	history_get_c equ r8
 
 
 match = 1, DEBUG \{
-		mov   rax, r9
+		mov   rax, cmh
 		mov   rcx, qword[rbp+Pos.counterMoveHistory]
 		sub   rax, rcx
 		mov   ecx, 4*16*64
 		xor   edx, edx
 		div   rcx
-	     Assert   e, rdx, 0     , '[rbx-1*sizeof.State+State.counterMoves] is bad rem'
-	     Assert   b, rax, 16*64 , '[rbx-1*sizeof.State+State.counterMoves] is bad quo'
-		mov   rax, r10
+	     Assert   e, rdx, 0     , 'cmh is bad rem'
+	     Assert   b, rax, 16*64 , 'cmh is bad quo'
+		mov   rax, fmh
 		mov   rcx, qword[rbp+Pos.counterMoveHistory]
 		sub   rax, rcx
 		mov   ecx, 4*16*64
 		xor   edx, edx
 		div   rcx
-	     Assert   e, rdx, 0     , '[rbx-2*sizeof.State+State.counterMoves] is bad rem'
-	     Assert   b, rax, 16*64 , '[rbx-2*sizeof.State+State.counterMoves] is bad quo'
-		mov   rax, r11
+	     Assert   e, rdx, 0     , 'fmh is bad rem'
+	     Assert   b, rax, 16*64 , 'fmh is bad quo'
+		mov   rax, fmh2
 		mov   rcx, qword[rbp+Pos.counterMoveHistory]
 		sub   rax, rcx
 		mov   ecx, 4*16*64
 		xor   edx, edx
 		div   rcx
-	     Assert   e, rdx, 0     , '[rbx-4*sizeof.State+State.counterMoves] is bad rem'
-	     Assert   b, rax, 16*64 , '[rbx-4*sizeof.State+State.counterMoves] is bad quo'
+	     Assert   e, rdx, 0     , 'fmh2 is bad rem'
+	     Assert   b, rax, 16*64 , 'fmh2 is bad quo'
 \}
 
 		cmp   start, ender
@@ -337,7 +357,7 @@ match = 1, DEBUG \{
 		mov   eax, ecx
 		mov   edx, ecx
 		and   eax, 64*64-1
-		mov   eax, dword[t+4*rax]
+		mov   eax, dword[history_get_c+4*rax]
 		shr   edx, 6
 		lea   start, [start+sizeof.ExtMove]
 		and   ecx, 63
@@ -345,10 +365,9 @@ match = 1, DEBUG \{
 	      movzx   edx, byte[rbp+Pos.board+rdx]
 		shl   edx, 6
 		add   edx, ecx
-		add   eax, dword[r8+4*rdx]
-		add   eax, dword[r9+4*rdx]
-		add   eax, dword[r10+4*rdx]
-		add   eax, dword[r11+4*rdx]
+		add   eax, dword[cmh+4*rdx]
+		add   eax, dword[fmh+4*rdx]
+		add   eax, dword[fmh2+4*rdx]
 		mov   dword[start-1*sizeof.ExtMove+ExtMove.score], eax
 ;SD_Int rax
 ;SD_String '|'
@@ -359,79 +378,51 @@ match = 1, DEBUG \{
 }
 
 
-macro ScoreEvasions start, ender, t {
-local ..WhileLoop, ..Normal, ..Special, ..Done, ..Positive, ..Capture, ..Negative
+macro ScoreEvasions start, ender {
 
-		mov   rdi, qword[rbp+Pos.history]
-		mov   t#d, dword[rbp+Pos.sideToMove]
-		shl   t#d, 12+2
-		add   t, qword[rbp+Pos.fromTo]
+local history_get_c
+local ..WhileLoop, ..Normal, ..Special, ..Done, ..Capture
+
+		mov   edi, dword[rbp+Pos.sideToMove]
+		shl   edi, 12+2
+		add   rdi, qword[rbp+Pos.history]
+
+	history_get_c equ rdi
+
 		cmp   start, ender
 		jae   ..Done
 ..WhileLoop:
 		mov   ecx, dword[start+ExtMove.move]
-		lea   start, [start+sizeof.ExtMove]
-;            SeeSign   ..Positive
-;               test   eax, eax
-;                 js   ..Negative
-;..Positive:
 		mov   r10d, ecx 	; r10d = move
 		mov   r8d, ecx
 		shr   r8d, 6
 		and   r8d, 63
 		and   ecx, 63
-	      movzx   r11d, byte[rbp+Pos.board+rcx]	; r11 = to piece
+		lea   start, [start+sizeof.ExtMove]
+	      movzx   ecx, byte[rbp+Pos.board+rcx]	; ecx = to piece
 	      movzx   edx, byte[rbp+Pos.board+r8]	; edx = from piece
-		lea   rcx, [rdi+4*rcx]
 		cmp   r10d, MOVE_TYPE_EPCAP shl 12
 		jae   ..Special
-	       test   r11d, r11d
+	       test   ecx, ecx
 		jnz   ..Capture
 ..Normal:
 		and   r10d, 64*64-1
-		shl   edx, 6+2
-		mov   eax, dword[t+4*r10]
-		add   eax, dword[rdx+rcx]
+		mov   eax, dword[history_get_c+4*r10]
 		mov   dword[start-1*sizeof.ExtMove+ExtMove.score], eax
-;SD_String 'se:'
-;SD_Int rax
-;SD_String '|'
-
 		cmp   start, ender
 		 jb   ..WhileLoop
 		jmp   ..Done
+..Special:
+		cmp   r10d, MOVE_TYPE_CASTLE shl 12
+		jae   ..Normal ; castling
 ..Capture:
-		mov   eax, dword[PieceValue_MG+4*r11]
+		mov   eax, dword[PieceValue_MG+4*ecx]
 		and   edx, 7
 		sub   eax, edx
 		add   eax, HistoryStats_Max+1	; match piece types of master
 		mov   dword[start-1*sizeof.ExtMove+ExtMove.score], eax
-;SD_String 'se:'
-;SD_Int rax
-;SD_String '|'
 		cmp   start, ender
 		 jb   ..WhileLoop
-		jmp   ..Done
-
-..Special:
-		cmp   r10d, MOVE_TYPE_CASTLE shl 12
-		jae   ..Normal ; castling
-		jmp   ..Capture
-
-;..Negative:
-;                sub   eax, HistoryStats_Max
-;                mov   dword[start-1*sizeof.ExtMove+ExtMove.score], eax
-;;SD_String 'se:'
-;;SD_Int rax
-;;SD_String '|'
-;                cmp   start, ender
-;                 jb   ..WhileLoop
 ..Done:
 
-
-
 }
-
-
-
-

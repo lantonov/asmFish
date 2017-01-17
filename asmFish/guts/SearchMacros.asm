@@ -137,9 +137,9 @@ match =1, DEBUG \{
 		mov   dword[rbx+State.moveCount], eax
 		mov   dword[rbx+State.history], eax
 		mov   dword[.bestValue], -VALUE_INFINITE
-	      movzx   r12d, byte[rbx-1*sizeof.State+State._ply]
+	      movzx   r12d, byte[rbx-1*sizeof.State+State.ply]
 		add   r12d, 1
-		mov   byte[rbx+State._ply], r12l
+		mov   byte[rbx+State.ply], r12l
 
 if USE_SELDEPTH
     if .PvNode eq 1
@@ -150,6 +150,7 @@ if USE_SELDEPTH
     end if
 end if
 
+	; callsCnt counts up instead of down as in master
 		mov   al, byte[rbp-Thread.rootPos+Thread.resetCalls]
 		mov   edx, dword[rbp-Thread.rootPos+Thread.callsCnt]
 	       test   al, al
@@ -175,25 +176,18 @@ end if
 
     if .RootNode eq 0
 	; Step 2. check for aborted search and immediate draws
-	      movzx   eax, word[rbx+State.rule50]
-	      movzx   r8d, word[rbx+State.pliesFromNull]
-		mov   r9, qword[rbx+State.key]
+	      movzx   edx, word[rbx+State.rule50]
+	      movzx   ecx, word[rbx+State.pliesFromNull]
+		mov   r8, qword[rbx+State.key]
+		mov   eax, r12d
 		cmp   r12d, MAX_PLY
 		jae   .AbortSearch_PlyBigger
 		cmp   byte[signals.stop], 0
 		jne   .AbortSearch_PlySmaller
-		cmp   eax, 100
-		jae   .CheckDrawBy50
-		cmp   eax, r8d
-	      cmova   eax, r8d
-		shr   eax, 1
-		 jz   .NoDrawBy50
-	       imul   rax, -2*sizeof.State
-	@@:	cmp   r9, qword[rbx+rax+State.key]
-		 je   .AbortSearch_PlySmaller
-		add   rax, 2*sizeof.State
-		jnz   @b
-     .NoDrawBy50:
+
+	; ss->ply < MAX_PLY holds at this point, so if we should
+	;   go to .AbortSearch_PlySmaller if a draw is detected
+	  PosIsDraw   .AbortSearch_PlySmaller, .CheckDraw_Cold, .CheckDraw_ColdRet
 
 
 	; Step 3. mate distance pruning
@@ -554,7 +548,7 @@ SD_NewLine
 		 jz   .9NoTTMove
 		mov   ecx, dword[.ttMove]
 		mov   edx, dword[rbx+State.threshold]
-	       call   SeeTest
+	       call   SeeTestGe
 	       test   eax, eax
 		 jz   .9NoTTMove
 		mov   edi, dword[.ttMove]
@@ -1062,7 +1056,7 @@ end if
 		mov   ecx, dword[.move]
 	       imul   edx, edi, -35
 	       imul   edx, edi
-	       call   SeeTest
+	       call   SeeTestGe
 	       test   eax, eax
 		 jz   .MovePickLoop
 
@@ -1075,7 +1069,7 @@ end if
 		jne   .13done
 	       imul   edx, -PawnValueEg
 
-	       call   SeeTest
+	       call   SeeTestGe
 	       test   eax, eax
 		 jz   .MovePickLoop
 
@@ -1174,7 +1168,7 @@ end if
 		mov   r9d, r12d
 		mov   r8d, r13d
 		xor   edx, edx
-	       call   SeeTest.HaveFromTo
+	       call   SeeTestGe.HaveFromTo
 	       test   eax, eax
 		jnz   .15skipA
 		sub   edi, 2*ONE_PLY
@@ -1183,16 +1177,14 @@ end if
 		mov   ecx, dword[.move]
 		and   ecx, 64*64-1
 		mov   edx, dword[.moved_piece_to_sq]
-		mov   r8, qword[rbp+Pos.history]
 		mov   r9, qword[.CMH-1*sizeof.State]
 		mov   r10, qword[.FMH-1*sizeof.State]
 		mov   r11, qword[.FMH2-1*sizeof.State]
 		mov   eax, dword[rbp+Pos.sideToMove]
 		xor   eax, 1
 		shl   eax, 12+2
-		add   rax, qword[rbp+Pos.fromTo]
+		add   rax, qword[rbp+Pos.history]
 		mov   eax, dword[rax+4*rcx]
-		add   eax, dword[r8+4*rdx]
 		sub   eax, 8000
 
 		mov   ecx, dword[rbx-2*sizeof.State+State.history]
@@ -1534,7 +1526,7 @@ end if
 		mov   rax, qword[rbx+State.checkersBB]
 		mov   edx, dword[.excludedMove]
 		mov   ecx, dword[rbp+Pos.sideToMove]
-	      movzx   edi, byte[rbx+State._ply]
+	      movzx   edi, byte[rbx+State.ply]
 		sub   edi, VALUE_MATE
 	       test   rax, rax
 	      cmovz   edi, dword[DrawValue+4*rcx]
@@ -1652,7 +1644,7 @@ pop r15 r14 r13 r9 r8 rdx rcx rax rdi rsi
 		ret
 
 .ValueFromTT:
-	      movzx   r8d, byte[rbx+State._ply]
+	      movzx   r8d, byte[rbx+State.ply]
 		mov   r9d, edi
 		sar   r9d, 31
 		xor   r8d, r9d
@@ -1710,7 +1702,7 @@ end if
 
 	      align   8
 .20ValueToTT:
-	      movzx   edx, byte[rbx+State._ply]
+	      movzx   edx, byte[rbx+State.ply]
 		mov   eax, edi
 		sar   eax, 31
 		xor   edx, eax
@@ -1720,9 +1712,8 @@ end if
 
     if .RootNode eq 0
 	      align   8
-.CheckDrawBy50:
-   PosIsDrawCheck50   .AbortSearch_PlySmaller, r8
-		jmp   .NoDrawBy50
+.CheckDraw_Cold:
+     PosIsDraw_Cold   .AbortSearch_PlySmaller, .CheckDraw_ColdRet
 
 
 
@@ -1751,7 +1742,7 @@ if USE_SYZYGY
 		mov   edi, edx
 
 		mov   r8d, -VALUE_MATE + MAX_PLY
-	      movzx   r9d, byte[rbx+State._ply]
+	      movzx   r9d, byte[rbx+State.ply]
 		add   r9d, r8d
 		cmp   eax, ecx
 	      cmovl   edx, r8d

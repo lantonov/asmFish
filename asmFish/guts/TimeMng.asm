@@ -150,5 +150,3 @@ align 8
 .mind:	 dq 2.2250738585072014e-308
 .MaxRatio   dq 7.09
 .StealRatio dq 0.35
-
-

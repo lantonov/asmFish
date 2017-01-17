@@ -1,3 +1,4 @@
+
 Options_Init:
 		lea   rdx, [options]
 		mov   byte[rdx+Options.displayInfoMove], -1
@@ -66,54 +67,71 @@ UciNewGame:
 		xor   ecx, ecx
 	       call   Position_ParseFEN
 	       call   Search_Clear
-
-		mov   rsi, qword[CmdLineStart]
-	       test   rsi, rsi
-		jnz   UciChoose
 		jmp   UciGetInput
 
 
 
 UciNextCmdFromCmdLine:
-	; skip to next cmd
-	;  if we reach null char, it is time to read from stdin
+	; rsi is the address of the current command string to process  (qword[CmdLineStart])
+	; if this string is empty, we should either
+	;      set CmdLineStart=NULL or goto quit depending on USE_CMDLINEQUIT
+	; if this string is not empty, we should
+	;      set CmdLineStart to be the address of the next command
 
-		lea   rdi, [Output]
-		lea   rcx, [sz_Info]
-	       call   PrintString
-	       call   _WriteOut_Output
+		xor   eax, eax
+		mov   r15, rsi			; save current command address
+		mov   qword[CmdLineStart], rax
+		cmp   al, byte[rsi]
+	if USE_CMDLINEQUIT
+		 je   UciQuit
+	else
+		 je   UciGetInput
+	end if
 
-		xor   r15, r15
+	; find start of next command
 .Next:
-	      lodsb
+		mov   al, byte[rsi]
 	       test   al, al
-		 jz   .Done
+		 jz   .Found
+		add   rsi, 1
 		cmp   al, ' '
 		jae   .Next
-	       call   SkipSpaces
-		mov   r15, rsi
-.Done:
-		mov   rcx, qword[CmdLineStart]
-		lea   rdi, [rsi-1]
-	       call   _WriteOut
-		lea   rcx, [sz_NewLine]
-		lea   rdi, [sz_NewLineEnd]
-	       call   _WriteOut
+	; we have hit the new line char
+.Found:
+	; rsi is now the address of next command
+		mov   qword[CmdLineStart], rsi
+		mov   rsi, r15			; restore current command address
 
-		mov   qword[CmdLineStart], r15
-		mov   rsi, r15
-	       test   r15, r15
-		jnz   UciChoose
-		jmp   UciQuit
+if VERBOSE
+Display_String 'processing cmd line command: '
+mov rcx, rsi
+mov rdi, qword[CmdLineStart]
+cmp byte[rdi], 1
+cmc
+sbb rdi, 0
+call _WriteOut
+lea rcx, [sz_NewLine]
+lea rdi, [sz_NewLineEnd]
+call _WriteOut
+end if
 
+		jmp   UciChoose
+
+
+
+; UciGetInput is where we expect to get a new command
+; this can either come from the command line or from reading from stdin
+; when processing this string, we can modify it,
+;   but we must not modify anything after the newline char, which signifies the start of next command
+
+; we usually display something before getting new input or even need to put a newline on the end of it
 UciWriteOut_NewLine:
        PrintNewLine
-
 UciWriteOut:
 	       call   _WriteOut_Output
 UciGetInput:
-
 GD_ResponseTime
+
 		mov   rsi, qword[CmdLineStart]
 	       test   rsi, rsi
 		jnz   UciNextCmdFromCmdLine
@@ -121,12 +139,14 @@ GD_ResponseTime
 	       call   _ReadIn
 	       test   eax, eax
 		jnz   UciQuit
+
 GD_GetTime
+UciChoose:
+	; rsi is the address of the string to process
+
 		cmp   byte[rsi], ' '
 		 jb   UciGetInput     ; don't process empty lines
 
-
-UciChoose:
 	       call   SkipSpaces
 
 		lea   rcx, [sz_go]
@@ -173,6 +193,11 @@ UciChoose:
 	       call   CmpString
 	       test   eax, eax
 		jnz   UciQuit
+
+		lea   rcx, [sz_wait]
+	       call   CmpString
+	       test   eax, eax
+		jnz   UciWait
 
 		lea   rcx, [sz_perft]
 	       call   CmpString
@@ -240,7 +265,6 @@ UciQuit:
 		mov   rdx, qword[UciLoop.th1.rootPos.stateEnd]
 		sub   rdx, rcx
 	       call   _VirtualFree
-		xor   eax, eax
 		add   rsp, UciLoop.localsize
 		pop   r15 r14 r13 r12 r11 rbx rdi rsi rbp
 		ret
@@ -283,10 +307,10 @@ UciIsReady:
 UciPonderHit:
 		mov   al, byte[signals.stopOnPonderhit]
 	       test   al, al
-		jnz   @f
+		jnz   .stop
 		mov   byte[limits.ponder], al
 		jmp   UciGetInput
-@@:
+	.stop:
 		mov   byte[signals.stop], -1
 		mov   rcx, qword[threadPool.threadTable+8*0]
 	       call   Thread_StartSearching_TRUE
@@ -299,6 +323,7 @@ UciStop:
 		mov   byte[signals.stop], -1
 		mov   rcx, qword[threadPool.threadTable+8*0]
 	       call   Thread_StartSearching_TRUE
+UciWait:
 		mov   rcx, qword[threadPool.threadTable+8*0]
 	       call   Thread_WaitForSearchFinished
 		jmp   UciGetInput
@@ -321,7 +346,7 @@ UciGo:
 	       test   al, al
 		 jz   .ok
 	       call   UciSync
-.ok:
+	.ok:
 		lea   rcx, [UciLoop.limits]
 	       call   Limits_Init
 .ReadLoop:
@@ -713,6 +738,13 @@ if USE_BOOK
 		lea   rbx, [.OwnBook]
 	       test   eax, eax
 		jnz   .CheckValue
+
+		lea   rcx, [sz_bestbookmove]
+	       call   CmpStringCaseless
+		lea   rbx, [.BestBookMove]
+	       test   eax, eax
+		jnz   .CheckValue
+
 end if
 
 if USE_WEAKNESS
@@ -786,6 +818,11 @@ end if
 
 .Priority:
 	       call   SkipSpaces
+
+		lea   rcx, [sz_none]
+	       call   CmpStringCaseless
+	       test   eax, eax
+		jnz   UciGetInput
 
 		lea   rcx, [sz_normal]
 	       call   CmpStringCaseless
@@ -982,6 +1019,11 @@ if USE_BOOK
 .OwnBook:
 	       call   ParseBoole
 		mov   byte[book.use], al
+		jmp   UciGetInput
+
+.BestBookMove:
+	       call   ParseBoole
+		mov   byte[book.bestBookMove], al
 		jmp   UciGetInput
 end if
 
@@ -1283,70 +1325,6 @@ end if
 		mov   byte[options.displayInfoMove], -1
 
 
-if PROFILE > 0
-		lea   rdi, [Output]
-
-		lea   r15, [profile.cjmpcounts]
-
-.CountLoop:
-		mov   rax, qword[r15+8*0]
-		 or   rax, qword[r15+8*1]
-		 jz   .CountDone
-
-		lea   rax, [r15-profile.cjmpcounts]
-		shr   eax, 4
-	       call   PrintUnsignedInteger
-		mov   al, ':'
-	      stosb
-       PrintNewLine
-
-
-	     szcall   PrintString, '  jmp not taken: '
-		mov   rax, qword[r15+8*0]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, '  jmp taken:     '
-		mov   rax, qword[r15+8*1]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, '  jmp percent:   '
-	  vcvtsi2sd   xmm0, xmm0, qword[r15+8*0]
-	  vcvtsi2sd   xmm1, xmm1, qword[r15+8*1]
-	     vaddsd   xmm0, xmm0, xmm1
-	     vdivsd   xmm1, xmm1, xmm0
-		mov   eax, 10000
-	  vcvtsi2sd   xmm2, xmm2, eax
-	     vmulsd   xmm1, xmm1, xmm2
-	  vcvtsd2si   eax, xmm1
-		xor   edx, edx
-		mov   ecx, 100
-		div   ecx
-		mov   r12d, edx
-	       call   PrintUnsignedInteger
-		mov   al, '.'
-	      stosb
-		mov   eax, r12d
-		xor   edx, edx
-		mov   ecx, 10
-		div   ecx
-		add   al, '0'
-	      stosb
-		lea   eax, [rdx+'0']
-	      stosb
-		mov   al, '%'
-	      stosb
-       PrintNewLine
-
-		add   r15, 16
-		jmp   .CountLoop
-
-.CountDone:
-
-		jmp   UciWriteOut
-end if
-
 		jmp   UciGetInput
 
 
@@ -1541,12 +1519,81 @@ UciProfile:
        PrintNewLine
 
 
+	     szcall   PrintString, 'Evaluate:             '
+		mov   rax, qword[profile.Evaluate]
+	       call   PrintUnsignedInteger
+       PrintNewLine
+	     szcall   PrintString, 'EvaluateLazy:         '
+		mov   rax, qword[profile.EvaluateLazy]
+	       call   PrintUnsignedInteger
+       PrintNewLine
+
+
+
+		lea   r15, [profile.cjmpcounts]
+.CountLoop:
+		mov   rax, qword[r15+8*0]
+		 or   rax, qword[r15+8*1]
+		 jz   .CountDone
+
+		lea   rax, [r15-profile.cjmpcounts]
+		shr   eax, 4
+	       call   PrintUnsignedInteger
+		mov   al, ':'
+	      stosb
+       PrintNewLine
+
+
+	     szcall   PrintString, '  jmp not taken: '
+		mov   rax, qword[r15+8*0]
+	       call   PrintUnsignedInteger
+       PrintNewLine
+
+	     szcall   PrintString, '  jmp taken:     '
+		mov   rax, qword[r15+8*1]
+	       call   PrintUnsignedInteger
+       PrintNewLine
+
+	     szcall   PrintString, '  jmp percent:   '
+	  vcvtsi2sd   xmm0, xmm0, qword[r15+8*0]
+	  vcvtsi2sd   xmm1, xmm1, qword[r15+8*1]
+	     vaddsd   xmm0, xmm0, xmm1
+	     vdivsd   xmm1, xmm1, xmm0
+		mov   eax, 10000
+	  vcvtsi2sd   xmm2, xmm2, eax
+	     vmulsd   xmm1, xmm1, xmm2
+	  vcvtsd2si   eax, xmm1
+		xor   edx, edx
+		mov   ecx, 100
+		div   ecx
+		mov   r12d, edx
+	       call   PrintUnsignedInteger
+		mov   al, '.'
+	      stosb
+		mov   eax, r12d
+		xor   edx, edx
+		mov   ecx, 10
+		div   ecx
+		add   al, '0'
+	      stosb
+		lea   eax, [rdx+'0']
+	      stosb
+		mov   al, '%'
+	      stosb
+       PrintNewLine
+
+		add   r15, 16
+		jmp   .CountLoop
+.CountDone:
+
+
 	       push   rdi
 		lea   rdi, [profile]
 		mov   ecx, profile.ender-profile
 		xor   eax, eax
 	      stosb
 		pop   rdi
+
 		jmp   UciWriteOut
 
 }

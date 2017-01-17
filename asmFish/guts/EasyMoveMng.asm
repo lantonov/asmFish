@@ -1,3 +1,4 @@
+
 EasyMoveMng_Clear:
 		lea   rcx, [easyMoveMng]
 		xor   eax, eax

@@ -1,6 +1,5 @@
 EmptyTTEntry = VALUE_NONE shl (8*MainHashEntry.value)
 
-
 	      align   16
 MainHash_Probe:
 	; in:   rcx  key
@@ -127,4 +126,3 @@ pop rdi r14 r15 r11 r10 r9 r8 rdx rcx rax
 		 or   edx, -1
 
 		ret
-

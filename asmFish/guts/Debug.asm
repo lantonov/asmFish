@@ -5,6 +5,35 @@ macro ProfileInc fxn {
 }
 
 
+macro ProfileJmp cc, index {
+local ..TakingJump
+; do a profile on the conditional jmp j#cc
+;  increment  qword[profile.cjmpcounts+16*index+0] if the jump is not taken
+;  incrememnt qword[profile.cjmpcounts+16*index+8] if the jump is taken
+; use like this:
+;    call foo
+;    test eax, eax
+;    ProfileJmp nz, 0
+;    jnz eaxNotZero
+;     ...
+;
+; The counts can be read after the "index:" label in the profile command
+
+match =1, PROFILE \{
+	       push   rax rcx
+		lea   rcx, [profile.cjmpcounts+16*(index)+8]
+	       j#cc   ..TakingJump
+		lea   rcx, [profile.cjmpcounts+16*(index)+0]
+..TakingJump:
+		mov   rax, qword[rcx]
+		lea   rax, [rax+1]
+		mov   qword[rcx], rax
+		pop   rcx rax
+
+ \}
+}
+
+
 macro DebugStackUse m {
 local ..message, ..over
  match =1, DEBUG \{
@@ -96,7 +125,7 @@ macro Display_Hex x {
 	push  x
 	push  rdi rsi rax rcx rdx r8 r9 r10 r11
 	lea  rdi, [Output]
-	mov rcx, qword[rsp+8*10]
+	mov rcx, qword[rsp+8*9]
 	call PrintHex
 	lea  rcx, [Output]
 	call _WriteOut
@@ -104,6 +133,18 @@ macro Display_Hex x {
 	add  rsp, 8
 }
 
+macro Display_Move x {
+	push  x
+	push  rdi rsi rax rcx rdx r8 r9 r10 r11
+	lea  rdi, [Output]
+	mov ecx, dword[rsp+8*9]
+	xor edx, edx
+	call PrintUciMove
+	lea  rcx, [Output]
+	call _WriteOut
+	pop r11 r10 r9 r8 rdx rcx rax rsi rdi
+	add  rsp, 8
+}
 
 
 macro Display_NewLine {
@@ -169,33 +210,6 @@ local ..skip, ..errorbox, ..message
 
 }
 
-
-macro Profile cc, index {
-local ..TakingJump
-; do a profile on the conditional jmp j#cc
-;  increment  qword[...+0] if the jump is not taken
-;  incrememnt qword[...+8] if the jump is taken
-; use like this:
-;    call foo
-;    test eax, eax
-;    Profile nz, 0
-;    jnz EaxNotZero
-;     ...
-;
-
-match =1, PROFILE \{
-	       push   rax rcx
-		lea   rcx, [profile.cjmpcounts+16*(index)+8]
-	       j#cc   ..TakingJump
-		lea   rcx, [profile.cjmpcounts+16*(index)+0]
-..TakingJump:
-		mov   rax, qword[rcx]
-		lea   rax, [rax+1]
-		mov   qword[rcx], rax
-		pop   rcx rax
-
- \}
-}
 
 
 

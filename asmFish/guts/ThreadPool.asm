@@ -15,10 +15,6 @@
 ;   .coreCnt     rd 1     number of cores detected on this node
 ;   .cmhTable    rq 1     our per-node cmh-table
 ;   .groupMask (win) or .cpuMask (linux)
-;
-;
-
-
 
 
 ThreadPool_Create:

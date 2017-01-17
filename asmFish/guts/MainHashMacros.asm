@@ -1,4 +1,5 @@
-macro MainHash_Save local, entr, key16, value, bounder, depth, move, ev {
+
+macro MainHash_Save lcopy, entr, key16, value, bounder, depth, move, ev {
 local ..dont_write_move, ..write_everything, ..write_after_move, ..done
 
 match =2, VERBOSE \{
@@ -92,7 +93,7 @@ ProfileInc MainHash_Save
 	end if
 
 		mov   rcx, qword[entr]
-		mov   qword[local], rcx
+		mov   qword[lcopy], rcx
 
 
 		mov   rcx, entr
@@ -121,7 +122,7 @@ else
 	else
 		 jz   ..dont_write_move
 	end if
-		mov   word[local+MainHashEntry.move], ax
+		mov   word[lcopy+MainHashEntry.move], ax
 end if
 
 ..dont_write_move:
@@ -132,7 +133,7 @@ end if
 		mov   al, bounder
 		cmp   al, BOUND_EXACT
 		 je   ..write_after_move
-	      movsx   eax, byte[local+MainHashEntry.depth]
+	      movsx   eax, byte[lcopy+MainHashEntry.depth]
 		sub   eax, 4
 		cmp   al, depth
 		 jl   ..write_after_move
@@ -140,25 +141,24 @@ end if
 	end if
 
 ..write_everything:
-		mov   word[local+MainHashEntry.move], ax
+		mov   word[lcopy+MainHashEntry.move], ax
 		mov   word[rcx], key16
 ..write_after_move:
 		mov   al, [mainHash.date]
 		 or   al, bounder
-		mov   byte[local+MainHashEntry.genBound], al
+		mov   byte[lcopy+MainHashEntry.genBound], al
 		mov   al, depth
-		mov   byte[local+MainHashEntry.depth], al
+		mov   byte[lcopy+MainHashEntry.depth], al
     if ev eqtype 0
-		mov   word[local+MainHashEntry.eval], ev
+		mov   word[lcopy+MainHashEntry.eval], ev
     else
 	      movsx   eax, ev
-		mov   word[local+MainHashEntry.eval], ax
+		mov   word[lcopy+MainHashEntry.eval], ax
     end if
-		mov   word[local+MainHashEntry.value], dx
+		mov   word[lcopy+MainHashEntry.value], dx
 ..done:
-		mov   rax, qword[local]
+		mov   rax, qword[lcopy]
 		mov   qword[entr], rax
 
 }
-
 

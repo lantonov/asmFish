@@ -1,4 +1,3 @@
-
 ; these os functions need to conform to the standards
 ; so stack support is given for the first four arguments
 
@@ -399,7 +398,7 @@ _VirtualAllocNuma:
 	; rcx is size
 	; edx is numa node
 		cmp   edx, -1
-		 jz   _VirtualAlloc
+		 je   _VirtualAlloc
 		sub   rsp, 8*7
  AssertStackAligned   '_VirtualAllocNuma'
 
@@ -1328,7 +1327,7 @@ Failed__imp_SetThreadAffinityMask:
 
 
 _ErrorBox:
-	; rdi points to null terminated string to write to message box
+	; rdi is the address of null terminated string to write to message box
 	; this may be called from a leaf with no stack allignment
 	; one purpose is a hard exit on failure
 	; loading user32.dll multiple times (i.e. on each call)

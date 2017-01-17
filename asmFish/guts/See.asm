@@ -324,6 +324,3 @@ restore occupied
 restore stm
 restore b
 restore stmAttackers
-
-
-

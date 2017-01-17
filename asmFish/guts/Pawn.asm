@@ -1,5 +1,4 @@
 
-
 macro EvalPawns Us {
 	; in  rbp address of Pos struct
 	;     rbx address of State struct

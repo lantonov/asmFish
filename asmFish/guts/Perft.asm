@@ -1,5 +1,4 @@
 
-
 Perft_Root:
 	       push   rbx rsi rdi r14 r15
 virtual at rsp
@@ -172,11 +171,3 @@ end virtual
 		add   rsp, .localsize
 		pop   r15 r14 rsi
 		ret
-
-
-
-
-
-
-
-
