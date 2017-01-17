@@ -23,5 +23,6 @@ USE_SPAMFILTER	 equ 0	; arena gui can't read at a rate > 1 line / 15ms
 USE_SYZYGY	 equ 1	; include tablebase probing code
 USE_BOOK	 equ 0	; include some book functions
 USE_WEAKNESS	 equ 0	; include uci_limitstrength and uci_elo
+USE_CMDLINEQUIT  equ 1	; after processing command line, should we quit?
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 include 'guts/asmFish.asm'
