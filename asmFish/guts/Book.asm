@@ -1,3 +1,4 @@
+
 Book_Destroy:
 	       push   rbx
 		mov   rcx, qword[book.buffer]
@@ -146,6 +147,9 @@ local  ..notSpecial
 Book_GetMove:
 	; in: rbp address of position
 	;     rbx address of state
+	; out: eax move
+	;      edx its weight in polyglot book
+	;           undefined if eax=MOVE_NONE
 
 	       push   rsi rdi r11 r12 r13 r14 r15
 virtual at rsp
@@ -208,20 +212,56 @@ end virtual
 
 
 .Probe:
+
 	       call   Position_PolyglotKey
 		mov   r12, rax
 	       imul   r14d, dword[book.entryCount], sizeof.BookEntry
 		add   r14, r15
-.TryFindStart:
-		cmp   r15, r14
-		jae   .Out
-		cmp   r12, qword[r15+BookEntry.key]
-		lea   r15, [r15+sizeof.BookEntry]
-		jne   .TryFindStart
-		sub   r15, 2*sizeof.BookEntry
 
+	; r12 is the key we want
+	; r14 is the address of the end of the book
+	; r15 is the address of the start of the book
+
+.Split:
+	; at this point the entry is in [r15,r14) if it is in the book
+		mov   rax, r14
+		sub   rax, r15
+		xor   edx, edx
+		mov   ecx, sizeof.BookEntry
+		cmp   r15, r14
+		jae   .Out	; if r15>=r14, then the entry is not in the book
+		div   rcx
+		shr   rax, 1
+		mul   rcx	   
+		lea   rsi, [r15+rax]
+		cmp   r12, qword[rsi+BookEntry.key]
+	      cmove   r15, rsi
+		 je   .Found	; we have found the key, but it might not be the first one
+	      cmovb   r14, rsi
+		lea   rsi, [rsi+sizeof.BookEntry]
+	      cmova   r15, rsi
+		jmp   .Split
+.Found:
+	; at this point r15 is the address of a matching entry 
+		sub   r15, sizeof.BookEntry
+		cmp   r15, qword[book.buffer]
+		 jb   .FoundFirst
+		cmp   r12, qword[r15+BookEntry.key]
+
+
+
+		 je   .Found		 
+
+
+.FoundFirst:
+	; at this point r15+sizeof.BookEntry is the address of the first matching entry
+
+	; edi is going to be the number of legal moves found in the book
 		xor   edi, edi
+	; r13d is going to be the total weight
 		xor   r13d, r13d
+	; r11d is going to be the maximum weight
+		xor   r11d, r11d
 .NextEntry:
 		add   r15, sizeof.BookEntry
 		cmp   r15, r14
@@ -244,7 +284,9 @@ end virtual
 	      movzx   ecx, word[r15+BookEntry.weight]
 		add   r13d, ecx
 		mov   dword[.moveList+8*rdi+0], eax
-		mov   dword[.moveList+8*rdi+4], r13d
+		mov   dword[.moveList+8*rdi+4], ecx
+		cmp   r11d, ecx
+	      cmovb   r11d, ecx
 		add   edi, 1
 		cmp   edi, MAX_MOVES
 		 jb   .NextEntry
@@ -255,19 +297,49 @@ end virtual
 	       test   r13d, r13d
 		 jz   .ZeroTotal
 
+	; if BestBookMove option is set, only choose the best moves
+		cmp   byte[book.bestBookMove], 0
+		jne   .FindBestMoves
+		
+	; get edx = a random number in [0,r13)
 		lea   rcx, [book.seed]
 	       call   Math_Rand_i
 		xor   edx, edx
-		div   r13
+
+		div   r13d
+		xor   ecx, ecx
+		mov   r8d, edx
       .NextMove:
 		mov   eax, dword[.moveList+8*rsi+0]
-		cmp   edx, dword[.moveList+8*rsi+4]
+		mov   edx, dword[.moveList+8*rsi+4]
+		add   ecx, edx
+		cmp   r8d, ecx
 		 jb   .Return
 		add   esi, 1
 		cmp   esi, edi
 		 jb   .NextMove
 	; we shouldn't get here, just return last move in list
 		jmp   .Return
+
+.FindBestMoves:
+	; filter out moves with weight < r11d
+	; and choose one of them randomly
+		xor   esi, esi
+		xor   ecx, ecx
+    .FindBestMoves_Loop:
+		mov   eax, dword[.moveList+8*rcx+0]
+		mov   dword[.moveList+8*rsi], eax
+		add   esi, 1
+		cmp   dword[.moveList+8*rcx+4], r11d
+		sbb   esi, 0	; move esi back one if weight < r11d
+		add   ecx, 1
+		cmp   ecx, edi
+		 jb   .FindBestMoves_Loop
+		
+	; esi is the number of best moves, it shouldn't be zero
+	       test   esi, esi
+		 jz   .NoMoves
+		mov   edi, esi
 
 .ZeroTotal:
 	; just pick a random move:
@@ -276,6 +348,7 @@ end virtual
 		xor   edx, edx
 		div   edi
 		mov   eax, dword[.moveList+8*rdx+0]
+		mov   edx, dword[.moveList+8*rdx+4]
 		jmp   .Return
 .NoMoves:
 		xor   eax, eax
@@ -335,19 +408,23 @@ end virtual
 .ParseDone:
 		mov   rcx, qword[r15+Brain.path]
 	       test   rcx, rcx
-		 jz   .Error
+
+		 jz   .ErrorBadIn
 	       call   _FileOpenRead
 		mov   qword[r15+Brain.file], rax
 		cmp   rax, -1
-		 je   .Error
+
+		 je   .ErrorBadIn
 
 		mov   rcx, qword[.outFilePath]
 	       test   rcx, rcx
-		 jz   .Error
+
+		 jz   .ErrorBadOut
 	       call   _FileOpenWrite
 		mov   qword[.outFile], rax
 		cmp   rax, -1
-		 je   .Error
+
+		 je   .ErrorBadOut
 
 		jmp   .Go
 
@@ -357,19 +434,19 @@ end virtual
 		pop   r15 r14 r13 r12 rdi rbx rbp
 		ret
 
-.Error:
-		mov   rcx, qword[r15+Brain.file]
-	       call   _FileClose
-		mov   rcx, qword[r15+Brain.file]
-	       call   _FileClose
-		 or   rax, -1
-		mov   qword[r15+Brain.file], rax
-		mov   qword[.outFile], rax
 
-		lea   rdi, [Output]
-	     szcall   PrintString, 'error occured'
-	       call   _WriteOut
-		jmp   .Return
+
+
+
+
+
+
+
+
+
+
+
+
 
 .ParseDepth:
 	       call   SkipSpaces
@@ -383,15 +460,54 @@ end virtual
 	       call   SkipSpaces
 	      lodsb
 		cmp   al, '"'
-		jne   .Error
+
+		jne   .ErrorQuotes
 		mov   qword[rbx], rsi
 	@@:   lodsb
 		cmp   al, ' '
-		 jb   .Error
+
+		 jb   .ErrorQuotes
 		cmp   al, '"'
 		jne   @b
 		mov   byte[rsi-1], 0
 		jmp   .ParseLoop
+
+
+;;;;;;;;;; errors ;;;;;;;;;;;;;;;;;;;;
+
+	; either of the in and out files are no good
+.ErrorQuotes:
+Display_String 'error occured: missing quotes for file'
+		jmp   .ErrorBadInOutClose
+.ErrorBadIn:
+Display_String 'error occured: bad in file'
+		jmp   .ErrorBadInOutClose
+.ErrorBadOut:
+Display_String 'error occured: bad out file'
+.ErrorBadInOutClose:
+Display_NewLine
+		mov   rcx, qword[r15+Brain.file]
+	       call   _FileClose
+		mov   rcx, qword[.outFile]
+	       call   _FileClose
+		 or   rax, -1
+		mov   qword[r15+Brain.file], rax
+		mov   qword[.outFile], rax
+		jmp   .Return
+
+
+	; the in file has a bad size
+.ErrorBadInSizeMod8:
+Display_String 'error occured: in file size is not a multiple of 8'
+		jmp   .ErrorBadInOutClose
+
+.ErrorBadInSizeLarge:
+Display_String 'error occured: in file size is much too big'
+		jmp   .ErrorBadInOutClose
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 .Go:
 
@@ -399,6 +515,14 @@ end virtual
 		mov   rcx, qword[r15+Brain.file]
 	       call   _FileSize
 		mov   rsi, rax
+	       test   esi, 7
+		jnz   .ErrorBadInSizeMod8
+		cmp   rsi, 8*10000000
+		jae   .ErrorBadInSizeLarge
+
+
+	; everything is good from this point
+	;  no more error handling
 
 	; read original file
 		mov   rcx, rsi
@@ -413,7 +537,7 @@ end virtual
 	       call   _FileRead
 
 	; copy to BrainEntry form
-		shl   rsi, 2
+		shl   rsi, 2	     ; BrainEntry is 4 times larger than entries in brainfish book
 		mov   rcx, rsi
 	       call   _VirtualAlloc
 		mov   qword[r15+Brain.start], rax
@@ -550,7 +674,8 @@ Display_NewLine
 	       call   _WriteOut_Output
 
 		mov   rcx, qword[r15+Brain.depthRecordBuffer]
-	       call   strlen
+
+	       call   StringLength
 		lea   rdi, [rcx+rax]
 	       call   _WriteOut
 
@@ -701,7 +826,7 @@ Move_ToPolyglot:
 		 jb   .prom
 		ret
 	.prom:
-		lea  eax, [rax+rcx+0x01000]
+		lea   eax, [rax+rcx+0x01000]
 		ret
 
 
@@ -774,7 +899,7 @@ RadixSort:
 	;     r14 swaping function
 	;         should swap structs at rax and rbx
 	;     r15 sizeof struct
-	; out: sort in the range [left,right) assuming bit above mask are sorted
+	; out: sort in the range [left,right) assuming bits above mask are sorted
 	       push   rbx rsi rdi
 	     Assert   ae, rdx, rcx, 'bad dimensions in RadixSort'
 	     Assert   ne, r12, 0, 'bad mask in RadixSort'
@@ -1221,4 +1346,3 @@ dq   0x4AE7D6A36EB5DBCB, 0x2D8D5432157064C8, 0xD1E649DE1E7F268B, 0x8A328A1CEDFE5
 dq   0xF6F7FD1431714200, 0x30C05B1BA332F41C, 0x8D2636B81555A786, 0x46C9FEB55D120902,   0xCCEC0A73B49C9921, 0x4E9D2827355FC492, 0x19EBB029435DCB0F, 0x4659D2B743848A2C
 dq   0x963EF2C96B33BE31, 0x74F85198B05A2E7D, 0x5A0F544DD2B1FB18, 0x03727073C2E134B1,   0xC7F6AA2DE59AEA61, 0x352787BAA0D7C22F, 0x9853EAB63B5E0B35, 0xABBDCDD7ED5C0860
 dq   0xCF05DAF5AC8D77B0, 0x49CAD48CEBF4A71E, 0x7A4C10EC2158C4A6, 0xD9E92AA246BF719E,   0x13AE978D09FE5557, 0x730499AF921549FF, 0x4E4B705B92903BA4, 0xFF577222C14F0A3A
-
