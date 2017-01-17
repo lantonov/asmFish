@@ -45,6 +45,22 @@ A: All older versions of asmFish/pedantFish are in the branch https://github.com
 
 
 ******** updates ********
+2017-01-17 FEN parsing: add a second check for correctly setting e.p. square (SF 2016-11-10)
+    - now checks as sf does with the additional checks that the ep square and original pawn square is empty,
+      and does not fail if these checks fail; just gives no ep square
+2017-01-17 Non-quiet pruning tweak (SF 2016-11-19)
+    - plus Simplify pruning rule
+    - plus Simplify pruning
+    - plus Another simplification for SEE pruning
+2017-01-17 Start searching for a repetition from the 4th ply behind (SF 2016-11-19)
+    - Plus threefold repetition detection
+2017-01-17 Fix the pawn hash failure when the pawn key is 0 (SF 2016-11-25)
+2017-01-17 Rank based threats (SF 2016-11-27)
+    - the conditional is now branchless using IsNotPawnMasks
+2017-01-17 Tweak best thread selection logic (SF 2017-01-01)
+    - Plus simplified select best thread
+2017-01-17 Remove HistoryStats (SF 2017-01-09)
+2017-01-17 Introduce lazy evaluation (SF 2017-01-13)
 2017-01-14 Correct a buggy "GivesCheck" function -- a patch by Moha himself!
     - fixes the crashes of asmFish in Fisher Random Chess
 	   esi starts as
