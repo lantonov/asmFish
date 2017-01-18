@@ -208,8 +208,3 @@ Init_SquareDistance_DistanceRingBB:
 		cmp   r15d, 64
 		 jb   .Next1
 		ret
-
-
-
-
-

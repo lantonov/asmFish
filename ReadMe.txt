@@ -45,6 +45,8 @@ A: All older versions of asmFish/pedantFish are in the branch https://github.com
 
 
 ******** updates ********
+2017-01-17 second bug fix of draw detection
+2017-01-17 dont clobber eax when testing checkers
 2017-01-17 FEN parsing: add a second check for correctly setting e.p. square (SF 2016-11-10)
     - now checks as sf does with the additional checks that the ep square and original pawn square is empty,
       and does not fail if these checks fail; just gives no ep square

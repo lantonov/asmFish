@@ -276,4 +276,3 @@ SQ_E8 equ (4+8*7)
 SQ_F8 equ (5+8*7)
 SQ_G8 equ (6+8*7)
 SQ_H8 equ (7+8*7)
-

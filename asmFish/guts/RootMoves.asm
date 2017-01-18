@@ -225,5 +225,3 @@ RootMovesVec_StableSort:
 ;.InsertPvDone:
 ;                pop   r15 r14 r13 r12 rdi rsi rbx
 ;                ret
-
-
