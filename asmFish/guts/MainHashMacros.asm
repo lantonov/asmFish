@@ -161,4 +161,3 @@ end if
 		mov   qword[entr], rax
 
 }
-

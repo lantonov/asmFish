@@ -26,3 +26,4 @@ USE_WEAKNESS	 equ 0	; include uci_limitstrength and uci_elo
 USE_CMDLINEQUIT  equ 1	; after processing command line, should we quit?
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 include 'guts/asmFish.asm'
+
