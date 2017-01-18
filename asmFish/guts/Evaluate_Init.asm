@@ -73,31 +73,14 @@ Evaluate_Init:
 
 
 		lea   rdi, [KingFlank]
-		mov   rax, (Rank4BB or Rank5BB or Rank6BB or Rank7BB or Rank8BB) \
-			   and (FileABB or FileBBB or FileCBB or FileDBB)
+		mov   rax, (FileABB or FileBBB or FileCBB or FileDBB)
 	      stosq
 	      stosq
 	      stosq
-		mov   rax, (Rank4BB or Rank5BB or Rank6BB or Rank7BB or Rank8BB) \
-			   and (FileCBB or FileDBB or FileEBB or FileFBB)
+		shl   rax, 2
 	      stosq
 	      stosq
-		mov   rax, (Rank4BB or Rank5BB or Rank6BB or Rank7BB or Rank8BB) \
-			   and (FileEBB or FileFBB or FileGBB or FileHBB)
-	      stosq
-	      stosq
-	      stosq
-		mov   rax, (Rank5BB or Rank4BB or Rank3BB or Rank2BB or Rank1BB) \
-			   and (FileABB or FileBBB or FileCBB or FileDBB)
-	      stosq
-	      stosq
-	      stosq
-		mov   rax, (Rank5BB or Rank4BB or Rank3BB or Rank2BB or Rank1BB) \
-			   and (FileCBB or FileDBB or FileEBB or FileFBB)
-	      stosq
-	      stosq
-		mov   rax, (Rank5BB or Rank4BB or Rank3BB or Rank2BB or Rank1BB) \
-			   and (FileEBB or FileFBB or FileGBB or FileHBB)
+		shl   rax, 2
 	      stosq
 	      stosq
 	      stosq

@@ -1,4 +1,20 @@
 
+MinorBehindPawn 	equ (( 16 shl 16) + (  0))
+BishopPawns		equ ((	8 shl 16) + ( 12))
+RookOnPawn		equ ((	8 shl 16) + ( 24))
+TrappedRook		equ (( 92 shl 16) + (  0))
+WeakQueen		equ (( 50 shl 16) + ( 10))
+OtherCheck		equ (( 10 shl 16) + ( 10))
+CloseEnemies		equ ((	7 shl 16) + (  0))
+PawnlessFlank		equ (( 20 shl 16) + ( 80))
+LooseEnemies		equ ((	0 shl 16) + ( 25))
+ThreatByHangingPawn	equ (( 71 shl 16) + ( 61))
+ThreatByRank		equ (( 16 shl 16) + (  3))
+Hanging 		equ (( 48 shl 16) + ( 27))
+ThreatByPawnPush	equ (( 38 shl 16) + ( 22))
+HinderPassedPawn	equ ((	7 shl 16) + (  0))
+
+
 macro EvalInit Us {
 ; in:  r13 rook + queen
 ;      r12 bishop+queen
@@ -68,12 +84,12 @@ macro EvalPieces Us, Pt {
 	;     r12 pieces of type Pt ( qword[rbp+Pos.typeBB+8*Pt])
 	;     r15 should be zero  for dirty trick
 
-local sign, addsub, subadd
+local addsub, subadd
 local Them, OutpostRanks
 
-local MinorBehindPawn, BishopPawns, RookOnPawn, RookOnFile0, RookOnFile1, TrappedRook
+local RookOnFile0, RookOnFile1
 local Outpost0, Outpost1, ReachableOutpost0, ReachableOutpost1, KingAttackWeight
-local MobilityBonus, WeakQueen
+local MobilityBonus
 
 local ..NextPiece, ..NoPinned, ..NoKingRing, ..AllDone
 local ..OutpostElse, ..OutpostDone, ..NoBehindPawnBonus
@@ -81,7 +97,6 @@ local ..NoEnemyPawnBonus, ..NoOpenFileBonus, ..NoTrappedByKing
 local ..SkipQueenPin, ..QueenPinLoop
 
 match =White, Us \{
-	sign	equ (1)
 	addsub	equ add
 	subadd	equ sub
 	Them	 equ Black
@@ -89,19 +104,14 @@ match =White, Us \{
 \}
 
 match =Black, Us \{
-	sign	equ (-1)
 	addsub	equ sub
 	subadd	equ add
 	Them	 equ White
 	OutpostRanks equ 0x000000FFFFFF0000
 \}
 
-	MinorBehindPawn equ ((16 shl 16) + (0))
-	BishopPawns	equ ((8 shl 16) + (12))
-	RookOnPawn	equ ((8 shl 16) + (24))
 	RookOnFile0	equ ((20 shl 16) + (7))
 	RookOnFile1	equ ((45 shl 16) + (20))
-	TrappedRook	equ ((92 shl 16) + (0))
 
 
 match =Knight, Pt \{
@@ -115,7 +125,7 @@ match =Knight, Pt \{
 match =Bishop, Pt \{
 	Outpost0	  equ ((20 shl 16) + (3))
 	Outpost1	  equ ((29 shl 16) + (8))
-	ReachableOutpost0 equ ((8 shl 16) + (0) )
+	ReachableOutpost0 equ (( 8 shl 16) + (0) )
 	ReachableOutpost1 equ ((14 shl 16) + (4))
 	KingAttackWeight equ 56
 	MobilityBonus	 equ MobilityBonus_Bishop
@@ -127,8 +137,9 @@ match =Rook, Pt \{
 match =Queen, Pt \{
 	KingAttackWeight equ 11
 	MobilityBonus	 equ MobilityBonus_Queen
-	WeakQueen	 equ ((50 shl 16) + ( 10))
 \}
+
+	     Assert   e, rdi, qword[.ei.pi], 'assertion rdi=qword[.ei.pi] failed in EvalPieces'
 
 
 if PEDANTIC
@@ -238,7 +249,7 @@ if (Pt in <Knight, Bishop>)
 		 jb   ..NoBehindPawnBonus
     end if
 		mov   rax, qword[rbp+Pos.typeBB+8*Pawn]
-		lea   ecx, [r14+8*sign]
+		lea   ecx, [r14+8*(Them-Us)]
 		 bt   rax, rcx
 		sbb   eax, eax
 		and   eax, MinorBehindPawn
@@ -255,8 +266,8 @@ if (Pt in <Knight, Bishop>)
 		jnc   ..OutpostElse
 		 bt   rax, r14
 		sbb   eax, eax
-		and   eax, (Outpost1-Outpost0)*sign
-		lea   esi, [rsi+rax+(Outpost0*sign)]
+		and   eax, (Outpost1-Outpost0)*(Them-Us)
+		lea   esi, [rsi+rax+(Outpost0*(Them-Us))]
 		jmp   ..OutpostDone
 ..OutpostElse:
 	       andn   rdx, rdx, rcx
@@ -265,8 +276,8 @@ if (Pt in <Knight, Bishop>)
 		and   rdx, qword[.ei.attackedBy+8*(8*Us+Pawn)]
 		neg   rdx
 		sbb   eax, eax
-		and   eax, (ReachableOutpost1-ReachableOutpost0)*sign
-		lea   esi, [rsi+rax+(ReachableOutpost0*sign)]
+		and   eax, (ReachableOutpost1-ReachableOutpost0)*(Them-Us)
+		lea   esi, [rsi+rax+(ReachableOutpost0*(Them-Us))]
 ..OutpostDone:
 
 
@@ -307,8 +318,8 @@ else if Pt eq Rook
 		jnc   ..NoOpenFileBonus
 		 bt   edx, ecx
 		sbb   eax, eax
-		and   eax, (RookOnFile1-RookOnFile0)*sign
-		lea   esi, [rsi+rax+(RookOnFile0*sign)]
+		and   eax, (RookOnFile1-RookOnFile0)*(Them-Us)
+		lea   esi, [rsi+rax+(RookOnFile0*(Them-Us))]
 		jmp   ..NoTrappedByKing
 ..NoOpenFileBonus:
 
@@ -417,26 +428,29 @@ macro EvalKing Us {
 	; in  rbp address of Pos struct
 	;     rbx address of State struct
 	;     rsp address of evaluation info
-	; io  esi accumulated score
+	; add/sub score to dword[.ei.score]
 
-local Them, Up
+local Them, Up, Camp
 
-local QueenContactCheck, QueenCheck, RookCheck, BishopCheck, KnightCheck, OtherCheck
+local QueenContactCheck, QueenCheck, RookCheck, BishopCheck, KnightCheck
 
 local ..AllDone, ..KingSafetyDone, ..DoKingSafety, ..KingSafetyDoneRet
-local ..NoQueenContactCheck
-local ..NoKingSide, ..NoQueenSide, ..kingRingLoop, ..NoPawns
+local ..RookDone, ..BishopDone, ..KnightDone
+local ..NoKingSide, ..NoQueenSide, ..NoPawns
 
 match =White, Us
 \{
 	Them  equ Black
 	Up    equ DELTA_N
+	Camp  equ (Rank1BB or Rank2BB or Rank3BB or Rank4BB or Rank5BB)
+
 \}
 
 match =Black, Us
 \{
 	Them  equ White
 	Up    equ DELTA_S
+	Camp  equ (Rank4BB or Rank5BB or Rank6BB or Rank7BB or Rank8BB)
 \}
 
 	QueenContactCheck equ 997
@@ -444,10 +458,12 @@ match =Black, Us
 	RookCheck   equ 688
 	BishopCheck equ 588
 	KnightCheck equ 924
-	OtherCheck equ	((10 shl 16) + (10))
 
-		mov   rdi, qword[.ei.pi]
+	     Assert   e, rdi, qword[.ei.pi], 'assertion rdi=qword[.ei.pi] failed in EvalKing'
+
 		mov   ecx, dword[.ei.ksq+4*Us]
+		mov   r15d, ecx
+	; r15d = our king square
 	      movzx   eax, byte[rbx+State.castlingRights]
 	      movzx   edx, byte[rdi+PawnEntry.castlingRights]
 		mov   esi, dword[rdi+PawnEntry.kingSafety+4*Us]
@@ -499,14 +515,17 @@ ED_Int rsi
 		sbb   eax, eax
 		and   eax, 717
 		sub   edi, eax
-		lea   eax, [rsi+0x08000]
-		sar   eax, 16
-	       imul   eax, 7
-		cdq	       ;
-		mov   ecx, 5   ;
-	       idiv   ecx      ;
-		sub   edi, 5
-		sub   edi, eax
+	; the following does edi += - 7*mg_value(score)/5 - 5
+		lea   edx, [rsi+0x08000]
+		sar   edx, 16
+		lea   ecx, [8*rdx]
+		sub   ecx, edx
+		mov   eax, 0x66666667
+	       imul   ecx
+		sar   ecx, 31
+		sar   edx, 1
+		lea   edi, [rdi+rcx-5]
+		sub   edi, edx
 	; edi = kingDanger
 
 		mov   r9, qword[rbp+Pos.typeBB+8*Them]
@@ -517,13 +536,11 @@ ED_Int rsi
 	       imul   eax, QueenContactCheck
 		add   edi, eax
 
-	; lower 32 bits of rsi are for additional kingDanger, which is always positive
-		shl   rsi, 32
-
 		mov   r8, qword[.ei.attackedBy+8*(8*Us+0)]
 		 or   r8, qword[rbp+Pos.typeBB+8*Them]
 		not   r8
 	; r8 = safe
+
 		mov   r9, qword[rbp+Pos.typeBB+8*Pawn]
 		mov   rax, qword[rbp+Pos.typeBB+8*Them]
 		and   rax, r9
@@ -532,24 +549,23 @@ ED_Int rsi
 		 or   r9, qword[.ei.attackedBy+8*(8*Us+Pawn)]
 		not   r9
 	; r9 = other
-		mov   eax, dword[.ei.ksq+4*Us]
-		mov   r15, qword[rbp+Pos.typeBB+8*White]
-		 or   r15, qword[rbp+Pos.typeBB+8*Black]
-	RookAttacks   r10, rax, r15, rdx
+
+		mov   r12, qword[rbp+Pos.typeBB+8*White]
+		 or   r12, qword[rbp+Pos.typeBB+8*Black]
+	RookAttacks   r10, r15, r12, rdx
 	; r10 = b1 = pos.attacks_from<ROOK  >(ksq)
-      BishopAttacks   r11, rax, r15, rdx
+      BishopAttacks   r11, r15, r12, rdx
 	; r11 = b1 = pos.attacks_from<BISHOP>(ksq)
 
+
+
 	; Enemy queen safe checks
-		mov   rcx, QueenCheck
 		mov   rax, r10
 		 or   rax, r11
 		and   rax, qword[.ei.attackedBy+8*(8*Them+Queen)]
 		and   rax, r8
-		neg   rax
-		sbb   rax, rax
-		and   rax, rcx
-		add   rsi, rax
+		lea   ecx, [rdi+QueenCheck]
+	     cmovnz   edi, ecx
 
 	; For other pieces, also consider the square safe if attacked twice,
 	; and only defended by a queen.
@@ -559,77 +575,62 @@ ED_Int rsi
 		and   rax, qword[.ei.attackedBy+8*(8*Us+Queen)]
 		and   rax, qword[.ei.attackedBy2+8*Them]
 		 or   r8, rax
+	; r8 = safe
+
 
 	; Enemy rooks safe and other checks
+
 		and   r10, qword[.ei.attackedBy+8*(8*Them+Rook)]
-		mov   rcx, RookCheck
-		mov   rax, r8
-		and   rax, r10
-		neg   rax
-		sbb   rax, rax
-		and   rcx, rax
-		add   rsi, rcx
-		mov   rcx, ((-OtherCheck) shl 32) + 0
-		not   rax
-		and   rax, r9
-		and   rax, r10
-		neg   rax
-		sbb   rax, rax
-		and   rcx, rax
-		add   rsi, rcx
+	; r10 = b1 & ei.attackedBy[Them][ROOK]
+	       test   r10, r8
+		lea   ecx, [rdi+RookCheck]
+	     cmovnz   edi, ecx
+		jnz   ..RookDone
+	       test   r10, r9
+		lea   ecx, [rsi-OtherCheck]
+	     cmovnz   esi, ecx
+    ..RookDone:
+
 
 	; Enemy bishops safe and other checks
+
 		and   r11, qword[.ei.attackedBy+8*(8*Them+Bishop)]
-		mov   rcx, BishopCheck
-		mov   rax, r8
-		and   rax, r11
-		neg   rax
-		sbb   rax, rax
-		and   rcx, rax
-		add   rsi, rcx
-		mov   rcx, ((-OtherCheck) shl 32) + 0
-		not   rax
-		and   rax, r9
-		and   rax, r11
-		neg   rax
-		sbb   rax, rax
-		and   rcx, rax
-		add   rsi, rcx
+	; r11 = b1 & ei.attackedBy[Them][BISHOP]
+
+	       test   r11, r8
+		lea   ecx, [rdi+BishopCheck]
+	     cmovnz   edi, ecx
+		jnz   ..BishopDone
+	       test   r11, r9
+		lea   ecx, [rsi-OtherCheck]
+	     cmovnz   esi, ecx
+    ..BishopDone:
 
 	; Enemy knights safe and other checks
-		mov   edx, dword[.ei.ksq+4*Us]
-		mov   r12, qword[KnightAttacks+8*rdx]
+		mov   r12, qword[KnightAttacks+8*r15]
 		and   r12, qword[.ei.attackedBy+8*(8*Them+Knight)]
-		mov   rcx, KnightCheck
-		mov   rax, r8
-		and   rax, r12
-		neg   rax
-		sbb   rax, rax
-		and   rcx, rax
-		add   rsi, rcx
-		mov   rcx, ((-OtherCheck) shl 32) + 0
-		not   rax
-		and   rax, r9
-		and   rax, r12
-		neg   rax
-		sbb   rax, rax
-		and   rcx, rax
-		add   rsi, rcx
+	; r12 = b
+	       test   r12, r8
+		lea   ecx, [rdi+KnightCheck]
+	     cmovnz   edi, ecx
+		jnz   ..KnightDone
+	       test   r12, r9
+		lea   ecx, [rsi-OtherCheck]
+	     cmovnz   esi, ecx
+    ..KnightDone:
+
 
 	; Compute the king danger score and subtract it from the evaluation
-		add   edi, esi
-		shr   rsi, 32
-		xor   eax, eax
+		mov   eax, 2*BishopValueMg
 	       test   edi, edi
-	      cmovs   edi, eax
+		 js   ..AllDone
 	       imul   edi, edi
 		shr   edi, 12
-		mov   eax, 2*BishopValueMg
 		cmp   edi, eax
 	      cmova   edi, eax
-
 		shl   edi, 16
 		sub   esi, edi
+
 		jmp   ..AllDone
 
 ..DoKingSafety:
@@ -695,6 +696,39 @@ match=1,DEBUG\{ and   rdx, qword[rcx+8*7] \}
 		jmp   ..KingSafetyDoneRet
 
 ..AllDone:
+
+		and   r15d, 7
+		mov   r15, qword[KingFlank+8*r15]
+	; r15 = KingFlank[kf]   ksq is not used anymore
+
+		mov   rax, Camp
+		and   rax, r15
+		and   rax, qword[.ei.attackedBy+8*(8*Them+0)]
+
+		mov   rdi, qword[.ei.pi]	; we may have clobbered rdi with kingDanger
+
+	       test   r15, qword[rbp+Pos.typeBB+8*Pawn]
+		lea   ecx, [rsi-PawnlessFlank]
+	      cmovz   esi, ecx		; pawnless flank
+
+
+		mov   rdx, qword[.ei.attackedBy+8*(8*Us+Pawn)]
+		not   rdx
+		and   rdx, qword[.ei.attackedBy2+8*Them]
+		and   rdx, rax
+	if Us eq White
+		shl   rax, 4
+	else if Us eq Black
+		shr   rax, 4
+	else
+	  display 'bad color in EvalKing'
+	  err
+	end if
+		 or   rax, rdx
+	     popcnt   rax, rax, r9
+	       imul   eax, CloseEnemies
+		sub   esi, eax		; king tropism
+
 	if Us eq White
 		add   dword[.ei.score], esi
 	else if Us eq Black
@@ -846,13 +880,17 @@ macro EvalThreats Us {
 	; in: rbp position
 	;     rbx state
 	;     rsp evaluation info
+	;     r10-r15 various bitboards
 	; io: esi score accumulated
 
-local LooseEnemies, ThreatByHangingPawn, ThreatByKing0, ThreatByKing1
-local Hanging, ThreatByPawnPush, PawnlessFlank, ThreatByRank
+local ThreatByKing0, ThreatByKing1
 local ..SafeThreatsDone, ..SafeThreatsLoop, ..WeakDone
 local ..ThreatMinorLoop, ..ThreatMinorDone, ..ThreatRookLoop, ..ThreatRookDone
 local ..ThreatMinorSkipPawn, ..ThreatRookSkipPawn
+
+ThreatByKing0		equ (( 3 shl 16) + ( 62))
+ThreatByKing1		equ (( 9 shl 16) + (138))
+
 
 match =White, Us
 \{
@@ -887,16 +925,6 @@ match =Black, Us
 	TRank2BB equ Rank7BB
 	TRank7BB equ Rank2BB
 \}
-
-	LooseEnemies		equ (( 0 shl 16) + ( 25))
-	ThreatByHangingPawn	equ ((71 shl 16) + ( 61))
-	ThreatByKing0		equ (( 3 shl 16) + ( 62))
-	ThreatByKing1		equ (( 9 shl 16) + (138))
-	Hanging 		equ ((48 shl 16) + ( 27))
-	ThreatByPawnPush	equ ((38 shl 16) + ( 22))
-	PawnlessFlank		equ ((20 shl 16) + ( 80))
-	ThreatByRank		equ ((16 shl 16) + (  3))
-
 
 		mov   rax, AttackedByUs
 		 or   rax, AttackedByThem
@@ -966,22 +994,6 @@ match =Black, Us
 		bsf   rax, r8
 	      movzx   ecx, byte[rbp+Pos.board+rax]
 	     addsub   esi, dword[Threat_Minor+4*rcx]
-
-; there is an array "IsNotPawnMasks" for doing this without a branch
-;               and   ecx, 7
-;               cmp   ecx, Pawn
-;                je   ..ThreatMinorSkipPawn
-;               shr   eax, 3
-;if Us eq White
-;               xor   eax, Them*7
-;end if
-;              imul   eax, ThreatByRank
-;            addsub   esi, eax
-;..ThreatMinorSkipPawn:
-;
-; like this
-
-
 		shr   eax, 3
     if Us eq White
 		xor   eax, Them*7
@@ -991,8 +1003,6 @@ match =Black, Us
 		and   eax, dword[IsNotPawnMasks+rcx]
 	       imul   eax, ThreatByRank
 	     addsub   esi, eax
-
-
 	       blsr   r8, r8, rcx
 		jnz   ..ThreatMinorLoop
 ..ThreatMinorDone:
@@ -1006,19 +1016,6 @@ match =Black, Us
 		bsf   rax, rdx
 	      movzx   ecx, byte[rbp+Pos.board+rax]
 	     addsub   esi, dword[Threat_Rook+4*rcx]
-
-; same here
-;               and   ecx, 7
-;               cmp   ecx, Pawn
-;                je   ..ThreatRookSkipPawn
-;               shr   eax, 3
-;if Us eq White
-;               xor   eax, Them*7
-;end if
-;              imul   eax, ThreatByRank
-;            addsub   esi, eax
-;..ThreatRookSkipPawn:
-
 
 		shr   eax, 3
     if Us eq White
@@ -1085,34 +1082,6 @@ match =Black, Us
 	       imul   eax, ThreatByPawnPush
 	     addsub   esi, eax
 
-		mov   ecx, dword[.ei.ksq+4*Them]
-		and   ecx, 7
-		mov   rax, qword[KingFlank+8*(8*Us+rcx)]
-		mov   r8, qword[KingFlank+8*(8*Them+rcx)]
-		 or   r8, rax
-		and   rax, AttackedByUs
-		mov   rdx, qword[.ei.attackedBy+8*(8*Them+Pawn)]
-		not   rdx
-		and   rdx, qword[.ei.attackedBy2+8*Us]
-		and   rdx, rax
-	if Us eq White
-		shr   rax, 4
-	else if Us eq Black
-		shl   rax, 4
-	end if
-		 or   rax, rdx
-	     popcnt   rax, rax, r9
-;SD_String 'pct:'
-;SD_Int rax
-;SD_String '|'
-	       imul   eax, (7 shl 16) + 0
-	     addsub   esi, eax
-
-
-		lea   eax, [rsi+(Them-Us)*PawnlessFlank]
-		and   r8, qword[rbp+Pos.typeBB+8*Pawn]
-	      cmovz   esi, eax
-
 
 ED_String ' evaluate_threats<'
 ED_Int Us
@@ -1140,7 +1109,7 @@ macro EvalPassedPawns Us {
 	; io  esi accumulated score
 
 local addsub, subadd
-local Them, Up, HinderPassedPawn
+local Them, Up
 local ..NextPawn, ..AllDone, ..AddBonus, ..Continue
 
 match =White, Us
@@ -1158,9 +1127,6 @@ match =Black, Us
 	Them	equ White
 	Up	equ DELTA_S
 \}
-
-	HinderPassedPawn equ (( 7 shl 16) + (0))
-
 
 	     Assert   ne, r15, 0, "assertion r15!=0 failed in EvalPassedPawns"
 
@@ -1190,15 +1156,8 @@ match =Black, Us
 		lea   r13d, [r12-2]
 		sub   r12d, 1
 	       imul   r13d, r12d
+	; r12d = r
 	; r13d = rr = r*(r-1)
-
-ED_String 'r: '
-ED_Int r12
-ED_NewLine
-
-ED_String 'rr: '
-ED_Int r13
-ED_NewLine
 
 		lea   r14d, [rcx+Up]
 	; r14d = blockSq
@@ -1321,6 +1280,8 @@ ED_NewLine
 macro EvalSpace Us {
 	; in: rbp position
 	;     rbx state
+	;     rdi qword[.ei.pi]
+	;     r10-r15 various bitboards
 	;     rsp evaluation info
 
 match =White, Us
@@ -1457,21 +1418,21 @@ ProfileInc EvaluateLazy
 
 	      movsx   eax, word[.ei.score+0]
 	      movsx   edx, word[.ei.score+2]
-		 bt   eax, 15
-		adc   eax, edx
-		cdq
-		mov   ecx, 2
-	       idiv   ecx
-		sub   eax, r8d
-		cdq
-		mov   ecx, 4
-	       idiv   ecx
-		add   eax, r8d
 		mov   ecx, dword[rbp+Pos.sideToMove]
 		neg   ecx
+		 bt   eax, 15
+		adc   eax, edx
+		cdq		     ; divide eax by 2
+		sub   eax, edx	     ;
+		sar   eax, 1	     ;
+		sub   eax, r8d
+		lea   edx, [rax+3]   ; divide eax by 4
+	      cmovs   eax, edx	     ;
+		sar   eax, 2	     ;
+		add   eax, r8d
 		xor   eax, ecx
 		sub   eax, ecx
-		
+
 		add   rsp, sizeof.EvalInfo
 		pop   r15 r14 r13 r12 rdi rsi rbx
 		ret
@@ -1635,6 +1596,7 @@ ED_NewLine
 		mov   qword[.ei.mobilityArea+8*Black], rdx
 
 
+	; EvalPieces adds to esi
 		mov   esi, dword[.ei.score]
 		xor   r15, r15		; prepare for dirty trick
 		mov   r12, qword[rbp+Pos.typeBB+8*Knight]
@@ -1649,15 +1611,16 @@ ED_NewLine
 		mov   r12, qword[rbp+Pos.typeBB+8*Queen]
 	 EvalPieces   White, Queen
 	 EvalPieces   Black, Queen
+
+	; EvalKing adds to dword[.ei.score]
 		mov   dword[.ei.score], esi
-
-
 	   EvalKing   Black
 	   EvalKing   White
-
-
-		mov   rdi, qword[.ei.pi]
 		mov   esi, dword[.ei.score]
+
+	; EvalPassedPawns, EvalThreats, EvalSpace add to esi
+	; EvalPassedPawns and EvalThreats are switched because
+	;    EvalThreats and EvalSpace share r10-r15
 		mov   r15, qword[rdi+PawnEntry.passedPawns+8*White]
 	       test   r15, r15
 		jnz   Evaluate_Cold2.EvalPassedPawns0
@@ -1665,7 +1628,6 @@ ED_NewLine
 	       test   r15, r15
 		jnz   Evaluate_Cold2.EvalPassedPawns1
 .EvalPassedPawnsRet:
-
 
 		mov   r14, qword[rbp+Pos.typeBB+8*White]
 		mov   r15, qword[rbp+Pos.typeBB+8*Black]
@@ -1690,36 +1652,15 @@ ED_NewLine
 
 	; Evaluate position potential for the winning side
 	     popcnt   r9, qword[rbp+Pos.typeBB+8*Pawn], rcx
-
-
-ED_String 'pawns: '
-ED_Int r9
-ED_NewLine
-
-
 	      movzx   edx, byte[rdi+PawnEntry.asymmetry]
-
-ED_String 'asymmetry: '
-ED_Int rdx
-ED_NewLine
-
-
 		lea   edx, [rdx+r9-15]
 		shl   edx, 3
 		lea   r9d, [rdx+4*r9]
 	; r9d = 8*(asy+pawns-15)+4*pawns
-
 	      movsx   r10d, si
-
-
-ED_String 'eg: '
-ED_Int r10
-ED_NewLine
-
-
+	; r11d = eg score
 		sar   r10d, 31
 		mov   r11d, r10d
-
 		mov   eax, dword[.ei.ksq+4*White]
 		mov   ecx, dword[.ei.ksq+4*Black]
 		and   eax, 7
@@ -1738,16 +1679,8 @@ ED_NewLine
 		xor   eax, edx
 		sub   eax, edx
 		sub   r8d, eax
-
-
-
 		lea   eax, [r9+8*r8]
 	; eax = initiative
-
-ED_String 'initiative: '
-ED_Int rax
-ED_NewLine
-
 	      movsx   edx, si
 		xor   edx, r11d
 		sub   edx, r11d
@@ -1761,10 +1694,6 @@ ED_NewLine
 		xor   eax, r10d
 		sub   eax, r11d
 		add   esi, eax
-
-
-
-
 
 ED_String ' evaluate_initiative: '
 ED_Score rsi
@@ -2265,3 +2194,19 @@ match =Black, Us \{
 		add   rsp, 8*16
 		pop   r15 r14 r13 r12
 		jmp   Evaluate.DoMaterialEvalReturn
+
+
+restore MinorBehindPawn
+restore BishopPawns
+restore RookOnPawn
+restore TrappedRook
+restore WeakQueen
+restore OtherCheck
+restore CloseEnemies
+restore PawnlessFlank
+restore LooseEnemies
+restore ThreatByHangingPawn
+restore ThreatByRank
+restore Hanging
+restore ThreatByPawnPush
+restore HinderPassedPawn
