@@ -348,6 +348,7 @@ _ExitThread:
 ; timing ;
 ;;;;;;;;;;
 
+	      align   16
 _GetTime:
 	; out: rax + rdx/2^64 = time in ms
 		sub   rsp, 8*9
@@ -360,7 +361,7 @@ _GetTime:
 		add   rsp, 8*9
 		ret
 
-_SetFrequency:
+_InitializeTimer:
 	; no arguments
 		sub   rsp, 8*5
  AssertStackAligned   '_SetFrequency'

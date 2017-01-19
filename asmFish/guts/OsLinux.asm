@@ -432,14 +432,14 @@ _ExitThread:
 ; timing ;
 ;;;;;;;;;;
 
+	      align   16
 _GetTime:
 	; out: rax + rdx/2^64 = time in ms
 	       push   rbx rsi rdi
 		sub   rsp, 8*2
 		mov   edi, CLOCK_MONOTONIC
 		mov   rsi, rsp
-		mov   eax, sys_clock_gettime
-	    syscall				; todo: change to a faster vdso call  ?how?
+	       call   qword[__imp_clock_gettime]
 		mov   eax, dword[rsp+8*1]	; tv_nsec
 		mov   rcx, 18446744073709;551616   2^64/10^6
 		mul   rcx
@@ -449,9 +449,27 @@ _GetTime:
 		add   rsp, 8*2
 		pop   rdi rsi rbx
 		ret
+.syscall:
+	       push   rbx
+		mov   eax, sys_clock_gettime
+	    syscall
+		pop   rbx
+		ret
 
-_SetFrequency:
-	; no arguments
+
+
+_InitializeTimer:
+	; we need to set the address of the clock_gettime function
+	; if the lookup succeeds, then we use the vdso function
+	;               otherwise use a simple wrapper to a syscall
+	       push   rbx
+		lea   rcx, [sz___vdso_clock_gettime]
+	       call   vdso_FindSymbol
+		lea   rcx, [_GetTime.syscall]
+	       test   rax, rax
+	      cmovz   rax, rcx
+		mov   qword[__imp_clock_gettime], rax
+		pop   rbx
 		ret
 
 _Sleep:
@@ -1348,3 +1366,203 @@ _ErrorBox:
 	    syscall
 		pop   rbx rsi rdi 
 		ret
+
+
+	; Thanks to
+	;
+	; HeavyThing x86_64 assembly language library and showcase programs
+	; Copyright 2015, 2016 2 Ton Digital 
+	; Homepage: https://2ton.com.au/
+	; Author: Jeff Marrison <jeff@2ton.com.au>
+	;
+	; for the meat of this function
+
+vdso_FindSymbol:
+	; vdso.inc: we parse /proc/self/auxv (and die if we can't)
+	; to get our kernel-exposed functions we are interested in
+	;
+	; in: rcx address of symbol string
+	; out: rax address of function
+	;          0 if failed
+
+	       push   rbx r12 r13 r14 r15
+
+virtual at rsp
+ .space      rb 1024		; read it directly onto our stack
+ .symbol     rq 1
+	     rq 1
+ .lend	     rb 0
+end virtual
+.localsize = ((.lend-rsp+15) and (-16))
+		sub   rsp, .localsize
+		mov   qword[.symbol], rcx
+
+		mov   eax, sys_open
+		lea   rdi, [sz_procselfauxv]
+		xor   esi, esi		      ; O_RDONLY
+	    syscall
+	       test   eax, eax
+		 js   .failed
+
+		mov   ebx, eax
+		mov   edi, eax
+		lea   rsi, [.space]
+		mov   edx, 1024
+		mov   eax, sys_read
+	    syscall
+	       test   eax, eax
+		 js   .failed
+
+		mov   edi, ebx
+		mov   ebx, eax
+		mov   eax, sys_close
+	    syscall
+		shr   ebx, 4		; each entry is 8 byte type, 8 byte value
+	       test   ebx, ebx
+		 jz   .failed
+
+		lea   r12, [.space]
+.ehdr_search:
+		cmp   qword[r12], 0x21	; AT_SYSINFO_EHDR
+		 je   .ehdr_found
+		add   r12, 16
+		sub   ebx, 1
+		jnz   .ehdr_search
+		jmp   .failed
+.ehdr_found:
+		mov   rbx, qword[r12+8] ; base address of our VDSO
+	       test   rbx, rbx
+		 jz   .failed
+	; we aren't really interested in validating it, if we got it from the kernel
+	; it is most-likely a-okay
+	; so all we are really after is the relocation table
+	      movzx   r12d, word[rbx+0x38]	; Elf64_Ehdr.e_phnum
+		mov   r15, [rbx+0x20]		; Elf64_Ehdr.e_phoff
+		add   r15, rbx
+	       test   r12d, r12d
+		 jz   .failed
+		xor   r13d, r13d
+		xor   r14d, r14d
+		mov   qword[rsp+992], rbx	; save our Ehdr
+		mov   qword[rsp+1008], -1	; we'll use this as link base pointer
+		mov   qword[rsp+1016], 0	; we'll use this as our dynamic program header
+.phdr_scan:
+		mov   eax, 0x38
+		xor   edx, edx
+		mul   r13d
+		lea   rdi, [r15+rax]		; Elf64_Phdr[r13d]
+		mov   ecx, [rdi]		; Elf64_Phdr.p_type
+		mov   rax, [rdi+16]		; Elf64_Phdr.p_vaddr
+		cmp   ecx, 1			; PT_LOAD
+		 je   .phdr_scan_ptload
+		cmp   ecx, 2
+		 je   .phdr_scan_ptdynamic
+.phdr_scan_next:
+		add   r13d, 1
+		sub   r12d, 1
+		jnz   .phdr_scan
+		cmp   qword[rsp+1008], -1
+		 je   .failed
+		cmp   qword[rsp+1016], 0
+		 je   .failed
+	; so now we can get our dynamic entries out
+		mov   rsi, [rsp+1008]
+		mov   rdi, [rsp+1016]
+		mov   rcx, rbx
+		mov   rax, [rdi+16]		; Elf64_Phdr.p_vaddr
+
+		sub   rcx, rsi			; relocation
+		add   rax, rcx			; Dyn
+
+		mov   r14, rcx
+		mov   r15, rax
+
+		xor   ebx, ebx			; our symtab
+		xor   r12d, r12d		; our strtab
+
+		mov   qword[rsp+1000], 0	; our symbol count (what will be anyway)
+	; all we are really interested in here is finding the symbol table
+	; and the string table (so we can do name lookups in it for what we are after)
+	; well, and the DT_HASH entry so we can figure out how many symbols we have
+
+.findstrsymtab:
+	; so we need r15.d_un.d_val + relocation _if_ r15.d_tag == DT_SYMTAB
+	; d_tag is the first signed 64 bits of r15, d_un is our union next 64 bits
+		cmp   qword[r15], 0
+		je    .dyndone
+		cmp   qword[r15], 4		; DT_HASH
+		je    .foundhash
+		cmp   qword[r15], 5		; DT_STRTAB
+		je    .foundstrtab
+		cmp   qword[r15], 6		; DT_SYMTAB
+		je    .foundsymtab
+		add   r15, 16
+		jmp   .findstrsymtab
+.foundhash:
+		mov   rcx, [r15+8]
+		lea   rsi, [r14+rcx]
+		mov   eax, [rsi+4]		; DT_HASH, second word
+	; symbol count is in eax
+		mov   dword[rsp+1000], eax
+		add   r15, 16
+		jmp   .findstrsymtab
+.foundstrtab:
+	; d_un.val + our relocation goods is what we want
+		mov   rcx, [r15+8]
+		lea   r12, [r14+rcx]		; strtab
+		add   r15, 16
+		jmp   .findstrsymtab
+.foundsymtab:
+	; d_un.val + our relocation goods is what we want
+		mov   rcx, [r15+8]
+		lea   rbx, [r14+rcx]	      ; symtab
+		add   r15, 16
+		jmp   .findstrsymtab
+.dyndone:
+	       test   rbx, rbx		      ; symtab
+		 jz   .failed
+	       test   r12, r12		      ; strtab
+		 jz   .failed
+		cmp   dword[rsp+1000], 0     ; count
+		 je   .failed
+	; if we made it to here, everything looks okay, walk our symbols
+.symwalk:
+	; strtab + [rbx] == st_name of this symbol
+		mov   r13d, dword [rbx]
+		add   r13, r12
+	; r13 = address of symbol string
+		mov   rsi, r13
+		mov   rcx, qword[.symbol]
+	       call   CmpString
+	       test   eax, eax
+		 jz   .symwalk_next
+		cmp   byte[rsi], 0	; make sure we are at the end
+		 jz   .foundit		;  of the symbol
+.symwalk_next:
+		add   rbx, 0x18
+		sub   dword[rsp+1000], 1
+		jnz   .symwalk
+	; if we made it to here, we didn't find what we were looking for
+.failed:
+		xor   eax, eax
+.return:
+		add   rsp, .localsize
+		pop   r15 r14 r13 r12 rbx
+		ret
+.foundit:
+	      ;movzx   eax, word [rbx+6]
+		mov   rax, qword[rbx+8]
+		add   rax, qword[rsp+992]
+		sub   rax, qword[rsp+1008]	; the address of our symbol
+		jmp   .return
+
+.phdr_scan_ptload:
+	; make sure it already isn't set
+		cmp   qword[rsp+1008], -1
+		jne   .phdr_scan_next
+		mov   [rsp+1008], rax		; link base pointer == Elf64_Phdr[r13d].p_vaddr
+		jmp   .phdr_scan_next
+.phdr_scan_ptdynamic:
+		mov   [rsp+1016], rdi
+		jmp   .phdr_scan_next
+

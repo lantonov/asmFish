@@ -120,6 +120,17 @@ macro Display_Int x {
 	add  rsp, 8
 }
 
+macro Display_UInt x {
+	push  x
+	push  rdi rsi rax rcx rdx r8 r9 r10 r11
+	lea  rdi, [Output]
+	movsxd rax, dword[rsp+8*9]
+	call PrintUnsignedInteger
+	lea  rcx, [Output]
+	call _WriteOut
+	pop r11 r10 r9 r8 rdx rcx rax rsi rdi
+	add  rsp, 8
+}
 
 macro Display_Hex x {
 	push  x
