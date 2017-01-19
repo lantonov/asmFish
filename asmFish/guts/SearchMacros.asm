@@ -81,44 +81,44 @@ end virtual
 		sub   rsp, .localsize
 
 match =2, VERBOSE \{
-push rcx rdx r8 r9 r13 r14 r15
-mov r15, rcx
-mov r14, rdx
-mov r13, r8
-lea rdi, [VerboseOutput]
-mov eax,'s<'
-stosw
+	       push   rcx rdx r8 r9 r13 r14 r15
+		mov   r15, rcx
+		mov   r14, rdx
+		mov   r13, r8
+		lea   rdi, [VerboseOutput]
+		mov   eax,'s<'
+	      stosw
 match =_ROOT_NODE, NT
 \\{
-mov al, '2'
+		mov   al, '2'
 \\}
 match =_PV_NODE, NT
 \\{
-mov al, '1'
+		mov   al, '1'
 \\}
 match =_NONPV_NODE, NT
 \\{
-mov al, '0'
+		mov   al, '0'
 \\}
-stosb
-mov eax, '> ('
-stosd
-sub rdi, 1
-movsxd rax, r15d
-call PrintSignedInteger
-mov ax, ', '
-stosw
-movsxd rax, r14d
-call PrintSignedInteger
-mov eax, ')  '
-stosd
-sub rdi, 1
-movsxd rax, r13d
-call PrintSignedInteger
-PrintNewLine
-lea rcx, [VerboseOutput]
-call _WriteOut
-pop r15 r14 r13 r9 r8 rdx rcx
+	      stosb
+		mov   eax, '> ('
+	      stosd
+		sub   rdi, 1
+	     movsxd   rax, r15d
+	       call   PrintSignedInteger
+		mov   ax, ', '
+	      stosw
+	     movsxd   rax, r14d
+	       call   PrintSignedInteger
+		mov   eax, ')  '
+	      stosd
+		sub   rdi, 1
+	     movsxd   rax, r13d
+	       call   PrintSignedInteger
+		PrintNewLine
+		lea   rcx, [VerboseOutput]
+	       call   _WriteOut
+		pop   r15 r14 r13 r9 r8 rdx rcx
 \}
 
 
@@ -1609,32 +1609,32 @@ end if
 		mov   eax, edi
 
 match =2, VERBOSE \{
-push rsi rdi rax rcx rdx r8 r9 r13 r14 r15
-mov r15, rax
-lea rdi, [VerboseOutput]
-mov eax,'s<'
-stosw
+	       push   rsi rdi rax rcx rdx r8 r9 r13 r14 r15
+		mov   r15, rax
+		lea   rdi, [VerboseOutput]
+		mov   eax,'s<'
+	      stosw
 match =_ROOT_NODE, NT
 \\{
-mov al, '2'
+		mov   al, '2'
 \\}
 match =_PV_NODE, NT
 \\{
-mov al, '1'
+		mov   al, '1'
 \\}
 match =_NONPV_NODE, NT
 \\{
-mov al, '0'
+		mov   al, '0'
 \\}
-stosb
-mov eax, '>r'
-stosw
-movsxd rax, r15d
-call PrintSignedInteger
-PrintNewLine
-lea rcx, [VerboseOutput]
-call _WriteOut
-pop r15 r14 r13 r9 r8 rdx rcx rax rdi rsi
+	      stosb
+		mov   eax, '>r'
+	      stosw
+	     movsxd   rax, r15d
+	       call   PrintSignedInteger
+	PrintNewLine
+		lea   rcx, [VerboseOutput]
+	       call   _WriteOut
+		pop   r15 r14 r13 r9 r8 rdx rcx rax rdi rsi
 \}
 
 

@@ -21,17 +21,17 @@ AttackersTo:
 
 		mov   r10d, ecx
 
-	RookAttacks  r8, r10, rdx, r9
-		mov  r9, qword [rbp+Pos.typeBB+8*Rook]
-		 or  r9, qword [rbp+Pos.typeBB+8*Queen]
-		and  r8, r9
-		 or  rax, r8
+	RookAttacks   r8, r10, rdx, r9
+		mov   r9, qword [rbp+Pos.typeBB+8*Rook]
+		 or   r9, qword [rbp+Pos.typeBB+8*Queen]
+		and   r8, r9
+		 or   rax, r8
 
-      BishopAttacks  r8, r10, rdx, r9
-		mov  r9, qword [rbp+Pos.typeBB+8*Bishop]
-		 or  r9, qword [rbp+Pos.typeBB+8*Queen]
-		and  r8, r9
-		 or  rax, r8
+      BishopAttacks   r8, r10, rdx, r9
+		mov   r9, qword [rbp+Pos.typeBB+8*Bishop]
+		 or   r9, qword [rbp+Pos.typeBB+8*Queen]
+		and   r8, r9
+		 or   rax, r8
 
 		ret
 

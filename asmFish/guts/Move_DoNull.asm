@@ -7,17 +7,17 @@ ProfileInc Move_DoNull
 
 
 match =1, DEBUG {
-push	rcx rdi
-lea	rdi, [DebugOutput]
-mov	qword[rbp+Pos.state], rbx
-call	Position_PrintSmall
-mov	eax, 10
-stosd
-mov	qword[rbp+Pos.state], rbx
-call	Position_IsLegal
-test	eax, eax
-jnz	Move_DoNull_posill
-pop	rdi rcx
+	       push   rcx rdi
+		lea   rdi, [DebugOutput]
+		mov   qword[rbp+Pos.state], rbx
+	       call   Position_PrintSmall
+		mov   eax, 10
+	      stosd
+		mov   qword[rbp+Pos.state], rbx
+	       call   Position_IsLegal
+	       test   eax, eax
+		jnz   Move_DoNull_posill
+		pop   rdi rcx
 }
 
 	; null move doesn't use a move picker
@@ -57,12 +57,12 @@ pop	rdi rcx
 
 
 match =1, DEBUG {
-push	rcx
-mov	qword[rbp+Pos.state], rbx
-call	Position_IsLegal
-test	eax, eax
-jnz	Move_DoNull_post_posill
-pop	rcx
+	       push   rcx
+		mov   qword[rbp+Pos.state], rbx
+	       call   Position_IsLegal
+	       test   eax, eax
+		jnz   Move_DoNull_post_posill
+		pop   rcx
 }
 
 		jmp   SetCheckInfo.AfterPrologue
@@ -82,27 +82,27 @@ pop	rcx
 match =1, DEBUG {
 
 Move_DoNull_posill:
-lea	rdi, [Output]
-szcall	PrintString, 'position did not pass Position_IsLegal in DoNullMove'
-jmp	Move_DoNull_GoError
+		lea   rdi, [Output]
+	     szcall   PrintString, 'position did not pass Position_IsLegal in DoNullMove'
+		jmp   Move_DoNull_GoError
 Move_DoNull_post_posill:
-lea	rdi, [Output]
-szcall	PrintString, 'position not legal after making null move in DoNullMove'
-jmp	Move_DoNull_GoError
+		lea   rdi, [Output]
+	     szcall   PrintString, 'position not legal after making null move in DoNullMove'
+		jmp   Move_DoNull_GoError
 
 
-Move_DoNull_GoError:
-PrintNewLine
-mov	rcx, qword[rbp+Pos.debugQWORD1]
-call	PrintString
-mov	al, 10
-stosb
-lea	rcx, [DebugOutput]
-call	PrintString
-xor	eax, eax
-stosd
-lea	rdi, [Output]
-call	_ErrorBox
+		Move_DoNull_GoError:
+		PrintNewLine
+		mov   rcx, qword[rbp+Pos.debugQWORD1]
+	       call   PrintString
+		mov   al, 10
+	      stosb
+		lea   rcx, [DebugOutput]
+	       call   PrintString
+		xor   eax, eax
+	      stosd
+		lea   rdi, [Output]
+	       call   _ErrorBox
 int3
 
 }

@@ -928,34 +928,34 @@ SD_NewLine
 
 
 match =2, VERBOSE {
-test eax, eax
-jnz  @f
+	       test   eax, eax
+		jnz   @f
 SD_String 'root_probe false'
 SD_NewLine
-add rsp, .localsize
-pop r15 r14 r13 r12 rdi rsi rbx
-ret
+		add   rsp, .localsize
+		pop   r15 r14 r13 r12 rdi rsi rbx
+		ret
 @@:
-mov rsi, qword[rbp+Pos.rootMovesVec.table]
-xor r15d, r15d
+		mov   rsi, qword[rbp+Pos.rootMovesVec.table]
+		xor   r15d, r15d
 .printnext:
-cmp rsi, qword[rbp+Pos.rootMovesVec.ender]
-jae .printdone
+		cmp   rsi, qword[rbp+Pos.rootMovesVec.ender]
+		jae   .printdone
 SD_String 'rm['
 SD_Int r15
 SD_String '].score='
 SD_Int qword[rsi+RootMove.score]
 SD_NewLine
-add r15d, 1
-add rsi, sizeof.RootMove
-jmp .printnext
+		add   r15d, 1
+		add   rsi, sizeof.RootMove
+		jmp   .printnext
 .printdone:
 SD_String 'root_probe true'
 SD_NewLine
-or eax, -1
-add rsp, .localsize
-pop r15 r14 r13 r12 rdi rsi rbx
-ret
+		 or   eax, -1
+		add   rsp, .localsize
+		pop   r15 r14 r13 r12 rdi rsi rbx
+		ret
 }
 
 		add   rsp, .localsize
@@ -1164,32 +1164,32 @@ end virtual
 		add   rsp, .localsize
 
 match =2, VERBOSE {
-test eax, eax
-jnz  @f
+	       test   eax, eax
+		jnz   @f
 SD_String 'root_probe_wdl false'
 SD_NewLine
-pop r15 rdi rsi
-ret
+		pop   r15 rdi rsi
+		ret
 @@:
-mov rsi, qword[rbp+Pos.rootMovesVec.table]
-xor r15d, r15d
+		mov   rsi, qword[rbp+Pos.rootMovesVec.table]
+		xor   r15d, r15d
 .printnext:
-cmp rsi, qword[rbp+Pos.rootMovesVec.ender]
-jae .printdone
+		cmp   rsi, qword[rbp+Pos.rootMovesVec.ender]
+		jae   .printdone
 SD_String 'rm['
 SD_Int r15
 SD_String '].score='
 SD_Int qword[rsi+RootMove.score]
 SD_NewLine
-add   r15d, 1
-add   rsi, sizeof.RootMove
-jmp   .printnext
+		add   r15d, 1
+		add   rsi, sizeof.RootMove
+		jmp   .printnext
 .printdone:
 SD_String 'root_probe_wdl true'
 SD_NewLine
-or eax, -1
-pop r15 rdi rsi
-ret
+		 or   eax, -1
+		pop   r15 rdi rsi
+		ret
 }
 
 		pop   r15 rdi rsi

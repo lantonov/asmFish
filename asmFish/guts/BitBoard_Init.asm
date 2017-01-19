@@ -101,65 +101,65 @@ Init_BetweenBB_LineBB:
 .NextSquare1:	xor   r14d,r14d
 .NextSquare2:
 		xor   rax,rax
-		mov  edx,r15d
-		shl  edx,6+3
-		 bt  qword[BishopAttacksPDEP+8*r15],r14
-		 jc  .Bishop
-		 bt  qword[RookAttacksPDEP+8*r15],r14
-		 jc  .Rook
-		mov  qword[LineBB+rdx+8*r14],rax
-		mov  qword[BetweenBB+rdx+8*r14],rax
-		jmp  .Done
+		mov   edx,r15d
+		shl   edx,6+3
+		 bt   qword[BishopAttacksPDEP+8*r15],r14
+		 jc   .Bishop
+		 bt   qword[RookAttacksPDEP+8*r15],r14
+		 jc   .Rook
+		mov   qword[LineBB+rdx+8*r14],rax
+		mov   qword[BetweenBB+rdx+8*r14],rax
+		jmp   .Done
 
 .Bishop:
 
-		xor  r13,r13
-      BishopAttacks  rax,r15,r13,r8
-      BishopAttacks  rbx,r14,r13,r8
-		and  rax,rbx
-		bts  rax,r15
-		bts  rax,r14
-		mov  qword[LineBB+rdx+8*r14],rax
+		xor   r13,r13
+      BishopAttacks   rax,r15,r13,r8
+      BishopAttacks   rbx,r14,r13,r8
+		and   rax,rbx
+		bts   rax,r15
+		bts   rax,r14
+		mov   qword[LineBB+rdx+8*r14],rax
 
 
-		xor  r13,r13
-		bts  r13,r14
-      BishopAttacks  rax,r15,r13,r8
-		xor  r13,r13
-		bts  r13,r15
-      BishopAttacks  rbx,r14,r13,r8
-		and  rax,rbx
-		mov  qword[BetweenBB+rdx+8*r14],rax
-		jmp  .Done
+		xor   r13,r13
+		bts   r13,r14
+      BishopAttacks   rax,r15,r13,r8
+		xor   r13,r13
+		bts   r13,r15
+      BishopAttacks   rbx,r14,r13,r8
+		and   rax,rbx
+		mov   qword[BetweenBB+rdx+8*r14],rax
+		jmp   .Done
 
 .Rook:
 
-		xor  r13,r13
-	RookAttacks  rax,r15,r13,r8
-	RookAttacks  rbx,r14,r13,r8
-		and  rax,rbx
-		bts  rax,r15
-		bts  rax,r14
-		mov  qword[LineBB+rdx+8*r14],rax
+		xor   r13,r13
+	RookAttacks   rax,r15,r13,r8
+	RookAttacks   rbx,r14,r13,r8
+		and   rax,rbx
+		bts   rax,r15
+		bts   rax,r14
+		mov   qword[LineBB+rdx+8*r14],rax
 
 
-		xor  r13,r13
-		bts  r13,r14
-	RookAttacks  rax,r15,r13,r8
-		xor  r13,r13
-		bts  r13,r15
-	RookAttacks  rbx,r14,r13,r8
-		and  rax,rbx
-		mov  qword[BetweenBB+rdx+8*r14],rax
-		jmp  .Done
+		xor   r13,r13
+		bts   r13,r14
+	RookAttacks   rax,r15,r13,r8
+		xor   r13,r13
+		bts   r13,r15
+	RookAttacks   rbx,r14,r13,r8
+		and   rax,rbx
+		mov   qword[BetweenBB+rdx+8*r14],rax
+		jmp   .Done
 
 .Done:
-		add  r14d,1
-		cmp  r14d,64
-		 jb  .NextSquare2
-		add  r15d,1
-		cmp  r15d,64
-		 jb  .NextSquare1
+		add   r14d,1
+		cmp   r14d,64
+		 jb   .NextSquare2
+		add   r15d,1
+		cmp   r15d,64
+		 jb   .NextSquare1
 
 		ret
 

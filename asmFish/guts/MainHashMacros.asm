@@ -3,33 +3,33 @@ macro MainHash_Save lcopy, entr, key16, value, bounder, depth, move, ev {
 local ..dont_write_move, ..write_everything, ..write_after_move, ..done
 
 match =2, VERBOSE \{
-mov qword[Verbr15], r15
-mov qword[Verbrdi], rdi
-lea rdi, [Output]
+		mov   qword[Verbr15], r15
+		mov   qword[Verbrdi], rdi
+		lea   rdi, [Output]
 
-mov r15w, key16
-push rsi rax rcx rdx r8 r9 r10 r11
-szcall PrintString, 'tsk'
-movzx rax, r15w
-call PrintUnsignedInteger
-pop r11 r10 r9 r8 rdx rcx rax rsi
-
-
-mov r15d, move
-push rsi rax rcx rdx r8 r9 r10 r11
-szcall PrintString, 'm'
-mov ecx, r15d
-xor edx, edx
-call PrintUciMove
-pop r11 r10 r9 r8 rdx rcx rax rsi
+		mov   r15w, key16
+	       push   rsi rax rcx rdx r8 r9 r10 r11
+	     szcall   PrintString, 'tsk'
+	      movzx   rax, r15w
+	       call   PrintUnsignedInteger
+		pop   r11 r10 r9 r8 rdx rcx rax rsi
 
 
-mov r15d, value
-push rsi rax rcx rdx r8 r9 r10 r11
-szcall PrintString, 'v'
-movsxd rax, r15d
-call PrintSignedInteger
-pop r11 r10 r9 r8 rdx rcx rax rsi
+		mov   r15d, move
+	       push   rsi rax rcx rdx r8 r9 r10 r11
+	     szcall   PrintString, 'm'
+		mov   ecx, r15d
+		xor   edx, edx
+	       call   PrintUciMove
+		pop   r11 r10 r9 r8 rdx rcx rax rsi
+
+
+		mov   r15d, value
+	       push   rsi rax rcx rdx r8 r9 r10 r11
+	     szcall   PrintString, 'v'
+	     movsxd   rax, r15d
+	       call   PrintSignedInteger
+		pop   r11 r10 r9 r8 rdx rcx rax rsi
 
 
     if ev eqtype 0
@@ -37,38 +37,38 @@ pop r11 r10 r9 r8 rdx rcx rax rsi
     else
 	      movsx   r15d, ev
     end if
-push rsi rax rcx rdx r8 r9 r10 r11
-szcall PrintString, 'e'
-movsxd rax, r15d
-call PrintSignedInteger
-pop r11 r10 r9 r8 rdx rcx rax rsi
+	       push   rsi rax rcx rdx r8 r9 r10 r11
+	     szcall   PrintString, 'e'
+	     movsxd   rax, r15d
+	       call   PrintSignedInteger
+		pop   r11 r10 r9 r8 rdx rcx rax rsi
 
     if depth eqtype 0
 		mov   r15d, depth
     else
 	      movsx   r15d, depth
     end if
-push rsi rax rcx rdx r8 r9 r10 r11
-szcall PrintString, 'd'
-movsxd rax, r15d
-call PrintSignedInteger
-pop r11 r10 r9 r8 rdx rcx rax rsi
+	       push   rsi rax rcx rdx r8 r9 r10 r11
+	     szcall   PrintString, 'd'
+	     movsxd   rax, r15d
+	       call   PrintSignedInteger
+		pop   r11 r10 r9 r8 rdx rcx rax rsi
 
 
-xor r15, r15
-mov r15l, bounder
-push rsi rax rcx rdx r8 r9 r10 r11
-szcall PrintString, 'b'
-movsxd rax, r15d
-call PrintSignedInteger
-mov al, '|'
-stosb
-call _WriteOut_Output
-pop r11 r10 r9 r8 rdx rcx rax rsi
+		xor   r15, r15
+		mov   r15l, bounder
+	       push   rsi rax rcx rdx r8 r9 r10 r11
+	     szcall   PrintString, 'b'
+	     movsxd   rax, r15d
+	       call   PrintSignedInteger
+		mov   al, '|'
+	      stosb
+	       call   _WriteOut_Output
+		pop   r11 r10 r9 r8 rdx rcx rax rsi
 
 
-mov r15, qword[Verbr15]
-mov rdi, qword[Verbrdi]
+		mov   r15, qword[Verbr15]
+		mov   rdi, qword[Verbrdi]
 
 \}
 

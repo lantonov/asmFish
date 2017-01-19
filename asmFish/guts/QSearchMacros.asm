@@ -113,39 +113,39 @@ end virtual
 
 
 match =2, VERBOSE \{
-push rcx rdx r8 r9 r13 r14 r15
-mov r15, rcx
-mov r14, rdx
-mov r13, r8
-lea rdi, [VerboseOutput]
-mov eax,'qs<'
-stosd
-sub rdi, 1
+	       push   rcx rdx r8 r9 r13 r14 r15
+		mov   r15, rcx
+		mov   r14, rdx
+		mov   r13, r8
+		lea   rdi, [VerboseOutput]
+		mov   eax,'qs<'
+	      stosd
+		sub   rdi, 1
 match =1, InCheck \\{
-mov al, 't'
+		mov   al, 't'
 \\}
 match =0, InCheck \\{
-mov al, 'f'
+		mov   al, 'f'
 \\}
-stosb
-mov eax, '> ('
-stosd
-sub rdi, 1
-movsxd rax, r15d
-call PrintSignedInteger
-mov ax, ', '
-stosw
-movsxd rax, r14d
-call PrintSignedInteger
-mov eax, ')  '
-stosd
-sub rdi, 1
-movsxd rax, r13d
-call PrintSignedInteger
-PrintNewLine
-lea rcx, [VerboseOutput]
-call _WriteOut
-pop r15 r14 r13 r9 r8 rdx rcx
+	      stosb
+		mov   eax, '> ('
+	      stosd
+		sub   rdi, 1
+	     movsxd   rax, r15d
+	       call   PrintSignedInteger
+		mov   ax, ', '
+	      stosw
+	     movsxd   rax, r14d
+	       call   PrintSignedInteger
+		mov   eax, ')  '
+	      stosd
+		sub   rdi, 1
+	     movsxd   rax, r13d
+	       call   PrintSignedInteger
+		PrintNewLine
+		lea   rcx, [VerboseOutput]
+	       call   _WriteOut
+		pop   r15 r14 r13 r9 r8 rdx rcx
 \}
 
 
@@ -585,63 +585,63 @@ match =2, VERBOSE \{
 	      align   8
 .ReturnA:
 match =2, VERBOSE \{
-push  rax rcx rdx r8
-mov   word[Output],'A '
-lea   rdi, [Output+2]
-call   _WriteOut_Output
-pop   r8 rdx rcx rax
-jmp   .Return
+	       push   rax rcx rdx r8
+		mov   word[Output],'A '
+		lea   rdi, [Output+2]
+	       call   _WriteOut_Output
+		pop   r8 rdx rcx rax
+		jmp   .Return
 \}
 
 .ReturnB:
 match =2, VERBOSE \{
 
-push  rax rcx rdx r8
-mov   word[Output],'B '
-lea   rdi, [Output+2]
-call   _WriteOut_Output
-pop   r8 rdx rcx rax
-jmp   .Return
+	       push   rax rcx rdx r8
+		mov   word[Output],'B '
+		lea   rdi, [Output+2]
+	       call   _WriteOut_Output
+		pop   r8 rdx rcx rax
+		jmp   .Return
 \}
 
 .ReturnC:
 match =2, VERBOSE \{
-push  rax rcx rdx r8
-mov   word[Output],'C '
-lea   rdi, [Output+2]
-call   _WriteOut_Output
-pop   r8 rdx rcx rax
-jmp   .Return
+	       push   rax rcx rdx r8
+		mov   word[Output],'C '
+		lea   rdi, [Output+2]
+	       call   _WriteOut_Output
+		pop   r8 rdx rcx rax
+		jmp   .Return
 \}
 
 .ReturnD:
 match =2, VERBOSE \{
-push  rax rcx rdx r8
-mov   word[Output],'D '
-lea   rdi, [Output+2]
-call   _WriteOut_Output
-pop   r8 rdx rcx rax
-jmp   .Return
+	       push   rax rcx rdx r8
+		mov   word[Output],'D '
+		lea   rdi, [Output+2]
+	       call   _WriteOut_Output
+		pop   r8 rdx rcx rax
+		jmp   .Return
 \}
 
 .ReturnE:
 match =2, VERBOSE \{
-push  rax rcx rdx r8
-mov   word[Output],'E '
-lea   rdi, [Output+2]
-call   _WriteOut_Output
-pop   r8 rdx rcx rax
-jmp   .Return
+	       push   rax rcx rdx r8
+		mov   word[Output],'E '
+		lea   rdi, [Output+2]
+	       call   _WriteOut_Output
+		pop   r8 rdx rcx rax
+		jmp   .Return
 \}
 
 .ReturnF:
 match =2, VERBOSE \{
-push  rax rcx rdx r8
-mov   word[Output],'F '
-lea   rdi, [Output+2]
-call   _WriteOut_Output
-pop   r8 rdx rcx rax
-jmp   .Return
+	       push   rax rcx rdx r8
+		mov   word[Output],'F '
+		lea   rdi, [Output+2]
+	       call   _WriteOut_Output
+		pop   r8 rdx rcx rax
+		jmp   .Return
 \}
 
 
@@ -649,26 +649,26 @@ jmp   .Return
 
 
 match =2, VERBOSE \{
-push rax r13 r14 r15
-mov r15, rax
-lea rdi, [VerboseOutput]
-mov eax,'qs<'
-stosd
-sub rdi, 1
+	       push   rax r13 r14 r15
+		mov   r15, rax
+		lea   rdi, [VerboseOutput]
+		mov   eax,'qs<'
+	      stosd
+		sub   rdi, 1
 match =1, InCheck \\{
-mov al, 't'
+		mov   al, 't'
 \\}
 match =0, InCheck \\{
-mov al, 'f'
+		mov   al, 'f'
 \\}
-stosb
-szcall PrintString, '>r'
-movsxd rax, r15d
-call PrintSignedInteger
-PrintNewLine
-lea rcx, [VerboseOutput]
-call _WriteOut
-pop r15 r14 r13 rax
+	      stosb
+	     szcall   PrintString, '>r'
+	     movsxd   rax, r15d
+	       call   PrintSignedInteger
+		PrintNewLine
+		lea   rcx, [VerboseOutput]
+	       call   _WriteOut
+		pop   r15 r14 r13 rax
 \}
 
 

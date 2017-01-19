@@ -8,28 +8,28 @@ Move_Undo:
 	       push   rsi
 
 if DEBUG
-mov	dword[rbp+Pos.debugDWORD1], ecx
+		mov   dword[rbp+Pos.debugDWORD1], ecx
 end if
 
 match=2, VERBOSE {
-sub	dword[rbp+Pos.gamePly], 1
-push rax rcx rsi rdi
-mov esi, ecx
-lea rdi, [VerboseOutput]
-mov rax, 'undomove'
-stosq
-movsxd rax, dword[rbp+Pos.gamePly]
-call PrintSignedInteger
-mov al, ':'
-stosb
-mov ecx, esi
-xor edx, edx
-call PrintUciMove
-mov al, '|'
-stosb
-lea rcx, [VerboseOutput]
-call _WriteOut
-pop rdi rsi rcx rax
+		sub   dword[rbp+Pos.gamePly], 1
+	       push   rax rcx rsi rdi
+		mov   esi, ecx
+		lea   rdi, [VerboseOutput]
+		mov   rax, 'undomove'
+	      stosq
+	     movsxd   rax, dword[rbp+Pos.gamePly]
+	       call   PrintSignedInteger
+		mov   al, ':'
+	      stosb
+		mov   ecx, esi
+		xor   edx, edx
+	       call   PrintUciMove
+		mov   al, '|'
+	      stosb
+		lea   rcx, [VerboseOutput]
+	       call   _WriteOut
+		pop   rdi rsi rcx rax
 }
 
 		mov   esi, dword[rbp+Pos.sideToMove]
@@ -73,7 +73,7 @@ end if
 		jnz   .Captured
 
 if DEBUG
-jmp	Move_Undo_Check
+		jmp   Move_Undo_Check
 end if
 		pop   rsi
 		ret
@@ -94,7 +94,7 @@ if PEDANTIC
 end if
 
 if DEBUG
-jmp	Move_Undo_Check
+		jmp   Move_Undo_Check
 end if
 		pop   rsi
 		ret
@@ -149,7 +149,7 @@ end if
 		and   r11d, 7
 		jnz   .PromCapture
 if DEBUG
-jmp	Move_Undo_Check
+		jmp   Move_Undo_Check
 end if
 		pop   rsi
 		ret
@@ -169,7 +169,7 @@ if PEDANTIC
 end if
 
 if DEBUG
-jmp	Move_Undo_Check
+		jmp   Move_Undo_Check
 end if
 		pop   rsi
 		ret
@@ -196,7 +196,7 @@ if PEDANTIC
 end if
 
 if DEBUG
-jmp	Move_Undo_Check
+		jmp   Move_Undo_Check
 end if
 		pop   rsi
 		ret
@@ -280,7 +280,7 @@ end if
 		mov   qword[rbp+Pos.typeBB+8*Rook], r11
 
 if DEBUG
-jmp	Move_Undo_Check
+		jmp   Move_Undo_Check
 end if
 		pop   rsi
 		ret
@@ -290,22 +290,22 @@ end if
 
 match =1, DEBUG {
 Move_Undo_Check:
-mov	qword[rbp+Pos.state], rbx
-call	Position_IsLegal
-test	eax, eax
-jnz	@f
-pop	rsi
-ret
+		mov   qword[rbp+Pos.state], rbx
+	       call   Position_IsLegal
+	       test   eax, eax
+		jnz   @f
+		pop   rsi
+		ret
 @@:
-lea	rdi,[DebugOutput]
-mov	rax, 'UndoMove'
-stosq
+		lea   rdi,[DebugOutput]
+		mov   rax, 'UndoMove'
+	      stosq
 PrintNewLine
-mov	ecx, dword[rbp+Pos.debugDWORD1]
-xor	edx, edx
-call	PrintUciMoveLong
+		mov   ecx, dword[rbp+Pos.debugDWORD1]
+		xor   edx, edx
+	       call   PrintUciMoveLong
 PrintNewLine
-lea	rdi, [DebugOutput]
-call	_ErrorBox
+		lea   rdi, [DebugOutput]
+	       call   _ErrorBox
 int3
 }

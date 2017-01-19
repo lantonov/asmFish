@@ -92,35 +92,35 @@ ProfileInc MainHash_Probe
 
 
 match =2, VERBOSE {
-push rax rcx rdx r8 r9 r10 r11 r15 r14 rdi
-mov r15, rax
-movzx  r14d, dx
-lea rdi, [VerboseOutput]
-szcall PrintString, 'tt hit key='
-mov rax, r14
-call PrintUnsignedInteger
-szcall PrintString, ' move='
-movzx ecx, word[r15+MainHashEntry.move]
-xor edx, edx
-call PrintUciMove
-szcall PrintString, ' value='
-movsx rax, word[r15+MainHashEntry.value]
-call PrintSignedInteger
-szcall PrintString, ' eval='
-movsx rax, word[r15+MainHashEntry.eval]
-call PrintSignedInteger
-szcall PrintString, ' depth='
-movsx rax, byte[r15+MainHashEntry.depth]
-call PrintSignedInteger
-szcall PrintString, ' bound='
-movzx  eax, byte[r15+MainHashEntry.genBound]
-and eax, 3
-call PrintSignedInteger
-mov al, '|'
-stosb
-lea rcx, [VerboseOutput]
-call _WriteOut
-pop rdi r14 r15 r11 r10 r9 r8 rdx rcx rax
+	       push   rax rcx rdx r8 r9 r10 r11 r15 r14 rdi
+		mov   r15, rax
+	      movzx   r14d, dx
+		lea   rdi, [VerboseOutput]
+	     szcall   PrintString, 'tt hit key='
+		mov   rax, r14
+	       call   PrintUnsignedInteger
+	     szcall   PrintString, ' move='
+	      movzx   ecx, word[r15+MainHashEntry.move]
+		xor   edx, edx
+	       call   PrintUciMove
+	     szcall   PrintString, ' value='
+	      movsx   rax, word[r15+MainHashEntry.value]
+	       call   PrintSignedInteger
+	     szcall   PrintString, ' eval='
+	      movsx   rax, word[r15+MainHashEntry.eval]
+	       call   PrintSignedInteger
+	     szcall   PrintString, ' depth='
+	      movsx   rax, byte[r15+MainHashEntry.depth]
+	       call   PrintSignedInteger
+	     szcall   PrintString, ' bound='
+	      movzx   eax, byte[r15+MainHashEntry.genBound]
+		and   eax, 3
+	       call   PrintSignedInteger
+		mov   al, '|'
+	      stosb
+		lea   rcx, [VerboseOutput]
+	       call   _WriteOut
+		pop   rdi r14 r15 r11 r10 r9 r8 rdx rcx rax
 }
 
 		 or   edx, -1

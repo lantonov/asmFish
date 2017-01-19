@@ -78,32 +78,32 @@ local ..Outer, ..Inner, ..InnerDone, ..OuterDone
 macro Partition2  cur, ender {
 ; at return ender point to start of elements that are <=0
 local ._048, ._049, ._050, ._051, .Done
-		cmp	cur, ender
-		lea	cur, [cur+8]
-		je	.Done
-._048:		mov	eax, dword [cur-4]
-		lea	rcx, [cur-8]
-		test	eax, eax
-		jg	._051
-		mov	eax, dword [ender-4]
-		lea	ender, [ender-8]
-		cmp	ender, rcx
-		jz	.Done
-		test	eax, eax
-		jg	._050
-._049:		sub	ender, 8
-		cmp	ender, rcx
-		jz	.Done
-		mov	eax, dword [ender+4]
-		test	eax, eax
-		jle	._049
-._050:		mov	rdx, qword [cur-8]
-		mov	rcx, qword [ender]
-		mov	qword [cur-8], rcx
-		mov	qword [ender], rdx
-._051:		cmp	ender, cur
-		lea	cur, [cur+8]
-		jnz	._048
+		cmp   cur, ender
+		lea   cur, [cur+8]
+		 je   .Done
+._048:		mov   eax, dword [cur-4]
+		lea   rcx, [cur-8]
+	       test   eax, eax
+		 jg   ._051
+		mov   eax, dword [ender-4]
+		lea   ender, [ender-8]
+		cmp   ender, rcx
+		 jz   .Done
+	       test   eax, eax
+		 jg   ._050
+._049:		sub   ender, 8
+		cmp   ender, rcx
+		 jz   .Done
+		mov   eax, dword [ender+4]
+	       test   eax, eax
+		jle   ._049
+._050:		mov   rdx, qword [cur-8]
+		mov   rcx, qword [ender]
+		mov   qword [cur-8], rcx
+		mov   qword [ender], rdx
+._051:		cmp   ender, cur
+		lea   cur, [cur+8]
+		jnz   ._048
 
 .Done:
 }

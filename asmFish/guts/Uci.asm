@@ -104,15 +104,15 @@ UciNextCmdFromCmdLine:
 
 if VERBOSE
 Display_String 'processing cmd line command: '
-mov rcx, rsi
-mov rdi, qword[CmdLineStart]
-cmp byte[rdi], 1
-cmc
-sbb rdi, 0
-call _WriteOut
-lea rcx, [sz_NewLine]
-lea rdi, [sz_NewLineEnd]
-call _WriteOut
+		mov   rcx, rsi
+		mov   rdi, qword[CmdLineStart]
+		cmp   byte[rdi], 1
+		cmc
+		sbb   rdi, 0
+	       call   _WriteOut
+		lea   rcx, [sz_NewLine]
+		lea   rdi, [sz_NewLineEnd]
+	       call   _WriteOut
 end if
 
 		jmp   UciChoose

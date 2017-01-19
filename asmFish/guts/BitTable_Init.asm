@@ -1,33 +1,33 @@
 
 BitTable_Init:
-		       push  rbx rsi rdi r12 r13 r14 r15
+	       push   rbx rsi rdi r12 r13 r14 r15
 
-			mov   ecx, 64*64*2*64
-		       call   _VirtualAlloc
-		       push   rax
+		mov   ecx, 64*64*2*64
+	       call   _VirtualAlloc
+	       push   rax
 
 
 Init_KPKEndgameTable:
 
-tn equ r15
-wp equ r14
-wk equ r13
-bk equ r12
-un equ r11
-u  equ r10
-to equ r9
-cnt equ rsi
-ocnt equ rdi
+tn    equ r15
+wp    equ r14
+wk    equ r13
+bk    equ r12
+un    equ r11
+u     equ r10
+to    equ r9
+cnt   equ rsi
+ocnt  equ rdi
 
 macro KPKEndgameTableOffset res,TN,WP,WK,BK {
-			mov   res, WP
-			shl   res, 6
-			add   res, WK
-			shl   res, 6
-			add   res, BK
-			shl   res, 1
-			add   res, TN
-			add   res, qword[rsp]
+		mov   res, WP
+		shl   res, 6
+		add   res, WK
+		shl   res, 6
+		add   res, BK
+		shl   res, 1
+		add   res, TN
+		add   res, qword[rsp]
 }
 
 		; KPKEndgameTable[WhitePawn-8][WhiteKing] is a qword
@@ -35,15 +35,15 @@ macro KPKEndgameTableOffset res,TN,WP,WK,BK {
 		;  bit 2*BlackKing+1 is set if win for black to move
 
 		; use hash table for uncompressed data
-			mov   rdi, qword[rsp]
-			mov   ecx, (64*64*2*64)/8
-			xor   eax, eax
-		  rep stosq
+		mov   rdi, qword[rsp]
+		mov   ecx, (64*64*2*64)/8
+		xor   eax, eax
+		rep stosq
 		; clear space for compressed data
-			lea  rdi, [KPKEndgameTable]
-			mov  ecx, 48*64
-			xor  eax, eax
-		  rep stosq
+		lea   rdi, [KPKEndgameTable]
+		mov   ecx, 48*64
+		xor   eax, eax
+		rep stosq
 
 		xor   cnt, cnt
 		lea   ocnt, [cnt+1]
