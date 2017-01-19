@@ -402,8 +402,11 @@ align 8
 }
 
 match ='L', VERSION_OS {
+ sz_procselfauxv		db '/proc/self/auxv',0
+ sz___vdso_clock_gettime	db '__vdso_clock_gettime',0
 align 8
  rspEntry dq ?
+ __imp_clock_gettime dq ?
 }
 
 align 8
@@ -549,7 +552,7 @@ StormDanger_NoFriendlyPawn rd 4*8
 StormDanger_Unblocked rd 4*8
 StormDanger_BlockedByPawn rd 4*8
 StormDanger_BlockedByKing rd 4*8
-KingFlank rq 2*8
+KingFlank rq 8
 ThreatBySafePawn rd 16
 Threat_Minor rd 16
 Threat_Rook rd 16
@@ -729,15 +732,10 @@ match ='L', VERSION_OS {
 		mov   qword[rspEntry], rsp
 }
 		and   rsp, -16
- AssertStackAligned   'Start'
 
 	       call   _SetStdHandles
-	       call   _SetFrequency
+	       call   _InitializeTimer
 	       call   _CheckCPU
-
-GD_String ' *** General Verbosity ON !! ***'
-GD_NewLine
-GD_GetTime
 
 	; init the engine
 	       call   Options_Init
