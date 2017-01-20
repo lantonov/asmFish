@@ -1489,13 +1489,13 @@ end virtual
 	; so we need r15.d_un.d_val + relocation _if_ r15.d_tag == DT_SYMTAB
 	; d_tag is the first signed 64 bits of r15, d_un is our union next 64 bits
 		cmp   qword[r15], 0
-		je    .dyndone
+		 je   .dyndone
 		cmp   qword[r15], 4		; DT_HASH
-		je    .foundhash
+		 je   .foundhash
 		cmp   qword[r15], 5		; DT_STRTAB
-		je    .foundstrtab
+		 je   .foundstrtab
 		cmp   qword[r15], 6		; DT_SYMTAB
-		je    .foundsymtab
+		 je   .foundsymtab
 		add   r15, 16
 		jmp   .findstrsymtab
 .foundhash:
@@ -1565,4 +1565,3 @@ end virtual
 .phdr_scan_ptdynamic:
 		mov   [rsp+1016], rdi
 		jmp   .phdr_scan_next
-

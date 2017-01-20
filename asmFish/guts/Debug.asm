@@ -121,15 +121,15 @@ macro Display_Int x {
 }
 
 macro Display_UInt x {
-	push  x
-	push  rdi rsi rax rcx rdx r8 r9 r10 r11
-	lea  rdi, [Output]
-	movsxd rax, dword[rsp+8*9]
-	call PrintUnsignedInteger
-	lea  rcx, [Output]
-	call _WriteOut
-	pop r11 r10 r9 r8 rdx rcx rax rsi rdi
-	add  rsp, 8
+	       push   x
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
+		lea   rdi, [Output]
+	     movsxd   rax, dword[rsp+8*9]
+	       call   PrintUnsignedInteger
+		lea   rcx, [Output]
+	       call   _WriteOut
+		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
+		add   rsp, 8
 }
 
 macro Display_Hex x {
@@ -396,44 +396,44 @@ macro SD_Move x {
 
 macro SD_Hex x {
  match =2, VERBOSE \{
-	push  x
-	push  rdi rsi rax rcx rdx r8 r9 r10 r11
-	lea  rdi, [VerboseOutput]
-	mov rcx, qword[rsp+8*9]
-	call PrintHex
-	lea  rcx, [VerboseOutput]
-	call _WriteOut
-	pop r11 r10 r9 r8 rdx rcx rax rsi rdi
-	add  rsp, 8
+	       push   x
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
+		lea   rdi, [VerboseOutput]
+		mov   rcx, qword[rsp+8*9]
+	       call   PrintHex
+		lea   rcx, [VerboseOutput]
+	       call   _WriteOut
+		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
+		add   rsp, 8
  \}
 }
 
 macro SD_Int x {
  match =2, VERBOSE \{
-	push  x
-	push  rdi rsi rax rcx rdx r8 r9 r10 r11
-	lea  rdi, [VerboseOutput]
-	movsxd rax, dword[rsp+8*9]
-	call PrintSignedInteger
-	lea  rcx, [VerboseOutput]
-	call _WriteOut
-	pop r11 r10 r9 r8 rdx rcx rax rsi rdi
-	add  rsp, 8
+	       push   x
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
+		lea   rdi, [VerboseOutput]
+	     movsxd   rax, dword[rsp+8*9]
+	       call   PrintSignedInteger
+		lea   rcx, [VerboseOutput]
+	       call   _WriteOut
+		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
+		add   rsp, 8
  \}
 }
 
 
 macro SD_UInt64 x {
  match =2, VERBOSE \{
-	push  x
-	push  rdi rsi rax rcx rdx r8 r9 r10 r11
-	lea  rdi, [VerboseOutput]
-	mov rax, qword[rsp+8*9]
-	call PrintUnsignedInteger
-	lea  rcx, [VerboseOutput]
-	call _WriteOut
-	pop r11 r10 r9 r8 rdx rcx rax rsi rdi
-	add  rsp, 8
+	       push   x
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
+		lea   rdi, [VerboseOutput]
+		mov   rax, qword[rsp+8*9]
+	       call   PrintUnsignedInteger
+		lea   rcx, [VerboseOutput]
+	       call   _WriteOut
+		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
+		add   rsp, 8
  \}
 }
 
@@ -441,19 +441,19 @@ macro SD_UInt64 x {
 
 macro SD_Bool8 x {
  match =2, VERBOSE \{
-	push  x
-	push  rdi rsi rax rcx rdx r8 r9 r10 r11
-	lea  rdi, [VerboseOutput]
-	movzx eax, byte[rsp+8*9]
-	neg eax
-	sbb eax, eax
-	and eax, 1
-	add eax, '0'
-	stosb
-	lea  rcx, [VerboseOutput]
-	call _WriteOut
-	pop r11 r10 r9 r8 rdx rcx rax rsi rdi
-	add  rsp, 8
+	       push   x
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
+		lea   rdi, [VerboseOutput]
+	      movzx   eax, byte[rsp+8*9]
+		neg   eax
+		sbb   eax, eax
+		and   eax, 1
+		add   eax, '0'
+	      stosb
+		lea   rcx, [VerboseOutput]
+	       call   _WriteOut
+		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
+		add   rsp, 8
  \}
 }
 
@@ -538,8 +538,8 @@ local ..message, ..over
 		lea   rdi, [VerboseOutput]
 	       call   PrintString
 		lea   rcx, [VerboseOutput]
-		lea  rcx, [VerboseOutput]
-	       call _WriteOut
+		lea   rcx, [VerboseOutput]
+	       call   _WriteOut
 		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
  \}
 }
