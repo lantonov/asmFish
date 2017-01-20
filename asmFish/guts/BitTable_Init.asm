@@ -38,12 +38,12 @@ macro KPKEndgameTableOffset res,TN,WP,WK,BK {
 		mov   rdi, qword[rsp]
 		mov   ecx, (64*64*2*64)/8
 		xor   eax, eax
-		rep stosq
+	  rep stosq
 		; clear space for compressed data
 		lea   rdi, [KPKEndgameTable]
 		mov   ecx, 48*64
 		xor   eax, eax
-		rep stosq
+	  rep stosq
 
 		xor   cnt, cnt
 		lea   ocnt, [cnt+1]
