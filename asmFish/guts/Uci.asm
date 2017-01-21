@@ -24,8 +24,19 @@ Options_Init:
 		ret
 
 
-UciLoop:
+Options_Destroy:
+               push   rbx
+                mov   rcx, qword[options.hashPath]
+                mov   rdx, qword[options.hashPathSizeB]
+                lea   rax, [options.hashPathBuffer]
+                cmp   rcx, rax
+                 je   @f
+	       call   _VirtualFree
+        @@:     pop   rbx
+		ret
 
+
+UciLoop:
 
 virtual at rsp
   .th1 Thread

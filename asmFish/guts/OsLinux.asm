@@ -404,12 +404,10 @@ _ThreadJoin:
 	   ;      js   Failed_sys_futex_ThreadJoin     ;
 
 	; free its stack
-		mov   rdi, qword[rbx+ThreadHandle.stackAddress]
-		mov   rsi, THREAD_STACK_SIZE
-		mov   eax, sys_munmap
-	    syscall
-	       test   eax, eax
-		jnz   Failed_sys_munmap_ThreadJoin
+                mov   rcx, qword[rbx+ThreadHandle.stackAddress]
+                mov   edx, THREAD_STACK_SIZE
+               call   _VirtualFree
+
 		pop   rdi rsi rbx
 		ret
 
@@ -512,6 +510,14 @@ _VirtualAllocNuma:
 		 je   _VirtualAlloc.go
 	       push   rbp rbx rsi rdi r15
 		sub   rsp, 16
+if DEBUG > 0
+add qword[DebugBalance], rcx
+end if
+GD_String 'size: '
+GD_Hex rcx
+GD_String '  alloc'
+GD_Int rdx
+GD_String ': '
 		mov   ebx, edx
 		mov   rbp, rcx
 		xor   edi, edi
@@ -524,6 +530,8 @@ _VirtualAllocNuma:
 		mov   r15, rax
 	       test   rax, rax
 		 js   Failed_sys_mmap
+GD_Hex rax
+GD_NewLine
 
 		mov   rdi, r15		; addr
 		mov   rsi, rbp		; len
@@ -550,6 +558,12 @@ _VirtualAlloc:
 		mov   r10d, MAP_PRIVATE or MAP_ANONYMOUS
 .go:
 	       push   rsi rdi rbx
+if DEBUG > 0
+add qword[DebugBalance], rcx
+end if
+GD_String 'size: '
+GD_Hex rcx
+GD_String '  alloc : '
 		xor   edi, edi
 		mov   rsi, rcx
 		mov   edx, PROT_READ or PROT_WRITE
@@ -559,6 +573,8 @@ _VirtualAlloc:
 	    syscall
 	       test   rax, rax
 		 js   Failed_sys_mmap
+GD_Hex rax
+GD_NewLine
 		pop   rbx rdi rsi
 		ret
 
@@ -568,14 +584,23 @@ _VirtualFree:
 	; rdx is size
 	       push   rsi rdi rbx
 	       test   rcx, rcx
-		 jz   @f
+		 jz   .null
+if DEBUG > 0
+sub qword[DebugBalance], rdx
+end if
+GD_String 'size: '
+GD_Hex rdx
+GD_String '  free  : '
+GD_Hex rcx
+GD_NewLine
 		mov   rdi, rcx
 		mov   rsi, rdx
 		mov   eax, sys_munmap
 	    syscall
 	       test   eax, eax
 		jnz   Failed_sys_munmap_VirtualFree
-	@@:	pop   rbx rdi rsi
+.null:
+                pop   rbx rdi rsi
 		ret
 
 
@@ -597,7 +622,12 @@ _VirtualAlloc_LargePages:
 
 	       push   rbx rsi rdi r14 r15
 		mov   r14, rcx
-
+if DEBUG > 0
+add qword[DebugBalance], rcx
+end if
+GD_String 'large size: '
+GD_Hex rcx
+GD_String '  alloc: '
 		xor   edi, edi
 		mov   rsi, rcx
 		mov   edx, PROT_READ or PROT_WRITE
@@ -609,6 +639,8 @@ _VirtualAlloc_LargePages:
 		mov   r15, rax
 	       test   rax, rax
 		 js   Failed_sys_mmap
+GD_Hex rax
+GD_NewLine
 
 		mov   rdi, r15
 		mov   rsi, r14
@@ -1275,10 +1307,10 @@ Failed_sys_munmap_VirtualFree:
 		lea   rdi, [@f]
 		jmp   Failed
 		@@: db 'sys_munmap in _VirtualFree failed',0
-Failed_sys_munmap_ThreadJoin:
-		lea   rdi, [@f]
-		jmp   Failed
-		@@: db 'sys_munmap in _ThreadJoin failed',0
+;Failed_sys_munmap_ThreadJoin:
+;               lea   rdi, [@f]
+;               jmp   Failed
+;               @@: db 'sys_munmap in _ThreadJoin failed',0
 Failed_sys_munmap_FileUnmap:
 		lea   rdi, [@f]
 		jmp   Failed

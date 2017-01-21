@@ -407,15 +407,11 @@ _VirtualAllocNuma:
 if DEBUG > 0
 add qword[DebugBalance], rcx
 end if
-
-
 GD_String 'size: '
-GD_Int rcx
-GD_NewLine
-GD_String 'alloc'
+GD_Hex rcx
+GD_String '  alloc'
 GD_Int rdx
 GD_String ': '
-
 		mov   qword[rsp+8*5], rdx
 		mov   qword[rsp+8*4], PAGE_READWRITE
 		mov   r9d, MEM_COMMIT
@@ -443,10 +439,8 @@ if DEBUG > 0
 add qword[DebugBalance], rcx
 end if
 GD_String 'size: '
-GD_Int rcx
-GD_NewLine
-GD_String 'alloc:  '
-
+GD_Hex rcx
+GD_String '  alloc : '
 		mov   rdx, rcx
 		xor   ecx, ecx
 		mov   r8d, MEM_COMMIT
@@ -456,7 +450,6 @@ GD_String 'alloc:  '
 		 jz   Failed__imp_VirtualAlloc
 GD_Hex rax
 GD_NewLine
-
 		add   rsp, 8*5
 		ret
 
@@ -474,12 +467,10 @@ if DEBUG > 0
 sub qword[DebugBalance], rdx
 end if
 GD_String 'size: '
-GD_Int rdx
-GD_NewLine
-GD_String 'free:  '
+GD_Hex rdx
+GD_String '  free  : '
 GD_Hex rcx
 GD_NewLine
-
 		xor   edx, edx
 	       call   qword[__imp_VirtualFree]
 	       test   eax, eax
@@ -537,12 +528,22 @@ end virtual
 		lea   rax, [rdi+rsi-1]
 		div   rsi
 		mul   rsi
-		mov   rdx, rax
 		mov   rbx, rax	; save size in rbx
+if DEBUG > 0
+add qword[DebugBalance], rbx
+end if
+GD_String 'large size: '
+GD_Hex rbx
+GD_String '  alloc: '
 		xor   ecx, ecx
+		mov   rdx, rbx
 		mov   r8d, MEM_RESERVE or MEM_COMMIT or MEM_LARGE_PAGES
 		mov   r9d, PAGE_READWRITE
 	       call   qword[__imp_VirtualAlloc]
+	       test   rax, rax
+		 jz   Failed__imp_VirtualAlloc
+GD_Hex rax
+GD_NewLine
 		mov   rdx, rbx
 		add   rsp, .localsize
 		pop   rdi rsi rbx

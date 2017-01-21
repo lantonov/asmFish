@@ -737,7 +737,9 @@ match ='L', VERSION_OS {
 	       call   _InitializeTimer
 	       call   _CheckCPU
 
-	; init the engine
+GD_GetTime
+
+        ; init the engine
 	       call   Options_Init
 	       call   MoveGen_Init
 	       call   BitBoard_Init
@@ -748,7 +750,7 @@ match ='L', VERSION_OS {
 	       call   Pawn_Init
 	       call   Endgame_Init
 
-GD_String ' init done'
+GD_String 'init done'
 GD_NewLine
 
 
@@ -777,6 +779,7 @@ end if
 	       call   _ParseCommandLine
 
 GD_ResponseTime
+GD_GetTime
 
 	; enter the main loop
 	       call   UciLoop
@@ -793,20 +796,20 @@ end if
 	       call   ThreadPool_Destroy
 	       call   MainHash_Destroy
 
+	; options may also require cleaning
+	       call   Options_Destroy
+
 	; clean up input buffer
 		mov   rcx, qword[InputBuffer]
 		mov   rdx, qword[InputBufferSizeB]
 	       call   _VirtualFree
-		xor   ecx, ecx
-		mov   qword[InputBuffer], rcx
-		mov   qword[InputBufferSizeB], rcx
 
 match =1, DEBUG {
 GD_String 'DebugBalance: '
-GD_Int qword[DebugBalance]
+GD_Hex qword[DebugBalance]
 GD_NewLine
 }
-	     Assert   e, rcx, qword[DebugBalance], 'assertion DebugBalance=0 failed'
+	     Assert   e, qword[DebugBalance], 0, 'assertion DebugBalance=0 failed'
 
 	       call   _ExitProcess
 
