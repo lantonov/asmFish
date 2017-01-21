@@ -14,62 +14,62 @@ macro search NT {
 match =_ROOT_NODE, NT
 \{
 ProfileInc Search_ROOT
- .PvNode equ 1
+ .PvNode   equ 1
  .RootNode equ 1
 \}
 
 match =_PV_NODE, NT
 \{
 ProfileInc Search_PV
- .PvNode equ 1
+ .PvNode   equ 1
  .RootNode equ 0
 \}
 
 match =_NONPV_NODE, NT
 \{
 ProfileInc Search_NONPV
- .PvNode equ 0
+ .PvNode   equ 0
  .RootNode equ 0
 \}
 
 
 virtual at rsp
-  .tte	      rq 1    ;0
-  .ltte       rq 1    ;8
-  .posKey	rq 1
-  .ttMove	    rd 1
-  .ttValue	    rd 1
-  .move 	    rd 1
-  .excludedMove     rd 1
-  .bestMove	  rd 1
-  .ext		  rd 1
-  .newDepth	  rd 1
-  .predictedDepth rd 1
-  .moveCount	    rd 1
-  .quietCount	    rd 1
-  .alpha	    rd 1
-  .beta 	    rd 1
-  .depth	  rd 1
-  .bestValue	  rd 1
-  .value	  rd 1
-  .eval 	  rd 1
-  .nullValue	    rd 1
-  .futilityValue    rd 1
-  .extension	    rd 1
-  .success	    rd 1   ; for tb
-  .rbeta		  rd 1
-  .moved_piece_to_sq	  rd 1
-  .givesCheck		  rb 1
+  .tte                    rq 1  ;0
+  .ltte                   rq 1  ;8
+  .posKey                 rq 1
+  .ttMove                 rd 1
+  .ttValue                rd 1
+  .move                   rd 1
+  .excludedMove           rd 1
+  .bestMove               rd 1
+  .ext                    rd 1
+  .newDepth               rd 1
+  .predictedDepth         rd 1
+  .moveCount              rd 1
+  .quietCount             rd 1
+  .alpha                  rd 1
+  .beta                   rd 1
+  .depth                  rd 1
+  .bestValue              rd 1
+  .value                  rd 1
+  .eval                   rd 1
+  .nullValue              rd 1
+  .futilityValue          rd 1
+  .extension              rd 1
+  .success                rd 1  ; for tb
+  .rbeta                  rd 1
+  .moved_piece_to_sq      rd 1
+  .givesCheck             rb 1
   .singularExtensionNode  rb 1
-  .improving		  rb 1
-  .captureOrPromotion	  rb 1	; nonzero for true
-  .doFullDepthSearch	  rb 1
-  .cutNode		  rb 1	; -1 for true
-  .ttHit		  rb 1
-  .moveCountPruning	  rb 1
-  .quietsSearched    rd 64
+  .improving              rb 1
+  .captureOrPromotion     rb 1  ; nonzero for true
+  .doFullDepthSearch      rb 1
+  .cutNode                rb 1  ; -1 for true
+  .ttHit                  rb 1
+  .moveCountPruning       rb 1
+  .quietsSearched         rd 64
 if .PvNode eq 1
-  .pv  rd MAX_PLY+1
+  .pv   rd MAX_PLY+1
 end if
   .lend rb 0
 end virtual
@@ -314,7 +314,7 @@ end if
 		cmp   edx, MOVE_NULL
 		 je   @f
 	       call   Evaluate
-	@@:	mov   r8d, eax
+	@@:     mov   r8d, eax
 		mov   dword[rbx+State.staticEval], eax
 		mov   dword[.eval], eax
 		mov   r9, qword [.posKey]
@@ -327,7 +327,7 @@ end if
 		cmp   eax, VALUE_NONE
 		jne   @f
 	       call   Evaluate
-	@@:	xor   ecx, ecx
+	@@:     xor   ecx, ecx
 		mov   dword[rbx+State.staticEval], eax
 		cmp   edi, eax
 	       setg   cl
@@ -336,7 +336,7 @@ end if
 		 je   @f
 	       test   cl, byte[.ltte+MainHashEntry.genBound]
 	     cmovnz   eax, edi
-	@@:	mov   dword[.eval], eax
+	@@:     mov   dword[.eval], eax
 .StaticValueDone:
 
 
@@ -542,7 +542,7 @@ SD_NewLine
 		 je   @f
 	       test   edx, edx
 		 jz   .9NoTTMove
-	@@:	mov   ecx, dword[.ttMove]
+	@@:     mov   ecx, dword[.ttMove]
 	       call   Move_IsPseudoLegal
 	       test   rax, rax
 		 jz   .9NoTTMove
@@ -804,7 +804,7 @@ SD_String '|'
 	       imul   ecx, dword[rbp-Thread.rootPos+Thread.PVIdx], sizeof.RootMove
 		add   rcx, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
 		mov   rdx, qword[rbp+Pos.rootMovesVec+RootMovesVec.ender]
-	@@:	cmp   rcx, rdx
+	@@:     cmp   rcx, rdx
 		jae   .MovePickLoop
 		cmp   eax, dword[rcx+RootMove.pv+4*0]
 		lea   rcx, [rcx+sizeof.RootMove]
