@@ -1439,6 +1439,21 @@ match =1, PROFILE {
 UciProfile:
 		lea   rdi, [Output]
 
+             szcall   PrintString, 'CheckTime:            '
+                mov   rax, qword[profile.CheckTime]
+               call   PrintUnsignedInteger
+       PrintNewLine
+
+             szcall   PrintString, 'Evaluate:             '
+                mov   rax, qword[profile.Evaluate]
+               call   PrintUnsignedInteger
+       PrintNewLine
+
+             szcall   PrintString, 'EvaluateLazy:         '
+                mov   rax, qword[profile.EvaluateLazy]
+               call   PrintUnsignedInteger
+       PrintNewLine
+
 	     szcall   PrintString, 'MainHash_Probe:       '
 		mov   rax, qword[profile.MainHash_Probe]
 	       call   PrintUnsignedInteger
@@ -1523,22 +1538,6 @@ UciProfile:
 		mov   rax, qword[profile.SetCheckInfo]
 	       call   PrintUnsignedInteger
        PrintNewLine
-
-	     szcall   PrintString, 'SetCheckInfo2:        '
-		mov   rax, qword[profile.SetCheckInfo2]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-
-	     szcall   PrintString, 'Evaluate:             '
-		mov   rax, qword[profile.Evaluate]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-	     szcall   PrintString, 'EvaluateLazy:         '
-		mov   rax, qword[profile.EvaluateLazy]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
 
 
 		lea   r15, [profile.cjmpcounts]

@@ -150,27 +150,19 @@ if USE_SELDEPTH
     end if
 end if
 
-	; callsCnt counts up instead of down as in master
-		mov   al, byte[rbp-Thread.rootPos+Thread.resetCalls]
-		mov   edx, dword[rbp-Thread.rootPos+Thread.callsCnt]
-	       test   al, al
-		 jz   .dontreset
-		xor   edx, edx
-		mov   byte[rbp-Thread.rootPos+Thread.resetCalls], 0
+	; callsCnt counts down as in master
+	; resetCnt, if nonzero, contains the count to which callsCnt should be reset
+                mov   eax, dword[rbp-Thread.rootPos+Thread.resetCnt]
+                mov   edx, dword[rbp-Thread.rootPos+Thread.callsCnt]
+               test   eax, eax
+                 jz   .dontreset
+                mov   edx, eax
+                mov   dword[rbp-Thread.rootPos+Thread.resetCnt], 0
 	.dontreset:
-		add   edx, 1
-		mov   dword[rbp-Thread.rootPos+Thread.callsCnt], edx
-		cmp   edx, 4096+1
-		 jb   .dontchecktime
-		mov   ecx, dword[threadPool.threadCnt]
-	     Assert   g, ecx, 0, 'Assertion dword[threadPool.threadCnt] > 0 failed in Search'
-	.ResetNextThread:
-		sub   ecx, 1
-		mov   rax, qword[threadPool.threadTable+8*rcx]
-		mov   byte[rax+Thread.resetCalls], -1
-		jnz   .ResetNextThread
-	       call   CheckTime
-		mov   byte[rbp-Thread.rootPos+Thread.skipCurrMove], al
+                sub   edx, 1
+                mov   dword[rbp-Thread.rootPos+Thread.callsCnt], edx
+                jns   .dontchecktime
+               call   CheckTime         ; CheckTime sets resetCalls for all threads
 	.dontchecktime:
 
 
@@ -831,14 +823,14 @@ SD_String '|'
 if USE_CURRMOVE
 if VERBOSE < 2
 	if .RootNode eq 1
-		mov   edx, dword[.depth]
-	      movsx   eax, byte[rbp-Thread.rootPos+Thread.skipCurrMove]
-		cmp   edx, CURRMOVE_MIN_DEPTH*ONE_PLY
-		 jb   @f
-		 or   eax, dword[rbp-Thread.rootPos+Thread.idx]
-		 jz   .PrintCurrentMove
+		mov   eax, dword[rbp-Thread.rootPos+Thread.idx]
+	       test   eax, eax
+		jnz   .PrintCurrentMoveRet
+	       call   _GetTime				; we are only polling the timer
+		sub   rax, qword[time.startTime]	;  in the main thread at the root
+		cmp   eax, CURRMOVE_MIN_TIME
+		jae   .PrintCurrentMove
 .PrintCurrentMoveRet:
-		@@:
 	end if
 end if
 end if

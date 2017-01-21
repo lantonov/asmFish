@@ -55,6 +55,9 @@ if PROFILE > 0
   profile:
    .cjmpcounts rq 2*16
 
+   .CheckTime dq 0
+   .Evaluate	  dq 0
+   .EvaluateLazy  dq 0
    .MainHash_Probe dq 0
    .MainHash_Save  dq 0
    .Move_Do	dq 0
@@ -72,9 +75,6 @@ if PROFILE > 0
    .See 	dq 0
    .SeeTest	dq 0
    .SetCheckInfo  dq 0
-   .SetCheckInfo2 dq 0
-   .Evaluate	  dq 0
-   .EvaluateLazy  dq 0
 
    .moveUnpack dq 0
    .moveStore  dq 0

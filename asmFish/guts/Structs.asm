@@ -351,15 +351,16 @@ struct Thread
  previousScore	 rd 1
  completedDepth  rd 1
  callsCnt	 rd 1
+ resetCnt	 rd 1
+		 rd 1
  searching	  rb 1
  exit		  rb 1
  failedLow	  rb 1
  easyMovePlayed   rb 1
- resetCalls	  rb 1
- skipCurrMove	  rb 1
+		  rb 1
+		  rb 1
  maxPly 	  rb 1
 		  rb 1
-		rq 1
  nodes		rq 1
  tbHits 	rq 1
  idx		rd 1
@@ -376,7 +377,7 @@ match =1, DEBUG {
  castling_ksqpath    rb 4*8
  castling_knights    rq 4
  castling_kingpawns  rq 4
- castling_movgen     rd 4
+ castling_movgen     rd 4       ; these are the four castling moves
  castling_rightsMask rb 64
  castling_end rb 0
 

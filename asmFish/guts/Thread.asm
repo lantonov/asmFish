@@ -59,8 +59,8 @@ Thread_Create:
 	; init some thread data
 		xor   eax, eax
 		mov   byte[rbx+Thread.exit], al
-		mov   byte[rbx+Thread.resetCalls], al
-		mov   dword[rbx+Thread.callsCnt], eax
+                mov   dword[rbx+Thread.resetCnt], eax   ; resetCnt is set to minimum in 
+                mov   dword[rbx+Thread.callsCnt], eax   ;  ThreadPool_StartThinking
 		mov   dword[rbx+Thread.idx], esi
 		mov   qword[rbx+Thread.numaNode], rdi
 
