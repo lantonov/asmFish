@@ -320,6 +320,9 @@ UciPonderHit:
 	       test   al, al
 		jnz   .stop
 		mov   byte[limits.ponder], al
+        ; we are now switching to normal search mode
+        ; check the time in case we have to abort the search asap
+               call   CheckTime
 		jmp   UciGetInput
 	.stop:
 		mov   byte[signals.stop], -1
