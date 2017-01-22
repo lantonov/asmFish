@@ -529,9 +529,6 @@ end virtual
 		div   rsi
 		mul   rsi
 		mov   rbx, rax	; save size in rbx
-if DEBUG > 0
-add qword[DebugBalance], rbx
-end if
 GD_String 'large size: '
 GD_Hex rbx
 GD_String '  alloc: '
@@ -539,15 +536,25 @@ GD_String '  alloc: '
 		mov   rdx, rbx
 		mov   r8d, MEM_RESERVE or MEM_COMMIT or MEM_LARGE_PAGES
 		mov   r9d, PAGE_READWRITE
-	       call   qword[__imp_VirtualAlloc]
-	       test   rax, rax
-		 jz   Failed__imp_VirtualAlloc
+               call   qword[__imp_VirtualAlloc]
+        ; this call to VirtualAlloc can fail
+               test   rax, rax
+                 jz   .alloc_failed
+.alloc_succeeded:
+if DEBUG > 0
+                add   qword[DebugBalance], rbx
+end if
 GD_Hex rax
 GD_NewLine
-		mov   rdx, rbx
-		add   rsp, .localsize
-		pop   rdi rsi rbx
-		ret
+                jmp   .alloc_done
+.alloc_failed:
+GD_String 'FAILED'
+GD_NewLine
+.alloc_done:
+                mov   rdx, rbx
+                add   rsp, .localsize
+                pop   rdi rsi rbx
+                ret
 .Fail:
 		 or   rsi, -1
 		mov   qword[LargePageMinSize], rsi
