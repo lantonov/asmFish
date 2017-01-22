@@ -14,6 +14,8 @@ Hanging 		equ (( 48 shl 16) + ( 27))
 ThreatByPawnPush	equ (( 38 shl 16) + ( 22))
 HinderPassedPawn	equ ((	7 shl 16) + (  0))
 
+LazyThreshold equ 1500
+
 
 macro EvalInit Us {
 ; in:  r13 rook + queen
@@ -1411,20 +1413,12 @@ end virtual
 
 ProfileInc EvaluateLazy
 
-	      movsx   eax, word[.ei.score+0]
-	      movsx   edx, word[.ei.score+2]
+                add   eax, 2*(LazyThreshold+1)
 		mov   ecx, dword[rbp+Pos.sideToMove]
 		neg   ecx
-		 bt   eax, 15
-		adc   eax, edx
 		cdq		     ; divide eax by 2
 		sub   eax, edx	     ;
 		sar   eax, 1	     ;
-		sub   eax, r8d
-		lea   edx, [rax+3]   ; divide eax by 4
-	      cmovs   eax, edx	     ;
-		sar   eax, 2	     ;
-		add   eax, r8d
 		xor   eax, ecx
 		sub   eax, ecx
 
@@ -1545,18 +1539,15 @@ ED_NewLine
 	; If score exceeds a threshold return a lazy evaluation.
 	;  lazy eval is called about 5% of the time
 
-	; checking if the components of a score (mg,eg) are BOTH >= 0 can be
-	;  done by testing the sign bits in the packed representation.
-	;  this is correct
-		sub   eax, 0x00010001 * (LazyEval+1)
-		mov   edx, 0x00010001 * ((-2*LazyEval)-2)
-		mov   r8d, LazyEval
-	       test   eax, 0x80008000
-		 jz   Evaluate_Cold.ReturnLazyEval
-		sub   edx, eax
-		neg   r8d
-	       test   edx, 0x80008000
-		 jz   Evaluate_Cold.ReturnLazyEval
+        ; checking if abs(a/2) > LazyThreshold
+        ; is the same as checking if a-2*(LazyThreshold+1)
+        ; is in the unsigned range [0,-4*(LazyThreshold+1)]
+                lea   edx, [rax+0x08000]
+                sar   edx, 16
+              movsx   eax, ax
+                lea   eax, [rax+rdx-2*(LazyThreshold+1)]
+                cmp   eax, 1-4*(LazyThreshold+1)
+                 jb   Evaluate_Cold.ReturnLazyEval
 
 
 	   EvalInit   White
@@ -2205,3 +2196,5 @@ restore ThreatByRank
 restore Hanging
 restore ThreatByPawnPush
 restore HinderPassedPawn
+
+restore LazyThreshold

@@ -98,7 +98,6 @@ SEP_CHAR equ ':'
 
 ; values for evaluation
  Eval_Tempo equ 20
- LazyEval equ 1500
 
 ; values from stats tables
  HistoryStats_Max equ 268435456
