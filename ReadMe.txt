@@ -45,6 +45,17 @@ A: All older versions of asmFish/pedantFish are in the branch https://github.com
 
 
 ******** updates ********
+2017-01-22 Simplification of lazy threshold
+    - SF 2017-01-21, bench 6406285
+2017-01-22 Outpost array simplification
+    - SF 2017-01-21, bench 5828283
+2017-01-22 oops (rename 'Display*' to 'GD*')
+2017-01-22 ensure that TimeMng_Init matches
+2017-01-22 check time right after ponderhit
+2017-01-22 accurate search abort and fix 'go nodes'
+2017-01-21 clean up memory
+2017-01-19 add clock_gettime from vDSO
+2017-01-18 clean up evaluation
 2017-01-17 second bug fix of draw detection
 2017-01-17 dont clobber eax when testing checkers
 2017-01-17 FEN parsing: add a second check for correctly setting e.p. square (SF 2016-11-10)

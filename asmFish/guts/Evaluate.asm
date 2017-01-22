@@ -99,42 +99,42 @@ local ..NoEnemyPawnBonus, ..NoOpenFileBonus, ..NoTrappedByKing
 local ..SkipQueenPin, ..QueenPinLoop
 
 match =White, Us \{
-	addsub	equ add
-	subadd	equ sub
-	Them	 equ Black
-	OutpostRanks equ 0x0000FFFFFF000000
+	addsub            equ add
+	subadd            equ sub
+	Them              equ Black
+	OutpostRanks      equ 0x0000FFFFFF000000
 \}
 
 match =Black, Us \{
-	addsub	equ sub
-	subadd	equ add
-	Them	 equ White
-	OutpostRanks equ 0x000000FFFFFF0000
+	addsub            equ sub
+	subadd            equ add
+	Them              equ White
+	OutpostRanks      equ 0x000000FFFFFF0000
 \}
 
-	RookOnFile0	equ ((20 shl 16) + (7))
-	RookOnFile1	equ ((45 shl 16) + (20))
+	RookOnFile0       equ ((20 shl 16) + (7))
+	RookOnFile1       equ ((45 shl 16) + (20))
 
 
 match =Knight, Pt \{
-	Outpost0	  equ ((22 shl 16) + (6))
-	Outpost1	  equ ((33 shl 16) + (9))
-	KingAttackWeight equ 78
-	MobilityBonus	 equ MobilityBonus_Knight
+	Outpost0          equ ((22 shl 16) + (6))
+	Outpost1          equ ((33 shl 16) + (9))
+	KingAttackWeight  equ 78
+	MobilityBonus     equ MobilityBonus_Knight
 \}
 match =Bishop, Pt \{
-	Outpost0	  equ (( 9 shl 16) + (2))
-	Outpost1	  equ ((14 shl 16) + (4))
-	KingAttackWeight equ 56
-	MobilityBonus	 equ MobilityBonus_Bishop
+	Outpost0          equ (( 9 shl 16) + (2))
+	Outpost1          equ ((14 shl 16) + (4))
+	KingAttackWeight  equ 56
+	MobilityBonus     equ MobilityBonus_Bishop
 \}
 match =Rook, Pt \{
-	KingAttackWeight equ 45
-	MobilityBonus	 equ MobilityBonus_Rook
+	KingAttackWeight  equ 45
+	MobilityBonus     equ MobilityBonus_Rook
 \}
 match =Queen, Pt \{
-	KingAttackWeight equ 11
-	MobilityBonus	 equ MobilityBonus_Queen
+	KingAttackWeight  equ 11
+	MobilityBonus     equ MobilityBonus_Queen
 \}
 
 	     Assert   e, rdi, qword[.ei.pi], 'assertion rdi=qword[.ei.pi] failed in EvalPieces'
@@ -437,24 +437,24 @@ local ..NoKingSide, ..NoQueenSide, ..NoPawns
 
 match =White, Us
 \{
-	Them  equ Black
-	Up    equ DELTA_N
-	Camp  equ (Rank1BB or Rank2BB or Rank3BB or Rank4BB or Rank5BB)
+	Them              equ Black
+	Up                equ DELTA_N
+	Camp              equ (Rank1BB or Rank2BB or Rank3BB or Rank4BB or Rank5BB)
 
 \}
 
 match =Black, Us
 \{
-	Them  equ White
-	Up    equ DELTA_S
-	Camp  equ (Rank4BB or Rank5BB or Rank6BB or Rank7BB or Rank8BB)
+	Them              equ White
+	Up                equ DELTA_S
+	Camp              equ (Rank4BB or Rank5BB or Rank6BB or Rank7BB or Rank8BB)
 \}
 
 	QueenContactCheck equ 997
-	QueenCheck  equ 745
-	RookCheck   equ 688
-	BishopCheck equ 588
-	KnightCheck equ 924
+	QueenCheck        equ 745
+	RookCheck         equ 688
+	BishopCheck       equ 588
+	KnightCheck       equ 924
 
 	     Assert   e, rdi, qword[.ei.pi], 'assertion rdi=qword[.ei.pi] failed in EvalKing'
 
@@ -915,12 +915,12 @@ match =Black, Us
 	PiecesAll      equ r13
 	PiecesUs       equ r15
 	PiecesThem     equ r14
-	Them  equ White
-	Up    equ DELTA_S
-	Left  equ DELTA_SE
-	Right equ DELTA_SW
-	TRank2BB equ Rank7BB
-	TRank7BB equ Rank2BB
+	Them           equ White
+	Up             equ DELTA_S
+	Left           equ DELTA_SE
+	Right          equ DELTA_SW
+	TRank2BB       equ Rank7BB
+	TRank7BB       equ Rank2BB
 \}
 
 		mov   rax, AttackedByUs
@@ -1291,9 +1291,9 @@ match =White, Us
 	PiecesUs       equ r14
 	PiecesThem     equ r15
 
-	Them  equ Black
-	SpaceMask  equ ((FileCBB or FileDBB or FileEBB or FileFBB) \
-			and (Rank2BB or Rank3BB or Rank4BB))
+	Them           equ Black
+	SpaceMask      equ ((FileCBB or FileDBB or FileEBB or FileFBB) \
+		            and (Rank2BB or Rank3BB or Rank4BB))
 \}
 
 match =Black, Us
@@ -1306,9 +1306,9 @@ match =Black, Us
 	PiecesUs       equ r15
 	PiecesThem     equ r14
 
-	Them  equ White
-	SpaceMask  equ ((FileCBB or FileDBB or FileEBB or FileFBB) \
-			and (Rank7BB or Rank6BB or Rank5BB))
+	Them           equ White
+	SpaceMask      equ ((FileCBB or FileDBB or FileEBB or FileFBB) \
+			    and (Rank7BB or Rank6BB or Rank5BB))
 
 \}
 
