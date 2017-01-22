@@ -23,8 +23,8 @@ end virtual
 		mov   esi, ecx
 		mov   dword[.ply], edx
 
-Display_String 'ply: '
-Display_Int qword[.ply]
+GD_String 'ply: '
+GD_Int qword[.ply]
 GD_String ' inc: '
 GD_Int qword[limits.incr+4*rsi]
 GD_String ' time: '
