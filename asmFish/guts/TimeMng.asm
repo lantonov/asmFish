@@ -10,8 +10,8 @@ TimeMng_Init:
 	;     edx ply
 
 virtual at rsp
-  .ply	   rd 1
-  .lend rb 0
+  .ply   rd 1
+  .lend  rb 0
 end virtual
 .localsize = ((.lend-rsp+15) and (-16))
 
@@ -178,8 +178,8 @@ align 8
 .mSkew:     dq mSkew
 .MaxRatio   dq MaxRatio
 .StealRatio dq StealRatio
-.mind:	 dq 0x0010000000000000
-.100p0:  dq 100.0
+.mind:      dq 0x0010000000000000
+.100p0:     dq 100.0
 
 restore MoveHorizon
 restore MaxRatio
