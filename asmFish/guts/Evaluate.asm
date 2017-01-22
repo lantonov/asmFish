@@ -88,7 +88,7 @@ local addsub, subadd
 local Them, OutpostRanks
 
 local RookOnFile0, RookOnFile1
-local Outpost0, Outpost1, ReachableOutpost0, ReachableOutpost1, KingAttackWeight
+local Outpost0, Outpost1, KingAttackWeight
 local MobilityBonus
 
 local ..NextPiece, ..NoPinned, ..NoKingRing, ..AllDone
@@ -115,18 +115,14 @@ match =Black, Us \{
 
 
 match =Knight, Pt \{
-	Outpost0	  equ ((43 shl 16) + (11))
-	Outpost1	  equ ((65 shl 16) + (20))
-	ReachableOutpost0 equ ((21 shl 16) + (5) )
-	ReachableOutpost1 equ ((35 shl 16) + (8) )
+	Outpost0	  equ ((22 shl 16) + (6))
+	Outpost1	  equ ((33 shl 16) + (9))
 	KingAttackWeight equ 78
 	MobilityBonus	 equ MobilityBonus_Knight
 \}
 match =Bishop, Pt \{
-	Outpost0	  equ ((20 shl 16) + (3))
-	Outpost1	  equ ((29 shl 16) + (8))
-	ReachableOutpost0 equ (( 8 shl 16) + (0) )
-	ReachableOutpost1 equ ((14 shl 16) + (4))
+	Outpost0	  equ (( 9 shl 16) + (2))
+	Outpost1	  equ ((14 shl 16) + (4))
 	KingAttackWeight equ 56
 	MobilityBonus	 equ MobilityBonus_Bishop
 \}
@@ -264,20 +260,19 @@ if (Pt in <Knight, Bishop>)
 		mov   rax, qword[.ei.attackedBy+8*(8*Us+Pawn)]
 		 bt   rcx, r14
 		jnc   ..OutpostElse
+                lea   ecx, [rsi+2*Outpost1*(Them-Us)]
+                add   esi, 2*Outpost0*(Them-Us)
 		 bt   rax, r14
-		sbb   eax, eax
-		and   eax, (Outpost1-Outpost0)*(Them-Us)
-		lea   esi, [rsi+rax+(Outpost0*(Them-Us))]
+              cmovc   esi, ecx
 		jmp   ..OutpostDone
 ..OutpostElse:
 	       andn   rdx, rdx, rcx
 		and   rdx, r9
 		 jz   ..OutpostDone
-		and   rdx, qword[.ei.attackedBy+8*(8*Us+Pawn)]
-		neg   rdx
-		sbb   eax, eax
-		and   eax, (ReachableOutpost1-ReachableOutpost0)*(Them-Us)
-		lea   esi, [rsi+rax+(ReachableOutpost0*(Them-Us))]
+                lea   ecx, [rsi+Outpost1*(Them-Us)]
+                add   esi, Outpost0*(Them-Us)
+               test   rdx, qword[.ei.attackedBy+8*(8*Us+Pawn)]
+             cmovnz   esi, ecx
 ..OutpostDone:
 
 
