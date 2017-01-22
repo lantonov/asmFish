@@ -582,10 +582,10 @@ UciParseMoves:
 		mov   ecx, edi
 		mov   edx, eax
 	       call   Move_Do__UciParseMoves
-	; when VERBOSE=0, domove/undomove don't update gamPly
-match =0, VERBOSE {
+	; when VERBOSE<>2, domove/undomove don't update gamePly
+if VERBOSE <> 2
 		inc   dword[rbp+Pos.gamePly]
-}
+end if
 		mov   qword[rbp+Pos.state], rbx
 	       call   SetCheckInfo
 		jmp   .get_move

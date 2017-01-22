@@ -148,12 +148,25 @@ macro vmovapd a,b {
 	     movapd   a, b
  \}
 }
-macro vmovsd a,b {
+macro vmovsd a,b,c {
  match =1, CPU_HAS_AVX1 \{
+    if c eq
 	     vmovsd   a, b
+    else
+             vmovsd   a, b, c
+    end if
  \}
  match =0, CPU_HAS_AVX1 \{
-	      movsd   a, b
+    if c eq
+              movsd   a, b
+    else
+        if a eq b
+	      movsd   a, c
+        else
+	     movaps   a, b
+	      movsd   a, c
+        end if
+    end if
  \}
 }
 

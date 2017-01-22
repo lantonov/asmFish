@@ -108,12 +108,10 @@ _CaptureOrPromotion_and db -1,-1,-1, 0
 
 align 16
 constd:
-.0p01	 dq 0.01
 .0p03	 dq 0.03
 .0p505	 dq 0.505
 .1p0	 dq 1.0
 .628p0	 dq 628.0
-.min	 dq 0x0010000000000000
 
 align 16
 HalfDensitySize = 20
