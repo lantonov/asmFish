@@ -12,9 +12,9 @@
   - program does a runtime check to see if these really are avaiable
 - DEBUG turns on some printing and asserts
 - VERBOSE turns on lots of printing and should only be used when searching for bugs
-- PREDANTIC turns on piece lists and other tiny differences so that bench matches official stockfish
+- PEDANTIC turns on piece lists and other tiny differences so that bench matches official stockfish;
+    makes asmFish identical to SF master in deterministic searches
 - PROFILE turns on several counts of called functions and branches taken
-- PEDANTIC makes asmFish identical to master in deterministic searches
 
 3. extra commands:
 - benchmarking
