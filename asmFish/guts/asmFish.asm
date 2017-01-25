@@ -56,6 +56,7 @@ if PROFILE > 0
    .cjmpcounts rq 2*16
 
    .CheckTime           dq 0
+   .EvalPassedPawns     dq 0
    .Evaluate            dq 0
    .EvaluateLazy        dq 0
    .MainHash_Probe      dq 0
@@ -543,13 +544,13 @@ MobilityBonus_Bishop rd 16
 MobilityBonus_Rook   rd 16
 MobilityBonus_Queen  rd 32
 
-Lever rd 8
-ShelterWeakness            rd 4*8
+Lever                      rd 8
+ShelterWeakness            rd 8*8
 StormDanger:
-StormDanger_NoFriendlyPawn rd 4*8
-StormDanger_Unblocked      rd 4*8
-StormDanger_BlockedByPawn  rd 4*8
-StormDanger_BlockedByKing  rd 4*8
+StormDanger_NoFriendlyPawn rd 8*8
+StormDanger_Unblocked	   rd 8*8
+StormDanger_BlockedByPawn  rd 8*8
+StormDanger_BlockedByKing  rd 8*8
 KingFlank                  rq 8
 ThreatBySafePawn           rd 16
 Threat_Minor               rd 16
