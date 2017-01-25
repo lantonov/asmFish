@@ -1447,6 +1447,11 @@ UciProfile:
                call   PrintUnsignedInteger
        PrintNewLine
 
+	     szcall   PrintString, 'EvalPassedPawns:      '
+		mov   rax, qword[profile.EvalPassedPawns]
+	       call   PrintUnsignedInteger
+       PrintNewLine
+
              szcall   PrintString, 'Evaluate:             '
                 mov   rax, qword[profile.Evaluate]
                call   PrintUnsignedInteger
