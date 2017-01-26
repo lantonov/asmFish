@@ -609,7 +609,7 @@ match ='L', VERSION_OS {
 segment readable executable
 }
 
-
+; these are all macros
 include 'AvxMacros.asm'
 include 'AttackMacros.asm'
 include 'GenMacros.asm'
@@ -620,6 +620,7 @@ include 'MainHashMacros.asm'
 include 'PosIsDrawMacro.asm'
 include 'Pawn.asm'
 include 'SliderBlockers.asm'
+include 'UpdateStats.asm'
 
 
 
@@ -636,8 +637,6 @@ include 'MainHash_Probe.asm'
 include 'Move_IsPseudoLegal.asm'
 include 'SetCheckInfo.asm'
 include 'Move_GivesCheck.asm'
-
-include 'UpdateStats.asm'
 
 include 'Gen_Captures.asm'
 include 'Gen_Quiets.asm'
