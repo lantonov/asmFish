@@ -80,47 +80,19 @@ end virtual
 	 _chkstk_ms   rsp, .localsize
 		sub   rsp, .localsize
 
-match =2, VERBOSE \{
-	       push   rcx rdx r8 r9 r13 r14 r15
-		mov   r15, rcx
-		mov   r14, rdx
-		mov   r13, r8
-		lea   rdi, [VerboseOutput]
-		mov   eax,'s<'
-	      stosw
-match =_ROOT_NODE, NT
-\\{
-		mov   al, '2'
-\\}
-match =_PV_NODE, NT
-\\{
-		mov   al, '1'
-\\}
-match =_NONPV_NODE, NT
-\\{
-		mov   al, '0'
-\\}
-	      stosb
-		mov   eax, '> ('
-	      stosd
-		sub   rdi, 1
-	     movsxd   rax, r15d
-	       call   PrintSignedInteger
-		mov   ax, ', '
-	      stosw
-	     movsxd   rax, r14d
-	       call   PrintSignedInteger
-		mov   eax, ')  '
-	      stosd
-		sub   rdi, 1
-	     movsxd   rax, r13d
-	       call   PrintSignedInteger
-		PrintNewLine
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r15 r14 r13 r9 r8 rdx rcx
-\}
-
+match =_ROOT_NODE, NT \{
+SD_String 's<2>('     \}
+match =_PV_NODE, NT \{
+SD_String 's<1>('   \}
+match =_NONPV_NODE, NT \{
+SD_String 's<0>('      \}
+SD_Int rcx
+SD_String ','
+SD_Int rdx
+SD_String ','
+SD_Int r8
+SD_String ')'
+SD_NewLine
 
 		mov   dword[.alpha], ecx
 		mov   dword[.beta], edx
@@ -1501,19 +1473,52 @@ end if
 
 
 	; Step 20. Check for mate and stalemate
+
+		mov   eax, dword[rbx-1*sizeof.State+State.currentMove]
+		and   eax, 63
+	      movzx   ecx, byte[rbp+Pos.board+rax]
+		shl   ecx, 6
+		lea   r15d, [rax+rcx]
+		mov   r12d, dword[.bestMove]
+		mov   eax, dword[.depth]
+		mov   r13d, eax
+	       imul   eax, eax
+		lea   r10d, [rax+2*r13-2]
+	; r15d = offset of [piece_on(prevSq),prevSq]
+	; r12d = move
+	; r13d = depth
+	; r10d = bonus
+
 		mov   edi, dword[.bestValue]
-		mov   edx, dword[.bestMove]
 		cmp   dword[.moveCount], 0
 		 je   .20Mate
-	       test   edx, edx
+	       test   r12d, r12d
 		 jz   .20CheckBonus
 .20Quiet:
-		mov   ecx, dword[.bestMove]
-		mov   edx, dword[.depth]
-		lea   r8, [.quietsSearched]
-		mov   r9d, dword[.quietCount]
-	       call   UpdateStats
+		mov   edx, r12d
+		mov   eax, r12d
+		and   eax, 63
+		shr   edx, 14
+	      movzx   eax, byte[rbp+Pos.board+rax]
+		 or   al, byte[_CaptureOrPromotion_or+rdx]
+	       test   al, byte[_CaptureOrPromotion_and+rdx]
+		jnz   .20Quiet_SkipUpdateStats
+	UpdateStats   r12d, .quietsSearched, dword[.quietCount], r11d, r10d, r15
+
+.20Quiet_SkipUpdateStats:
+
+		lea   r10d, [r10+2*(r13+1)+1]
+	; r10d = penalty
+		cmp   dword[rbx-1*sizeof.State+State.moveCount], 1
+		jne   .20TTStore
+		cmp   byte[rbx+State.capturedPiece], 0
+		jne   .20TTStore
+	       imul   r11d, r10d, -32
+		cmp   r10d, 324
+		jae   .20TTStore
+      UpdateCmStats   (rbx-1*sizeof.State), r15, r11d, r10d, r8
 		jmp   .20TTStore
+
 .20Mate:
 		mov   rax, qword[rbx+State.checkersBB]
 		mov   edx, dword[.excludedMove]
@@ -1529,50 +1534,19 @@ end if
 	; we already checked that bestMove = 0
 		mov   eax, dword[rbx-1*sizeof.State+State.currentMove]
 		lea   ecx, [eax-1]
-		mov   edx, dword[.depth]
+		mov   edx, r13d
 		sub   edx, 3*ONE_PLY
 		 or   edx, ecx
 		 js   .20TTStore
 		cmp   byte[rbx+State.capturedPiece], 0
 		jne   .20TTStore
 
-		mov   r10d, dword[.depth]
-		mov   edx, r10d
-	       imul   r10d, r10d
-		lea   r10d, [r10+2*rdx-2]
-
-		and   eax, 63
-	      movzx   r8d, byte[rbp+Pos.board+rax]
-		shl   r8d, 6
-		add   r8d, eax
-		shl   r8d, 2
-
 	       imul   r11d, r10d, 32
 		cmp   r10d, 324
 		jae   .20TTStore
-
-		mov   r9, qword[rbx-2*sizeof.State+State.counterMoves]
-	       test   r9, r9
-		 jz   @f
-		add   r9, r8
-	apply_bonus   r9, r11d, r10d, 936
-	@@:
-		mov   r9, qword[rbx-3*sizeof.State+State.counterMoves]
-	       test   r9, r9
-		 jz   @f
-		add   r9, r8
-	apply_bonus   r9, r11d, r10d, 936
-	@@:
-		mov   r9, qword[rbx-5*sizeof.State+State.counterMoves]
-	       test   r9, r9
-		 jz   @f
-		add   r9, r8
-	apply_bonus   r9, r11d, r10d, 936
-	@@:
+      UpdateCmStats   (rbx-1*sizeof.State), r15, r11d, r10d, r8
 
 .20TTStore:
-
-
 	; edi = bestValue
 		mov   r9, qword[.posKey]
 		lea   ecx, [rdi+VALUE_MATE_IN_MAX_PLY]
@@ -1600,35 +1574,13 @@ end if
       MainHash_Save   .ltte, r8, r9w, edx, sil, byte[.depth], eax, word[rbx+State.staticEval]
 		mov   eax, edi
 
-match =2, VERBOSE \{
-	       push   rsi rdi rax rcx rdx r8 r9 r13 r14 r15
-		mov   r15, rax
-		lea   rdi, [VerboseOutput]
-		mov   eax,'s<'
-	      stosw
-match =_ROOT_NODE, NT
-\\{
-		mov   al, '2'
-\\}
-match =_PV_NODE, NT
-\\{
-		mov   al, '1'
-\\}
-match =_NONPV_NODE, NT
-\\{
-		mov   al, '0'
-\\}
-	      stosb
-		mov   eax, '>r'
-	      stosw
-	     movsxd   rax, r15d
-	       call   PrintSignedInteger
-	PrintNewLine
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r15 r14 r13 r9 r8 rdx rcx rax rdi rsi
-\}
-
+match =_ROOT_NODE, NT \{
+SD_String 's<2>r'     \}
+match =_PV_NODE, NT \{
+SD_String 's<1>r'   \}
+match =_NONPV_NODE, NT \{
+SD_String 's<0>r'      \}
+SD_Int r15
 
 .Return:
 		add   rsp, .localsize
@@ -1677,18 +1629,57 @@ end if
 
 	      align   8
 .ReturnTTValue:
+	; edi = ttValue
+		mov   r12d, ecx
+		mov   eax, dword[.depth]
+		mov   r13d, eax
+	       imul   eax, eax
+		lea   r10d, [rax+2*r13-2]
+	; r12d = move
+	; r13d = depth
+	; r10d = bonus
 		mov   eax, edi
-		;mov   dword[rbx+State.currentMove], ecx
 		cmp   edi, dword[.beta]
 		 jl   .Return
 	       test   ecx, ecx
 		 jz   .Return
-		mov   edx, dword[.depth]
-		xor   r8, r8
-		xor   r9d, r9d
-	       call   UpdateStats
+
+	; ttMove is quiet; update move sorting heuristics on TT hit
+
+		mov   eax, dword[rbx-1*sizeof.State+State.currentMove]
+		and   eax, 63
+	      movzx   ecx, byte[rbp+Pos.board+rax]
+		shl   ecx, 6
+		lea   r15d, [rax+rcx]
+	; r15d = offset of [piece_on(prevSq),prevSq]
+
+		mov   edx, r12d
+		mov   eax, r12d
+		and   eax, 63
+		shr   edx, 14
+	      movzx   eax, byte[rbp+Pos.board+rax]
+		 or   al, byte[_CaptureOrPromotion_or+rdx]
+	       test   al, byte[_CaptureOrPromotion_and+rdx]
+		jnz   .ReturnTTValue_SkipUpdateStats
+	UpdateStats   r12d, 0, 0, r11d, r10d, r15
+
+.ReturnTTValue_SkipUpdateStats:
+
+		mov   eax, edi
+		lea   r10d, [r10+2*(r13+1)+1]
+	; r10d = penalty
+		cmp   dword[rbx-1*sizeof.State+State.moveCount], 1
+		jne   .Return
+		cmp   byte[rbx+State.capturedPiece], 0
+		jne   .Return
+	       imul   r11d, r10d, -32
+		cmp   r10d, 324
+		jae   .Return
+      UpdateCmStats   (rbx-1*sizeof.State), r15, r11d, r10d, r8
+
 		mov   eax, edi
 		jmp   .Return
+
     end if
 
 
