@@ -488,14 +488,14 @@ macro DisplayScore buffer {
 		mov   r15, rsp
 		and   rsp, -16
 		lea   rdi, [buffer]
-		mov   eax, dword[rsp+8*10]
+		mov   eax, dword[r15+8*10]
 		add   eax, 0x08000
 		sar   eax, 16
 	     movsxd   rax, eax
 	       call   PrintSignedInteger
 		mov   al, ','
 	      stosb
-	      movsx   rax, word[rsp+8*10]
+	      movsx   rax, word[r15+8*10]
 	       call   PrintSignedInteger
 		lea   rcx, [buffer]
 	       call   _WriteOut

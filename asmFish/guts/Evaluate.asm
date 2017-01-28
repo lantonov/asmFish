@@ -1084,7 +1084,7 @@ macro EvalPassedPawns Us {
 	; add to dword[.ei.score]
 
 local addsub, subadd, Them, Up, s, PiecesUs, PiecesThem
-local ..NextPawn, ..AllDone, ..AddToBonus, ..Continue
+local ..NextPawn, ..AllDone, ..AddToBonus, ..Continue, ..DontScaleDown
 
 match =White, Us
 \{
@@ -1119,7 +1119,6 @@ ProfileInc EvalPassedPawns
 	     Assert   e, PiecesUs, qword[rbp+Pos.typeBB+8*Us], 'assertion PiecesUs failed in EvalPassedPawns'
 	     Assert   e, PiecesThem, qword[rbp+Pos.typeBB+8*Them], 'assertion PiecesThem failed in EvalPassedPawns'
 
-
 ..NextPawn:
 		bsf   r8, r9
 	       blsr   r9, r9, rax
@@ -1134,6 +1133,8 @@ ProfileInc EvalPassedPawns
 	; esi = (mbonus, ebonus)
 
 		mov   rax, qword[ForwardBB+8*(64*Us+r8)]
+		add   r8d, Up
+	; r8d = blockSq
 		mov   rdx, AttackedByThem
 		 or   rdx, PiecesThem
 		and   rax, rdx
@@ -1149,16 +1150,14 @@ ProfileInc EvalPassedPawns
 
 
 	if Us eq White
-		cmp   r8d, SQ_A4
+		cmp   r8d, SQ_A4+Up
 		 jb   ..Continue
 	else if Us eq Black
-		cmp   r8d, SQ_A6
+		cmp   r8d, SQ_A6+Up
 		jae   ..Continue
 	end if
 	; at this point rr!=0
 
-		add   r8d, Up
-	; r8d = blockSq
 
 	; ecx is free because s = r8-Up
 	s equ (r8-Up)
@@ -1233,11 +1232,32 @@ ProfileInc EvalPassedPawns
 		add   esi, eax
 
 ..Continue:		
+	; r8d = blockSq
 
 	; Assign a small bonus when the opponent has no pieces left
 		lea   eax, [esi+20]
 	       test   dword[rbx+State.npMaterial], 0x0FFFF shl (16*Them)
 	      cmovz   esi, eax
+
+	; scale down bonus for candidate passers which need more than one pawn
+	; push to become passed
+		lea   ecx, [rsi+0x08000]
+		sar   ecx, 16
+	      movsx   eax, si
+		mov   r10, qword[rbp+Pos.typeBB+8*Pawn]
+		and   r10, PiecesThem
+	       test   r10, qword[PassedPawnMask+8*(r8+64*(Us))]
+		 jz   ..DontScaleDown
+		cdq
+		sub   eax, edx
+		sar   eax, 1
+	       xchg   eax, ecx
+		cdq
+		sub   eax, edx
+		sar   eax, 1
+		shl   eax, 16
+		lea   esi, [rax+rcx]
+..DontScaleDown:
 
 		and   r8d, 7
 		add   esi, dword[PassedFile+4*r8]
