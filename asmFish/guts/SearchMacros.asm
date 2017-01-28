@@ -1112,7 +1112,7 @@ end if
 		shl   eax, 12+2
 		add   rax, qword[rbp+Pos.history]
 		mov   eax, dword[rax+4*rcx]
-		sub   eax, 8000
+		sub   eax, 4000
 
 		mov   ecx, dword[rbx-2*sizeof.State+State.history]
 
@@ -1593,13 +1593,23 @@ end if
 	; r12d = move
 	; r13d = depth
 	; r10d = bonus
+
+		mov   eax, r12d
+		mov   edx, r12d
+		and   edx, 63
+		shr   eax, 14
+	      movzx   edx, byte[rbp+Pos.board+rdx]
+		 or   dl, byte[_CaptureOrPromotion_or+rax]
+		and   dl, byte[_CaptureOrPromotion_and+rax]
+	; dl = capture or promotion
+
 		mov   eax, edi
-		cmp   edi, dword[.beta]
-		 jl   .Return
 	       test   ecx, ecx
 		 jz   .Return
 
 	; ttMove is quiet; update move sorting heuristics on TT hit
+		cmp   edi, dword[.beta]
+		 jl   .ReturnTTValue_Penalty
 
 		mov   eax, dword[rbx-1*sizeof.State+State.currentMove]
 		and   eax, 63
@@ -1608,13 +1618,7 @@ end if
 		lea   r15d, [rax+rcx]
 	; r15d = offset of [piece_on(prevSq),prevSq]
 
-		mov   edx, r12d
-		mov   eax, r12d
-		and   eax, 63
-		shr   edx, 14
-	      movzx   eax, byte[rbp+Pos.board+rax]
-		 or   al, byte[_CaptureOrPromotion_or+rdx]
-	       test   al, byte[_CaptureOrPromotion_and+rdx]
+	       test   dl, dl
 		jnz   .ReturnTTValue_SkipUpdateStats
 	UpdateStats   r12d, 0, 0, r11d, r10d, r15
 
@@ -1635,6 +1639,40 @@ end if
 		mov   eax, edi
 		jmp   .Return
 
+
+.ReturnTTValue_Penalty:
+
+		lea   r10d, [r10+2*(r13+1)+1]
+		and   ecx, 64*64-1
+		mov   r8d, dword[rbp+Pos.sideToMove]
+		shl   r8d, 12+2
+		add   r8, qword[rbp+Pos.history]
+		lea   r8, [r8+4*rcx]
+	; r8 = offset in history table
+
+		cmp   edi, dword[.alpha]
+		jge   .Return
+	       test   dl, dl
+		jnz   .Return
+	       imul   r11d, r10d, -32
+		cmp   r10d, 324
+		jae   .Return
+
+	apply_bonus   r8, r11d, r10d, 324
+
+		mov   r9d, r12d
+		and   r9d, 63
+		mov   eax, r12d
+		shr   eax, 6
+		and   eax, 63
+	      movzx   eax, byte[rbp+Pos.board+rax]
+		shl   eax, 6
+		add   r9d, eax
+	; r9 = offset in cm table
+      UpdateCmStats   (rbx-0*sizeof.State), r9, r11d, r10d, r8
+
+		mov   eax, edi
+		jmp   .Return
     end if
 
 
