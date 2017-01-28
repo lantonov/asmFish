@@ -113,19 +113,9 @@ UciNextCmdFromCmdLine:
 		mov   qword[CmdLineStart], rsi
 		mov   rsi, r15			; restore current command address
 
-if VERBOSE
-Display_String 'processing cmd line command: '
-		mov   rcx, rsi
-		mov   rdi, qword[CmdLineStart]
-		cmp   byte[rdi], 1
-		cmc
-		sbb   rdi, 0
-	       call   _WriteOut
-		lea   rcx, [sz_NewLine]
-		lea   rdi, [sz_NewLineEnd]
-	       call   _WriteOut
-end if
-
+GD String, 'processing cmd line command: '
+GD String, rsi
+GD NewLine
 		jmp   UciChoose
 
 
@@ -141,7 +131,7 @@ UciWriteOut_NewLine:
 UciWriteOut:
 	       call   _WriteOut_Output
 UciGetInput:
-GD_ResponseTime
+GD ResponseTime
 
 		mov   rsi, qword[CmdLineStart]
 	       test   rsi, rsi
@@ -151,7 +141,7 @@ GD_ResponseTime
 	       test   eax, eax
 		jnz   UciQuit
 
-GD_GetTime
+GD GetTime
 UciChoose:
 	; rsi is the address of the string to process
 

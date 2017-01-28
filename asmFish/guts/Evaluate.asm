@@ -407,16 +407,6 @@ end if
 
 ..AllDone:
 
-
-
-ED_String ' evaluate_pieces<'
-ED_Int Us
-ED_String ', '
-ED_Int Pt
-ED_String '>: '
-ED_Score rsi
-ED_NewLine
-
 }
 
 
@@ -556,7 +546,6 @@ match =Black, Us
       BishopAttacks   rdx, r11, PiecesUs, rax
 	; rdx = b1 = pos.attacks_from<BISHOP>(ksq)
 		xor   PiecesUs, PiecesThem
-
 
 
 	; Enemy queen safe checks
@@ -718,13 +707,6 @@ match=1,DEBUG\{ and   rdx, qword[rcx+8*7] \}
 	else if Us eq Black
 		sub   dword[.ei.score], esi
 	end if
-
-
-ED_String ' evaluate_king<'
-ED_Int Us
-ED_String '>: '
-ED_Score rsi
-ED_NewLine
 
 }
 
@@ -1087,13 +1069,6 @@ match =Black, Us
 	       imul   eax, ThreatByPawnPush
 	     addsub   esi, eax
 
-
-ED_String ' evaluate_threats<'
-ED_Int Us
-ED_String '>: '
-ED_Score rsi
-ED_NewLine
-
 }
 
 
@@ -1275,12 +1250,6 @@ ProfileInc EvalPassedPawns
 ..AllDone:
 		mov   rdi, qword[.ei.pi]
 
-ED_String ' evaluate_passed_pawns<'
-ED_Int Us
-ED_String '>: '
-ED_Score dword[.ei.score]
-ED_NewLine
-
 }
 
 
@@ -1390,12 +1359,6 @@ match =Black, Us
 		shl   eax, 16
 
 	     addsub   esi, eax
-
-ED_String ' evaluate_space<'
-ED_Int Us
-ED_String '>: '
-ED_Score rsi
-ED_NewLine
 
 }
 
@@ -1696,11 +1659,6 @@ end virtual
 		sub   eax, r11d
 		add   esi, eax
 
-ED_String ' evaluate_initiative: '
-ED_Score rsi
-ED_String 'partial score: '
-ED_Score rsi
-
 	; esi = score
 	; r14 = ei.pi
 	; Evaluate scale factor for the winning side
@@ -1726,8 +1684,6 @@ end if
 	       test   ecx, ecx
 		jnz   Evaluate_Cold2.HaveScaleFunction	      ; 1.98%
 .HaveScaleFunctionReturn:
-ED_String ' ei.me->scale_factor(pos, strongSide): '
-ED_Int rax
 		lea   ecx, [rax-48]
 		mov   r10, qword[rbp+Pos.typeBB+8*Bishop]
 		mov   r8, qword[rbp+Pos.typeBB+8*White]
@@ -1782,10 +1738,6 @@ ED_Int rax
 	; r12d = eg_value(score)
 	; adjust score for side to move
 
-;SD_String 'sf:'
-;SD_Int rax
-;SD_String '|'
-
 if PEDANTIC
   ;// Interpolate between a middlegame and a (scaled by 'sf') endgame score
   ;Value v =  mg_value(score) * int(ei.me->game_phase())
@@ -1833,10 +1785,6 @@ else
 		xor   eax, ecx
 		lea   eax, [rax+rdi+Eval_Tempo]
 end if
-
-SD_String 'eval:'
-SD_Int rax
-SD_String '|'
 
 		add   rsp, sizeof.EvalInfo
 		pop   r15 r14 r13 r12 rdi rsi rbx

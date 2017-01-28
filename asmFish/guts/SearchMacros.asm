@@ -80,20 +80,6 @@ end virtual
 	 _chkstk_ms   rsp, .localsize
 		sub   rsp, .localsize
 
-match =_ROOT_NODE, NT \{
-SD_String 's<2>('     \}
-match =_PV_NODE, NT \{
-SD_String 's<1>('   \}
-match =_NONPV_NODE, NT \{
-SD_String 's<0>('      \}
-SD_Int rcx
-SD_String ','
-SD_Int rdx
-SD_String ','
-SD_Int r8
-SD_String ')'
-SD_NewLine
-
 		mov   dword[.alpha], ecx
 		mov   dword[.beta], edx
 		mov   dword[.depth], r8d
@@ -270,7 +256,6 @@ end if
 	       test   r13d, r13d
 		jnz   .StaticValueYesTTHit
 .StaticValueNoTTHit:
-;SD_String 'ttHit=f|'
 		mov   eax, dword[rbx-1*sizeof.State+State.staticEval]
 		neg   eax
 		add   eax, 2*Eval_Tempo
@@ -287,7 +272,6 @@ end if
       MainHash_Save   .ltte, r12, r9w, edx, BOUND_NONE, DEPTH_NONE, 0, r8w
 		jmp   .StaticValueDone
 .StaticValueYesTTHit:
-;SD_String 'ttHit=t|'
 		cmp   eax, VALUE_NONE
 		jne   @f
 	       call   Evaluate
@@ -485,9 +469,6 @@ end if
 
 
 	; initialize movepick
-
-SD_String 'init MovePick probcut'
-SD_NewLine
 	     Assert   e, qword[rbx+State.checkersBB], 0, 'assertion qword[rbx+State.checkersBB] == 0 failed in Search.Step9'
 		lea   r15, [MovePick_PROBCUT_GEN]
 		mov   dword[rbx+State.threshold], edi
@@ -653,8 +634,7 @@ end if
 .FMH2 equ (rbx-4*sizeof.State+State.counterMoves)
 
 
-SD_String 'init MovePick main'
-SD_NewLine
+        ; initialize move pick
 
 		mov   ecx, dword[.ttMove]
 		mov   edx, dword[.depth]
@@ -669,7 +649,6 @@ SD_NewLine
 		add   edx, eax
 		mov   eax, dword[rdi+4*rdx]
 		mov   dword[rbx+State.countermove], eax
-
 
 
 		lea   r15, [MovePick_CAPTURES_GEN]
@@ -753,12 +732,6 @@ SD_NewLine
 		mov   dword[.move], eax
 	       test   eax, eax
 		 jz   .MovePickDone
-
-SD_String 'mp='
-SD_Move rax
-SD_String '|'
-
-
 		cmp   eax, dword[.excludedMove]
 		 je   .MovePickLoop
 
@@ -780,11 +753,6 @@ SD_String '|'
 		add   eax, 1
 		mov   dword[rbx+State.moveCount], eax
 		mov   dword[.moveCount], eax
-
-;SD_String 'mc='
-;SD_Int rax
-;SD_String '|'
-
 
 		xor   eax, eax
 	if .PvNode eq 1
@@ -840,11 +808,6 @@ end if
 		and   edx, ecx
 		sar   edx, 31
 		mov   byte[.moveCountPruning], dl
-
-;SD_String 'mcp='
-;SD_Bool8 rdx
-;SD_NewLine
-
 
 
       ; Step 12. Extend checks
@@ -1573,14 +1536,6 @@ end if
     end if
       MainHash_Save   .ltte, r8, r9w, edx, sil, byte[.depth], eax, word[rbx+State.staticEval]
 		mov   eax, edi
-
-match =_ROOT_NODE, NT \{
-SD_String 's<2>r'     \}
-match =_PV_NODE, NT \{
-SD_String 's<1>r'   \}
-match =_NONPV_NODE, NT \{
-SD_String 's<0>r'      \}
-SD_Int r15
 
 .Return:
 		add   rsp, .localsize

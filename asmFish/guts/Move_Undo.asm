@@ -16,8 +16,9 @@ match=2, VERBOSE {
 	       push   rax rcx rsi rdi
 		mov   esi, ecx
 		lea   rdi, [VerboseOutput]
-		mov   rax, 'undomove'
-	      stosq
+		mov   eax, 'udm'
+	      stosd
+                sub   rdi, 1
 	     movsxd   rax, dword[rbp+Pos.gamePly]
 	       call   PrintSignedInteger
 		mov   al, ':'

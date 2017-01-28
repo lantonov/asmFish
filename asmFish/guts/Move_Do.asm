@@ -135,8 +135,10 @@ Move_Do:
 	       push   rsi rdi r12 r13 r14 r15
 	       push   rcx rdx
 
+        ; stack is unaligned at this point
+
 match =1, DEBUG {
-	       push   rcx rdx
+	       push   rax rcx rdx
 		sub   rsp, MAX_MOVES*sizeof.ExtMove
 		mov   dword[rbp+Pos.debugDWORD1], ecx
 		lea   rdi, [DebugOutput]
@@ -166,11 +168,11 @@ PrintNewLine
 		lea   rcx, [rcx+sizeof.ExtMove]
 		jne   @b
 		add   rsp, MAX_MOVES*sizeof.ExtMove
-		pop   rdx rcx
+		pop   rdx rcx rax
 }
 
 match=2, VERBOSE {
-	       push   rax rcx rsi rdi
+	       push   rax rcx rdx rsi rdi
 		mov   esi, ecx
 		lea   rdi, [VerboseOutput]
 		mov   ax, 'dm'
@@ -182,9 +184,11 @@ match=2, VERBOSE {
 		mov   ecx, esi
 		xor   edx, edx
 	       call   PrintUciMove
+		mov   al, '|'
+	      stosb
 		lea   rcx, [VerboseOutput]
 	       call   _WriteOut
-		pop   rdi rsi rcx rax
+		pop   rdi rsi rdx rcx rax
 		add   dword[rbp+Pos.gamePly], 1	  ; gamePly is only used by search to init the timeman
 }
 
@@ -311,15 +315,6 @@ end if
 	      vmovq   qword[rbx+State.materialKey], xmm3
 	      vmovq   qword[rbx+State.psq], xmm6
 
-;match =2, VERBOSE {
-;movsx eax, word[rbx+State.rule50]
-;SD_Int rax
-;SD_String ','
-;movsx eax, word[rbx+State.pliesFromNull]
-;SD_Int rax
-;SD_String '|'
-;}
-
 		mov   r15, qword[rbp+Pos.typeBB+8*rsi]
 		xor   esi, 1
 		mov   r14, qword[rbp+Pos.typeBB+8*rsi]
@@ -360,7 +355,7 @@ match =1, DEBUG {
 		cmp   edx, r12d
 		 je   Move_Do_capself
 		cmp   eax, King
-		 je    Move_Do_capking
+		 je   Move_Do_capking
 }
 
 		mov   rdi, qword[rbp+Pos.typeBB+r12]
@@ -758,7 +753,7 @@ Move_Do_post_posill:
 
 
 Move_Do_GoError:
-PrintNewLine
+       PrintNewLine
 		mov   rcx, qword[rbp+Pos.debugQWORD1]
 	       call   PrintString
 PrintNewLine
@@ -773,5 +768,5 @@ PrintNewLine
 	      stosd
 		lea   rdi, [Output]
 	       call   _ErrorBox
-int3
+               int3
 }

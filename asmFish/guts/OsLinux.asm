@@ -513,11 +513,11 @@ _VirtualAllocNuma:
 if DEBUG > 0
 add qword[DebugBalance], rcx
 end if
-GD_String 'size: '
-GD_Hex rcx
-GD_String '  alloc'
-GD_Int rdx
-GD_String ': '
+GD String, 'size: '
+GD Hex, rcx
+GD String, '  alloc'
+GD Int32, rdx
+GD String, ': '
 		mov   ebx, edx
 		mov   rbp, rcx
 		xor   edi, edi
@@ -530,8 +530,8 @@ GD_String ': '
 		mov   r15, rax
 	       test   rax, rax
 		 js   Failed_sys_mmap
-GD_Hex rax
-GD_NewLine
+GD Hex, rax
+GD NewLine
 
 		mov   rdi, r15		; addr
 		mov   rsi, rbp		; len
@@ -561,9 +561,9 @@ _VirtualAlloc:
 if DEBUG > 0
 add qword[DebugBalance], rcx
 end if
-GD_String 'size: '
-GD_Hex rcx
-GD_String '  alloc : '
+GD String, 'size: '
+GD Hex, rcx
+GD String, '  alloc : '
 		xor   edi, edi
 		mov   rsi, rcx
 		mov   edx, PROT_READ or PROT_WRITE
@@ -573,8 +573,8 @@ GD_String '  alloc : '
 	    syscall
 	       test   rax, rax
 		 js   Failed_sys_mmap
-GD_Hex rax
-GD_NewLine
+GD Hex, rax
+GD NewLine
 		pop   rbx rdi rsi
 		ret
 
@@ -588,11 +588,11 @@ _VirtualFree:
 if DEBUG > 0
 sub qword[DebugBalance], rdx
 end if
-GD_String 'size: '
-GD_Hex rdx
-GD_String '  free  : '
-GD_Hex rcx
-GD_NewLine
+GD String, 'size: '
+GD Hex, rdx
+GD String, '  free  : '
+GD Hex, rcx
+GD NewLine
 		mov   rdi, rcx
 		mov   rsi, rdx
 		mov   eax, sys_munmap
@@ -625,9 +625,9 @@ _VirtualAlloc_LargePages:
 if DEBUG > 0
 add qword[DebugBalance], rcx
 end if
-GD_String 'large size: '
-GD_Hex rcx
-GD_String '  alloc: '
+GD String, 'large size: '
+GD Hex, rcx
+GD String, '  alloc: '
 		xor   edi, edi
 		mov   rsi, rcx
 		mov   edx, PROT_READ or PROT_WRITE
@@ -639,8 +639,8 @@ GD_String '  alloc: '
 		mov   r15, rax
 	       test   rax, rax
 		 js   Failed_sys_mmap
-GD_Hex rax
-GD_NewLine
+GD Hex, rax
+GD NewLine
 
 		mov   rdi, r15
 		mov   rsi, r14
@@ -733,6 +733,8 @@ _WriteOut:
 	; in: rcx  address of string start
 	;     rdi  address of string end
 	       push   rsi rdi rbx
+ AssertStackAligned   '_WriteOut'
+
 		mov   rsi, rcx
 		mov   rdx, rdi
 		sub   rdx, rcx

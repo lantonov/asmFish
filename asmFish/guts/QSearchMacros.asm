@@ -92,62 +92,6 @@ end virtual
 	 _chkstk_ms   rsp, .localsize
 		sub   rsp, .localsize
 
-;match =_PV_NODE, NT
-;\{
-;match =1, InCheck \\{
-;DebugStackUse 'qsearch<PV, in check>'
-;\\}
-;match =0, InCheck \\{
-;DebugStackUse 'qsearch<PV, not in check>'
-;\\}
-;\}
-;match =_NONPV_NODE, NT
-;\{
-;match =1, InCheck \\{
-;DebugStackUse 'qsearch<NON_PV, in check>'
-;\\}
-;match =0, InCheck \\{
-;DebugStackUse 'qsearch<NON_PV, not in check>'
-;\\}
-;\}
-
-
-match =2, VERBOSE \{
-	       push   rcx rdx r8 r9 r13 r14 r15
-		mov   r15, rcx
-		mov   r14, rdx
-		mov   r13, r8
-		lea   rdi, [VerboseOutput]
-		mov   eax,'qs<'
-	      stosd
-		sub   rdi, 1
-match =1, InCheck \\{
-		mov   al, 't'
-\\}
-match =0, InCheck \\{
-		mov   al, 'f'
-\\}
-	      stosb
-		mov   eax, '> ('
-	      stosd
-		sub   rdi, 1
-	     movsxd   rax, r15d
-	       call   PrintSignedInteger
-		mov   ax, ', '
-	      stosw
-	     movsxd   rax, r14d
-	       call   PrintSignedInteger
-		mov   eax, ')  '
-	      stosd
-		sub   rdi, 1
-	     movsxd   rax, r13d
-	       call   PrintSignedInteger
-		PrintNewLine
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r15 r14 r13 r9 r8 rdx rcx
-\}
-
 
 		mov   dword[.alpha], ecx
 		mov   dword[.beta], edx
@@ -339,10 +283,6 @@ end if
 		mov   dword[.move], eax
 	       test   eax, eax
 		 jz   .MovePickDone
-
-SD_String 'Qmp='
-SD_Move rax
-SD_String '|'
 
 
 	; check for check and get address of search function
@@ -584,94 +524,12 @@ match =2, VERBOSE \{
 
 	      align   8
 .ReturnA:
-match =2, VERBOSE \{
-	       push   rax rcx rdx r8
-		mov   word[Output],'A '
-		lea   rdi, [Output+2]
-	       call   _WriteOut_Output
-		pop   r8 rdx rcx rax
-		jmp   .Return
-\}
-
 .ReturnB:
-match =2, VERBOSE \{
-
-	       push   rax rcx rdx r8
-		mov   word[Output],'B '
-		lea   rdi, [Output+2]
-	       call   _WriteOut_Output
-		pop   r8 rdx rcx rax
-		jmp   .Return
-\}
-
 .ReturnC:
-match =2, VERBOSE \{
-	       push   rax rcx rdx r8
-		mov   word[Output],'C '
-		lea   rdi, [Output+2]
-	       call   _WriteOut_Output
-		pop   r8 rdx rcx rax
-		jmp   .Return
-\}
-
 .ReturnD:
-match =2, VERBOSE \{
-	       push   rax rcx rdx r8
-		mov   word[Output],'D '
-		lea   rdi, [Output+2]
-	       call   _WriteOut_Output
-		pop   r8 rdx rcx rax
-		jmp   .Return
-\}
-
 .ReturnE:
-match =2, VERBOSE \{
-	       push   rax rcx rdx r8
-		mov   word[Output],'E '
-		lea   rdi, [Output+2]
-	       call   _WriteOut_Output
-		pop   r8 rdx rcx rax
-		jmp   .Return
-\}
-
 .ReturnF:
-match =2, VERBOSE \{
-	       push   rax rcx rdx r8
-		mov   word[Output],'F '
-		lea   rdi, [Output+2]
-	       call   _WriteOut_Output
-		pop   r8 rdx rcx rax
-		jmp   .Return
-\}
-
-
 .Return:
-
-
-match =2, VERBOSE \{
-	       push   rax r13 r14 r15
-		mov   r15, rax
-		lea   rdi, [VerboseOutput]
-		mov   eax,'qs<'
-	      stosd
-		sub   rdi, 1
-match =1, InCheck \\{
-		mov   al, 't'
-\\}
-match =0, InCheck \\{
-		mov   al, 'f'
-\\}
-	      stosb
-	     szcall   PrintString, '>r'
-	     movsxd   rax, r15d
-	       call   PrintSignedInteger
-		PrintNewLine
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r15 r14 r13 rax
-\}
-
-
 		add   rsp, .localsize
 		pop   r15 r14 r13 r12 rdi rsi rbx
 		ret

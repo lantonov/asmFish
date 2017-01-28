@@ -70,9 +70,6 @@ match =1, DEBUG {
 .Drawish:
 		xor   eax, esi
 		sub   eax, esi
-
-ND_String 'KXK eval: '
-ND_Int rax
 		pop   rsi rdi r14 r15
 		ret
 
@@ -89,8 +86,6 @@ ND_Int rax
 	       blsr   r15, r15, rcx
 		jnz   .NextSquare
 		xor   eax, eax
-ND_String 'KXK eval: '
-ND_Int rax
 		pop   rsi rdi r14 r15
 		ret
 
@@ -129,8 +124,6 @@ EndgameEval_KBNK:
 		sub   ecx, 1
 		xor   eax, ecx
 		sub   eax, ecx
-ND_String 'KBNK eval: '
-ND_Int rax
 		ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -202,8 +195,6 @@ match =1, DEBUG {
 		 bt   r11, rdx
 		sbb   edx, edx
 		and   eax, edx
-ND_String 'KPK eval: '
-ND_Int rax
 		ret
 
 
@@ -311,8 +302,6 @@ psq equ r11d
 		xor   eax, esi
 		sub   eax, esi
 		pop   rsi
-ND_String 'KRKP eval: '
-ND_Int rax
 		ret
 
 restore wksq_
@@ -339,8 +328,6 @@ EndgameEval_KRKB:
 		sub   ecx, 1
 		xor   eax, ecx
 		sub   eax, ecx
-ND_String 'KRKB eval: '
-ND_Int rax
 		ret
 
 
@@ -365,8 +352,6 @@ EndgameEval_KRKN:
 		sub   ecx, 1
 		xor   eax, ecx
 		sub   eax, ecx
-ND_String 'KRKN eval: '
-ND_Int rax
 		ret
 
 
@@ -409,8 +394,6 @@ EndgameEval_KQKP:
 		sub   ecx, 1
 		xor   eax, ecx
 		sub   eax, ecx
-ND_String 'KQKP eval: '
-ND_Int rax
 		ret
 
 
@@ -439,8 +422,6 @@ EndgameEval_KQKR:
 		sub   ecx, 1
 		xor   eax, ecx
 		sub   eax, ecx
-ND_String 'KQKR eval: '
-ND_Int rax
 		ret
 
 
@@ -449,8 +430,6 @@ ND_Int rax
 EndgameEval_KNNK:
 	; Some cases of trivial draws
 		xor   eax, eax
-ND_String 'KNNK eval: '
-ND_Int rax
 		ret
 
 
@@ -461,24 +440,6 @@ ND_Int rax
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameScale_KBPsK:
-
-ND_String 'W'
-ND_UInt64 qword[rbp+Pos.typeBB+8*White]
-ND_String 'B'
-ND_UInt64 qword[rbp+Pos.typeBB+8*Black]
-ND_String 'P'
-ND_UInt64 qword[rbp+Pos.typeBB+8*Pawn]
-ND_String 'N'
-ND_UInt64 qword[rbp+Pos.typeBB+8*Knight]
-ND_String 'B'
-ND_UInt64 qword[rbp+Pos.typeBB+8*Bishop]
-ND_String 'R'
-ND_UInt64 qword[rbp+Pos.typeBB+8*Rook]
-ND_String 'Q'
-ND_UInt64 qword[rbp+Pos.typeBB+8*Queen]
-ND_String 'K'
-ND_UInt64 qword[rbp+Pos.typeBB+8*King]
-
 	; r8 = pawns
 	; r9 = strong pieces
 		mov   r8, qword[rbp+Pos.typeBB+8*Pawn]
@@ -505,8 +466,6 @@ ND_UInt64 qword[rbp+Pos.typeBB+8*King]
 	; else return none
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
-ND_String 'KBPsK scale: '
-ND_Int rax
 		ret
 
 	      align   8
@@ -532,8 +491,6 @@ ND_Int rax
 		jae   .ReturnNone
 	; distance(queeningSq, kingSq) <= 1
 		xor   eax, eax
-ND_String 'KBPsK scale: '
-ND_Int rax
 		ret
 
 	      align   8
@@ -604,139 +561,8 @@ ND_Int rax
 		cmp   edx, SQ_A7
 		 jb   .ReturnNone
 		xor   eax, eax
-ND_String 'KBPsK scale: '
-ND_Int rax
 		ret
 
-
-
-if 0
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	      align   16
-EndgameScale_KBPsK:
-
-		mov   r8, qword[rbp+Pos.typeBB+8*rcx]
-		mov   r9, r8
-		and   r8, qword[rbp+Pos.typeBB+8*Pawn]
-		xor   edx, edx
-		mov   r11, LightSquares
-		mov   rax, not FileABB
-	       test   r8, rax
-		 jz   .AllOnAFile
-		not   r11
-		mov   rax, not FileHBB
-	       test   r8, rax
-		 jz   .AllOnHFile
-		mov   r10, not FileBBB
-	       test   r8, r10
-		 jz   .AllOnBFile
-		mov   r10, not FileGBB
-	       test   r8, r10
-		 jz   .AllOnGFile
-.ReturnNone:
-		mov   eax, SCALE_FACTOR_NONE
-ND_String 'KBPsK scale: '
-ND_Int rax
-		ret
-
-	      align   8
-.AllOnHFile:
-		add   edx, 7
-.AllOnAFile:
-		xor   ecx, 1
-	       imul   eax, ecx, 56
-		xor   edx, eax
-		shl   edx, 6
-
-		lea   rax, [rcx-1]
-		xor   r11, rax
-
-		mov   r10, qword[rbp+Pos.typeBB+8*Bishop]
-		;and   r10, r9
-
-		mov   rax, qword[rbp+Pos.typeBB+8*King]
-		and   rax, qword[rbp+Pos.typeBB+8*rcx]
-		bsf   rax, rax
-		;xor   ecx, 1
-	       test   r10, r11
-		jnz   .ReturnNone
-		cmp   byte[SquareDistance+rdx+rax], 2
-		jae   .ReturnNone
-		xor   eax, eax
-ND_String 'KBPsK scale: '
-ND_Int rax
-		ret
-
-	      align   8
-.AllOnBFile:
-.AllOnGFile:
-		xor   ecx, 1
-	; ecx = weak side
-	      movzx   eax, word[rbx+State.npMaterial+2*rcx]
-		mov   r8, qword[rbp+Pos.typeBB+8*Pawn]
-		and   r8, qword[rbp+Pos.typeBB+8*rcx]
-		 jz   .ReturnNone
-	       test   eax, eax
-		jnz   .ReturnNone
-		mov   r11, qword[rbp+Pos.typeBB+8*rcx]
-		and   r11, qword[rbp+Pos.typeBB+8*King]
-		bsf   r11, r11
-	; r11 = weakKingSq
-		xor   ecx, 1
-		 jz   @f
-		bsf   r8, r8
-		jmp   .HaveBackmostSq
-	@@:	bsr   r8, r8
-.HaveBackmostSq:
-	; r8 = weakPawnSq
-		mov   r10, qword[rbp+Pos.typeBB+8*Bishop]
-		and   r10, r9
-		bsf   r10, r10
-	; r10 = bishopSq
-	       imul   edx, ecx, 7
-		mov   eax, r8d
-		shr   eax, 3
-		xor   eax, edx
-		cmp   eax, RANK_7
-		jne   .ReturnNone
-
-		xor   ecx, 1
-		lea   eax, [2*rcx-1]
-		xor   ecx, 1
-
-		lea   eax, [r8+8*rax]
-		mov   rdx, qword[rbp+Pos.typeBB+8*Pawn]
-		and   rdx, r9
-		 bt   rdx, rax
-		jnc   .ReturnNone
-		and   r9, qword[rbp+Pos.typeBB+8*King]
-		bsf   r9, r9
-	; r9 = strongKingSq
-	       blsr   rax, rdx	     ; rax is zero if strong has one pawn
-		 jz   @f
-		xor   r10d, r8d
-		and   r10d, 01001b
-		 jz   .ReturnNone
-		cmp   r10d, 01001b
-		 je   .ReturnNone
-	@@:
-		shl   r8, 6
-	      movzx   eax, byte[SquareDistance+r8+r11]
-	      movzx   edx, byte[SquareDistance+r8+r9]
-		cmp   eax, 3
-		jae   .ReturnNone
-		cmp   eax, edx
-		 ja   .ReturnNone
-	       imul   edx, ecx, 56
-		xor   edx, r11d
-		cmp   edx, SQ_A7
-		 jb   .ReturnNone
-		xor   eax, eax
-ND_String 'KBPsK scale: '
-ND_Int rax
-		ret
-
-end if
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -774,13 +600,9 @@ EndgameScale_KQKRPs:
 		cmp   r10d, RANK_3
 		jne   .ReturnNone
 		xor   eax, eax
-ND_String 'KQKRPs scale: '
-ND_Int rax
 		ret
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
-ND_String 'KQKRPs scale: '
-ND_Int rax
 		ret
 
 
@@ -969,8 +791,6 @@ qs equ r15d
 		sub   eax, SCALE_FACTOR_MAX
 		neg   eax
 		pop   rbx r12 r13 r14 r15
-ND_String 'KRPKR scale: '
-ND_Int rax
 		ret
 .7:
 		cmp   f, FILE_A
@@ -1026,8 +846,6 @@ ND_Int rax
 		add   eax, SCALE_FACTOR_MAX
 		add   eax, edx
 		pop   rbx r12 r13 r14 r15
-ND_String 'KRPKR scale: '
-ND_Int rax
 		ret
 .8:
 		cmp   r, RANK_4
@@ -1042,8 +860,6 @@ ND_Int rax
 		jne   @f
 		mov   eax, 10
 		pop   rbx r12 r13 r14 r15
-ND_String 'KRPKR scale: '
-ND_Int rax
 		ret
 	@@:
 		mov   eax, bksq
@@ -1062,20 +878,14 @@ ND_Int rax
 		sub   eax, 24
 		neg   eax
 		pop   rbx r12 r13 r14 r15
-ND_String 'KRPKR scale: '
-ND_Int rax
 		ret
 .9:
 		mov   eax, SCALE_FACTOR_NONE
 		pop   rbx r12 r13 r14 r15
-ND_String 'KRPKR scale: '
-ND_Int rax
 		ret
 .ReturnDraw:
 		xor   eax, eax
 		pop   rbx r12 r13 r14 r15
-ND_String 'KRPKR scale: '
-ND_Int rax
 		ret
 
 
@@ -1138,8 +948,6 @@ ppush  equ r11d
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
 .Return:
-ND_String 'KRPKB scale: '
-ND_Int rax
 		ret
 .Rank6:
 	       imul   eax, ksq, 64
@@ -1160,8 +968,6 @@ ND_Int rax
 		cmp   eax, 3
 		 jb   .ReturnNone
 		mov   eax, 8
-ND_String 'KRPKB scale: '
-ND_Int rax
 		ret
 .Rank5:
 		mov   eax, bsq
@@ -1189,8 +995,6 @@ ND_Int rax
 		cmp   ksq, edx
 		jne   .Return
 		mov   eax, 24
-ND_String 'KRPKB scale: '
-ND_Int rax
 		ret
 restore ksq_
 restore bsq_
@@ -1263,13 +1067,9 @@ KRPPKRPScaleFactors equ (0+256*(9+256*(10+256*(14+256*(21+256*(44))))))
 		lea   ecx, [8*r11]
 		shr   rax, cl
 	      movzx   eax, al
-ND_String 'KRPPKRP scale: '
-ND_Int rax
 		ret
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
-ND_String 'KRPPKRP scale: '
-ND_Int rax
 		ret
 restore wpsq1_
 restore wpsq2_
@@ -1315,8 +1115,6 @@ ksq_  equ r9
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
 .Return:
-ND_String 'KPsK scale: '
-ND_Int rax
 		ret
 restore pawns
 restore ksq
@@ -1377,9 +1175,6 @@ weakKingSq_	equ r11
 		 je   .c2
 .ReturnDraw:
 		xor   eax, eax
-
-ND_String 'KBPKB scale: '
-ND_Int rax
 		pop   rbx
 		ret
 .c2:
@@ -1410,9 +1205,6 @@ ND_Int rax
 		jnz   .ReturnDraw
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
-
-ND_String 'KBPKB scale: '
-ND_Int rax
 		pop   rbx
 		ret
 
@@ -1473,10 +1265,6 @@ blockSq2_ equ r14
 		jne   @f
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
-
-ND_String 'KBPPKB scale: '
-ND_Int rax
-
 		pop   rbx r12 r13 r14 r15
 		ret
 	@@:
@@ -1521,8 +1309,6 @@ ND_Int rax
 		 jb   .ReturnNone
 .ReturnDraw:
 		xor   eax, eax
-ND_String 'KBPPKB scale: '
-ND_Int rax
 		pop   rbx r12 r13 r14 r15
 		ret
 .c1:
@@ -1550,8 +1336,6 @@ ND_Int rax
 .ReturnNone2:
 		mov   eax, SCALE_FACTOR_NONE
 		pop   rbx r12 r13 r14 r15
-ND_String 'KBPPKB scale: '
-ND_Int rax
 		ret
 .c12:
 		cmp   ksq, blockSq2
@@ -1567,8 +1351,6 @@ ND_Int rax
 		jnz   .ReturnDraw
 		mov   eax, SCALE_FACTOR_NONE
 		pop   rbx r12 r13 r14 r15
-ND_String 'KBPPKB scale: '
-ND_Int rax
 		ret
 restore wbsq
 restore bbsq
@@ -1637,14 +1419,10 @@ weakKingSq_	equ r10
 	@@:
 		xor   eax, eax
 		pop   rbx
-ND_String 'KBPKN scale: '
-ND_Int rax
 		ret
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
 		pop   rbx
-ND_String 'KBPKN scale: '
-ND_Int rax
 		ret
 restore pawnSq
 restore strongBishopSq
@@ -1680,8 +1458,6 @@ EndgameScale_KNPK:
 		 ja   .Return
 		xor   eax, eax
 .Return:
-ND_String 'KNPK scale: '
-ND_Int rax
 		ret
 
 
@@ -1713,15 +1489,11 @@ weakKingSq_ equ r10
 	       test   rax, qword[ForwardBB+rsi+8*pawnSq_]
 		jnz   @f
 		mov   eax, SCALE_FACTOR_NONE
-ND_String 'KNPKB scale: '
-ND_Int rax
 		pop   rsi
 		ret
 @@:
 	       imul   eax, weakKingSq, 64
 	      movzx   eax, byte[SquareDistance+rax+pawnSq_]
-ND_String 'KNPKB scale: '
-ND_Int rax
 		pop   rsi
 		ret
 restore pawnSq
@@ -1771,8 +1543,6 @@ EndgameScale_KPKP:
 		cmp   eax, 2
 		 jb   .try_KPK
 		mov   eax, SCALE_FACTOR_NONE
-ND_String 'KPKP scale: '
-ND_Int rax
 		ret
 .try_KPK:
 	; look up entry
@@ -1793,6 +1563,4 @@ ND_Int rax
 		 bt   r11, rdx
 		sbb   eax, eax
 		and   eax, SCALE_FACTOR_NONE
-ND_String 'KPKP scale: '
-ND_Int rax
 		ret

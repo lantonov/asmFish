@@ -2,22 +2,22 @@
 	      align   16
 Move_DoNull:
 	       push   rsi rdi r12 r13 r14 r15
+        ; stack is unaligned at this point
 
 ProfileInc Move_DoNull
 
 
 match =1, DEBUG {
-	       push   rcx rdi
+	       push   rcx rdx rdi
 		lea   rdi, [DebugOutput]
 		mov   qword[rbp+Pos.state], rbx
 	       call   Position_PrintSmall
-		mov   eax, 10
-	      stosd
+       PrintNewLine
 		mov   qword[rbp+Pos.state], rbx
 	       call   Position_IsLegal
 	       test   eax, eax
 		jnz   Move_DoNull_posill
-		pop   rdi rcx
+		pop   rdi rdx rcx
 }
 
 	; null move doesn't use a move picker
@@ -91,18 +91,16 @@ Move_DoNull_post_posill:
 		jmp   Move_DoNull_GoError
 
 
-		Move_DoNull_GoError:
-		PrintNewLine
+Move_DoNull_GoError:
+       PrintNewLine
 		mov   rcx, qword[rbp+Pos.debugQWORD1]
 	       call   PrintString
-		mov   al, 10
-	      stosb
+       PrintNewLine
 		lea   rcx, [DebugOutput]
 	       call   PrintString
 		xor   eax, eax
 	      stosd
 		lea   rdi, [Output]
 	       call   _ErrorBox
-int3
-
+               int3
 }

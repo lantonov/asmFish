@@ -129,7 +129,7 @@ end virtual
 	     vmulsd   xmm7, xmm5, xmm5	; xmm7 = d^2
 	    vsqrtsd   xmm5, xmm5, xmm5
 	     vaddsd   xmm5, xmm5, xmm5	; xmm5 = 2*Sqrt[d]
-	     vaddsd   xmm6, xmm7, qword[constd.min]  ; xmm6 = d^2+e
+	     vaddsd   xmm6, xmm7, qword[.mind]  ; xmm6 = d^2+e
 	       imul   ebx, dword[weakness.multiPV], sizeof.RootMove
 		add   rbx, qword[rbp+Pos.rootMovesVec.table]	     ; rbx = end of moves to consider
     .Loop:
@@ -185,19 +185,25 @@ end virtual
 		pop   r15 r14 rdi rsi rbx
 		ret
 
+align 8
+.mind: dq 0.00000001
 
 
-
-
+Weakness_Create:
+                mov   byte[weakness.enabled], 0
+                mov   ecx, 1000
 
 Weakness_SetElo:
 	; in: ecx target Elo
-	;  should set averageCpLoss
+	;  should set targetLoss
 	  vcvtsi2sd   xmm0, xmm0, ecx
 		lea   rcx, [.Table]
 		lea   rdx, [.TableEnd]
 	       call   Math_Lerp
 	     vmovsd   qword[weakness.targetLoss], xmm0
+GD String, 'setting targetLoss to '
+GD Double, qword[weakness.targetLoss]
+GD NewLine
 		ret
 
 align 16

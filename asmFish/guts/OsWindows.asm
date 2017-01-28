@@ -407,11 +407,11 @@ _VirtualAllocNuma:
 if DEBUG > 0
 add qword[DebugBalance], rcx
 end if
-GD_String 'size: '
-GD_Hex rcx
-GD_String '  alloc'
-GD_Int rdx
-GD_String ': '
+GD String, 'size: '
+GD Hex, rcx
+GD String, '  alloc'
+GD Int32, rdx
+GD String, ': '
 		mov   qword[rsp+8*5], rdx
 		mov   qword[rsp+8*4], PAGE_READWRITE
 		mov   r9d, MEM_COMMIT
@@ -421,8 +421,8 @@ GD_String ': '
 	       call   qword[__imp_VirtualAllocExNuma]
 	       test   rax, rax
 		 jz   Failed__imp_VirtualAllocExNuma
-GD_Hex rax
-GD_NewLine
+GD Hex, rax
+GD NewLine
 
 		add   rsp, 8*7
 		ret
@@ -436,11 +436,11 @@ _VirtualAlloc:
  AssertStackAligned   '_VirtualAlloc'
 
 if DEBUG > 0
-add qword[DebugBalance], rcx
+                add   qword[DebugBalance], rcx
 end if
-GD_String 'size: '
-GD_Hex rcx
-GD_String '  alloc : '
+GD String, 'size: '
+GD Hex, rcx
+GD String, '  alloc : '
 		mov   rdx, rcx
 		xor   ecx, ecx
 		mov   r8d, MEM_COMMIT
@@ -448,8 +448,8 @@ GD_String '  alloc : '
 	       call   qword[__imp_VirtualAlloc]
 	       test   rax, rax
 		 jz   Failed__imp_VirtualAlloc
-GD_Hex rax
-GD_NewLine
+GD Hex, rax
+GD NewLine,
 		add   rsp, 8*5
 		ret
 
@@ -464,13 +464,13 @@ _VirtualFree:
 		 jz   .null
 
 if DEBUG > 0
-sub qword[DebugBalance], rdx
+                sub   qword[DebugBalance], rdx
 end if
-GD_String 'size: '
-GD_Hex rdx
-GD_String '  free  : '
-GD_Hex rcx
-GD_NewLine
+GD String, 'size: '
+GD Hex, rdx
+GD String, '  free  : '
+GD Hex, rcx
+GD NewLine
 		xor   edx, edx
 	       call   qword[__imp_VirtualFree]
 	       test   eax, eax
@@ -529,9 +529,9 @@ end virtual
 		div   rsi
 		mul   rsi
 		mov   rbx, rax	; save size in rbx
-GD_String 'large size: '
-GD_Hex rbx
-GD_String '  alloc: '
+GD String, 'large size: '
+GD Hex, rbx
+GD String, '  alloc: '
 		xor   ecx, ecx
 		mov   rdx, rbx
 		mov   r8d, MEM_RESERVE or MEM_COMMIT or MEM_LARGE_PAGES
@@ -544,12 +544,12 @@ GD_String '  alloc: '
 if DEBUG > 0
                 add   qword[DebugBalance], rbx
 end if
-GD_Hex rax
-GD_NewLine
+GD Hex, rax
+GD NewLine
                 jmp   .alloc_done
 .alloc_failed:
-GD_String 'FAILED'
-GD_NewLine
+GD String, 'FAILED'
+GD NewLine
 .alloc_done:
                 mov   rdx, rbx
                 add   rsp, .localsize
@@ -813,13 +813,14 @@ _ReadIn:
 if DEBUG > 0
 add qword[DebugBalance], rdx
 end if
+GD String, 'size: '
+GD Hex, rcx
+GD String, '  alloc : '
 	       call   qword[__imp_VirtualAlloc]
 	       test   rax, rax
 		 jz   Failed__imp_VirtualAlloc_ReadIn
-
-GD_String 'alloc: '
-GD_Hex rax
-GD_NewLine
+GD Hex, rax
+GD NewLine
 
 		mov   rcx, qword[InputBufferSizeB]
 
@@ -835,9 +836,11 @@ end if
 	  rep movsb
 		mov   rcx, qword[InputBuffer]
 
-GD_String 'free:  '
-GD_Hex rcx
-GD_NewLine
+GD String, 'size: '
+GD Hex, qword[InputBufferSizeB]
+GD String, '  free  : '
+GD Hex, rcx
+GD NewLine
 
 	       call   qword[__imp_VirtualFree]
 	       test   rax, rax

@@ -34,153 +34,6 @@ local ..TakingJump
 }
 
 
-macro DebugStackUse m {
-local ..message, ..over
- match =1, DEBUG \{
-	       push   rdi rax rcx rdx r8 r9 r10 r11
-		lea   rdi,[DebugOutput]
-		mov   rax, qword[rbp-Thread.rootPos+Thread.stackBase]
-		sub   rax, rsp
-		cmp   rax, qword[rbp-Thread.rootPos+Thread.stackRecord]
-		jbe   ..over
-		mov   qword[rbp-Thread.rootPos+Thread.stackRecord], rax
-	       call   PrintUnsignedInteger
-		lea   rcx, [..message]
-	       call   PrintString
-		lea   rcx, [DebugOutput]
-	       call   _WriteOut
-		jmp   ..over
-..message:
-		db  ' new stack use record in '
-		db m
-		db 13,10,0
-..over:
-		pop   r11 r10 r9 r8 rdx rcx rax rdi
- \}
-}
-
-macro DebugDisplay m {
-; lets not clobber any registers here
-local ..message, ..over
- match =1, DEBUG \{
-	       push   rdi rax rcx rdx r8 r9 r10 r11
-		jmp   ..over
-   ..message: db m
-	      db 10,0
-   ..over:
-		lea   rdi,[..message]
-	       call   _ErrorBox
-		pop   r11 r10 r9 r8 rdx rcx rax rdi
- \}
-}
-
-macro Display m {
-; lets not clobber any registers here
-local ..message, ..over
-	       push   rdi rax rcx rdx r8 r9 r10 r11
-		jmp   ..over
-   ..message: db m
-	      db 10,0
-   ..over:
-		lea   rdi,[..message]
-	       call   _ErrorBox
-		pop   r11 r10 r9 r8 rdx rcx rax rdi
-}
-
-
-
-
-macro Display_String m {
-; lets not clobber any registers here
-local ..message, ..over
-	       push   rdi rax rcx rdx r8 r9 r10 r11
-		lea   rcx, [..message]
-		jmp   ..over
-   ..message:
-	    db m
-	    db 0
-   ..over:
-		lea   rdi, [Output]
-	       call   PrintString
-		lea   rcx, [Output]
-		lea   rcx, [Output]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rdi
-}
-
-macro Display_Int x {
-	       push   x
-	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
-		lea   rdi, [Output]
-	     movsxd   rax, dword[rsp+8*9]
-	       call   PrintSignedInteger
-		lea   rcx, [Output]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
-		add   rsp, 8
-}
-
-macro Display_UInt x {
-	       push   x
-	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
-		lea   rdi, [Output]
-	     movsxd   rax, dword[rsp+8*9]
-	       call   PrintUnsignedInteger
-		lea   rcx, [Output]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
-		add   rsp, 8
-}
-
-macro Display_Hex x {
-	       push   x
-	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
-		lea   rdi, [Output]
-		mov   rcx, qword[rsp+8*9]
-	       call   PrintHex
-		lea   rcx, [Output]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
-		add   rsp, 8
-}
-
-macro Display_Move x {
-	       push   x
-	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
-		lea   rdi, [Output]
-		mov   ecx, dword[rsp+8*9]
-		xor   edx, edx
-	       call   PrintUciMove
-		lea   rcx, [Output]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
-		add   rsp, 8
-}
-
-
-macro Display_NewLine {
-; lets not clobber any registers here
-local ..message, ..over
-	       push   rdi rax rcx rdx r8 r9 r10 r11
-		lea   rcx, [..message]
-		jmp   ..over
-   ..message:
-  match =1, OS_IS_WINDOWS \{
-	    db 13
-  \}
-	    db 10
-	    db 0
-   ..over:
-		lea   rdi, [Output]
-	       call   PrintString
-		lea   rcx, [Output]
-		lea   rcx, [Output]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rdi
-}
-
-
-
 macro Assert cc,a,b,m {
 ; if the assertion succeeds, only the eflags are clobbered
 local ..skip, ..errorbox, ..message
@@ -217,32 +70,360 @@ local ..skip, ..errorbox, ..message
 		jmp   _ExitProcess
    ..skip:
  \}
-
-
 }
 
 
-
-
-macro GD_GetTime {
-match =1, VERBOSE \{
-	       call   _GetTime
-		mov   qword[VerboseTime1+8*0], rdx
-		mov   qword[VerboseTime1+8*1], rax
-\}
+macro DebugStackUse m {
+local ..message, ..over
+ match =1, DEBUG \{
+	       push   rdi rax rcx rdx r8 r9 r10 r11
+		lea   rdi,[DebugOutput]
+		mov   rax, qword[rbp-Thread.rootPos+Thread.stackBase]
+		sub   rax, rsp
+		cmp   rax, qword[rbp-Thread.rootPos+Thread.stackRecord]
+		jbe   ..over
+		mov   qword[rbp-Thread.rootPos+Thread.stackRecord], rax
+	       call   PrintUnsignedInteger
+		lea   rcx, [..message]
+	       call   PrintString
+		lea   rcx, [DebugOutput]
+	       call   _WriteOut
+		jmp   ..over
+..message:
+		db  ' new stack use record in '
+		db m
+        NewLineData
+		db 0
+..over:
+		pop   r11 r10 r9 r8 rdx rcx rax rdi
+ \}
 }
 
 
-macro GD_ResponseTime m {
+; For these macros
+;  the display function fxn is called on args
+;  if the VERBOSE setting is in the list <...>.
+
+; currently we have
+; AD which always activated
+; GD which is activated when VERBOSE=1
+; SD which is activated when VERBOSE=2
+
+macro AD fxn, [arg] {
+  forward
+    local ..message, ..over
+        if arg eqtype 'somestring'      ; make space for immediate strings
+               push   rax
+		lea   rax, [..message]
+		jmp   ..over
+           ..message:
+                 db   arg
+                 db   0
+           ..over:
+               xchg   rax, qword[rsp]
+        else if arg eq                  ; empty arg just push something
+               push   rax
+        else
+               push   arg
+        end if
+  common
+        Display#fxn   Output
+  reverse
+                add   rsp, 8            ; pop whatever was pushed
+}
+
+macro GD fxn, [arg] {
  match =1, VERBOSE \{
-		lea   rdi, [Output]
+  forward
+    local ..message, ..over
+        if arg eqtype 'somestring'
+               push   rax
+		lea   rax, [..message]
+		jmp   ..over
+           ..message:
+                 db   arg
+                 db   0
+           ..over:
+               xchg   rax, qword[rsp]
+        else if arg eq
+               push   rax
+        else
+               push   arg
+        end if
+  common
+        Display#fxn   VerboseOutput
+  reverse
+                add   rsp, 8
+ \}
+}
+
+macro SD fxn, [arg] {
+ match =2, VERBOSE \{
+  forward
+    local ..message, ..over
+        if arg eqtype 'somestring'
+               push   rax
+		lea   rax, [..message]
+		jmp   ..over
+           ..message:
+                 db   arg
+                 db   0
+           ..over:
+               xchg   rax, qword[rsp]
+        else if arg eq
+               push   rax
+        else
+               push   arg
+        end if
+  common
+        Display#fxn   VerboseOutput
+  reverse
+                add   rsp, 8
+ \}
+}
+
+
+
+; These are supposed to display stuff without clobbering registers
+; the arguments are supposed to be on the stack
+; macro is best used from the macros above
+; the macro argument 'buffer' is what we use to print the string
+
+macro DisplayString buffer {
+local ..nextchar
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11 r15
+		mov   r15, rsp
+		and   rsp, -16
+		mov   rcx, qword[r15+8*10]
+                lea   rdi, [rcx-1]
+..nextchar:
+                add   rdi, 1
+                cmp   byte[rdi], ' '
+                jae   ..nextchar
+	       call   _WriteOut
+		mov   rsp, r15
+		pop   r15 r11 r10 r9 r8 rdx rcx rax rsi rdi
+}
+macro DisplayNewLine buffer {
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11 r15
+		mov   r15, rsp
+		and   rsp, -16
+		lea   rdi, [buffer]
+       PrintNewLine
+		lea   rcx, [buffer]
+	       call   _WriteOut
+		mov   rsp, r15
+		pop   r15 r11 r10 r9 r8 rdx rcx rax rsi rdi
+}
+macro DisplayInt32 buffer {
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11 r15
+		mov   r15, rsp
+		and   rsp, -16
+		lea   rdi, [buffer]
+	     movsxd   rax, dword[r15+8*10]
+	       call   PrintSignedInteger
+		lea   rcx, [buffer]
+	       call   _WriteOut
+		mov   rsp, r15
+		pop   r15 r11 r10 r9 r8 rdx rcx rax rsi rdi
+}
+macro DisplayUInt32 buffer {
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11 r15
+		mov   r15, rsp
+		and   rsp, -16
+		lea   rdi, [buffer]
+		mov   eax, dword[r15+8*10]
+	       call   PrintUnsignedInteger
+		lea   rcx, [buffer]
+	       call   _WriteOut
+		mov   rsp, r15
+		pop   r15 r11 r10 r9 r8 rdx rcx rax rsi rdi
+}
+macro DisplayInt64 buffer {
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11 r15
+		mov   r15, rsp
+		and   rsp, -16
+		lea   rdi, [buffer]
+		mov   rax, qword[r15+8*10]
+	       call   PrintSignedInteger
+		lea   rcx, [buffer]
+	       call   _WriteOut
+		mov   rsp, r15
+		pop   r15 r11 r10 r9 r8 rdx rcx rax rsi rdi
+}
+macro DisplayUInt64 buffer {
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11 r15
+		mov   r15, rsp
+		and   rsp, -16
+		lea   rdi, [buffer]
+		mov   rax, qword[r15+8*10]
+	       call   PrintUnsignedInteger
+		lea   rcx, [buffer]
+	       call   _WriteOut
+		mov   rsp, r15
+		pop   r15 r11 r10 r9 r8 rdx rcx rax rsi rdi
+}
+macro DisplayDouble buffer {            ; this is not robust
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11 r15
+		mov   r15, rsp
+		and   rsp, -16
+                lea   rdi, [buffer]
+local digits, power
+        digits = 2
+        power = 1
+        repeat digits
+          power = 10*power
+        end repeat
+                mov   rax, power
+          vcvtsi2sd   xmm0, xmm0, rax
+             vmulsd   xmm0, xmm0, qword[r15+8*10]
+         vcvttsd2si   rax, xmm0
+                cqo
+                mov   ecx, power
+               idiv   rcx
+                mov   rsi, rdx
+	       call   PrintSignedInteger
+                mov   al, '.'
+              stosb
+                mov   rax, rsi
+                cqo
+                xor   rax, rdx
+                sub   rax, rdx
+        repeat digits
+           power = power/10
+                xor   edx, edx
+                mov   ecx, power
+                div   rcx
+                add   eax, '0'
+              stosb
+                mov   rax, rdx
+        end repeat
+		lea   rcx, [buffer]
+	       call   _WriteOut
+		mov   rsp, r15
+		pop   r15 r11 r10 r9 r8 rdx rcx rax rsi rdi
+}
+macro DisplayFloat buffer {            ; this is not robust
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11 r15
+		mov   r15, rsp
+		and   rsp, -16
+                lea   rdi, [buffer]
+local digits, power
+        digits = 2
+        power = 1
+        repeat digits
+          power = 10*power
+        end repeat
+                mov   rax, power
+          vcvtsi2sd   xmm0, xmm0, rax
+          vcvtss2sd   xmm1, xmm1, dword[r15+8*10]
+             vmulsd   xmm0, xmm0, xmm1
+         vcvttsd2si   rax, xmm0
+                cqo
+                mov   ecx, power
+               idiv   rcx
+                mov   rsi, rdx
+	       call   PrintSignedInteger
+                mov   al, '.'
+              stosb
+                mov   rax, rsi
+                cqo
+                xor   rax, rdx
+                sub   rax, rdx
+        repeat digits
+           power = power/10
+                xor   edx, edx
+                mov   ecx, power
+                div   rcx
+                add   eax, '0'
+              stosb
+                mov   rax, rdx
+        end repeat
+		lea   rcx, [buffer]
+	       call   _WriteOut
+		mov   rsp, r15
+		pop   r15 r11 r10 r9 r8 rdx rcx rax rsi rdi
+}
+macro DisplayHex buffer {
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11 r15
+		mov   r15, rsp
+		and   rsp, -16
+		lea   rdi, [buffer]
+		mov   rcx, qword[r15+8*10]
+	       call   PrintHex
+		lea   rcx, [buffer]
+	       call   _WriteOut
+		mov   rsp, r15
+		pop   r15 r11 r10 r9 r8 rdx rcx rax rsi rdi
+}
+macro DisplayMove buffer {
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11 r15
+		mov   r15, rsp
+		and   rsp, -16
+		lea   rdi, [buffer]
+		mov   ecx, dword[r15+8*10]
+		xor   edx, edx			; assume chess960=false
+	       call   PrintUciMove
+		lea   rcx, [buffer]
+	       call   _WriteOut
+		mov   rsp, r15
+		pop   r15 r11 r10 r9 r8 rdx rcx rax rsi rdi
+}
+macro DisplayScore buffer {
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11 r15
+		mov   r15, rsp
+		and   rsp, -16
+		lea   rdi, [buffer]
+		mov   eax, dword[rsp+8*10]
+		add   eax, 0x08000
+		sar   eax, 16
+	     movsxd   rax, eax
+	       call   PrintSignedInteger
+		mov   al, ','
+	      stosb
+	      movsx   rax, word[rsp+8*10]
+	       call   PrintSignedInteger
+		lea   rcx, [buffer]
+	       call   _WriteOut
+		mov   rsp, r15
+		pop   r15 r11 r10 r9 r8 rdx rcx rax rsi rdi
+}
+macro DisplayBool buffer {
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11 r15
+		mov   r15, rsp
+		and   rsp, -16
+		lea   rdi, [buffer]
+		cmp   byte[r15+8*10], 0
+	      setnz   al
+		add   al, '0'
+	      stosb
+		lea   rcx, [buffer]
+	       call   _WriteOut
+		mov   rsp, r15
+		pop   r15 r11 r10 r9 r8 rdx rcx rax rsi rdi
+}
+macro DisplayGetTime buffer { ; haha, this doesn't actually display anything
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11 r15
+		mov   r15, rsp
+		and   rsp, -16
+	       call   _GetTime
+		mov   qword[VerboseTime+8*0], rdx
+		mov   qword[VerboseTime+8*1], rax
+		mov   rsp, r15
+		pop   r15 r11 r10 r9 r8 rdx rcx rax rsi rdi
+}
+macro DisplayResponseTime buffer {
+	       push   rdi rsi rax rcx rdx r8 r9 r10 r11 r15
+		mov   r15, rsp
+		and   rsp, -16
+		lea   rdi, [buffer]
 		mov   rax, 'response'
 	      stosq
 		mov   rax, ' time:  '
 	      stosq
 	       call   _GetTime
-		sub   rdx, qword[VerboseTime1+8*0]
-		sbb   rax, qword[VerboseTime1+8*1]
+		sub   rdx, qword[VerboseTime+8*0]
+		sbb   rax, qword[VerboseTime+8*1]
 		mov   r8, rdx
 		mov   ecx, 1000
 		mul   rcx
@@ -250,351 +431,13 @@ macro GD_ResponseTime m {
 		mul   rcx
 		lea   rax, [r8+rdx]
 	       call   PrintUnsignedInteger
-		mov   eax, ' us' + (10 shl 24)
+		mov   eax, ' us'
 	      stosd
-	       call _WriteOut_Output
-\}
-}
-
-
-macro GD_String m {
-; lets not clobber any registers here
-local ..message, ..over
- match =1, VERBOSE \{
-	       push   rdi rax rcx rdx r8 r9 r10 r11
-		lea   rcx, [..message]
-		jmp   ..over
-   ..message:
-	    db m
-	    db 0
-   ..over:
-		lea   rdi, [VerboseOutput]
-	       call   PrintString
-		lea   rcx, [VerboseOutput]
-		lea   rcx, [VerboseOutput]
+		sub   rdi, 1
+       PrintNewLine
+		lea   rcx, [buffer]
 	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rdi
- \}
+		mov   rsp, r15
+		pop   r15 r11 r10 r9 r8 rdx rcx rax rsi rdi
 }
 
-macro GD_Int x {
- match =1, VERBOSE \{
-	       push   x
-	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
-		lea   rdi, [VerboseOutput]
-	     movsxd   rax, dword[rsp+8*9]
-	       call   PrintSignedInteger
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
-		add   rsp, 8
- \}
-}
-
-
-macro GD_Hex x {
- match =1, VERBOSE \{
-	       push   x
-	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
-		lea   rdi, [VerboseOutput]
-		mov   rcx, qword[rsp+8*9]
-	       call   PrintHex
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
-		add   rsp, 8
- \}
-}
-
-
-
-macro GD_NewLine {
-; lets not clobber any registers here
-local ..message, ..over
- match =1, VERBOSE \{
-	       push   rdi rax rcx rdx r8 r9 r10 r11
-		lea   rcx, [..message]
-		jmp   ..over
-   ..message:
- match =1, OS_IS_WINDOWS \\{
-	    db 13
-  \\}
-	    db 10
-	    db 0
-   ..over:
-		lea   rdi, [VerboseOutput]
-	       call   PrintString
-		lea   rcx, [VerboseOutput]
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rdi
- \}
-}
-
-
-
-
-
-macro SD_NewLine {
-; lets not clobber any registers here
-local ..message, ..over
- match =2, VERBOSE \{
-	       push   rdi rax rcx rdx r8 r9 r10 r11
-		lea   rcx, [..message]
-		jmp   ..over
-   ..message:
-  match =1, OS_IS_WINDOWS \\{
-	    db 13
-  \\}
-	    db 10
-	    db 0
-   ..over:
-		lea   rdi, [VerboseOutput]
-	       call   PrintString
-		lea   rcx, [VerboseOutput]
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rdi
- \}
-}
-
-macro SD_String m {
-; lets not clobber any registers here
-local ..message, ..over
- match =2, VERBOSE \{
-	       push   rdi rax rcx rdx r8 r9 r10 r11
-		lea   rcx, [..message]
-		jmp   ..over
-   ..message:
-	    db m
-	    db 0
-   ..over:
-		lea   rdi, [VerboseOutput]
-	       call   PrintString
-		lea   rcx, [VerboseOutput]
-		lea  rcx, [VerboseOutput]
-	       call _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rdi
- \}
-}
-
-macro SD_Move x {
- match =2, VERBOSE \{
-	       push   x
-	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
-		lea   rdi, [VerboseOutput]
-		mov   ecx, dword[rsp+8*9]
-		xor   edx, edx
-	       call   PrintUciMove
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
-		add   rsp, 8
- \}
-}
-
-
-macro SD_Hex x {
- match =2, VERBOSE \{
-	       push   x
-	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
-		lea   rdi, [VerboseOutput]
-		mov   rcx, qword[rsp+8*9]
-	       call   PrintHex
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
-		add   rsp, 8
- \}
-}
-
-macro SD_Int x {
- match =2, VERBOSE \{
-	       push   x
-	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
-		lea   rdi, [VerboseOutput]
-	     movsxd   rax, dword[rsp+8*9]
-	       call   PrintSignedInteger
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
-		add   rsp, 8
- \}
-}
-
-
-macro SD_UInt64 x {
- match =2, VERBOSE \{
-	       push   x
-	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
-		lea   rdi, [VerboseOutput]
-		mov   rax, qword[rsp+8*9]
-	       call   PrintUnsignedInteger
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
-		add   rsp, 8
- \}
-}
-
-
-
-macro SD_Bool8 x {
- match =2, VERBOSE \{
-	       push   x
-	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
-		lea   rdi, [VerboseOutput]
-	      movzx   eax, byte[rsp+8*9]
-		neg   eax
-		sbb   eax, eax
-		and   eax, 1
-		add   eax, '0'
-	      stosb
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
-		add   rsp, 8
- \}
-}
-
-
-
-
-
-macro ED_String m {
-; lets not clobber any registers here
-local ..message, ..over
- match =4, VERBOSE \{
-	       push   rdi rax rcx rdx r8 r9 r10 r11
-		lea   rcx, [..message]
-		jmp   ..over
-   ..message:
-	    db m
-	    db 0
-   ..over:
-		lea   rdi, [VerboseOutput]
-	       call   PrintString
-		lea   rcx, [VerboseOutput]
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rdi
- \}
-}
-
-
-
-macro ED_Int x {
- match =4, VERBOSE \{
-	       push   x
-	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
-		lea   rdi, [VerboseOutput]
-	     movsxd   rax, dword[rsp+8*9]
-	       call   PrintSignedInteger
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
-		add   rsp, 8
- \}
-}
-
-
-
-macro ED_Score x {
- match =4, VERBOSE \{
-	       push   x
-	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
-		lea   rdi, [VerboseOutput]
-		mov   eax, dword[rsp+8*9]
-		add   eax, 0x08000
-		sar   eax, 16
-	     movsxd   rax, eax
-	       call   PrintSignedInteger
-		mov   al, ','
-	      stosb
-	      movsx   rax, word[rsp+8*9]
-	       call   PrintSignedInteger
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
-		add   rsp, 8
- \}
-}
-
-
-
-macro ED_NewLine {
-local ..message, ..over
- match =4, VERBOSE \{
-	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
-		lea   rcx, [..message]
-		jmp   ..over
-   ..message:
-  match =1, OS_IS_WINDOWS \\{
-	    db 13
-  \\}
-	    db 10
-	    db 0
-   ..over:
-		lea   rdi, [VerboseOutput]
-	       call   PrintString
-		lea   rcx, [VerboseOutput]
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
- \}
-}
-
-
-
-
-
-
-macro ND_String m {
-; lets not clobber any registers here
-local ..message, ..over
-if VERBOSE>1
-	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
-		lea   rcx, [..message]
-		jmp   ..over
-   ..message:
-	    db m
-	    db 0
-   ..over:
-		lea   rdi, [VerboseOutput]
-	       call   PrintString
-		lea   rcx, [VerboseOutput]
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
-end if
-}
-
-
-macro ND_Int x {
-if VERBOSE>1
-	       push   x
-	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
-		lea   rdi, [VerboseOutput]
-	     movsxd   rax, dword[rsp+8*9]
-	       call   PrintSignedInteger
-	PrintNewLine
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
-		add   rsp, 8
-end if
-}
-
-macro ND_UInt64 x {
-if VERBOSE>1
-	       push   x
-	       push   rdi rsi rax rcx rdx r8 r9 r10 r11
-		lea   rdi, [VerboseOutput]
-		mov   rax, qword[rsp+8*9]
-	       call   PrintUnsignedInteger
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   r11 r10 r9 r8 rdx rcx rax rsi rdi
-		add   rsp, 8
-end if
-}

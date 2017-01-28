@@ -46,8 +46,8 @@ ProfileInc CheckTime
         ; The values of rdi at this point are in geometric progression.
         ; On tested machine, this ends a 'go movetime 10000' in 10000 ms
         ; with approx 130 calls to CheckTime.
-GD_String 'rdi: '
-GD_Int rdi
+GD String, 'ms remaining: '
+GD Int64, rdi
                 mov   eax, MAX_RESETCNT/2000
                 mul   rdi
                 add   rax, MIN_RESETCNT ; resetCnt should be at least 50
@@ -58,9 +58,9 @@ GD_Int rdi
 
 .Return:
 
-GD_String ' resetCnt: '
-GD_Int rsi
-GD_NewLine
+GD String, ' resetCnt: '
+GD Int64, rsi
+GD NewLine
 
 	; set resetCnt for all threads to esi
                 mov   ecx, dword[threadPool.threadCnt]
@@ -100,8 +100,8 @@ GD_NewLine
         ; the values of rdi at this point are in geometric progression
         ; this ends 'go nodes 1000000' with 1000053 nodes
         ; with 22 calls to CheckTime
-GD_String 'rdi: '
-GD_Int rdi
+GD String, 'nodes remaining: '
+GD Int64, rdi
                 mov   rax, (1 shl 63)/3
                 mul   rdi               ; rdx = rdi/6
                 add   rdx, MIN_RESETCNT

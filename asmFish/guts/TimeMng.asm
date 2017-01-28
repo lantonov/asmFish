@@ -23,15 +23,15 @@ end virtual
 		mov   esi, ecx
 		mov   dword[.ply], edx
 
-GD_String 'ply: '
-GD_Int qword[.ply]
-GD_String ' inc: '
-GD_Int qword[limits.incr+4*rsi]
-GD_String ' time: '
-GD_Int qword[limits.time+4*rsi]
-GD_String ' movestogo: '
-GD_Int qword[limits.movestogo]
-GD_NewLine
+GD String, 'ply: '
+GD Int32, qword[.ply]
+GD String, ' inc: '
+GD Int32, qword[limits.incr+4*rsi]
+GD String, ' time: '
+GD Int32, qword[limits.time+4*rsi]
+GD String, ' movestogo: '
+GD Int32, qword[limits.movestogo]
+GD NewLine
 
 		mov   rax, qword[limits.startTime]
 		mov   qword[time.startTime], rax
@@ -109,11 +109,11 @@ GD_NewLine
 
 		mov   qword[time.optimumTime], r12
 		mov   qword[time.maximumTime], r13
-GD_String 'optimumTime: '
-GD_Int r12
-GD_String ' maximumTime: '
-GD_Int r13
-GD_NewLine
+GD String, 'optimumTime: '
+GD Int64, r12
+GD String, ' maximumTime: '
+GD Int64, r13
+GD NewLine
 		add   rsp, .localsize
 		pop   r15 r14 r13 r12 rdi rsi rbx
 		ret

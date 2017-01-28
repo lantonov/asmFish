@@ -88,10 +88,7 @@ end if
 if VERBOSE > 0
   align 16
   VerboseOutput         rq 1024
-  VerboseTime1          rq 2
-  VerboseTime2          rq 2
-  Verbr15               rq 1
-  Verbrdi               rq 1
+  VerboseTime           rq 2
 end if
 
 
@@ -735,7 +732,7 @@ match ='L', VERSION_OS {
 	       call   _InitializeTimer
 	       call   _CheckCPU
 
-GD_GetTime
+GD GetTime
 
         ; init the engine
 	       call   Options_Init
@@ -748,8 +745,8 @@ GD_GetTime
 	       call   Pawn_Init
 	       call   Endgame_Init
 
-GD_String 'init done'
-GD_NewLine
+GD String, 'init done'
+GD NewLine
 
 
 	; write engine name
@@ -770,14 +767,18 @@ end if
 if USE_BOOK
 	       call   Book_Create
 end if
+if USE_WEAKNESS
+	       call   Weakness_Create
+end if
+
 
 	; command line could contain commands
 	; this function also initializes InputBuffer
 	; which contains the commands we should process first
 	       call   _ParseCommandLine
 
-GD_ResponseTime
-GD_GetTime
+GD ResponseTime
+GD GetTime
 
 	; enter the main loop
 	       call   UciLoop
@@ -803,9 +804,9 @@ end if
 	       call   _VirtualFree
 
 match =1, DEBUG {
-GD_String 'DebugBalance: '
-GD_Hex qword[DebugBalance]
-GD_NewLine
+GD String, 'DebugBalance: '
+GD Hex, qword[DebugBalance]
+GD NewLine
 }
 	     Assert   e, qword[DebugBalance], 0, 'assertion DebugBalance=0 failed'
 
