@@ -50,6 +50,8 @@ segment readable writeable
 }
 
 
+
+
 if PROFILE > 0
   align 16
   profile:
@@ -820,6 +822,33 @@ include 'BitTable_Init.asm'
 include 'Evaluate_Init.asm'
 include 'Pawn_Init.asm'
 include 'Endgame_Init.asm'
+
+
+
+
+
+if PROFILE > 0
+; put this at the very end of code section to collect all the profile names
+; in the preprocessor variables hitprofilelist and condprofilelist
+
+DisplayProfileData:
+               push   rbx rsi rdi
+   PrintProfileData
+                pop   rdi rsi rbx
+                ret
+
+
+; we also need a data section to keep track of the counts
+match ='W', VERSION_OS {
+section '.profile' data readable writeable
+}
+match ='L', VERSION_OS {
+segment readable writeable
+}
+
+MakeProfileData
+
+end if
 
 
 

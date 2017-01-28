@@ -646,3 +646,47 @@ align 16
   .Mask1 dq 0f0f0f0f0f0f0f0fh, 0f0f0f0f0f0f0f0fh
   .Comp1 dq 0909090909090909h, 0909090909090909h
   .Num1  dq 2727272727272727h, 2727272727272727h
+
+
+
+if VERBOSE>0 | DEBUG>0 | PROFILE>0
+
+PrintDouble:
+        ; in xmm0
+        ; lower double is printed
+        ; this function is not robust
+               push   rsi
+
+    digits = 2
+    power = 1
+    repeat digits
+        power = 10*power
+    end repeat
+                mov   rax, power
+          vcvtsi2sd   xmm1, xmm1, rax
+             vmulsd   xmm0, xmm0, xmm1
+         vcvttsd2si   rax, xmm0
+                cqo
+                mov   ecx, power
+               idiv   rcx
+                mov   rsi, rdx
+	       call   PrintSignedInteger
+                mov   al, '.'
+              stosb
+                mov   rax, rsi
+                cqo
+                xor   rax, rdx
+                sub   rax, rdx
+    repeat digits
+        power = power/10
+                xor   edx, edx
+                mov   ecx, power
+                div   rcx
+                add   eax, '0'
+              stosb
+                mov   rax, rdx
+    end repeat
+                pop   rsi
+                ret
+
+end if

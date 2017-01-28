@@ -1,37 +1,204 @@
-macro ProfileInc fxn {
- match =1, PROFILE \{
-	   lock inc   qword[profile.#fxn]
- \}
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; profiling
+;   Its as simple as using the ProfileInc and ProfileCond macros
+;   in the code. Example
+; ...
+; ProfileInc foo
+; ProfileInc bar
+; ProfileInc bar
+; ProfileInc ooh
+; ProfileInc ahh
+;  ... some test ...
+; ProfileCond e, oops
+;  ... some test ...
+; ProfileCond e, oops
+; ProfileInc foo
+;  ... some test ...
+; ProfileCond nz, yup
+; ....
+;
+; will create six symbols foo, bar, ooh, ahh, oops, yup
+;   that can be viewed with 'profile' cmd
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+hitprofilelist equ
+condprofilelist equ
+
+macro ProfileInc name {
+  match =1, PROFILE \{
+    hitprofilelist equ hitprofilelist, name
+               inc   qword[hitprofiledata_#name]
+  \}
 }
 
-
-macro ProfileJmp cc, index {
-local ..TakingJump
-; do a profile on the conditional jmp j#cc
-;  increment  qword[profile.cjmpcounts+16*index+0] if the jump is not taken
-;  incrememnt qword[profile.cjmpcounts+16*index+8] if the jump is taken
-; use like this:
-;    call foo
-;    test eax, eax
-;    ProfileJmp nz, 0
-;    jnz eaxNotZero
-;     ...
-;
-; The counts can be read after the "index:" label in the profile command
-
- match =1, PROFILE \{
+macro ProfileCond cc, name {
+  match =1, PROFILE \{
+    condprofilelist equ condprofilelist, name
+    local ..ConditionIsTrue
 	       push   rax rcx
-		lea   rcx, [profile.cjmpcounts+16*(index)+8]
-	       j#cc   ..TakingJump
-		lea   rcx, [profile.cjmpcounts+16*(index)+0]
-..TakingJump:
+		lea   rcx, [condprofiledataTRUE_#name]
+	       j#cc   ..ConditionIsTrue
+		lea   rcx, [condprofiledataFALSE_#name]
+..ConditionIsTrue:
 		mov   rax, qword[rcx]
 		lea   rax, [rax+1]
 		mov   qword[rcx], rax
 		pop   rcx rax
-
- \}
+  \}
 }
+
+
+
+macro ifndef expr {
+  local HERE
+  if defined HERE | ~ defined expr
+   HERE = 1
+}
+
+macro MakeProfileData {
+  match =,the_list, hitprofilelist \{
+    irp name, the_list \\{
+      ifndef hitprofiledata_\\#name
+        display 'profiling the hit '
+        display \\`name
+        display 10
+        hitprofiledata_\\#name dq 0
+      end if
+    \\}
+  \}
+  match =,the_list, condprofilelist \{
+    irp name, the_list \\{
+      ifndef condprofiledataTRUE_\\#name
+        display 'profiling the condition '
+        display \\`name
+        display 10
+        condprofiledataTRUE_\\#name dq 0
+        condprofiledataFALSE_\\#name dq 0
+      end if
+    \\}
+  \}
+}
+
+macro PrintProfileData {
+
+        ; first print the data on hits
+
+                lea   rdi, [Output]
+                mov   rax, 'profile '
+              stosq
+                mov   rax, 'hits:'
+              stosq
+                sub   rdi, 3
+       PrintNewLine
+               call   _WriteOut_Output
+
+  match =,the_list, hitprofilelist \{
+    irp name, the_list \\{
+        \\local ..symbol, ..over, ..skip
+                lea   rdi, [Output]
+                mov   rax, qword[hitprofiledata_\\#name]
+               test   rax, rax
+                 jz   ..skip
+               call   PrintUnsignedInteger
+                lea   rcx, [Output+20]
+                sub   rcx, rdi
+                mov   eax, 1
+                cmp   ecx, eax
+              cmovb   ecx, eax
+                mov   al, ' '
+          rep stosb
+               call   _WriteOut_Output
+                jmp   ..over
+..symbol:
+                 db   \\`name
+        NewLineData
+..over:
+                lea   rcx, [..symbol]
+                lea   rdi, [..over]
+               call   _WriteOut
+                xor   eax, eax
+                mov   qword[hitprofiledata_\\#name], rax
+..skip:
+    \\}
+  \}
+
+        ; then print the data on conditions
+
+                lea   rdi, [Output]
+                mov   rax, 'profile '
+              stosq
+                mov   rax, 'cond:'
+              stosq
+                sub   rdi, 3
+       PrintNewLine
+               call   _WriteOut_Output
+
+  match =,the_list, condprofilelist \{
+    irp name, the_list \\{
+        \\local ..symbol, ..over, ..skip
+                lea   rdi, [Output]
+                mov   rax, qword[condprofiledataTRUE_\\#name]
+                 or   rax, qword[condprofiledataFALSE_\\#name]
+               test   rax, rax
+                 jz   ..skip
+                mov   rax, qword[condprofiledataTRUE_\\#name]
+               call   PrintUnsignedInteger
+                mov   ax, ', '
+              stosw
+                mov   rax, qword[condprofiledataFALSE_\\#name]
+               call   PrintUnsignedInteger
+                lea   rcx, [Output+20]
+                sub   rcx, rdi
+                mov   eax, 1
+                cmp   ecx, eax
+              cmovb   ecx, eax
+                mov   al, ' '
+          rep stosb
+                jmp   ..over
+..symbol:
+                 db   \\`name
+                 db   0
+..over:
+                lea   rcx, [..symbol]
+               call   PrintString
+                lea   rcx, [Output+50]
+                sub   rcx, rdi
+                mov   eax, 1
+                cmp   ecx, eax
+              cmovb   ecx, eax
+                mov   al, ' '
+          rep stosb
+          vcvtsi2sd   xmm0, xmm0, qword[condprofiledataTRUE_\\#name]
+          vcvtsi2sd   xmm1, xmm1, qword[condprofiledataFALSE_\\#name]
+             vaddsd   xmm1, xmm1, xmm0
+             vdivsd   xmm0, xmm0, xmm1
+                mov   eax, 100
+          vcvtsi2sd   xmm1, xmm1, eax
+             vmulsd   xmm0, xmm0, xmm1
+               call   PrintDouble
+                mov   al, '%'
+              stosb
+       PrintNewLine
+               call   _WriteOut_Output 
+                xor   eax, eax
+                mov   qword[condprofiledataTRUE_\\#name], rax
+                mov   qword[condprofiledataFALSE_\\#name], rax
+..skip:
+    \\}
+  \}
+
+
+}
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+; assert
+;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 
 macro Assert cc,a,b,m {
@@ -99,6 +266,10 @@ local ..message, ..over
  \}
 }
 
+
+;;;;;;;;;;;;;;;;;;;;;;
+; general printing
+;;;;;;;;;;;;;;;;;;;;;
 
 ; For these macros
 ;  the display function fxn is called on args
@@ -263,82 +434,25 @@ macro DisplayUInt64 buffer {
 		mov   rsp, r15
 		pop   r15 r11 r10 r9 r8 rdx rcx rax rsi rdi
 }
-macro DisplayDouble buffer {            ; this is not robust
+macro DisplayDouble buffer {
 	       push   rdi rsi rax rcx rdx r8 r9 r10 r11 r15
 		mov   r15, rsp
 		and   rsp, -16
                 lea   rdi, [buffer]
-local digits, power
-        digits = 2
-        power = 1
-        repeat digits
-          power = 10*power
-        end repeat
-                mov   rax, power
-          vcvtsi2sd   xmm0, xmm0, rax
-             vmulsd   xmm0, xmm0, qword[r15+8*10]
-         vcvttsd2si   rax, xmm0
-                cqo
-                mov   ecx, power
-               idiv   rcx
-                mov   rsi, rdx
-	       call   PrintSignedInteger
-                mov   al, '.'
-              stosb
-                mov   rax, rsi
-                cqo
-                xor   rax, rdx
-                sub   rax, rdx
-        repeat digits
-           power = power/10
-                xor   edx, edx
-                mov   ecx, power
-                div   rcx
-                add   eax, '0'
-              stosb
-                mov   rax, rdx
-        end repeat
+             vmovsd   xmm0, qword[r15+8*10]
+               call   PrintDouble
 		lea   rcx, [buffer]
 	       call   _WriteOut
 		mov   rsp, r15
 		pop   r15 r11 r10 r9 r8 rdx rcx rax rsi rdi
 }
-macro DisplayFloat buffer {            ; this is not robust
+macro DisplayFloat buffer {
 	       push   rdi rsi rax rcx rdx r8 r9 r10 r11 r15
 		mov   r15, rsp
 		and   rsp, -16
                 lea   rdi, [buffer]
-local digits, power
-        digits = 2
-        power = 1
-        repeat digits
-          power = 10*power
-        end repeat
-                mov   rax, power
-          vcvtsi2sd   xmm0, xmm0, rax
-          vcvtss2sd   xmm1, xmm1, dword[r15+8*10]
-             vmulsd   xmm0, xmm0, xmm1
-         vcvttsd2si   rax, xmm0
-                cqo
-                mov   ecx, power
-               idiv   rcx
-                mov   rsi, rdx
-	       call   PrintSignedInteger
-                mov   al, '.'
-              stosb
-                mov   rax, rsi
-                cqo
-                xor   rax, rdx
-                sub   rax, rdx
-        repeat digits
-           power = power/10
-                xor   edx, edx
-                mov   ecx, power
-                div   rcx
-                add   eax, '0'
-              stosb
-                mov   rax, rdx
-        end repeat
+          vcvtss2sd   xmm0, xmm0, dword[r15+8*10]
+               call   PrintDouble
 		lea   rcx, [buffer]
 	       call   _WriteOut
 		mov   rsp, r15

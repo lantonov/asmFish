@@ -1496,15 +1496,18 @@ end virtual
 		mov   qword[.ei.me], rsi
 
 		cmp   rdx, qword[rbx+State.materialKey]
+        ProfileCond   ne, DoMaterialEval
 		jne   DoMaterialEval	; 0.87%
 .DoMaterialEvalReturn:
 	       imul   eax, 0x00010001
 		add   dword[.ei.score], eax
 	       test   ecx, ecx
+        ProfileCond   nz, HaveSpecializedEval
 		jnz   HaveSpecializedEval
 
 		mov   eax, dword[rdi+PawnEntry.score]
 		cmp   r15, qword[rbx+State.pawnKey]
+        ProfileCond   ne, DoPawnEval
 		jne   Evaluate_Cold.DoPawnEval	 ; 6.34%
 .DoPawnEvalReturn:
 		add   eax, dword[.ei.score]
