@@ -1650,8 +1650,6 @@ end if
 		lea   r8, [r8+4*rcx]
 	; r8 = offset in history table
 
-		cmp   edi, dword[.alpha]
-		jge   .Return
 	       test   dl, dl
 		jnz   .Return
 	       imul   r11d, r10d, -32
