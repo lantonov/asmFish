@@ -419,7 +419,7 @@ macro EvalKing Us {
 
 local Them, Up, Camp
 local PiecesUs, PiecesThem
-local QueenContactCheck, QueenCheck, RookCheck, BishopCheck, KnightCheck
+local QueenCheck, RookCheck, BishopCheck, KnightCheck
 local ..AllDone, ..DoKingSafety, ..KingSafetyDoneRet
 local ..RookDone, ..BishopDone, ..KnightDone
 local ..NoKingSide, ..NoQueenSide, ..NoPawns
@@ -447,7 +447,6 @@ match =Black, Us
 	Camp		equ (Rank4BB or Rank5BB or Rank6BB or Rank7BB or Rank8BB)
 \}
 
-	QueenContactCheck equ 997
 	QueenCheck	  equ 745
 	RookCheck	  equ 688
 	BishopCheck	  equ 588
@@ -519,16 +518,10 @@ match =Black, Us
 		sub   edi, edx
 	; edi = kingDanger
 
-	       andn   r9, PiecesThem, qword[.ei.attackedBy+8*(8*Them+Queen)]
-		and   r9, r8
-		and   r9, qword[.ei.attackedBy2+8*Them]
-	     popcnt   rax, r9, rcx
-	       imul   eax, QueenContactCheck
-		add   edi, eax
-
-		mov   r8, AttackedByUs
-		 or   r8, PiecesThem
-		not   r8
+		and   r8, qword[.ei.attackedBy2+8*Them]
+               andn   r8, r8, AttackedByUs
+                 or   r8, PiecesThem
+                not   r8
 	; r8 = safe
 
 		mov   r9, qword[rbp+Pos.typeBB+8*Pawn]
