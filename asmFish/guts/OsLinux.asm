@@ -669,7 +669,7 @@ _ParseCommandLine:
 		mov   rbp, qword[rspEntry]
 
 		xor   eax, eax
-		mov   qword[CmdLineStart], rax
+		mov   qword[ioBuffer.cmdLineStart], rax
 
 		xor   ebx, ebx
 		xor   edi, edi
@@ -685,15 +685,15 @@ _ParseCommandLine:
 
 		lea   ecx, [rdi+4097]
 		and   ecx, -4096
-		mov   qword[InputBufferSizeB], rcx
+		mov   qword[ioBuffer.inputBufferSizeB], rcx
 	       call   _VirtualAlloc
-		mov   qword[InputBuffer], rax
+		mov   qword[ioBuffer.inputBuffer], rax
 
 	       test   edi, edi
 		 jz   .Done
 
-		mov   rdi, qword[InputBuffer]
-		mov   qword[CmdLineStart], rdi
+		mov   rdi, qword[ioBuffer.inputBuffer]
+		mov   qword[ioBuffer.cmdLineStart], rdi
 
 		xor   ebx, ebx
     .NextArg2:
@@ -760,66 +760,23 @@ _WriteError:
 
 
 
-_ReadIn:
-	; out: eax =  0 if not file end 
-	;      eax = -1 if file end 
-	;      rsi address of string start 
-	;      ecx length of string
-	; 
-	; uses global InputBuffer and InputBufferSizeB 
-	; reads one line and then returns 
-	; a line is a string of characters where the last
-	;  and only the last character is below 0x20 (the space char)
-	       push   rdi rbx r13 r14 r15
-		xor   ebx, ebx				; ebx = length of return string
-		mov   r15, qword[InputBuffer]		; r15 = buffer
-		mov   r14, qword[InputBufferSizeB]	; r14 = size
-.ReadLoop:
-		cmp   rbx, r14
-		jae   .ReAlloc
-.ReAllocRet:
+_ReadStdIn:
+	; in: rcx address to write
+	;     edx max size
+	; out: rax > 0 number of bytes written
+	;      rax = 0 nothing written; end of file
+	;      rax < 0 error
+
+	       push   rbx rsi rdi
 		mov   edi, stdin
-		lea   rsi, [r15+rbx]
-		mov   edx, 1
+		mov   rsi, rcx
 		mov   eax, sys_read 
 	    syscall
-	; check for file end 
-		cmp   rax, 1
-		 jl  .FileEnd
-	; check for new line
-		add   ebx, 1
-		cmp   byte[rsi], ' '
-		jae   .ReadLoop
-
-		xor   eax, eax
-.Return:
-		mov   rsi, r15
-		mov   ecx, ebx
-		pop   r15 r14 r13 rbx rdi
+GD String, 'read: '
+GD Int64, rax
+GD NewLine
+		pop   rdi rsi rbx
 		ret
-.FileEnd:
-		 or   eax, -1
-		jmp  .Return
-.ReAlloc:
-	; get new buffer
-		lea   rcx, [r14+4096]
-	       call   _VirtualAlloc
-		mov   r13, rax
-		mov   rdi, rax
-	; copy data
-		mov   rsi, r15
-		mov   rcx, r14
-	  rep movsb
-	; free old buffer
-		mov   rcx, r15
-		mov   rdx, r14
-	       call   _VirtualFree
-	; set new data
-		mov   r15, r13
-		add   r14, 4096
-		mov   qword[InputBuffer], r13
-		mov   qword[InputBufferSizeB], r14
-		jmp   .ReAllocRet
 
 
 ;;;;;;;;;;;;;;;;;;

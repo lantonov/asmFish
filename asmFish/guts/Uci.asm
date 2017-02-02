@@ -91,7 +91,7 @@ UciNextCmdFromCmdLine:
 
 		xor   eax, eax
 		mov   r15, rsi			; save current command address
-		mov   qword[CmdLineStart], rax
+		mov   qword[ioBuffer.cmdLineStart], rax
 		cmp   al, byte[rsi]
 	if USE_CMDLINEQUIT
 		 je   UciQuit
@@ -110,7 +110,7 @@ UciNextCmdFromCmdLine:
 	; we have hit the new line char
 .Found:
 	; rsi is now the address of next command
-		mov   qword[CmdLineStart], rsi
+		mov   qword[ioBuffer.cmdLineStart], rsi
 		mov   rsi, r15			; restore current command address
 
 GD String, 'processing cmd line command: '
@@ -133,11 +133,11 @@ UciWriteOut:
 UciGetInput:
 GD ResponseTime
 
-		mov   rsi, qword[CmdLineStart]
+		mov   rsi, qword[ioBuffer.cmdLineStart]
 	       test   rsi, rsi
 		jnz   UciNextCmdFromCmdLine
 
-	       call   _ReadIn
+	       call   GetLine
 	       test   eax, eax
 		jnz   UciQuit
 

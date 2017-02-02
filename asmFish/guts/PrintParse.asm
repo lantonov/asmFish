@@ -451,6 +451,75 @@ ParseBoole:
 		ret
 
 
+GetLine:
+	; out: eax =  0 if success
+	;      eax = -1 if failed (file end or error)
+	;      rsi address of string start 
+	;      ecx length of string
+	; 
+	; uses global ioBuffer struct
+	; reads one line and then returns 
+	; a line is a string of characters where the last
+	;  and only the last character is below 0x20 (the space char)
+	       push   rbx r12 r13 r14 r15
+		xor   ebx, ebx				; ebx = length of return string
+		mov   r12d, dword[ioBuffer.tmp_i]
+		mov   r13d, dword[ioBuffer.tmp_j]
+		mov   r14, qword[ioBuffer.inputBufferSizeB]
+		mov   r15, qword[ioBuffer.inputBuffer]
+.ReadLoop:
+		cmp   rbx, r14
+		jae   .ReAlloc
+.ReAllocRet:
+		cmp   r12d, r13d
+		jae   .GetMoreData
+.GetMoreDataRet:
+		mov   al, byte[ioBuffer.tmpBuffer+r12]
+		add   r12d, 1
+		mov   byte[r15+rbx], al
+		add   ebx, 1
+		cmp   al, ' '
+		jae   .ReadLoop
+		xor   eax, eax
+.Return:
+		mov   dword[ioBuffer.tmp_i], r12d
+		mov   dword[ioBuffer.tmp_j], r13d
+		mov   qword[ioBuffer.inputBufferSizeB], r14
+		mov   qword[ioBuffer.inputBuffer], r15
+		mov   rsi, r15
+		mov   ecx, ebx
+		pop   r15 r14 r13 r12 rbx
+		ret
+.GetMoreData:
+		xor   r12d, r12d
+		lea   rcx, [ioBuffer.tmpBuffer]
+		mov   edx, sizeof.IOBuffer.tmpBuffer
+	       call   _ReadStdIn
+		mov   r13d, eax
+		cmp   rax, 1
+		jge   .GetMoreDataRet
+.Failed:
+		 or   eax, -1
+		xor   r13d, r13d
+		jmp  .Return
+.ReAlloc:
+	; get new buffer
+		lea   rcx, [r14+4096]
+	       call   _VirtualAlloc
+		mov   r13, rax
+		mov   rdi, rax
+	; copy data
+		mov   rsi, r15
+		mov   rcx, r14
+	  rep movsb
+	; free old buffer
+		mov   rcx, r15
+		mov   rdx, r14
+	       call   _VirtualFree
+	; set new data
+		mov   r15, r13
+		add   r14, 4096
+		jmp   .ReAllocRet
 
 
 

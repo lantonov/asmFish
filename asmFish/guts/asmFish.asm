@@ -409,11 +409,12 @@ align 8
 
 align 8
  LargePageMinSize dq ?
- CmdLineStart	  dq ?
- InputBuffer	  dq ?	   ; input buffer has dynamic allocation
- InputBufferSizeB dq ?
- Output 	  rb 1024  ; output buffer has static allocation
 
+align 16
+ ioBuffer	IOBuffer
+
+align 16
+ Output 	  rb 1024  ; output buffer has static allocation
 
 
 
@@ -801,8 +802,8 @@ end if
 	       call   Options_Destroy
 
 	; clean up input buffer
-		mov   rcx, qword[InputBuffer]
-		mov   rdx, qword[InputBufferSizeB]
+		mov   rcx, qword[ioBuffer.inputBuffer]
+		mov   rdx, qword[ioBuffer.inputBufferSizeB]
 	       call   _VirtualFree
 
 match =1, DEBUG {

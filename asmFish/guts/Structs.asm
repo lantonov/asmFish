@@ -446,6 +446,16 @@ struct ThreadPool
 ends
 
 
+; structure for buffer input and output (input only for now)
+struct IOBuffer
+ cmdLineStart	  dq ?	; address of string from cmd line to parse
+ inputBuffer	  dq ?	; address of string from stdin to parse
+ inputBufferSizeB dq ?	; byte capacity of inputBuffer
+ tmp_i		dd ?
+ tmp_j		dd ?
+ tmpBuffer	rb 512
+ tmpBufferEnd	rb 0
+ends
 
 
 ; structures for books
