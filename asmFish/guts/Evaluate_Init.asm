@@ -27,11 +27,11 @@ Evaluate_Init:
 
 		lea   rsi, [.ShelterWeakness]
 		lea   rdi, [ShelterWeakness]
-		mov   ecx, 8*8
+		mov   ecx, 4*8
 	  rep movsd
 		lea   rsi, [.StormDanger]
 		lea   rdi, [StormDanger]
-		mov   ecx, 4*8*8
+		mov   ecx, 4*4*8
 	  rep movsd
 
 
@@ -73,14 +73,31 @@ Evaluate_Init:
 
 
 		lea   rdi, [KingFlank]
-		mov   rax, (FileABB or FileBBB or FileCBB or FileDBB)
+		mov   rax, (Rank4BB or Rank5BB or Rank6BB or Rank7BB or Rank8BB) \
+			   and (FileABB or FileBBB or FileCBB or FileDBB)
 	      stosq
 	      stosq
 	      stosq
-		shl   rax, 2
+		mov   rax, (Rank4BB or Rank5BB or Rank6BB or Rank7BB or Rank8BB) \
+			   and (FileCBB or FileDBB or FileEBB or FileFBB)
 	      stosq
 	      stosq
-		shl   rax, 2
+		mov   rax, (Rank4BB or Rank5BB or Rank6BB or Rank7BB or Rank8BB) \
+			   and (FileEBB or FileFBB or FileGBB or FileHBB)
+	      stosq
+	      stosq
+	      stosq
+		mov   rax, (Rank5BB or Rank4BB or Rank3BB or Rank2BB or Rank1BB) \
+			   and (FileABB or FileBBB or FileCBB or FileDBB)
+	      stosq
+	      stosq
+	      stosq
+		mov   rax, (Rank5BB or Rank4BB or Rank3BB or Rank2BB or Rank1BB) \
+			   and (FileCBB or FileDBB or FileEBB or FileFBB)
+	      stosq
+	      stosq
+		mov   rax, (Rank5BB or Rank4BB or Rank3BB or Rank2BB or Rank1BB) \
+			   and (FileEBB or FileFBB or FileGBB or FileHBB)
 	      stosq
 	      stosq
 	      stosq
@@ -187,54 +204,32 @@ align 4
  dd (2 shl 16) + (5)
 
 
-; ShelterWeakness and StormDanger are twice as big
-; to avoid an anoying min(f,FILE_H-f) in ShelterStorm
 .ShelterWeakness:
  dd 100, 20, 10, 46, 82,  86,  98, 0
  dd 116,  4, 28, 87, 94, 108, 104, 0
  dd 109,  1, 59, 87, 62,  91, 116, 0
  dd  75, 12, 43, 59, 90,  84, 112, 0
- dd  75, 12, 43, 59, 90,  84, 112, 0
- dd 109,  1, 59, 87, 62,  91, 116, 0
- dd 116,  4, 28, 87, 94, 108, 104, 0
- dd 100, 20, 10, 46, 82,  86,  98, 0
 
 .StormDanger:
  dd 4,	 73, 132, 46, 31 ,  0,0,0
  dd 1,	 64, 143, 26, 13 ,  0,0,0
  dd 1,	 47, 110, 44, 24 ,  0,0,0
  dd 0,	 72, 127, 50, 31 ,  0,0,0
- dd 0,	 72, 127, 50, 31 ,  0,0,0
- dd 1,	 47, 110, 44, 24 ,  0,0,0
- dd 1,	 64, 143, 26, 13 ,  0,0,0
- dd 4,	 73, 132, 46, 31 ,  0,0,0
 
  dd 22,  45,  104, 62,	6 , 0,0,0
  dd 31,  30,   99, 39, 19 , 0,0,0
  dd 23,  29,   96, 41, 15 , 0,0,0
  dd 21,  23,  116, 41, 15 , 0,0,0
- dd 21,  23,  116, 41, 15 , 0,0,0
- dd 23,  29,   96, 41, 15 , 0,0,0
- dd 31,  30,   99, 39, 19 , 0,0,0
- dd 22,  45,  104, 62,	6 , 0,0,0
 
  dd  0,  0,   79, 23,  1 , 0,0,0
  dd  0,  0,  148, 27,  2 , 0,0,0
  dd  0,  0,  161, 16,  1 , 0,0,0
  dd  0,  0,  171, 22, 15 , 0,0,0
- dd  0,  0,  171, 22, 15 , 0,0,0
- dd  0,  0,  161, 16,  1 , 0,0,0
- dd  0,  0,  148, 27,  2 , 0,0,0
- dd  0,  0,   79, 23,  1 , 0,0,0
 
  dd  0,  -290, -274, 57, 41 , 0,0,0
  dd  0,    60,	144, 39, 13 , 0,0,0
  dd  0,    65,	141, 41, 34 , 0,0,0
  dd  0,    53,	127, 56, 14 , 0,0,0
- dd  0,    53,	127, 56, 14 , 0,0,0
- dd  0,    65,	141, 41, 34 , 0,0,0
- dd  0,    60,	144, 39, 13 , 0,0,0
- dd  0,  -290, -274, 57, 41 , 0,0,0
 
 
 

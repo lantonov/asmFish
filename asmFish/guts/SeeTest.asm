@@ -73,10 +73,10 @@ SeeTestGe:
 	; out: eax = 1 if  see >= edx
 	;      eax = 0 if  see <  edx
 
-from         equ r8
-from_d       equ r8d
-to           equ r9
-to_d         equ r9d
+from   equ r8
+from_d equ r8d
+to     equ r9
+to_d   equ r9d
 stm	     equ rsi
 stm_d	     equ esi
 attackers    equ r15
@@ -99,19 +99,19 @@ res	     equ eax
 ProfileInc SeeTest
 
 if DEBUG
-	       push   rcx rdx r8 r9
-		and   ecx, 15 shl 12
-		shl   r8d, 6
-		add   ecx, r8d
-		add   ecx, r9d
-		mov   dword[rbp+Pos.debugDWORD1], ecx
-		mov   dword[rbp+Pos.debugDWORD2], edx
-	       call   See
-		pop   r9 r8 rdx rcx
-		cmp   eax, edx
-	      setge   al
-	      movzx   eax, al
-	       push   rax
+push	rcx rdx r8 r9
+and	ecx, 15 shl 12
+shl	r8d, 6
+add	ecx, r8d
+add	ecx, r9d
+mov	dword[rbp+Pos.debugDWORD1], ecx
+mov	dword[rbp+Pos.debugDWORD2], edx
+call	See
+pop	r9 r8 rdx rcx
+cmp	eax, edx
+setge	al
+movzx	eax, al
+push	rax
 end if
 	       push   r12 r13 r14 r15 rsi rdi
 
@@ -237,9 +237,9 @@ end if
 .Return:
 		pop   rdi rsi r15 r14 r13 r12
 if DEBUG
-		pop   rcx
-		cmp   eax, ecx
-		jne   SeeTest_Error
+pop	rcx
+cmp	eax, ecx
+jne	SeeTest_Error
 end if
 		ret
 
@@ -319,9 +319,9 @@ end if
 
 		pop   rdi rsi r15 r14 r13 r12
 if DEBUG
-		pop   rcx
-		cmp   eax, ecx
-		jne   SeeTest_Error
+pop	rcx
+cmp	eax, ecx
+jne	SeeTest_Error
 end if
 		ret
 
@@ -334,30 +334,30 @@ end if
 
 if DEBUG
 SeeTest_Error:
-		lea   rdi, [Output]
-	       push   rcx rax
-	     szcall   PrintString, 'SeeTest mismatch: SeeTest = '
-		pop   rax
-	       call   PrintUnsignedInteger
-	     szcall   PrintString, 'while (See >= value) = '
-		pop   rax
-	       call   PrintUnsignedInteger
+lea	rdi, [Output]
+push	rcx rax
+szcall	PrintString, 'SeeTest mismatch: SeeTest = '
+pop	rax
+call	PrintUnsignedInteger
+szcall	PrintString, 'while (See >= value) = '
+pop	rax
+call	PrintUnsignedInteger
 PrintNewLine
-		mov   rax, 'move:   '
-	      stosq
-		mov   ecx, dword[rbp+Pos.debugDWORD1]
-		mov   edx, dword[rbp+Pos.chess960]
-	       call  PrintUciMoveLong
+mov	rax, 'move:   '
+stosq
+mov	ecx, dword[rbp+Pos.debugDWORD1]
+mov	edx, dword[rbp+Pos.chess960]
+call	PrintUciMoveLong
 PrintNewLine
-		mov   rax, 'value:  '
-	      stosq
-	     movsxd   rax, dword[rbp+Pos.debugDWORD2]
-	       call   PrintSignedInteger
+mov	rax, 'value:  '
+stosq
+movsxd	rax, dword[rbp+Pos.debugDWORD2]
+call	PrintSignedInteger
 PrintNewLine
-		mov   qword[rbp+Pos.state], rbx
-	       call   Position_PrintSmall
-		lea   rdi, [Output]
-	       call   _ErrorBox
+mov	qword[rbp+Pos.state], rbx
+call	Position_PrintSmall
+lea	rdi, [Output]
+call	_ErrorBox
 int3
 end if
 

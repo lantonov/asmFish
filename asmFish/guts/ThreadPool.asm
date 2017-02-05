@@ -192,8 +192,7 @@ end if
 		mov   qword[r14+Thread.nodes], rax
 		mov   qword[r14+Thread.tbHits], rax
 		mov   byte[r14+Thread.maxPly], al
-                mov   dword[r14+Thread.resetCnt], eax
-                mov   dword[r14+Thread.callsCnt], MIN_RESETCNT  ; check time asap
+		mov   byte[r14+Thread.skipCurrMove], -1
 
 		lea   rsi, [limits.moveVec]
 		lea   rdi, [.moveList]
@@ -266,8 +265,6 @@ end if
 		mov   qword[rbx+Thread.nodes], rax
 		mov   qword[rbx+Thread.tbHits], rax
 		mov   byte[rbx+Thread.maxPly], al
-                mov   dword[r14+Thread.resetCnt], eax
-                mov   dword[r14+Thread.callsCnt], MAX_RESETCNT  ; main thread already has min
 
 
 	; copy the filtered moves of main thread to worker thread

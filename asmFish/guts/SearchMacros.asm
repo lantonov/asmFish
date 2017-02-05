@@ -14,62 +14,62 @@ macro search NT {
 match =_ROOT_NODE, NT
 \{
 ProfileInc Search_ROOT
- .PvNode   equ 1
+ .PvNode equ 1
  .RootNode equ 1
 \}
 
 match =_PV_NODE, NT
 \{
 ProfileInc Search_PV
- .PvNode   equ 1
+ .PvNode equ 1
  .RootNode equ 0
 \}
 
 match =_NONPV_NODE, NT
 \{
 ProfileInc Search_NONPV
- .PvNode   equ 0
+ .PvNode equ 0
  .RootNode equ 0
 \}
 
 
 virtual at rsp
-  .tte                    rq 1  ;0
-  .ltte                   rq 1  ;8
-  .posKey                 rq 1
-  .ttMove                 rd 1
-  .ttValue                rd 1
-  .move                   rd 1
-  .excludedMove           rd 1
-  .bestMove               rd 1
-  .ext                    rd 1
-  .newDepth               rd 1
-  .predictedDepth         rd 1
-  .moveCount              rd 1
-  .quietCount             rd 1
-  .alpha                  rd 1
-  .beta                   rd 1
-  .depth                  rd 1
-  .bestValue              rd 1
-  .value                  rd 1
-  .eval                   rd 1
-  .nullValue              rd 1
-  .futilityValue          rd 1
-  .extension              rd 1
-  .success                rd 1  ; for tb
-  .rbeta                  rd 1
-  .moved_piece_to_sq      rd 1
-  .givesCheck             rb 1
+  .tte	      rq 1    ;0
+  .ltte       rq 1    ;8
+  .posKey	rq 1
+  .ttMove	    rd 1
+  .ttValue	    rd 1
+  .move 	    rd 1
+  .excludedMove     rd 1
+  .bestMove	  rd 1
+  .ext		  rd 1
+  .newDepth	  rd 1
+  .predictedDepth rd 1
+  .moveCount	    rd 1
+  .quietCount	    rd 1
+  .alpha	    rd 1
+  .beta 	    rd 1
+  .depth	  rd 1
+  .bestValue	  rd 1
+  .value	  rd 1
+  .eval 	  rd 1
+  .nullValue	    rd 1
+  .futilityValue    rd 1
+  .extension	    rd 1
+  .success	    rd 1   ; for tb
+  .rbeta		  rd 1
+  .moved_piece_to_sq	  rd 1
+  .givesCheck		  rb 1
   .singularExtensionNode  rb 1
-  .improving              rb 1
-  .captureOrPromotion     rb 1  ; nonzero for true
-  .doFullDepthSearch      rb 1
-  .cutNode                rb 1  ; -1 for true
-  .ttHit                  rb 1
-  .moveCountPruning       rb 1
-  .quietsSearched         rd 64
+  .improving		  rb 1
+  .captureOrPromotion	  rb 1	; nonzero for true
+  .doFullDepthSearch	  rb 1
+  .cutNode		  rb 1	; -1 for true
+  .ttHit		  rb 1
+  .moveCountPruning	  rb 1
+  .quietsSearched    rd 64
 if .PvNode eq 1
-  .pv   rd MAX_PLY+1
+  .pv  rd MAX_PLY+1
 end if
   .lend rb 0
 end virtual
@@ -79,6 +79,48 @@ end virtual
 	       push   rbx rsi rdi r12 r13 r14 r15
 	 _chkstk_ms   rsp, .localsize
 		sub   rsp, .localsize
+
+match =2, VERBOSE \{
+push rcx rdx r8 r9 r13 r14 r15
+mov r15, rcx
+mov r14, rdx
+mov r13, r8
+lea rdi, [VerboseOutput]
+mov eax,'s<'
+stosw
+match =_ROOT_NODE, NT
+\\{
+mov al, '2'
+\\}
+match =_PV_NODE, NT
+\\{
+mov al, '1'
+\\}
+match =_NONPV_NODE, NT
+\\{
+mov al, '0'
+\\}
+stosb
+mov eax, '> ('
+stosd
+sub rdi, 1
+movsxd rax, r15d
+call PrintSignedInteger
+mov ax, ', '
+stosw
+movsxd rax, r14d
+call PrintSignedInteger
+mov eax, ')  '
+stosd
+sub rdi, 1
+movsxd rax, r13d
+call PrintSignedInteger
+PrintNewLine
+lea rcx, [VerboseOutput]
+call _WriteOut
+pop r15 r14 r13 r9 r8 rdx rcx
+\}
+
 
 		mov   dword[.alpha], ecx
 		mov   dword[.beta], edx
@@ -108,19 +150,27 @@ if USE_SELDEPTH
     end if
 end if
 
-	; callsCnt counts down as in master
-	; resetCnt, if nonzero, contains the count to which callsCnt should be reset
-                mov   eax, dword[rbp-Thread.rootPos+Thread.resetCnt]
-                mov   edx, dword[rbp-Thread.rootPos+Thread.callsCnt]
-               test   eax, eax
-                 jz   .dontreset
-                mov   edx, eax
-                mov   dword[rbp-Thread.rootPos+Thread.resetCnt], 0
+	; callsCnt counts up instead of down as in master
+		mov   al, byte[rbp-Thread.rootPos+Thread.resetCalls]
+		mov   edx, dword[rbp-Thread.rootPos+Thread.callsCnt]
+	       test   al, al
+		 jz   .dontreset
+		xor   edx, edx
+		mov   byte[rbp-Thread.rootPos+Thread.resetCalls], 0
 	.dontreset:
-                sub   edx, 1
-                mov   dword[rbp-Thread.rootPos+Thread.callsCnt], edx
-                jns   .dontchecktime
-               call   CheckTime         ; CheckTime sets resetCalls for all threads
+		add   edx, 1
+		mov   dword[rbp-Thread.rootPos+Thread.callsCnt], edx
+		cmp   edx, 4096+1
+		 jb   .dontchecktime
+		mov   ecx, dword[threadPool.threadCnt]
+	     Assert   g, ecx, 0, 'Assertion dword[threadPool.threadCnt] > 0 failed in Search'
+	.ResetNextThread:
+		sub   ecx, 1
+		mov   rax, qword[threadPool.threadTable+8*rcx]
+		mov   byte[rax+Thread.resetCalls], -1
+		jnz   .ResetNextThread
+	       call   CheckTime
+		mov   byte[rbp-Thread.rootPos+Thread.skipCurrMove], al
 	.dontchecktime:
 
 
@@ -256,6 +306,7 @@ end if
 	       test   r13d, r13d
 		jnz   .StaticValueYesTTHit
 .StaticValueNoTTHit:
+;SD_String 'ttHit=f|'
 		mov   eax, dword[rbx-1*sizeof.State+State.staticEval]
 		neg   eax
 		add   eax, 2*Eval_Tempo
@@ -263,7 +314,7 @@ end if
 		cmp   edx, MOVE_NULL
 		 je   @f
 	       call   Evaluate
-	@@:     mov   r8d, eax
+	@@:	mov   r8d, eax
 		mov   dword[rbx+State.staticEval], eax
 		mov   dword[.eval], eax
 		mov   r9, qword [.posKey]
@@ -272,10 +323,11 @@ end if
       MainHash_Save   .ltte, r12, r9w, edx, BOUND_NONE, DEPTH_NONE, 0, r8w
 		jmp   .StaticValueDone
 .StaticValueYesTTHit:
+;SD_String 'ttHit=t|'
 		cmp   eax, VALUE_NONE
 		jne   @f
 	       call   Evaluate
-	@@:     xor   ecx, ecx
+	@@:	xor   ecx, ecx
 		mov   dword[rbx+State.staticEval], eax
 		cmp   edi, eax
 	       setg   cl
@@ -284,7 +336,7 @@ end if
 		 je   @f
 	       test   cl, byte[.ltte+MainHashEntry.genBound]
 	     cmovnz   eax, edi
-	@@:     mov   dword[.eval], eax
+	@@:	mov   dword[.eval], eax
 .StaticValueDone:
 
 
@@ -469,6 +521,9 @@ end if
 
 
 	; initialize movepick
+
+SD_String 'init MovePick probcut'
+SD_NewLine
 	     Assert   e, qword[rbx+State.checkersBB], 0, 'assertion qword[rbx+State.checkersBB] == 0 failed in Search.Step9'
 		lea   r15, [MovePick_PROBCUT_GEN]
 		mov   dword[rbx+State.threshold], edi
@@ -487,7 +542,7 @@ end if
 		 je   @f
 	       test   edx, edx
 		 jz   .9NoTTMove
-	@@:     mov   ecx, dword[.ttMove]
+	@@:	mov   ecx, dword[.ttMove]
 	       call   Move_IsPseudoLegal
 	       test   rax, rax
 		 jz   .9NoTTMove
@@ -634,7 +689,8 @@ end if
 .FMH2 equ (rbx-4*sizeof.State+State.counterMoves)
 
 
-        ; initialize move pick
+SD_String 'init MovePick main'
+SD_NewLine
 
 		mov   ecx, dword[.ttMove]
 		mov   edx, dword[.depth]
@@ -649,6 +705,7 @@ end if
 		add   edx, eax
 		mov   eax, dword[rdi+4*rdx]
 		mov   dword[rbx+State.countermove], eax
+
 
 
 		lea   r15, [MovePick_CAPTURES_GEN]
@@ -732,6 +789,12 @@ end if
 		mov   dword[.move], eax
 	       test   eax, eax
 		 jz   .MovePickDone
+
+SD_String 'mp='
+SD_Move rax
+SD_String '|'
+
+
 		cmp   eax, dword[.excludedMove]
 		 je   .MovePickLoop
 
@@ -741,7 +804,7 @@ end if
 	       imul   ecx, dword[rbp-Thread.rootPos+Thread.PVIdx], sizeof.RootMove
 		add   rcx, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
 		mov   rdx, qword[rbp+Pos.rootMovesVec+RootMovesVec.ender]
-	@@:     cmp   rcx, rdx
+	@@:	cmp   rcx, rdx
 		jae   .MovePickLoop
 		cmp   eax, dword[rcx+RootMove.pv+4*0]
 		lea   rcx, [rcx+sizeof.RootMove]
@@ -754,6 +817,11 @@ end if
 		mov   dword[rbx+State.moveCount], eax
 		mov   dword[.moveCount], eax
 
+;SD_String 'mc='
+;SD_Int rax
+;SD_String '|'
+
+
 		xor   eax, eax
 	if .PvNode eq 1
 		mov   qword[rbx+1*sizeof.State+State.pv], rax
@@ -763,14 +831,14 @@ end if
 if USE_CURRMOVE
 if VERBOSE < 2
 	if .RootNode eq 1
-		mov   eax, dword[rbp-Thread.rootPos+Thread.idx]
-	       test   eax, eax
-		jnz   .PrintCurrentMoveRet
-	       call   _GetTime				; we are only polling the timer
-		sub   rax, qword[time.startTime]	;  in the main thread at the root
-		cmp   eax, CURRMOVE_MIN_TIME
-		jae   .PrintCurrentMove
+		mov   edx, dword[.depth]
+	      movsx   eax, byte[rbp-Thread.rootPos+Thread.skipCurrMove]
+		cmp   edx, CURRMOVE_MIN_DEPTH*ONE_PLY
+		 jb   @f
+		 or   eax, dword[rbp-Thread.rootPos+Thread.idx]
+		 jz   .PrintCurrentMove
 .PrintCurrentMoveRet:
+		@@:
 	end if
 end if
 end if
@@ -808,6 +876,11 @@ end if
 		and   edx, ecx
 		sar   edx, 31
 		mov   byte[.moveCountPruning], dl
+
+;SD_String 'mcp='
+;SD_Bool8 rdx
+;SD_NewLine
+
 
 
       ; Step 12. Extend checks
@@ -1112,7 +1185,7 @@ end if
 		shl   eax, 12+2
 		add   rax, qword[rbp+Pos.history]
 		mov   eax, dword[rax+4*rcx]
-		sub   eax, 4000
+		sub   eax, 8000
 
 		mov   ecx, dword[rbx-2*sizeof.State+State.history]
 
@@ -1436,52 +1509,19 @@ end if
 
 
 	; Step 20. Check for mate and stalemate
-
-		mov   eax, dword[rbx-1*sizeof.State+State.currentMove]
-		and   eax, 63
-	      movzx   ecx, byte[rbp+Pos.board+rax]
-		shl   ecx, 6
-		lea   r15d, [rax+rcx]
-		mov   r12d, dword[.bestMove]
-		mov   eax, dword[.depth]
-		mov   r13d, eax
-	       imul   eax, eax
-		lea   r10d, [rax+2*r13-2]
-	; r15d = offset of [piece_on(prevSq),prevSq]
-	; r12d = move
-	; r13d = depth
-	; r10d = bonus
-
 		mov   edi, dword[.bestValue]
+		mov   edx, dword[.bestMove]
 		cmp   dword[.moveCount], 0
 		 je   .20Mate
-	       test   r12d, r12d
+	       test   edx, edx
 		 jz   .20CheckBonus
 .20Quiet:
-		mov   edx, r12d
-		mov   eax, r12d
-		and   eax, 63
-		shr   edx, 14
-	      movzx   eax, byte[rbp+Pos.board+rax]
-		 or   al, byte[_CaptureOrPromotion_or+rdx]
-	       test   al, byte[_CaptureOrPromotion_and+rdx]
-		jnz   .20Quiet_SkipUpdateStats
-	UpdateStats   r12d, .quietsSearched, dword[.quietCount], r11d, r10d, r15
-
-.20Quiet_SkipUpdateStats:
-
-		lea   r10d, [r10+2*(r13+1)+1]
-	; r10d = penalty
-		cmp   dword[rbx-1*sizeof.State+State.moveCount], 1
-		jne   .20TTStore
-		cmp   byte[rbx+State.capturedPiece], 0
-		jne   .20TTStore
-	       imul   r11d, r10d, -32
-		cmp   r10d, 324
-		jae   .20TTStore
-      UpdateCmStats   (rbx-1*sizeof.State), r15, r11d, r10d, r8
+		mov   ecx, dword[.bestMove]
+		mov   edx, dword[.depth]
+		lea   r8, [.quietsSearched]
+		mov   r9d, dword[.quietCount]
+	       call   UpdateStats
 		jmp   .20TTStore
-
 .20Mate:
 		mov   rax, qword[rbx+State.checkersBB]
 		mov   edx, dword[.excludedMove]
@@ -1497,19 +1537,50 @@ end if
 	; we already checked that bestMove = 0
 		mov   eax, dword[rbx-1*sizeof.State+State.currentMove]
 		lea   ecx, [eax-1]
-		mov   edx, r13d
+		mov   edx, dword[.depth]
 		sub   edx, 3*ONE_PLY
 		 or   edx, ecx
 		 js   .20TTStore
 		cmp   byte[rbx+State.capturedPiece], 0
 		jne   .20TTStore
 
+		mov   r10d, dword[.depth]
+		mov   edx, r10d
+	       imul   r10d, r10d
+		lea   r10d, [r10+2*rdx-2]
+
+		and   eax, 63
+	      movzx   r8d, byte[rbp+Pos.board+rax]
+		shl   r8d, 6
+		add   r8d, eax
+		shl   r8d, 2
+
 	       imul   r11d, r10d, 32
 		cmp   r10d, 324
 		jae   .20TTStore
-      UpdateCmStats   (rbx-1*sizeof.State), r15, r11d, r10d, r8
+
+		mov   r9, qword[rbx-2*sizeof.State+State.counterMoves]
+	       test   r9, r9
+		 jz   @f
+		add   r9, r8
+	apply_bonus   r9, r11d, r10d, 936
+	@@:
+		mov   r9, qword[rbx-3*sizeof.State+State.counterMoves]
+	       test   r9, r9
+		 jz   @f
+		add   r9, r8
+	apply_bonus   r9, r11d, r10d, 936
+	@@:
+		mov   r9, qword[rbx-5*sizeof.State+State.counterMoves]
+	       test   r9, r9
+		 jz   @f
+		add   r9, r8
+	apply_bonus   r9, r11d, r10d, 936
+	@@:
 
 .20TTStore:
+
+
 	; edi = bestValue
 		mov   r9, qword[.posKey]
 		lea   ecx, [rdi+VALUE_MATE_IN_MAX_PLY]
@@ -1536,6 +1607,36 @@ end if
     end if
       MainHash_Save   .ltte, r8, r9w, edx, sil, byte[.depth], eax, word[rbx+State.staticEval]
 		mov   eax, edi
+
+match =2, VERBOSE \{
+push rsi rdi rax rcx rdx r8 r9 r13 r14 r15
+mov r15, rax
+lea rdi, [VerboseOutput]
+mov eax,'s<'
+stosw
+match =_ROOT_NODE, NT
+\\{
+mov al, '2'
+\\}
+match =_PV_NODE, NT
+\\{
+mov al, '1'
+\\}
+match =_NONPV_NODE, NT
+\\{
+mov al, '0'
+\\}
+stosb
+mov eax, '>r'
+stosw
+movsxd rax, r15d
+call PrintSignedInteger
+PrintNewLine
+lea rcx, [VerboseOutput]
+call _WriteOut
+pop r15 r14 r13 r9 r8 rdx rcx rax rdi rsi
+\}
+
 
 .Return:
 		add   rsp, .localsize
@@ -1584,91 +1685,16 @@ end if
 
 	      align   8
 .ReturnTTValue:
-	; edi = ttValue
-		mov   r12d, ecx
-		mov   eax, dword[.depth]
-		mov   r13d, eax
-	       imul   eax, eax
-		lea   r10d, [rax+2*r13-2]
-	; r12d = move
-	; r13d = depth
-	; r10d = bonus
-
-		mov   eax, r12d
-		mov   edx, r12d
-		and   edx, 63
-		shr   eax, 14
-	      movzx   edx, byte[rbp+Pos.board+rdx]
-		 or   dl, byte[_CaptureOrPromotion_or+rax]
-		and   dl, byte[_CaptureOrPromotion_and+rax]
-	; dl = capture or promotion
-
 		mov   eax, edi
+		;mov   dword[rbx+State.currentMove], ecx
+		cmp   edi, dword[.beta]
+		 jl   .Return
 	       test   ecx, ecx
 		 jz   .Return
-
-	; ttMove is quiet; update move sorting heuristics on TT hit
-		cmp   edi, dword[.beta]
-		 jl   .ReturnTTValue_Penalty
-
-		mov   eax, dword[rbx-1*sizeof.State+State.currentMove]
-		and   eax, 63
-	      movzx   ecx, byte[rbp+Pos.board+rax]
-		shl   ecx, 6
-		lea   r15d, [rax+rcx]
-	; r15d = offset of [piece_on(prevSq),prevSq]
-
-	       test   dl, dl
-		jnz   .ReturnTTValue_SkipUpdateStats
-	UpdateStats   r12d, 0, 0, r11d, r10d, r15
-
-.ReturnTTValue_SkipUpdateStats:
-
-		mov   eax, edi
-		lea   r10d, [r10+2*(r13+1)+1]
-	; r10d = penalty
-		cmp   dword[rbx-1*sizeof.State+State.moveCount], 1
-		jne   .Return
-		cmp   byte[rbx+State.capturedPiece], 0
-		jne   .Return
-	       imul   r11d, r10d, -32
-		cmp   r10d, 324
-		jae   .Return
-      UpdateCmStats   (rbx-1*sizeof.State), r15, r11d, r10d, r8
-
-		mov   eax, edi
-		jmp   .Return
-
-
-.ReturnTTValue_Penalty:
-
-		lea   r10d, [r10+2*(r13+1)+1]
-		and   ecx, 64*64-1
-		mov   r8d, dword[rbp+Pos.sideToMove]
-		shl   r8d, 12+2
-		add   r8, qword[rbp+Pos.history]
-		lea   r8, [r8+4*rcx]
-	; r8 = offset in history table
-
-	       test   dl, dl
-		jnz   .Return
-	       imul   r11d, r10d, -32
-		cmp   r10d, 324
-		jae   .Return
-
-	apply_bonus   r8, r11d, r10d, 324
-
-		mov   r9d, r12d
-		and   r9d, 63
-		mov   eax, r12d
-		shr   eax, 6
-		and   eax, 63
-	      movzx   eax, byte[rbp+Pos.board+rax]
-		shl   eax, 6
-		add   r9d, eax
-	; r9 = offset in cm table
-      UpdateCmStats   (rbx-0*sizeof.State), r9, r11d, r10d, r8
-
+		mov   edx, dword[.depth]
+		xor   r8, r8
+		xor   r9d, r9d
+	       call   UpdateStats
 		mov   eax, edi
 		jmp   .Return
     end if

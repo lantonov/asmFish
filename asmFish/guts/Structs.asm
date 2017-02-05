@@ -143,7 +143,7 @@ match =1, DEBUG {
  stateTable	rq 1 ; the beginning of the vector of State structs
  stateEnd	rq 1 ; the end of
  counterMoveHistory  rq 1	 ; these structs hold addresses
- history 	rq 1		 ; of tables used by the search
+ history	rq 1		 ; of tables used by the search
  counterMoves	rq 1		 ;
  materialTable	rq 1		 ;
  pawnTable	rq 1		 ;
@@ -377,7 +377,7 @@ match =1, DEBUG {
  castling_ksqpath    rb 4*8
  castling_knights    rq 4
  castling_kingpawns  rq 4
- castling_movgen     rd 4       ; these are the four castling moves
+ castling_movgen     rd 4	; these are the four castling moves
  castling_rightsMask rb 64
  castling_end rb 0
 
@@ -456,6 +456,8 @@ struct IOBuffer
  tmpBuffer	rb 512
  tmpBufferEnd	rb 0
 ends
+
+
 
 
 ; structures for books

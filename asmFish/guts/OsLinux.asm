@@ -404,9 +404,9 @@ _ThreadJoin:
 	   ;      js   Failed_sys_futex_ThreadJoin     ;
 
 	; free its stack
-                mov   rcx, qword[rbx+ThreadHandle.stackAddress]
-                mov   edx, THREAD_STACK_SIZE
-               call   _VirtualFree
+		mov   rcx, qword[rbx+ThreadHandle.stackAddress]
+		mov   edx, THREAD_STACK_SIZE
+	       call   _VirtualFree
 
 		pop   rdi rsi rbx
 		ret
@@ -600,7 +600,7 @@ GD NewLine
 	       test   eax, eax
 		jnz   Failed_sys_munmap_VirtualFree
 .null:
-                pop   rbx rdi rsi
+		pop   rbx rdi rsi
 		ret
 
 
@@ -669,7 +669,7 @@ _ParseCommandLine:
 		mov   rbp, qword[rspEntry]
 
 		xor   eax, eax
-		mov   qword[ioBuffer.cmdLineStart], rax
+		mov   qword[CmdLineStart], rax
 
 		xor   ebx, ebx
 		xor   edi, edi
@@ -685,15 +685,15 @@ _ParseCommandLine:
 
 		lea   ecx, [rdi+4097]
 		and   ecx, -4096
-		mov   qword[ioBuffer.inputBufferSizeB], rcx
+		mov   qword[InputBufferSizeB], rcx
 	       call   _VirtualAlloc
-		mov   qword[ioBuffer.inputBuffer], rax
+		mov   qword[InputBuffer], rax
 
 	       test   edi, edi
 		 jz   .Done
 
-		mov   rdi, qword[ioBuffer.inputBuffer]
-		mov   qword[ioBuffer.cmdLineStart], rdi
+		mov   rdi, qword[InputBuffer]
+		mov   qword[CmdLineStart], rdi
 
 		xor   ebx, ebx
     .NextArg2:

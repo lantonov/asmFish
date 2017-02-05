@@ -6,121 +6,121 @@
 
 Move_Do__UciParseMoves:
 match =1, DEBUG {
-		lea   rax, [@f]
-		mov   [rbp+Pos.debugQWORD1], rax
-		jmp   Move_Do
+lea	rax, [@f]
+mov	[rbp+Pos.debugQWORD1], rax
+jmp	Move_Do
 @@: db 'DoMove__UciParseMoves',0	   }
 
 Move_Do__PerftGen_Root:
 match =1, DEBUG {
-		lea   rax, [@f]
-		mov   [rbp+Pos.debugQWORD1], rax
-		jmp   Move_Do
+lea	rax, [@f]
+mov	[rbp+Pos.debugQWORD1], rax
+jmp	Move_Do
 @@: db 'DoMove__PerftGen_Root',0	   }
 
 Move_Do__PerftGen_Branch:
 match =1, DEBUG {
-		lea   rax, [@f]
-		mov   [rbp+Pos.debugQWORD1], rax
-		jmp   Move_Do
+lea	rax, [@f]
+mov	[rbp+Pos.debugQWORD1], rax
+jmp	Move_Do
 @@: db 'DoMove__PerftGen_Branch',0	     }
 
 Move_Do__ExtractPonderFromTT:
 match =1, DEBUG {
-		lea   rax, [@f]
-		mov   [rbp+Pos.debugQWORD1], rax
-		jmp   Move_Do
+lea	rax, [@f]
+mov	[rbp+Pos.debugQWORD1], rax
+jmp	Move_Do
 @@: db 'DoMove__ExtractPonderFromTT',0		 }
 
 Move_Do__Search:
 match =1, DEBUG {
-		lea   rax, [@f]
-		mov   [rbp+Pos.debugQWORD1], rax
-		jmp   Move_Do
+lea	rax, [@f]
+mov	[rbp+Pos.debugQWORD1], rax
+jmp	Move_Do
 @@: db 'DoMove__Search',0			 }
 
 Move_Do__QSearch:
 match =1, DEBUG {
-		lea   rax, [@f]
-		mov   [rbp+Pos.debugQWORD1], rax
-		jmp   Move_Do
+lea	rax, [@f]
+mov	[rbp+Pos.debugQWORD1], rax
+jmp	Move_Do
 @@: db 'DoMove__QSearch',0			 }
 
 Move_Do__EasyMoveMng:
 match =1, DEBUG {
-		lea   rax, [@f]
-		mov   [rbp+Pos.debugQWORD1], rax
-		jmp   Move_Do
+lea	rax, [@f]
+mov	[rbp+Pos.debugQWORD1], rax
+jmp	Move_Do
 @@: db 'DoMove__EasyMoveMng',0			 }
 
 Move_Do__RootMove_InsertPVInTT:
 match =1, DEBUG {
-		lea   rax, [@f]
-		mov   [rbp+Pos.debugQWORD1], rax
-		jmp   Move_Do
+lea	rax, [@f]
+mov	[rbp+Pos.debugQWORD1], rax
+jmp	Move_Do
 @@: db 'DoMove__RootMove_InsertPVInTT',0	 }
 
 Move_Do__ProbCut:
 match =1, DEBUG {
-		lea   rax, [@f]
-		mov   [rbp+Pos.debugQWORD1], rax
-		jmp   Move_Do
+lea	rax, [@f]
+mov	[rbp+Pos.debugQWORD1], rax
+jmp	Move_Do
 @@: db 'DoMove__ProbCut',0	   }
 
 Move_Do__Tablebase_ProbeAB:
 match =1, DEBUG {
-		lea   rax, [@f]
-		mov   [rbp+Pos.debugQWORD1], rax
-		jmp   Move_Do
+lea	rax, [@f]
+mov	[rbp+Pos.debugQWORD1], rax
+jmp	Move_Do
 @@: db 'Move_Do__Tablebase_ProbeAB',0	      }
 
 Move_Do__Tablebase_ProbeWDL:
 match =1, DEBUG {
-		lea   rax, [@f]
-		mov   [rbp+Pos.debugQWORD1], rax
-		jmp   Move_Do
+lea	rax, [@f]
+mov	[rbp+Pos.debugQWORD1], rax
+jmp	Move_Do
 @@: db 'Move_Do__Tablebase_ProbeWDL',0	       }
 
 Move_Do__Tablebase_ProbeDTZNoEP:
 match =1, DEBUG {
-		lea   rax, [@f]
-		mov   [rbp+Pos.debugQWORD1], rax
-		jmp   Move_Do
+lea	rax, [@f]
+mov	[rbp+Pos.debugQWORD1], rax
+jmp	Move_Do
 @@: db 'Move_Do__Tablebase_ProbeDTZNoEP',0	   }
 
 Move_Do__Tablebase_ProbeDTZNoEP_SuccessIsNeg_WdlIsPositive:
 match =1, DEBUG {
-		lea   rax, [@f]
-		mov   [rbp+Pos.debugQWORD1], rax
-		jmp   Move_Do
+lea	rax, [@f]
+mov	[rbp+Pos.debugQWORD1], rax
+jmp	Move_Do
 @@: db 'Move_Do__Tablebase_ProbeDTZNoEP_SuccessIsNeg_WdlIsPositive',0	      }
 
 Move_Do__Tablebase_ProbeDTZNoEP_SuccessIsNeg_WdlIsNonpositive:
 match =1, DEBUG {
-		lea   rax, [@f]
-		mov   [rbp+Pos.debugQWORD1], rax
-		jmp   Move_Do
+lea	rax, [@f]
+mov	[rbp+Pos.debugQWORD1], rax
+jmp	Move_Do
 @@: db 'Move_Do__Tablebase_ProbeDTZNoEP_SuccessIsNeg_WdlIsNonpositive',0	 }
 
 Move_Do__Tablebase_ProbeDTZ:
 match =1, DEBUG {
-		lea   rax, [@f]
-		mov   [rbp+Pos.debugQWORD1], rax
-		jmp   Move_Do
+lea	rax, [@f]
+mov	[rbp+Pos.debugQWORD1], rax
+jmp	Move_Do
 @@: db 'Move_Do__Tablebase_ProbeDTZ',0	       }
 
 Move_Do__Tablebase_RootProbe:
 match =1, DEBUG {
-		lea   rax, [@f]
-		mov   [rbp+Pos.debugQWORD1], rax
-		jmp   Move_Do
+lea	rax, [@f]
+mov	[rbp+Pos.debugQWORD1], rax
+jmp	Move_Do
 @@: db 'Move_Do__Tablebase_RootProbe',0 	}
 
 Move_Do__Tablebase_RootProbeWDL:
 match =1, DEBUG {
-		lea   rax, [@f]
-		mov   [rbp+Pos.debugQWORD1], rax
-		jmp   Move_Do
+lea	rax, [@f]
+mov	[rbp+Pos.debugQWORD1], rax
+jmp	Move_Do
 @@: db 'Move_Do__Tablebase_RootProbeWDL',0	   }
 
 
@@ -135,61 +135,57 @@ Move_Do:
 	       push   rsi rdi r12 r13 r14 r15
 	       push   rcx rdx
 
-        ; stack is unaligned at this point
-
 match =1, DEBUG {
-	       push   rax rcx rdx
-		sub   rsp, MAX_MOVES*sizeof.ExtMove
-		mov   dword[rbp+Pos.debugDWORD1], ecx
-		lea   rdi, [DebugOutput]
-		mov   qword[rbp+Pos.state], rbx
-	       call   Position_PrintSmall
+push	rcx rdx
+sub	rsp, MAX_MOVES*sizeof.ExtMove
+mov	dword[rbp+Pos.debugDWORD1], ecx
+lea	rdi, [DebugOutput]
+mov	qword[rbp+Pos.state], rbx
+call	Position_PrintSmall
 PrintNewLine
-		mov   qword[rbp+Pos.state], rbx
-	       call   Position_IsLegal
-	       test   eax, eax
-		jnz   Move_Do_posill
-		mov   ecx, dword[rbp+Pos.debugDWORD1]
-	       call   Move_IsPseudoLegal
-	       test   rax, rax
-		 jz   Move_Do_pillegal
-		mov   ecx, dword[rbp+Pos.debugDWORD1]
-	       call   Move_IsLegal
-	       test   eax, eax
-		 jz   Move_Do_illegal
-		mov   rdi, rsp
-	       call   Gen_Legal
-		mov   rcx, rsp
+mov	qword[rbp+Pos.state], rbx
+call	Position_IsLegal
+test	eax, eax
+jnz	Move_Do_posill
+mov	ecx, dword[rbp+Pos.debugDWORD1]
+call	Move_IsPseudoLegal
+test	rax, rax
+jz	Move_Do_pillegal
+mov	ecx, dword[rbp+Pos.debugDWORD1]
+call	Move_IsLegal
+test	eax, eax
+jz	Move_Do_illegal
+mov	rdi, rsp
+call	Gen_Legal
+mov	rcx, rsp
 @@:
-		cmp   rcx, rdi
-		jae   Move_Do_DoIllegal
-		mov   eax, dword[rbp+Pos.debugDWORD1]
-		cmp   eax, dword[rcx]
-		lea   rcx, [rcx+sizeof.ExtMove]
-		jne   @b
-		add   rsp, MAX_MOVES*sizeof.ExtMove
-		pop   rdx rcx rax
+cmp	rcx, rdi
+jae	Move_Do_DoIllegal
+mov	eax, dword[rbp+Pos.debugDWORD1]
+cmp	eax, dword[rcx]
+lea	rcx, [rcx+sizeof.ExtMove]
+jne	@b
+add	rsp, MAX_MOVES*sizeof.ExtMove
+pop	rdx rcx
 }
 
 match=2, VERBOSE {
-	       push   rax rcx rdx rsi rdi
-		mov   esi, ecx
-		lea   rdi, [VerboseOutput]
-		mov   ax, 'dm'
-	      stosw
-	     movsxd   rax, dword[rbp+Pos.gamePly]
-	       call   PrintSignedInteger
-		mov   al, ':'
-	      stosb
-		mov   ecx, esi
-		xor   edx, edx
-	       call   PrintUciMove
-		mov   al, '|'
-	      stosb
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   rdi rsi rdx rcx rax
-		add   dword[rbp+Pos.gamePly], 1	  ; gamePly is only used by search to init the timeman
+push	rax rcx rsi rdi
+mov	esi, ecx
+lea	rdi, [VerboseOutput]
+mov	ax, 'dm'
+stosw
+movsxd	rax, dword[rbp+Pos.gamePly]
+call	PrintSignedInteger
+mov	al, ':'
+stosb
+mov	ecx, esi
+xor	edx, edx
+call	PrintUciMove
+lea	rcx, [VerboseOutput]
+call	_WriteOut
+pop	rdi rsi rcx rax
+add	dword[rbp+Pos.gamePly], 1	  ; gamePly is only used by search to init the timeman
 }
 
 		mov   esi, dword[rbp+Pos.sideToMove]
@@ -315,6 +311,15 @@ end if
 	      vmovq   qword[rbx+State.materialKey], xmm3
 	      vmovq   qword[rbx+State.psq], xmm6
 
+;match =2, VERBOSE {
+;movsx eax, word[rbx+State.rule50]
+;SD_Int rax
+;SD_String ','
+;movsx eax, word[rbx+State.pliesFromNull]
+;SD_Int rax
+;SD_String '|'
+;}
+
 		mov   r15, qword[rbp+Pos.typeBB+8*rsi]
 		xor   esi, 1
 		mov   r14, qword[rbp+Pos.typeBB+8*rsi]
@@ -334,10 +339,10 @@ end if
 		mov   qword[rbx+State.checkersBB], rax
 
 match =1, DEBUG {
-		mov   qword[rbp+Pos.state], rbx
-	       call   Position_IsLegal
-	       test   eax, eax
-		jnz   Move_Do_post_posill
+mov qword[rbp+Pos.state], rbx
+call Position_IsLegal
+test eax, eax
+jnz Move_Do_post_posill
 }
 		jmp   SetCheckInfo.go
 
@@ -351,11 +356,11 @@ match =1, DEBUG {
 	; remove piece r11(=r12+rax) on to square r9
 
 match =1, DEBUG {
-		lea   edx, [8*rsi]
-		cmp   edx, r12d
-		 je   Move_Do_capself
-		cmp   eax, King
-		 je   Move_Do_capking
+lea edx, [8*rsi]
+cmp edx, r12d
+je Move_Do_capself
+cmp eax, King
+je Move_Do_capking
 }
 
 		mov   rdi, qword[rbp+Pos.typeBB+r12]
@@ -417,10 +422,10 @@ end if
 		jnz   .DoFull
 		mov   qword[rbx+State.checkersBB], rax
 match =1, DEBUG {
-		mov   qword[rbp+Pos.state], rbx
-	       call   Position_IsLegal
-	       test   eax, eax
-		jnz   Move_Do_post_posill
+mov qword[rbp+Pos.state], rbx
+call Position_IsLegal
+test eax, eax
+jnz Move_Do_post_posill
 }
 		jmp   SetCheckInfo.go
 
@@ -454,10 +459,10 @@ match =1, DEBUG {
 		and   rax, r12
 		mov   qword[rbx+State.checkersBB], rax
 match =1, DEBUG {
-		mov   qword[rbp+Pos.state], rbx
-	       call   Position_IsLegal
-	       test   eax, eax
-		jnz   Move_Do_post_posill
+mov qword[rbp+Pos.state], rbx
+call Position_IsLegal
+test eax, eax
+jnz Move_Do_post_posill
 }
 		jmp   SetCheckInfo.go
 
@@ -615,11 +620,11 @@ end if
 	; r11 = our rook
 
 match =1, DEBUG {
-		mov   eax, dword[rbp+Pos.debugDWORD1]
-		cmp   eax, dword[rbp-Thread.rootPos+Thread.castling_movgen+8*rsi+0]
-		 je   @f
-		cmp   eax, dword[rbp-Thread.rootPos+Thread.castling_movgen+8*rsi+4]
-		jne   Move_Do_badcas
+mov eax, dword[rbp+Pos.debugDWORD1]
+cmp eax, dword[rbp-Thread.rootPos+Thread.castling_movgen+8*rsi+0]
+je @f
+cmp eax, dword[rbp-Thread.rootPos+Thread.castling_movgen+8*rsi+4]
+jne Move_Do_badcas
 @@:
 }
 	       push   rax	    ; these are popped before exit
@@ -719,54 +724,54 @@ end if
 match =1, DEBUG {
 
 Move_Do_posill:
-		lea   rdi, [Output]
-	     szcall   PrintString, 'position did not pass Position_IsLegal in DoMove'
-		jmp   Move_Do_GoError
+lea	rdi, [Output]
+szcall	PrintString, 'position did not pass Position_IsLegal in DoMove'
+jmp	Move_Do_GoError
 Move_Do_pillegal:
-		lea   rdi, [Output]
-	     szcall   PrintString, 'move did not pass IsMovePseudoLegal in DoMove'
-		jmp   Move_Do_GoError
+lea	rdi, [Output]
+szcall	PrintString, 'move did not pass IsMovePseudoLegal in DoMove'
+jmp	Move_Do_GoError
 Move_Do_illegal:
-		lea   rdi, [Output]
-	     szcall   PrintString, 'move did not pass IsMoveLegal in DoMove'
-		jmp   Move_Do_GoError
+lea	rdi, [Output]
+szcall	PrintString, 'move did not pass IsMoveLegal in DoMove'
+jmp	Move_Do_GoError
 Move_Do_DoIllegal:
-		lea   rdi, [Output]
-	     szcall   PrintString, 'move not in legal list in DoMove'
-		jmp   Move_Do_GoError
+lea	rdi, [Output]
+szcall	PrintString, 'move not in legal list in DoMove'
+jmp	Move_Do_GoError
 Move_Do_badcas:
-		lea   rdi, [Output]
-	     szcall   PrintString, 'bad castling in DoMove'
-		jmp   Move_Do_GoError
+lea	rdi, [Output]
+szcall	PrintString, 'bad castling in DoMove'
+jmp	Move_Do_GoError
 Move_Do_capself:
-		lea   rdi, [Output]
-	     szcall   PrintString, 'capture self in DoMove'
-		jmp   Move_Do_GoError
+lea	rdi, [Output]
+szcall	PrintString, 'capture self in DoMove'
+jmp	Move_Do_GoError
 Move_Do_capking:
-		lea   rdi, [Output]
-	     szcall   PrintString, 'capture king in DoMove'
-		jmp   Move_Do_GoError
+lea	rdi, [Output]
+szcall	PrintString, 'capture king in DoMove'
+jmp	Move_Do_GoError
 Move_Do_post_posill:
-		lea   rdi, [Output]
-	     szcall   PrintString, 'position not legal after making'
-		jmp   Move_Do_GoError
+lea	rdi, [Output]
+szcall	PrintString, 'position not legal after making'
+jmp	Move_Do_GoError
 
 
 Move_Do_GoError:
-       PrintNewLine
-		mov   rcx, qword[rbp+Pos.debugQWORD1]
-	       call   PrintString
 PrintNewLine
-		mov   rax, 'move:   '
-		mov   ecx, dword[rbp+Pos.debugDWORD1]
-		mov   edx, dword[rbp+Pos.chess960]
-	       call   PrintUciMoveLong
+mov	rcx, qword[rbp+Pos.debugQWORD1]
+call	PrintString
 PrintNewLine
-		lea   rcx, [DebugOutput]
-	       call   PrintString
-		xor   eax, eax
-	      stosd
-		lea   rdi, [Output]
-	       call   _ErrorBox
-               int3
+mov	rax, 'move:   '
+mov	ecx, dword[rbp+Pos.debugDWORD1]
+mov	edx, dword[rbp+Pos.chess960]
+call	PrintUciMoveLong
+PrintNewLine
+lea	rcx, [DebugOutput]
+call	PrintString
+xor	eax, eax
+stosd
+lea	rdi, [Output]
+call	_ErrorBox
+int3
 }

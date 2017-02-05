@@ -5,10 +5,9 @@ macro EvalPawns Us {
 	;     rdi address of pawn table entry
 	; out esi score
 local Them, Up, Right, Left
-local Isolated0, Isolated1, Backward0, Backward1, Unsupported, Doubled
 local ..NextPiece, ..AllDone, ..WritePawnSpan
 local ..Neighbours_True, ..Lever_False, ..TestUnsupported
-local ..Lever_True, ..Neighbours_False, ..Continue, ..NoPassed
+local ..Lever_True, ..Neighbours_False, ..Continue
 
 match =White, Us
 \{
@@ -185,43 +184,24 @@ end if
 		shr   edx, 3
 		mov   rdx, qword[RankBB+8*rdx]
 		and   rdx, r9
-	     popcnt   r9, rdx, rax
-	; r9 = popcnt(phalanx)
 		neg   rdx
 		adc   r11d, r11d
 	       blsr   rax, r8
 		neg   rax
 		adc   r11d, r11d
 		lea   r11d, [8*r11+r12]
-		 or   rdx, r8
-	     cmovnz   edx, dword[Connected+4*r11]
-		add   esi, edx
+		 or   r8, rdx
+	     cmovnz   r8d, dword[Connected+4*r11]
+		add   esi, r8d
 	; connected is taken care of
-	     popcnt   r8, r8, rax
-	; r8 = popcnt(supported)
 
-		mov   rax, qword[PawnAttacks+8*(64*Us+rcx)]
-		and   rax, r14
-	; rax = lever
-		mov   rdx, qword[PawnAttacks+8*(64*Us+rcx+Up)]
-		and   rdx, r14
-	; rdx = leverPush
-
-	       test   r13, qword[ForwardBB+8*(64*Us+rcx)]
-		jnz   ..NoPassed
-		xor   r10, rax
-		xor   r10, rdx
-		jnz   ..NoPassed
-	     popcnt   rax, rax, r10
-	     popcnt   rdx, rdx, r10
-		sub   r8, rax
-		sub   r9, rdx
-		 or   r8, r9
-		 js   ..NoPassed
-		mov   eax, 1
+		mov   rdx, qword[ForwardBB+8*(64*Us+rcx)]
+		and   rdx, r13
+		xor   eax, eax
+		 or   r10, rdx
+	       setz   al
 		shl   rax, cl
 		 or   qword[rdi+PawnEntry.passedPawns+8*Us], rax
-..NoPassed:
 	; passed pawns is taken care of
 
 
@@ -236,5 +216,17 @@ else
 end if
 
 ..AllDone:
+
+restore Them
+restore Up
+restore Right
+restore Left
+restore Isolated0
+restore Isolated1
+restore Backward0
+restore Backward1
+restore Unsupported0
+restore Unsupported1
+restore Doubled
 
 }

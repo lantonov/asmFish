@@ -31,5 +31,8 @@ Search_Clear:
 		jmp   .NextThread
 .ThreadsDone:
 
+GD_String 'returning from Search_Clear'
+GD_NewLine
+
 		pop   rdi rsi rbx
 		ret

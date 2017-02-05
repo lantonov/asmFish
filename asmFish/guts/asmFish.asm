@@ -51,58 +51,22 @@ segment readable writeable
 
 
 
-
-if PROFILE > 0
-  align 16
-  profile:
-   .cjmpcounts rq 2*16
-
-   .CheckTime           dq 0
-   .EvalPassedPawns     dq 0
-   .Evaluate            dq 0
-   .EvaluateLazy        dq 0
-   .MainHash_Probe      dq 0
-   .MainHash_Save       dq 0
-   .Move_Do             dq 0
-   .Move_DoNull         dq 0
-   .Move_GivesCheck     dq 0
-   .Move_IsLegal        dq 0
-   .Move_IsPseudoLegal  dq 0
-   .QSearch_PV_TRUE     dq 0
-   .QSearch_PV_FALSE    dq 0
-   .QSearch_NONPV_TRUE  dq 0
-   .QSearch_NONPV_FALSE dq 0
-   .Search_ROOT         dq 0
-   .Search_PV           dq 0
-   .Search_NONPV        dq 0
-   .See                 dq 0
-   .SeeTest             dq 0
-   .SetCheckInfo        dq 0
-
-   .moveUnpack          dq 0
-   .moveStore           dq 0
-   .moveRetrieve        dq 0
-
-   .ender               rb 0
-end if
-
-
 if VERBOSE > 0
   align 16
-  VerboseOutput         rq 1024
-  VerboseTime           rq 2
+  VerboseOutput 	rq 1024
+  VerboseTime		rq 2
 end if
 
 
 if DEBUG > 0
   align 16
-  DebugBalance          rq 1
-  DebugOutput           rq 1024
+  DebugBalance		rq 1
+  DebugOutput		rq 1024
 end if
 
 align 16
-RazorMargin             dd 483, 570, 603, 554
-_CaptureOrPromotion_or  db  0,-1,-1, 0
+RazorMargin		dd 483, 570, 603, 554
+_CaptureOrPromotion_or	db  0,-1,-1, 0
 _CaptureOrPromotion_and db -1,-1,-1, 0
 
 
@@ -249,14 +213,14 @@ sz_NewLine:
 sz_NewLineEnd:
 szUciResponseEnd:
 
-szCPUError         db 'Error: processor does not support',0
-   .POPCNT         db ' POPCNT',0
-   .AVX1           db ' AVX1',0
-   .AVX2           db ' AVX2',0
-   .BMI1           db ' BMI1',0
-   .BMI2           db ' BMI2',0
-szStartFEN         db 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',0
-PieceToChar        db '.?PNBRQK??pnbrqk'
+szCPUError	   db 'Error: processor does not support',0
+   .POPCNT	   db ' POPCNT',0
+   .AVX1	   db ' AVX1',0
+   .AVX2	   db ' AVX2',0
+   .BMI1	   db ' BMI1',0
+   .BMI2	   db ' BMI2',0
+szStartFEN	   db 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',0
+PieceToChar	   db '.?PNBRQK??pnbrqk'
 
 sz_error_think	   db 'error: setoption called while thinking',0
 sz_error_value	   db 'error: setoption has no value',0
@@ -393,9 +357,9 @@ align 8
  hStdIn      dq ?
  hStdError   dq ?
  hAdvapi32   dq ?
- __imp_MessageBoxA                    dq ?
- __imp_VirtualAllocExNuma             dq ?
- __imp_SetThreadGroupAffinity         dq ?
+ __imp_MessageBoxA		      dq ?
+ __imp_VirtualAllocExNuma	      dq ?
+ __imp_SetThreadGroupAffinity	      dq ?
  __imp_GetLogicalProcessorInformationEx dq ?
 }
 
@@ -408,13 +372,17 @@ align 8
 }
 
 align 8
+nnetrand dq 1
+nnetFlops dq 0
+nnetTime1 dq 0
+nnetTime2 dq 0
+
+align 8
  LargePageMinSize dq ?
+ Output 	  rb 1024  ; output buffer has static allocation
 
 align 16
  ioBuffer	IOBuffer
-
-align 16
- Output 	  rb 1024  ; output buffer has static allocation
 
 
 
@@ -544,46 +512,46 @@ MobilityBonus_Bishop rd 16
 MobilityBonus_Rook   rd 16
 MobilityBonus_Queen  rd 32
 
-Lever                      rd 8
-ShelterWeakness            rd 8*8
+Lever			   rd 8
+ShelterWeakness 	   rd 8*8
 StormDanger:
 StormDanger_NoFriendlyPawn rd 8*8
 StormDanger_Unblocked	   rd 8*8
 StormDanger_BlockedByPawn  rd 8*8
 StormDanger_BlockedByKing  rd 8*8
-KingFlank                  rq 8
-ThreatBySafePawn           rd 16
-Threat_Minor               rd 16
-Threat_Rook                rd 16
-PassedRank                 rd 8
-PassedFile                 rd 8
+KingFlank		   rq 8
+ThreatBySafePawn	   rd 16
+Threat_Minor		   rd 16
+Threat_Rook		   rd 16
+PassedRank		   rd 8
+PassedFile		   rd 8
 
 DoMaterialEval_Data:
-.QuadraticOurs:            rd 8*6
-.QuadraticTheirs:          rd 8*6
+.QuadraticOurs: 	   rd 8*6
+.QuadraticTheirs:	   rd 8*6
 
 
 
 ;;;;;;;;;;;;;; data for endgames ;;;;;;;;;;;;;;
 align 64
-EndgameEval_Map            rb 2*ENDGAME_EVAL_MAX_INDEX*sizeof.EndgameMapEntry
-EndgameScale_Map           rb 2*ENDGAME_SCALE_MAX_INDEX*sizeof.EndgameMapEntry
-EndgameEval_FxnTable       rd ENDGAME_EVAL_MAX_INDEX
-EndgameScale_FxnTable      rd ENDGAME_SCALE_MAX_INDEX
-KPKEndgameTable            rq 48*64
-PushToEdges                rb 64
-PushToCorners              rb 64
-PushClose                  rb 8
-PushAway                   rb 8
+EndgameEval_Map 	   rb 2*ENDGAME_EVAL_MAX_INDEX*sizeof.EndgameMapEntry
+EndgameScale_Map	   rb 2*ENDGAME_SCALE_MAX_INDEX*sizeof.EndgameMapEntry
+EndgameEval_FxnTable	   rd ENDGAME_EVAL_MAX_INDEX
+EndgameScale_FxnTable	   rd ENDGAME_SCALE_MAX_INDEX
+KPKEndgameTable 	   rq 48*64
+PushToEdges		   rb 64
+PushToCorners		   rb 64
+PushClose		   rb 8
+PushAway		   rb 8
 
 ;;;;;;;;;;;;;;;;;;;;; data for tablebase ;;;;;;;;;;;;;;
 align 16
-Tablebase_Cardinality      rd 1
+Tablebase_Cardinality	   rd 1
 Tablebase_MaxCardinality   rd 1
-Tablebase_ProbeDepth       rd 1
-Tablebase_Score            rd 1
-Tablebase_RootInTB         rb 1    ; boole 0 or -1
-Tablebase_UseRule50        rb 1    ; boole 0 or -1
+Tablebase_ProbeDepth	   rd 1
+Tablebase_Score 	   rd 1
+Tablebase_RootInTB	   rb 1    ; boole 0 or -1
+Tablebase_UseRule50	   rb 1    ; boole 0 or -1
 
 
 
@@ -737,7 +705,7 @@ match ='L', VERSION_OS {
 
 GD GetTime
 
-        ; init the engine
+	; init the engine
 	       call   Options_Init
 	       call   MoveGen_Init
 	       call   BitBoard_Init
@@ -758,6 +726,11 @@ match =0, VERBOSE {
 		lea   rcx, [szGreeting]
 	       call   _WriteOut
 }
+
+
+
+call RunNNet
+
 
 	; set up threads, hash, and tablebases
 	       call   MainHash_Create
@@ -825,6 +798,8 @@ include 'Pawn_Init.asm'
 include 'Endgame_Init.asm'
 
 
+include 'NeuralNet.asm'
+
 
 
 
@@ -833,10 +808,10 @@ if PROFILE > 0
 ; in the preprocessor variables hitprofilelist and condprofilelist
 
 DisplayProfileData:
-               push   rbx rsi rdi
+	       push   rbx rsi rdi
    PrintProfileData
-                pop   rdi rsi rbx
-                ret
+		pop   rdi rsi rbx
+		ret
 
 
 ; we also need a data section to keep track of the counts

@@ -100,8 +100,8 @@ Book_Load:
 	; check if all entries are ordered
 	       test   edx, edx
 		 jz   .InOrder
-AD String, 'info string undefined behaviour from unsorted keys in polyglot book'
-AD NewLine
+Display_String 'info string undefined behaviour from unsorted keys in polyglot book'
+Display_NewLine
 	.InOrder:
 
 	; free space r14
@@ -217,7 +217,6 @@ end virtual
 		mov   r12, rax
 	       imul   r14d, dword[book.entryCount], sizeof.BookEntry
 		add   r14, r15
-
 	; r12 is the key we want
 	; r14 is the address of the end of the book
 	; r15 is the address of the start of the book
@@ -247,9 +246,6 @@ end virtual
 		cmp   r15, qword[book.buffer]
 		 jb   .FoundFirst
 		cmp   r12, qword[r15+BookEntry.key]
-
-
-
 		 je   .Found		 
 
 
@@ -305,7 +301,6 @@ end virtual
 		lea   rcx, [book.seed]
 	       call   Math_Rand_i
 		xor   edx, edx
-
 		div   r13d
 		xor   ecx, ecx
 		mov   r8d, edx
@@ -408,33 +403,26 @@ end virtual
 .ParseDone:
 		mov   rcx, qword[r15+Brain.path]
 	       test   rcx, rcx
-
 		 jz   .ErrorBadIn
 	       call   _FileOpenRead
 		mov   qword[r15+Brain.file], rax
 		cmp   rax, -1
-
 		 je   .ErrorBadIn
 
 		mov   rcx, qword[.outFilePath]
 	       test   rcx, rcx
-
 		 jz   .ErrorBadOut
 	       call   _FileOpenWrite
 		mov   qword[.outFile], rax
 		cmp   rax, -1
-
 		 je   .ErrorBadOut
 
 		jmp   .Go
-
 
 .Return:
 		add   rsp, .localsize
 		pop   r15 r14 r13 r12 rdi rbx rbp
 		ret
-
-
 
 
 .ParseDepth:
@@ -443,18 +431,14 @@ end virtual
       ClampUnsigned   eax, 1, 100
 		mov   dword[r15+Brain.maxDepth], eax
 		jmp   .ParseLoop
-
-
 .ParsePath:
 	       call   SkipSpaces
 	      lodsb
 		cmp   al, '"'
-
 		jne   .ErrorQuotes
 		mov   qword[rbx], rsi
 	@@:   lodsb
 		cmp   al, ' '
-
 		 jb   .ErrorQuotes
 		cmp   al, '"'
 		jne   @b
@@ -466,15 +450,15 @@ end virtual
 
 	; either of the in and out files are no good
 .ErrorQuotes:
-AD String, 'error occured: missing quotes for file'
+Display_String 'error occured: missing quotes for file'
 		jmp   .ErrorBadInOutClose
 .ErrorBadIn:
-AD String, 'error occured: bad in file'
+Display_String 'error occured: bad in file'
 		jmp   .ErrorBadInOutClose
 .ErrorBadOut:
-AD String, 'error occured: bad out file'
+Display_String 'error occured: bad out file'
 .ErrorBadInOutClose:
-AD NewLine
+Display_NewLine
 		mov   rcx, qword[r15+Brain.file]
 	       call   _FileClose
 		mov   rcx, qword[.outFile]
@@ -487,11 +471,11 @@ AD NewLine
 
 	; the in file has a bad size
 .ErrorBadInSizeMod8:
-AD String, 'error occured: in file size is not a multiple of 8'
+Display_String 'error occured: in file size is not a multiple of 8'
 		jmp   .ErrorBadInOutClose
 
 .ErrorBadInSizeLarge:
-AD String, 'error occured: in file size is much too big'
+Display_String 'error occured: in file size is much too big'
 		jmp   .ErrorBadInOutClose
 
 
@@ -576,28 +560,28 @@ AD String, 'error occured: in file size is much too big'
 		 jb   .NextEntry
 
 	     Assert   e, rdi, qword[r15+Brain.ender], 'oops in brain open'
-AD String, 'brain entries: '
-AD Int64, r10
-AD NewLine
-AD String, 'brain duplicates (HMM): '
-AD Int64, r11
-AD NewLine
-AD String, 'brain unsorted (OK): '
-AD Int64, r12
-AD NewLine
+Display_String 'brain entries: '
+Display_Int r10
+Display_NewLine
+Display_String 'brain duplicates (HMM): '
+Display_Int r11
+Display_NewLine
+Display_String 'brain unsorted (OK): '
+Display_Int r12
+Display_NewLine
 		mov   dword[r15+Brain.entriesCount], r10d
 
 
 	       test   r12, r12
 		 jz   .DontSortBrain
-AD String 'sorting brain keys'
-AD NewLine
+Display_String 'sorting brain keys'
+Display_NewLine
 	; sort entries
 		mov   rcx, qword[r15+Brain.start]
 		mov   rdx, qword[r15+Brain.ender]
 	       call   RadixSort_Brain
-AD String 'done sorting brain keys'
-AD NewLine
+Display_String 'done sorting brain keys'
+Display_NewLine
 	.DontSortBrain:
 
 
@@ -646,24 +630,23 @@ AD NewLine
 
 	; start searching
 
-AD String, 'starting search with maxDepth '
-AD Int64, qword[r15+Brain.maxDepth]
-AD NewLine
+Display_String 'starting search with maxDepth '
+Display_Int qword[r15+Brain.maxDepth]
+Display_NewLine
 
 		xor   ecx, ecx
 		mov   dword[r15+Brain.depthRecord], ecx
 	       call   BookSearch
 
 	; display found portion
-AD String, 'BookSearch done'
-AD NewLine
+Display_String 'BookSearch done'
+Display_NewLine
 		lea   rdi, [Output]
 	       call   Brain_PrintFound
        PrintNewLine
 	       call   _WriteOut_Output
 
 		mov   rcx, qword[r15+Brain.depthRecordBuffer]
-
 	       call   StringLength
 		lea   rdi, [rcx+rax]
 	       call   _WriteOut
@@ -696,14 +679,14 @@ AD NewLine
 		mov   qword[rbp+Pos.stateEnd], rax
 		mov   qword[rbp+Pos.moveList], rax
 
-AD String, 'sorting polyglot keys'
-AD NewLine
+Display_String 'sorting polyglot keys'
+Display_NewLine
 	; sort entries
 		mov   rcx, qword[r15+Brain.start]
 		mov   rdx, qword[r15+Brain.ender]
 	       call   RadixSort_BrainPolyglot
-AD String, 'done sorting polyglot keys'
-AD NewLine
+Display_String 'done sorting polyglot keys'
+Display_NewLine
 
 	; copy from BrainEntry to polyglot book
 		mov   esi, dword[r15+Brain.entriesCount]
@@ -763,15 +746,16 @@ AD NewLine
 		 jb   .NextEntry2
 		mov   qword[r15+Brain.currentOrg], rdi
 
-AD String, 'polyglot entries: '
-AD Int64, r10
-AD NewLine
-AD String, 'polyglot duplicates (OK): '
-AD Int64, r11
-AD NewLine
-AD String, 'polyglot unsorted (BAD): '
-AD Int64, r12
-AD NewLine
+Display_String 'polyglot entries: '
+Display_Int r10
+Display_NewLine
+Display_String 'polyglot duplicates (OK): '
+Display_Int r11
+Display_NewLine
+Display_String 'polyglot unsorted (BAD): '
+Display_Int r12
+Display_NewLine
+
 
 
 		mov   rcx, qword[.outFile]
@@ -1177,7 +1161,6 @@ Position_PolyglotKey:
 		add   ecx, 1
 		cmp   ecx, 64
 		 jb   .NextSquare
-
 		ret
 
 .EpSquare:

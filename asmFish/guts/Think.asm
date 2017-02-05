@@ -417,6 +417,9 @@ MainThread_Think:
 		lea   rbp, [rcx+Thread.rootPos]
 		mov   rbx, qword[rbp+Pos.state]
 
+GD_String 'MainThread_Think'
+GD_NewLine
+
 		mov   ecx, dword[rbp+Pos.sideToMove]
 		mov   edx, dword[rbp+Pos.gamePly]
 	       call   TimeMng_Init
@@ -559,11 +562,16 @@ end if
 	       call   DisplayMove_Uci
 
 .return:
+
+GD_String 'MainThread_Think returning'
+GD_NewLine
+
 		pop   r15 rdi rsi rbx rbp
 		ret
 
 if USE_WEAKNESS
 .pick_weak_move:
+
 	       call   Weakness_PickMove
 		mov   rax, qword[rbp+Pos.rootMovesVec.table]
 		mov   eax, dword[rax+0*sizeof.RootMove+RootMove.score]

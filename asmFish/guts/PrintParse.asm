@@ -523,7 +523,6 @@ GetLine:
 
 
 
-
 QueryNodeAffinity:
 	; in: ecx node self
 	;     edx node parent  can be -1
@@ -718,44 +717,44 @@ align 16
 
 
 
-if VERBOSE>0 | DEBUG>0 | PROFILE>0
+;if VERBOSE>0 | DEBUG>0 | PROFILE>0
 
 PrintDouble:
-        ; in xmm0
-        ; lower double is printed
-        ; this function is not robust
-               push   rsi
+	; in xmm0
+	; lower double is printed
+	; this function is not robust
+	       push   rsi
 
     digits = 2
     power = 1
     repeat digits
-        power = 10*power
+	power = 10*power
     end repeat
-                mov   rax, power
-          vcvtsi2sd   xmm1, xmm1, rax
-             vmulsd   xmm0, xmm0, xmm1
-         vcvttsd2si   rax, xmm0
-                cqo
-                mov   ecx, power
-               idiv   rcx
-                mov   rsi, rdx
+		mov   rax, power
+	  vcvtsi2sd   xmm1, xmm1, rax
+	     vmulsd   xmm0, xmm0, xmm1
+	 vcvttsd2si   rax, xmm0
+		cqo
+		mov   ecx, power
+	       idiv   rcx
+		mov   rsi, rdx
 	       call   PrintSignedInteger
-                mov   al, '.'
-              stosb
-                mov   rax, rsi
-                cqo
-                xor   rax, rdx
-                sub   rax, rdx
+		mov   al, '.'
+	      stosb
+		mov   rax, rsi
+		cqo
+		xor   rax, rdx
+		sub   rax, rdx
     repeat digits
-        power = power/10
-                xor   edx, edx
-                mov   ecx, power
-                div   rcx
-                add   eax, '0'
-              stosb
-                mov   rax, rdx
+	power = power/10
+		xor   edx, edx
+		mov   ecx, power
+		div   rcx
+		add   eax, '0'
+	      stosb
+		mov   rax, rdx
     end repeat
-                pop   rsi
-                ret
+		pop   rsi
+		ret
 
-end if
+;end if

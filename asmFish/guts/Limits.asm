@@ -15,16 +15,16 @@ Limits_Init:
 		ret
 
 Limits_Set:
-        ; in: rcx address of of LimitsType struct
-        ;      set useTimeMgmt member
-              movzx   eax, byte[rcx+Limits.infinite]
-                 or   eax, dword[rcx+Limits.mate]
-                 or   eax, dword[rcx+Limits.movetime]
-                 or   eax, dword[rcx+Limits.depth]
-                 or   rax, qword[rcx+Limits.nodes]
-               setz   al
-                mov   byte[rcx+Limits.useTimeMgmt], al
-                ret
+	; in: rcx address of of LimitsType struct
+	;      set useTimeMgmt member
+		mov   eax, dword[rcx+Limits.mate]
+		 or   eax, dword[rcx+Limits.movetime]
+		 or   eax, dword[rcx+Limits.depth]
+		 or   al, byte[rcx+Limits.infinite]
+		cmp   eax, 1
+		sbb   eax, eax
+		mov   byte[rcx+Limits.useTimeMgmt], al
+		ret
 
 
 Limits_Copy:

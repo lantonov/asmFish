@@ -127,6 +127,7 @@ _FileRead:
 		lea   r9, [rsp+8*6]
 		mov   qword[rsp+8*4], 0
 	       call   qword[__imp_ReadFile]
+	       mov  edx, [rsp+8*6]
 		add   rsp, 8*7
 		ret
 
@@ -436,7 +437,7 @@ _VirtualAlloc:
  AssertStackAligned   '_VirtualAlloc'
 
 if DEBUG > 0
-                add   qword[DebugBalance], rcx
+		add   qword[DebugBalance], rcx
 end if
 GD String, 'size: '
 GD Hex, rcx
@@ -464,7 +465,7 @@ _VirtualFree:
 		 jz   .null
 
 if DEBUG > 0
-                sub   qword[DebugBalance], rdx
+		sub   qword[DebugBalance], rdx
 end if
 GD String, 'size: '
 GD Hex, rdx
@@ -536,25 +537,25 @@ GD String, '  alloc: '
 		mov   rdx, rbx
 		mov   r8d, MEM_RESERVE or MEM_COMMIT or MEM_LARGE_PAGES
 		mov   r9d, PAGE_READWRITE
-               call   qword[__imp_VirtualAlloc]
-        ; this call to VirtualAlloc can fail
-               test   rax, rax
-                 jz   .alloc_failed
+	       call   qword[__imp_VirtualAlloc]
+	; this call to VirtualAlloc can fail
+	       test   rax, rax
+		 jz   .alloc_failed
 .alloc_succeeded:
 if DEBUG > 0
-                add   qword[DebugBalance], rbx
+		add   qword[DebugBalance], rbx
 end if
 GD Hex, rax
 GD NewLine
-                jmp   .alloc_done
+		jmp   .alloc_done
 .alloc_failed:
 GD String, 'FAILED'
 GD NewLine
 .alloc_done:
-                mov   rdx, rbx
-                add   rsp, .localsize
-                pop   rdi rsi rbx
-                ret
+		mov   rdx, rbx
+		add   rsp, .localsize
+		pop   rdi rsi rbx
+		ret
 .Fail:
 		 or   rsi, -1
 		mov   qword[LargePageMinSize], rsi
@@ -781,6 +782,7 @@ _WriteError:
 
 
 
+
 _ReadStdIn:
 	; in: rcx address to write
 	;     edx max size
@@ -804,6 +806,12 @@ GD Int64, rax
 GD NewLine
 		add   rsp, 8*9
 		ret
+.Error:
+		 or   rax, -1
+		add   rsp, 8*9
+		ret
+
+
 
 
 ;;;;;;;;;;;;;;;;;;

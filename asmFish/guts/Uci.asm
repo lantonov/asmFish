@@ -25,14 +25,14 @@ Options_Init:
 
 
 Options_Destroy:
-               push   rbx
-                mov   rcx, qword[options.hashPath]
-                mov   rdx, qword[options.hashPathSizeB]
-                lea   rax, [options.hashPathBuffer]
-                cmp   rcx, rax
-                 je   @f
+	       push   rbx
+		mov   rcx, qword[options.hashPath]
+		mov   rdx, qword[options.hashPathSizeB]
+		lea   rax, [options.hashPathBuffer]
+		cmp   rcx, rax
+		 je   @f
 	       call   _VirtualFree
-        @@:     pop   rbx
+	@@:	pop   rbx
 		ret
 
 
@@ -310,9 +310,9 @@ UciPonderHit:
 	       test   al, al
 		jnz   .stop
 		mov   byte[limits.ponder], al
-        ; we are now switching to normal search mode
-        ; check the time in case we have to abort the search asap
-               call   CheckTime
+	; we are now switching to normal search mode
+	; check the time in case we have to abort the search asap
+	       call   CheckTime
 		jmp   UciGetInput
 	.stop:
 		mov   byte[signals.stop], -1
@@ -1430,6 +1430,6 @@ end if
 
 match =1, PROFILE {
 UciProfile:
-               call   DisplayProfileData
+	       call   DisplayProfileData
 		jmp   UciGetInput
 }

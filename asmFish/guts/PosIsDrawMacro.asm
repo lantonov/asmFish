@@ -61,14 +61,14 @@ coldreturnlabel:
 
 ; this macro should be headed by the coldlabel argument of the PosIsDraw macro
 macro PosIsDraw_Cold WeHaveADraw, coldreturnlabel {
-		mov   r11, qword[rbx+State.checkersBB]	; don't clobber eax
-	       test   r11, r11				; as it holds ply 
-		 jz   WeHaveADraw		; draw if we are not in check
+		mov   rax, qword[rbx+State.checkersBB]
+	       test   rax, rax
+		 jz   WeHaveADraw
 	       push   rax rcx rdx r8 r9 rdi
 		mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
 	       call   Gen_Legal
 		cmp   rdi, qword[rbx-1*sizeof.State+State.endMoves]
 		pop   rdi r9 r8 rdx rcx rax
-		jne   WeHaveADraw		; draw if we have some moves
-		jmp   coldreturnlabel		; otherwise fall through
+		 je   WeHaveADraw
+		jmp   coldreturnlabel
 }

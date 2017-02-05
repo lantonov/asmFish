@@ -99,6 +99,7 @@ stmAttackers equ r11
 		and   r9d, 63
 .HaveFromTo:
 
+SD_String 'see'
 ProfileInc See
 
 	       push   r12 r13 r14 r15 rcx rsi rdi
@@ -125,6 +126,10 @@ ProfileInc See
 	      movzx   eax, byte[rbp+Pos.board+to_]
 		mov   eax, dword[PieceValue_MG+4*rax]
 	       push   rax
+
+SD_String 'p'
+SD_Int rax
+
 
 	; r14 = occupied
 	; r15 = attackers
@@ -185,6 +190,8 @@ ProfileInc See
 
 		sub   eax, dword[rsp]
 	       push   rax
+SD_String 'p'
+SD_Int rax
 
 		mov   eax, PawnValueMg
 		mov   b, qword[rbp+Pos.typeBB+8*Pawn]
@@ -229,6 +236,9 @@ ProfileInc See
 		 jb   @b
 .Return:
 		pop   rdi rsi rcx r15 r14 r13 r12
+SD_String 'r'
+SD_Int rax
+SD_String '|'
 		ret
 
 
@@ -286,6 +296,7 @@ ProfileInc See
 		cmp   ecx, MOVE_TYPE_CASTLE
 		 je   .Castle
 .EpCapture:
+SD_String 'ep'
 		lea   eax, [r9+2*r13-8]
 		btr   occupied, rax
 		mov   dword[rsp], PawnValueMg
@@ -296,6 +307,9 @@ ProfileInc See
 		pop   rax
 		xor   eax, eax
 		pop   rdi rsi rcx r15 r14 r13 r12
+SD_String 'r'
+SD_Int rax
+SD_String '|'
 		ret
 
 

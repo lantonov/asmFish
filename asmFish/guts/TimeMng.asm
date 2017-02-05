@@ -1,17 +1,12 @@
-MoveHorizon equ 50
-MaxRatio    equ 7.09
-StealRatio  equ 0.35
-XScale      equ 7.64
-XShift      equ 58.4
-mSkew       equ -0.183
+MOVE_HORIZON = 50
 
 TimeMng_Init:
 	; in: ecx color us
 	;     edx ply
 
 virtual at rsp
-  .ply   rd 1
-  .lend  rb 0
+  .ply	   rd 1
+  .lend rb 0
 end virtual
 .localsize = ((.lend-rsp+15) and (-16))
 
@@ -23,16 +18,6 @@ end virtual
 		mov   esi, ecx
 		mov   dword[.ply], edx
 
-GD String, 'ply: '
-GD Int32, qword[.ply]
-GD String, ' inc: '
-GD Int32, qword[limits.incr+4*rsi]
-GD String, ' time: '
-GD Int32, qword[limits.time+4*rsi]
-GD String, ' movestogo: '
-GD Int32, qword[limits.movestogo]
-GD NewLine
-
 		mov   rax, qword[limits.startTime]
 		mov   qword[time.startTime], rax
 
@@ -42,11 +27,12 @@ GD NewLine
 	      cmovb   eax, ecx
 		mov   r12d, eax
 		mov   r13d, eax
-	; r12d = optimumTime
-	; r13d = maximumTime
+	; r12d = optimumTime]
+	; r13d = time.maximumTime
+
 
 		mov   eax, dword[limits.movestogo]
-		mov   ecx, MoveHorizon
+		mov   ecx, MOVE_HORIZON
 	       test   eax, eax
 	      cmovz   eax, ecx
 		cmp   eax, ecx
@@ -109,11 +95,7 @@ GD NewLine
 
 		mov   qword[time.optimumTime], r12
 		mov   qword[time.maximumTime], r13
-GD String, 'optimumTime: '
-GD Int64, r12
-GD String, ' maximumTime: '
-GD Int64, r13
-GD NewLine
+
 		add   rsp, .localsize
 		pop   r15 r14 r13 r12 rdi rsi rbx
 		ret
@@ -125,65 +107,46 @@ GD NewLine
 	;     xmm4 TMaxRatio
 	;     xmm5 TStealRatio
 	;     edx = movestogo
-
 	     vxorps   xmm2, xmm2, xmm2
 	  vcvtsi2sd   xmm3, xmm3, rcx
 	; xmm3 = myTime
-
-               call   .move_importance
-	  vcvtsi2sd   xmm1, xmm1, dword[options.slowMover]
-	     vmulsd   xmm6, xmm0, xmm1
-	     vdivsd   xmm6, xmm6, qword[.100p0]
-	; xmm6 = moveImportance
-	     vxorps   xmm2, xmm2, xmm2
-		lea   ecx, [r8+2*rdx]
- .otherLoop:
-		add   r8d, 2
-		cmp   r8d, ecx
-		jae   .otherDone
-               call   .move_importance
-	     vaddsd   xmm2, xmm2, xmm0
-		jmp   .otherLoop
- .otherDone:
-	; xmm2 = otherMovesImportance
-	     vmulsd   xmm4, xmm4, xmm6
-	     vmulsd   xmm5, xmm5, xmm2
-	     vaddsd   xmm0, xmm4, xmm2
-	     vdivsd   xmm4, xmm4, xmm0
-	     vaddsd   xmm5, xmm5, xmm6
-	     vaddsd   xmm0, xmm6, xmm2
-	     vdivsd   xmm5, xmm5, xmm0
-	     vminsd   xmm4, xmm4, xmm5
-	     vmulsd   xmm3, xmm3, xmm4
-	 vcvttsd2si   rax, xmm3
-		ret
-
-.move_importance:
-        ; in: r8d ply
-        ; out: xmm0
-	  vcvtsi2sd   xmm0, xmm0, r8d
+		lea   ecx, [rdx-1]
+		jmp   .rcomp
+.rloop:      vaddsd   xmm2, xmm2, xmm0
+.rcomp: 	lea   eax, [r8+2*rcx]
+	  vcvtsi2sd   xmm0, xmm0, eax
 	     vsubsd   xmm0, xmm0, qword[.XShift]
 	     vdivsd   xmm0, xmm0, qword[.XScale]
 	       call   Math_Exp_d_d
 	     vaddsd   xmm0, xmm0, qword[constd.1p0]
-	     vmovsd   xmm1, qword[.mSkew]
+	     vmovsd   xmm1, qword[.Skew]
 	       call   Math_Power_d_dd
 	     vaddsd   xmm0, xmm0, qword[.mind]
-                ret
+		sub   ecx, 1
+		jns   .rloop
+	; xmm2 = otherMovesImportance
+	  vcvtsi2sd   xmm1, xmm1, dword[options.slowMover]
+	     vmulsd   xmm1, xmm1, qword[constd.0p01]
+	     vmulsd   xmm1, xmm1, xmm0
+	; xmm1 = moveImportance
+	     vmulsd   xmm4, xmm4, xmm1
+	     vmulsd   xmm5, xmm5, xmm2
+	     vaddsd   xmm0, xmm4, xmm2
+	     vdivsd   xmm4, xmm4, xmm0
+	     vaddsd   xmm5, xmm5, xmm1
+	     vaddsd   xmm1, xmm1, xmm2
+	     vdivsd   xmm5, xmm5, xmm1
+	     vminsd   xmm4, xmm4, xmm5
+	     vmulsd   xmm3, xmm3, xmm4
+	  vcvtsd2si   rax, xmm3
+		ret
+
 
 
 align 8
-.XShift:    dq XShift
-.XScale:    dq XScale
-.mSkew:     dq mSkew
-.MaxRatio   dq MaxRatio
-.StealRatio dq StealRatio
-.mind:      dq 0x0010000000000000
-.100p0:     dq 100.0
-
-restore MoveHorizon
-restore MaxRatio
-restore StealRatio
-restore XScale
-restore XShift
-restore mSkew
+.XShift: dq 58.4
+.XScale: dq 7.64
+.Skew:	 dq -0.183
+.mind:	 dq 2.2250738585072014e-308
+.MaxRatio   dq 7.09
+.StealRatio dq 0.35

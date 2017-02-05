@@ -28,6 +28,30 @@ macro vfmaddsd a,b,c,d {
 	     vaddsd   a, a, d
  \}
 }
+macro vfmaddss a,b,c,d {
+ match =1, CPU_HAS_AVX2 \{
+	if a eq b
+	vfmadd213ss   a, c, d
+	else if a eq c
+	vfmadd213ss   a, b, d
+	else if a eq d
+	vfmadd231ss   a, b, c
+	else
+	    vmovaps   a, b
+	vfmadd213ss   a, c, d
+	end if
+
+ \}
+ match =0, CPU_HAS_AVX2 \{
+	 if a eq d
+	   display 'arguments of vfmaddpd are strange for no avx2'
+	   display 13,10
+	   err
+	 end if
+	     vmulss   a, b, c
+	     vaddss   a, a, d
+ \}
+}
 
 
 macro vaddsd a,b,c {
@@ -45,6 +69,22 @@ macro vaddsd a,b,c {
     end if
  \}
 }
+macro vaddss a,b,c {
+ match =1, CPU_HAS_AVX1 \{
+	     vaddss  a,b,c
+ \}
+ match =0, CPU_HAS_AVX1 \{
+    if a eq b
+	      addss  a, c
+    else if a eq c
+	      addss  a, b
+    else
+	     movaps  a, b
+	      addss  a, c
+    end if
+ \}
+}
+
 
 macro vsubsd a,b,c {
  match =1, CPU_HAS_AVX1 \{
@@ -61,6 +101,22 @@ macro vsubsd a,b,c {
     end if
  \}
 }
+macro vsubss a,b,c {
+ match =1, CPU_HAS_AVX1 \{
+	     vsubss  a,b,c
+ \}
+ match =0, CPU_HAS_AVX1 \{
+    if a eq b
+	      subss  a, c
+    else if a eq c
+	      subss  a, b
+    else
+	     movaps  a, b
+	      subss  a, c
+    end if
+ \}
+}
+
 
 macro vcvtsi2sd a,b,c {
  match =1, CPU_HAS_AVX1 \{
@@ -99,6 +155,23 @@ macro vdivsd a,b,c {
     else
 	     movaps   a, b
 	      divsd   a, c
+    end if
+ \}
+}
+macro vdivss a,b,c {
+ match =1, CPU_HAS_AVX1 \{
+	     vdivss   a, b, c
+ \}
+ match =0, CPU_HAS_AVX1 \{
+    if a eq b
+	      divss   a, c
+    else if a eq c
+	   display 'arguments of vdivsd are strange for no avx1'
+	   display 13,10
+	   err
+    else
+	     movaps   a, b
+	      divss   a, c
     end if
  \}
 }
@@ -153,19 +226,19 @@ macro vmovsd a,b,c {
     if c eq
 	     vmovsd   a, b
     else
-             vmovsd   a, b, c
+	     vmovsd   a, b, c
     end if
  \}
  match =0, CPU_HAS_AVX1 \{
     if c eq
-              movsd   a, b
+	      movsd   a, b
     else
-        if a eq b
+	if a eq b
 	      movsd   a, c
-        else
+	else
 	     movaps   a, b
 	      movsd   a, c
-        end if
+	end if
     end if
  \}
 }

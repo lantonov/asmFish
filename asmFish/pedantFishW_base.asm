@@ -1,11 +1,11 @@
 VERSION_OS	 fix 'W'
 VERSION_PRE	 fix 'pedantFish'
-VERSION_POST	 fix 'base'
+VERSION_POST	 fix 'bmi2'
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; cpu options 0 or 1
-CPU_HAS_POPCNT	 equ 0	;  popcnt                       very nice function
-CPU_HAS_BMI1	 equ 0	;  andn                         why not use it if we can
-CPU_HAS_BMI2	 equ 0	;  pext + pdep                  nice for move generation, but not much faster than magics
+CPU_HAS_POPCNT	 equ 1	;  popcnt                       very nice function
+CPU_HAS_BMI1	 equ 1	;  andn                         why not use it if we can
+CPU_HAS_BMI2	 equ 1	;  pext + pdep                  nice for move generation, but not much faster than magics
 CPU_HAS_AVX1	 equ 0	;  256 bit floating point       probably only used for memory copy if used at all
 CPU_HAS_AVX2	 equ 0	;  256 bit integer + fmadd      probably not used
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -21,9 +21,8 @@ USE_HASHFULL	 equ 1	; printing feature
 USE_SELDEPTH	 equ 1	; printing feature
 USE_SPAMFILTER	 equ 0	; arena gui can't read at a rate > 1 line / 15ms
 USE_SYZYGY	 equ 1	; include tablebase probing code
-USE_BOOK	 equ 1	; include some book functions
+USE_BOOK	 equ 0	; include some book functions
 USE_WEAKNESS	 equ 0	; include uci_limitstrength and uci_elo
 USE_CMDLINEQUIT  equ 1	; after processing command line, should we quit?
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 include 'guts/asmFish.asm'
-

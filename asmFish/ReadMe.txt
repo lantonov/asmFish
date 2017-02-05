@@ -54,4 +54,8 @@ Syzygy50MoveRule: Consider 50 move rule when probing.
 SyzygyPath:     Path to syzygy tablebases. 
 OwnBook:        Lookup position in book if possible.
 BookFile:       Loads polyglot book into engine.
+<<<<<<< HEAD
 BestBookMove:   Use only the best moves from the book.
+=======
+BestBookMove:   Use only the best moves from the book.
+>>>>>>> 4119e271242257c7372355842fe2decba15ff16d

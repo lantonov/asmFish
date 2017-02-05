@@ -927,7 +927,8 @@ _ZL11setup_pairsPhyPyPS_S_i:
 	or	esi, eax				
 	movzx	ecx, si 				
 	movzx	r13d, si
-
+;SD_String 'num_syms='
+;SD_Int r13
 	and	esi, 01H				
 	add	rcx, r10				
 	call	malloc					
@@ -1290,6 +1291,11 @@ _ZL9pawn_fileP12TBEntry_pawnPi.isra.0:
 	ret						
 
 _ZL11add_to_hashP7TBEntryy:
+
+;SD_String 'add_to_hash: key='
+;SD_UInt64 rdx
+;SD_String 10
+
 
 	push	rbx					
 	sub	rsp, 32 				
@@ -2247,6 +2253,8 @@ _ZN13TablebaseCore4initEPKc:
 
 _ZN13TablebaseCore15probe_wdl_tableER8PositionPi:
 
+;SD_String <db 'probe_wdl_table()',10>
+
 	push	r15					
 	push	r14					
 	push	r13					
@@ -2260,6 +2268,12 @@ _ZN13TablebaseCore15probe_wdl_tableER8PositionPi:
 	mov	rdi, rcx				
 	mov	r13, rdx				
 	call	_Z16pos_material_keyR8Position
+
+;SD_String 'key='
+;SD_UInt64 rax
+;SD_String 10
+
+
 	mov	rcx, rdi				
 	mov	qword [rsp+38H], rax			
 	call	_Z11pos_KvK_keyR8Position		
@@ -2679,6 +2693,9 @@ _ZN13TablebaseCore15probe_wdl_tableER8PositionPi:
 	and	r12d, 38H				
 ?_271:	cmp	byte [rbx+1BH], 0			
 	jnz	?_275					
+
+;SD_String <db 'yes pawns',10>
+
 	imul	rax, rsi, 6
 	xor	r12d, r12d				
 	lea	r13, [rbx+rax+60H]			
@@ -2693,6 +2710,10 @@ _ZN13TablebaseCore15probe_wdl_tableER8PositionPi:
 	sar	edx, 3					
 	and	r8d, 07H				
 	call	_Z10pos_piecesR8Position5Color9PieceType
+;SD_String 'bb='
+;SD_UInt64 rax
+;SD_String 10
+
 ?_273:	lea	rdx, [rax-1H]				
 	movsxd	rcx, r12d				
 	inc	r12d					
@@ -2710,10 +2731,16 @@ _ZN13TablebaseCore15probe_wdl_tableER8PositionPi:
 	lea	r9, [rbx+rax+30H]			
 	lea	rdx, [rbx+rdx+6CH]			
 	call	_ZL12encode_pieceP13TBEntry_piecePhPiS2_
+;SD_String 'idx='
+;SD_UInt64 rax
+;SD_String 10
 	mov	rcx, qword [rbx+rsi*8]			
 	jmp	?_280					
 
 ?_275:
+
+;SD_String <db 'yes pawns',10>
+
 	movzx	r8d, byte [rbx+60H]
 	lea	r14, [rsp+0C0H] 			
 	mov	rcx, rdi				
@@ -2722,6 +2749,9 @@ _ZN13TablebaseCore15probe_wdl_tableER8PositionPi:
 	and	r8d, 07H				
 	sar	edx, 3					
 	call	_Z10pos_piecesR8Position5Color9PieceType
+;SD_String 'bb='
+;SD_UInt64 rax
+;SD_String 10
 	xor	edx, edx
 ?_276:	bsf	rcx, rax				
 	lea	r8, [rax-1H]				
@@ -2752,6 +2782,9 @@ _ZN13TablebaseCore15probe_wdl_tableER8PositionPi:
 	sar	edx, 3					
 	and	r8d, 07H				
 	call	_Z10pos_piecesR8Position5Color9PieceType
+;SD_String 'bb='
+;SD_UInt64 rax
+;SD_String 10
 ?_278:	lea	rcx, [rax-1H]
 	movsxd	r8, r13d				
 	inc	r13d					
@@ -2771,7 +2804,10 @@ _ZN13TablebaseCore15probe_wdl_tableER8PositionPi:
 	mov	rcx, rbx				
 	lea	rax, [rax+rdx+60H]			
 	lea	rdx, [rbx+rax+0CH]			
-	call	_ZL11encode_pawnP12TBEntry_pawnPhPiS2_
+	call	_ZL11encode_pawnP12TBEntry_pawnPhPiS2_	
+;SD_String 'idx='
+;SD_UInt64 rax
+;SD_String 10
 	imul	r13, qword [rsp+30H], 11
 	lea	rdx, [rsi+r13+4H]			
 	mov	rcx, qword [rbx+rdx*8]			
@@ -2792,7 +2828,12 @@ _ZN13TablebaseCore15probe_wdl_tableER8PositionPi:
 	pop	r12					
 	pop	r13					
 	pop	r14					
-	pop	r15
+	pop	r15					
+
+
+SD_String 'probe_wdl_table '
+SD_Int rax
+SD_String '|'
 	ret
 
 _ZN13TablebaseCore15probe_dtz_tableER8PositioniPi:
@@ -3340,10 +3381,10 @@ _ZN13TablebaseCore15probe_dtz_tableER8PositioniPi:
 
 ?_330:	mov	rcx, r12				
 	call	free					
-	jmp	?_286
+	jmp	?_286					
 
 ?_331:	mov	qword [ ?_334], r12			
-	jmp	?_286
+	jmp	?_286					
 
 ?_332:	
 	add	rsp, 248				
@@ -3355,4 +3396,9 @@ _ZN13TablebaseCore15probe_dtz_tableER8PositioniPi:
 	pop	r13					
 	pop	r14					
 	pop	r15
+
+SD_String 'probe_dtz_table '
+SD_Int rax
+SD_String '|'
+
 	ret						

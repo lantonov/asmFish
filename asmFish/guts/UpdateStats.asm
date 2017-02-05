@@ -1,111 +1,142 @@
 
-macro UpdateCmStats ss, offset, bonus32, absbonus, t1 {
-	; bonus32 is 32*bonus
-	; absbonus is abs(bonus)
-        ; clobbers rax, rcx, rdx, t1
-
-	     Assert   b, absbonus, 324, 'assertion abs(bonus)<324 failed in UpdateCmStats'
-
-local ..over1, ..over2, ..over3
-
-		mov   t1, qword[ss-1*sizeof.State+State.counterMoves]
-	       test   t1, t1
-		 jz   ..over1
-	apply_bonus   (t1+4*(offset)), bonus32, absbonus, 936
-..over1:
-
-		mov   t1, qword[ss-2*sizeof.State+State.counterMoves]
-	       test   t1, t1
-		 jz   ..over2
-	apply_bonus   (t1+4*(offset)), bonus32, absbonus, 936
-..over2:
-
-		mov   t1, qword[ss-4*sizeof.State+State.counterMoves]
-	       test   t1, t1
-		 jz   ..over3
-	apply_bonus   (t1+4*(offset)), bonus32, absbonus, 936
-..over3:
-
-}
+	      align   16
+UpdateStats:
+	; in: rbp pos
+	;     rbx state
+	;     ecx move
+	;     edx depth   this should be >0
+	;     r8  quiets  could be NULL
+	;     r9d quietsCnt
 
 
+	       push   r15 r14 r13 r12 rsi rdi
+
+		mov   r12d, ecx ; r12d = move
+		mov   r13d, edx ; r13d = depth
+		mov   r15d, r9d ; r15d = quietsCnt
+				; r8 = quiets
+		mov   eax, edx
+	       imul   eax, edx
+		lea   r14d, [rax+2*rdx-2]	; r14d = bonus
 
 
-macro UpdateStats move, quiets, quietsCnt, bonus32, absbonus, prevOffset {
-
-        ; clobbers rax, rcx, rdx, r8, r9
-        ; it also might clobber rsi and change the sign of bonus32
-
-local ..DontUpdateKillers, ..DontUpdateOpp, ..BonusTooBig, ..NextQuiet, ..Return
-
-
-if DEBUG
 		mov   eax, dword[rbx-1*sizeof.State+State.currentMove]
 		and   eax, 63
 	      movzx   ecx, byte[rbp+Pos.board+rax]
 		shl   ecx, 6
-		add   eax, ecx
-	     Assert   e, prevOffset, rax, 'assertion prevOffset = offset of [piece_on(prevSq),prevSq] failed in UpdateStats'
-end if
+		lea   edi, [rax+rcx]
+
+; rdi = prevoff
+
+; r11d = bonus*32
+; r10d = abs(bonus)
 
 
-		mov   eax, dword[rbx+State.killers+4*0]
-		cmp   eax, move
-		 je   ..DontUpdateKillers
-		mov   dword[rbx+State.killers+4*1], eax
-		mov   dword[rbx+State.killers+4*0], move
-..DontUpdateKillers:
+		mov   eax, dword[rbx-1*sizeof.State+State.moveCount]
+		cmp   eax, 1
+		jne   .SkipExtraPenalty
+		mov   al, byte[rbx+State.capturedPiece]
+	       test   al, al
+		jnz   .SkipExtraPenalty
+
+		lea   r10d, [r14+2*(r13+1)+1]
+	       imul   r11d, r10d, -32
+		cmp   r10d, 324
+		jae   .SkipExtraPenalty
+
+		mov   rsi, qword[rbx-2*sizeof.State+State.counterMoves]
+	       test   rsi, rsi
+		 jz   @f
+	apply_bonus   rsi+4*rdi, r11d, r10d, 936
+	@@:
+		mov   rsi, qword[rbx-3*sizeof.State+State.counterMoves]
+	       test   rsi, rsi
+		 jz   @f
+	apply_bonus   rsi+4*rdi, r11d, r10d, 936
+	@@:
+		mov   rsi, qword[rbx-5*sizeof.State+State.counterMoves]
+	       test   rsi, rsi
+		 jz   @f
+	apply_bonus   rsi+4*rdi, r11d, r10d, 936
+	@@:
+.SkipExtraPenalty:
 
 
-		mov   r8, qword[rbx-1*sizeof.State+State.counterMoves]
-	       test   r8, r8
-		 jz   ..DontUpdateOpp
-		mov   r8, qword[rbp+Pos.counterMoves]
-		mov   dword[r8+4*prevOffset], move
-..DontUpdateOpp:
-
-
-	       imul   bonus32, absbonus, 32
-		cmp   absbonus, 324
-		jae   ..BonusTooBig
-
-		mov   eax, move
-		and   eax, 64*64-1
-		mov   r8d, dword[rbp+Pos.sideToMove]
-		shl   r8d, 12+2
-		add   r8, qword[rbp+Pos.history]
-		lea   r8, [r8+4*rax]
-	apply_bonus   r8, bonus32, absbonus, 324
-
-		mov   r9d, move
-		and   r9d, 63
-		mov   eax, move
-		shr   eax, 6
+		mov   ecx, r12d
+		mov   edx, r12d
+		mov   eax, r12d
 		and   eax, 63
+		mov   r9d, eax
+		shr   edx, 14
 	      movzx   eax, byte[rbp+Pos.board+rax]
+		 or   al, byte[_CaptureOrPromotion_or+rdx]
+		and   al, byte[_CaptureOrPromotion_and+rdx]
+		jnz   .Return
+
+		shr   ecx, 6
+		and   ecx, 63
+	      movzx   eax, byte[rbp+Pos.board+rcx]
 		shl   eax, 6
 		add   r9d, eax
-      UpdateCmStats   (rbx-0*sizeof.State), r9, bonus32, absbonus, r8
+; r9 = moveoff
+		mov   eax, dword[rbx+State.killers+4*0]
+		cmp   eax, r12d
+		 je   @f
+		mov   dword[rbx+State.killers+4*1], eax
+		mov   dword[rbx+State.killers+4*0], r12d
+	@@:
+
+		mov   r10d, r14d
+	       imul   r11d, r14d, 32
+		cmp   r14d, 324
+		jae   .BonusTooBig
 
 
-if quiets eq 0
-else
+
+		mov   eax, r12d
+		and   eax, 64*64-1
+		mov   esi, dword[rbp+Pos.sideToMove]
+		shl   esi, 12+2
+		add   rsi, qword[rbp+Pos.history]
+		lea   rsi, [rsi+4*rax]
+	apply_bonus   rsi, r11d, r10d, 324
+
+
+		mov   rsi, qword[rbx-1*sizeof.State+State.counterMoves]
+	       test   rsi, rsi
+		 jz   @f
+	apply_bonus   rsi+4*r9, r11d, r10d, 936
+		mov   rsi, qword[rbp+Pos.counterMoves]
+		mov   dword[rsi+4*rdi], r12d
+	@@:
+
+		mov   rsi, qword[rbx-2*sizeof.State+State.counterMoves]
+	       test   rsi, rsi
+		 jz   @f
+	apply_bonus   rsi+4*r9, r11d, r10d, 936
+	@@:
+
+		mov   rsi, qword[rbx-4*sizeof.State+State.counterMoves]
+	       test   rsi, rsi
+		 jz   @f
+	apply_bonus   rsi+4*r9, r11d, r10d, 936
+	@@:
+
+
 	; Decrease all the other played quiet moves
-		neg   bonus32
-		xor   esi, esi
-		cmp   esi, quietsCnt
-		 je   ..Return
-..NextQuiet:
-		mov   edx, dword[quiets+4*rsi]
-		mov   ecx, edx
-		mov   eax, edx
+		neg   r11d
 
-		and   edx, 64*64-1
-		mov   r8d, dword[rbp+Pos.sideToMove]
-		shl   r8d, 12+2
-		add   r8, qword[rbp+Pos.history]
-		lea   r8, [r8+4*rdx]
+		xor   edi, edi
+	       test   r15d, r15d
+		jnz   .HaveQuiets
+.Return:
+		pop   rdi rsi r12 r13 r14 r15
+		ret
 
+.HaveQuiets:
+		mov   eax, dword[r8]
+		mov   ecx, dword[r8]
+.NextQuiet:
 		and   ecx, 63
 		shr   eax, 6
 		and   eax, 63
@@ -113,18 +144,49 @@ else
 		shl   eax, 6
 		lea   r9d, [rax+rcx]
 
-	apply_bonus   r8, bonus32, absbonus, 324
+;               mov   rsi, qword[rbp+Pos.history]
+;       apply_bonus   rsi+4*r9, r11d, r10d, 324
 
-      UpdateCmStats   (rbx-0*sizeof.State), r9, bonus32, absbonus, r8
+		mov   eax, dword[r8+4*rdi]
+		and   eax, 64*64-1
+		mov   esi, dword[rbp+Pos.sideToMove]
+		shl   esi, 12+2
+		add   rsi, qword[rbp+Pos.history]
+		lea   rsi, [rsi+4*rax]
+	apply_bonus   rsi, r11d, r10d, 324
 
-		add   esi, 1
-		cmp   esi, quietsCnt
-		 jb   ..NextQuiet
+		mov   rsi, qword[rbx-1*sizeof.State+State.counterMoves]
+	       test   rsi, rsi
+		 jz   @f
+	apply_bonus   rsi+4*r9, r11d, r10d, 936
+	@@:
+		mov   rsi, qword[rbx-2*sizeof.State+State.counterMoves]
+	       test   rsi, rsi
+		 jz   @f
+	apply_bonus   rsi+4*r9, r11d, r10d, 936
+	@@:
+		mov   rsi, qword[rbx-4*sizeof.State+State.counterMoves]
+	       test   rsi, rsi
+		 jz   @f
+	apply_bonus   rsi+4*r9, r11d, r10d, 936
+	@@:
 
-end if
+		add   edi, 1
+		mov   eax, dword[r8+4*rdi]
+		mov   ecx, dword[r8+4*rdi]
+		cmp   edi, r15d
+		 jb   .NextQuiet
 
-..BonusTooBig:
-..Return:
+.Return2:
+		pop   rdi rsi r12 r13 r14 r15
+		ret
 
-}
 
+
+.BonusTooBig:
+		mov   rsi, qword[rbx-1*sizeof.State+State.counterMoves]
+	       test   rsi, rsi
+		 jz   .Return2
+		mov   rsi, qword[rbp+Pos.counterMoves]
+		mov   dword[rsi+4*rdi], r12d
+		jmp   .Return2
