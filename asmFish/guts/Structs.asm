@@ -143,7 +143,7 @@ match =1, DEBUG {
  stateTable	rq 1 ; the beginning of the vector of State structs
  stateEnd	rq 1 ; the end of
  counterMoveHistory  rq 1	 ; these structs hold addresses
- history 	rq 1		 ; of tables used by the search
+ history	rq 1		 ; of tables used by the search
  counterMoves	rq 1		 ;
  materialTable	rq 1		 ;
  pawnTable	rq 1		 ;
@@ -351,15 +351,16 @@ struct Thread
  previousScore	 rd 1
  completedDepth  rd 1
  callsCnt	 rd 1
+ resetCnt	 rd 1
+		 rd 1
  searching	  rb 1
  exit		  rb 1
  failedLow	  rb 1
  easyMovePlayed   rb 1
- resetCalls	  rb 1
- skipCurrMove	  rb 1
+		  rb 1
+		  rb 1
  maxPly 	  rb 1
 		  rb 1
-		rq 1
  nodes		rq 1
  tbHits 	rq 1
  idx		rd 1
@@ -376,7 +377,7 @@ match =1, DEBUG {
  castling_ksqpath    rb 4*8
  castling_knights    rq 4
  castling_kingpawns  rq 4
- castling_movgen     rd 4
+ castling_movgen     rd 4	; these are the four castling moves
  castling_rightsMask rb 64
  castling_end rb 0
 
@@ -442,6 +443,18 @@ struct ThreadPool
 	   rd 1
  threadTable rq MAX_THREADS
  nodeTable   rb MAX_NUMANODES*sizeof.NumaNode
+ends
+
+
+; structure for buffer input and output (input only for now)
+struct IOBuffer
+ cmdLineStart	  dq ?	; address of string from cmd line to parse
+ inputBuffer	  dq ?	; address of string from stdin to parse
+ inputBufferSizeB dq ?	; byte capacity of inputBuffer
+ tmp_i		dd ?
+ tmp_j		dd ?
+ tmpBuffer	rb 512
+ tmpBufferEnd	rb 0
 ends
 
 
@@ -516,4 +529,3 @@ struct BookEntry
  move	rw 1
  weight rw 1
 ends
-

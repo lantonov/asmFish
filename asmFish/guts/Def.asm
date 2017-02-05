@@ -1,20 +1,28 @@
-; wait at least this before writing out info string
+
+; MAX_RESETCNT should NOT be more than the number of times search is called per second/core,
+; which is about half of nps/core (the other half comes from qsearch). Higher setting are 
+; dangerous but lower settings lead to increased polling of the time
+; MIN_RESETCNT should be fairly low, not more than 50, say.
+MAX_RESETCNT equ 200000
+MIN_RESETCNT equ 40
+
+; if USE_SPAMFILTER, wait at least this ms before writing out info string
 SPAMFILTER_DELAY equ 100
-; don't print current move info before these
+
+; if USE_CURRMOVE, don't print current move info before this number of ms
 CURRMOVE_MIN_TIME equ 3000
-CURRMOVE_MIN_DEPTH equ 20
 
 
 ; some bounds
-MAX_MOVES equ 224    ; maximum number of pseudo legal moves for any position
-AVG_MOVES equ 64     ; average number of pseudo legal moves for any position, setting < MAX_MOVES technically could cause program crash
+MAX_MOVES equ 224	; maximum number of pseudo legal moves for any position
+AVG_MOVES equ 96	; safe average number of moves per position, used for memory allocation
 MAX_THREADS equ 256
 MAX_NUMANODES equ 32
-MAX_LINUXCPUS equ 512
-MAX_HASH_LOG2MB equ 16
+MAX_LINUXCPUS equ 512			; should be a multiple of 64
+MAX_HASH_LOG2MB equ 16			; max hash size is (2^MAX_HASH_LOG2MB) MiB
 THREAD_STACK_SIZE equ 1048576
-PAWN_HASH_ENTRY_COUNT equ 16384
-MATERIAL_HASH_ENTRY_COUNT equ 8192
+PAWN_HASH_ENTRY_COUNT equ 16384 	; should be a power of 2
+MATERIAL_HASH_ENTRY_COUNT equ 8192	; should be a power of 2
 
 
 match ='W', VERSION_OS {
@@ -90,7 +98,6 @@ SEP_CHAR equ ':'
 
 ; values for evaluation
  Eval_Tempo equ 20
- LazyEval equ 1500
 
 ; values from stats tables
  HistoryStats_Max equ 268435456
@@ -276,5 +283,3 @@ SQ_E8 equ (4+8*7)
 SQ_F8 equ (5+8*7)
 SQ_G8 equ (6+8*7)
 SQ_H8 equ (7+8*7)
-
-

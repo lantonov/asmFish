@@ -50,70 +50,32 @@ segment readable writeable
 }
 
 
-if PROFILE > 0
-  align 16
-  profile:
-   .cjmpcounts rq 2*16
-
-   .MainHash_Probe dq 0
-   .MainHash_Save  dq 0
-   .Move_Do	dq 0
-   .Move_DoNull dq 0
-   .Move_GivesCheck    dq 0
-   .Move_IsLegal       dq 0
-   .Move_IsPseudoLegal dq 0
-   .QSearch_PV_TRUE	dq 0
-   .QSearch_PV_FALSE	dq 0
-   .QSearch_NONPV_TRUE	dq 0
-   .QSearch_NONPV_FALSE dq 0
-   .Search_ROOT  dq 0
-   .Search_PV	 dq 0
-   .Search_NONPV dq 0
-   .See 	dq 0
-   .SeeTest	dq 0
-   .SetCheckInfo  dq 0
-   .SetCheckInfo2 dq 0
-   .Evaluate	  dq 0
-   .EvaluateLazy  dq 0
-
-   .moveUnpack dq 0
-   .moveStore  dq 0
-   .moveRetrieve dq 0
-
-   .ender rb 0
-end if
-
 
 if VERBOSE > 0
   align 16
-  VerboseOutput rq 1024
-  VerboseTime1 rq 2
-  VerboseTime2 rq 2
-  Verbr15 rq 1
-  Verbrdi rq 1
+  VerboseOutput 	rq 1024
+  VerboseTime		rq 2
 end if
 
 
 if DEBUG > 0
   align 16
-  DebugBalance rq 1
-  DebugOutput  rq 1024
+  DebugBalance		rq 1
+  DebugOutput		rq 1024
 end if
 
 align 16
-RazorMargin dd 483, 570, 603, 554
+RazorMargin		dd 483, 570, 603, 554
 _CaptureOrPromotion_or	db  0,-1,-1, 0
 _CaptureOrPromotion_and db -1,-1,-1, 0
 
 
 align 16
 constd:
-.0p01	 dq 0.01
 .0p03	 dq 0.03
 .0p505	 dq 0.505
 .1p0	 dq 1.0
 .628p0	 dq 628.0
-.min	 dq 0x0010000000000000
 
 align 16
 HalfDensitySize = 20
@@ -251,14 +213,14 @@ sz_NewLine:
 sz_NewLineEnd:
 szUciResponseEnd:
 
-szCPUError	db 'Error: processor does not support',0
-   .POPCNT	db ' POPCNT',0
-   .AVX1	db ' AVX1',0
-   .AVX2	db ' AVX2',0
-   .BMI1	db ' BMI1',0
-   .BMI2	db ' BMI2',0
-szStartFEN	db 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',0
-PieceToChar	db '.?PNBRQK??pnbrqk'
+szCPUError	   db 'Error: processor does not support',0
+   .POPCNT	   db ' POPCNT',0
+   .AVX1	   db ' AVX1',0
+   .AVX2	   db ' AVX2',0
+   .BMI1	   db ' BMI1',0
+   .BMI2	   db ' BMI2',0
+szStartFEN	   db 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',0
+PieceToChar	   db '.?PNBRQK??pnbrqk'
 
 sz_error_think	   db 'error: setoption called while thinking',0
 sz_error_value	   db 'error: setoption has no value',0
@@ -395,24 +357,32 @@ align 8
  hStdIn      dq ?
  hStdError   dq ?
  hAdvapi32   dq ?
- __imp_MessageBoxA dq ?
- __imp_VirtualAllocExNuma dq ?
- __imp_SetThreadGroupAffinity dq ?
+ __imp_MessageBoxA		      dq ?
+ __imp_VirtualAllocExNuma	      dq ?
+ __imp_SetThreadGroupAffinity	      dq ?
  __imp_GetLogicalProcessorInformationEx dq ?
 }
 
 match ='L', VERSION_OS {
+ sz_procselfauxv		db '/proc/self/auxv',0
+ sz___vdso_clock_gettime	db '__vdso_clock_gettime',0
 align 8
  rspEntry dq ?
+ __imp_clock_gettime dq ?
 }
 
 align 8
+nnetrand dq 1
+nnetFlops dq 0
+nnetTime1 dq 0
+nnetTime2 dq 0
+
+align 8
  LargePageMinSize dq ?
- CmdLineStart	  dq ?
- InputBuffer	  dq ?	   ; input buffer has dynamic allocation
- InputBufferSizeB dq ?
  Output 	  rb 1024  ; output buffer has static allocation
 
+align 16
+ ioBuffer	IOBuffer
 
 
 
@@ -496,7 +466,7 @@ PawnAttacks:
 
 
 ;;;;;;;;;;;;;;;;;;; bitboards ;;;;;;;;;;;;;;;;;;;;;
- SquareDistance  rb 64*64
+ SquareDistance    rb 64*64
  BetweenBB	   rq 64*64
  LineBB 	   rq 64*64
  DistanceRingBB    rq 8*64
@@ -517,12 +487,12 @@ Zobrist_Castling:  rq 16
 Zobrist_Ep:	   rq 8
 Zobrist_side:	   rq 1
 Zobrist_noPawns:   rq 1
-PieceValue_MG:	  rd 16
-PieceValue_EG:	  rd 16
+PieceValue_MG:	   rd 16
+PieceValue_EG:	   rd 16
 
-IsNotPawnMasks:   rb 16
-IsNotPieceMasks:  rb 16
-IsPawnMasks:	  rb 16
+IsNotPawnMasks:    rb 16
+IsNotPieceMasks:   rb 16
+IsPawnMasks:	   rb 16
 
 
 ;;;;;;;;;;;;;;;;;;;; data for search ;;;;;;;;;;;;;;;;;;;;;;;
@@ -542,46 +512,46 @@ MobilityBonus_Bishop rd 16
 MobilityBonus_Rook   rd 16
 MobilityBonus_Queen  rd 32
 
-Lever rd 8
-ShelterWeakness rd 4*8
+Lever			   rd 8
+ShelterWeakness 	   rd 8*8
 StormDanger:
-StormDanger_NoFriendlyPawn rd 4*8
-StormDanger_Unblocked rd 4*8
-StormDanger_BlockedByPawn rd 4*8
-StormDanger_BlockedByKing rd 4*8
-KingFlank rq 2*8
-ThreatBySafePawn rd 16
-Threat_Minor rd 16
-Threat_Rook rd 16
-PassedRank rd 8
-PassedFile rd 8
+StormDanger_NoFriendlyPawn rd 8*8
+StormDanger_Unblocked	   rd 8*8
+StormDanger_BlockedByPawn  rd 8*8
+StormDanger_BlockedByKing  rd 8*8
+KingFlank		   rq 8
+ThreatBySafePawn	   rd 16
+Threat_Minor		   rd 16
+Threat_Rook		   rd 16
+PassedRank		   rd 8
+PassedFile		   rd 8
 
 DoMaterialEval_Data:
-.QuadraticOurs: rd 8*6
-.QuadraticTheirs: rd 8*6
+.QuadraticOurs: 	   rd 8*6
+.QuadraticTheirs:	   rd 8*6
 
 
 
 ;;;;;;;;;;;;;; data for endgames ;;;;;;;;;;;;;;
 align 64
-EndgameEval_Map        rb 2*ENDGAME_EVAL_MAX_INDEX*sizeof.EndgameMapEntry
-EndgameScale_Map       rb 2*ENDGAME_SCALE_MAX_INDEX*sizeof.EndgameMapEntry
-EndgameEval_FxnTable   rd ENDGAME_EVAL_MAX_INDEX
-EndgameScale_FxnTable  rd ENDGAME_SCALE_MAX_INDEX
-KPKEndgameTable   rq 48*64
-PushToEdges   rb 64
-PushToCorners rb 64
-PushClose     rb 8
-PushAway      rb 8
+EndgameEval_Map 	   rb 2*ENDGAME_EVAL_MAX_INDEX*sizeof.EndgameMapEntry
+EndgameScale_Map	   rb 2*ENDGAME_SCALE_MAX_INDEX*sizeof.EndgameMapEntry
+EndgameEval_FxnTable	   rd ENDGAME_EVAL_MAX_INDEX
+EndgameScale_FxnTable	   rd ENDGAME_SCALE_MAX_INDEX
+KPKEndgameTable 	   rq 48*64
+PushToEdges		   rb 64
+PushToCorners		   rb 64
+PushClose		   rb 8
+PushAway		   rb 8
 
 ;;;;;;;;;;;;;;;;;;;;; data for tablebase ;;;;;;;;;;;;;;
 align 16
-Tablebase_Cardinality rd 1
-Tablebase_MaxCardinality rd 1
-Tablebase_ProbeDepth  rd 1
-Tablebase_Score  rd 1
-Tablebase_RootInTB  rb 1    ; boole 0 or -1
-Tablebase_UseRule50 rb 1    ; boole 0 or -1
+Tablebase_Cardinality	   rd 1
+Tablebase_MaxCardinality   rd 1
+Tablebase_ProbeDepth	   rd 1
+Tablebase_Score 	   rd 1
+Tablebase_RootInTB	   rb 1    ; boole 0 or -1
+Tablebase_UseRule50	   rb 1    ; boole 0 or -1
 
 
 
@@ -607,7 +577,7 @@ match ='L', VERSION_OS {
 segment readable executable
 }
 
-
+; these are all macros
 include 'AvxMacros.asm'
 include 'AttackMacros.asm'
 include 'GenMacros.asm'
@@ -618,6 +588,7 @@ include 'MainHashMacros.asm'
 include 'PosIsDrawMacro.asm'
 include 'Pawn.asm'
 include 'SliderBlockers.asm'
+include 'UpdateStats.asm'
 
 
 
@@ -634,8 +605,6 @@ include 'MainHash_Probe.asm'
 include 'Move_IsPseudoLegal.asm'
 include 'SetCheckInfo.asm'
 include 'Move_GivesCheck.asm'
-
-include 'UpdateStats.asm'
 
 include 'Gen_Captures.asm'
 include 'Gen_Quiets.asm'
@@ -729,15 +698,12 @@ match ='L', VERSION_OS {
 		mov   qword[rspEntry], rsp
 }
 		and   rsp, -16
- AssertStackAligned   'Start'
 
 	       call   _SetStdHandles
-	       call   _SetFrequency
+	       call   _InitializeTimer
 	       call   _CheckCPU
 
-GD_String ' *** General Verbosity ON !! ***'
-GD_NewLine
-GD_GetTime
+GD GetTime
 
 	; init the engine
 	       call   Options_Init
@@ -750,8 +716,8 @@ GD_GetTime
 	       call   Pawn_Init
 	       call   Endgame_Init
 
-GD_String ' init done'
-GD_NewLine
+GD String, 'init done'
+GD NewLine
 
 
 	; write engine name
@@ -760,6 +726,11 @@ match =0, VERBOSE {
 		lea   rcx, [szGreeting]
 	       call   _WriteOut
 }
+
+
+
+call RunNNet
+
 
 	; set up threads, hash, and tablebases
 	       call   MainHash_Create
@@ -772,13 +743,18 @@ end if
 if USE_BOOK
 	       call   Book_Create
 end if
+if USE_WEAKNESS
+	       call   Weakness_Create
+end if
+
 
 	; command line could contain commands
 	; this function also initializes InputBuffer
 	; which contains the commands we should process first
 	       call   _ParseCommandLine
 
-GD_ResponseTime
+GD ResponseTime
+GD GetTime
 
 	; enter the main loop
 	       call   UciLoop
@@ -795,20 +771,20 @@ end if
 	       call   ThreadPool_Destroy
 	       call   MainHash_Destroy
 
+	; options may also require cleaning
+	       call   Options_Destroy
+
 	; clean up input buffer
-		mov   rcx, qword[InputBuffer]
-		mov   rdx, qword[InputBufferSizeB]
+		mov   rcx, qword[ioBuffer.inputBuffer]
+		mov   rdx, qword[ioBuffer.inputBufferSizeB]
 	       call   _VirtualFree
-		xor   ecx, ecx
-		mov   qword[InputBuffer], rcx
-		mov   qword[InputBufferSizeB], rcx
 
 match =1, DEBUG {
-GD_String 'DebugBalance: '
-GD_Int qword[DebugBalance]
-GD_NewLine
+GD String, 'DebugBalance: '
+GD Hex, qword[DebugBalance]
+GD NewLine
 }
-	     Assert   e, rcx, qword[DebugBalance], 'assertion DebugBalance=0 failed'
+	     Assert   e, qword[DebugBalance], 0, 'assertion DebugBalance=0 failed'
 
 	       call   _ExitProcess
 
@@ -820,6 +796,35 @@ include 'BitTable_Init.asm'
 include 'Evaluate_Init.asm'
 include 'Pawn_Init.asm'
 include 'Endgame_Init.asm'
+
+
+include 'NeuralNet.asm'
+
+
+
+
+if PROFILE > 0
+; put this at the very end of code section to collect all the profile names
+; in the preprocessor variables hitprofilelist and condprofilelist
+
+DisplayProfileData:
+	       push   rbx rsi rdi
+   PrintProfileData
+		pop   rdi rsi rbx
+		ret
+
+
+; we also need a data section to keep track of the counts
+match ='W', VERSION_OS {
+section '.profile' data readable writeable
+}
+match ='L', VERSION_OS {
+segment readable writeable
+}
+
+MakeProfileData
+
+end if
 
 
 

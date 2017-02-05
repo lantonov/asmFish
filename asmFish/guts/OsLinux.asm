@@ -404,12 +404,10 @@ _ThreadJoin:
 	   ;      js   Failed_sys_futex_ThreadJoin     ;
 
 	; free its stack
-		mov   rdi, qword[rbx+ThreadHandle.stackAddress]
-		mov   rsi, THREAD_STACK_SIZE
-		mov   eax, sys_munmap
-	    syscall
-	       test   eax, eax
-		jnz   Failed_sys_munmap_ThreadJoin
+		mov   rcx, qword[rbx+ThreadHandle.stackAddress]
+		mov   edx, THREAD_STACK_SIZE
+	       call   _VirtualFree
+
 		pop   rdi rsi rbx
 		ret
 
@@ -432,14 +430,14 @@ _ExitThread:
 ; timing ;
 ;;;;;;;;;;
 
+	      align   16
 _GetTime:
 	; out: rax + rdx/2^64 = time in ms
 	       push   rbx rsi rdi
 		sub   rsp, 8*2
 		mov   edi, CLOCK_MONOTONIC
 		mov   rsi, rsp
-		mov   eax, sys_clock_gettime
-	    syscall				; todo: change to a faster vdso call  ?how?
+	       call   qword[__imp_clock_gettime]
 		mov   eax, dword[rsp+8*1]	; tv_nsec
 		mov   rcx, 18446744073709;551616   2^64/10^6
 		mul   rcx
@@ -449,9 +447,27 @@ _GetTime:
 		add   rsp, 8*2
 		pop   rdi rsi rbx
 		ret
+.syscall:
+	       push   rbx
+		mov   eax, sys_clock_gettime
+	    syscall
+		pop   rbx
+		ret
 
-_SetFrequency:
-	; no arguments
+
+
+_InitializeTimer:
+	; we need to set the address of the clock_gettime function
+	; if the lookup succeeds, then we use the vdso function
+	;               otherwise use a simple wrapper to a syscall
+	       push   rbx
+		lea   rcx, [sz___vdso_clock_gettime]
+	       call   vdso_FindSymbol
+		lea   rcx, [_GetTime.syscall]
+	       test   rax, rax
+	      cmovz   rax, rcx
+		mov   qword[__imp_clock_gettime], rax
+		pop   rbx
 		ret
 
 _Sleep:
@@ -494,6 +510,14 @@ _VirtualAllocNuma:
 		 je   _VirtualAlloc.go
 	       push   rbp rbx rsi rdi r15
 		sub   rsp, 16
+if DEBUG > 0
+add qword[DebugBalance], rcx
+end if
+GD String, 'size: '
+GD Hex, rcx
+GD String, '  alloc'
+GD Int32, rdx
+GD String, ': '
 		mov   ebx, edx
 		mov   rbp, rcx
 		xor   edi, edi
@@ -506,6 +530,8 @@ _VirtualAllocNuma:
 		mov   r15, rax
 	       test   rax, rax
 		 js   Failed_sys_mmap
+GD Hex, rax
+GD NewLine
 
 		mov   rdi, r15		; addr
 		mov   rsi, rbp		; len
@@ -532,6 +558,12 @@ _VirtualAlloc:
 		mov   r10d, MAP_PRIVATE or MAP_ANONYMOUS
 .go:
 	       push   rsi rdi rbx
+if DEBUG > 0
+add qword[DebugBalance], rcx
+end if
+GD String, 'size: '
+GD Hex, rcx
+GD String, '  alloc : '
 		xor   edi, edi
 		mov   rsi, rcx
 		mov   edx, PROT_READ or PROT_WRITE
@@ -541,6 +573,8 @@ _VirtualAlloc:
 	    syscall
 	       test   rax, rax
 		 js   Failed_sys_mmap
+GD Hex, rax
+GD NewLine
 		pop   rbx rdi rsi
 		ret
 
@@ -550,14 +584,23 @@ _VirtualFree:
 	; rdx is size
 	       push   rsi rdi rbx
 	       test   rcx, rcx
-		 jz   @f
+		 jz   .null
+if DEBUG > 0
+sub qword[DebugBalance], rdx
+end if
+GD String, 'size: '
+GD Hex, rdx
+GD String, '  free  : '
+GD Hex, rcx
+GD NewLine
 		mov   rdi, rcx
 		mov   rsi, rdx
 		mov   eax, sys_munmap
 	    syscall
 	       test   eax, eax
 		jnz   Failed_sys_munmap_VirtualFree
-	@@:	pop   rbx rdi rsi
+.null:
+		pop   rbx rdi rsi
 		ret
 
 
@@ -579,7 +622,12 @@ _VirtualAlloc_LargePages:
 
 	       push   rbx rsi rdi r14 r15
 		mov   r14, rcx
-
+if DEBUG > 0
+add qword[DebugBalance], rcx
+end if
+GD String, 'large size: '
+GD Hex, rcx
+GD String, '  alloc: '
 		xor   edi, edi
 		mov   rsi, rcx
 		mov   edx, PROT_READ or PROT_WRITE
@@ -591,6 +639,8 @@ _VirtualAlloc_LargePages:
 		mov   r15, rax
 	       test   rax, rax
 		 js   Failed_sys_mmap
+GD Hex, rax
+GD NewLine
 
 		mov   rdi, r15
 		mov   rsi, r14
@@ -683,6 +733,8 @@ _WriteOut:
 	; in: rcx  address of string start
 	;     rdi  address of string end
 	       push   rsi rdi rbx
+ AssertStackAligned   '_WriteOut'
+
 		mov   rsi, rcx
 		mov   rdx, rdi
 		sub   rdx, rcx
@@ -708,66 +760,23 @@ _WriteError:
 
 
 
-_ReadIn:
-	; out: eax =  0 if not file end 
-	;      eax = -1 if file end 
-	;      rsi address of string start 
-	;      ecx length of string
-	; 
-	; uses global InputBuffer and InputBufferSizeB 
-	; reads one line and then returns 
-	; a line is a string of characters where the last
-	;  and only the last character is below 0x20 (the space char)
-	       push   rdi rbx r13 r14 r15
-		xor   ebx, ebx				; ebx = length of return string
-		mov   r15, qword[InputBuffer]		; r15 = buffer
-		mov   r14, qword[InputBufferSizeB]	; r14 = size
-.ReadLoop:
-		cmp   rbx, r14
-		jae   .ReAlloc
-.ReAllocRet:
+_ReadStdIn:
+	; in: rcx address to write
+	;     edx max size
+	; out: rax > 0 number of bytes written
+	;      rax = 0 nothing written; end of file
+	;      rax < 0 error
+
+	       push   rbx rsi rdi
 		mov   edi, stdin
-		lea   rsi, [r15+rbx]
-		mov   edx, 1
+		mov   rsi, rcx
 		mov   eax, sys_read 
 	    syscall
-	; check for file end 
-		cmp   rax, 1
-		 jl  .FileEnd
-	; check for new line
-		add   ebx, 1
-		cmp   byte[rsi], ' '
-		jae   .ReadLoop
-
-		xor   eax, eax
-.Return:
-		mov   rsi, r15
-		mov   ecx, ebx
-		pop   r15 r14 r13 rbx rdi
+GD String, 'read: '
+GD Int64, rax
+GD NewLine
+		pop   rdi rsi rbx
 		ret
-.FileEnd:
-		 or   eax, -1
-		jmp  .Return
-.ReAlloc:
-	; get new buffer
-		lea   rcx, [r14+4096]
-	       call   _VirtualAlloc
-		mov   r13, rax
-		mov   rdi, rax
-	; copy data
-		mov   rsi, r15
-		mov   rcx, r14
-	  rep movsb
-	; free old buffer
-		mov   rcx, r15
-		mov   rdx, r14
-	       call   _VirtualFree
-	; set new data
-		mov   r15, r13
-		add   r14, 4096
-		mov   qword[InputBuffer], r13
-		mov   qword[InputBufferSizeB], r14
-		jmp   .ReAllocRet
 
 
 ;;;;;;;;;;;;;;;;;;
@@ -1257,10 +1266,10 @@ Failed_sys_munmap_VirtualFree:
 		lea   rdi, [@f]
 		jmp   Failed
 		@@: db 'sys_munmap in _VirtualFree failed',0
-Failed_sys_munmap_ThreadJoin:
-		lea   rdi, [@f]
-		jmp   Failed
-		@@: db 'sys_munmap in _ThreadJoin failed',0
+;Failed_sys_munmap_ThreadJoin:
+;               lea   rdi, [@f]
+;               jmp   Failed
+;               @@: db 'sys_munmap in _ThreadJoin failed',0
 Failed_sys_munmap_FileUnmap:
 		lea   rdi, [@f]
 		jmp   Failed
@@ -1348,3 +1357,202 @@ _ErrorBox:
 	    syscall
 		pop   rbx rsi rdi 
 		ret
+
+
+	; Thanks to
+	;
+	; HeavyThing x86_64 assembly language library and showcase programs
+	; Copyright 2015, 2016 2 Ton Digital 
+	; Homepage: https://2ton.com.au/
+	; Author: Jeff Marrison <jeff@2ton.com.au>
+	;
+	; for the meat of this function
+
+vdso_FindSymbol:
+	; vdso.inc: we parse /proc/self/auxv (and die if we can't)
+	; to get our kernel-exposed functions we are interested in
+	;
+	; in: rcx address of symbol string
+	; out: rax address of function
+	;          0 if failed
+
+	       push   rbx r12 r13 r14 r15
+
+virtual at rsp
+ .space      rb 1024		; read it directly onto our stack
+ .symbol     rq 1
+	     rq 1
+ .lend	     rb 0
+end virtual
+.localsize = ((.lend-rsp+15) and (-16))
+		sub   rsp, .localsize
+		mov   qword[.symbol], rcx
+
+		mov   eax, sys_open
+		lea   rdi, [sz_procselfauxv]
+		xor   esi, esi		      ; O_RDONLY
+	    syscall
+	       test   eax, eax
+		 js   .failed
+
+		mov   ebx, eax
+		mov   edi, eax
+		lea   rsi, [.space]
+		mov   edx, 1024
+		mov   eax, sys_read
+	    syscall
+	       test   eax, eax
+		 js   .failed
+
+		mov   edi, ebx
+		mov   ebx, eax
+		mov   eax, sys_close
+	    syscall
+		shr   ebx, 4		; each entry is 8 byte type, 8 byte value
+	       test   ebx, ebx
+		 jz   .failed
+
+		lea   r12, [.space]
+.ehdr_search:
+		cmp   qword[r12], 0x21	; AT_SYSINFO_EHDR
+		 je   .ehdr_found
+		add   r12, 16
+		sub   ebx, 1
+		jnz   .ehdr_search
+		jmp   .failed
+.ehdr_found:
+		mov   rbx, qword[r12+8] ; base address of our VDSO
+	       test   rbx, rbx
+		 jz   .failed
+	; we aren't really interested in validating it, if we got it from the kernel
+	; it is most-likely a-okay
+	; so all we are really after is the relocation table
+	      movzx   r12d, word[rbx+0x38]	; Elf64_Ehdr.e_phnum
+		mov   r15, [rbx+0x20]		; Elf64_Ehdr.e_phoff
+		add   r15, rbx
+	       test   r12d, r12d
+		 jz   .failed
+		xor   r13d, r13d
+		xor   r14d, r14d
+		mov   qword[rsp+992], rbx	; save our Ehdr
+		mov   qword[rsp+1008], -1	; we'll use this as link base pointer
+		mov   qword[rsp+1016], 0	; we'll use this as our dynamic program header
+.phdr_scan:
+		mov   eax, 0x38
+		xor   edx, edx
+		mul   r13d
+		lea   rdi, [r15+rax]		; Elf64_Phdr[r13d]
+		mov   ecx, [rdi]		; Elf64_Phdr.p_type
+		mov   rax, [rdi+16]		; Elf64_Phdr.p_vaddr
+		cmp   ecx, 1			; PT_LOAD
+		 je   .phdr_scan_ptload
+		cmp   ecx, 2
+		 je   .phdr_scan_ptdynamic
+.phdr_scan_next:
+		add   r13d, 1
+		sub   r12d, 1
+		jnz   .phdr_scan
+		cmp   qword[rsp+1008], -1
+		 je   .failed
+		cmp   qword[rsp+1016], 0
+		 je   .failed
+	; so now we can get our dynamic entries out
+		mov   rsi, [rsp+1008]
+		mov   rdi, [rsp+1016]
+		mov   rcx, rbx
+		mov   rax, [rdi+16]		; Elf64_Phdr.p_vaddr
+
+		sub   rcx, rsi			; relocation
+		add   rax, rcx			; Dyn
+
+		mov   r14, rcx
+		mov   r15, rax
+
+		xor   ebx, ebx			; our symtab
+		xor   r12d, r12d		; our strtab
+
+		mov   qword[rsp+1000], 0	; our symbol count (what will be anyway)
+	; all we are really interested in here is finding the symbol table
+	; and the string table (so we can do name lookups in it for what we are after)
+	; well, and the DT_HASH entry so we can figure out how many symbols we have
+
+.findstrsymtab:
+	; so we need r15.d_un.d_val + relocation _if_ r15.d_tag == DT_SYMTAB
+	; d_tag is the first signed 64 bits of r15, d_un is our union next 64 bits
+		cmp   qword[r15], 0
+		 je   .dyndone
+		cmp   qword[r15], 4		; DT_HASH
+		 je   .foundhash
+		cmp   qword[r15], 5		; DT_STRTAB
+		 je   .foundstrtab
+		cmp   qword[r15], 6		; DT_SYMTAB
+		 je   .foundsymtab
+		add   r15, 16
+		jmp   .findstrsymtab
+.foundhash:
+		mov   rcx, [r15+8]
+		lea   rsi, [r14+rcx]
+		mov   eax, [rsi+4]		; DT_HASH, second word
+	; symbol count is in eax
+		mov   dword[rsp+1000], eax
+		add   r15, 16
+		jmp   .findstrsymtab
+.foundstrtab:
+	; d_un.val + our relocation goods is what we want
+		mov   rcx, [r15+8]
+		lea   r12, [r14+rcx]		; strtab
+		add   r15, 16
+		jmp   .findstrsymtab
+.foundsymtab:
+	; d_un.val + our relocation goods is what we want
+		mov   rcx, [r15+8]
+		lea   rbx, [r14+rcx]	      ; symtab
+		add   r15, 16
+		jmp   .findstrsymtab
+.dyndone:
+	       test   rbx, rbx		      ; symtab
+		 jz   .failed
+	       test   r12, r12		      ; strtab
+		 jz   .failed
+		cmp   dword[rsp+1000], 0     ; count
+		 je   .failed
+	; if we made it to here, everything looks okay, walk our symbols
+.symwalk:
+	; strtab + [rbx] == st_name of this symbol
+		mov   r13d, dword [rbx]
+		add   r13, r12
+	; r13 = address of symbol string
+		mov   rsi, r13
+		mov   rcx, qword[.symbol]
+	       call   CmpString
+	       test   eax, eax
+		 jz   .symwalk_next
+		cmp   byte[rsi], 0	; make sure we are at the end
+		 jz   .foundit		;  of the symbol
+.symwalk_next:
+		add   rbx, 0x18
+		sub   dword[rsp+1000], 1
+		jnz   .symwalk
+	; if we made it to here, we didn't find what we were looking for
+.failed:
+		xor   eax, eax
+.return:
+		add   rsp, .localsize
+		pop   r15 r14 r13 r12 rbx
+		ret
+.foundit:
+	      ;movzx   eax, word [rbx+6]
+		mov   rax, qword[rbx+8]
+		add   rax, qword[rsp+992]
+		sub   rax, qword[rsp+1008]	; the address of our symbol
+		jmp   .return
+
+.phdr_scan_ptload:
+	; make sure it already isn't set
+		cmp   qword[rsp+1008], -1
+		jne   .phdr_scan_next
+		mov   [rsp+1008], rax		; link base pointer == Elf64_Phdr[r13d].p_vaddr
+		jmp   .phdr_scan_next
+.phdr_scan_ptdynamic:
+		mov   [rsp+1016], rdi
+		jmp   .phdr_scan_next

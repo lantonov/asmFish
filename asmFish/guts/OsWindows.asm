@@ -127,6 +127,7 @@ _FileRead:
 		lea   r9, [rsp+8*6]
 		mov   qword[rsp+8*4], 0
 	       call   qword[__imp_ReadFile]
+	       mov  edx, [rsp+8*6]
 		add   rsp, 8*7
 		ret
 
@@ -348,6 +349,7 @@ _ExitThread:
 ; timing ;
 ;;;;;;;;;;
 
+	      align   16
 _GetTime:
 	; out: rax + rdx/2^64 = time in ms
 		sub   rsp, 8*9
@@ -360,7 +362,7 @@ _GetTime:
 		add   rsp, 8*9
 		ret
 
-_SetFrequency:
+_InitializeTimer:
 	; no arguments
 		sub   rsp, 8*5
  AssertStackAligned   '_SetFrequency'
@@ -406,15 +408,11 @@ _VirtualAllocNuma:
 if DEBUG > 0
 add qword[DebugBalance], rcx
 end if
-
-
-GD_String 'size: '
-GD_Int rcx
-GD_NewLine
-GD_String 'alloc'
-GD_Int rdx
-GD_String ': '
-
+GD String, 'size: '
+GD Hex, rcx
+GD String, '  alloc'
+GD Int32, rdx
+GD String, ': '
 		mov   qword[rsp+8*5], rdx
 		mov   qword[rsp+8*4], PAGE_READWRITE
 		mov   r9d, MEM_COMMIT
@@ -424,8 +422,8 @@ GD_String ': '
 	       call   qword[__imp_VirtualAllocExNuma]
 	       test   rax, rax
 		 jz   Failed__imp_VirtualAllocExNuma
-GD_Hex rax
-GD_NewLine
+GD Hex, rax
+GD NewLine
 
 		add   rsp, 8*7
 		ret
@@ -439,13 +437,11 @@ _VirtualAlloc:
  AssertStackAligned   '_VirtualAlloc'
 
 if DEBUG > 0
-add qword[DebugBalance], rcx
+		add   qword[DebugBalance], rcx
 end if
-GD_String 'size: '
-GD_Int rcx
-GD_NewLine
-GD_String 'alloc:  '
-
+GD String, 'size: '
+GD Hex, rcx
+GD String, '  alloc : '
 		mov   rdx, rcx
 		xor   ecx, ecx
 		mov   r8d, MEM_COMMIT
@@ -453,9 +449,8 @@ GD_String 'alloc:  '
 	       call   qword[__imp_VirtualAlloc]
 	       test   rax, rax
 		 jz   Failed__imp_VirtualAlloc
-GD_Hex rax
-GD_NewLine
-
+GD Hex, rax
+GD NewLine,
 		add   rsp, 8*5
 		ret
 
@@ -470,15 +465,13 @@ _VirtualFree:
 		 jz   .null
 
 if DEBUG > 0
-sub qword[DebugBalance], rdx
+		sub   qword[DebugBalance], rdx
 end if
-GD_String 'size: '
-GD_Int rdx
-GD_NewLine
-GD_String 'free:  '
-GD_Hex rcx
-GD_NewLine
-
+GD String, 'size: '
+GD Hex, rdx
+GD String, '  free  : '
+GD Hex, rcx
+GD NewLine
 		xor   edx, edx
 	       call   qword[__imp_VirtualFree]
 	       test   eax, eax
@@ -536,12 +529,29 @@ end virtual
 		lea   rax, [rdi+rsi-1]
 		div   rsi
 		mul   rsi
-		mov   rdx, rax
 		mov   rbx, rax	; save size in rbx
+GD String, 'large size: '
+GD Hex, rbx
+GD String, '  alloc: '
 		xor   ecx, ecx
+		mov   rdx, rbx
 		mov   r8d, MEM_RESERVE or MEM_COMMIT or MEM_LARGE_PAGES
 		mov   r9d, PAGE_READWRITE
 	       call   qword[__imp_VirtualAlloc]
+	; this call to VirtualAlloc can fail
+	       test   rax, rax
+		 jz   .alloc_failed
+.alloc_succeeded:
+if DEBUG > 0
+		add   qword[DebugBalance], rbx
+end if
+GD Hex, rax
+GD NewLine
+		jmp   .alloc_done
+.alloc_failed:
+GD String, 'FAILED'
+GD NewLine
+.alloc_done:
 		mov   rdx, rbx
 		add   rsp, .localsize
 		pop   rdi rsi rbx
@@ -657,7 +667,7 @@ _ParseCommandLine:
 
 
 		xor   eax, eax
-		mov   qword[CmdLineStart], rax
+		mov   qword[ioBuffer.cmdLineStart], rax
 
 	       call   qword[__imp_GetCommandLineA]
 		mov   rsi, rax
@@ -670,9 +680,9 @@ _ParseCommandLine:
 		not   rcx
 		add   ecx, 4095
 		and   ecx, -4096
-		mov   qword[InputBufferSizeB], rcx
+		mov   qword[ioBuffer.inputBufferSizeB], rcx
 	       call   _VirtualAlloc
-		mov   qword[InputBuffer], rax
+		mov   qword[ioBuffer.inputBuffer], rax
 
 .find_command_start:
 	      lodsb
@@ -700,8 +710,8 @@ _ParseCommandLine:
 		cmp   byte[rsi], 0
 		 je   .done
 
-		mov   rdi, qword[InputBuffer]
-		mov   qword[CmdLineStart], rdi
+		mov   rdi, qword[ioBuffer.inputBuffer]
+		mov   qword[ioBuffer.cmdLineStart], rdi
 
 	; replace semi colons with 10
 		mov   dl, 10
@@ -772,95 +782,36 @@ _WriteError:
 
 
 
-_ReadIn:
-	; out: eax =  0 if not file end
-	;      eax = -1 if file end
-	;      rsi address of string start
-	;      rcx address of string end
-	;
-	; uses global InputBuffer and InputBufferSizeB
-	; reads one line and then returns
-	; any char < ' ' is considered a newline char and
-	       push   r13 rbp rdi rbx
+
+_ReadStdIn:
+	; in: rcx address to write
+	;     edx max size
+	; out: rax > 0 number of bytes written
+	;      rax = 0 nothing written; end of file
+	;      rax < 0 error
+
 		sub   rsp, 8*9
- AssertStackAligned   '_ReadIn'
-
-
-		mov   rbx, qword[InputBuffer]
-		lea   r13, [rsp+3CH]
-?_1062:
-		mov   rax, rbx
-		sub   rax, qword[InputBuffer]
-		mov   rcx, qword[InputBufferSizeB]
-		add   rax, 9
-		cmp   rax, rcx
-		mov   rdx, rcx
-		 jl   ?_1063
-
-		add   edx, 4096
-		mov   r9d, 4
-		mov   r8d, 4096
-		xor   ecx, ecx
-if DEBUG > 0
-add qword[DebugBalance], rdx
-end if
-	       call   qword[__imp_VirtualAlloc]
-	       test   rax, rax
-		 jz   Failed__imp_VirtualAlloc_ReadIn
-
-GD_String 'alloc: '
-GD_Hex rax
-GD_NewLine
-
-		mov   rcx, qword[InputBufferSizeB]
-
-if DEBUG > 0
-sub qword[DebugBalance], rcx
-end if
-
-		mov   r8d, MEM_RELEASE
-		xor   edx, edx
-		mov   rsi, qword[InputBuffer]
-		mov   rdi, rax
-		mov   rbp, rax
-	  rep movsb
-		mov   rcx, qword[InputBuffer]
-
-GD_String 'free:  '
-GD_Hex rcx
-GD_NewLine
-
-	       call   qword[__imp_VirtualFree]
-	       test   rax, rax
-		 jz   Failed__imp_VirtualFree_ReadIn
-		sub   rbx, qword [InputBuffer]
-		mov   qword[InputBuffer], rbp
-		add   qword[InputBufferSizeB], 4096
-		add   rbx, rbp
-?_1063:
-		mov   rdx, rbx
-		mov   r9, r13
-		mov   qword[rsp+20H], 0
-		mov   r8d, 1
-		mov   rcx, qword[hStdIn]
+		mov   qword[rsp+8*4], 0 	; lpOverlapped
+		lea   r9, [rsp+8*8]		; lpNumberOfBytesRead
+		mov   r8d, edx			; nNumberOfBytesToRead
+		mov   rdx, rcx			; lpBuffer
+		mov   rcx, qword[hStdIn]	; hFile
 	       call   qword[__imp_ReadFile]
-		mov   dl, byte[rbx]
-	       test   eax, eax
-		 jz   ?_1064
-		cmp   dword[rsp+3CH], 0
-		 jz   ?_1065
-?_1064: 	cmp   dl, 31
-		jle   ?_1066
-		inc   rbx
-		jmp   ?_1062
-?_1065: 	 or   eax, -1
-		jmp   ?_1067
-?_1066: 	mov   byte[rbx], 0
-		xor   eax, eax
-?_1067: 	add   rsp, 8*9
-		mov   rsi, qword[InputBuffer]
-		pop   rbx rdi rbp r13
+		mov   ecx, dword[rsp+8*8]
+		sub   eax, 1
+	     cmovnc   eax, ecx
+	     movsxd   rax, eax
+GD String, 'read: '
+GD Int64, rax
+GD NewLine
+		add   rsp, 8*9
 		ret
+.Error:
+		 or   rax, -1
+		add   rsp, 8*9
+		ret
+
+
 
 
 ;;;;;;;;;;;;;;;;;;

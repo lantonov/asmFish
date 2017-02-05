@@ -24,8 +24,19 @@ Options_Init:
 		ret
 
 
-UciLoop:
+Options_Destroy:
+	       push   rbx
+		mov   rcx, qword[options.hashPath]
+		mov   rdx, qword[options.hashPathSizeB]
+		lea   rax, [options.hashPathBuffer]
+		cmp   rcx, rax
+		 je   @f
+	       call   _VirtualFree
+	@@:	pop   rbx
+		ret
 
+
+UciLoop:
 
 virtual at rsp
   .th1 Thread
@@ -80,7 +91,7 @@ UciNextCmdFromCmdLine:
 
 		xor   eax, eax
 		mov   r15, rsi			; save current command address
-		mov   qword[CmdLineStart], rax
+		mov   qword[ioBuffer.cmdLineStart], rax
 		cmp   al, byte[rsi]
 	if USE_CMDLINEQUIT
 		 je   UciQuit
@@ -99,22 +110,12 @@ UciNextCmdFromCmdLine:
 	; we have hit the new line char
 .Found:
 	; rsi is now the address of next command
-		mov   qword[CmdLineStart], rsi
+		mov   qword[ioBuffer.cmdLineStart], rsi
 		mov   rsi, r15			; restore current command address
 
-if VERBOSE
-Display_String 'processing cmd line command: '
-mov rcx, rsi
-mov rdi, qword[CmdLineStart]
-cmp byte[rdi], 1
-cmc
-sbb rdi, 0
-call _WriteOut
-lea rcx, [sz_NewLine]
-lea rdi, [sz_NewLineEnd]
-call _WriteOut
-end if
-
+GD String, 'processing cmd line command: '
+GD String, rsi
+GD NewLine
 		jmp   UciChoose
 
 
@@ -130,17 +131,17 @@ UciWriteOut_NewLine:
 UciWriteOut:
 	       call   _WriteOut_Output
 UciGetInput:
-GD_ResponseTime
+GD ResponseTime
 
-		mov   rsi, qword[CmdLineStart]
+		mov   rsi, qword[ioBuffer.cmdLineStart]
 	       test   rsi, rsi
 		jnz   UciNextCmdFromCmdLine
 
-	       call   _ReadIn
+	       call   GetLine
 	       test   eax, eax
 		jnz   UciQuit
 
-GD_GetTime
+GD GetTime
 UciChoose:
 	; rsi is the address of the string to process
 
@@ -309,6 +310,9 @@ UciPonderHit:
 	       test   al, al
 		jnz   .stop
 		mov   byte[limits.ponder], al
+	; we are now switching to normal search mode
+	; check the time in case we have to abort the search asap
+	       call   CheckTime
 		jmp   UciGetInput
 	.stop:
 		mov   byte[signals.stop], -1
@@ -568,10 +572,10 @@ UciParseMoves:
 		mov   ecx, edi
 		mov   edx, eax
 	       call   Move_Do__UciParseMoves
-	; when VERBOSE=0, domove/undomove don't update gamPly
-match =0, VERBOSE {
+	; when VERBOSE<>2, domove/undomove don't update gamePly
+if VERBOSE <> 2
 		inc   dword[rbp+Pos.gamePly]
-}
+end if
 		mov   qword[rbp+Pos.state], rbx
 	       call   SetCheckInfo
 		jmp   .get_move
@@ -1426,174 +1430,6 @@ end if
 
 match =1, PROFILE {
 UciProfile:
-		lea   rdi, [Output]
-
-	     szcall   PrintString, 'MainHash_Probe:       '
-		mov   rax, qword[profile.MainHash_Probe]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, 'MainHash_Save:        '
-		mov   rax, qword[profile.MainHash_Save] 
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, 'Move_Do:              '
-		mov   rax, qword[profile.Move_Do]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, 'Move_DoNull:          '
-		mov   rax, qword[profile.Move_DoNull]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, 'Move_GivesCheck:      '
-		mov   rax, qword[profile.Move_GivesCheck]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, 'Move_IsLegal:         '
-		mov   rax, qword[profile.Move_IsLegal]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, 'Move_IsPseudoLegal:   '
-		mov   rax, qword[profile.Move_IsPseudoLegal]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, 'QSearch_PV_TRUE:      '
-		mov   rax, qword[profile.QSearch_PV_TRUE]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, 'QSearch_PV_FALSE:     '
-		mov   rax, qword[profile.QSearch_PV_FALSE]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, 'QSearch_NONPV_TRUE:   '
-		mov   rax, qword[profile.QSearch_NONPV_TRUE]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, 'QSearch_NONPV_FALSE:  '
-		mov   rax, qword[profile.QSearch_NONPV_FALSE]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, 'Search_ROOT:          '
-		mov   rax, qword[profile.Search_ROOT]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, 'Search_NONPV:         '
-		mov   rax, qword[profile.Search_NONPV]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, 'Search_PV:            '
-		mov   rax, qword[profile.Search_PV]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, 'See:                  '
-		mov   rax, qword[profile.See]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, 'SeeTest:              '
-		mov   rax, qword[profile.SeeTest]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, 'SetCheckInfo:         '
-		mov   rax, qword[profile.SetCheckInfo]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, 'SetCheckInfo2:        '
-		mov   rax, qword[profile.SetCheckInfo2]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-
-	     szcall   PrintString, 'Evaluate:             '
-		mov   rax, qword[profile.Evaluate]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-	     szcall   PrintString, 'EvaluateLazy:         '
-		mov   rax, qword[profile.EvaluateLazy]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-
-
-		lea   r15, [profile.cjmpcounts]
-.CountLoop:
-		mov   rax, qword[r15+8*0]
-		 or   rax, qword[r15+8*1]
-		 jz   .CountDone
-
-		lea   rax, [r15-profile.cjmpcounts]
-		shr   eax, 4
-	       call   PrintUnsignedInteger
-		mov   al, ':'
-	      stosb
-       PrintNewLine
-
-
-	     szcall   PrintString, '  jmp not taken: '
-		mov   rax, qword[r15+8*0]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, '  jmp taken:     '
-		mov   rax, qword[r15+8*1]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-	     szcall   PrintString, '  jmp percent:   '
-	  vcvtsi2sd   xmm0, xmm0, qword[r15+8*0]
-	  vcvtsi2sd   xmm1, xmm1, qword[r15+8*1]
-	     vaddsd   xmm0, xmm0, xmm1
-	     vdivsd   xmm1, xmm1, xmm0
-		mov   eax, 10000
-	  vcvtsi2sd   xmm2, xmm2, eax
-	     vmulsd   xmm1, xmm1, xmm2
-	  vcvtsd2si   eax, xmm1
-		xor   edx, edx
-		mov   ecx, 100
-		div   ecx
-		mov   r12d, edx
-	       call   PrintUnsignedInteger
-		mov   al, '.'
-	      stosb
-		mov   eax, r12d
-		xor   edx, edx
-		mov   ecx, 10
-		div   ecx
-		add   al, '0'
-	      stosb
-		lea   eax, [rdx+'0']
-	      stosb
-		mov   al, '%'
-	      stosb
-       PrintNewLine
-
-		add   r15, 16
-		jmp   .CountLoop
-.CountDone:
-
-
-	       push   rdi
-		lea   rdi, [profile]
-		mov   ecx, profile.ender-profile
-		xor   eax, eax
-	      stosb
-		pop   rdi
-
-		jmp   UciWriteOut
-
+	       call   DisplayProfileData
+		jmp   UciGetInput
 }
