@@ -223,13 +223,6 @@ end if
 		add   dword[.ei.kingAdjacentZoneAttacksCount+4*Us], eax
 ..NoKingRing:
 
-    if Pt eq Queen
-		mov   rax, qword[.ei.attackedBy+8*(8*Them+Knight)]
-		 or   rax, qword[.ei.attackedBy+8*(8*Them+Bishop)]
-		 or   rax, qword[.ei.attackedBy+8*(8*Them+Rook)]
-	       andn   r9, rax, r9
-    end if
-
 		mov   rax, qword[.ei.mobilityArea+8*Us]
 		and   rax, r9
 	     popcnt   r10, rax, rcx
