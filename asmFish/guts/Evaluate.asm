@@ -1700,8 +1700,6 @@ end if
 		mov   edi, dword[rbx+State.npMaterial]
 		and   r8, r10
 		and   r9, r10
-		cmp   edx, PHASE_MIDGAME
-		jae   .ScaleFactorDone
 	       test   ecx, not 16
 		jnz   .ScaleFactorDone
 	       blsr   r8, r8, rcx
