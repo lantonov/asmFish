@@ -1220,11 +1220,6 @@ ProfileInc EvalPassedPawns
 ..Continue:		
 	; r8d = blockSq
 
-	; Assign a small bonus when the opponent has no pieces left
-		lea   eax, [esi+20]
-	       test   dword[rbx+State.npMaterial], 0x0FFFF shl (16*Them)
-	      cmovz   esi, eax
-
 	; scale down bonus for candidate passers which need more than one pawn
 	; push to become passed
 		lea   ecx, [rsi+0x08000]
