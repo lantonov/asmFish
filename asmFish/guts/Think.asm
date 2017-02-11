@@ -332,7 +332,7 @@ end if
 		mov   eax, dword[time.optimumTime]
 		mov   ecx, 5
 		mul   ecx
-		mov   ecx, 42
+		mov   ecx, 44
 		div   ecx
 	; eax = Time.optimum() * 5 / 42
 		mov   r8, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
