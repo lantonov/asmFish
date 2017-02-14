@@ -690,9 +690,11 @@ end virtual
 .localsize = ((.localend-rsp+15) and (-16))
 	 _chkstk_ms   rsp, .localsize
 		sub   rsp, .localsize
+GD String, 'Tablebase_RootProbe called'
+GD NewLine
+
 		lea   rcx, [.success]
 	       call   Tablebase_ProbeDTZ
-
 		mov   edx, dword[.success]
 		mov   r15d, eax
 	; r15d = dtz
@@ -702,9 +704,9 @@ end virtual
 
 	       call   SetCheckInfo
 
-		mov   r12, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
+		mov   r12, qword[rbp+Pos.rootMovesVec.table]
 .RootMoveLoop:
-		cmp   r12, qword[rbp+Pos.rootMovesVec+RootMovesVec.ender]
+		cmp   r12, qword[rbp+Pos.rootMovesVec.ender]
 		jae   .RootMovesDone
 
 		mov   ecx, dword[r12+RootMove.pv+4*0]
@@ -719,7 +721,7 @@ end virtual
 		mov   rcx, qword[rbx+State.checkersBB]
 	       test   rcx, rcx
 		 jz   @f
-		cmp   r12d, 0
+		cmp   r15d, 0
 		jle   @f
 		lea   rdi, [.mlist]
 	       call   Gen_Legal
@@ -731,6 +733,7 @@ end virtual
 
 	       test   esi, esi
 		jnz   .UndoMove
+
 
 		lea   rcx, [.success]
 		cmp   word[rbx+State.rule50], 0
@@ -761,6 +764,11 @@ end virtual
 	      cmovz   eax, edx
 		 jz   .Return
 		mov   dword[r12+RootMove.score], esi
+GD String, 'unfiltered move '
+GD Move, qword[r12+RootMove.pv+4*0]
+GD String, ' score '
+GD Int32, rsi
+GD NewLine
 		add   r12, sizeof.RootMove
 		jmp   .RootMoveLoop
 .RootMovesDone:
@@ -837,6 +845,11 @@ end virtual
 		mov   eax, dword[rsi+RootMove.score]
 	       test   eax, eax
 		jnz   .Drawing1
+GD String, 'filtered drawing move '
+GD Move, qword[rsi+RootMove.pv+4*0]
+GD String, ' score '
+GD Int32, qword[rsi+RootMove.score]
+GD NewLine
 		mov   ecx, sizeof.RootMove
 	  rep movsb
 		jmp   .Drawing1a
@@ -850,33 +863,13 @@ end virtual
 		 or   eax, -1
 .Return:
 
+GD String, 'Tablebase_RootProbe returning '
+GD Int32, rax
+GD NewLine
 
-match =2, VERBOSE {
-	       test   eax, eax
-		jnz   @f
-		add   rsp, .localsize
-		pop   r15 r14 r13 r12 rdi rsi rbx
-		ret
-@@:
-		mov   rsi, qword[rbp+Pos.rootMovesVec.table]
-		xor   r15d, r15d
-.printnext:
-		cmp   rsi, qword[rbp+Pos.rootMovesVec.ender]
-		jae   .printdone
-		add   r15d, 1
-		add   rsi, sizeof.RootMove
-		jmp   .printnext
-.printdone:
-		 or   eax, -1
-		add   rsp, .localsize
-		pop   r15 r14 r13 r12 rdi rsi rbx
-		ret
-}
-
-		add   rsp, .localsize
-		pop   r15 r14 r13 r12 rdi rsi rbx
-		ret
-
+                add   rsp, .localsize
+                pop   r15 r14 r13 r12 rdi rsi rbx
+                ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 .Winning:
@@ -940,6 +933,11 @@ match =2, VERBOSE {
 		jle   .Winning2
 		cmp   eax, r13d
 		 jg   .Winning2
+GD String, 'filtered winning move '
+GD Move, qword[rsi+RootMove.pv+4*0]
+GD String, ' score '
+GD Int32, qword[rsi+RootMove.score]
+GD NewLine
 		mov   ecx, sizeof.RootMove
 	  rep movsb
 		jmp   .Winning2a
@@ -976,6 +974,11 @@ match =2, VERBOSE {
 		mov   eax, dword[rsi+RootMove.score]
 		cmp   eax, edx
 		jne   .Losing2
+GD String, 'filtered losing move '
+GD Move, qword[rsi+RootMove.pv+4*0]
+GD String, ' score '
+GD Int32, qword[rsi+RootMove.score]
+GD NewLine
 		mov   ecx, sizeof.RootMove
 	  rep movsb
 		jmp   .Losing2a
