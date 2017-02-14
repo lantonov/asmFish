@@ -554,16 +554,7 @@ UciParseMoves:
 	       test   eax, eax
 		mov   rax, rsi
 		 jz   .done
-		mov   rbx, qword[rbp+Pos.state]
-		mov   rax, rbx
-		sub   rax, qword[rbp+Pos.stateTable]
-		xor   edx, edx
-		mov   ecx, sizeof.State
-		div   ecx
-	     Assert   e, edx, 0, 'weird remainder in UciParseMoves'
-		lea   ecx, [rax+8]
-		shr   ecx, 2
-		add   ecx, eax
+		mov   ecx, 2
 	       call   Position_SetExtraCapacity
 		mov   rbx, qword[rbp+Pos.state]
 		mov   ecx, edi

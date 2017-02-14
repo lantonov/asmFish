@@ -1455,18 +1455,24 @@ Position_CopyToSearch:
 
 Position_SetExtraCapacity:
 	; in: rbp postion
-	;     ecx
-	; reserve space for ecx additional state elements after the current
+	; reserve space for at least ecx states past the current
 
-		add   ecx, 1
-	       imul   ecx, sizeof.State
-		add   rcx, qword[rbp+Pos.state]
-		cmp   rcx, qword[rbp+Pos.stateEnd]
-		 ja   .realloc
+               imul   ecx, sizeof.State
+                add   rcx, qword[rbp+Pos.state]
+                cmp   rcx, qword[rbp+Pos.stateEnd]
+		jae   .realloc
 		ret
 .realloc:
 	       push   rbx rsi rdi
 		sub   rcx, qword[rbp+Pos.stateTable]
+                mov   eax, ecx
+                xor   edx, edx
+                mov   ecx, sizeof.State
+                div   ecx
+                lea   ecx, [rax+8]
+                shr   ecx, 2
+                add   ecx, eax
+               imul   ecx, sizeof.State
 		mov   ebx, ecx
 	       call   _VirtualAlloc
 		mov   r8, rax
