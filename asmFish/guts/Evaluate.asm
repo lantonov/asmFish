@@ -7,7 +7,6 @@ WeakQueen		equ (( 50 shl 16) + ( 10))
 OtherCheck		equ (( 10 shl 16) + ( 10))
 CloseEnemies		equ ((	7 shl 16) + (  0))
 PawnlessFlank		equ (( 20 shl 16) + ( 80))
-LooseEnemies		equ ((	0 shl 16) + ( 25))
 ThreatByHangingPawn	equ (( 71 shl 16) + ( 61))
 ThreatByRank		equ (( 16 shl 16) + (  3))
 Hanging 		equ (( 48 shl 16) + ( 27))
@@ -895,18 +894,6 @@ match =Black, Us
 	     Assert   e, AttackedByThem, qword[.ei.attackedBy+8*(8*Them+0)], 'assertion AttackedByThem failed in EvalThreats'
 	     Assert   e, PiecesUs, qword[rbp+Pos.typeBB+8*Us], 'assertion PiecesUs failed in EvalThreats'
 	     Assert   e, PiecesThem, qword[rbp+Pos.typeBB+8*Them], 'assertion PiecesThem failed in EvalThreats'
-
-		mov   rax, AttackedByUs
-		 or   rax, AttackedByThem
-		mov   rdx, qword[rbp+Pos.typeBB+8*Queen]
-		 or   rdx, qword[rbp+Pos.typeBB+8*King]
-		and   rdx, PiecesThem
-		xor   rdx, PiecesThem
-	       andn   rax, rax, rdx
-		neg   rax
-		sbb   eax, eax
-		and   eax, LooseEnemies
-	     addsub   esi, eax
 
 		mov   r8, PiecesThem
 		mov   r9, PiecesPawn
@@ -2155,7 +2142,6 @@ restore WeakQueen
 restore OtherCheck
 restore CloseEnemies
 restore PawnlessFlank
-restore LooseEnemies
 restore ThreatByHangingPawn
 restore ThreatByRank
 restore Hanging
