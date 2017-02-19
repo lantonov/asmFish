@@ -83,15 +83,15 @@ SEP_CHAR equ ':'
 ; piece values
  PawnValueMg   equ 188
  KnightValueMg equ 753
- BishopValueMg equ 826
+ BishopValueMg equ 814
  RookValueMg   equ 1285
  QueenValueMg  equ 2513
 
  PawnValueEg   equ 248
  KnightValueEg equ 832
- BishopValueEg equ 897
+ BishopValueEg equ 890
  RookValueEg   equ 1371
- QueenValueEg  equ 2650
+ QueenValueEg  equ 2648
 
  MidgameLimit equ 15258
  EndgameLimit equ  3915
