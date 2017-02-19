@@ -298,9 +298,6 @@ end if
 		mov   edx, dword[.depth]
 		cmp   edx, 4*ONE_PLY
 		jge   .6skip
-		mov   eax, dword[.ttMove]
-	       test   eax, eax
-		jnz   .6skip
 		mov   ecx, dword[.eval]
 		mov   eax, dword[RazorMargin+4*rdx]
 		add   eax, ecx
