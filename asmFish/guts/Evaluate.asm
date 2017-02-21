@@ -1608,10 +1608,10 @@ end virtual
 	; Evaluate position potential for the winning side
 	     popcnt   r9, qword[rbp+Pos.typeBB+8*Pawn], rcx
 	      movzx   edx, byte[rdi+PawnEntry.asymmetry]
-		lea   edx, [rdx+r9-15]
+		lea   edx, [rdx+r9-17]
 		shl   edx, 3
 		lea   r9d, [rdx+4*r9]
-	; r9d = 8*(asy+pawns-15)+4*pawns
+	; r9d = 8*(asy+pawns-17)+4*pawns
 	      movsx   r10d, si
 	; r11d = eg score
 		sar   r10d, 31
@@ -1635,15 +1635,24 @@ end virtual
 		sub   eax, edx
 		sub   r8d, eax
 		lea   eax, [r9+8*r8]
+
+                mov   rcx, FileABB or FileBBB or FileCBB or FileDBB
+               test   rcx, qword[rbp+Pos.typeBB+8*Pawn]
+                 jz   .NotBothFlanks
+                mov   rcx, FileEBB or FileFBB or FileGBB or FileHBB
+               test   rcx, qword[rbp+Pos.typeBB+8*Pawn]
+                 jz   .NotBothFlanks
+                add   eax, 16
+.NotBothFlanks:
+
 	; eax = initiative
 	      movsx   edx, si
 		xor   edx, r11d
 		sub   edx, r11d
-		shr   edx, 1
 		neg   edx
 		cmp   eax, edx
 	      cmovl   eax, edx
-	; eax = std::max(initiative, -abs(eg / 2))
+	; eax = std::max(initiative, -abs(eg))
 	       test   esi, 0x0FFFF
 	      cmovz   r10d, eax
 		xor   eax, r10d
