@@ -1603,19 +1603,45 @@ end virtual
 	  EvalSpace   White
 .SkipSpace:
 
-
+		mov   r14, rdi
+		mov   r15, qword[.ei.me]
 
 	; Evaluate position potential for the winning side
-	     popcnt   r9, qword[rbp+Pos.typeBB+8*Pawn], rcx
+
+                mov   r8, FileABB or FileBBB or FileCBB or FileDBB
+                mov   rcx, FileEBB or FileFBB or FileGBB or FileHBB
+                and   r8, r11
+                and   rcx, r11
+                mov   eax, 16
+                neg   r8
+                sbb   r8, r8
+                and   r8, rcx
+             cmovnz   r8d, eax
+
+	     popcnt   rax, r11, rcx
 	      movzx   edx, byte[rdi+PawnEntry.asymmetry]
-		lea   edx, [rdx+r9-17]
-		shl   edx, 3
-		lea   r9d, [rdx+4*r9]
-	; r9d = 8*(asy+pawns-17)+4*pawns
-	      movsx   r10d, si
-	; r11d = eg score
-		sar   r10d, 31
-		mov   r11d, r10d
+		lea   edx, [rdx+rax-17]
+		lea   r8d, [r8+4*rax]
+                lea   r8d, [r8+8*rdx]
+
+	      movsx   r9d, si
+		sar   r9d, 31
+              movsx   edi, si
+                sub   esi, r9d
+                xor   edi, r9d
+                sub   edi, r9d
+                neg   edi
+
+		mov   eax, dword[.ei.ksq+4*White]
+		mov   ecx, dword[.ei.ksq+4*Black]
+		and   eax, 0111000b
+		and   ecx, 0111000b
+		sub   eax, ecx
+		cdq
+		xor   eax, edx
+		sub   eax, edx
+		sub   r8d, eax
+
 		mov   eax, dword[.ei.ksq+4*White]
 		mov   ecx, dword[.ei.ksq+4*Black]
 		and   eax, 7
@@ -1624,47 +1650,20 @@ end virtual
 		cdq
 		xor   eax, edx
 		sub   eax, edx
-		mov   r8d, eax
-		mov   eax, dword[.ei.ksq+4*White]
-		mov   ecx, dword[.ei.ksq+4*Black]
-		shr   eax, 3
-		shr   ecx, 3
-		sub   eax, ecx
-		cdq
-		xor   eax, edx
-		sub   eax, edx
-		sub   r8d, eax
-		lea   eax, [r9+8*r8]
+		lea   eax, [r8+8*rax]
+        ; eax = initiative
 
-                mov   rcx, FileABB or FileBBB or FileCBB or FileDBB
-               test   rcx, qword[rbp+Pos.typeBB+8*Pawn]
-                 jz   .NotBothFlanks
-                mov   rcx, FileEBB or FileFBB or FileGBB or FileHBB
-               test   rcx, qword[rbp+Pos.typeBB+8*Pawn]
-                 jz   .NotBothFlanks
-                add   eax, 16
-.NotBothFlanks:
-
-	; eax = initiative
-	      movsx   edx, si
-		xor   edx, r11d
-		sub   edx, r11d
-		neg   edx
-		cmp   eax, edx
-	      cmovl   eax, edx
-	; eax = std::max(initiative, -abs(eg))
-	       test   esi, 0x0FFFF
-	      cmovz   r10d, eax
-		xor   eax, r10d
-		sub   eax, r11d
+		cmp   eax, edi
+	      cmovl   eax, edi
+	       test   edi, edi
+	      cmovz   r9d, eax
+		xor   eax, r9d
 		add   esi, eax
 
 	; esi = score
 	; r14 = ei.pi
 	; Evaluate scale factor for the winning side
 
-		mov   r14, qword[.ei.pi]
-		mov   r15, qword[.ei.me]
 if PEDANTIC
 	      movsx   r12d, si
 		lea   r13d, [r12-1]
