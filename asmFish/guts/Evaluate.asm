@@ -90,7 +90,7 @@ local Them, OutpostRanks
 
 local RookOnFile0, RookOnFile1
 local Outpost0, Outpost1, KingAttackWeight
-local MobilityBonus
+local MobilityBonus, ProtectorBonus
 
 local ..NextPiece, ..NoPinned, ..NoKingRing, ..AllDone
 local ..OutpostElse, ..OutpostDone, ..NoBehindPawnBonus
@@ -120,20 +120,24 @@ match =Knight, Pt \{
 	Outpost1	  equ ((33 shl 16) + (9))
 	KingAttackWeight  equ 78
 	MobilityBonus	  equ MobilityBonus_Knight
+        ProtectorBonus    equ Protector_Knight
 \}
 match =Bishop, Pt \{
 	Outpost0	  equ (( 9 shl 16) + (2))
 	Outpost1	  equ ((14 shl 16) + (4))
 	KingAttackWeight  equ 56
 	MobilityBonus	  equ MobilityBonus_Bishop
+        ProtectorBonus    equ Protector_Bishop
 \}
 match =Rook, Pt \{
 	KingAttackWeight  equ 45
 	MobilityBonus	  equ MobilityBonus_Rook
+        ProtectorBonus    equ Protector_Rook
 \}
 match =Queen, Pt \{
 	KingAttackWeight  equ 11
 	MobilityBonus	  equ MobilityBonus_Queen
+        ProtectorBonus    equ Protector_Queen
 \}
 
 	     Assert   e, rdi, qword[.ei.pi], 'assertion rdi=qword[.ei.pi] failed in EvalPieces'
@@ -167,6 +171,7 @@ else
 		bsf   r14, r15
 	       blsr   r15, r15, rcx
 end if
+        ; r14 = square s
 
 
 	; Find attacked squares, including x-ray attacks for bishops and rooks
@@ -227,8 +232,12 @@ end if
 	     popcnt   r10, rax, rcx
 	     addsub   esi, dword[MobilityBonus+4*r10]
 
-if (Pt in <Knight, Bishop>)
+                lea   eax, [8*r8]
+              movzx   eax, byte[SquareDistance+8*rax+r14]
+	     addsub   esi, dword[ProtectorBonus+4*rax]
 
+
+if (Pt in <Knight, Bishop>)
 
 	; Bonus when behind a pawn
     if Us eq White
