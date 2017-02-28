@@ -939,19 +939,22 @@ match =Black, Us
 		jnz   ..SafeThreatsLoop
 ..SafeThreatsDone:
 
-		mov   r8, PiecesThem
-		mov   r9, PiecesPawn
-		and   r9, r8
-		xor   r8, r9
-		mov   r9, qword[.ei.attackedBy+8*(8*Them+Pawn)]
-		and   r8, r9
-	; r8 = defended
+                mov   r9, qword[.ei.attackedBy2+8*Us]
+               andn   r9, r9, qword[.ei.attackedBy2+8*Them]
+                 or   r9, qword[.ei.attackedBy+8*(8*Them+Pawn)]
+        ; r9 = stronglyProtected
+                mov   r8, PiecesPawn
+               andn   r8, r8, PiecesThem
+                and   r8, r9
+	; r8 = defended (= pos.pieces(Them) & ~pos.pieces(PAWN) & stronglyProtected)
 	       andn   r9, r9, PiecesThem
 		and   r9, AttackedByUs
-	; r9 = weak
+	; r9 = weak  (stronglyProtected variable is not used anymore)
 		 or   r8, r9
 	; r8 = defended | weak
 		 jz   ..WeakDone
+
+
 		mov   rax, qword[.ei.attackedBy+8*(8*Us+Knight)]
 		 or   rax, qword[.ei.attackedBy+8*(8*Us+Bishop)]
 		and   r8, rax
