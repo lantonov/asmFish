@@ -478,7 +478,7 @@ _Sleep:
 		xor   edx, edx
 		mov   ecx, 1000
 		div   ecx
-	       imul   edx, 1000
+	       imul   edx, 1000000
 		mov   qword[rsp+8*0], rax
 		mov   qword[rsp+8*1], rdx
 		mov   rdi, rsp
