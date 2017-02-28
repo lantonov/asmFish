@@ -82,6 +82,17 @@ Search_Init:
 		cmp   rbp, 16
 		jnz   ._0053
 
+
+                lea   rsi, [.RazorMargin]
+                lea   rdi, [RazorMargin]
+                mov   ecx, 4
+          rep movsd
+
+                lea   rsi, [._CaptureOrPromotion_or]
+                lea   rdi, [_CaptureOrPromotion_or]
+                mov   ecx, 8    ; copy both or and and
+          rep movsb
+
 		pop   rbx rsi rdi rbp r12 r13 r14
 		ret
 
@@ -94,3 +105,18 @@ align 8
 ._2733: dq 4003333333333333H				      ; 1AD0 _ 2.4
 ._2734: dq 3FDF5C28F5C28F5CH				      ; 1AD8 _ 0.49
 ._2735: dq 3FF0B851EB851EB8H				      ; 1AE0 _ 1.045
+
+
+
+.RazorMargin             dd 483, 570, 603, 554
+._CaptureOrPromotion_or  db  0,-1,-1, 0
+._CaptureOrPromotion_and db -1,-1,-1, 0
+
+
+
+
+
+
+
+
+

@@ -247,7 +247,8 @@ end if
 
 UciUnknown:
 		lea   rdi, [Output]
-	     szcall   PrintString, 'error: unknown command '
+                lea   rcx, [sz_error_unknown]
+	       call   PrintString
 		mov   ecx, 64
 	       call   ParseToken
        PrintNewLine
@@ -432,7 +433,8 @@ UciGo:
 
 .Error:
 		lea   rdi, [Output]
-	     szcall   PrintString, 'error: unexpected token '
+                lea   rcx, [sz_error_token]
+	       call   PrintString
 		mov   ecx, 64
 	       call   ParseToken
        PrintNewLine
@@ -514,7 +516,8 @@ UciPosition:
 		lea   rbp, [UciLoop.th1.rootPos]
 
 	       call   SkipSpaces
-	     szcall   CmpString, 'moves'
+                lea   rcx, [sz_moves]
+	       call   CmpString
 	       test   eax, eax
 		 jz   UciGetInput
 	       call   UciParseMoves
@@ -523,7 +526,8 @@ UciPosition:
 .badmove:
 		mov   rsi, rax
 		lea   rdi, [Output]
-	     szcall   PrintString, 'error: illegal move '
+                lea   rcx, [sz_error_moves]
+	       call   PrintString
 		mov   ecx, 6
 	       call   ParseToken
        PrintNewLine
@@ -531,7 +535,8 @@ UciPosition:
 		jmp   UciWriteOut
 .illegal:
 		lea   rdi, [Output]
-	     szcall   PrintString, 'error: illegal fen'
+                lea   rcx, [sz_error_fen]
+	       call   PrintString
        PrintNewLine
 		lea   rbp, [UciLoop.th1.rootPos]
 		jmp   UciWriteOut
@@ -1058,7 +1063,8 @@ UciPerft:
 		jmp   UciGetInput
 .bad_depth:
 		lea   rdi, [Output]
-	     szcall   PrintString, 'error: bad depth '
+                lea   rcx, [sz_error_depth]
+	       call   PrintString
 		mov   ecx, 8
 	       call   ParseToken
 		jmp   UciWriteOut_NewLine

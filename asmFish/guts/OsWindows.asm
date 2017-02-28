@@ -900,19 +900,6 @@ end virtual
 	       call   qword[__imp_GetLogicalProcessorInformationEx]
 		mov   ebx, dword[.size]
 
-
-;       ; make four nodes from one
-;         irps i, 1 2 3 {
-;                lea   rsi, [r15]
-;                lea   rdi, [r15+i*sizeof.WinNumaNode]
-;                mov   ecx, sizeof.WinNumaNode
-;          rep movsb
-;                add   dword[r15+i*sizeof.WinNumaNode+WinNumaNode.NodeNumber], i
-;                and   qword[r15+i*sizeof.WinNumaNode+WinNumaNode.GroupMask.Mask], 1 shl i
-;                add   ebx, sizeof.WinNumaNode
-;         }
-;                and   qword[r15+0*sizeof.WinNumaNode+WinNumaNode.GroupMask.Mask], 1 shl 0
-
 		mov   rsi, r15
 		add   rbx, rsi
 		xor   r12d, r12d  ; threadPool.nodeCnt

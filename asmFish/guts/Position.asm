@@ -1097,8 +1097,8 @@ SetCastlingRights:
 
 	; r8 = rook to
 	; r9 = king to
-	      movzx   r8d, byte[rsquare_lookup+r15]
-	      movzx   r9d, byte[ksquare_lookup+r15]
+	      movzx   r8d, byte[.rsquare_lookup+r15]
+	      movzx   r9d, byte[.ksquare_lookup+r15]
 
 	; set castling rights
 	      movzx   eax, byte[rbx+State.castlingRights]
@@ -1192,7 +1192,8 @@ SetCastlingRights:
 		jmp   .find_rook_sq
 
 
-
+.rsquare_lookup:  db SQ_F1, SQ_D1, SQ_F8, SQ_D8
+.ksquare_lookup:  db SQ_G1, SQ_C1, SQ_G8, SQ_C8
 
 
 

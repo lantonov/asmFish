@@ -1,8 +1,3 @@
-
-resb equ rb
-resd equ rd
-resq equ rq
-
 align 64
 
 ?_338:							; byte
@@ -348,8 +343,17 @@ _ZL4pchr:						; byte
 
 
 
+align 16
+wdl_to_Value5:
+  dd  -VALUE_MATE + MAX_PLY + 1
+  dd VALUE_DRAW - 2
+  dd VALUE_DRAW
+  dd VALUE_DRAW + 2
+  dd VALUE_MATE - MAX_PLY - 1
 
+WDLtoDTZ db -1,-101,0,101,1
 
+align 64
 _ZN13TablebaseCore14MaxCardinalityE:
 	rd    16
 

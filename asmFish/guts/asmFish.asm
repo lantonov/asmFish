@@ -50,43 +50,6 @@ segment readable writeable
 }
 
 
-
-
-if PROFILE > 0
-  align 16
-  profile:
-   .cjmpcounts rq 2*16
-
-   .CheckTime           dq 0
-   .EvalPassedPawns     dq 0
-   .Evaluate            dq 0
-   .EvaluateLazy        dq 0
-   .MainHash_Probe      dq 0
-   .MainHash_Save       dq 0
-   .Move_Do             dq 0
-   .Move_DoNull         dq 0
-   .Move_GivesCheck     dq 0
-   .Move_IsLegal        dq 0
-   .Move_IsPseudoLegal  dq 0
-   .QSearch_PV_TRUE     dq 0
-   .QSearch_PV_FALSE    dq 0
-   .QSearch_NONPV_TRUE  dq 0
-   .QSearch_NONPV_FALSE dq 0
-   .Search_ROOT         dq 0
-   .Search_PV           dq 0
-   .Search_NONPV        dq 0
-   .See                 dq 0
-   .SeeTest             dq 0
-   .SetCheckInfo        dq 0
-
-   .moveUnpack          dq 0
-   .moveStore           dq 0
-   .moveRetrieve        dq 0
-
-   .ender               rb 0
-end if
-
-
 if VERBOSE > 0
   align 16
   VerboseOutput         rq 1024
@@ -100,10 +63,7 @@ if DEBUG > 0
   DebugOutput           rq 1024
 end if
 
-align 16
-RazorMargin             dd 483, 570, 603, 554
-_CaptureOrPromotion_or  db  0,-1,-1, 0
-_CaptureOrPromotion_and db -1,-1,-1, 0
+
 
 
 align 16
@@ -121,22 +81,6 @@ match =0, CPU_HAS_POPCNT {
  Mask01    dq 0x0101010101010101
  Mask11    dq 0x1111111111111111
 }
-
-
-
-
-align 4
-wdl_to_Value5:
-  dd  -VALUE_MATE + MAX_PLY + 1
-  dd VALUE_DRAW - 2
-  dd VALUE_DRAW
-  dd VALUE_DRAW + 2
-  dd VALUE_MATE - MAX_PLY - 1
-
-WDLtoDTZ db -1,-101,0,101,1
-
-rsquare_lookup:  db SQ_F1, SQ_D1, SQ_F8, SQ_D8
-ksquare_lookup:  db SQ_G1, SQ_C1, SQ_G8, SQ_C8
 
 
 szUciResponse:
@@ -234,6 +178,11 @@ szCPUError         db 'Error: processor does not support',0
 szStartFEN         db 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',0
 PieceToChar        db '.?PNBRQK??pnbrqk'
 
+sz_error_depth     db 'error: bad depth ',0
+sz_error_fen       db 'error: illegal fen',0
+sz_error_moves     db 'error: illegal move ',0
+sz_error_token     db 'error: unexpected token ',0
+sz_error_unknown   db 'error: unknown command ',0
 sz_error_think	   db 'error: setoption called while thinking',0
 sz_error_value	   db 'error: setoption has no value',0
 sz_error_name	   db 'error: setoption has no name',0
@@ -263,6 +212,7 @@ sz_depth		db 'depth',0
 sz_nodes		db 'nodes',0
 sz_wtime		db 'wtime',0
 sz_btime		db 'btime',0
+sz_moves                db 'moves',0
 sz_perft		db 'perft',0
 sz_bench		db 'bench',0
 sz_ttfile		db 'ttfile',0
@@ -438,6 +388,8 @@ align 16
 
 ; this section is only read from after initialization
 ;  except for DrawValue
+;
+; todo: see if the order/alignment of these variables affects performance
 
 match ='W', VERSION_OS {
 section '.bss' data readable writeable
@@ -474,9 +426,10 @@ PawnAttacks:
 
 
 ;;;;;;;;;;;;;;;;;;; bitboards ;;;;;;;;;;;;;;;;;;;;;
- SquareDistance    rb 64*64
+align 4096
  BetweenBB	   rq 64*64
  LineBB 	   rq 64*64
+ SquareDistance    rb 64*64
  DistanceRingBB    rq 8*64
  ForwardBB	   rq 2*64
  PawnAttackSpan    rq 2*64
@@ -505,13 +458,16 @@ IsPawnMasks:	   rb 16
 
 ;;;;;;;;;;;;;;;;;;;; data for search ;;;;;;;;;;;;;;;;;;;;;;;
 
-align 64
-Reductions	   rd 2*2*64*64
-FutilityMoveCounts rd 16*2
-DrawValue	   rd 2 	   ; it is updated when threads start to think
+align 4096
+Reductions	        rd 2*2*64*64
+FutilityMoveCounts      rd 16*2
+RazorMargin             rd 4
+_CaptureOrPromotion_or  rb 4
+_CaptureOrPromotion_and rb 4
+DrawValue	        rd 2    ; it is updated when threads start to think
 
 
-;;;;;;;;;; data for evaluation ;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;; data for evaluation ;;;;;;;;;;;;;;;;;;;;
 
 align 64
 Connected rd 2*2*2*8
@@ -544,6 +500,7 @@ DoMaterialEval_Data:
 
 
 ;;;;;;;;;;;;;; data for endgames ;;;;;;;;;;;;;;
+
 align 64
 EndgameEval_Map            rb 2*ENDGAME_EVAL_MAX_INDEX*sizeof.EndgameMapEntry
 EndgameScale_Map           rb 2*ENDGAME_SCALE_MAX_INDEX*sizeof.EndgameMapEntry
@@ -555,7 +512,8 @@ PushToCorners              rb 64
 PushClose                  rb 8
 PushAway                   rb 8
 
-;;;;;;;;;;;;;;;;;;;;; data for tablebase ;;;;;;;;;;;;;;
+;;;;;;;;;;;;;; data for tablebase ;;;;;;;;;;;;;;
+
 align 16
 Tablebase_Cardinality      rd 1
 Tablebase_MaxCardinality   rd 1
