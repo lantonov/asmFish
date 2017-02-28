@@ -84,20 +84,29 @@ end virtual
 
 	; skip depths for helper threads
 		mov   eax, dword[rbp-Thread.rootPos+Thread.idx]
-		mov   ecx, HalfDensitySize
+		mov   ecx, 20
 		sub   eax, 1
-		 jc   .age_out
-		xor   edx, edx
-		div   ecx
-		mov   r8d, dword[HalfDensityRows+8*rdx+4*0]
-		mov   r9d, dword[HalfDensityRows+8*rdx+4*1]
-		mov   eax, dword[rbp+Pos.gamePly]
-		add   eax, r15d
-		xor   edx, edx
-		div   r8d
-		 bt   r9d, edx
-		 jc   .id_loop
+                 jc   .age_out
+
+                xor   edx, edx
+                div   ecx
+        ; edx = idx-1 after idx has been updated by edx=(idx-1)%+1
+                xor   ecx, ecx
+        .loopSkipPly:
+                add   ecx, 1
+                lea   eax, [rcx+1]
+               imul   eax, ecx
+                cmp   eax, edx
+                jbe   .loopSkipPly
+                lea   eax, [r15+rdx]
+                add   eax, dword[rbp+Pos.gamePly]
+                xor   edx, edx
+                div   ecx
+                sub   eax, ecx
+               test   eax, 1
+                 jz   .id_loop
 		jmp   .save_prev_score
+
 .age_out:
 	; Age out PV variability metric
 	     vmovsd   xmm0, qword[rbp-Thread.rootPos+Thread.bestMoveChanges]
