@@ -20,8 +20,7 @@ SlidingAttacks.NextSquare:
         add  x2, x2, x4
         add  x3, x3, x5
         cmp  x2, 8
-        bhs  SlidingAttacks.NextDirection
-        cmp  x3, 8
+       ccmp  x3, 8, 0b0010, lo  // nzcv
         bhs  SlidingAttacks.NextDirection
         add  x1, x2, x3,lsl 3
         mov  x2, 1
@@ -52,8 +51,10 @@ Directions.WhitePawnAttacks:
 Directions.BlackPawnAttacks:
         .byte +1,-1, -1,-1,  0,0
 
+
 Gen_Init:
         stp  x29, x30, [sp, -16]!
+
 
 Init_FileBB:
        adrp  x15, FileBB
@@ -66,6 +67,7 @@ Init_FileBB.Next:
        subs  x1, x1, 1
         bne  Init_FileBB.Next
 
+
 Init_RankBB:
        adrp  x15, RankBB
         add  x15, x15, :lo12:RankBB
@@ -76,6 +78,7 @@ Init_RankBB.Next:
         lsl  x0, x0, 8
        subs  x1, x1, 1
         bne  Init_RankBB.Next
+
 
 // Fixed shift magics found by Volker Annuss.
 // From: http://talkchess.com/forum/viewtopic.php?p=670709#670709

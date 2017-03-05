@@ -1,6 +1,6 @@
 // macro names seem to be case insensitive
 
-.macro Lea Reg, Addr
+.macro lea Reg, Addr
        adrp  Reg, \Addr
         add  Reg, Reg, :lo12:\Addr
 .endm
@@ -56,6 +56,9 @@
         ldp  x30, x0, [sp],16
 .endm
 
+// Display a formated message. Use %[x,i,u]n for displaying
+// register xn in hex, signed or unsigned.
+// ex: Display "sq: %i14  sq: %i15  line: %x0  bet: %x1\n"
 .macro Display Message
         PushAll
         adr  x0, anom\@

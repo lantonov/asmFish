@@ -1,25 +1,22 @@
+Output: .space 1024
 
-asdf:
-        .space 1024
-options:
-        .space 1024
-Output:
-        .space 1024
+        .align 16
+options:   .space sizeof.Options
+        .align 16
+ioBuffer:  .space sizeof.IOBuffer
+
+
 
 // data for move generation
 
         .balign 64
 SlidingAttacksBB:    .space 8*89524
-        .balign 64
-BishopAttacksSTUFF:
-BishopAttacksPEXT:   .space 8*64
-BishopAttacksMOFF:   .space 8*64
-BishopAttacksPDEP:   .space 8*64
+
+        .balign 4096
 RookAttacksSTUFF:
 RookAttacksPEXT:     .space 8*64
 RookAttacksMOFF:     .space 8*64
 RookAttacksPDEP:     .space 8*64
-BishopAttacksIMUL:   .space 8*64
 RookAttacksIMUL:     .space 8*64
 
 PawnAttacks:
@@ -27,6 +24,13 @@ WhitePawnAttacks:    .space 8*64
 BlackPawnAttacks:    .space 8*64
 KnightAttacks:	     .space 8*64
 KingAttacks:	     .space 8*64
+
+        .balign 4096
+BishopAttacksSTUFF:
+BishopAttacksPEXT:   .space 8*64
+BishopAttacksMOFF:   .space 8*64
+BishopAttacksPDEP:   .space 8*64
+BishopAttacksIMUL:   .space 8*64
 
 
 // bitboards 

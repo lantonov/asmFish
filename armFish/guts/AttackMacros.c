@@ -1,6 +1,5 @@
 .macro RookAttacks X, Sq, Occ, T, S
        adrp  S, RookAttacksSTUFF
-        add  S, S, :lo12:RookAttacksSTUFF
         add  S, S, Sq, lsl 3
         ldr  T, [S, RookAttacksPEXT - RookAttacksSTUFF]
         and  T, T, Occ
@@ -13,7 +12,6 @@
 
 .macro BishopAttacks X, Sq, Occ, T, S
        adrp  S, BishopAttacksSTUFF
-        add  S, S, :lo12:BishopAttacksSTUFF
         add  S, S, Sq, lsl 3
         ldr  T, [S, BishopAttacksPEXT - BishopAttacksSTUFF]
         and  T, T, Occ
