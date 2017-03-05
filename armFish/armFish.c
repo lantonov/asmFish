@@ -26,8 +26,13 @@ $ qemu-aarch64 ./armFish
 .globl _start
 _start:
 
+         bl  Os_SetStdHandles
+         bl  Os_InitializeTimer
+         bl  Os_CheckCPU
+
 // initialize the engine
          bl  Gen_Init
+         bl  BitBoard_Init
          bl  Options_Init
 
 // write engine name
@@ -60,6 +65,7 @@ _start:
 .include "guts/Uci.c"
 .include "guts/OsLinux.c"
 .include "guts/PrintParse.c"
+.include "guts/BitBoard_Init.c"
 .include "guts/Gen_Init.c"
 
 
