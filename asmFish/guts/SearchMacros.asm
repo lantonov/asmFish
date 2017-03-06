@@ -894,14 +894,19 @@ end if
     if .RootNode eq 0
 
 		mov   ecx, dword[.bestValue]
+              movzx   esi, word[rbx+State.npMaterial+2*0]
+		add   eax, ecx
 		cmp   ecx, VALUE_MATED_IN_MAX_PLY
 		jle   .13done
-
 		mov   al, byte[.captureOrPromotion]
+	      movzx   ecx, word[rbx+State.npMaterial+2*1]
+                add   esi, ecx
 		 or   al, byte[.givesCheck]
 		jnz   .13else
 		mov   eax, dword[rbp+Pos.sideToMove]
 		lea   ecx, [8*rax+Pawn]
+                cmp   esi, 5000
+                jae   .13do
 		cmp   r14d, ecx
 		jne   .13do
 		mov   ecx, r12d
