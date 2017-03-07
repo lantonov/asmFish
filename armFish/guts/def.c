@@ -132,10 +132,271 @@ ENDGAME_SCALE_MAX_INDEX = 16
 
 // hacky structs defs
 
-EndgameMapEntry.key     = 0
-EndgameMapEntry.entri   = 8 + EndgameMapEntry.key
-sizeof.EndgameMapEntry  = 16
+MainHash.___ = 0
+MainHash.table = 0 + MainHash.___
+MainHash.mask = 1*sizeof.rq + MainHash.table
+MainHash.lpSize = 1*sizeof.rq + MainHash.mask
+MainHash.sizeMB = 1*sizeof.rq + MainHash.lpSize
+MainHash.date = 1*sizeof.rd + MainHash.sizeMB
+sizeof.MainHash = 1*sizeof.rb + 3*sizeof.rb + MainHash.date
 
+MainHashEntry.___ = 0
+MainHashEntry.genBound = 0 + MainHashEntry.___
+MainHashEntry.depth = 1*sizeof.rb + MainHashEntry.genBound
+MainHashEntry.move = 1*sizeof.rb + MainHashEntry.depth
+MainHashEntry.eval = 1*sizeof.rw + MainHashEntry.move
+MainHashEntry.value = 1*sizeof.rw + MainHashEntry.eval
+sizeof.MainHashEntry = 1*sizeof.rw + MainHashEntry.value
+
+MaterialEntry.___ = 0
+MaterialEntry.key = 0 + MaterialEntry.___
+MaterialEntry.scalingFunction = 1*sizeof.rq + MaterialEntry.key
+MaterialEntry.evaluationFunction = 2*sizeof.rb + MaterialEntry.scalingFunction
+MaterialEntry.gamePhase = 1*sizeof.rb + MaterialEntry.evaluationFunction
+MaterialEntry.factor = 1*sizeof.rb + MaterialEntry.gamePhase
+MaterialEntry.value = 2*sizeof.rb + MaterialEntry.factor
+sizeof.MaterialEntry = 1*sizeof.rw + MaterialEntry.value
+
+PawnEntry.___ = 0
+PawnEntry.passedPawns = 0 + PawnEntry.___
+PawnEntry.pawnAttacks = 2*sizeof.rq + PawnEntry.passedPawns
+PawnEntry.pawnAttacksSpan = 2*sizeof.rq + PawnEntry.pawnAttacks
+PawnEntry.key = 2*sizeof.rq + PawnEntry.pawnAttacksSpan
+PawnEntry.kingSafety = 1*sizeof.rq + PawnEntry.key
+PawnEntry.score = 2*sizeof.rd + PawnEntry.kingSafety
+PawnEntry.kingSquares = 1*sizeof.rd + PawnEntry.score
+PawnEntry.semiopenFiles = 2*sizeof.rb + PawnEntry.kingSquares
+PawnEntry.pawnsOnSquares = 2*sizeof.rb + PawnEntry.semiopenFiles
+PawnEntry.asymmetry = 4*sizeof.rb + PawnEntry.pawnsOnSquares
+PawnEntry.openFiles = 1*sizeof.rb + PawnEntry.asymmetry
+PawnEntry.castlingRights = 1*sizeof.rb + PawnEntry.openFiles
+sizeof.PawnEntry = 1*sizeof.rb + 1*sizeof.rb + PawnEntry.castlingRights
+
+HistoryStats.___ = 0
+sizeof.HistoryStats = 0 + 2*64*64*sizeof.rd + HistoryStats.___
+
+MoveStats.___ = 0
+sizeof.MoveStats = 0 + 16*64*sizeof.rd + MoveStats.___
+
+CounterMoveHistoryStats.___ = 0
+sizeof.CounterMoveHistoryStats = 0 + 16*64*16*64*sizeof.rd + CounterMoveHistoryStats.___
+
+EvalInfo.___ = 0
+EvalInfo.attackedBy = 0 + EvalInfo.___
+EvalInfo.attackedBy2 = 16*sizeof.rq + EvalInfo.attackedBy
+EvalInfo.pinnedPieces = 2*sizeof.rq + EvalInfo.attackedBy2
+EvalInfo.mobilityArea = 2*sizeof.rq + EvalInfo.pinnedPieces
+EvalInfo.kingRing = 2*sizeof.rq + EvalInfo.mobilityArea
+EvalInfo.kingAttackersCount = 2*sizeof.rq + EvalInfo.kingRing
+EvalInfo.kingAttackersWeight = 2*sizeof.rd + EvalInfo.kingAttackersCount
+EvalInfo.kingAdjacentZoneAttacksCount = 2*sizeof.rd + EvalInfo.kingAttackersWeight
+EvalInfo.ksq = 2*sizeof.rd + EvalInfo.kingAdjacentZoneAttacksCount
+EvalInfo.me = 2*sizeof.rd + EvalInfo.ksq
+EvalInfo.pi = 1*sizeof.rq + EvalInfo.me
+EvalInfo.score = 1*sizeof.rq + EvalInfo.pi
+sizeof.EvalInfo = 1*sizeof.rd + 1*sizeof.rd + 2*sizeof.rd + EvalInfo.score
+
+EndgameMapEntry.___ = 0
+EndgameMapEntry.key = 0 + EndgameMapEntry.___
+EndgameMapEntry.entri = 1*sizeof.rq + EndgameMapEntry.key
+sizeof.EndgameMapEntry = 1*sizeof.rb + 7*sizeof.rb + EndgameMapEntry.entri
+
+ExtMove.___ = 0
+ExtMove.move = 0 + ExtMove.___
+ExtMove.score = 1*sizeof.rd + ExtMove.move
+sizeof.ExtMove = 1*sizeof.rd + ExtMove.score
+
+RootMovesVec.___ = 0
+RootMovesVec.table = 0 + RootMovesVec.___
+RootMovesVec.ender = 1*sizeof.rq + RootMovesVec.table
+sizeof.RootMovesVec = 1*sizeof.rq + RootMovesVec.ender
+
+RootMove.___ = 0
+RootMove.prevScore = 0 + RootMove.___
+RootMove.score = 1*sizeof.rd + RootMove.prevScore
+RootMove.pvSize = 1*sizeof.rd + RootMove.score
+RootMove.pv = 1*sizeof.rd + 1*sizeof.rd + RootMove.pvSize
+sizeof.RootMove = MAX_PLY*sizeof.rd + RootMove.pv
+
+Pos.___ = 0
+Pos.typeBB = 0 + Pos.___
+Pos.board = 8*sizeof.rq + Pos.typeBB
+Pos.pieceIdx = 64*sizeof.rb + Pos.board
+Pos.pieceEnd = 64*sizeof.rb + Pos.pieceIdx
+Pos.pieceList = 16*sizeof.rb + Pos.pieceEnd
+Pos.sideToMove = 16*16*sizeof.rb + Pos.pieceList
+Pos.gamePly = 1*sizeof.rd + 1*sizeof.rd + Pos.sideToMove
+Pos.chess960 = 1*sizeof.rd + Pos.gamePly
+Pos._copy_size = 1*sizeof.rd + Pos.chess960
+Pos.state = 0*sizeof.rb + Pos._copy_size
+Pos.stateTable = 1*sizeof.rq + Pos.state
+Pos.stateEnd = 1*sizeof.rq + Pos.stateTable
+Pos.counterMoveHistory = 1*sizeof.rq + Pos.stateEnd
+Pos.history = 1*sizeof.rq + Pos.counterMoveHistory
+Pos.counterMoves = 1*sizeof.rq + Pos.history
+Pos.materialTable = 1*sizeof.rq + Pos.counterMoves
+Pos.pawnTable = 1*sizeof.rq + Pos.materialTable
+Pos.rootMovesVec = 1*sizeof.rq + Pos.pawnTable
+Pos.moveList = 1*sizeof.RootMovesVec + Pos.rootMovesVec
+sizeof.Pos = 1*sizeof.rq + Pos.moveList
+
+State.___ = 0
+State.key = 0 + State.___
+State.pawnKey = 1*sizeof.rq + State.key
+State.materialKey = 1*sizeof.rq + State.pawnKey
+State.psq = 1*sizeof.rq + State.materialKey
+State.npMaterial = 2*sizeof.rw + State.psq
+State.rule50 = 2*sizeof.rw + State.npMaterial
+State.pliesFromNull = 1*sizeof.rw + State.rule50
+State.epSquare = 1*sizeof.rw + State.pliesFromNull
+State.castlingRights = 1*sizeof.rb + State.epSquare
+State.capturedPiece = 1*sizeof.rb + State.castlingRights
+State.ksq = 1*sizeof.rb + State.capturedPiece
+State.checkersBB = 1*sizeof.rb + State.ksq
+State.dcCandidates = 1*sizeof.rq + State.checkersBB
+State.pinned = 1*sizeof.rq + State.dcCandidates
+State.checkSq = 1*sizeof.rq + State.pinned
+State.blockersForKing = 8*sizeof.rq + State.checkSq
+State.pinnersForKing = 2*sizeof.rq + State.blockersForKing
+State._stack_start = 2*sizeof.rq + State.pinnersForKing
+State.pv = 0*sizeof.rb + State._stack_start
+State.counterMoves = 1*sizeof.rq + State.pv
+State.currentMove = 1*sizeof.rq + State.counterMoves
+State.excludedMove = 1*sizeof.rd + State.currentMove
+State.killers = 1*sizeof.rd + State.excludedMove
+State.moveCount = 2*sizeof.rd + State.killers
+State.staticEval = 1*sizeof.rd + State.moveCount
+State.history = 1*sizeof.rd + State.staticEval
+State.ply = 1*sizeof.rd + State.history
+State.skipEarlyPruning = 1*sizeof.rb + State.ply
+State._stack_end = 1*sizeof.rb + 2*sizeof.rb + State.skipEarlyPruning
+State._movepick_start = 0*sizeof.rb + State._stack_end
+State.cur = 0*sizeof.rb + State._movepick_start
+State.endMoves = 1*sizeof.rq + State.cur
+State.endBadCaptures = 1*sizeof.rq + State.endMoves
+State.stage = 1*sizeof.rq + State.endBadCaptures
+State.countermove = 1*sizeof.rq + State.stage
+State.depth = 1*sizeof.rd + State.countermove
+State.ttMove = 1*sizeof.rd + State.depth
+State.threshold = 1*sizeof.rd + State.ttMove
+State.recaptureSquare = 1*sizeof.rd + State.threshold
+State._movepick_end = 1*sizeof.rd + 3*sizeof.rd + State.recaptureSquare
+sizeof.State = 0*sizeof.rb + State._movepick_end
+
+Limits.___ = 0
+Limits.nodes = 0 + Limits.___
+Limits.startTime = 1*sizeof.rq + Limits.nodes
+Limits.time = 1*sizeof.rq + Limits.startTime
+Limits.incr = 2*sizeof.rd + Limits.time
+Limits.movestogo = 2*sizeof.rd + Limits.incr
+Limits.depth = 1*sizeof.rd + Limits.movestogo
+Limits.movetime = 1*sizeof.rd + Limits.depth
+Limits.mate = 1*sizeof.rd + Limits.movetime
+Limits.multiPV = 1*sizeof.rd + Limits.mate
+Limits.infinite = 1*sizeof.rd + 1*sizeof.rd +
+   Limits.multiPV
+Limits.ponder = 1*sizeof.rb + Limits.infinite
+Limits.useTimeMgmt = 1*sizeof.rb + Limits.ponder
+Limits.moveVecSize = 1*sizeof.rb + 1*sizeof.rb +
+   Limits.useTimeMgmt
+Limits.moveVec = 1*sizeof.rd + Limits.moveVecSize
+sizeof.Limits = MAX_MOVES*sizeof.rw + Limits.moveVec
+
+Options.___ = 0
+Options.hash = 0 + Options.___
+Options.threads = 1*sizeof.rd + Options.hash
+Options.largePages = 1*sizeof.rd + Options.threads
+Options.changed = 1*sizeof.rb + Options.largePages
+Options.multiPV = 1*sizeof.rb + 2*sizeof.rb + Options.changed
+Options.chess960 = 1*sizeof.rd + Options.multiPV
+Options.minThinkTime = 1*sizeof.rd + Options.chess960
+Options.slowMover = 1*sizeof.rd + Options.minThinkTime
+Options.moveOverhead = 1*sizeof.rd + Options.slowMover
+Options.contempt = 1*sizeof.rd + Options.moveOverhead
+Options.ponder = 1*sizeof.rd + Options.contempt
+Options.displayInfoMove = 1*sizeof.rb + Options.ponder
+Options.syzygy50MoveRule = 1*sizeof.rb + 1*sizeof.rb + Options.displayInfoMove
+Options.syzygyProbeDepth = 1*sizeof.rb + Options.syzygy50MoveRule
+Options.syzygyProbeLimit = 1*sizeof.rd + Options.syzygyProbeDepth
+sizeof.Options = 1*sizeof.rd + Options.syzygyProbeLimit
+
+EasyMoveMng.___ = 0
+EasyMoveMng.expectedPosKey = 0 + EasyMoveMng.___
+EasyMoveMng.pv = 1*sizeof.rq + EasyMoveMng.expectedPosKey
+EasyMoveMng.stableCnt = 4*sizeof.rd + EasyMoveMng.pv
+sizeof.EasyMoveMng = 1*sizeof.rd + 3*sizeof.rd + EasyMoveMng.stableCnt
+
+Signals.___ = 0
+Signals.stop = 0 + Signals.___
+Signals.stopOnPonderhit = 1*sizeof.rb + Signals.stop
+sizeof.Signals = 1*sizeof.rb + 14*sizeof.rb + Signals.stopOnPonderhit
+
+Time.___ = 0
+Time.startTime = 0 + Time.___
+Time.optimumTime = 1*sizeof.rq + Time.startTime
+Time.maximumTime = 1*sizeof.rq + Time.optimumTime
+sizeof.Time = 1*sizeof.rq + 1*sizeof.rq + Time.maximumTime
+
+ThreadHandle.___ = 0
+ThreadHandle.stackAddress = 0 + ThreadHandle.___
+ThreadHandle.mutex = 1*sizeof.rq + ThreadHandle.stackAddress
+sizeof.ThreadHandle = 1*sizeof.rd + 1*sizeof.rd + ThreadHandle.mutex
+
+Mutex.___ = 0
+sizeof.Mutex = 0 + 1*sizeof.rd + 1*sizeof.rd + 1*sizeof.rq + Mutex.___
+
+ConditionalVariable.___ = 0
+sizeof.ConditionalVariable = 0 + 1*sizeof.rd + 1*sizeof.rd + 1*sizeof.rq + ConditionalVariable.___
+
+Thread.___ = 0
+Thread.mutex = 0 + Thread.___
+Thread.sleep1 = 1*sizeof.Mutex + Thread.mutex
+Thread.sleep2 = 1*sizeof.ConditionalVariable + Thread.sleep1
+Thread.threadHandle = 1*sizeof.ConditionalVariable + Thread.sleep2
+Thread.numaNode = 1*sizeof.ThreadHandle + Thread.threadHandle
+Thread.bestMoveChanges = 1*sizeof.rq + Thread.numaNode
+Thread.PVIdx = 1*sizeof.rq + Thread.bestMoveChanges
+Thread.previousScore = 1*sizeof.rd + Thread.PVIdx
+Thread.completedDepth = 1*sizeof.rd + Thread.previousScore
+Thread.callsCnt = 1*sizeof.rd + Thread.completedDepth
+Thread.resetCnt = 1*sizeof.rd + Thread.callsCnt
+Thread.searching = 1*sizeof.rd + 1*sizeof.rd + Thread.resetCnt
+Thread.exit = 1*sizeof.rb + Thread.searching
+Thread.failedLow = 1*sizeof.rb + Thread.exit
+Thread.easyMovePlayed = 1*sizeof.rb + Thread.failedLow
+Thread.maxPly = 1*sizeof.rb + 1*sizeof.rb + 1*sizeof.rb + Thread.easyMovePlayed
+Thread.nodes = 1*sizeof.rb + 1*sizeof.rb + Thread.maxPly
+Thread.tbHits = 1*sizeof.rq + Thread.nodes
+Thread.idx = 1*sizeof.rq + Thread.tbHits
+Thread.rootDepth = 1*sizeof.rd + Thread.idx
+Thread.castling_start = 1*sizeof.rd + Thread.rootDepth
+Thread.castling_rfrom = 0*sizeof.rb + Thread.castling_start
+Thread.castling_rto = 4*sizeof.rb + Thread.castling_rfrom
+Thread.castling_path = 4*sizeof.rb + Thread.castling_rto
+Thread.castling_ksqpath = 4*sizeof.rq + Thread.castling_path
+Thread.castling_knights = 4*8*sizeof.rb + Thread.castling_ksqpath
+Thread.castling_kingpawns = 4*sizeof.rq + Thread.castling_knights
+Thread.castling_movgen = 4*sizeof.rq + Thread.castling_kingpawns
+Thread.castling_rightsMask = 4*sizeof.rd + Thread.castling_movgen
+Thread.castling_end = 64*sizeof.rb + Thread.castling_rightsMask
+Thread.rootPos = 0*sizeof.rb + 1*sizeof. + Thread.castling_end
+sizeof.Thread = 1*sizeof.Pos + Thread.rootPos
+
+NumaNode.___ = 0
+NumaNode.nodeNumber = 0 + NumaNode.___
+NumaNode.coreCnt = 1*sizeof.rd + NumaNode.nodeNumber
+NumaNode.cmhTable = 1*sizeof.rd + NumaNode.coreCnt
+NumaNode.parent = 1*sizeof.rq + NumaNode.cmhTable
+NumaNode.cpuMask = 1*sizeof.rq + 1*sizeof.rq + NumaNode.parent
+sizeof.NumaNode = MAX_LINUXCPUS/64*sizeof.rq + NumaNode.cpuMask
+
+ThreadPool.___ = 0
+ThreadPool.threadCnt = 0 + ThreadPool.___
+ThreadPool.nodeCnt = 1*sizeof.rd + ThreadPool.threadCnt
+ThreadPool.coreCnt = 1*sizeof.rd + ThreadPool.nodeCnt
+ThreadPool.threadTable = 1*sizeof.rd + 1*sizeof.rd + ThreadPool.coreCnt
+ThreadPool.nodeTable = MAX_THREADS*sizeof.rq + ThreadPool.threadTable
+sizeof.ThreadPool = MAX_NUMANODES*sizeof.NumaNode*sizeof.rb + ThreadPool.nodeTable
 
 IOBuffer.inputBuffer       = 0
 IOBuffer.inputBufferSizeB  = 8 + IOBuffer.inputBuffer
@@ -144,18 +405,3 @@ IOBuffer.tmp_j             = 4 + IOBuffer.tmp_i
 IOBuffer.tmpBuffer         = 4 + IOBuffer.tmp_j
 sizeof.IOBuffer.tmpBuffer  = 512
 sizeof.IOBuffer            = 512+IOBuffer.tmpBuffer
-
-Options.hash                    = 0
-Options.threads                 = 8 + Options.hash
-Options.largePages              = 8 + Options.threads
-Options.changed                 = 1 + Options.largePages
-Options.multiPV                 = 3 + Options.changed
-Options.chess960	        = 4 + Options.multiPV
-Options.minThinkTime	        = 4 + Options.chess960
-Options.slowMover	        = 4 + Options.minThinkTime
-Options.moveOverhead	        = 4 + Options.slowMover
-Options.contempt	        = 4 + Options.moveOverhead
-Options.ponder 	                = 4 + Options.contempt
-Options.displayInfoMove         = 1 + Options.ponder
-sizeof.Options                  = 3 + Options.displayInfoMove
-sizeof.Options = sizeof.Options & -16
