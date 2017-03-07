@@ -13,7 +13,7 @@ Os_InitializeTimer:
 
 
 Os_GetTime:
-// out: x0, x1 such that x0+x1/2^64 = time in ms
+// out: x0, x2 such that x0+x2/2^64 = time in ms
         stp  x29, x30, [sp, -16]!
         stp  x14, x15, [sp, -16]!
         sub  sp, sp, 64
@@ -21,13 +21,13 @@ Os_GetTime:
         add  x1, sp, 16
         mov  x8, 113
         svc  0
-        ldr  x2, [sp, 16]
+        ldr  x1, [sp, 16]
         ldr  x3, [sp, 24]
         ldr  x4, =18446744073709
         mov  x5, 1000
-        mul  x1, x3, x4
+        mul  x2, x3, x4
       umulh  x0, x3, x4
-       madd  x0, x2, x5, x0
+       madd  x0, x1, x5, x0
         add  sp, sp, 64
         ldp  x14, x15, [sp], 16
         ldp  x29, x30, [sp], 16
@@ -35,17 +35,17 @@ Os_GetTime:
 
 
 Os_Sleep:
-// in: x0 ms to sleep
+// in: x1 ms to sleep
         stp  x29, x30, [sp, -16]!
         stp  x14, x15, [sp, -16]!
         sub  sp, sp, 64
-        mov  x1, 1000
-       udiv  x2, x0, x1
-       msub  x3, x2, x1, x0
-        mul  x1, x1, x1
-        mul  x3, x3, x1
-        str  x2, [sp,16]
-        str  x3, [sp,24]
+        mov  x0, 1000
+       udiv  x2, x1, x0
+       msub  x3, x2, x0, x1
+        mul  x0, x0, x0
+        mul  x3, x3, x0
+        str  x2, [sp, 16]
+        str  x3, [sp, 24]
         add  x0, sp, 16
         mov  x1, 0            
         mov  x8, 101
@@ -56,8 +56,15 @@ Os_Sleep:
         ret
 
 
+Os_VirtualAlloc_LargePages:
+// in: x1 size
+        mov  x0, 0
+        mov  x2, 0
+        ret
+
+
 Os_VirtualAlloc:
-// in: x0 size
+// in: x1 size
         stp  x29, x30, [sp, -16]!
         stp  x14, x15, [sp, -16]!
         sub  sp, sp, 64
@@ -65,7 +72,6 @@ Os_VirtualAlloc:
         mov  x4, -1
         mov  x3, 0x22
         mov  x2, 0x03
-        mov  x1, x0
         mov  x0, 0
         mov  x8, sys_mmap
         svc  0
@@ -78,12 +84,14 @@ Os_VirtualAlloc:
 
 
 Os_VirtualFree:
-// in: x0 address
-//     x1 size
+// in: x1 address
+//     x2 size
         stp  x29, x30, [sp, -16]!
         stp  x14, x15, [sp, -16]!
         sub  sp, sp, 64
-        cbz  x0, Os_VirtualFree.Null
+        cbz  x1, Os_VirtualFree.Null
+        mov  x1, x2
+        mov  x0, x1
         mov  x8, sys_unmap
         svc  0
         cmp  w0, 0
@@ -96,16 +104,15 @@ Os_VirtualFree.Null:
 
 
 Os_WriteOut_Output:
-       adrp  x0, Output
-        add  x0, x0, :lo12:Output
-_WriteOut:
-// in: x0 address of string start
+       adrp  x1, Output
+        add  x1, x1, :lo12:Output
+Os_WriteOut:
+// in: x1 address of string start
 // in: x15 address of string end
         stp  x29, x30, [sp, -16]!
         stp  x14, x15, [sp, -16]!
         sub  sp, sp, 64
-        sub  x2, x15, x0
-        mov  x1, x0
+        sub  x2, x15, x1
         mov  x0, 1
         mov  x8, 64
         svc  0
@@ -116,13 +123,11 @@ _WriteOut:
 
 
 Os_ReadStdIn:
-// in: x0 address of buffer
-//     x1 max bytes to read
+// in: x1 address of buffer
+//     x2 max bytes to read
         stp  x29, x30, [sp, -16]!
         stp  x14, x15, [sp, -16]!
         sub  sp, sp, 64
-        mov  x2, x1
-        mov  x1, x0
         mov  x0, 0
         mov  x8, 63
         svc  0
@@ -140,8 +145,8 @@ Os_ParseCommandLine:
         stp  x27, x28, [sp, 48]
        adrp  x29, ioBuffer
         add  x29, x29, :lo12:ioBuffer
-        mov  x0, 4096
-        str  x0, [x29,IOBuffer.inputBufferSizeB]
+        mov  x1, 4096
+        str  x1, [x29,IOBuffer.inputBufferSizeB]
          bl  Os_VirtualAlloc
         str  x0, [x29,IOBuffer.inputBuffer]
         ldp  x24, x25, [sp, 32]

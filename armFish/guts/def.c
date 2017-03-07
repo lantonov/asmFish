@@ -1,4 +1,20 @@
 
+MAX_RESETCNT = 200000
+MIN_RESETCNT = 40
+SPAMFILTER_DELAY = 100
+CURRMOVE_MIN_TIME = 3000
+
+AVG_MOVES = 96 
+MAX_MOVES = 224
+MAX_THREADS = 256
+MAX_NUMANODES = 32
+MAX_LINUXCPUS = 512
+MAX_HASH_LOG2MB = 16
+THREAD_STACK_SIZE = 1048576
+PAWN_HASH_ENTRY_COUNT = 16384
+MATERIAL_HASH_ENTRY_COUNT = 8192
+
+
 SQ_A1 = (0+8*0)
 SQ_B1 = (1+8*0)
 SQ_C1 = (2+8*0)
@@ -124,13 +140,102 @@ Eval_Tempo = 20
 // values from stats tables
 HistoryStats_Max = 268435456
 
+// values for evaluation
+VALUE_ZERO	 = 0
+VALUE_DRAW	 = 0
+VALUE_KNOWN_WIN  = 10000
+VALUE_MATE	 = 32000
+VALUE_INFINITE   = 32001
+VALUE_NONE	 = 32002
+VALUE_MATE_IN_MAX_PLY	=  VALUE_MATE - 2 * MAX_PLY
+VALUE_MATED_IN_MAX_PLY = -VALUE_MATE_IN_MAX_PLY
+
+PHASE_MIDGAME	 = 128
+
+SCALE_FACTOR_DRAW    = 0
+SCALE_FACTOR_ONEPAWN = 48
+SCALE_FACTOR_NORMAL  = 64
+SCALE_FACTOR_MAX     = 128
+SCALE_FACTOR_NONE    = 255
+
+
+// depths for search
+ONE_PLY = 1
+MAX_PLY = 128
+DEPTH_QS_CHECKS     =	0
+DEPTH_QS_NO_CHECKS  = -1
+DEPTH_QS_RECAPTURES = -5
+DEPTH_NONE	     = -6
+
+// definitions for move gen macros
+CAPTURES     = 0
+QUIETS       = 1
+QUIET_CHECKS = 2
+EVASIONS     = 3
+NON_EVASIONS = 4
+LEGAL	      = 5
+
+DELTA_N =  8
+DELTA_E =  1
+DELTA_S = -8
+DELTA_W = -1
+
+DELTA_NN = 16
+DELTA_NE = 9
+DELTA_SE = -7
+DELTA_SS = -16
+DELTA_SW = -9
+DELTA_NW = 7
+
+// bounds           don't change
+BOUND_NONE  = 0
+BOUND_UPPER = 1
+BOUND_LOWER = 2
+BOUND_EXACT = 3
+
+// endgame eval fxn indices  see Endgames_Int.asm for details
+EndgameEval_KPK_index	= 1  // KP vs K
+EndgameEval_KNNK_index	= 2  // KNN vs K
+EndgameEval_KBNK_index	= 3  // KBN vs K
+EndgameEval_KRKP_index	= 4  // KR vs KP
+EndgameEval_KRKB_index	= 5  // KR vs KB
+EndgameEval_KRKN_index	= 6  // KR vs KN
+EndgameEval_KQKP_index	= 7  // KQ vs KP
+EndgameEval_KQKR_index	= 8  // KQ vs KR
+
+ENDGAME_EVAL_MAP_SIZE = 8  // this should be number of functions added to the eval map
+
+EndgameEval_KXK_index	= 10 // Generic mate lone king eval
 
 ENDGAME_EVAL_MAX_INDEX = 16
+
+// endgame scale fxn indices  see Endgames_Int.asm for details
+EndgameScale_KNPK_index    = 1  // KNP vs K
+EndgameScale_KNPKB_index   = 2  // KNP vs KB
+EndgameScale_KRPKR_index   = 3  // KRP vs KR
+EndgameScale_KRPKB_index   = 4  // KRP vs KB
+EndgameScale_KBPKB_index   = 5  // KBP vs KB
+EndgameScale_KBPKN_index   = 6  // KBP vs KN
+EndgameScale_KBPPKB_index  = 7  // KBPP vs KB
+EndgameScale_KRPPKRP_index = 8  // KRPP vs KRP
+
+ENDGAME_SCALE_MAP_SIZE = 8  // this should be number of functions added to the eval map
+
+EndgameScale_KBPsK_index   = 10 // KB and pawns vs K
+EndgameScale_KQKRPs_index  = 11 // KQ vs KR and pawns
+EndgameScale_KPsK_index    = 12 // K and pawns vs K
+EndgameScale_KPKP_index    = 13 // KP vs KP
+
 ENDGAME_SCALE_MAX_INDEX = 16
 
 
 
 // hacky structs defs
+
+sizeof.rb = 1
+sizeof.rw = 2
+sizeof.rd = 4
+sizeof.rq = 8
 
 MainHash.___ = 0
 MainHash.table = 0 + MainHash.___
@@ -293,12 +398,10 @@ Limits.depth = 1*sizeof.rd + Limits.movestogo
 Limits.movetime = 1*sizeof.rd + Limits.depth
 Limits.mate = 1*sizeof.rd + Limits.movetime
 Limits.multiPV = 1*sizeof.rd + Limits.mate
-Limits.infinite = 1*sizeof.rd + 1*sizeof.rd +
-   Limits.multiPV
+Limits.infinite = 1*sizeof.rd + 1*sizeof.rd + Limits.multiPV
 Limits.ponder = 1*sizeof.rb + Limits.infinite
 Limits.useTimeMgmt = 1*sizeof.rb + Limits.ponder
-Limits.moveVecSize = 1*sizeof.rb + 1*sizeof.rb +
-   Limits.useTimeMgmt
+Limits.moveVecSize = 1*sizeof.rb + 1*sizeof.rb + Limits.useTimeMgmt
 Limits.moveVec = 1*sizeof.rd + Limits.moveVecSize
 sizeof.Limits = MAX_MOVES*sizeof.rw + Limits.moveVec
 
@@ -379,7 +482,7 @@ Thread.castling_kingpawns = 4*sizeof.rq + Thread.castling_knights
 Thread.castling_movgen = 4*sizeof.rq + Thread.castling_kingpawns
 Thread.castling_rightsMask = 4*sizeof.rd + Thread.castling_movgen
 Thread.castling_end = 64*sizeof.rb + Thread.castling_rightsMask
-Thread.rootPos = 0*sizeof.rb + 1*sizeof. + Thread.castling_end
+Thread.rootPos = 0*sizeof.rb + Thread.castling_end
 sizeof.Thread = 1*sizeof.Pos + Thread.rootPos
 
 NumaNode.___ = 0

@@ -27,10 +27,10 @@ Search_Init.L4:
         mov  w23, 1
 Search_Init.L3:
        fmov  d0, d10
-         bl  log
+         bl  Math_log_d_d
        fmov  d8, d0
       scvtf  d0, w23
-         bl  log
+         bl  Math_log_d_d
        fmul  d0, d8, d0
         add  x2, x21, 32768
        fmul  d0, d0, d9
@@ -59,10 +59,9 @@ Search_Init.L2:
         bne  Search_Init.L5
 
        fmov  d12, xzr
-        lea  x19, FutilityMoveCounts
+        lea  x19, (FutilityMoveCounts + 64)
         ldr  d8, Search_Init.LC0
         ldr  d11, Search_Init.LC1
-        add  x19, x19, 320
         ldr  d10, Search_Init.LC2
         mov  w20, 0
         ldr  d9, Search_Init.LC3
@@ -71,20 +70,30 @@ Search_Init.L6:
        fmov  d1, d8
         add  w20, w20, 1
        fadd  d0, d13, d12
-         bl  pow
+         bl  Math_pow_d_dd
       fmadd  d0, d0, d11, d10
        fmov  d1, d8
      fcvtzs  w0, d0
        fadd  d0, d13, d9
         str  w0, [x19, -64]
-         bl  pow
-        ldr  d1, .LC4
+         bl  Math_pow_d_dd
+        ldr  d1, Search_Init.LC4
         cmp  w20, 16
-        ldr  d2, .LC5
+        ldr  d2, Search_Init.LC5
       fmadd  d0, d0, d1, d2
      fcvtzs  w0, d0
         str  w0, [x19], 4
         bne  Search_Init.L6
+
+        lea  x0, RazorMargin
+        adr  x1, Search_Init.RazorMargin
+        mov  x2, 4*4
+         bl  MemoryCopy
+        lea  x0, _CaptureOrPromotion_or
+        adr  x1, Search_Init._CaptureOrPromotion_or
+        mov  x2, 8      // copy both or and and
+         bl  MemoryCopy
+
         ldp  x19, x20, [sp, 16]
         ldp  x21, x22, [sp, 32]
         ldp  x23, x24, [sp, 48]
@@ -114,3 +123,11 @@ Search_Init.LC4:
 Search_Init.LC5:
         .word   858993459
         .word   1074213683
+
+Search_Init.RazorMargin:
+        .word 483, 570, 603, 554
+Search_Init._CaptureOrPromotion_or:
+        .byte 0,-1,-1, 0
+Search_Init._CaptureOrPromotion_and:
+        .byte -1,-1,-1, 0
+

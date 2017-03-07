@@ -10,7 +10,7 @@ BitTable_Init:
 	       call   _VirtualAlloc
 	       push   rax
 */
-        mov  x0, 64*64*2*64
+        mov  x1, 64*64*2*64
          bl  Os_VirtualAlloc
         mov  x29, x0
 
@@ -452,8 +452,8 @@ Init_KPKTable.End:
 		pop   r15 r14 r13 r12 rdi rsi rbx
 		ret
 */
-        mov  x0, x29
-        mov  x1, 64*64*2*64
+        mov  x1, x29
+        mov  x2, 64*64*2*64
          bl  Os_VirtualFree
         ldp  x27, x28, [sp], 16
         ldp  x29, x30, [sp], 16

@@ -1,33 +1,33 @@
 
 StringLength:
-// in:  x0 address of null terminated string
+// in:  x1 address of null terminated string
 // out: x0 length
-        sub  x1, x0, 1
+        mov  x0, -1
 StringLength.Next:
-       ldrb  w2, [x1,1]!
+        add  x0, x0, 1
+       ldrb  w2, [x1, x0]
        cbnz  w2, StringLength.Next
-        sub  x0, x1, x0
         ret
 
 
 PrintString.Next:
-       strb  w1, [x15], 1
+       strb  w0, [x15], 1
 PrintString:
-// in: x0 address of source string
+// in: x1 address of source string
 // io: x15 string
-       ldrb  w1, [x0], 1
-       cbnz  w1, PrintString.Next
+       ldrb  w0, [x1], 1
+       cbnz  w0, PrintString.Next
         ret
 
 
 PrintFancy:
-// in: x0 address of source string
-//     x1 address of dword array
+// in: x1 address of source string
+//     x2 address of dword array
 // io: x15 string with ie %x3 replaced by x1[3] ect
         stp  x29, x30, [sp, -16]!
         stp  x28, x14, [sp, -16]!
-        mov  x14, x0
-        mov  x29, x1
+        mov  x14, x1
+        mov  x29, x2
 PrintFancy.Loop:
        ldrb  w0, [x14], 1
         cmp  w0, '%'
@@ -61,15 +61,15 @@ PrintFancy.GotOne:
 
 
 CmpString:
-// if beginning of string at x14 matches null terminated string at x0
+// if beginning of string at x14 matches null terminated string at x1
 // then advance x14 to end of match and return x0 = -1
 // else return x0 = 0 and do nothing
         mov  x3, x14
 CmpString.Next:
-       ldrb  w1, [x0], 1
-        cbz  w1, CmpString.Found
+       ldrb  w0, [x1], 1
+        cbz  w0, CmpString.Found
        ldrb  w2, [x3], 1
-        cmp  w1, w2
+        cmp  w0, w2
         beq  CmpString.Next
 CmpString.NoMatch:
         mov  x0, 0
@@ -92,25 +92,25 @@ SkipSpaces:
 
 ParseToken.Next:
         add  x14, x14, 1
-       strb  w1, [x15], 1
+       strb  w0, [x15], 1
 ParseToken:
-// write at most x0 characters of string at x14 to x15
-       ldrb  w1, [x14]
-       subs  x0, x0, 1
+// write at most x1 characters of string at x14 to x15
+       ldrb  w0, [x14]
+       subs  x1, x1, 1
         blo  ParseToken.Done
-        cmp  w1, '/'
+        cmp  w0, '/'
         blo  ParseToken.Done
-        cmp  w1, ':'
+        cmp  w0, ':'
         blo  ParseToken.Next
-        cmp  w1, 'A'
+        cmp  w0, 'A'
         blo  ParseToken.Done
-        cmp  w1, '['
+        cmp  w0, '['
         blo  ParseToken.Next
-        cmp  w1, '\'
+        cmp  w0, '\'
         beq  ParseToken.Next
-        cmp  w1, 'a'
+        cmp  w0, 'a'
         blo  ParseToken.Done
-        cmp  w1, 128
+        cmp  w0, 128
         blo  ParseToken.Next
 ParseToken.Done:
         ret
@@ -277,8 +277,8 @@ GetLine.Done:
         ret
 GetLine.GetMore:
         mov  x22, 0
-        add  x0, x29, IOBuffer.tmpBuffer
-        mov  x1, sizeof.IOBuffer.tmpBuffer
+        add  x1, x29, IOBuffer.tmpBuffer
+        mov  x2, sizeof.IOBuffer.tmpBuffer
          bl  Os_ReadStdIn
         mov  x23, x0
         cmp  x0, 1
@@ -308,6 +308,7 @@ MemoryCopy.Next:
        strb  w3, [x0], 1
 MemoryCopy:
 // copy x2 bytes from x1 to x0
+// advance x0 to the end of the block
        cbnz  x2, MemoryCopy.Next
         ret
 
@@ -317,6 +318,7 @@ MemoryFill.Next:
        strb  w1, [x0], 1
 MemoryFill:
 // fill x2 bytes from the lower byte in x1 to x0
+// advance x0 to the end of the block
        cbnz  x2, MemoryFill.Next
         ret
 

@@ -53,20 +53,18 @@ UciLoop.localsize = (UciLoop.localsize + 15) & (-16)
 3:
          bl  GetLine
 
+
          bl  SkipSpaces
 
-       adrp  x0, sz_quit
-        add  x0, x0, :lo12:sz_quit
+        lea  x1, sz_quit
          bl  CmpString
        cbnz  w0, 2f
 
-       adrp  x15, Output
-        add  x15, x15, :lo12:Output
-       adrp  x0, sz_error_unknown_command
-        add  x0, x0, :lo12:sz_error_unknown_command
+        lea  x15, Output
+        lea  x1, sz_error_unknown_command
          bl  PrintString
 
-        mov  x0, 64
+        mov  x1, 64
          bl  ParseToken
         PrintNewLine
           b  1b

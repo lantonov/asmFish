@@ -1,9 +1,11 @@
 Output: .space 1024
 
         .align 16
-options:   .space sizeof.Options
+options:    .space sizeof.Options
         .align 16
-ioBuffer:  .space sizeof.IOBuffer
+ioBuffer:   .space sizeof.IOBuffer
+        .align 16
+mainHash:   .space sizeof.MainHash
 
 
 
@@ -96,7 +98,7 @@ Threat_Minor:               .space 4*16
 Threat_Rook:                .space 4*16
 PassedRank:                 .space 4*8
 PassedFile:                 .space 4*8
-
+DoMaterialEval_Data:
 DoMaterialEval_Data.QuadraticOurs:     .space 4*8*6
 DoMaterialEval_Data.QuadraticTheirs:   .space 4*8*6
 

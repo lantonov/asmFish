@@ -1,3 +1,6 @@
+        .balign 8
+LargePageMinSize:
+        .dword 0
 sz_error_rook_page:
         .ascii "rook attack data is not page aligned\0"
 sz_error_bishop_page:

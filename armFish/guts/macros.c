@@ -97,7 +97,7 @@
 // ex: Display "sq: %i14  sq: %i15  line: %x0  bet: %x1\n"
 .macro Display Message
         PushAll
-        adr  x0, anom\@
+        adr  x1, anom\@
           b  anol\@
 anom\@:
         .ascii \Message
@@ -105,7 +105,7 @@ anom\@:
         .balign 4
 anol\@:
         Lea  x15, Output
-        mov  x1, sp
+        mov  x2, sp
          bl  PrintFancy
          bl  Os_WriteOut_Output
         PopAll
@@ -113,7 +113,7 @@ anol\@:
 
 .macro DisplayString Message
         PushAll
-        adr  x0, anom\@
+        adr  x1, anom\@
           b  anol\@
 anom\@:
         .ascii \Message
@@ -137,44 +137,8 @@ anol\@:
 
 .macro DisplayPause
         PushAll
-        mov  x0, 1000
+        mov  x1, 1000
          bl  Os_Sleep
         PopAll     
-.endm
-
-.macro rep_movsb pl
-        tst  x1, x1
-        beq  \pl&.over\@
-\pl&.back\@:
-       ldrb  w0, [x14], 1
-       strb  w0, [x15], 1
-       subs  x1, x1, 1
-        bne  \pl&.back\@
-\pl&.over\@:
-.endm
-
-.macro tester cnt
-                mov  w0, \cnt
-               strb  w0, [x17], 1
-        \cnt = \cnt-1
-                mov  w0, \cnt
-               strb  w0, [x17], 1
-
-.if \cnt
-                
-                mov  w0, 'A'
-               strb  w0, [x17], 1
-.endif
-
-.endm
-
-
-.macro increment t, reg
-.if \t
-                add  reg, reg, 1
-.else
-                sub  reg, reg, 1
-.endif
-
 .endm
 
