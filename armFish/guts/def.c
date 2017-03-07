@@ -102,14 +102,46 @@ Rook   = 5
 Queen  = 6
 King   = 7
 
+// piece values
+PawnValueMg   = 188
+KnightValueMg = 753
+BishopValueMg = 814
+RookValueMg   = 1285
+QueenValueMg  = 2513
+
+PawnValueEg   = 248
+KnightValueEg = 832
+BishopValueEg = 890
+RookValueEg   = 1371
+QueenValueEg  = 2648
+
+MidgameLimit = 15258
+EndgameLimit = 3915
+
+// values for evaluation
+Eval_Tempo = 20
+
+// values from stats tables
+HistoryStats_Max = 268435456
+
+
+ENDGAME_EVAL_MAX_INDEX = 16
+ENDGAME_SCALE_MAX_INDEX = 16
+
 
 
 // hacky structs defs
+
+EndgameMapEntry.key     = 0
+EndgameMapEntry.entri   = 8 + EndgameMapEntry.key
+sizeof.EndgameMapEntry  = 16
+
+
 IOBuffer.inputBuffer       = 0
-IOBuffer.inputBufferSizeB  = 8+IOBuffer.inputBuffer
-IOBuffer.tmp_i             = 8+IOBuffer.inputBufferSizeB
-IOBuffer.tmp_j             = 4+IOBuffer.tmp_i
-IOBuffer.tmpBuffer         = 4+IOBuffer.tmp_j
+IOBuffer.inputBufferSizeB  = 8 + IOBuffer.inputBuffer
+IOBuffer.tmp_i             = 8 + IOBuffer.inputBufferSizeB
+IOBuffer.tmp_j             = 4 + IOBuffer.tmp_i
+IOBuffer.tmpBuffer         = 4 + IOBuffer.tmp_j
 sizeof.IOBuffer.tmpBuffer  = 512
 sizeof.IOBuffer            = 512+IOBuffer.tmpBuffer
 

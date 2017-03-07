@@ -29,8 +29,8 @@ SlidingAttacks.NextSquare:
         tst  x7, x2
         beq  SlidingAttacks.NextSquare
 SlidingAttacks.NextDirection:
-      ldrsb  x4, [x14],1
-      ldrsb  x5, [x14],1
+      ldrsb  x4, [x14], 1
+      ldrsb  x5, [x14], 1
 	mov  x1, x21
 	mov  x9, 0
         orr  x2, x4, x5
@@ -55,10 +55,8 @@ Directions.BlackPawnAttacks:
 Gen_Init:
         stp  x29, x30, [sp, -16]!
 
-
 Init_FileBB:
-       adrp  x15, FileBB
-        add  x15, x15, :lo12:FileBB
+        lea  x15, FileBB
 	mov  x1, 8
         ldr  x0, =FileABB
 Init_FileBB.Next:
@@ -67,10 +65,8 @@ Init_FileBB.Next:
        subs  x1, x1, 1
         bne  Init_FileBB.Next
 
-
 Init_RankBB:
-       adrp  x15, RankBB
-        add  x15, x15, :lo12:RankBB
+        lea  x15, RankBB
 	mov  x1, 8
         mov  x0, 0x0ff
 Init_RankBB.Next:
@@ -78,7 +74,6 @@ Init_RankBB.Next:
         lsl  x0, x0, 8
        subs  x1, x1, 1
         bne  Init_RankBB.Next
-
 
 // Fixed shift magics found by Volker Annuss.
 // From: http://talkchess.com/forum/viewtopic.php?p=670709#670709
@@ -92,26 +87,26 @@ Init_Attacks.NextSquare:
 
         adr  x14, Directions.KnightAttacks
          bl  SlidingAttacks
-        Lea  x16, KnightAttacks
+        lea  x16, KnightAttacks
 	str  x0, [x16, x21, lsl 3]
 
         adr  x14, Directions.KingAttacks
          bl  SlidingAttacks
-        Lea  x16, KingAttacks
+        lea  x16, KingAttacks
 	str  x0, [x16, x21, lsl 3]
 
         adr  x14, Directions.WhitePawnAttacks
          bl  SlidingAttacks
-        Lea  x16, WhitePawnAttacks
+        lea  x16, WhitePawnAttacks
 	str  x0, [x16, x21, lsl 3]
 
         adr  x14, Directions.BlackPawnAttacks
          bl  SlidingAttacks
-        Lea  x16, BlackPawnAttacks
+        lea  x16, BlackPawnAttacks
 	str  x0, [x16, x21, lsl 3]
 
-        Lea  x15, FileBB
-        Lea  x14, RankBB
+        lea  x15, FileBB
+        lea  x14, RankBB
 
         and  x0, x21, 7
 	ldr  x23, = ~ (FileABB | FileHBB)
@@ -128,22 +123,22 @@ Init_Attacks.NextSquare:
 
         adr  x14, Directions.RookAttacks
          bl  SlidingAttacks
-        Lea  x16, RookAttacksPDEP
-        Lea  x17, RookAttacksPEXT
+        lea  x16, RookAttacksPDEP
+        lea  x17, RookAttacksPEXT
         str  x0, [x16, x21, lsl 3]
         and  x0, x0, x23
         str  x0, [x17, x21, lsl 3]
 
         adr  x14, Directions.BishopAttacks
          bl  SlidingAttacks
-        Lea  x16, BishopAttacksPDEP
-        Lea  x17, BishopAttacksPEXT
+        lea  x16, BishopAttacksPDEP
+        lea  x17, BishopAttacksPEXT
         str  x0, [x16, x21, lsl 3]
         and  x0, x0, x23
         str  x0, [x17, x21, lsl 3]
 
         lsl  x21, x21, 4        
-        Lea  x19, SlidingAttacksBB
+        lea  x19, SlidingAttacksBB
         adr  x16, Init_Attacks.RookData
         adr  x17, Init_Attacks.BishopData
         add  x5, x21, 8
@@ -155,12 +150,12 @@ Init_Attacks.NextSquare:
         add  x3, x19, x3,lsl 3
         lsr  x21, x21, 4
 
-        Lea  x16, RookAttacksIMUL
-        Lea  x17, RookAttacksMOFF       
+        lea  x16, RookAttacksIMUL
+        lea  x17, RookAttacksMOFF       
         str  x0, [x16, x21,lsl 3]
         str  x1, [x17, x21,lsl 3]
-        Lea  x16, BishopAttacksIMUL
-        Lea  x17, BishopAttacksMOFF
+        lea  x16, BishopAttacksIMUL
+        lea  x17, BishopAttacksMOFF
         str  x2, [x16,x21,lsl 3]
         str  x3, [x17,x21,lsl 3]
 
@@ -168,9 +163,9 @@ Init_Attacks.NextSquare:
 Init_Attacks.NextRookSubset:
         adr  x14, Directions.RookAttacks
          bl  SlidingAttacks
-        Lea  x16, RookAttacksPEXT
-        Lea  x17, RookAttacksIMUL
-        Lea  x19, RookAttacksMOFF
+        lea  x16, RookAttacksPEXT
+        lea  x17, RookAttacksIMUL
+        lea  x19, RookAttacksMOFF
 
         ldr  x1, [x16, x21, lsl 3]
         ldr  x2, [x17, x21, lsl 3]
@@ -187,9 +182,9 @@ Init_Attacks.NextRookSubset:
 Init_Attacks.NextBishopSubset:
         adr  x14, Directions.BishopAttacks
          bl  SlidingAttacks
-        Lea  x16, BishopAttacksPEXT
-        Lea  x17, BishopAttacksIMUL
-        Lea  x19, BishopAttacksMOFF
+        lea  x16, BishopAttacksPEXT
+        lea  x17, BishopAttacksIMUL
+        lea  x19, BishopAttacksMOFF
 
         ldr  x1, [x16, x21, lsl 3]
         ldr  x2, [x17, x21, lsl 3]
@@ -207,7 +202,7 @@ Init_Attacks.NextBishopSubset:
         blo   Init_Attacks.NextSquare
 
 Init_Attacks.Done:
-        ldp  x29, x30, [sp],16
+        ldp  x29, x30, [sp], 16
 	ret
 
 Init_Attacks.RookData:

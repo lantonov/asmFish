@@ -8,7 +8,6 @@ ioBuffer:  .space sizeof.IOBuffer
 
 
 // data for move generation
-
         .balign 64
 SlidingAttacksBB:    .space 8*89524
 
@@ -47,79 +46,70 @@ AdjacentFilesBB:   .space 8*8
 FileBB: 	   .space 8*8
 RankBB: 	   .space 8*8
 
-/*
-;;;;;;;;;;;;;;;;;;;; DoMove data ;;;;;;;;;;;;;;;;;;;;;;;;
 
-align 64
-Scores_Pieces:	   rq 16*64
-Zobrist_Pieces:    rq 16*64
-Zobrist_Castling:  rq 16
-Zobrist_Ep:	   rq 8
-Zobrist_side:	   rq 1
-Zobrist_noPawns:   rq 1
-PieceValue_MG:	   rd 16
-PieceValue_EG:	   rd 16
-
-IsNotPawnMasks:    rb 16
-IsNotPieceMasks:   rb 16
-IsPawnMasks:	   rb 16
+// DoMove data
+        .balign 64
+Scores_Pieces:	   .space 8*16*64
+Zobrist_Pieces:    .space 8*16*64
+Zobrist_Castling:  .space 8*16
+Zobrist_Ep:	   .space 8*8
+Zobrist_side:	   .space 8*1
+Zobrist_noPawns:   .space 8*1
+PieceValue_MG:	   .space 4*16
+PieceValue_EG:	   .space 4*16
+IsNotPawnMasks:    .space 1*16
+IsNotPieceMasks:   .space 1*16
+IsPawnMasks:	   .space 1*16
 
 
-;;;;;;;;;;;;;;;;;;;; data for search ;;;;;;;;;;;;;;;;;;;;;;;
+// data for search
+        .balign 4096
+Reductions:	         .space 4*2*2*64*64
+FutilityMoveCounts:      .space 4*16*2
+RazorMargin:             .space 4*4
+_CaptureOrPromotion_or:  .space 1*4
+_CaptureOrPromotion_and: .space 1*4
+DrawValue:	         .space 4*2    // it is updated when threads start to think
 
-align 4096
-Reductions	        rd 2*2*64*64
-FutilityMoveCounts      rd 16*2
-RazorMargin             rd 4
-_CaptureOrPromotion_or  rb 4
-_CaptureOrPromotion_and rb 4
-DrawValue	        rd 2    ; it is updated when threads start to think
 
-
-;;;;;;;;;;;;;;;;;;;; data for evaluation ;;;;;;;;;;;;;;;;;;;;
-
-align 64
-Connected rd 2*2*2*8
-Protector_Knight rd 8
-Protector_Bishop rd 8
-Protector_Rook   rd 8
-Protector_Queen  rd 8
-MobilityBonus_Knight rd 16
-MobilityBonus_Bishop rd 16
-MobilityBonus_Rook   rd 16
-MobilityBonus_Queen  rd 32
-Lever                      rd 8
-ShelterWeakness            rd 8*8
+// data for evaluation
+        .balign 64
+Connected:           .space 4*2*2*2*8
+Protector_Knight:      .space 4*8
+Protector_Bishop:      .space 4*8
+Protector_Rook:        .space 4*8
+Protector_Queen:       .space 4*8
+MobilityBonus_Knight:   .space 4*16
+MobilityBonus_Bishop:   .space 4*16
+MobilityBonus_Rook:     .space 4*16
+MobilityBonus_Queen:    .space 4*32
+Lever:                .space 4*8
+ShelterWeakness:      .space 4*8*8
 StormDanger:
-StormDanger_NoFriendlyPawn rd 8*8
-StormDanger_Unblocked	   rd 8*8
-StormDanger_BlockedByPawn  rd 8*8
-StormDanger_BlockedByKing  rd 8*8
-KingFlank                  rq 8
-ThreatBySafePawn           rd 16
-Threat_Minor               rd 16
-Threat_Rook                rd 16
-PassedRank                 rd 8
-PassedFile                 rd 8
+StormDanger_NoFriendlyPawn: .space 4*8*8
+StormDanger_Unblocked:	    .space 4*8*8
+StormDanger_BlockedByPawn:  .space 4*8*8
+StormDanger_BlockedByKing:  .space 4*8*8
+KingFlank:                  .space 8*8
+ThreatBySafePawn:           .space 4*16
+Threat_Minor:               .space 4*16
+Threat_Rook:                .space 4*16
+PassedRank:                 .space 4*8
+PassedFile:                 .space 4*8
 
-DoMaterialEval_Data:
-.QuadraticOurs:            rd 8*6
-.QuadraticTheirs:          rd 8*6
-
+DoMaterialEval_Data.QuadraticOurs:     .space 4*8*6
+DoMaterialEval_Data.QuadraticTheirs:   .space 4*8*6
 
 
-;;;;;;;;;;;;;; data for endgames ;;;;;;;;;;;;;;
-
-align 64
-EndgameEval_Map            rb 2*ENDGAME_EVAL_MAX_INDEX*sizeof.EndgameMapEntry
-EndgameScale_Map           rb 2*ENDGAME_SCALE_MAX_INDEX*sizeof.EndgameMapEntry
-EndgameEval_FxnTable       rd ENDGAME_EVAL_MAX_INDEX
-EndgameScale_FxnTable      rd ENDGAME_SCALE_MAX_INDEX
-KPKEndgameTable            rq 48*64
-PushToEdges                rb 64
-PushToCorners              rb 64
-PushClose                  rb 8
-PushAway                   rb 8
-
-*/
+// data for endgames
+        .balign 64
+EndgameEval_Map:        .space 2*ENDGAME_EVAL_MAX_INDEX*sizeof.EndgameMapEntry
+EndgameScale_Map:       .space 2*ENDGAME_SCALE_MAX_INDEX*sizeof.EndgameMapEntry
+EndgameEval_FxnTable:   .space 8*ENDGAME_EVAL_MAX_INDEX
+EndgameScale_FxnTable:  .space 8*ENDGAME_SCALE_MAX_INDEX
+KPKEndgameTable:        .space 8*48*64
+PushToEdges:            .space 64
+PushToCorners:          .space 64
+PushClose:              .space 8
+PushAway:               .space 8
 
