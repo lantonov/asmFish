@@ -24,6 +24,10 @@ $ qemu-aarch64 ./armFish
 
 
 .text
+
+.include "guts/Endgame.c"
+
+
 .globl _start
 _start:
 
@@ -37,17 +41,23 @@ _start:
          bl  BitBoard_Init
          bl  Position_Init
          bl  BitTable_Init
+         bl  Search_Init
+         bl  Evaluate_Init
+         bl  Pawn_Init
+         bl  Endgame_Init
 
 
 // check some computations
-lea x16, Scores_Pieces
-mov x0, 200
+lea x16, EndgameEval_Map
+mov x0, 7
 ldr x0, [x16, x0, lsl 3]
-mov x1, 300
+mov x1, 8
 ldr x1, [x16, x1, lsl 3]
-mov x2, 400
+mov x2, 9
 ldr x2, [x16, x2, lsl 3]
-Display "test: %x0 %x1 %x2\n"
+mov x3, 10
+ldr x3, [x16, x3, lsl 3]
+Display "test: %x0 %x1 %x2 %x3\n"
 fmov d16, 2.0e0
 fmov d17, 2.5e0
 fmov d0, d16
@@ -77,12 +87,14 @@ Display "test: scalbn(%d16, %i17) = %d0\n"
 
 // write engine name
         lea  x15, Output
-        lea  x0, sz_greeting
+        lea  x1, sz_greeting
          bl  PrintString
         PrintNewLine
          bl  Os_WriteOut_Output
 
 // set up threads and hash
+         bl  MainHash_Create
+//         bl  ThreadPool_Create
 
 // command line could contain commands
 // this function also initializes InputBuffer
@@ -91,6 +103,13 @@ Display "test: scalbn(%d16, %i17) = %d0\n"
 
 // enter the main loop
          bl  UciLoop
+
+// clean up threads and hash
+//         bl  ThreadPool_Destroy
+         bl  MainHash_Destroy
+
+// options may also require cleaning
+         bl  Options_Destroy
 
 // clean up input buffer
         lea  x2, ioBuffer
@@ -106,10 +125,16 @@ Display "test: scalbn(%d16, %i17) = %d0\n"
 .include "guts/Math.c"
 .include "guts/OsLinux.c"
 .include "guts/PrintParse.c"
+.include "guts/MainHash.c"
+
 .include "guts/BitBoard_Init.c"
 .include "guts/Gen_Init.c"
 .include "guts/Position_Init.c"
 .include "guts/BitTable_Init.c"
+.include "guts/Search_Init.c"
+.include "guts/Evaluate_Init.c"
+.include "guts/Pawn_Init.c"
+.include "guts/Endgame_Init.c"
 
 
 
