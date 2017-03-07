@@ -28,8 +28,8 @@ Init_InFrontBB.Next:
 
 
 Init_ForwardBB_PawnAttackSpan_PassedPawnMask:
-        mov     x3, 0
-        mov     w4, 0
+        mov  x3, 0
+        mov  w4, 0
         lea  x0, InFrontBB
         lea  x9, FileBB
         lea  x10, ForwardBB
@@ -37,33 +37,33 @@ Init_ForwardBB_PawnAttackSpan_PassedPawnMask:
         lea  x12, PawnAttackSpan
         lea  x13, PassedPawnMask
 Init_ForwardBB_PawnAttackSpan_PassedPawnMask.L4:
-        cmp     w4, 2
-        beq     Init_ForwardBB_PawnAttackSpan_PassedPawnMask.L2
-        sbfiz   x17, x4, 3, 32
-        add     x16, x10, x3
-        add     x15, x12, x3
-        add     x14, x13, x3
-        mov     x1, 0
+        cmp  w4, 2
+        beq  Init_ForwardBB_PawnAttackSpan_PassedPawnMask.L2
+      sbfiz  x17, x4, 3, 32
+        add  x16, x10, x3
+        add  x15, x12, x3
+        add  x14, x13, x3
+        mov  x1, 0
 Init_ForwardBB_PawnAttackSpan_PassedPawnMask.L3:
-        asr     w2, w1, 3
-        and     x8, x1, 7
-        lsl     x6, x1, 3
-        add     x1, x1, 1
-        add     x2, x17, x2, sxtw
-        cmp     x1, 64
-        ldr     x7, [x0, x2, lsl 3]
-        ldr     x2, [x9, x8, lsl 3]
-        and     x5, x7, x2
-        ldr     x2, [x11, x8, lsl 3]
-        str     x5, [x16, x6]
-        and     x2, x7, x2
-        str     x2, [x15, x6]
-        orr     x2, x5, x2
-        str     x2, [x14, x6]
-        bne     Init_ForwardBB_PawnAttackSpan_PassedPawnMask.L3
-        add     x3, x3, 512
-        add     w4, w4, 1
-        b       Init_ForwardBB_PawnAttackSpan_PassedPawnMask.L4
+        asr  w2, w1, 3
+        and  x8, x1, 7
+        lsl  x6, x1, 3
+        add  x1, x1, 1
+        add  x2, x17, x2, sxtw
+        cmp  x1, 64
+        ldr  x7, [x0, x2, lsl 3]
+        ldr  x2, [x9, x8, lsl 3]
+        and  x5, x7, x2
+        ldr  x2, [x11, x8, lsl 3]
+        str  x5, [x16, x6]
+        and  x2, x7, x2
+        str  x2, [x15, x6]
+        orr  x2, x5, x2
+        str  x2, [x14, x6]
+        bne  Init_ForwardBB_PawnAttackSpan_PassedPawnMask.L3
+        add  x3, x3, 512
+        add  w4, w4, 1
+          b  Init_ForwardBB_PawnAttackSpan_PassedPawnMask.L4
 Init_ForwardBB_PawnAttackSpan_PassedPawnMask.L2:
         ret
 

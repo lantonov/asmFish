@@ -3,11 +3,14 @@ Os_ExitProcess:
         mov  x8, 94
         svc  0
 
+
 Os_SetStdHandles:
         ret
 
+
 Os_InitializeTimer:
         ret
+
 
 Os_GetTime:
 // out: x0, x1 such that x0+x1/2^64 = time in ms
@@ -30,6 +33,7 @@ Os_GetTime:
         ldp  x29, x30, [sp], 16
         ret
 
+
 Os_Sleep:
 // in: x0 ms to sleep
         stp  x29, x30, [sp, -16]!
@@ -51,6 +55,7 @@ Os_Sleep:
         ldp  x29, x30, [sp], 16
         ret
 
+
 Os_VirtualAlloc:
 // in: x0 size
         stp  x29, x30, [sp, -16]!
@@ -60,9 +65,9 @@ Os_VirtualAlloc:
         mov  x4, -1
         mov  x3, 0x22
         mov  x2, 0x03
-        mov  x1, 100
+        mov  x1, x0
         mov  x0, 0
-        mov  x8, 222
+        mov  x8, sys_mmap
         svc  0
         tst  x0, x0
         bmi  Failed_sys_mmap_VirtualAlloc
@@ -71,21 +76,24 @@ Os_VirtualAlloc:
         ldp  x29, x30, [sp], 16
         ret
 
+
 Os_VirtualFree:
 // in: x0 address
 //     x1 size
         stp  x29, x30, [sp, -16]!
         stp  x14, x15, [sp, -16]!
         sub  sp, sp, 64
-        cbz  x0, 1f
-        mov  x8, 215
+        cbz  x0, Os_VirtualFree.Null
+        mov  x8, sys_unmap
         svc  0
         cmp  w0, 0
         bne  Failed_sys_unmap_VirtualFree
-1:      add  sp, sp, 64
+Os_VirtualFree.Null:
+        add  sp, sp, 64
         ldp  x14, x15, [sp], 16
         ldp  x29, x30, [sp], 16
         ret
+
 
 Os_WriteOut_Output:
        adrp  x0, Output
@@ -106,6 +114,7 @@ _WriteOut:
         ldp  x29, x30, [sp], 16
         ret
 
+
 Os_ReadStdIn:
 // in: x0 address of buffer
 //     x1 max bytes to read
@@ -121,6 +130,7 @@ Os_ReadStdIn:
         ldp  x14, x15, [sp], 16
         ldp  x29, x30, [sp], 16
         ret
+
 
 Os_ParseCommandLine:
 // initializes ioBuffer struct  
@@ -140,32 +150,30 @@ Os_ParseCommandLine:
         ldp  x28, x30, [sp], 64
         ret
 
+
 Failed_sys_mmap_VirtualAlloc:
         lea  x15, sz_error_sys_mmap_VirtualAlloc
           b  Failed
 Failed_sys_unmap_VirtualFree:
         lea  x15, sz_error_sys_unmap_VirtualFree
           b  Failed
-
 Failed:
 // x15 address of null terminated string
         mov  x21, x0
         mov  x0, x15
-       adrp  x15, Output
-        add  x15, x15, :lo12:Output
+        lea  x15, Output
          bl  PrintString
-       adrp  x0, sz_failed_x0
-        add  x0, x0, :lo12:sz_failed_x0
+        lea  x0, sz_failed_x0
          bl  PrintString
         mov  x0, x21
          bl  PrintHex
         mov  w0, 10
        strb  w0, [x15], 1
-       adrp  x15, Output
-        add  x15, x15, :lo12:Output
+        lea  x15, Output
          bl  Os_ErrorBox
         mov  x0, 1
          bl  Os_ExitProcess
+
 
 Os_ErrorBox:
 // x15 address of null terminated string

@@ -1,3 +1,4 @@
+
 StringLength:
 // in:  x0 address of null terminated string
 // out: x0 length
@@ -8,6 +9,7 @@ StringLength.Next:
         sub  x0, x1, x0
         ret
 
+
 PrintString.Next:
        strb  w1, [x15], 1
 PrintString:
@@ -17,12 +19,13 @@ PrintString:
        cbnz  w1, PrintString.Next
         ret
 
+
 PrintFancy:
 // in: x0 address of source string
 //     x1 address of dword array
-// io: x15 string with ie #3 replaced by x1[3] ect
-        stp  x29, x30, [sp,-16]!
-        stp  x28, x14, [sp,-16]!
+// io: x15 string with ie %x3 replaced by x1[3] ect
+        stp  x29, x30, [sp, -16]!
+        stp  x28, x14, [sp, -16]!
         mov  x14, x0
         mov  x29, x1
 PrintFancy.Loop:
@@ -33,22 +36,29 @@ PrintFancy.Loop:
        strb  w0, [x15], 1
           b  PrintFancy.Loop
 PrintFancy.Done:
-        ldp  x28, x14, [sp],16
-        ldp  x29, x30, [sp],16
+        ldp  x28, x14, [sp], 16
+        ldp  x29, x30, [sp], 16
         ret
 PrintFancy.GotOne:
        ldrb  w28, [x14], 1   
          bl  ParseInteger
+        and  x0, x0, 31
+        add  x1, x29, 8*32
+        ldr  d0, [x1, x0, lsl 3]
         ldr  x0, [x29, x0, lsl 3]
         adr  x1, PrintHex
         adr  x2, PrintInt
         adr  x3, PrintUInt
+        adr  x4, PrintDouble
         cmp  x28, 'i'
        csel  x1, x1, x2, ne
         cmp  x28, 'u'
        csel  x1, x1, x3, ne
+        cmp  x28, 'd'
+       csel  x1, x1, x4, ne
         blr  x1
           b  PrintFancy.Loop
+
 
 CmpString:
 // if beginning of string at x14 matches null terminated string at x0
@@ -69,6 +79,7 @@ CmpString.Found:
         mov  x0, -1
         ret
 
+
 SkipSpaces.Next:
         add  x14, x14, 1
 SkipSpaces:
@@ -78,7 +89,8 @@ SkipSpaces:
         beq  SkipSpaces.Next
         ret
 
-ParseToken.Get:
+
+ParseToken.Next:
         add  x14, x14, 1
        strb  w1, [x15], 1
 ParseToken:
@@ -89,19 +101,20 @@ ParseToken:
         cmp  w1, '/'
         blo  ParseToken.Done
         cmp  w1, ':'
-        blo  ParseToken.Get
+        blo  ParseToken.Next
         cmp  w1, 'A'
         blo  ParseToken.Done
         cmp  w1, '['
-        blo  ParseToken.Get
+        blo  ParseToken.Next
         cmp  w1, '\'
-        beq  ParseToken.Get
+        beq  ParseToken.Next
         cmp  w1, 'a'
         blo  ParseToken.Done
         cmp  w1, 128
-        blo  ParseToken.Get
+        blo  ParseToken.Next
 ParseToken.Done:
         ret
+
 
 PrintHex:
 // in: x0
@@ -119,14 +132,49 @@ PrintHex.Next:
        cbnz  w4, PrintHex.Next
         ret
 
+
+PrintDouble:
+// in: d0 double
+// io: x15 string
+        stp  x29, x30, [sp, -16]!
+        mov  x1, 1000
+      scvtf  d1, x1
+       fmul  d0, d0, d1
+     fcvtzs  x2, d0
+        tst  x2, x2
+        mov  w4, '-'
+       strb  w4, [x15]
+       cinc  x15, x15, lt
+       cneg  x2, x2, lt
+       sdiv  x0, x2, x1
+       msub  x29, x0, x1, x2
+         bl  PrintUInt
+        mov  w4, '.'
+       strb  w4, [x15], 1
+        mov  x2, 100
+       udiv  x4, x29, x2
+       msub  x3, x4, x2, x29
+        mov  x0, 10
+        add  w4, w4, '0'
+       strb  w4, [x15], 1
+       udiv  x2, x3, x0
+        add  w4, w2, '0'
+       strb  w4, [x15], 1
+       msub  x2, x2, x0, x3
+        add  w2, w2, '0'
+       strb  w2, [x15], 1
+        ldp  x29, x30, [sp], 16
+        ret
+
+
 PrintInt:
 // in: x0 signed integer
 // io: x15 string
         tst  x0, x0
         mov  w1, '-'
        strb  w1, [x15]
-      csinc  x15, x15, x15, pl
-      csneg  x0, x0, x0, pl
+       cinc  x15, x15, lt
+       cneg  x0, x0, lt
 
 PrintUInt:
 // in: x0 unsigned integer
@@ -150,6 +198,7 @@ PrintUInt.PopLoop:
         add  sp, sp, 64
         ret
 
+
 ParseInteger:
 // io: x14 string
 // out: x0
@@ -167,9 +216,9 @@ ParseInteger.Pos:
         add  x14, x14, 1
 ParseInteger.Loop:     
        ldrb  w1, [x14]
-       subs  w1, w1, 48
+       subs  x1, x1, '0'
         blo  ParseInteger.Done
-        cmp  w1, 9
+        cmp  x1, 9
         bhi  ParseInteger.Done
         add  x14, x14, 1
         add  x0, x0, x0, lsl 2
@@ -179,6 +228,7 @@ ParseInteger.Done:
         eor  x0, x0, x2
         sub  x0, x0, x2
         ret
+
 
 GetLine:
 // out: x0 = 0 if success, = -1 if failed
@@ -204,9 +254,9 @@ GetLine.ReallocRet:
         bhs  GetLine.GetMore
 GetLine.GetMoreRet:
         add  x0, x29, IOBuffer.tmpBuffer
-       ldrb  w0, [x0,x22]
+       ldrb  w0, [x0, x22]
         add  x22, x22, 1
-       strb  w0, [x25,x28]
+       strb  w0, [x25, x28]
         add  x28, x28, 1
         cmp  w0, ' '
         bhs  GetLine.NextChar
@@ -238,27 +288,35 @@ GetLine.Failed:
         mov  x23, 0
           b  GetLine.Done
 GetLine.Realloc:
-// get new buffer
         add  x0, x24, 4096
          bl  Os_VirtualAlloc
         mov  x23, x0
-        mov  x19, x0
-// copy data
-        mov  x20, x25
-        mov  x0, x24
-         bl  9f
-// free old buffer
+        mov  x1, x25
+        mov  x2, x24
+         bl  MemoryCopy
         mov  x0, x25
         mov  x1, x24
          bl  Os_VirtualFree
-// set new data
         mov  x25, x23
         add  x24, x24, 4096
           b  GetLine.ReallocRet
-8:
-        sub  x0, x0, 1
-       ldrb  w1, [x20], 1
-       strb  w1, [x19], 1
-9:
-       cbnz  x0, 8b
+
+
+MemoryCopy.Next:
+        sub  x2, x2, 1
+       ldrb  w3, [x1], 1
+       strb  w3, [x0], 1
+MemoryCopy:
+// copy x2 bytes from x1 to x0
+       cbnz  x2, MemoryCopy.Next
         ret
+
+
+MemoryFill.Next:
+        sub  x2, x2, 1
+       strb  w1, [x0], 1
+MemoryFill:
+// fill x2 bytes from the lower byte in x1 to x0
+       cbnz  x2, MemoryFill.Next
+        ret
+
