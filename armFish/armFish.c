@@ -10,6 +10,7 @@ $ qemu-aarch64 ./armFish
 .altmacro
 
 .include "guts/def.c"
+.include "guts/linux64.c"
 .include "guts/macros.c"
 .include "guts/AttackMacros.c"
 
@@ -31,13 +32,52 @@ _start:
          bl  Os_CheckCPU
 
 // initialize the engine
+         bl  Options_Init
          bl  Gen_Init
          bl  BitBoard_Init
-         bl  Options_Init
+         bl  Position_Init
+         bl  BitTable_Init
+
+
+// check some computations
+lea x16, Scores_Pieces
+mov x0, 200
+ldr x0, [x16, x0, lsl 3]
+mov x1, 300
+ldr x1, [x16, x1, lsl 3]
+mov x2, 400
+ldr x2, [x16, x2, lsl 3]
+Display "test: %x0 %x1 %x2\n"
+fmov d16, 2.0e0
+fmov d17, 2.5e0
+fmov d0, d16
+fmov d1, d17
+bl Math_pow_d_dd
+Display "test: pow(%d16, %d17) = %d0\n"
+fneg d17, d17
+fmov d0, d16
+fmov d1, d17
+bl Math_pow_d_dd
+Display "test: pow(%d16, %d17) = %d0\n"
+fmov d16, 3.0e1
+fmov d0, d16
+bl Math_log_d_d
+Display "test: log(%d16) = %d0\n"
+fmov d16, 3.0e0
+fmov d0, d16
+bl Math_exp_d_d
+Display "test: exp(%d16) = %d0\n"
+fmov d16, 3.5e0
+mov x17, -2
+fmov d0, d16
+mov w0, w17
+bl Math_scalbn_d_di
+Display "test: scalbn(%d16, %i17) = %d0\n"
+
 
 // write engine name
-        Lea  x15, Output
-        Lea  x0, sz_greeting
+        lea  x15, Output
+        lea  x0, sz_greeting
          bl  PrintString
         PrintNewLine
          bl  Os_WriteOut_Output
@@ -53,7 +93,7 @@ _start:
          bl  UciLoop
 
 // clean up input buffer
-        Lea  x2, ioBuffer
+        lea  x2, ioBuffer
         ldr  x0, [x2, IOBuffer.inputBuffer]
         ldr  x1, [x2, IOBuffer.inputBufferSizeB]
          bl  Os_VirtualFree
@@ -63,10 +103,13 @@ _start:
 
 
 .include "guts/Uci.c"
+.include "guts/Math.c"
 .include "guts/OsLinux.c"
 .include "guts/PrintParse.c"
 .include "guts/BitBoard_Init.c"
 .include "guts/Gen_Init.c"
+.include "guts/Position_Init.c"
+.include "guts/BitTable_Init.c"
 
 
 
