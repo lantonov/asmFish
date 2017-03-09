@@ -294,59 +294,11 @@ local ..Loop, ..Done, ..TestLoop
 		mov   cmh, qword[rbx-1*sizeof.State+State.counterMoves]
 		mov   fmh, qword[rbx-2*sizeof.State+State.counterMoves]
 		mov   fmh2, qword[rbx-4*sizeof.State+State.counterMoves]
-		mov   rax, qword[rbp+Pos.counterMoveHistory]
-		add   rax, 4*(64*16)*(64*8)
-
-match =1, DEBUG \{
-; we are using a dead spot of the cmh table
-; make sure that the entries really are zero
-xor ecx, ecx
-..TestLoop:
-Assert e, dword[rax+4*rcx], 0, 'cmh dead spot is not really dead in ScoreQuiets'
-add ecx, 1
-cmp ecx, 64*16
-jb ..TestLoop
-\}
-
-	       test   cmh, cmh
-	      cmovz   cmh, rax
-	       test   fmh, fmh
-	      cmovz   fmh, rax
-	       test   fmh2, fmh2
-	      cmovz   fmh2, rax
 		mov   r8d, dword[rbp+Pos.sideToMove]
 		shl   r8d, 12+2
 		add   r8, qword[rbp+Pos.history]
 
 	history_get_c equ r8
-
-
-match = 1, DEBUG \{
-		mov   rax, cmh
-		mov   rcx, qword[rbp+Pos.counterMoveHistory]
-		sub   rax, rcx
-		mov   ecx, 4*16*64
-		xor   edx, edx
-		div   rcx
-	     Assert   e, rdx, 0     , 'cmh is bad rem'
-	     Assert   b, rax, 16*64 , 'cmh is bad quo'
-		mov   rax, fmh
-		mov   rcx, qword[rbp+Pos.counterMoveHistory]
-		sub   rax, rcx
-		mov   ecx, 4*16*64
-		xor   edx, edx
-		div   rcx
-	     Assert   e, rdx, 0     , 'fmh is bad rem'
-	     Assert   b, rax, 16*64 , 'fmh is bad quo'
-		mov   rax, fmh2
-		mov   rcx, qword[rbp+Pos.counterMoveHistory]
-		sub   rax, rcx
-		mov   ecx, 4*16*64
-		xor   edx, edx
-		div   rcx
-	     Assert   e, rdx, 0     , 'fmh2 is bad rem'
-	     Assert   b, rax, 16*64 , 'fmh2 is bad quo'
-\}
 
 		cmp   start, ender
 		jae   ..Done

@@ -34,42 +34,46 @@ ProfileInc Search_NONPV
 
 
 virtual at rsp
-  .tte                    rq 1  ;0
-  .ltte                   rq 1  ;8
-  .posKey                 rq 1
-  .ttMove                 rd 1
-  .ttValue                rd 1
-  .move                   rd 1
-  .excludedMove           rd 1
-  .bestMove               rd 1
-  .ext                    rd 1
-  .newDepth               rd 1
-  .predictedDepth         rd 1
-  .moveCount              rd 1
-  .quietCount             rd 1
-  .alpha                  rd 1
-  .beta                   rd 1
-  .depth                  rd 1
-  .bestValue              rd 1
-  .value                  rd 1
-  .eval                   rd 1
-  .nullValue              rd 1
-  .futilityValue          rd 1
-  .extension              rd 1
-  .success                rd 1  ; for tb
-  .rbeta                  rd 1
-  .moved_piece_to_sq      rd 1
-  .givesCheck             rb 1
+  .tte			  rq 1	;0
+  .ltte 		  rq 1	;8
+  .posKey		  rq 1
+
+  .ttMove		  rd 1
+  .ttValue		  rd 1
+  .move 		  rd 1
+  .excludedMove 	  rd 1
+  .bestMove		  rd 1
+  .ext			  rd 1
+  .newDepth		  rd 1
+  .predictedDepth	  rd 1
+  .moveCount		  rd 1
+  .quietCount		  rd 1
+  .check_cm	rd 1
+  .check_fm	rd 1
+  .check_fm2	rd 1
+  .alpha		  rd 1
+  .beta 		  rd 1
+  .depth		  rd 1
+  .bestValue		  rd 1
+  .value		  rd 1
+  .eval 		  rd 1
+  .nullValue		  rd 1
+  .futilityValue	  rd 1
+  .extension		  rd 1
+  .success		  rd 1	; for tb
+  .rbeta		  rd 1
+  .moved_piece_to_sq	  rd 1
+  .givesCheck		  rb 1
   .singularExtensionNode  rb 1
-  .improving              rb 1
-  .captureOrPromotion     rb 1  ; nonzero for true
-  .doFullDepthSearch      rb 1
-  .cutNode                rb 1  ; -1 for true
-  .ttHit                  rb 1
-  .moveCountPruning       rb 1
-  .quietsSearched         rd 64
+  .improving		  rb 1
+  .captureOrPromotion	  rb 1	; nonzero for true
+  .doFullDepthSearch	  rb 1
+  .cutNode		  rb 1	; -1 for true
+  .ttHit		  rb 1
+  .moveCountPruning	  rb 1
+  .quietsSearched	  rd 64
 if .PvNode eq 1
-  .pv   rd MAX_PLY+1
+  .pv	rd MAX_PLY+1
 end if
   .lend rb 0
 end virtual
@@ -110,17 +114,17 @@ end if
 
 	; callsCnt counts down as in master
 	; resetCnt, if nonzero, contains the count to which callsCnt should be reset
-                mov   eax, dword[rbp-Thread.rootPos+Thread.resetCnt]
-                mov   edx, dword[rbp-Thread.rootPos+Thread.callsCnt]
-               test   eax, eax
-                 jz   .dontreset
-                mov   edx, eax
-                mov   dword[rbp-Thread.rootPos+Thread.resetCnt], 0
+		mov   eax, dword[rbp-Thread.rootPos+Thread.resetCnt]
+		mov   edx, dword[rbp-Thread.rootPos+Thread.callsCnt]
+	       test   eax, eax
+		 jz   .dontreset
+		mov   edx, eax
+		mov   dword[rbp-Thread.rootPos+Thread.resetCnt], 0
 	.dontreset:
-                sub   edx, 1
-                mov   dword[rbp-Thread.rootPos+Thread.callsCnt], edx
-                jns   .dontchecktime
-               call   CheckTime         ; CheckTime sets resetCalls for all threads
+		sub   edx, 1
+		mov   dword[rbp-Thread.rootPos+Thread.callsCnt], edx
+		jns   .dontchecktime
+	       call   CheckTime 	; CheckTime sets resetCalls for all threads
 	.dontchecktime:
 
 
@@ -158,10 +162,12 @@ end if
     end if ;.RootNode eq 0
 
 		xor   eax, eax
+		mov   ecx, CmhDeadOffset
+		add   rcx, qword[rbp+Pos.counterMoveHistory]
 		mov   dword[.bestMove], eax
 		mov   dword[rbx+1*sizeof.State+State.excludedMove], eax
 		mov   dword[rbx+0*sizeof.State+State.currentMove], eax
-		mov   qword[rbx+0*sizeof.State+State.counterMoves], rax
+		mov   qword[rbx+0*sizeof.State+State.counterMoves], rcx
 		mov   byte[rbx+1*sizeof.State+State.skipEarlyPruning], al
 		mov   dword[rbx+2*sizeof.State+State.killers+4*0], eax
 		mov   dword[rbx+2*sizeof.State+State.killers+4*1], eax
@@ -263,7 +269,7 @@ end if
 		cmp   edx, MOVE_NULL
 		 je   @f
 	       call   Evaluate
-	@@:     mov   r8d, eax
+	@@:	mov   r8d, eax
 		mov   dword[rbx+State.staticEval], eax
 		mov   dword[.eval], eax
 		mov   r9, qword [.posKey]
@@ -275,7 +281,7 @@ end if
 		cmp   eax, VALUE_NONE
 		jne   @f
 	       call   Evaluate
-	@@:     xor   ecx, ecx
+	@@:	xor   ecx, ecx
 		mov   dword[rbx+State.staticEval], eax
 		cmp   edi, eax
 	       setg   cl
@@ -284,7 +290,7 @@ end if
 		 je   @f
 	       test   cl, byte[.ltte+MainHashEntry.genBound]
 	     cmovnz   eax, edi
-	@@:     mov   dword[.eval], eax
+	@@:	mov   dword[.eval], eax
 .StaticValueDone:
 
 
@@ -363,7 +369,8 @@ end if
 		and   edx, eax
 		 js   .8skip
 
-		xor   eax, eax
+		mov   eax, CmhDeadOffset
+		add   rax, qword[rbp+Pos.counterMoveHistory]
 		mov   dword[rbx+State.currentMove], MOVE_NULL
 		mov   qword[rbx+State.counterMoves], rax
 
@@ -484,7 +491,7 @@ end if
 		 je   @f
 	       test   edx, edx
 		 jz   .9NoTTMove
-	@@:     mov   ecx, dword[.ttMove]
+	@@:	mov   ecx, dword[.ttMove]
 	       call   Move_IsPseudoLegal
 	       test   rax, rax
 		 jz   .9NoTTMove
@@ -517,7 +524,7 @@ end if
 	      movzx   eax, byte[rbp+Pos.board+rax]
 		shl   eax, 6
 		add   eax, ecx
-	       imul   eax, 4*16*64
+		shl   eax, 2+4+6
 		add   rax, qword[rbp+Pos.counterMoveHistory]
 		mov   qword[rbx+State.counterMoves], rax
 
@@ -629,9 +636,29 @@ end if
 .CMH  equ (rbx-1*sizeof.State+State.counterMoves)
 .FMH  equ (rbx-2*sizeof.State+State.counterMoves)
 .FMH2 equ (rbx-4*sizeof.State+State.counterMoves)
+	; !cm_ok => check_cm < 0
+	;           check_cm >= 0 otherwise
+	; !fm_ok => check_fm < 0
+	;           check_fm >= 0 otherwise
+	; !fm_ok || (cm_ok && fm_ok) => check_fm2 < 0
+	;                               check_fm2 >= 0 otherwise
+		mov   eax, dword[rbx-1*sizeof.State+State.currentMove]
+		mov   ecx, dword[rbx-2*sizeof.State+State.currentMove]
+		mov   edx, dword[rbx-4*sizeof.State+State.currentMove]
+		sub   eax, 1
+		sub   ecx, 1
+		sub   edx, 1
+		mov   dword[.check_cm], eax
+		mov   dword[.check_fm], ecx
+		not   eax
+		not   ecx
+		and   eax, ecx
+		 or   edx, eax
+		mov   dword[.check_fm2], edx
 
 
-        ; initialize move pick
+
+	; initialize move pick
 
 		mov   ecx, dword[.ttMove]
 		mov   edx, dword[.depth]
@@ -738,7 +765,7 @@ end if
 	       imul   ecx, dword[rbp-Thread.rootPos+Thread.PVIdx], sizeof.RootMove
 		add   rcx, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
 		mov   rdx, qword[rbp+Pos.rootMovesVec+RootMovesVec.ender]
-	@@:     cmp   rcx, rdx
+	@@:	cmp   rcx, rdx
 		jae   .MovePickLoop
 		cmp   eax, dword[rcx+RootMove.pv+4*0]
 		lea   rcx, [rcx+sizeof.RootMove]
@@ -922,20 +949,20 @@ end if
 	       test   al, al
 		jnz   .MovePickLoop
 
+		mov   edi, dword[.newDepth]
 		mov   esi, 63
 	      movzx   eax, byte[.improving]
 		;mov   ecx, dword[.depth]
 		mov   ecx, edx
 		cmp   edx, esi
 	      cmova   ecx, esi
-	       imul   eax, 64
-		add   eax, ecx
+		lea   eax, [8*rax]
+		lea   eax, [8*rax+rcx]
 		mov   ecx, dword[.moveCount]
 		cmp   ecx, esi
 	      cmova   ecx, esi
-	       imul   eax, 64
-		add   eax, ecx
-		mov   edi, dword[.newDepth]
+		lea   eax, [8*rax]
+		lea   eax, [8*rax+rcx]
 		sub   edi, dword[Reductions+4*(rax+2*64*64*.PvNode)]
 	; edi = lmrDepth
 
@@ -943,27 +970,19 @@ end if
 		mov   r8, qword[.CMH]
 		mov   r9, qword[.FMH]
 		mov   r10, qword[.FMH2]
+		lea   r11, [8*r14]
+		lea   r11, [8*r11+r13]
+		mov   eax, dword[r8+4*r11]
+		mov   ecx, dword[r9+4*r11]
+		mov   edx, dword[r10+4*r11]
+		 or   eax, dword[.check_cm]
+		 or   ecx, dword[.check_fm]
+		 or   edx, dword[.check_fm2]
 		cmp   edi, 3*ONE_PLY
 		jge   .13DontSkip2
-
-	       imul   eax, r14d, 64
-		add   eax, r13d
-	       test   r8, r8
-		 jz   @f
-		cmp   dword[r8+4*rax], 0
-		jge   .13DontSkip2
-	@@:    test   r9, r9
-		 jz   @f
-		cmp   dword[r9+4*rax], 0
-		jge   .13DontSkip2
-	@@:    test   r10, r10
-		 jz   .MovePickLoop
-		cmp   dword[r10+4*rax], 0
-		 jl   .MovePickLoop
-	       test   r8, r8
-		 jz   .13DontSkip2
-	       test   r9, r9
-		jnz   .MovePickLoop
+		and   eax, ecx
+	       test   eax, edx
+		 js   .MovePickLoop
 	.13DontSkip2:
 
 	; Futility pruning: parent node
@@ -988,7 +1007,6 @@ end if
 	       call   SeeTestGe
 	       test   eax, eax
 		 jz   .MovePickLoop
-
 		jmp   .13done
 .13else:
 		mov   ecx, dword[.move]
@@ -997,7 +1015,6 @@ end if
 		cmp   byte[.extension], 0
 		jne   .13done
 	       imul   edx, -PawnValueEg
-
 	       call   SeeTestGe
 	       test   eax, eax
 		 jz   .MovePickLoop
@@ -1118,16 +1135,9 @@ end if
 
 		mov   ecx, dword[rbx-2*sizeof.State+State.history]
 
-	       test   r9, r9
-		 jz   @f
 		add   eax, dword[r9+4*rdx]
-	@@:    test   r10, r10
-		 jz   @f
 		add   eax, dword[r10+4*rdx]
-	@@:    test   r11, r11
-		 jz   @f
 		add   eax, dword[r11+4*rdx]
-	@@:
 
 ; if a>0 and b<0
 ;   d=d-1
@@ -1497,11 +1507,8 @@ end if
 		jmp   .20TTStore
 .20CheckBonus:
 	; we already checked that bestMove = 0
-		mov   eax, dword[rbx-1*sizeof.State+State.currentMove]
-		lea   ecx, [eax-1]
-		mov   edx, r13d
-		sub   edx, 3*ONE_PLY
-		 or   edx, ecx
+		lea   edx, [r13-3*ONE_PLY]
+		 or   edx, dword[.check_cm]
 		 js   .20TTStore
 		cmp   byte[rbx+State.capturedPiece], 0
 		jne   .20TTStore

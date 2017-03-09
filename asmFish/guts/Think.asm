@@ -19,7 +19,6 @@ end virtual
 
 		lea   rbp, [rcx+Thread.rootPos]
 		mov   rbx, qword[rbp+Pos.state]
-;GD_String <db 'Thread_Think',10>
 
 		mov   dword[.easyMove], 0
 		mov   dword[.alpha], -VALUE_INFINITE
@@ -31,11 +30,14 @@ end virtual
 	; clear the search stack
 		lea   rdx, [rbx-5*sizeof.State]
 		lea   r8, [rbx+3*sizeof.State]
+		mov   r9d, CmhDeadOffset
+		add   r9, qword[rbp+Pos.counterMoveHistory]
 .clear_stack:
 		xor   eax, eax
 		lea   rdi, [rdx+State._stack_start]
 		mov   ecx, State._stack_end-State._stack_start
 	  rep stosb
+		mov   qword[rdx+State.counterMoves], r9
 		add   rdx, sizeof.State
 		cmp   rdx, r8
 		 jb   .clear_stack
@@ -86,25 +88,25 @@ end virtual
 		mov   eax, dword[rbp-Thread.rootPos+Thread.idx]
 		mov   ecx, 20
 		sub   eax, 1
-                 jc   .age_out
+		 jc   .age_out
 
-                xor   edx, edx
-                div   ecx
-        ; edx = idx-1 after idx has been updated by edx=(idx-1)%+1
-                xor   ecx, ecx
-        .loopSkipPly:
-                add   ecx, 1
-                lea   eax, [rcx+1]
-               imul   eax, ecx
-                cmp   eax, edx
-                jbe   .loopSkipPly
-                lea   eax, [r15+rdx]
-                add   eax, dword[rbp+Pos.gamePly]
-                xor   edx, edx
-                div   ecx
-                sub   eax, ecx
-               test   eax, 1
-                 jz   .id_loop
+		xor   edx, edx
+		div   ecx
+	; edx = idx-1 after idx has been updated by edx=(idx-1)%+1
+		xor   ecx, ecx
+	.loopSkipPly:
+		add   ecx, 1
+		lea   eax, [rcx+1]
+	       imul   eax, ecx
+		cmp   eax, edx
+		jbe   .loopSkipPly
+		lea   eax, [r15+rdx]
+		add   eax, dword[rbp+Pos.gamePly]
+		xor   edx, edx
+		div   ecx
+		sub   eax, ecx
+	       test   eax, 1
+		 jz   .id_loop
 		jmp   .save_prev_score
 
 .age_out:
