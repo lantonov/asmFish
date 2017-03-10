@@ -80,6 +80,27 @@ CmpString.Found:
         ret
 
 
+CmpStringCaseless:
+// if beginning of string at x14 matches null terminated string at x1
+// then advance x14 to end of match and return x0 = -1
+// else return x0 = 0 and do nothing
+        mov  x3, x14
+CmpStringCaseless.Next:
+       ldrb  w0, [x1], 1
+        cbz  w0, CmpStringCaseless.Found
+       ldrb  w2, [x3], 1
+        ToLower w2
+        cmp  w0, w2
+        beq  CmpStringCaseless.Next
+CmpStringCaseless.NoMatch:
+        mov  x0, 0
+        ret
+CmpStringCaseless.Found:
+        mov  x14, x3
+        mov  x0, -1
+        ret
+
+
 SkipSpaces.Next:
         add  x14, x14, 1
 SkipSpaces:
@@ -114,6 +135,66 @@ ParseToken:
         blo  ParseToken.Next
 ParseToken.Done:
         ret
+        
+
+
+
+ParseUciMove:
+/*
+	; if string at rsi is a legal move, it is return in eax and rsi is advanced,
+	;   othersize MOVE_NONE (0) is return and rsi is unchanged
+
+	       push   rbx rdi rsi
+virtual at rsp
+  .moveList    rb sizeof.ExtMove*MAX_MOVES
+  .lend rb 0
+end virtual
+.localsize = ((.lend-rsp+15) and (-16))
+
+	 _chkstk_ms   rsp, .localsize
+		sub   rsp, .localsize
+
+		lea   rdi, [.moveList]
+		mov   rbx, qword[rbp+Pos.state]
+	       call   SetCheckInfo
+	       call   Gen_Legal
+		xor   eax, eax
+	      stosd
+
+		mov   ebx, dword[rsi]
+	      movzx   eax, byte[rsi+4]
+	    ToLower   eax
+		mov   edx, ' '
+		sub   edx, eax
+		adc   rsi, 4
+		sar   edx, 31
+		and   eax, edx
+		shl   rax, 32
+		 or   rbx, rax
+		lea   rdi, [.moveList-sizeof.ExtMove]
+.CheckNext:
+		add   rdi, sizeof.ExtMove
+		mov   ecx, dword[rdi+ExtMove.move]
+		xor   eax, eax
+	       test   ecx, ecx
+		 jz   .Failed
+		mov   edx, dword[rbp+Pos.chess960]
+	       call   _PrintUciMove	   ; string result is in rax
+		cmp   rax, rbx
+		jne   .CheckNext
+
+		mov   eax, dword[rdi+ExtMove.move]
+		add   rsp, .localsize
+		pop   rdx rdi rbx	   ; move found - keep advanced value of rsi
+		ret
+
+.Failed:
+		add   rsp, .localsize
+		pop   rsi rdi rbx
+		ret
+*/
+
+
 
 
 PrintHex:
@@ -227,6 +308,42 @@ ParseInteger.Loop:
 ParseInteger.Done:      
         eor  x0, x0, x2
         sub  x0, x0, x2
+        ret
+
+
+ParseBoole:
+/*
+	; io: rsi string
+	;out: rax = -1 if string starts with true
+	;         = 0  otherwise
+	; rsi is advanced if true or false is read
+
+		 or   rax, -1
+		mov   ecx, dword[rsi]
+		add   rsi, 4
+		cmp   ecx, 'true'
+		 je   .done
+		sub   rsi, 4
+		xor   eax, eax
+		cmp   ecx, 'fals'
+		jne   .done
+		cmp   byte[rsi+4], 'e'
+		jne   .done
+		add   rsi, 5
+	.done:
+		ret
+*/
+        stp  x29, x30, [sp, -16]!
+        lea  x1, sz_true
+         bl  CmpString
+        cmp  w0, 0
+        mov  x0, -1
+        bne  ParseBoole.Done
+        lea  x1, sz_false
+         bl  CmpString
+        mov  x0, 0
+ParseBoole.Done:
+        ldp  x29, x30, [sp], 16
         ret
 
 

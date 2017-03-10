@@ -377,7 +377,7 @@ UciIsReady:
 */
         lea  x16, options
        ldrb  w0, [x16, Options.changed]
-        cbz  UciIsReady.ok
+        cbz  w0, UciIsReady.ok
          bl  UciSync
 UciIsReady.ok:
 /*
@@ -477,7 +477,7 @@ UciGo:
 */
         lea  x16, options
        ldrb  w0, [x16, Options.changed]
-        cbz  UciGo.ok
+        cbz  w0, UciGo.ok
          bl  UciSync
 UciGo.ok:
 /*
@@ -638,7 +638,7 @@ UciGo.Error:
        PrintNewLine
 		jmp   UciWriteOut
 */
-        lea  rdi, Output
+        lea  x15, Output
         lea  x1, sz_error_token
          bl  PrintString
         mov  x1, 64
@@ -770,7 +770,7 @@ UciPosition.Start:
         lea  x14, szStartFEN
         lea  x16, [options]
        ldrb  w1, [x16, Options.chess960]
-         bl  Position_ParseFEN
+         bl  Position_ParseFen
         mov  x14, x25
           b  UciPosition.check
 
@@ -781,7 +781,7 @@ UciPosition.Fen:
 */
         lea  x16, [options]
        ldrb  w1, [x16, Options.chess960]
-         bl  Position_ParseFEN
+         bl  Position_ParseFen
         
 UciPosition.check:
 /*
@@ -914,7 +914,7 @@ UciParseMoves.get_move:
         ldr  x21, [x20, Pos.state]
         mov  x1, x15
         str  w15, [x21, sizeof.State+State.currentMove]
-       call  Move_GivesCheck
+         bl  Move_GivesCheck
         mov  x1, x15
         mov  x2, x0
          bl  Move_Do__UciParseMoves
@@ -937,7 +937,11 @@ UciSetOption:
 	       test   al, al
 		jnz   .Error
 */
-
+        lea  x16, threadPool
+        ldr  x0, [x16, ThreadPool.threadTable+8*0]
+       ldrb  w0, [x0, Thread.searching]
+        lea  x1, sz_error_think
+       cbnz  w0, UciSetOption.Error
 UciSetOption.Read:
 /*
 	       call   SkipSpaces
@@ -948,6 +952,12 @@ UciSetOption.Read:
 		 jz   .Error
 	       call   SkipSpaces
 */
+         bl  SkipSpaces
+        lea  x1, sz_name
+         bl  CmpString
+        lea  x1, sz_error_name
+        cbz  w0, UciSetOption.Error
+         bl  SkipSpaces
 /*
 		lea   rcx, [sz_threads]
 	       call   CmpStringCaseless
@@ -955,6 +965,10 @@ UciSetOption.Read:
 	       test   eax, eax
 		jnz   .CheckValue
 */
+        lea  x1, sz_threads
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.Threads
+       cbnz  w0, UciSetOption.CheckValue
 /*
 		lea   rcx, [sz_hash]
 	       call   CmpStringCaseless
@@ -962,6 +976,10 @@ UciSetOption.Read:
 	       test   eax, eax
 		jnz   .CheckValue
 */
+        lea  x1, sz_hash
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.Hash
+       cbnz  w0, UciSetOption.CheckValue
 /*
 		lea   rcx, [sz_largepages]
 	       call   CmpStringCaseless
@@ -969,6 +987,10 @@ UciSetOption.Read:
 	       test   eax, eax
 		jnz   .CheckValue
 */
+        lea  x1, sz_largepages
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.LargePages
+       cbnz  w0, UciSetOption.CheckValue
 /*
 		lea   rcx, [sz_nodeaffinity]
 	       call   CmpStringCaseless
@@ -976,6 +998,10 @@ UciSetOption.Read:
 	       test   eax, eax
 		jnz   .CheckValue
 */
+        lea  x1, sz_nodeaffinity
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.NodeAffinity
+       cbnz  w0, UciSetOption.CheckValue
 /*
 		lea   rcx, [sz_priority]
 	       call   CmpStringCaseless
@@ -983,12 +1009,19 @@ UciSetOption.Read:
 	       test   eax, eax
 		jnz   .CheckValue
 */
+        lea  x1, sz_priority
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.Priority
+       cbnz  w0, UciSetOption.CheckValue
 /*
 		lea   rcx, [sz_clear_hash]  ; arena may send Clear Hash
 	       call   CmpStringCaseless     ;  instead of ClearHash
 	       test   eax, eax		    ;
 		jnz   .ClearHash	    ;
 */
+        lea  x1, sz_clear_hash
+         bl  CmpStringCaseless
+       cbnz  w0, UciSetOption.ClearHash
 /*
 		lea   rcx, [sz_ponder]
 	       call   CmpStringCaseless
@@ -996,6 +1029,10 @@ UciSetOption.Read:
 	       test   eax, eax
 		jnz   .CheckValue
 */
+        lea  x1, sz_ponder
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.Ponder
+       cbnz  w0, UciSetOption.CheckValue
 /*
 		lea   rcx, [sz_contempt]
 	       call   CmpStringCaseless
@@ -1003,6 +1040,10 @@ UciSetOption.Read:
 	       test   eax, eax
 		jnz   .CheckValue
 */
+        lea  x1, sz_contempt
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.Contempt
+       cbnz  w0, UciSetOption.CheckValue
 /*
 		lea   rcx, [sz_multipv]
 	       call   CmpStringCaseless
@@ -1010,6 +1051,10 @@ UciSetOption.Read:
 	       test   eax, eax
 		jnz   .CheckValue
 */
+        lea  x1, sz_multipv
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.MultiPv
+       cbnz  w0, UciSetOption.CheckValue
 /*
 		lea   rcx, [sz_moveoverhead]
 	       call   CmpStringCaseless
@@ -1017,6 +1062,10 @@ UciSetOption.Read:
 	       test   eax, eax
 		jnz   .CheckValue
 */
+        lea  x1, sz_moveoverhead
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.MoveOverhead
+       cbnz  w0, UciSetOption.CheckValue
 /*
 		lea   rcx, [sz_minthinktime]
 	       call   CmpStringCaseless
@@ -1024,6 +1073,10 @@ UciSetOption.Read:
 	       test   eax, eax
 		jnz   .CheckValue
 */
+        lea  x1, sz_minthinktime
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.MinThinkTime
+       cbnz  w0, UciSetOption.CheckValue
 /*
 		lea   rcx, [sz_slowmover]
 	       call   CmpStringCaseless
@@ -1031,6 +1084,10 @@ UciSetOption.Read:
 	       test   eax, eax
 		jnz   .CheckValue
 */
+        lea  x1, sz_slowmover
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.SlowMover
+       cbnz  w0, UciSetOption.CheckValue
 /*
 		lea   rcx, [sz_uci_chess960]
 	       call   CmpStringCaseless
@@ -1038,6 +1095,10 @@ UciSetOption.Read:
 	       test   eax, eax
 		jnz   .CheckValue
 */
+        lea  x1, sz_uci_chess960
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.Chess960
+       cbnz  w0, UciSetOption.CheckValue
 /*
 		lea   rdi, [Output]
 		lea   rcx, [sz_error_option]
@@ -1047,6 +1108,13 @@ UciSetOption.Read:
        PrintNewLine
 		jmp   UciWriteOut
 */
+        lea  x15, Output
+        lea  x1, sz_error_option
+         bl  PrintString
+        mov  x1, 64
+         bl  ParseToken
+          b  UciWriteOut_NewLine
+
 UciSetOption.Error:
 /*
 		lea   rdi, [Output]
@@ -1055,6 +1123,10 @@ UciSetOption.Error:
 	       call   _WriteOut_Output
 		jmp   UciGetInput
 */
+        lea  x15, Output
+         bl  PrintString
+          b  UciWriteOut_NewLine
+        
 UciSetOption.CheckValue:
 /*
 	       call   SkipSpaces
@@ -1066,6 +1138,14 @@ UciSetOption.CheckValue:
 	       call   SkipSpaces
 		jmp   rbx
 */
+         bl  SkipSpaces
+        lea  x1, sz_value
+         bl  CmpString
+        lea  x1, sz_error_value
+       cbnz  w0, UciSetOption.Error
+         bl  SkipSpaces
+         br  x21
+
 UciSetOption.LargePages:
 /*
 	       call   ParseBoole
@@ -1073,6 +1153,13 @@ UciSetOption.LargePages:
 		mov   byte[options.changed], -1
 		jmp   UciGetInput
 */
+         bl  ParseBoole
+        lea  x16, options
+       strb  w0, [x16, Options.largePages]
+        mov  w0, -1
+       strb  w0, [x16, Options.changed]
+          b  UciGetInput
+
 UciSetOption.Hash:
 /*
 	       call   ParseInteger
@@ -1082,6 +1169,16 @@ UciSetOption.Hash:
 		mov   byte[options.changed], -1
 		jmp   UciGetInput
 */
+         bl  ParseInteger
+        mov  w4, 1
+        mov  w5, 1 << MAX_HASH_LOG2MB
+        ClampUnsigned w0, w4, w5
+        lea  x16, options
+        str  w0, [x16, Options.hash]
+        mov  w0, -1
+       strb  w0, [x16, Options.changed]
+          b  UciGetInput
+
 UciSetOption.Threads:
 /*
 	       call   ParseInteger
@@ -1090,6 +1187,16 @@ UciSetOption.Threads:
 		mov   byte[options.changed], -1
 		jmp   UciGetInput
 */
+         bl  ParseInteger
+        mov  w4, 1
+        mov  w5, MAX_THREADS
+        ClampUnsigned w0, w4, w5
+        lea  x16, options
+        str  w0, [x16, Options.threads]
+        mov  w0, -1
+       strb  w0, [x16, Options.changed]
+          b  UciGetInput
+        
 
 UciSetOption.NodeAffinity:
 /*
@@ -1100,6 +1207,12 @@ UciSetOption.NodeAffinity:
 	       call   ThreadPool_ReadOptions
 		jmp   UciGetInput
 */
+         bl  ThreadPool_Destroy
+        mov  x1, x14
+         bl  ThreadPool_Create
+         bl  Os_DisplayThreadPoolInfo
+         bl  ThreadPool_ReadOptions
+          b  UciGetInput
 
 UciSetOption.Priority:
 /*
@@ -1110,24 +1223,39 @@ UciSetOption.Priority:
 	       test   eax, eax
 		jnz   UciGetInput
 */
+         bl  SkipSpaces
+        lea  x1, sz_none
+         bl  CmpStringCaseless
+       cbnz  w0, UciGetInput
 /*
 		lea   rcx, [sz_normal]
 	       call   CmpStringCaseless
 	       test   eax, eax
 		jnz   .PriorityNormal
 */
+        lea  x1, sz_normal
+         bl  CmpStringCaseless
+       cbnz  w0, UciSetOption.PriorityNormal
 /*
 		lea   rcx, [sz_low]
 	       call   CmpStringCaseless
 	       test   eax, eax
 		jnz   .PriorityLow
 */
+        lea  x1, sz_low
+         bl  CmpStringCaseless
+       cbnz  w0, UciSetOption.PriorityLow
+        
 /*
 		lea   rcx, [sz_idle]
 	       call   CmpStringCaseless
 	       test   eax, eax
 		jnz   .PriorityIdle
 */
+        lea  x1, sz_idle
+         bl  CmpStringCaseless
+       cbnz  w0, UciSetOption.PriorityIdle
+
 /*
 		lea   rdi, [Output]
 		mov   rax, 'error: u'
@@ -1140,21 +1268,34 @@ UciSetOption.Priority:
 	       call   ParseToken
 		jmp   UciWriteOut_NewLine
 */
+        lea  x15, Output
+        lea  x1, sz_error_priority
+         bl  PrintString
+        mov  x1, 64
+         bl  ParseToken
+          b  UciWriteOut_NewLine
+
 UciSetOption.PriorityNormal:
 /*
 	       call   _SetPriority_Normal
 		jmp   UciGetInput
 */
+         bl  Os_SetPriority_Normal
+          b  UciGetInput
 UciSetOption.PriorityLow:
 /*
 	       call   _SetPriority_Low
 		jmp   UciGetInput
 */
+         bl  Os_SetPriority_Low
+          b  UciGetInput
 UciSetOption.PriorityIdle:
 /*
 	       call   _SetPriority_Idle
 		jmp   UciGetInput
 */
+         bl  Os_SetPriority_Idle
+          b  UciGetInput
 
 UciSetOption.ClearHash:
 /*
@@ -1168,6 +1309,11 @@ UciSetOption.ClearHash:
 	      stosq
 		jmp   UciWriteOut_NewLine
 */
+         bl  Search_Clear
+        lea  x15, Output
+        lea  x1, sz_hash_cleared
+         bl  PrintString
+          b  UciWriteOut_NewLine
 
 UciSetOption.MultiPv:
 /*
@@ -1176,18 +1322,36 @@ UciSetOption.MultiPv:
 		mov   dword[options.multiPV], eax
 		jmp   UciGetInput
 */
+         bl  ParseInteger
+        mov  w4, 1
+        mov  w5, MAX_MOVES
+        ClampUnsigned w0, w4, w5
+        lea  x16, options
+        str  w0, [x16, Options.multiPV]
+          b  UciGetInput
+
 UciSetOption.Chess960:
 /*
 	       call   ParseBoole
 		mov   byte[options.chess960], al
 		jmp   UciGetInput
 */
+         bl  ParseBoole
+        lea  x16, options
+       strb  w0, [x16, Options.chess960]
+          b  UciGetInput
+
 UciSetOption.Ponder:
 /*
 	       call   ParseBoole
 		mov   byte[options.ponder], al
 		jmp   UciGetInput
 */
+         bl  ParseBoole
+        lea  x16, options
+       strb  w0, [x16, Options.ponder]
+          b  UciGetInput
+
 UciSetOption.Contempt:
 /*
 	       call   ParseInteger
@@ -1195,6 +1359,14 @@ UciSetOption.Contempt:
 		mov   dword[options.contempt], eax
 		jmp   UciGetInput
 */
+         bl  ParseInteger
+        mov  w4, -100
+        mov  w5, 100
+        ClampSigned w0, w4, w5
+        lea  x16, options
+        str  w0, [x16, Options.contempt]
+          b  UciGetInput
+
 UciSetOption.MoveOverhead:
 /*
 	       call   ParseInteger
@@ -1202,6 +1374,13 @@ UciSetOption.MoveOverhead:
 		mov   dword[options.moveOverhead], eax
 		jmp   UciGetInput
 */
+         bl  ParseInteger
+        mov  w4, 0
+        mov  w5, 5000
+        ClampUnsigned w0, w4, w5
+        lea  x16, options
+        str  w0, [x16, Options.moveOverhead]
+          b  UciGetInput
 UciSetOption.MinThinkTime:
 /*
 	       call   ParseInteger
@@ -1209,6 +1388,14 @@ UciSetOption.MinThinkTime:
 		mov   dword[options.minThinkTime], eax
 		jmp   UciGetInput
 */
+         bl  ParseInteger
+        mov  w4, 0
+        mov  w5, 5000
+        ClampUnsigned w0, w4, w5
+        lea  x16, options
+        str  w0, [x16, Options.minThinkTime]
+          b  UciGetInput
+
 UciSetOption.SlowMover:
 /*
 	       call   ParseInteger
@@ -1216,6 +1403,13 @@ UciSetOption.SlowMover:
 		mov   dword[options.slowMover], eax
 		jmp   UciGetInput
 */
+         bl  ParseInteger
+        mov  w4, 0
+        mov  w5, 1000
+        ClampSigned w0, w4, w5
+        lea  x16, options
+        str  w0, [x16, Options.slowMover]
+          b  UciGetInput
 
 
 
@@ -1238,6 +1432,17 @@ UciPerft:
 	       call   _SetPriority_Normal
 		jmp   UciGetInput
 */
+         bl  SkipSpaces
+         bl  ParseInteger
+        cbz  x0, UciPerft.bad_depth
+        cmp  x0, 10
+        bhi  UciPerft.bad_depth
+        mov  x14, x0
+        mov  x1, x0
+         bl  Position_SetExtraCapacity
+        mov  x1, x14
+         bl  Perft_Root
+          b  UciGetInput
 UciPerft.bad_depth:
 /*
 		lea   rdi, [Output]
@@ -1247,7 +1452,12 @@ UciPerft.bad_depth:
 	       call   ParseToken
 		jmp   UciWriteOut_NewLine
 */
-
+        lea  x15 Output
+        lea  x1, sz_error_depth
+         bl  PrintString
+        mov  x1, 8
+         bl  ParseToken
+          b  UciWriteOut_NewLine
 
 UciBench:
 /*
@@ -1258,7 +1468,11 @@ UciBench:
 
 		lea   rdi, [.parse_hash]
 */
-
+        mov  x22, 13
+        mov  x23, 1
+        mov  x24, 16
+        mov  x25, 0
+        adr  x15, UciBench.parse_hash
 UciBench.parse_loop:
 /*
 	       call   SkipSpaces
@@ -1275,24 +1489,43 @@ UciBench.parse_loop:
 		jmp   rdi	; we have a number without preceding depth, threads, hash, or realtime token
 		@@:
 */
+         bl  SkipSpaces
+       ldrb  w1, [x14]
+        cmp  w1, ' '
+        blo  UciBench.parse_done
+        sub  w0, w1, '0'
+        cmp  w0, 10
+        bhs  UciBench.GotToken
+        cbz  x15, UciBench.parse_done
+         br  x15
+UciBench.GotToken:
 /*
 		lea   rcx, [sz_threads]
 	       call   CmpString
 	       test   eax, eax
 		jnz   .parse_threads
 */
+        lea  x1, sz_threads
+         bl  CmpString
+       cbnz  w0, UciBench.parse_threads
 /*
 		lea   rcx, [sz_depth]
 	       call   CmpString
 	       test   eax, eax
 		jnz   .parse_depth
 */
+        lea  x1, sz_depth
+         bl  CmpString
+       cbnz  w0, UciBench.parse_depth
 /*
 		lea   rcx, [sz_hash]
 	       call   CmpString
 	       test   eax, eax
 		jnz   .parse_hash
 */
+        lea  x1, sz_hash
+         bl  CmpString
+       cbnz  w0, UciBench.parse_hash
 /*
 		lea   rcx, [sz_realtime]
 	       call   CmpString
@@ -1300,6 +1533,10 @@ UciBench.parse_loop:
 		jnz   .parse_realtime
 		jmp   .parse_done
 */
+        lea  x1, sz_realtime
+         bl  CmpString
+       cbnz  w0, UciBench.parse_realtime
+          b  UciBench.parse_done
 UciBench.parse_hash:
 /*
 		lea   rdi, [.parse_threads]
@@ -1309,6 +1546,14 @@ UciBench.parse_hash:
 		mov   r14d, eax
 		jmp   .parse_loop
 */
+        adr  x15, UciBench.parse_threads
+         bl  SkipSpaces
+         bl  ParseInteger
+        mov  w4, 1
+        mov  w5, 1 << MAX_HASH_LOG2MB
+        ClampUnsigned w0, w4, w5
+        mov  w24, w0
+          b  UciBench.parse_loop
 UciBench.parse_threads:
 /*
 		lea   rdi, [.parse_depth]
@@ -1318,6 +1563,14 @@ UciBench.parse_threads:
 		mov   r13d, eax
 		jmp   .parse_loop
 */
+        adr  x15, UciBench.parse_depth
+         bl  SkipSpaces
+         bl  ParseInteger
+        mov  w4, 1
+        mov  w5, MAX_THREADS
+        ClampUnsigned w0, w4, w5
+        mov  w23, w0
+          b  UciBench.parse_loop
 UciBench.parse_depth:
 /*
 		lea   rdi, [.parse_realtime]
@@ -1327,6 +1580,15 @@ UciBench.parse_depth:
 		mov   r12d, eax
 		jmp   .parse_loop
 */
+        adr  x15, UciBench.parse_realtime
+         bl  SkipSpaces
+         bl  ParseInteger
+        mov  w4, 1
+        mov  w5, 40
+        ClampUnsigned w0, w4, w5
+        mov  w22, w0
+          b  UciBench.parse_loop
+
 UciBench.parse_realtime:
 /*
 		xor   edi, edi
@@ -1337,6 +1599,12 @@ UciBench.parse_realtime:
 		adc   r15d, r15d
 		jmp   .parse_loop
 */
+        mov  x15, 0
+         bl  SkipSpaces
+         bl  ParseInteger
+        cmp  x0, 0
+       cset  x15, ne
+          b  UciBench.parse_loop
 UciBench.parse_done:
 /*
 		lea   rdi, [Output]
@@ -1375,24 +1643,48 @@ UciBench.parse_done:
 		mov   dword[options.threads], r13d
 	       call   ThreadPool_ReadOptions
 */
+        stp  x22, x25, [sp, -16]!
+        stp  x24, x23, [sp, -16]!
+        lea  x15, Output
+        lea  x1, sz_bench_format1
+        add  x2, sp, 0
+         bl  PrintFancy
+        add  sp, sp, 32
+         bl  Os_WriteOut_Output
+        lea  x16, options
+        str  w24, [x16, Options.hash]
+        str  w23, [x16, Options.threads]
+         bl  MainHash_ReadOptions
+         bl  ThreadPool_ReadOptions
+
 /*
 		xor   eax, eax
 		mov   qword[UciLoop.nodes], rax
 		mov   byte[options.displayInfoMove], al
 	       call   Search_Clear
 */
+        lea  x16, options
+        str  xzr, [sp, UciLoop.nodes]
+       strb  wzr, [x16, Options.displayInfoMove]
 /*
 	       test   r15d, r15d
 		 jz   @f
 	       call   _SetPriority_Realtime
 	@@:
 */
+        cbz  x25, 1f
+         bl  Os_SetPriority_Realtime
+    1:
 /*
 		xor   r13d, r13d
 		mov   qword[UciLoop.time], r13
 		mov   qword[UciLoop.nodes], r13
 		lea   rsi, [BenchFens]
 */
+        mov  x23, 0
+        str  xzr, [sp, UciLoop.time]
+        str  xzr, [sp, UciLoop.nodes]
+        lea  x14, BenchFens
 
 UciBench.nextpos:
 /*
@@ -1406,6 +1698,14 @@ UciBench.nextpos:
 	       call   Limits_Set
 		lea   rcx, [UciLoop.limits]
 */
+        add  x23, x23, 1
+         bl  SkipSpaces
+         bl  Position_ParseFen
+        add  x1, sp, UciLoop.limits
+         bl  Limits_Init
+        add  x1, sp, UciLoop.limits
+        str  w22, [x1, Limits.depth]
+         bl  Limits_Set
 /*
 	       call   _GetTime
 		mov   r14, rax
@@ -1421,6 +1721,23 @@ UciBench.nextpos:
 		add   qword[UciLoop.nodes], rax
 		mov   r15, rax
 */
+         bl  Os_GetTime
+        mov  x24, x0
+        add  x1, sp, UciLoop.limits
+         bl  ThreadPool_StartThinking
+        lea  x16, threadPool
+        ldr  x1, [x16, ThreadPool.threadTable+8*0]
+         bl  Thread_WaitForSearchFinished
+         bl  Os_GetTime
+        sub  x24, x0, x24
+         bl  ThreadPool_NodesSearched_TbHits
+        ldr  x4, [sp, UciLoop.time]
+        ldr  x5, [sp, UciLoop.nodes]
+        add  x4, x4, x24
+        add  x5, x5, x0
+        str  x4, [sp, UciLoop.time]
+        str  x5, [sp, UciLoop.nodes]
+
 /*
 		lea   rdi, [Output]
 		mov   rax, r13
@@ -1464,6 +1781,19 @@ UciBench.nextpos:
 		cmp   rsi, BenchFensEnd
 		 jb   .nextpos
 */
+        cmp  x24, 0
+       cinc  x1, x24, eq
+       udiv  x2, x25, x1
+        stp  x23, x0, [sp, -32]!
+        str  x2, [sp, 16]
+        lea  x1, sz_bench_format2
+        add  x2, sp, 0
+         bl  PrintFancy
+        add  sp, sp, 32
+         bl  Os_WriteOut_Output
+        lea  x16, BenchFensEnd
+        cmp  x14, x16
+        blo  UciBench.nextpos
 
 /*
 	       call   _SetPriority_Normal
@@ -1517,7 +1847,25 @@ UciBench.nextpos:
 
 		jmp   UciGetInput
 */
-
+        ldr  x0, [sp, UciLoop.nodes]
+        ldr  x1, [sp, UciLoop.time]
+        mov  x2, 1000
+        cmp  x1, 0
+       cinc  x1, x1, eq
+      scvtf  d0, x0
+      scvtf  d1, x1
+      scvtf  d2, x2
+       fmul  d0, d0, d2
+       fdiv  d0, d0, d1
+     fcvtzs  x2, d0
+        stp  x0, x1, [sp, -32]!
+        str  x2, [sp, 16]
+        lea  x1, sz_bench_format3
+        add  x2, sp, 0
+         bl  PrintFancy
+        add  sp, sp, 32
+         bl  Os_WriteOut_Output                
+          b  UciGetInput
 
 
 

@@ -499,11 +499,12 @@ ThreadPool.nodeCnt = 1*sizeof.rd + ThreadPool.threadCnt
 ThreadPool.coreCnt = 1*sizeof.rd + ThreadPool.nodeCnt
 ThreadPool.threadTable = 1*sizeof.rd + 1*sizeof.rd + ThreadPool.coreCnt
 ThreadPool.nodeTable = MAX_THREADS*sizeof.rq + ThreadPool.threadTable
-sizeof.ThreadPool = MAX_NUMANODES*sizeof.NumaNode*sizeof.rb + ThreadPool.nodeTable
+sizeof.ThreadPool = MAX_NUMANODES*sizeof.NumaNode + ThreadPool.nodeTable
 
 IOBuffer.inputBuffer       = 0
 IOBuffer.inputBufferSizeB  = 8 + IOBuffer.inputBuffer
-IOBuffer.tmp_i             = 8 + IOBuffer.inputBufferSizeB
+IOBuffer.cmdLineStart      = 8 + IOBuffer.inputBufferSizeB
+IOBuffer.tmp_i             = 8 + IOBuffer.cmdLineStart
 IOBuffer.tmp_j             = 4 + IOBuffer.tmp_i
 IOBuffer.tmpBuffer         = 4 + IOBuffer.tmp_j
 sizeof.IOBuffer.tmpBuffer  = 512

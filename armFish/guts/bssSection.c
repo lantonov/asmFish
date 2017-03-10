@@ -1,12 +1,17 @@
 Output: .space 1024
 
         .align 16
+limits:   .space sizeof.Limits
+        .align 16
+signals:   .space sizeof.Signals
+        .align 16
 options:    .space sizeof.Options
         .align 16
 ioBuffer:   .space sizeof.IOBuffer
         .align 16
 mainHash:   .space sizeof.MainHash
-
+        .align 16
+threadPool: .space sizeof.ThreadPool
 
 
 // data for move generation

@@ -1,8 +1,15 @@
 // macro names seem to be case insensitive
+.macro ClampUnsigned Reg, RegMin, RegMax
+
+.endm
+
+.macro ClampSigned Reg, RegMin, RegMax
+
+.endm
 
 .macro lea Reg, Addr
-       adrp  Reg, \Addr
-        add  Reg, Reg, :lo12:\Addr
+       adrp  \Reg, \Addr
+        add  \Reg, \Reg, :lo12:\Addr
 .endm
 
 .macro AddSub T, A, B, C
@@ -140,5 +147,14 @@ anol\@:
         mov  x1, 1000
          bl  Os_Sleep
         PopAll     
+.endm
+
+.macro ToLower Reg
+        sub  \Reg, \Reg, 'A'
+        cmp  \Reg, 'Z'-'A'+1
+        bhs  loc_Lower\@
+        add  \Reg, \Reg, 'a'-'A'
+loc_Lower\@:
+        add  \Reg, \Reg, 'A'
 .endm
 
