@@ -2,6 +2,8 @@
 LargePageMinSize:
         .dword 0
 
+DisplayLock: .zero sizeof.Mutex
+
 szUciResponse:
 	.ascii "id name "
 szGreeting:
@@ -161,6 +163,8 @@ sz_nodeaffinity: 	.ascii "nodeaffinity\0"
 sz_moveoverhead: 	.ascii "moveoverhead\0"
 sz_minthinktime: 	.ascii "minthinktime\0"
 sz_uci_chess960: 	.ascii "uci_chess960\0"
+
+sz_show: .ascii "show\0"
 
 BenchFens: //fens must be separated by one or more space char
 .ascii "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "

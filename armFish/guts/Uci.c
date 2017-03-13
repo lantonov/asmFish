@@ -24,6 +24,7 @@ Options_Init:
        strb  w0, [x1, Options.largePages]
         ret
 
+
 Options_Destroy:
         ret
 
@@ -42,10 +43,11 @@ UciLoop.localsize = (UciLoop.localsize + 15) & (-16)
 
         stp  x29, x30, [sp, -16]!
         stp  x20, x21, [sp, -16]!
-        stp  x14, x15, [sp, -16]!
         stp  x22, x23, [sp, -16]!
         stp  x24, x25, [sp, -16]!
+        stp  x26, x27, [sp, -16]!
         sub  sp, sp, UciLoop.localsize
+
 
 /*
 	        mov   byte[options.displayInfoMove], -1
@@ -93,6 +95,16 @@ UciNewGame:
         ldr  x2, [sp, UciLoop.th1+Thread.rootPos+Pos.stateEnd]
         sub  x2, x2, x1
          bl  Os_VirtualFree
+        add  x20, sp, UciLoop.th1+Thread.rootPos
+        str  xzr, [x20, Pos.state]
+        str  xzr, [x20, Pos.stateTable]
+        str  xzr, [x20, Pos.stateEnd]
+        lea  x26, szStartFEN
+        mov  w1, 0
+         bl  Position_ParseFen
+         bl  Search_Clear
+          b  UciGetInput
+
 
 UciNextCmdFromCmdLine:
 /*
@@ -131,20 +143,20 @@ GD String, rsi
 GD NewLine
 		jmp   UciChoose
 */
-        mov  x25, x14
+        mov  x25, x26
         lea  x16, [ioBuffer]
         str  xzr, [x16, IOBuffer.cmdLineStart]
-       ldrb  w0, [x14]
+       ldrb  w0, [x26]
         cbz  w0, UciQuit
 UciNextCmdFromCmdLine.Next:       
-       ldrb  w0, [x14]
+       ldrb  w0, [x26]
         cbz  w0, UciNextCmdFromCmdLine.Found
-        add  x14, x14, 1
+        add  x26, x26, 1
         cmp  w0, ' '
         bhs  UciNextCmdFromCmdLine.Next
 UciNextCmdFromCmdLine.Found:
-        str  x14, [x16, IOBuffer.cmdLineStart]
-        mov  x14, x25
+        str  x26, [x16, IOBuffer.cmdLineStart]
+        mov  x26, x25
           b  UciChoose
 
 /*
@@ -177,8 +189,8 @@ UciWriteOut:
          bl  Os_WriteOut_Output
 UciGetInput:
         lea  x16, ioBuffer
-        ldr  x14, [x16, IOBuffer.cmdLineStart]
-       cbnz  x14, UciNextCmdFromCmdLine
+        ldr  x26, [x16, IOBuffer.cmdLineStart]
+       cbnz  x26, UciNextCmdFromCmdLine
          bl  GetLine
        cbnz  w0, UciQuit
 
@@ -191,7 +203,7 @@ UciChoose:
 
 	       call   SkipSpaces
 */
-       ldrb  w0, [x14]
+       ldrb  w0, [x26]
         cmp  w0, ' '
         blo  UciGetInput
          bl  SkipSpaces
@@ -303,6 +315,12 @@ UciChoose:
          bl  CmpString
        cbnz  w0, UciBench
 
+
+        lea  x1, sz_show
+         bl  CmpString
+       cbnz  w0, UciShow
+
+
 UciUnknown:
 /*
 		lea   rdi, [Output]
@@ -313,7 +331,7 @@ UciUnknown:
        PrintNewLine
 		jmp   UciWriteOut
 */
-        lea  x15, Output
+        lea  x27, Output
         lea  x1, sz_error_unknown
          bl  PrintString
         mov  x1, 64
@@ -346,17 +364,20 @@ UciQuit:
         lea  x16, threadPool
         ldr  x1, [x16, ThreadPool.threadTable+8*0]
          bl  Thread_WaitForSearchFinished
+
+        add  x0, sp, UciLoop.th1+Thread.rootPos
         ldr  x1, [sp, UciLoop.th1+Thread.rootPos+Pos.stateTable]
         ldr  x2, [sp, UciLoop.th1+Thread.rootPos+Pos.stateEnd]
         sub  x2, x2, x1
          bl  Os_VirtualFree
-        sub  sp, sp, UciLoop.localsize
-        stp  x24, x25, [sp], 16
-        stp  x22, x23, [sp], 16
-        stp  x14, x15, [sp], 16
-        stp  x20, x21, [sp], 16
-        stp  x29, x30, [sp], 16
+        add  sp, sp, UciLoop.localsize
+        ldp  x26, x27, [sp], 16
+        ldp  x24, x25, [sp], 16
+        ldp  x22, x23, [sp], 16
+        ldp  x20, x21, [sp], 16
+        ldp  x29, x30, [sp], 16
         ret
+
 
 UciUci:
 /*		lea   rcx, [szUciResponse]
@@ -365,7 +386,7 @@ UciUci:
 		jmp   UciGetInput
 */
         lea  x1, szUciResponse
-        lea  x15, szUciResponseEnd
+        lea  x27, szUciResponseEnd
          bl  UciWriteOut
 
 UciIsReady:
@@ -388,7 +409,7 @@ UciIsReady.ok:
        PrintNewLine
 		jmp   UciWriteOut
 */
-        lea  x15, Output
+        lea  x27, Output
         lea  x1, sz_readyok
          bl  PrintString
           b  UciWriteOut_NewLine
@@ -494,7 +515,7 @@ UciGo.ReadLoop:
 		 jb   .ReadLoopDone
 */
          bl  SkipSpaces
-       ldrb  w0, [x14]
+       ldrb  w0, [x26]
         cmp  w0, ' '
         blo  UciGo.ReadLoopDone
 /*
@@ -504,7 +525,7 @@ UciGo.ReadLoop:
 	       test   eax, eax
 		jnz   .parse_dword
 */
-        add  x15, sp, UciLoop.limits+Limits.time+4*White
+        add  x27, sp, UciLoop.limits+Limits.time+4*White
         lea  x1, sz_wtime
          bl  CmpString
        cbnz  w0, UciGo.parse_dword
@@ -515,7 +536,7 @@ UciGo.ReadLoop:
 	       test   eax, eax
 		jnz   .parse_dword
 */
-        add  x15, sp, UciLoop.limits+Limits.time+4*Black
+        add  x27, sp, UciLoop.limits+Limits.time+4*Black
         lea  x1, sz_btime
          bl  CmpString
        cbnz  w0, UciGo.parse_dword
@@ -526,7 +547,7 @@ UciGo.ReadLoop:
 	       test   eax, eax
 		jnz   .parse_dword
 */
-        add  x15, sp, UciLoop.limits+Limits.incr+4*White
+        add  x27, sp, UciLoop.limits+Limits.incr+4*White
         lea  x1, sz_winc
          bl  CmpString
        cbnz  w0, UciGo.parse_dword
@@ -537,7 +558,7 @@ UciGo.ReadLoop:
 	       test   eax, eax
 		jnz   .parse_dword
 */
-        add  x15, sp, UciLoop.limits+Limits.incr+4*Black
+        add  x27, sp, UciLoop.limits+Limits.incr+4*Black
         lea  x1, sz_binc
          bl  CmpString
        cbnz  w0, UciGo.parse_dword
@@ -548,7 +569,7 @@ UciGo.ReadLoop:
 	       test   eax, eax
 		jnz   .parse_true
 */
-        add  x15, sp, UciLoop.limits+Limits.infinite
+        add  x27, sp, UciLoop.limits+Limits.infinite
         lea  x1, sz_infinite
          bl  CmpString
        cbnz  w0, UciGo.parse_true
@@ -559,7 +580,7 @@ UciGo.ReadLoop:
 	       test   eax, eax
 		jnz   .parse_dword
 */
-        add  x15, sp, UciLoop.limits+Limits.movestogo
+        add  x27, sp, UciLoop.limits+Limits.movestogo
         lea  x1, sz_movestogo
          bl  CmpString
        cbnz  w0, UciGo.parse_dword
@@ -570,7 +591,7 @@ UciGo.ReadLoop:
 	       test   eax, eax
 		jnz   .parse_qword
 */
-        add  x15, sp, UciLoop.limits+Limits.nodes
+        add  x27, sp, UciLoop.limits+Limits.nodes
         lea  x1, sz_nodes
          bl  CmpString
        cbnz  w0, UciGo.parse_qword
@@ -581,7 +602,7 @@ UciGo.ReadLoop:
 	       test   eax, eax
 		jnz   .parse_dword
 */
-        add  x15, sp, UciLoop.limits+Limits.movetime
+        add  x27, sp, UciLoop.limits+Limits.movetime
         lea  x1, sz_movetime
          bl  CmpString
        cbnz  w0, UciGo.parse_dword
@@ -592,7 +613,7 @@ UciGo.ReadLoop:
 	       test   eax, eax
 		jnz   .parse_dword
 */
-        add  x15, sp, UciLoop.limits+Limits.depth
+        add  x27, sp, UciLoop.limits+Limits.depth
         lea  x1, sz_depth
          bl  CmpString
        cbnz  w0, UciGo.parse_dword
@@ -603,7 +624,7 @@ UciGo.ReadLoop:
 	       test   eax, eax
 		jnz   .parse_dword
 */
-        add  x15, sp, UciLoop.limits+Limits.mate
+        add  x27, sp, UciLoop.limits+Limits.mate
         lea  x1, sz_mate
          bl  CmpString
        cbnz  w0, UciGo.parse_dword
@@ -614,7 +635,7 @@ UciGo.ReadLoop:
 	       test   eax, eax
 		jnz   .parse_true
 */
-        add  x15, sp, UciLoop.limits+Limits.ponder
+        add  x27, sp, UciLoop.limits+Limits.ponder
         lea  x1, sz_ponder
          bl  CmpString
        cbnz  w0, UciGo.parse_true 
@@ -638,7 +659,7 @@ UciGo.Error:
        PrintNewLine
 		jmp   UciWriteOut
 */
-        lea  x15, Output
+        lea  x27, Output
         lea  x1, sz_error_token
          bl  PrintString
         mov  x1, 64
@@ -668,7 +689,7 @@ UciGo.parse_qword:
 */
          bl  SkipSpaces
          bl  ParseInteger
-        str  x0, [x15]
+        str  x0, [x27]
           b  UciGo.ReadLoop
 
 UciGo.parse_dword:
@@ -680,7 +701,7 @@ UciGo.parse_dword:
 */
          bl  SkipSpaces
          bl  ParseInteger
-        str  w0, [x15]
+        str  w0, [x27]
           b  UciGo.ReadLoop
 
 UciGo.parse_true:
@@ -711,16 +732,16 @@ UciGo.parse_searchmoves:
         cbz  w0, UciGo.ReadLoop
         ldr  w1, [sp, UciLoop.limits+Limits.moveVecSize]
         add  w5, w1, 1
-        add  x15, sp, UciLoop.limits+Limits.moveVec
+        add  x27, sp, UciLoop.limits+Limits.moveVec
 UciGo.parse_searchmoves_loop:
         cbz  x1, UciGo.parse_searchmoves_new
         sub  x1, x1, 1
-       ldrh  w4, [x15], 2
+       ldrh  w4, [x27], 2
         cmp  w4, w0
         beq  UciGo.parse_searchmoves
           b  UciGo.parse_searchmoves_loop
 UciGo.parse_searchmoves_new:
-       strh  w0, [x15], 2
+       strh  w0, [x27], 2
         str  w5, [sp, UciLoop.limits+Limits.moveVecSize]
           b  UciGo.parse_searchmoves
 
@@ -734,7 +755,7 @@ UciPosition:
 		lea   rbp, [UciLoop.th2.rootPos]
 */
          bl  SkipSpaces
-       ldrb  w0, [x14]
+       ldrb  w0, [x26]
         cmp  w0, ' '
         blo  UciUnknown
         add  x20, sp, UciLoop.th2+Thread.rootPos
@@ -766,12 +787,12 @@ UciPosition.Start:
 		mov   rsi, r15
 		jmp   .check
 */
-        mov  x25, x14
-        lea  x14, szStartFEN
-        lea  x16, [options]
+        mov  x25, x26
+        lea  x26, szStartFEN
+        lea  x16, options
        ldrb  w1, [x16, Options.chess960]
          bl  Position_ParseFen
-        mov  x14, x25
+        mov  x26, x25
           b  UciPosition.check
 
 UciPosition.Fen:
@@ -828,8 +849,8 @@ UciPosition.badmove:
 		lea   rbp, [UciLoop.th1.rootPos]
 		jmp   UciWriteOut
 */
-        mov  x14, x0
-        lea  x15, Output
+        mov  x26, x0
+        lea  x27, Output
         lea  x1, sz_error_moves
          bl  PrintString
         mov  x2, 6
@@ -850,7 +871,7 @@ UciPosition.BadCmd:
 		lea   rbp, [UciLoop.th1.rootPos]
 		jmp   UciUnknown
 */
-        lea  x15, Output
+        lea  x27, Output
         lea  x1, sz_error_fen
          bl  PrintString
         PrintNewLine
@@ -897,25 +918,25 @@ UciParseMoves.done:
 		ret
 */
         stp  x21, x30, [sp, -16]
-        stp  x14, x15, [sp, -16]
+        stp  x26, x27, [sp, -16]
 UciParseMoves.get_move:
          bl  SkipSpaces
         mov  x0, 0
-       ldrb  w4, [x14]
+       ldrb  w4, [x26]
         cmp  w4, ' '
         blo  UciParseMoves.done
          bl  ParseUciMove
-        mov  x15, x0
+        mov  x27, x0
         tst  x0, x0
-        mov  x0, x14
+        mov  x0, x26
         beq  UciParseMoves.done
         mov  x1, 2
          bl  Position_SetExtraCapacity
         ldr  x21, [x20, Pos.state]
-        mov  x1, x15
-        str  w15, [x21, sizeof.State+State.currentMove]
+        mov  x1, x27
+        str  w27, [x21, sizeof.State+State.currentMove]
          bl  Move_GivesCheck
-        mov  x1, x15
+        mov  x1, x27
         mov  x2, x0
          bl  Move_Do__UciParseMoves
         ldr  w4, [x20, Pos.gamePly]
@@ -925,7 +946,7 @@ UciParseMoves.get_move:
          bl  SetCheckInfo
           b  UciParseMoves.get_move
 UciParseMoves.done:
-        ldp  x14, x15, [sp], 16
+        ldp  x26, x27, [sp], 16
         ldp  x21, x30, [sp], 16
         ret
 
@@ -1108,7 +1129,7 @@ UciSetOption.Read:
        PrintNewLine
 		jmp   UciWriteOut
 */
-        lea  x15, Output
+        lea  x27, Output
         lea  x1, sz_error_option
          bl  PrintString
         mov  x1, 64
@@ -1123,7 +1144,7 @@ UciSetOption.Error:
 	       call   _WriteOut_Output
 		jmp   UciGetInput
 */
-        lea  x15, Output
+        lea  x27, Output
          bl  PrintString
           b  UciWriteOut_NewLine
         
@@ -1208,7 +1229,7 @@ UciSetOption.NodeAffinity:
 		jmp   UciGetInput
 */
          bl  ThreadPool_Destroy
-        mov  x1, x14
+        mov  x1, x26
          bl  ThreadPool_Create
          bl  Os_DisplayThreadPoolInfo
          bl  ThreadPool_ReadOptions
@@ -1268,7 +1289,7 @@ UciSetOption.Priority:
 	       call   ParseToken
 		jmp   UciWriteOut_NewLine
 */
-        lea  x15, Output
+        lea  x27, Output
         lea  x1, sz_error_priority
          bl  PrintString
         mov  x1, 64
@@ -1310,7 +1331,7 @@ UciSetOption.ClearHash:
 		jmp   UciWriteOut_NewLine
 */
          bl  Search_Clear
-        lea  x15, Output
+        lea  x27, Output
         lea  x1, sz_hash_cleared
          bl  PrintString
           b  UciWriteOut_NewLine
@@ -1437,10 +1458,10 @@ UciPerft:
         cbz  x0, UciPerft.bad_depth
         cmp  x0, 10
         bhi  UciPerft.bad_depth
-        mov  x14, x0
+        mov  x26, x0
         mov  x1, x0
          bl  Position_SetExtraCapacity
-        mov  x1, x14
+        mov  x1, x26
          bl  Perft_Root
           b  UciGetInput
 UciPerft.bad_depth:
@@ -1452,7 +1473,7 @@ UciPerft.bad_depth:
 	       call   ParseToken
 		jmp   UciWriteOut_NewLine
 */
-        lea  x15 Output
+        lea  x27 Output
         lea  x1, sz_error_depth
          bl  PrintString
         mov  x1, 8
@@ -1472,7 +1493,7 @@ UciBench:
         mov  x23, 1
         mov  x24, 16
         mov  x25, 0
-        adr  x15, UciBench.parse_hash
+        adr  x27, UciBench.parse_hash
 UciBench.parse_loop:
 /*
 	       call   SkipSpaces
@@ -1490,14 +1511,14 @@ UciBench.parse_loop:
 		@@:
 */
          bl  SkipSpaces
-       ldrb  w1, [x14]
+       ldrb  w1, [x26]
         cmp  w1, ' '
         blo  UciBench.parse_done
         sub  w0, w1, '0'
         cmp  w0, 10
         bhs  UciBench.GotToken
-        cbz  x15, UciBench.parse_done
-         br  x15
+        cbz  x27, UciBench.parse_done
+         br  x27
 UciBench.GotToken:
 /*
 		lea   rcx, [sz_threads]
@@ -1546,7 +1567,7 @@ UciBench.parse_hash:
 		mov   r14d, eax
 		jmp   .parse_loop
 */
-        adr  x15, UciBench.parse_threads
+        adr  x27, UciBench.parse_threads
          bl  SkipSpaces
          bl  ParseInteger
         mov  w4, 1
@@ -1563,7 +1584,7 @@ UciBench.parse_threads:
 		mov   r13d, eax
 		jmp   .parse_loop
 */
-        adr  x15, UciBench.parse_depth
+        adr  x27, UciBench.parse_depth
          bl  SkipSpaces
          bl  ParseInteger
         mov  w4, 1
@@ -1580,7 +1601,7 @@ UciBench.parse_depth:
 		mov   r12d, eax
 		jmp   .parse_loop
 */
-        adr  x15, UciBench.parse_realtime
+        adr  x27, UciBench.parse_realtime
          bl  SkipSpaces
          bl  ParseInteger
         mov  w4, 1
@@ -1599,11 +1620,11 @@ UciBench.parse_realtime:
 		adc   r15d, r15d
 		jmp   .parse_loop
 */
-        mov  x15, 0
+        mov  x27, 0
          bl  SkipSpaces
          bl  ParseInteger
         cmp  x0, 0
-       cset  x15, ne
+       cset  x27, ne
           b  UciBench.parse_loop
 UciBench.parse_done:
 /*
@@ -1645,7 +1666,7 @@ UciBench.parse_done:
 */
         stp  x22, x25, [sp, -16]!
         stp  x24, x23, [sp, -16]!
-        lea  x15, Output
+        lea  x27, Output
         lea  x1, sz_bench_format1
         add  x2, sp, 0
          bl  PrintFancy
@@ -1684,7 +1705,7 @@ UciBench.parse_done:
         mov  x23, 0
         str  xzr, [sp, UciLoop.time]
         str  xzr, [sp, UciLoop.nodes]
-        lea  x14, BenchFens
+        lea  x26, BenchFens
 
 UciBench.nextpos:
 /*
@@ -1792,7 +1813,7 @@ UciBench.nextpos:
         add  sp, sp, 32
          bl  Os_WriteOut_Output
         lea  x16, BenchFensEnd
-        cmp  x14, x16
+        cmp  x26, x16
         blo  UciBench.nextpos
 
 /*
@@ -1867,5 +1888,17 @@ UciBench.nextpos:
          bl  Os_WriteOut_Output                
           b  UciGetInput
 
+
+UciShow:
+/*
+		lea   rdi, [Output]
+		mov   rbx, qword[rbp+Pos.state]
+	       call   Position_Print
+		jmp   UciWriteOut
+*/
+        lea  x27, Output
+        ldr  x21, [x20, Pos.state]
+         bl  Position_Print
+          b  UciWriteOut
 
 

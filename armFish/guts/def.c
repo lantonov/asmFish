@@ -106,8 +106,15 @@ Rank4BB   = 0x00000000FF000000
 Rank3BB   = 0x0000000000FF0000
 Rank2BB   = 0x000000000000FF00
 Rank1BB   = 0x00000000000000FF
-//CornersBB = 0b0111111011111111111111111111111111111111111111111111111101111110
 
+// move types
+MOVE_TYPE_NORMAL = 0
+MOVE_TYPE_PROM   = 4
+MOVE_TYPE_EPCAP  = 8
+MOVE_TYPE_CASTLE = 12
+// special moves (should be negative as 32bit quantities)
+MOVE_NONE    = 0
+MOVE_NULL    = 65 + 0x0FFFFF000
 
 White  = 0
 Black  = 1
@@ -344,6 +351,10 @@ Pos.pawnTable = 1*sizeof.rq + Pos.materialTable
 Pos.rootMovesVec = 1*sizeof.rq + Pos.pawnTable
 Pos.moveList = 1*sizeof.RootMovesVec + Pos.rootMovesVec
 sizeof.Pos = 1*sizeof.rq + Pos.moveList
+
+.if Pos.typeBB
+ .error "Pos.typeBB is not zero"
+.endif
 
 State.___ = 0
 State.key = 0 + State.___

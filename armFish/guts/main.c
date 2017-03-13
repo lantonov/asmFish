@@ -1,4 +1,7 @@
 
+        lea  x1, DisplayLock
+         bl  Os_MutexCreate
+
          bl  Os_SetStdHandles
          bl  Os_InitializeTimer
          bl  Os_CheckCPU
@@ -13,7 +16,6 @@
          bl  Evaluate_Init
          bl  Pawn_Init
          bl  Endgame_Init
-
 
 // check some computations
 lea x16, EndgameEval_Map
@@ -31,30 +33,30 @@ fmov d17, 2.5e0
 fmov d0, d16
 fmov d1, d17
 bl Math_pow_d_dd
-Display "test: pow(%d16, %d17) = %d0\n"
+Display "pow(%d16, %d17): %d0\n"
 fneg d17, d17
 fmov d0, d16
 fmov d1, d17
 bl Math_pow_d_dd
-Display "test: pow(%d16, %d17) = %d0\n"
+Display "pow(%d16, %d17): %d0\n"
 fmov d16, 3.0e1
 fmov d0, d16
 bl Math_log_d_d
-Display "test: log(%d16) = %d0\n"
+Display "log(%d16): %d0\n"
 fmov d16, 3.0e0
 fmov d0, d16
 bl Math_exp_d_d
-Display "test: exp(%d16) = %d0\n"
+Display "exp(%d16): %d0\n"
 fmov d16, 3.5e0
 mov x17, -2
 fmov d0, d16
 mov w0, w17
 bl Math_scalbn_d_di
-Display "test: scalbn(%d16, %i17) = %d0\n"
+Display "scalbn(%d16, %i17): %d0\n"
 
 
 // write engine name
-        lea  x15, szGreetingEnd
+        lea  x27, szGreetingEnd
 	lea  x1, szGreeting
          bl  Os_WriteOut
 
@@ -69,7 +71,6 @@ Display "test: scalbn(%d16, %i17) = %d0\n"
 
 // enter the main loop
          bl  UciLoop
-
 // clean up threads and hash
          bl  ThreadPool_Destroy
          bl  MainHash_Destroy
@@ -79,9 +80,12 @@ Display "test: scalbn(%d16, %i17) = %d0\n"
 
 // clean up input buffer
         lea  x2, ioBuffer
-        ldr  x0, [x2, IOBuffer.inputBuffer]
-        ldr  x1, [x2, IOBuffer.inputBufferSizeB]
+        ldr  x1, [x2, IOBuffer.inputBuffer]
+        ldr  x2, [x2, IOBuffer.inputBufferSizeB]
          bl  Os_VirtualFree
+
+        lea  x1, DisplayLock
+         bl  Os_MutexDestroy
 
         mov  w0, 0
          bl  Os_ExitProcess

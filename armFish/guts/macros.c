@@ -1,10 +1,16 @@
 // macro names seem to be case insensitive
 .macro ClampUnsigned Reg, RegMin, RegMax
-
+        cmp  \Reg, \RegMin
+       csel  \Reg, \Reg, \RegMin, hs
+        cmp  \Reg, \RegMax
+       csel  \Reg, \Reg, \RegMax, ls
 .endm
 
 .macro ClampSigned Reg, RegMin, RegMax
-
+        cmp  \Reg, \RegMin
+       csel  \Reg, \Reg, \RegMin, ge
+        cmp  \Reg, \RegMax
+       csel  \Reg, \Reg, \RegMax, le
 .endm
 
 .macro lea Reg, Addr
@@ -22,11 +28,10 @@
 
 .macro PrintNewLine
         mov  w0, 10
-       strb  w0, [x15], 1
+       strb  w0, [x27], 1
 .endm
 
 .macro PushAll
-
         stp  d30, d31, [sp, -16]!
         stp  d28, d29, [sp, -16]!
         stp  d26, d27, [sp, -16]!
@@ -96,55 +101,35 @@
         ldp  d26, d27, [sp], 16
         ldp  d28, d29, [sp], 16
         ldp  d30, d31, [sp], 16
-
 .endm
 
 // Display a formated message. Use %[x,i,u]n for displaying
 // register xn in hex, signed or unsigned.
 // ex: Display "sq: %i14  sq: %i15  line: %x0  bet: %x1\n"
-.macro Display Message
+.macro Display Mes
         PushAll
+        lea  x1, DisplayLock
+         bl  Os_MutexLock
         adr  x1, anom\@
           b  anol\@
 anom\@:
-        .ascii \Message
+        .ascii \Mes
         .byte 0
         .balign 4
 anol\@:
-        Lea  x15, Output
+        lea  x27, DisplayOutput
         mov  x2, sp
          bl  PrintFancy
-         bl  Os_WriteOut_Output
+        lea  x1, DisplayOutput
+         bl  Os_WriteOut
+        lea  x1, DisplayLock
+         bl  Os_MutexUnlock
         PopAll
-.endm
-
-.macro DisplayString Message
-        PushAll
-        adr  x1, anom\@
-          b  anol\@
-anom\@:
-        .ascii \Message
-        .byte 0
-        .balign 4
-anol\@:
-        Lea  x15, Output
-         bl  PrintString
-         bl  Os_WriteOut_Output
-        PopAll
-.endm
-
-.macro DisplayReg Reg
-        PushAll
-        mov  x0, Reg
-        Lea  x15, Output
-         bl  PrintHex
-         bl  Os_WriteOut_Output
-        PopAll     
 .endm
 
 .macro DisplayPause
         PushAll
-        mov  x1, 1000
+        mov  x1, 100
          bl  Os_Sleep
         PopAll     
 .endm

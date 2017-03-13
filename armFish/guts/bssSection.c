@@ -1,16 +1,19 @@
-Output: .space 1024
+DisplayOutput:  .space 1024
+Output:         .space 1024
 
-        .align 16
+        .balign 16
+time:     .space sizeof.Time
+        .balign 16
 limits:   .space sizeof.Limits
-        .align 16
+        .balign 16
 signals:   .space sizeof.Signals
-        .align 16
+        .balign 16
 options:    .space sizeof.Options
-        .align 16
+        .balign 16
 ioBuffer:   .space sizeof.IOBuffer
-        .align 16
+        .balign 16
 mainHash:   .space sizeof.MainHash
-        .align 16
+        .balign 16
 threadPool: .space sizeof.ThreadPool
 
 

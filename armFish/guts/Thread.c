@@ -81,7 +81,6 @@ Thread_Create:
 		mov   r15d, dword[rdi+NumaNode.nodeNumber]
 */
          bl  ThreadIdxToNode
-Display "Thread Create: idx: %i14  node: %x0\n"
         mov  x15, x0
         ldr  w25, [x15, NumaNode.nodeNumber]
 /*
@@ -93,10 +92,10 @@ Display "Thread Create: idx: %i14  node: %x0\n"
 		mov   rbx, rax
 */
         mov  x1, sizeof.Thread
-        mov  x2, x25
+        mov  w2, w25
          bl  Os_VirtualAllocNuma
-        lea  x16, threadPool
-        str  x0, [x21, Thread.numaNode]
+        lea  x16, threadPool+ThreadPool.threadTable
+        str  x0, [x16, x14, lsl 3]
         mov  x21, x0
 /*
 	; fill in address of numanode struct
@@ -110,6 +109,7 @@ Display "Thread Create: idx: %i14  node: %x0\n"
 		mov   dword[rbx+Thread.idx], esi
 		mov   qword[rbx+Thread.numaNode], rdi
 */
+        str  x15, [x21, Thread.numaNode]
        strb  wzr, [x21, Thread.exit]
         str  wzr, [x21, Thread.resetCnt]
         str  wzr, [x21, Thread.callsCnt]
@@ -411,6 +411,7 @@ Thread_Delete:
 */
         lea  x16, threadPool+ThreadPool.threadTable
         ldr  x1, [x16, x14, lsl 3]
+        mov  x2, sizeof.Thread
          bl  Os_VirtualFree
         lea  x16, threadPool+ThreadPool.threadTable
         str  xzr, [x16, x14, lsl 3]
@@ -463,6 +464,7 @@ Thread_IdleLoop.lock:
          bl  Os_MutexLock
        strb  wzr, [x21, Thread.searching]
 
+
 Thread_IdleLoop.check_exit:
 /*
 		mov   al, byte[rbx+Thread.exit]
@@ -511,14 +513,12 @@ Thread_IdleLoop.check_out:
 */
        ldrb  w0, [x21, Thread.exit]
         cbz  w0, Thread_IdleLoop.loop
-        stp  x14, x15, [sp], 16
-        stp  x21, x30, [sp], 16
+
+Display "goodbye from thread %x21\n"
+
+        ldp  x14, x15, [sp], 16
+        ldp  x21, x30, [sp], 16
         ret
-
-
-
-
-
 
 
 

@@ -1,4 +1,4 @@
-sys_unmap = 215
+sys_munmap = 215
 sys_mmap = 222
 sys_futex = 98
 sys_clone = 220

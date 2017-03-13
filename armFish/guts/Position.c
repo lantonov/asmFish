@@ -85,6 +85,7 @@ Position_SetState.Empty:
 
 
 Position_SetPieceLists:
+        ret
 /*
 	; in: rbp Position
 	; out: set index, pieceCount, pieceList members in some fixed order
@@ -149,6 +150,8 @@ Position_SetPieceLists.Done:
 
 
 Position_IsLegal:
+        mov  x0, 0
+        ret
 /*
 	; in: rbp position
 	; out: eax =  0 if position is legal more checks are performed with DEBUG
@@ -350,6 +353,15 @@ Position_ParseFen:
 	       test   rbx, rbx
 		 jz   .alloc
 */
+        stp  x29, x30, [sp, -16]!
+        stp  x27, x21, [sp, -16]!
+        stp  x22, x23, [sp, -16]!
+        stp  x24, x25, [sp, -16]!
+        mov  w22, w1
+        ldr  x21, [x20, Pos.stateTable]
+        cbz  x21, Position_ParseFen.alloc
+
+
 Position_ParseFen.alloc_ret:
 /*
 		xor   eax, eax
@@ -357,12 +369,22 @@ Position_ParseFen.alloc_ret:
 		mov   rdi, rbp
 	  rep stosq
 		mov   dword[rbp+Pos.chess960], r12d
-
+*/
+        mov  x0, x20
+        mov  x1, 0
+        mov  x2, Pos._copy_size
+         bl  MemoryFill
+/*
 		xor   eax, eax
 		mov   ecx, sizeof.State/8
 		mov   rdi, rbx
 	  rep stosq
-
+*/
+        mov  x0, x20
+        mov  x1, 0
+        mov  x2, sizeof.State
+         bl  MemoryFill
+/*
 		xor   eax, eax
 		mov   ecx, Thread.castling_end-Thread.castling_start
 		lea   rdi, [rbp-Thread.rootPos+Thread.castling_start]
@@ -374,6 +396,15 @@ Position_ParseFen.alloc_ret:
 		xor   ecx,ecx
 		jmp   .ExpectPiece
 */
+        add  x0, x21, -Thread.rootPos+Thread.castling_start
+        mov  x1, 0
+        mov  x2, Thread.castling_end-Thread.castling_start
+         bl  MemoryFill
+         bl  SkipSpaces
+        mov  x0, 0
+        mov  x1, 0
+          b  Position_ParseFen.ExpectPiece
+
 Position_ParseFen.ExpectPieceOrSlash:
 /*
 	       test   ecx,7
@@ -382,6 +413,12 @@ Position_ParseFen.ExpectPieceOrSlash:
 		cmp   al, '/'
 		jne   .Failed
 */
+        tst  x1, 7
+        bne  Position_ParseFen.ExpectPiece
+       ldrb  w0, [x26], 1
+        cmp  w0, '/'
+        bne  Position_ParseFen.Failed
+
 Position_ParseFen.ExpectPiece:
 /*
 	      lodsb
@@ -429,11 +466,59 @@ Position_ParseFen.ExpectPiece:
 		cmp   eax, 8
 		 ja   .Failed
 */
+       ldrb  w0, [x26], 1
+
+        mov  x2, 8*White+Pawn
+        cmp  w0, 'P'
+        beq  Position_ParseFen.FoundPiece
+        mov  x2, 8*White+Knight
+        cmp  w0, 'N'
+        beq  Position_ParseFen.FoundPiece
+        mov  x2, 8*White+Bishop
+        cmp  w0, 'B'
+        beq  Position_ParseFen.FoundPiece
+        mov  x2, 8*White+Rook
+        cmp  w0, 'R'
+        beq  Position_ParseFen.FoundPiece
+        mov  x2, 8*White+Queen
+        cmp  w0, 'Q'
+        beq  Position_ParseFen.FoundPiece
+        mov  x2, 8*White+King
+        cmp  w0, 'K'
+        beq  Position_ParseFen.FoundPiece
+
+        mov  x2, 8*Black+Pawn
+        cmp  w0, 'p'
+        beq  Position_ParseFen.FoundPiece
+        mov  x2, 8*Black+Knight
+        cmp  w0, 'n'
+        beq  Position_ParseFen.FoundPiece
+        mov  x2, 8*Black+Bishop
+        cmp  w0, 'b'
+        beq  Position_ParseFen.FoundPiece
+        mov  x2, 8*Black+Rook
+        cmp  w0, 'r'
+        beq  Position_ParseFen.FoundPiece
+        mov  x2, 8*Black+Queen
+        cmp  w0, 'q'
+        beq  Position_ParseFen.FoundPiece
+        mov  x2, 8*Black+King
+        cmp  w0, 'k'
+        beq  Position_ParseFen.FoundPiece
+
+       subs  x0, x0, '0'
+        bmi  Position_ParseFen.Failed
+        cmp  x0, 8
+        bhi  Position_ParseFen.Failed
+        
 Position_ParseFen.Spaces:
 /*
 		add   ecx, eax
 		jmp   .PieceDone
 */
+        add  x1, x1, x0
+          b  Position_ParseFen.PieceDone
+
 Position_ParseFen.FoundPiece:
 /*
 		xor   ecx, 0111000b
@@ -447,11 +532,28 @@ Position_ParseFen.FoundPiece:
 		xor   ecx, 0111000b
 		add   ecx, 1
 */
+        eor  x3, x1, 56
+        add  x1, x1, 1
+        mov  x7, 1
+        lsl  x7, x7, x3
+        and  x4, x2, 7
+        lsr  x5, x2, 3
+        ldr  x0, [x20, x4, lsl 3]
+        orr  x0, x0, x7
+        str  x0, [x20, x4, lsl 3]
+        ldr  x0, [x20, x5, lsl 3]
+        orr  x0, x0, x7
+        str  x0, [x20, x5, lsl 3]
+        add  x16, x20, Pos.board
+       strb  w2, [x16, x3]
+
 Position_ParseFen.PieceDone:
 /*
 		cmp   ecx, 64
 		 jb   .ExpectPieceOrSlash
 */
+        tbz  x1, 6, Position_ParseFen.ExpectPieceOrSlash
+
 Position_ParseFen.Turn:
 /*
 	       call   SkipSpaces
@@ -467,6 +569,17 @@ Position_ParseFen.Turn:
 		cmp   al, '-'
 		 je   .EpSquare
 */
+         bl  SkipSpaces
+       ldrb  w0, [x26], 1
+        cmp  w0, 'b'
+       cset  w1, eq
+        str  w1, [x20, Pos.sideToMove]
+
+         bl  SkipSpaces
+       ldrb  w0, [x26], 1
+        cmp  w0, '-'
+        beq  Position_ParseFen.EpSquare
+
 Position_ParseFen.NextCastlingChar:
 /*
 		mov   edx, 1
@@ -484,13 +597,16 @@ Position_ParseFen.NextCastlingChar:
 	      lodsb
 		cmp   al, ' '
 		jne   .NextCastlingChar
-
- ;   4) En passant target square (in algebraic notation). If there's no en passant
- ;      target square, this is "-". If a pawn has just made a 2-square move, this
- ;      is the position "behind" the pawn. This is recorded only if there is a pawn
- ;      in position to make an en passant capture, and if there really is a pawn
- ;      that might have advanced two squares.
 */
+        cmp  x0, 'Z'
+        orr  x1, x0, 0x020
+       cset  x2, hi
+         bl  SetCastlingRights
+       cbnz  w0, Position_ParseFen.Failed
+       ldrb  w0, [x26], 1
+        cmp  w0, ' '
+        bne  Position_ParseFen.NextCastlingChar
+
 Position_ParseFen.EpSquare:
 /*
 	       call   SkipSpaces
@@ -537,17 +653,34 @@ Position_ParseFen.EpSquare:
 
 		jmp   .FiftyMoves
 */
+         bl  SkipSpaces
+         bl  ParseSquare
+       strb  w0, [x21, State.epSquare]
+        cmp  w0, 64
+        beq  Position_ParseFen.FiftyMoves
+        bhi  Position_ParseFen.Failed
+        
+          b  Position_ParseFen.FiftyMoves
+        
+
 Position_ParseFen.EpSquareBad:
 /*
 	; we can either fail here or set it to SQ_NONE
 		mov   byte[rbx+State.epSquare], 64
 */
+        mov  w0, 64
+       strb  w0, [x21, State.epSquare]
+
 Position_ParseFen.FiftyMoves:
 /*
 	       call   SkipSpaces
 	       call   ParseInteger
 		mov   word[rbx+State.rule50], ax
 */
+        bl  SkipSpaces
+        bl  ParseInteger
+      strh  w0, [x21, State.rule50]
+
 Position_ParseFen.MoveNumber:
 /*
 	       call   SkipSpaces
@@ -564,28 +697,45 @@ Position_ParseFen.MoveNumber:
 	       test   eax,eax
 		jnz   .Failed
 */
+         bl  SkipSpaces
+         bl  ParseInteger
+       subs  x1, x0, 1
+       csel  x0, xzr, x1, mi
+        ldr  w2, [x20, Pos.sideToMove]
+        add  x0, x2, x0, lsl 1
+        str  w0, [x20, Pos.gamePly]
+
+         bl  Position_SetState
+         bl  Position_SetPieceLists
+         bl  Position_IsLegal
+       cbnz  w0, Position_ParseFen.Failed
+
 Position_ParseFen.done:
-/*
-		pop   r15 r14 r13 r12 rdi rbx rbp
-		ret
-*/
+        ldp  x24, x25, [sp], 16
+        ldp  x22, x23, [sp], 16
+        ldp  x27, x21, [sp], 16
+        ldp  x29, x30, [sp], 16
+        ret
+
 Position_ParseFen.Failed:
-/*
-		 or   eax, -1
-		jmp   .done
-*/
+        mov  w0, -1
+          b  Position_ParseFen.done
+
 Position_ParseFen.alloc:
-/*
-		mov   ecx, 64*sizeof.State
-		mov   r15d, ecx
-	       call   _VirtualAlloc
-		mov   rbx, rax
-		mov   qword[rbp+Pos.state], rax
-		mov   qword[rbp+Pos.stateTable], rax
-		add   rax, r15
-		mov   qword[rbp+Pos.stateEnd], rax
-		jmp   .alloc_ret
-*/
+        mov  w1, 64*sizeof.State
+        mov  w25, w1
+         bl  Os_VirtualAlloc
+        mov  x21, x0
+        str  x0, [x20, Pos.state]
+        str  x0, [x20, Pos.stateTable]
+        add  x0, x0, x25
+        str  x0, [x20, Pos.stateEnd]
+          b  Position_ParseFen.alloc_ret
+
+
+
+
+
 
 
 
@@ -622,6 +772,31 @@ SetCastlingRights:
 		cmp   ecx, 7
 		 ja   .failed
 */
+        ldr  x7, [x20, 8*King]
+        ldr  x4, [x20, x2, lsl 3]
+        and  x7, x7, x4
+       rbit  x4, x7
+        cbz  x7, SetCastlingRights.failed
+        clz  x7, x4
+        mov  x4, 56
+        mul  x6, x2, x4
+        lsl  x8, x2, 3
+        add  x8, x8, Rook
+        add  x6, x6, 7
+        mov  x9, -1
+        cmp  x1, 'k'
+        beq  SetCastlingRights.find_rook_sq
+        sub  x6, x6, 7
+        mov  x9, 1
+        cmp  x1, 'q'
+        beq  SetCastlingRights.find_rook_sq
+        sub  x1, x1, 'a'
+        add  x6, x6, x1
+        cmp  x1, 7
+        bhi  SetCastlingRights.failed
+        
+        
+
 SetCastlingRights.have_rook_sq:
 /*
 	; esi = rook from
@@ -636,7 +811,15 @@ SetCastlingRights.have_rook_sq:
 
 	; r15 = 2*color + r14
 		lea   r15, [2*rdx+r14]
-
+*/
+        add  x16, x20, Pos.board
+       ldrb  w4, [x16, x6]
+        cmp  x8, x4
+        bne  SetCastlingRights.failed
+        cmp  x6, x7
+       cset  x14, lo
+        add  x15, x14, x2, lsl 1
+/*
 	; r8 = rook to
 	; r9 = king to
 	      movzx   r8d, byte[rsquare_lookup+r15]
@@ -654,7 +837,26 @@ SetCastlingRights.have_rook_sq:
 	      movzx   eax, byte[rbp-Thread.rootPos+Thread.castling_rightsMask+rdi]
 		bts   eax, r15d
 		mov   byte[rbp-Thread.rootPos+Thread.castling_rightsMask+rdi], al
+*/
 
+        adr  x16, SetCastlingRights.rsquare_lookup
+        adr  x17, SetCastlingRights.ksquare_lookup
+       ldrb  w8, [x16, x15]
+       ldrb  w9, [x17, x15]
+        add  x16, x20, -Thread.rootPos+Thread.castling_rightsMask
+        mov  x3, 1
+        lsl  x3, x3, x15
+       ldrb  w0, [x21, State.castlingRights]
+        orr  w0, w0, w3
+       strb  w0, [x21, State.castlingRights]
+       ldrb  w0, [x16, x6]
+        orr  w0, w0, w3
+       strb  w0, [x16, x6]
+       ldrb  w0, [x16, x7]
+        orr  w0, w0, w3
+       strb  w0, [x16, x7]
+
+/*
 	; set rook from/to
 		mov   byte[rbp-Thread.rootPos+Thread.castling_rfrom+r15], sil
 		mov   byte[rbp-Thread.rootPos+Thread.castling_rto+r15], r8l
@@ -670,6 +872,20 @@ SetCastlingRights.have_rook_sq:
 	       xchg   r12, r13
 	@@:	sub   r12, 1
 */
+        add  x16, x20, -Thread.rootPos+Thread.castling_rfrom
+        add  x17, x20, -Thread.rootPos+Thread.castling_rto
+       strb  w6, [x16, x15]
+       strb  w8, [x17, x15]
+
+        add  x11, x20, -Thread.rootPos+Thread.castling_ksqpath
+        add  x11, x11, x15, lsl 3
+        str  xzr, [x11]
+        cmp  x7, x9
+       csel  x12, x7, x9, lo
+       csel  x13, x7, x9, hi
+        sub  x12, x12, 1
+        
+
 SetCastlingRights.king_loop:
 /*
 		add   r12, 1
@@ -689,6 +905,43 @@ SetCastlingRights.king_loop:
 		bts   rax, r12
 		jmp   .king_loop
 */
+        add  x12, x12, 1
+        cmp  x12, x13
+        bhi  SetCastlingRights.king_loop_done
+        cmp  x12, x7
+        beq  SetCastlingRights.king_loop
+
+        add  x16, x20, -Thread.rootPos+Thread.castling_ksqpath
+        ldr  x4, [x16, x15, lsl 3]
+        add  x4, x4, 1
+        str  x4, [x16, x15, lsl 3]
+
+        add  x11, x11, 1
+       strb  w12, [x11]
+
+        lea  x16, KnightAttacks
+        ldr  x1, [x16, x12, lsl 3]
+        add  x16, x21, -Thread.rootPos+Thread.castling_knights
+        ldr  x4, [x16, x15, lsl 3]
+        orr  x4, x4, x1
+        str  x4, [x16, x15, lsl 3]
+
+        lea  x16, KingAttacks
+        ldr  x1, [x16, x12, lsl 3]
+        add  x16, x21, -Thread.rootPos+Thread.castling_kingpawns
+        ldr  x4, [x16, x15, lsl 3]
+        orr  x4, x4, x1
+        str  x4, [x16, x15, lsl 3]
+
+        cmp  x12, x6
+        beq  SetCastlingRights.king_loop
+        mov  x4, 1
+        lsl  x4, x4, x12
+        orr  x0, x0, x4
+        cmp  x12, x6
+          b  SetCastlingRights.king_loop
+
+
 SetCastlingRights.king_loop_done:
 /*
 		mov   r12, rsi
@@ -698,6 +951,11 @@ SetCastlingRights.king_loop_done:
 	       xchg   r12, r13
 	@@:	sub   r12, 1
 */
+        cmp  x6, x8
+       csel  x12, x6, x8, lo
+       csel  x13, x6, x8, hi
+        sub  x12, x12, 1
+
 SetCastlingRights.rook_loop:
 /*
 		add   r12, 1
@@ -710,6 +968,18 @@ SetCastlingRights.rook_loop:
 		bts   rax, r12
 		jmp   .rook_loop
 */
+        add  x12, x12, 1
+        cmp  x12, x13
+        bhi  SetCastlingRights.rook_loop_done
+        cmp  x12, x7
+        beq  SetCastlingRights.rook_loop
+        cmp  x12, x6
+        beq  SetCastlingRights.rook_loop
+        mov  x4, 1
+        lsl  x4, x4, x12
+        orr  x0, x0, x4
+          b  SetCastlingRights.rook_loop
+
 SetCastlingRights.rook_loop_done:
 /*
 		mov   qword[rbp-Thread.rootPos+Thread.castling_path+8*r15], rax
@@ -724,16 +994,31 @@ SetCastlingRights.rook_loop_done:
 
 		xor   eax, eax
 */
+        add  x16, x20, -Thread.rootPos+Thread.castling_path
+        str  x0, [x16, x15, lsl 3]
+
+        mov  w0, MOVE_TYPE_CASTLE
+        add  w0, w7, w0, lsl 6
+        add  w0, w6, w0, lsl 6
+        add  x16, x20, -Thread.rootPos+Thread.castling_movgen
+        str  w0, [x16, x15, lsl 2]
+
+        mov  w0, 0
+
 SetCastlingRights.done:
 /*
 		pop   r15 r14 r13 r12 rsi rdi
 		ret
 */
+        ret
+
 SetCastlingRights.failed:
 /*
 		 or   eax, -1
 		jmp   .done
 */
+        mov  w0, -1
+        ret
 
 SetCastlingRights.find_rook_sq:
 /*
@@ -744,6 +1029,26 @@ SetCastlingRights.find_rook_sq:
 		add   esi, r9d
 		jmp   .find_rook_sq
 */
+        cmp  x6, 64
+        bhs  SetCastlingRights.failed
+        add  x16, x20, Pos.board
+       ldrb  w4, [x16, x6]
+        cmp  x8, x4
+        beq  SetCastlingRights.have_rook_sq
+        add  x6, x6, x9
+          b  SetCastlingRights.find_rook_sq
+
+SetCastlingRights.rsquare_lookup:
+        .byte  SQ_F1, SQ_D1, SQ_F8, SQ_D8
+SetCastlingRights.ksquare_lookup:
+        .byte  SQ_G1, SQ_C1, SQ_G8, SQ_C8
+
+
+
+
+
+
+
 
 
 
@@ -760,12 +1065,21 @@ Position_PrintFen:
 
 		mov   r8d, 7
 */
+        stp  x21, x30, [sp, -16]!
+        ldr  x21, [x20, Pos.state]
+
+
+       ldrb  w1, [x21, State.castlingRights]
+        mov  x8, 7
 Position_PrintFen.loop1:
 /*
 		xor   ecx, ecx
 
 		xor   r9d, r9d
 */
+        mov  x1, 0
+        mov  x9, 0
+
 Position_PrintFen.loop2:
 /*
 		lea   r10d, [r9+8*r8]
@@ -785,10 +1099,27 @@ Position_PrintFen.loop2:
 
 		jmp   .cont
 */
+        add  x10, x9, x8, lsl 3
+        add  x16, x20, Pos.board
+       ldrb  w2, [x16, x10]
+
+        cbz  w2, Position_PrintFen.space
+        add  x0, x1, '0'
+        tst  x1, x1
+       strb  w0, [x27]
+       cinc  x27, x27, ne
+        lea  x16, PieceToChar
+       ldrb  w0, [x16, x2]
+       strb  w0, [x27], 1
+        mov  x1, 0
+          b  Position_PrintFen.cont
+
 Position_PrintFen.space:
 /*
 		add   ecx,1
 */
+        add  x1, x1, 1
+
 Position_PrintFen.cont:
 /*
 		add   r9d,1
@@ -805,7 +1136,19 @@ Position_PrintFen.cont:
 
 		sub   r8d, 1
 		jns   .loop1
-
+*/
+        add  x9, x9, 1
+        cmp  x9, 8
+        blo  Position_PrintFen.loop2
+        add  x0, x1, '0'
+        tst  x1, x1
+       strb  w0, [x27]
+       cinc  x27, x27, ne
+        mov  w0, '/'
+       strb  w0, [x27], 1
+       subs  x8, x8, 1
+        bpl  Position_PrintFen.loop1
+/*
 	; side to move
 		mov   byte[rdi-1], ' '
 		mov   eax, 'w '
@@ -856,7 +1199,69 @@ Position_PrintFen.cont:
 		pop   rbx
 		ret
 */
+        mov  w0, ' '
+       strb  w0, [x27, -1]
+        mov  w0, ('w'<<0) + (' '<<8)
+        mov  w1, ('b'<<0) + (' '<<8)
+       strb  w4, [x20, Pos.sideToMove]
+        tst  w4, w4
+       csel  w0, w2, w0, ne
+       strh  w0, [x27], 2
 
+       ldrb  w1, [x21, State.castlingRights]
+        mov  w0, '-'
+       strb  w0, [x27]
+        tst  w1, w1
+       cinc  x27, x27, eq
+
+        mov  w0, ('K'<<0) + ('Q'<<8)
+       movk  w0, ('k'<<0) + ('q'<<8), lsl 16
+        ldr  w2, [x20, -Thread.rootPos+Thread.castling_rfrom]
+        mov  w4, 0x07070707
+        and  w2, w2, w4
+        mov  w4, ('A'<<0) + ('A'<<8)
+       movk  w4, ('a'<<0) + ('a'<<8), lsl 16
+        add  w2, w2, w4
+        ldr  w4, [x21, Pos.chess960]
+        tst  w4, w4
+       csel  w0, w2, w0, ne
+
+       strb  w0, [x27]
+        lsr  w0, w0, 8
+        tst  x1, 1
+       cinc  x27, x27, ne
+       strb  w0, [x27]
+        lsr  w0, w0, 8
+        tst  x1, 2
+       cinc  x27, x27, ne
+       strb  w0, [x27]
+        lsr  w0, w0, 8
+        tst  x1, 4
+       cinc  x27, x27, ne
+       strb  w0, [x27]
+        lsr  w0, w0, 8
+        tst  x1, 8
+       cinc  x27, x27, ne
+
+        mov  w0, ' '
+       strb  w0, [x27], 1
+       ldrb  w1, [x21, State.epSquare]
+         bl  PrintSquare
+
+        mov  w0, ' '
+       strb  w0, [x27], 1
+       ldrh  w0, [x21, State.rule50]
+         bl  PrintUInt
+
+        mov  w0, ' '
+       strb  w0, [x27], 1
+        ldr  w0, [x21, Pos.gamePly]
+        add  w0, w0, 2
+        lsr  w0, w0, 1
+         bl  PrintUInt
+
+        ldp  x21, x30, [sp], 16
+        ret
 
 
 
@@ -1068,4 +1473,98 @@ Position_SetExtraCapacity.realloc:
 		pop   rdi rsi rbx
 		ret
 */
+
+
+PrintBitboardCompact:
+/*	       push   rsi
+		mov   rsi, rcx
+	@@:    test   rsi, rsi
+		 jz   @f
+		bsf   rcx, rsi
+	       blsr   rsi, rsi, rax
+	       call   PrintSquare
+		mov   al, ' '
+	      stosb
+		jmp   @b
+	@@:	pop   rsi
+		ret
+*/
+        stp  x26, x30, [sp, -16]!
+        mov  x26, x1
+        mov  x0, x26
+         bl  PrintHex 
+        mov  w0, ' '
+       strb  w0, [x27], 1
+PrintBitboardCompact.Loop:
+        cbz  x26, PrintBitboardCompact.Done
+       rbit  x1, x26
+        clz  x1, x1
+         bl  PrintSquare
+        mov  w0, ' '
+       strb  w0, [x27], 1
+        sub  x4, x26, 1
+        and  x26, x26, x4
+          b  PrintBitboardCompact.Loop
+PrintBitboardCompact.Done:
+        ldp  x26, x30, [sp], 16
+        ret
+
+
+Position_Print:
+        stp  x21, x30, [sp, -16]!
+        ldr  x21, [x20, Pos.state]
+         bl  Position_PrintFen
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_white
+         bl  PrintString
+        ldr  x1, [x20, 8*White]
+         bl  PrintBitboardCompact
+        PrintNewLine
+        adr  x1, Position_Print.sz_black
+         bl  PrintString
+        ldr  x1, [x20, 8*Black]
+         bl  PrintBitboardCompact
+        PrintNewLine
+        adr  x1, Position_Print.sz_pawn
+         bl  PrintString
+        ldr  x1, [x20, 8*Pawn]
+         bl  PrintBitboardCompact
+        PrintNewLine
+        adr  x1, Position_Print.sz_knight
+         bl  PrintString
+        ldr  x1, [x20, 8*Knight]
+         bl  PrintBitboardCompact
+        PrintNewLine
+        adr  x1, Position_Print.sz_bishop
+         bl  PrintString
+        ldr  x1, [x20, 8*Bishop]
+         bl  PrintBitboardCompact
+        PrintNewLine
+        adr  x1, Position_Print.sz_rook
+         bl  PrintString
+        ldr  x1, [x20, 8*Rook]
+         bl  PrintBitboardCompact
+        PrintNewLine
+        adr  x1, Position_Print.sz_queen
+         bl  PrintString
+        ldr  x1, [x20, 8*Queen]
+         bl  PrintBitboardCompact
+        PrintNewLine
+        adr  x1, Position_Print.sz_king
+         bl  PrintString
+        ldr  x1, [x20, 8*King]
+         bl  PrintBitboardCompact
+        PrintNewLine
+
+        ldp  x21, x30, [sp], 16
+        ret
+Position_Print.sz_white:  .ascii "white:     \0"
+Position_Print.sz_black:  .ascii "black:     \0"
+Position_Print.sz_pawn:   .ascii "pawn:      \0"
+Position_Print.sz_knight: .ascii "knight:    \0"
+Position_Print.sz_bishop: .ascii "bishop:    \0"
+Position_Print.sz_rook:   .ascii "rook:      \0"
+Position_Print.sz_queen:  .ascii "queen:     \0"
+Position_Print.sz_king:   .ascii "king:      \0"
 
