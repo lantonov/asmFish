@@ -45,15 +45,13 @@ EasyMoveMng_Update:
 		mov   ecx, dword[rsi+EasyMoveMng.pv+4*0]
 	       call   Move_GivesCheck
 		mov   ecx, dword[rsi+EasyMoveMng.pv+4*0]
-		mov   edx, eax
-		add   qword[rbp-Thread.rootPos+Thread.nodes], 1
+		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__EasyMoveMng
 	       call   SetCheckInfo
 		mov   ecx, dword[rsi+EasyMoveMng.pv+4*1]
 	       call   Move_GivesCheck
 		mov   ecx, dword[rsi+EasyMoveMng.pv+4*1]
-		mov   edx, eax
-		add   qword[rbp-Thread.rootPos+Thread.nodes], 1
+		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__EasyMoveMng
 
 		mov   rax, qword[rbx+State.key]

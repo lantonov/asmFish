@@ -125,6 +125,8 @@ SEP_CHAR equ ':'
 ; depths for search
  ONE_PLY = 1
  MAX_PLY = 128
+ MAX_SYZYGY_PLY = 20 ; how many times can the syzygy probe recurse?
+
  DEPTH_QS_CHECKS     =	0
  DEPTH_QS_NO_CHECKS  = -1
  DEPTH_QS_RECAPTURES = -5

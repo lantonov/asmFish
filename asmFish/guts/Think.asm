@@ -727,7 +727,7 @@ end virtual
 		 je   .Return
 	       call   Move_GivesCheck
 		mov   ecx, dword[r15+RootMove.pv+4*0]
-		mov   edx, eax
+		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__ExtractPonderFromTT
 		mov   rcx, qword[rbx+State.key]
 	       call   MainHash_Probe

@@ -31,8 +31,8 @@ end virtual
 		 jz   .MoveLoopDone
 		mov   ecx, dword[rsi]
 	       call   Move_GivesCheck
-		mov   edx, eax
 		mov   ecx, dword[rsi]
+		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__PerftGen_Root
 		mov   eax, 1
 		lea   ecx, [r15-1]
@@ -154,8 +154,8 @@ end virtual
 		 jz   .DepthNDone
 .DepthNLoop:
 	       call   Move_GivesCheck
-		mov   edx, eax
 		mov   ecx, dword[rsi]
+		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__PerftGen_Branch
 		mov   ecx, r15d
 	       call   Perft_Branch

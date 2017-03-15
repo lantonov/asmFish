@@ -1061,8 +1061,8 @@ end virtual
 		mov   ecx, dword[r13+ExtMove.move]
 		mov   dword[rbx+State.currentMove], ecx
 	       call   Move_GivesCheck
-		mov   edx, eax
 		mov   ecx, dword[r13+ExtMove.move]
+		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__PerftGen_Root
 		mov   rax, qword[rbx-sizeof.State+State.endMoves]
 		mov   qword[rbx+State.cur], rax

@@ -63,7 +63,7 @@ virtual at rsp
   .success		  rd 1	; for tb
   .rbeta		  rd 1
   .moved_piece_to_sq	  rd 1
-  .givesCheck		  rb 1
+                          rb 1
   .singularExtensionNode  rb 1
   .improving		  rb 1
   .captureOrPromotion	  rb 1	; nonzero for true
@@ -531,7 +531,7 @@ end if
 		mov   ecx, dword[.move]
 	       call   Move_GivesCheck
 		mov   ecx, dword[.move]
-		mov   edx, eax
+		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__ProbCut
 		mov   ecx, dword[.rbeta]
 		mov   edi, ecx
@@ -820,7 +820,7 @@ end if
 
 		mov   ecx, dword[.move]
 	       call   Move_GivesCheck
-		mov   byte[.givesCheck], al
+		mov   byte[rbx+State.givesCheck], al
 
 		mov   edx, dword[.depth]
 	      movzx   ecx, byte[.improving]
@@ -877,8 +877,8 @@ end if
       ; The call to search_NonPV with the same value of ss messed up our
       ; move picker data. So we fix it.
 		mov   r12, qword[rbx+State.stage]
-		mov   r13d, dword[rbx+State.ttMove]
-		mov   r14d, dword[rbx+State.countermove]
+		mov   r13, qword[rbx+State.ttMove]      ; ttMove and Depth
+		mov   r14, qword[rbx+State.countermove] ; counter move and gives check
 	       call   Search_NonPv
 		xor   ecx, ecx
 		mov   byte[rbx+State.skipEarlyPruning], cl
@@ -888,11 +888,9 @@ end if
 		mov   dword[.extension], ecx
       ; The call to search_NonPV with the same value of ss messed up our
       ; move picker data. So we fix it.
-		mov   edx, dword[.depth]
 		mov   qword[rbx+State.stage], r12
-		mov   dword[rbx+State.depth], edx
-		mov   dword[rbx+State.ttMove], r13d
-		mov   dword[rbx+State.countermove], r14d
+		mov   qword[rbx+State.ttMove], r13
+		mov   qword[rbx+State.countermove], r14
 
 
 .12done:
@@ -928,7 +926,7 @@ end if
 		mov   al, byte[.captureOrPromotion]
 	      movzx   ecx, word[rbx+State.npMaterial+2*1]
 		add   esi, ecx
-		 or   al, byte[.givesCheck]
+		 or   al, byte[rbx+State.givesCheck]
 		jnz   .13else
 		mov   eax, dword[rbp+Pos.sideToMove]
 		lea   ecx, [8*rax+Pawn]
@@ -1051,7 +1049,6 @@ end if
 		mov   qword[rbx+State.counterMoves], rax
 
 	; Step 14. Make the move
-	      movsx   edx, byte[.givesCheck]
 	       call   Move_Do__Search
 
 
@@ -1206,7 +1203,7 @@ end if
 		mov   r8d, dword[.newDepth]
 		lea   r10, [QSearch_NonPv_InCheck]
 		lea   r11, [QSearch_NonPv_NoCheck]
-		cmp   byte[.givesCheck], 0
+		cmp   byte[rbx-1*sizeof.State+State.givesCheck], 0
 	     cmovne   r11, r10
 		lea   rax, [Search_NonPv]
 		cmp   r8d, 1
@@ -1239,7 +1236,7 @@ end if
 		mov   r8d, dword [.newDepth]
 		lea   r10, [QSearch_Pv_InCheck]
 		lea   r11, [QSearch_Pv_NoCheck]
-		cmp   byte[.givesCheck], 0
+		cmp   byte[rbx-1*sizeof.State+State.givesCheck], 0
 	     cmovne   r11, r10
 		lea   rax, [Search_Pv]
 		cmp   r8d, 1
@@ -1271,7 +1268,7 @@ end if
 		mov   r8d, dword[.newDepth]
 		lea   r10, [QSearch_NonPv_InCheck]
 		lea   r11, [QSearch_NonPv_NoCheck]
-		cmp   byte[.givesCheck], 0
+		cmp   byte[rbx-1*sizeof.State+State.givesCheck], 0
 	     cmovne   r11, r10
 		lea   rax, [Search_NonPv]
 		cmp   r8d, 1
@@ -1307,7 +1304,7 @@ end if
 		mov   r8d, dword [.newDepth]
 		lea   r10, [QSearch_Pv_InCheck]
 		lea   r11, [QSearch_Pv_NoCheck]
-		cmp   byte[.givesCheck], 0
+		cmp   byte[rbx-1*sizeof.State+State.givesCheck], 0
 	     cmovne   r11, r10
 		lea   rax, [Search_Pv]
 		cmp   r8d, 1

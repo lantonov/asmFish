@@ -1405,7 +1405,7 @@ Position_CopyToSearch:
 	; if rcx < MAX_PLY+102, we need to realloc
 		mov   rdx, qword[r13+Pos.stateEnd]
 		sub   rdx, r9
-		cmp   rdx, sizeof.State*(100+MAX_PLY+2)
+		cmp   rdx, sizeof.State*(100+MAX_PLY+2+MAX_SYZYGY_PLY)
 		 jb   .realloc
 .copy_states:
 	; r9 = address of its state table
@@ -1443,11 +1443,11 @@ Position_CopyToSearch:
 		; rdx already has the size
 	       call   _VirtualFree
 .alloc:
-		mov   ecx, sizeof.State*(100+MAX_PLY+2)
+		mov   ecx, sizeof.State*(100+MAX_PLY+2+MAX_SYZYGY_PLY)
 	       call   _VirtualAlloc
 		mov   r9, rax
 		mov   qword[r13+Pos.stateTable], rax
-		lea   rax, [rax+sizeof.State*(100+MAX_PLY+2)]
+		add   rax, sizeof.State*(100+MAX_PLY+2+MAX_SYZYGY_PLY)
 		mov   qword[r13+Pos.stateEnd], rax
 		jmp   .copy_states
 

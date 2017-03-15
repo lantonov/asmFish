@@ -566,7 +566,7 @@ UciParseMoves:
 		mov   dword[rbx+sizeof.State+State.currentMove], edi
 	       call   Move_GivesCheck
 		mov   ecx, edi
-		mov   edx, eax
+		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__UciParseMoves
 	; when VERBOSE<>2, domove/undomove don't update gamePly
 if VERBOSE <> 2

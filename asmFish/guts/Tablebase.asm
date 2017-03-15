@@ -81,7 +81,7 @@ end virtual
 		 jz   .MoveLoop
 	       call   Move_GivesCheck
 		mov   ecx, dword[rsi+ExtMove.move]
-		mov   edx, eax
+		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__Tablebase_ProbeAB
 		mov   ecx, r15d
 		mov   edx, r14d
@@ -194,7 +194,7 @@ end virtual
 		mov   ecx, dword[rsi+ExtMove.move]
 	       call   Move_GivesCheck
 		mov   ecx, dword[rsi+ExtMove.move]
-		mov   edx, eax
+		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__Tablebase_ProbeWDL
 		mov   ecx, -2
 		mov   edx, 2
@@ -322,7 +322,7 @@ end virtual
 		mov   ecx, dword[rsi+ExtMove.move]
 	       call   Move_GivesCheck
 		mov   ecx, dword[rsi+ExtMove.move]
-		mov   edx, eax
+		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__Tablebase_ProbeDTZNoEP
 		mov   rcx, r15
 	       call   Tablebase_ProbeWDL
@@ -413,7 +413,7 @@ Tablebase_ProbeDTZNoEP_SuccessIsNeg_WdlIsPositive:
 		mov   ecx, dword[rsi+ExtMove.move]
 	       call   Move_GivesCheck
 		mov   ecx, dword[rsi+ExtMove.move]
-		mov   edx, eax
+		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__Tablebase_ProbeDTZNoEP_SuccessIsNeg_WdlIsPositive
 		mov   rcx, r15
 	       call   Tablebase_ProbeDTZ
@@ -465,7 +465,7 @@ Tablebase_ProbeDTZNoEP_SuccessIsNeg_WdlIsNonpositive:
 		mov   ecx, dword[rsi+ExtMove.move]
 	       call   Move_GivesCheck
 		mov   ecx, dword[rsi+ExtMove.move]
-		mov   edx, eax
+		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__Tablebase_ProbeDTZNoEP_SuccessIsNeg_WdlIsNonpositive
 	      movzx   eax, word[rbx+State.rule50]
 	       test   eax, eax
@@ -568,7 +568,7 @@ end virtual
 		mov   ecx, dword[rsi+ExtMove.move]
 	       call   Move_GivesCheck
 		mov   ecx, dword[rsi+ExtMove.move]
-		mov   edx, eax
+		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__Tablebase_ProbeDTZ
 		mov   ecx, -2
 		mov   edx, 2
@@ -712,7 +712,7 @@ GD NewLine
 		mov   ecx, dword[r12+RootMove.pv+4*0]
 	       call   Move_GivesCheck
 		mov   ecx, dword[r12+RootMove.pv+4*0]
-		mov   edx, eax
+		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__Tablebase_RootProbe
 
 		xor   esi, esi
@@ -1028,7 +1028,7 @@ end virtual
 		mov   ecx, dword[rsi+RootMove.pv+4*0]
 	       call   Move_GivesCheck
 		mov   ecx, dword[rsi+RootMove.pv+4*0]
-		mov   edx, eax
+		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__Tablebase_RootProbeWDL
 		lea   rcx, [.success]
 	       call   Tablebase_ProbeWDL
