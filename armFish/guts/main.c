@@ -54,7 +54,6 @@ mov w0, w17
 bl Math_scalbn_d_di
 Display "scalbn(%d16, %i17): %d0\n"
 
-
 // write engine name
         lea  x27, szGreetingEnd
 	lea  x1, szGreeting

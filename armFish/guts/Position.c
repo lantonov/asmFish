@@ -8,6 +8,9 @@ Position_SetState:
 		sub   rsp, 64
 		mov   rbx, qword[rbp+Pos.state]
 */
+        stp  x21, x30, [sp, -16]!
+        sub  sp, sp, 64
+        ldr  x21, [x20, Pos.state]
 /*
 		mov   rax, qword[Zobrist_side]
 		mov   r15d, dword[rbp+Pos.sideToMove]
@@ -22,6 +25,23 @@ Position_SetState:
 		xor   r15, qword[Zobrist_Ep+8*rcx]
 		@@:
 */
+        lea  x16, [Zobrist_side]
+        ldr  w15, [x20, Pos.sideToMove]
+       ldrb  w1, [x21, State.epSquare]
+       ldrb  w2, [x21, State.castlingRights]
+        neg  x15, x15
+        ldr  x4, [x16]
+        and  x15, x15, x4
+        lea  x16, Zobrist_Castling
+        ldr  x4, [x16, x2, lsl 3]
+        eor  x15, x15, x4
+        cmp  x2, 64
+        bhs  1f
+        and  x2, x2, 7
+        lea  x16, Zobrist_Ep
+        ldr  x4, [x16, x1, lsl 3]
+        eor  x15, x15, x4
+1:
 /*
 		mov   r14, [Zobrist_noPawns]
 		xor   r13, r13
@@ -31,6 +51,12 @@ Position_SetState:
 
 		xor   esi, esi
 */
+        lea  x16, [Zobrist_noPawns]
+        ldr  x14, [x16]
+        mov  x13, 0
+        eor  v0.16b, v0.16b, v0.16b
+        st1  {v0.16b}, [sp]
+        mov  x6, 0
 Position_SetState.NextSquare:
 /*
 	      movzx   eax, byte[rbp+Pos.board+rsi]
@@ -38,11 +64,21 @@ Position_SetState.NextSquare:
 		and   edx, 7	; edx = piece type
 		 jz   .Empty
 */
+        add  x16, x20, Pos.board
+       ldrb  w0, [x16, x6]
+       ands  x2, x0, 7
+        beq  Position_SetState.Empty
 /*
 	       imul   ecx, eax, 64*8
 	      vmovq   xmm1, qword[Scores_Pieces+rcx+8*rsi]
 	     vpaddd   xmm0, xmm0, xmm1
 */
+        lsl  x1, x0, 6+3
+        lea  x16, Scores_Pieces
+        add  x16, x16, x1
+        ldr  d1, [x16, x6, lsl 3]
+        add  v0.2s, v0.2s, v1.2s
+
 /*
 		xor   r15, qword[Zobrist_Pieces+rcx+8*rsi]
 		cmp   edx, Pawn
@@ -50,12 +86,26 @@ Position_SetState.NextSquare:
 		xor   r14, qword[Zobrist_Pieces+rcx+8*rsi]
 	 @@:
 */
+        lea  x16, Zobrist_Pieces
+        add  x16, x16, x1
+        ldr  x4, [x16, x6, lsl 3]
+        eor  x15, x15, x4
+        cmp  x2, Pawn
+        bne  1f
+        eor  x14, x14, x4
+1:      
 /*
 	      movzx   edx, byte [rsp+rax]
 		xor   r13, qword[Zobrist_Pieces+rcx+8*rdx]
 		add   edx, 1
 		mov   byte [rsp+rax], dl
 */
+       ldrb  w2, [sp, x0]
+        ldr  x4, [x16, x2, lsl 3]
+        eor  x13, x13, x4
+        add  x2, x2, 1
+       strb  w2, [sp, x0]
+
 Position_SetState.Empty:
 /*
 		add   esi, 1
@@ -67,6 +117,12 @@ Position_SetState.Empty:
 		mov   qword[rbx+State.materialKey], r13
 	      vmovq   qword[rbx+State.psq], xmm0
 */
+        add  x6, x6, 1
+        tbz  x6, 6, Position_SetState.NextSquare
+        str  x15, [x21, State.key]
+        str  x14, [x21, State.pawnKey]
+        str  x13, [x21, State.materialKey]
+        str  d0, [x21, State.psq]
 /*
 		mov   ecx, dword [rbp+Pos.sideToMove]
 		mov   rdx, qword [rbp+Pos.typeBB+8*King]
@@ -81,11 +137,22 @@ Position_SetState.Empty:
 		pop   r15 r14 r13 r12 rdi rsi rbx
 		ret
 */
-
+        ldr  w1, [x20, Pos.sideToMove]
+Display "Position_SetState sideToMove %x1\n"
+        ldr  x2, [x20, 8*King]
+        ldr  x4, [x20, x1, lsl 3]
+        and  x2, x2, x4
+       rbit  x4, x2
+        clz  x2, x4
+         bl  AttackersTo_Side
+        str  x0, [x21, State.checkersBB]
+         bl  SetCheckInfo
+        add  sp, sp, 64
+        ldp  x21, x30, [sp], 16
+        ret
 
 
 Position_SetPieceLists:
-        ret
 /*
 	; in: rbp Position
 	; out: set index, pieceCount, pieceList members in some fixed order
@@ -97,6 +164,11 @@ Position_SetPieceLists:
 		mov   ecx, 64
 	  rep stosb
 */
+        stp  x21, x30, [sp, -16]!
+        add  x0, x20, Pos.pieceIdx
+        mov  w1, 0
+        mov  x2, 64
+         bl  MemoryFill
 /*
 	; fill piece counts with indices indicating no pieces on the board
 irps c, White Black {
@@ -110,6 +182,41 @@ irps c, White Black {
 		mov   byte[rbp+Pos.pieceEnd+(8*c+King)]  , 16*(8*c+King)
 }
 */
+    c=0
+        mov  w0, 0
+       strb  w0, [x20, Pos.pieceEnd+(8*c+0)]
+        mov  w0, 0
+       strb  w0, [x20, Pos.pieceEnd+(8*c+1)]
+        mov  w0, 16*(8*c+Pawn)
+       strb  w0, [x20, Pos.pieceEnd+(8*c+Pawn)]
+        mov  w0, 16*(8*c+Knight)
+       strb  w0, [x20, Pos.pieceEnd+(8*c+Knight)]
+        mov  w0, 16*(8*c+Bishop)
+       strb  w0, [x20, Pos.pieceEnd+(8*c+Bishop)]
+        mov  w0, 16*(8*c+Rook)
+       strb  w0, [x20, Pos.pieceEnd+(8*c+Rook)]
+        mov  w0, 16*(8*c+Queen)
+       strb  w0, [x20, Pos.pieceEnd+(8*c+Queen)]
+        mov  w0, 16*(8*c+King)
+       strb  w0, [x20, Pos.pieceEnd+(8*c+King)]
+    c=1
+        mov  w0, 0
+       strb  w0, [x20, Pos.pieceEnd+(8*c+0)]
+        mov  w0, 0
+       strb  w0, [x20, Pos.pieceEnd+(8*c+1)]
+        mov  w0, 16*(8*c+Pawn)
+       strb  w0, [x20, Pos.pieceEnd+(8*c+Pawn)]
+        mov  w0, 16*(8*c+Knight)
+       strb  w0, [x20, Pos.pieceEnd+(8*c+Knight)]
+        mov  w0, 16*(8*c+Bishop)
+       strb  w0, [x20, Pos.pieceEnd+(8*c+Bishop)]
+        mov  w0, 16*(8*c+Rook)
+       strb  w0, [x20, Pos.pieceEnd+(8*c+Rook)]
+        mov  w0, 16*(8*c+Queen)
+       strb  w0, [x20, Pos.pieceEnd+(8*c+Queen)]
+        mov  w0, 16*(8*c+King)
+       strb  w0, [x20, Pos.pieceEnd+(8*c+King)]
+
 /*
 	; fill piece lists with SQ_NONE
 		lea   rdi, [rbp+Pos.pieceList]
@@ -120,6 +227,12 @@ irps c, White Black {
 	; the order is A8 to H8, then A7 to H7, ect
 		xor   esi, esi
 */
+        add  x0, x20, Pos.pieceList
+        mov  w1, 64
+        mov  w2, 16*16
+         bl  MemoryFill
+
+        mov  x6, 0
 Position_SetPieceLists.NextSquare:
 /*
 		xor   esi, 56
@@ -132,6 +245,20 @@ Position_SetPieceLists.NextSquare:
 		add   ecx, 1
 		mov   byte[rbp+Pos.pieceEnd+rax], cl
 */
+        eor  x7, x6, 56
+        add  x16, x20, Pos.board
+       ldrb  w0, [x16, x7]
+        cbz  w0, Position_SetPieceLists.skip
+        add  x16, x20, Pos.pieceEnd
+       ldrb  w1, [x16, x0]
+        add  x16, x20, Pos.pieceIdx
+       strb  w1, [x16, x7]
+        add  x16, x20, Pos.pieceList
+       strb  w7, [x16, x1]
+        add  x1, x1, 1
+        add  x16, x20, Pos.pieceEnd
+       strb  w1, [x16, x0]
+
 Position_SetPieceLists.skip:
 /*
 		xor   esi, 56
@@ -139,19 +266,20 @@ Position_SetPieceLists.skip:
 		cmp   esi, 64
 		 jb   .NextSquare
 */
+        add  x6, x6, 1
+        tbz  x6, 6, Position_SetPieceLists.NextSquare
 Position_SetPieceLists.Done:
 /*
 		pop   rdi rsi rbx
 		ret
 */
-
+        ldp  x21, x30, [sp], 16
+        ret
 
 
 
 
 Position_IsLegal:
-        mov  x0, 0
-        ret
 /*
 	; in: rbp position
 	; out: eax =  0 if position is legal more checks are performed with DEBUG
@@ -180,7 +308,29 @@ Position_IsLegal:
 		cmp   eax, 3
 		jae   .Failed
 */
+        stp  x21, x30, [sp, -16]!
+Display "pos is legal entered\n"
+
+        ldr  x0, [x20, 8*White]
+        ldr  x1, [x20, 8*Black]
+        tst  x0, x1
+        bne  Position_IsLegal.Failed
+        
+        Popcnt  x0, x0, x8
+        cmp  x0, 16
+        bhi  Position_IsLegal.Failed
+        Popcnt  x1, x1, x8
+        cmp  x1, 16
+        bhi  Position_IsLegal.Failed
+
+        ldr  x21, [x20, Pos.state]
+        ldr  x4, [x21, State.checkersBB]
+        Popcnt  x0, x4, x8
+        cmp  x0, 3
+        bhi  Position_IsLegal.Failed
+
 Position_IsLegal.VerifyKings:
+Display "pos is legal verify kings\n"
 /*
 		mov   rax, qword[rbp+Pos.typeBB+8*White]
 		and   rax, qword[rbp+Pos.typeBB+8*King]
@@ -193,13 +343,34 @@ Position_IsLegal.VerifyKings:
 		cmp   eax, 1
 		jne   .Failed
 */
+        ldr  x0, [x20, 8*White]
+        ldr  x4, [x20, 8*King]
+        and  x0, x0, x4
+        Popcnt  x0, x0, x8
+        cmp  x0, 1
+        bne  Position_IsLegal.Failed
+        ldr  x0, [x20, 8*Black]
+        ldr  x4, [x20, 8*King]
+        and  x0, x0, x4
+        Popcnt  x0, x0, x8
+        cmp  x0, 1
+        bne  Position_IsLegal.Failed
+
 Position_IsLegal.VerifyPawns:
+Display "pos is legal verify pawns\n"
 /*
 		mov   rax, 0xFF000000000000FF
 	       test   rax, qword[rbp+Pos.typeBB+8*Pawn]
 		jnz   .Failed
 */
+        mov  x0, 0x0FFFF
+        ror  x0, x0, 8
+        ldr  x4, [x20, 8*Pawn]
+        tst  x0, x4
+        bne  Position_IsLegal.Failed
+
 Position_IsLegal.VerifyPieces:
+Display "pos is legal verify pieces\n"
 /*
 		mov   rcx, qword[rbp+Pos.typeBB+8*White]
 		mov   r9, rcx
@@ -217,6 +388,46 @@ irps p, Pawn Knight Bishop Rook Queen {
 		cmp   rcx, r9
 		jne   .Failed
 */
+        ldr  x9, [x20, 8*White]
+        ldr  x1, [x20, 8*King]
+        and  x1, x1, x9
+        Popcnt  x2, x9, x8
+
+        ldr  x0, [x20, 8*Pawn]
+        and  x0, x0, x9
+        orr  x1, x1, x0
+        Popcnt  x0, x0,x8
+        sub  x2, x2, x0
+
+        ldr  x0, [x20, 8*Knight]
+        and  x0, x0, x9
+        orr  x1, x1, x0
+        Popcnt  x0, x0,x8
+        sub  x2, x2, x0
+
+        ldr  x0, [x20, 8*Bishop]
+        and  x0, x0, x9
+        orr  x1, x1, x0
+        Popcnt  x0, x0,x8
+        sub  x2, x2, x0
+
+        ldr  x0, [x20, 8*Rook]
+        and  x0, x0, x9
+        orr  x1, x1, x0
+        Popcnt  x0, x0,x8
+        sub  x2, x2, x0
+
+        ldr  x0, [x20, 8*Queen]
+        and  x0, x0, x9
+        orr  x1, x1, x0
+        Popcnt  x0, x0,x8
+        sub  x2, x2, x0
+
+        cmp  x2, 1
+        bne  Position_IsLegal.Failed
+        cmp  x1, x9
+        bne  Position_IsLegal.Failed
+
 /*
 		mov   rcx, qword[rbp+Pos.typeBB+8*Black]
 		mov   r9, rcx
@@ -236,6 +447,47 @@ irps p, Pawn Knight Bishop Rook Queen {
 
 		xor   edx, edx
 */
+        ldr  x9, [x20, 8*Black]
+        ldr  x1, [x20, 8*King]
+        and  x1, x1, x9
+        Popcnt  x2, x9, x8
+
+        ldr  x0, [x20, 8*Pawn]
+        and  x0, x0, x9
+        orr  x1, x1, x0
+        Popcnt  x0, x0,x8
+        sub  x2, x2, x0
+
+        ldr  x0, [x20, 8*Knight]
+        and  x0, x0, x9
+        orr  x1, x1, x0
+        Popcnt  x0, x0,x8
+        sub  x2, x2, x0
+
+        ldr  x0, [x20, 8*Bishop]
+        and  x0, x0, x9
+        orr  x1, x1, x0
+        Popcnt  x0, x0,x8
+        sub  x2, x2, x0
+
+        ldr  x0, [x20, 8*Rook]
+        and  x0, x0, x9
+        orr  x1, x1, x0
+        Popcnt  x0, x0,x8
+        sub  x2, x2, x0
+
+        ldr  x0, [x20, 8*Queen]
+        and  x0, x0, x9
+        orr  x1, x1, x0
+        Popcnt  x0, x0,x8
+        sub  x2, x2, x0
+
+        cmp  x2, 1
+        bne  Position_IsLegal.Failed
+        cmp  x1, x9
+        bne  Position_IsLegal.Failed
+
+        mov  x2, 0
 
 Position_IsLegal.VerifyBoard:
 /*
@@ -256,6 +508,22 @@ Position_IsLegal.VerifyBoard:
 		jnc   .Failed
 		jmp   .next
 */
+        add  x16, x20, Pos.board
+       ldrb  w0, [x16, x2]
+        cbz  w0, Position_IsLegal.empty
+        cmp  w0, 16
+        bhs  Position_IsLegal.Failed
+        and  x1, x0, 8
+        and  x0, x0, 7
+        cbz  x0, Position_IsLegal.Failed
+        cmp  x0, 1
+        cbz  x0, Position_IsLegal.Failed
+        ldr  x8, [x20, x0, lsl 3]
+        ldr  x4, [x20, x1]
+        and  x8, x8, x4
+        lsr  x8, x8, x2
+        tbz  x8, 0, Position_IsLegal.Failed
+          b  Position_IsLegal.next
 Position_IsLegal.empty:
 /*
 		mov   r8, qword[rbp+Pos.typeBB+8*0]
@@ -269,13 +537,31 @@ Position_IsLegal.empty:
 		 bt   r8, rdx
 		 jc   .Failed
 */
+        ldp  x8, x9, [x20, 8*0]
+        ldp  x10, x11, [x20, 8*2]
+        ldp  x12, x13, [x20, 8*4]
+        ldp  x14, x15, [x20, 8*6]
+        orr  x8, x8, x9
+        orr  x10, x10, x11
+        orr  x12, x12, x13
+        orr  x14, x14, x15
+        orr  x8, x8, x10
+        orr  x12, x12, x14
+        orr  x8, x8, x12
+        lsr  x8, x8, x2
+       tbnz  x8, 0, Position_IsLegal.Failed
+
 Position_IsLegal.next:
 /*
 		add   edx, 1
 		cmp   edx, 64
 		 jb   .VerifyBoard
 */
+        add  x2, x2, 1
+        tbz  x2, 6, Position_IsLegal.VerifyBoard
+
 Position_IsLegal.VerifyEp:
+Display "pos is legal verify ep\n"
 /*
 	      movzx   ecx, byte [rbx+State.epSquare]
 		cmp   ecx, 64
@@ -283,6 +569,15 @@ Position_IsLegal.VerifyEp:
 		mov   rax, Rank3BB+Rank6BB
 		 bt   rax, rcx
 		jnc  .Failed
+*/
+       ldrb  w1, [x21, State.epSquare]
+        cmp  w1, 64
+        bhs  Position_IsLegal.VerifyEpDone
+        mov  x0, Rank3BB
+        orr  x0, x0, Rank6BB
+        lsr  x0, x0, x1
+        tbz  x0, 0, Position_IsLegal.Failed
+/*
 	; make sure square behind ep square is empty
 	      movzx   eax, byte[rbp+Pos.sideToMove]
 		xor   eax, 1
@@ -293,6 +588,20 @@ Position_IsLegal.VerifyEp:
 		 jc   .Failed
 		 bt   qword[rbp+Pos.typeBB+8*White], rax
 		 jc   .Failed
+*/
+        ldr  w0, [x20, Pos.sideToMove]
+        eor  x0, x0, 1
+        ldr  x2, [x20, x0, lsl 3]
+        lsl  x0, x0, 4
+        add  x0, x0, x1
+        sub  x0, x0, 8
+        ldr  x4, [x20, 8*Black]
+        lsr  x4, x4, x0
+       tbnz  x4, 0, Position_IsLegal.Failed
+        ldr  x4, [x20, 8*White]
+        lsr  x4, x4, x0
+       tbnz  x4, 0, Position_IsLegal.Failed
+/*
 	; and square in front is occupied by one of their pawns
 	      movzx   eax, byte[rbp+Pos.sideToMove]
 		and   rdx, qword[rbp+Pos.typeBB+8*Pawn]
@@ -300,6 +609,14 @@ Position_IsLegal.VerifyEp:
 		lea   eax, [rax+rcx-8]
 		 bt   rdx, rax
 		jnc   .Failed
+*/
+        ldr  w0, [x20, Pos.sideToMove]
+        ldr  x4, [x20, 8*Pawn]
+        add  x0, x1, x0, lsl 4
+        sub  x0, x0, 8
+        lsr  x4, x2, x0
+        tbz  x4, 0, Position_IsLegal.Failed
+/*
 	; and opposing pawn can capture ep square
 	      movzx   eax, byte[rbp+Pos.sideToMove]
 		mov   rdx, qword[rbp+Pos.typeBB+8*rax]
@@ -309,10 +626,19 @@ Position_IsLegal.VerifyEp:
 	       test   rdx, qword[WhitePawnAttacks+rax+8*rcx]
 		 jz   .Failed
 */
+        ldr  w0, [x20, Pos.sideToMove]
+        ldr  x2, [x20, x0, lsl 3]
+        eor  x0, x0, 1
+        lea  x16, WhitePawnAttacks
+        add  x16, x16, x0, lsl 6+3
+        ldr  x4, [x16, x1, lsl 3]
+        tst  x2, x4
+        beq  Position_IsLegal.Failed
 Position_IsLegal.VerifyEpDone:
 
 
 Position_IsLegal.VerifyKingCapture:
+//Display "pos is legal king capture\n"
 /*
 	; make sure we can't capture their king
 	      movzx   ecx, byte[rbp+Pos.sideToMove]
@@ -328,13 +654,30 @@ Position_IsLegal.VerifyKingCapture:
 		pop   rdi rbx
 		ret
 */
+        ldr  w1, [x20, Pos.sideToMove]
+        eor  x1, x1, 1
+        ldr  x2, [x20, 8*King]
+        ldr  x4, [x20, x1, lsl 3]
+        and  x2, x2, x4
+       rbit  x4, x2
+        clz  x2, x4
+         bl  AttackersTo_Side
+Display "pos is legal king capture AttackersTo_Side: %x0\n"
+
+       cbnz  x0, Position_IsLegal.Failed
+Display "Position_IsLegal PASSED\n"
+        ldp  x21, x30, [sp], 16
+        ret
 Position_IsLegal.Failed:
 /*
 		 or   eax, -1
 		pop   rdi rbx
 		ret
 */
-
+Display "Position_IsLegal FAILED\n"
+        mov  w0, -1
+        ldp  x21, x30, [sp], 16
+        ret
 
 
 
@@ -656,6 +999,7 @@ Position_ParseFen.EpSquare:
          bl  SkipSpaces
          bl  ParseSquare
        strb  w0, [x21, State.epSquare]
+
         cmp  w0, 64
         beq  Position_ParseFen.FiftyMoves
         bhi  Position_ParseFen.Failed
@@ -1068,7 +1412,6 @@ Position_PrintFen:
         stp  x21, x30, [sp, -16]!
         ldr  x21, [x20, Pos.state]
 
-
        ldrb  w1, [x21, State.castlingRights]
         mov  x8, 7
 Position_PrintFen.loop1:
@@ -1203,7 +1546,7 @@ Position_PrintFen.cont:
        strb  w0, [x27, -1]
         mov  w0, ('w'<<0) + (' '<<8)
         mov  w1, ('b'<<0) + (' '<<8)
-       strb  w4, [x20, Pos.sideToMove]
+        ldr  w4, [x20, Pos.sideToMove]
         tst  w4, w4
        csel  w0, w2, w0, ne
        strh  w0, [x27], 2
@@ -1438,6 +1781,15 @@ Position_SetExtraCapacity:
 		jae   .realloc
 		ret
 */
+        mov  x4, sizeof.State
+        mul  x1, x1, x4
+        ldr  x4, [x20, Pos.state]
+        add  x1, x1, x4
+        ldr  x4, [x20, Pos.stateEnd]
+        cmp  x1, x4
+        bhs  Position_SetExtraCapacity.realloc
+        ret
+
 Position_SetExtraCapacity.realloc:
 /*	       push   rbx rsi rdi
 		sub   rcx, qword[rbp+Pos.stateTable]
@@ -1473,6 +1825,34 @@ Position_SetExtraCapacity.realloc:
 		pop   rdi rsi rbx
 		ret
 */
+        stp  x21, x30, [sp, -16]!
+        ldr  x4, [x20, Pos.stateTable]
+        sub  x0, x1, x4
+        mov  x2, sizeof.State
+       udiv  x0, x0, x2
+        add  x1, x0, 8
+        add  x1, x0, x1, lsr 2
+        mul  x1, x1, x2
+        mov  x21, x1
+         bl  Os_VirtualAlloc
+        mov  x8, x0
+        add  x10, x0, x21
+        ldr  x1, [x20, Pos.stateTable]
+        ldr  x9, [x20, Pos.state]
+        sub  x9, x9, x1
+        add  x9, x9, x8
+        ldr  x2, [x20, Pos.stateEnd]
+        sub  x2, x2, x1
+         bl  MemoryCopy
+        ldr  x1, [x20, Pos.stateTable]
+        ldr  x2, [x20, Pos.stateEnd]
+        sub  x2, x2, x1
+        str  x9, [x20, Pos.state]
+        str  x8, [x20, Pos.stateTable]
+        ldr  x10, [x20, Pos.stateEnd]
+         bl  Os_VirtualFree
+        ldp  x21, x30, [sp], 16
+        ret
 
 
 PrintBitboardCompact:
@@ -1513,8 +1893,45 @@ PrintBitboardCompact.Done:
 Position_Print:
         stp  x21, x30, [sp, -16]!
         ldr  x21, [x20, Pos.state]
-         bl  Position_PrintFen
-        PrintNewLine
+
+        ldr  w0, [x20, Pos.sideToMove]
+/*
+		xor   ecx, ecx
+	@@:	xor   ecx, 56
+	      movzx   eax, byte[rbp+Pos.board+rcx]
+		mov   edx, '  ' + (10 shl 16)
+		mov   dl, byte[PieceToChar+rax]
+		mov   eax, '* ' + (10 shl 16)
+		cmp   cl, byte[rbx+State.epSquare]
+	     cmovne   eax, edx
+	      stosd
+		xor   ecx, 56
+		lea   eax, [rcx+1]
+		and   eax, 7
+		neg   eax
+		sbb   rdi, 1
+		add   ecx, 1
+		cmp   ecx, 64
+		 jb   @b
+*/
+        mov  x1, 0
+1:
+        eor  x3, x1, 56
+        add  x16, x20, Pos.board
+       ldrb  w2, [x16, x1]
+        lea  x16, PieceToChar
+       ldrb  w2, [x16, x2] 
+        add  w2, w2, (' '<<8) + 10<<16
+        mov  w0, '*'
+        add  w0, w0, (' '<<8) + 10<<16
+       ldrb  w4, [x21, State.epSquare]
+        cmp  x3, x4
+       csel  w0, w2, w0, ne
+        str  w0, [x27], 2        
+        add  x1, x1, 1
+        tst  x1, 7
+       cinc  x27, x27, eq
+        tbz  x1, 6, 1b
 
         adr  x1, Position_Print.sz_white
          bl  PrintString
@@ -1557,14 +1974,250 @@ Position_Print:
          bl  PrintBitboardCompact
         PrintNewLine
 
+        adr  x1, Position_Print.sz_pieceIdx
+         bl  PrintString
+
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_pieceEnd
+         bl  PrintString
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_pieceList
+         bl  PrintString
+/*
+		xor   esi, esi
+	.3:    test   esi, 15
+		jnz   @f
+       PrintNewLine
+		mov   eax, '    '
+	      stosd
+	   @@:	lea   rax, [rdi+3]
+	       push   rax
+	      movzx   ecx, byte[rbp+Pos.pieceList+rsi]
+	       call   PrintSquare
+		pop   rcx
+		sub   rcx, rdi
+		mov   al, ' '
+	  rep stosb
+		add   esi, 1
+		cmp   esi, 16*16
+		 jb   .3
+       PrintNewLine
+*/
+        mov  x6, 0
+Position_Print.pieceList_loop:
+        tst  x6, 15
+        bne  Position_Print.pieceList_loop1
+        PrintNewLine
+        mov  w0, ' '
+       strb  w0, [x27], 1
+       strb  w0, [x27], 1
+       strb  w0, [x27], 1
+       strb  w0, [x27], 1
+Position_Print.pieceList_loop1:
+        add  x15, x27, 3
+        add  x16, x20, Pos.pieceList
+       ldrb  w1, [x16, x6]
+         bl  PrintSquare
+        sub  x2, x15, x27
+        mov  w1, ' '
+        mov  x0, x27
+         bl  MemoryFill
+        mov  x27, x0
+        add  x6, x6, 1
+        cmp  x6, 16*16
+        blo  Position_Print.pieceList_loop
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_checkers
+         bl  PrintString
+        ldr  x1, [x21, State.checkersBB]
+         bl  PrintBitboardCompact
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_pinned
+         bl  PrintString
+        ldr  x1, [x21, State.pinned]
+         bl  PrintBitboardCompact
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_fen
+         bl  PrintString
+         bl  Position_PrintFen
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_isok
+         bl  PrintString
+         bl  Position_IsLegal
+        tst  w0, w0
+        lea  x1, sz_yes
+        lea  x2, sz_no
+       csel  x1, x1, x2, eq
+         bl  PrintString
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_sideToMove
+         bl  PrintString
+        ldr  w0, [x20, Pos.sideToMove]
+        mov  w1, 'b'-'w'
+        mov  w2, 'w'
+       madd  w0, w0, w1, w2
+       strb  w0, [x27], 1
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_epSquare
+         bl  PrintString
+       ldrb  w1, [x21, State.epSquare]
+         bl  PrintSquare
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_rule50
+         bl  PrintString
+       ldrh  w1, [x21, State.rule50]
+         bl  PrintUInt
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_pliesFromNull
+         bl  PrintString
+       ldrh  w1, [x21, State.pliesFromNull]
+         bl  PrintUInt
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_capturedPiece
+         bl  PrintString
+       ldrb  w1, [x21, State.capturedPiece]
+        lea  x16, PieceToChar
+       ldrb  w0, [x16, x1]
+       strb  w0, [x27], 1
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_key
+         bl  PrintString
+        ldr  x0, [x21, State.key]
+         bl  PrintHex
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_pawnKey
+         bl  PrintString
+        ldr  x0, [x21, State.pawnKey]
+         bl  PrintHex
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_materialKey
+         bl  PrintString
+        ldr  x0, [x21, State.materialKey]
+         bl  PrintHex
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_psq
+         bl  PrintString
+/*
+		mov   eax, 'mg: '
+	      stosd
+		mov   eax, dword[rbx+State.psq]
+		add   eax, 0x08000
+		sar   eax, 16
+	     movsxd   rax, eax
+	       call   PrintSignedInteger
+		mov   ax, '  '
+	      stosw
+		mov   eax, 'eg: '
+	      stosd
+	      movsx   rax, word[rbx+State.psq+2*0]
+	       call   PrintSignedInteger
+*/
+        mov  w0, 'm'
+       strb  w0, [x27], 1
+        mov  w0, 'g'
+       strb  w0, [x27], 1
+        mov  w0, ':'
+       strb  w0, [x27], 1
+        mov  w0, ' '
+       strb  w0, [x27], 1
+        ldr  w0, [x21, State.psq]
+        add  w0, w0, 0x08000
+        asr  w0, w0, 16
+       sxtw  x0, w0
+         bl  PrintInt
+        mov  w0, ' '
+       strb  w0, [x27], 1
+        mov  w0, ' '
+       strb  w0, [x27], 1
+        mov  w0, 'e'
+       strb  w0, [x27], 1
+        mov  w0, 'g'
+       strb  w0, [x27], 1
+        mov  w0, ':'
+       strb  w0, [x27], 1
+        mov  w0, ' '
+       strb  w0, [x27], 1
+      ldrsw  x0, [x21, State.psq+2*0]
+         bl  PrintInt
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_npMaterial
+         bl  PrintString
+        mov  w0, 'w'
+       strb  w0, [x27], 1
+        mov  w0, ':'
+       strb  w0, [x27], 1
+        mov  w0, ' '
+       strb  w0, [x27], 1
+       ldrh  w0, [x21, State.npMaterial+2*0]
+         bl  PrintUInt
+        mov  w0, ' '
+       strb  w0, [x27], 1
+        mov  w0, ' '
+       strb  w0, [x27], 1
+        mov  w0, 'e'
+       strb  w0, [x27], 1
+        mov  w0, 'g'
+       strb  w0, [x27], 1
+        mov  w0, ':'
+       strb  w0, [x27], 1
+        mov  w0, ' '
+       strb  w0, [x27], 1
+       ldrh  w0, [x21, State.npMaterial+2*1]
+         bl  PrintUInt
+        PrintNewLine
+
+        adr  x1, Position_Print.sz_Gen_Legal
+         bl  PrintString
+        PrintNewLine
+
         ldp  x21, x30, [sp], 16
         ret
-Position_Print.sz_white:  .ascii "white:     \0"
-Position_Print.sz_black:  .ascii "black:     \0"
-Position_Print.sz_pawn:   .ascii "pawn:      \0"
-Position_Print.sz_knight: .ascii "knight:    \0"
-Position_Print.sz_bishop: .ascii "bishop:    \0"
-Position_Print.sz_rook:   .ascii "rook:      \0"
-Position_Print.sz_queen:  .ascii "queen:     \0"
-Position_Print.sz_king:   .ascii "king:      \0"
+
+
+Position_Print.sz_white:     .ascii "white:     \0"
+Position_Print.sz_black:     .ascii "black:     \0"
+Position_Print.sz_pawn:      .ascii "pawn:      \0"
+Position_Print.sz_knight:    .ascii "knight:    \0"
+Position_Print.sz_bishop:    .ascii "bishop:    \0"
+Position_Print.sz_rook:      .ascii "rook:      \0"
+Position_Print.sz_queen:     .ascii "queen:     \0"
+Position_Print.sz_king:      .ascii "king:      \0"
+Position_Print.sz_pieceIdx:  .ascii "pieceIdx:  \0"
+Position_Print.sz_pieceEnd:  .ascii "pieceEnd:  \0"
+Position_Print.sz_pieceList: .ascii "pieceList: \0"
+Position_Print.sz_checkers:  .ascii "checkers:  \0"
+Position_Print.sz_pinned:    .ascii "pinned:    \0"
+Position_Print.sz_fen:            .ascii "fen:            \0"
+Position_Print.sz_isok:           .ascii "isok:           \0"
+Position_Print.sz_sideToMove:     .ascii "sideToMove:     \0"
+Position_Print.sz_castlingRights: .ascii "castlingRights: \0"
+Position_Print.sz_epSquare:       .ascii "epSquare:       \0"
+Position_Print.sz_rule50:         .ascii "rule50:         \0"
+Position_Print.sz_pliesFromNull:  .ascii "pliesFromNull:  \0"
+Position_Print.sz_capturedPiece:  .ascii "capturedPiece:  \0"
+Position_Print.sz_key:          .ascii "key:            \0"
+Position_Print.sz_pawnKey:      .ascii "pawnKey:        \0"
+Position_Print.sz_materialKey:  .ascii "materialKey:    \0"
+Position_Print.sz_psq:        .ascii "psq:            \0"
+Position_Print.sz_npMaterial: .ascii "npMaterial:     \0"
+Position_Print.sz_Gen_Legal:  .ascii "Gen_Legal:      \0"
+        .balign 4
+
+
 

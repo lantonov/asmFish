@@ -26,8 +26,10 @@ PrintFancy:
 // io: x27 string with ie %x3 replaced by x1[3] ect
         stp  x29, x30, [sp, -16]!
         stp  x28, x26, [sp, -16]!
+        stp  x24, x25, [sp, -16]!
         mov  x26, x1
-        mov  x29, x2
+        mov  x28, x2
+        mov  x29, x3
 PrintFancy.Loop:
        ldrb  w0, [x26], 1
         cmp  w0, '%'
@@ -36,26 +38,33 @@ PrintFancy.Loop:
        strb  w0, [x27], 1
           b  PrintFancy.Loop
 PrintFancy.Done:
+        ldp  x24, x25, [sp], 16
         ldp  x28, x26, [sp], 16
         ldp  x29, x30, [sp], 16
         ret
 PrintFancy.GotOne:
-       ldrb  w28, [x26], 1   
+       ldrb  w24, [x26], 1   
          bl  ParseInteger
         and  x0, x0, 31
-        add  x1, x29, 8*32
-        ldr  d0, [x1, x0, lsl 3]
-        ldr  x0, [x29, x0, lsl 3]
+        add  x1, x29, x0, lsl 4
+        ld1  {V0.16b}, [x1]
+        ldr  x0, [x28, x0, lsl 3]
         adr  x1, PrintHex
         adr  x2, PrintInt
         adr  x3, PrintUInt
         adr  x4, PrintDouble
-        cmp  x28, 'i'
+        adr  x5, PrintDoubleVec
+        adr  x6, PrintHexVec
+        cmp  w24, 'i'
        csel  x1, x1, x2, ne
-        cmp  x28, 'u'
+        cmp  w24, 'u'
        csel  x1, x1, x3, ne
-        cmp  x28, 'd'
+        cmp  w24, 'd'
        csel  x1, x1, x4, ne
+        cmp  w24, 'D'
+       csel  x1, x1, x5, ne
+        cmp  w24, 'X'
+       csel  x1, x1, x6, ne
         blr  x1
           b  PrintFancy.Loop
 
@@ -138,8 +147,132 @@ ParseToken.Done:
         
 
 
+PrintUciMove:
+/*
+	       call   _PrintUciMove
+		mov   qword[rdi], rax
+		add   rdi, rdx
+		ret
+*/
+         bl  _PrintUciMove
+        str  x0, [x27]
+        add  x27, x27, x2
+        ret
+
+_PrintUciMove:
+/*
+	; in:  ecx  move
+	;      edx  is chess960
+	; out: rax  move string
+	;      edx  byte length of move string  4 or 5 for promotions
+		mov   r8d, ecx
+		shr   r8d, 6
+		and   r8d, 63	; r8d = from
+		mov   r9d, ecx
+		and   r9d, 63	; r9d = to
+		mov   eax, 'NONE'
+	       test   ecx, ecx
+		 jz   .Return
+		mov   eax, 'NULL'
+		cmp   ecx, MOVE_NULL
+		 jz   .Return
+
+	; castling requires special attention
+		cmp   r9d, r8d
+		sbb   eax, eax
+		mov   r10d, r9d
+		and   r10d, 56
+		lea   r10d, [r10+4*rax+FILE_G]
+		shr   ecx, 12
+		lea   eax, [ecx-MOVE_TYPE_CASTLE]
+		 or   eax, edx
+	      cmovz   r9d, r10d
+
+		mov   edx, r9d
+		and   r9d, 7
+		and   edx, 56
+		shl   edx, 5
+		lea   eax, [rdx+r9+'a1']
+
+		shl   eax, 16
+
+		mov   edx, r8d
+		and   r8d, 7
+		and   edx, 56
+		shl   edx, 5
+		add   edx, r8d
+		lea   eax, [rax+rdx+'a1']
+
+		sub   ecx, MOVE_TYPE_PROM
+		cmp   ecx, 4
+		 jb   .Promotion
+*/
+       ubfx  x8, x1, 6, 6
+        and  x9, x1, 63
+        mov  w0, 'N' + ('O'<<8)
+       movk  w0, 'N' + ('E'<<8), lsl 16
+        cbz  x1, _PrintUciMove.Return
+        mov  w0, 'N' + ('U'<<8)
+       movk  w0, 'L' + ('L'<<8), lsl 16
+        tst  w1, w1
+        bmi  _PrintUciMove.Return
+        cmp  x9, x8
+       cset  x0, hi
+        and  x10, x9, 56
+        add  x10, x10, x0, lsl 2
+        add  x10, x10, FILE_C
+        lsr  x1, x1, 12
+        cmp  x1, MOVE_TYPE_CASTLE
+       ccmp  x2, 0, 0, eq
+       csel  x9, x10, x9, eq
+        
+        mov  x0, 'a' + ('1'<<8)
+        and  x2, x9, 56
+        add  x0, x0, x2, lsl 5
+        and  x9, x9, 7
+        add  x0, x0, x9
+        
+        mov  x3, 'a' + ('1'<<8)
+        and  x2, x8, 56
+        add  x3, x3, x2, lsl 5
+        and  x8, x8, 7
+        add  x3, x3, x8
+
+        add  x0, x3, x0, lsl 16
+        sub  x1, x1, MOVE_TYPE_PROM
+        cmp  x1, 4
+        blo  _PrintUciMove.Promotion
+
+_PrintUciMove.Return:
+/*
+		mov   edx, 4
+		ret
+*/
+        mov  x2, 4
+        ret
+_PrintUciMove.Promotion:
+/*
+		shl   ecx, 3
+		mov   edx, 'nbrq'
+		shr   edx, cl
+		and   edx, 0x0FF
+		shl   rdx, 32
+		 or   rax, rdx
+		mov   edx, 5
+		ret
+*/
+        adr  x3, _PrintUciMove.lookup
+        ldr  w3, [x3, x1]
+        add  x0, x0, x3, lsl 32
+        mov  x2, 5
+        ret
+
+_PrintUciMove.lookup:
+        .ascii "nbrq"
+
 
 ParseUciMove:
+
 /*
 	; if string at rsi is a legal move, it is return in eax and rsi is advanced,
 	;   othersize MOVE_NONE (0) is return and rsi is unchanged
@@ -153,7 +286,14 @@ end virtual
 
 	 _chkstk_ms   rsp, .localsize
 		sub   rsp, .localsize
-
+*/
+ParseUciMove.moveList = 0
+ParseUciMove.localsize = sizeof.ExtMove*MAX_MOVES
+ParseUciMove.localsize = (ParseUciMove.localsize+15) & -16
+        stp  x21, x30, [sp, -16]!
+        stp  x26, x27, [sp, -16]!
+        sub  sp, sp, ParseUciMove.localsize
+/*
 		lea   rdi, [.moveList]
 		mov   rbx, qword[rbp+Pos.state]
 	       call   SetCheckInfo
@@ -193,6 +333,39 @@ end virtual
 		pop   rsi rdi rbx
 		ret
 */
+        add  x27, sp, ParseUciMove.moveList
+        ldr  x21, [x20, Pos.state]
+         bl  SetCheckInfo
+         bl  Gen_Legal
+        str  xzr, [x27]
+        ldr  w21, [x26], 4
+       ldrb  w0, [x26]
+        ToLower w0
+        cmp  w0, ' '
+       cinc  x26, x26, hi
+       csel  w0, w0, wzr, hi
+        add  x21, x21, x0, lsl 32
+        add  x27, sp, ParseUciMove.moveList-sizeof.ExtMove
+ParseUciMove.CheckNext:
+        add  x27, x27, sizeof.ExtMove
+        ldr  w1, [x27, ExtMove.move]
+        cbz  w1, ParseUciMove.Failed
+        ldr  w2, [x20, Pos.chess960]
+         bl  _PrintUciMove
+        cmp  x0, x21
+        bne  ParseUciMove.CheckNext
+        ldr  w0, [x27, ExtMove.move]
+        add  sp, sp, ParseUciMove.localsize
+        ldp  x26, x27, [sp], 16
+        ldp  x21, x30, [sp], 16
+        ret
+ParseUciMove.Failed:
+        mov  w0, 0
+        add  sp, sp, ParseUciMove.localsize
+        ldp  x26, x27, [sp], 16
+        ldp  x21, x30, [sp], 16
+        ret
+
 
 PrintSquare:
 /*
@@ -269,7 +442,7 @@ ParseSquare:
         add  x0, x1, x0, lsl 3
         ret
 ParseSquare.none:
-        mov  x0, 65
+        mov  x0, 64
         ret
 ParseSquare.error:
         mov  x26, x2
@@ -291,6 +464,44 @@ PrintHex.Next:
        strb  w1, [x27], 1                
         sub  w4, w4, 1
        cbnz  w4, PrintHex.Next
+        ret
+
+
+PrintHexVec:
+// in: v0 double
+// io: x27 string
+        stp  x29, x30, [sp, -16]!
+        sub  sp, sp, 16
+        st1  {v0.16b}, [sp]
+        ldr  x0, [sp, 0]
+         bl  PrintHex
+        mov  w0, '_'
+       strb  w0, [x27], 1
+        ldr  x0, [sp, 8]
+         bl  PrintHex
+        add  sp, sp, 16       
+        ldp  x29, x30, [sp], 16
+        ret
+
+
+PrintDoubleVec:
+// in: v0 double
+// io: x27 string
+        stp  x29, x30, [sp, -16]!
+        sub  sp, sp, 16
+        st1  {v0.16b}, [sp]
+        mov  w0, '('
+       strb  w0, [x27], 1
+        ldr  d0, [sp, 0]
+         bl  PrintDouble
+        mov  w0, ','
+       strb  w0, [x27], 1
+        ldr  d0, [sp, 8]
+         bl  PrintDouble
+        mov  w0, ')'
+       strb  w0, [x27], 1
+        add  sp, sp, 16       
+        ldp  x29, x30, [sp], 16
         ret
 
 

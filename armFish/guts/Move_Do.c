@@ -147,17 +147,9 @@ Move_Do:
 	;     edx  move is check
 
 	       push   rsi rdi r12 r13 r14 r15
-	       push   rcx rdx
-
         ; stack is unaligned at this point
-
-*/
-
-/*
 		mov   esi, dword[rbp+Pos.sideToMove]
-
 	      vmovq   xmm15, qword[Zobrist_side]
-
 		mov   r8d, ecx
 		shr   r8d, 6
 		and   r8d, 63	; r8d = from
@@ -170,8 +162,6 @@ ProfileInc Move_Do
 
 	      movzx   r10d, byte[rbp+Pos.board+r8]     ; r10 = FROM PIECE
 	      movzx   r11d, byte[rbp+Pos.board+r9]     ; r11 = TO PIECE
-
-	       push   r10
 
 	      vmovq   xmm5, qword[rbx+State.key]
 	      vmovq   xmm4, qword[rbx+State.pawnKey]
@@ -194,7 +184,41 @@ ProfileInc Move_Do
 		and   al, dl
 		jnz   .Rights
 */
-Move_Do.RightsRet:
+        ldr  w6, [x20, Pos.sideToMove]
+        lea  x16, Zobrist_side
+        ldr  d15, [x16]
+       ubfx  x8, x1, 6, 6
+        and  x9, x1, 63
+        lsr  x1, x1, 12
+        add  x16, x20, Pos.board
+       ldrb  w10, [x16, x8]
+       ldrb  w11, [x16, x8]
+        ldr  d5, [x21, State.key]
+        ldr  d4, [x21, State.pawnKey]
+        ldr  d3, [x21, State.materialKey]
+        ldr  d6, [x21, State.psq]
+        eor  v5.8b, v5.8b, v15.8b
+
+        mov  x4, 1
+        ldr  x5, [x20, -Thread.rootPos+Thread.nodes]
+        add  x5, x5, x4
+        str  x5, [x20, -Thread.rootPos+Thread.nodes]
+
+       movk  w4, 1, lsl 16
+        ldr  w0, [x21, State.rule50]
+        add  w0, w0, w4
+       strb  w11, [x21, sizeof.State+State.capturedPiece]
+        str  w0, [x21, sizeof.State+State.rule50]
+
+        add  x16, x20, -Thread.rootPos+Thread.castling_rightsMask
+       ldrb  w2, [x21, State.castlingRights]
+       ldrb  w0, [x16, x8] 
+       ldrb  w4, [x16, x9]
+        orr  w0, w0, w4
+       ands  w0, w0, w2
+        bne  Move_Do.Rights
+
+Move_Do.RightsRet:	
 /*
                 mov   byte[rbx+sizeof.State+State.castlingRights], dl
 
@@ -204,6 +228,12 @@ Move_Do.RightsRet:
 		 jb   .ResetEp
 		mov   byte[rbx+sizeof.State+State.epSquare], al
 */
+       strb  w2, [x21, sizeof.State+State.castlingRights]
+       ldrb  w0, [x21, State.epSquare]
+        cmp  w0, 64
+        blo  Move_Do.ResetEp
+       strb  w0, [x21, sizeof.State+State.epSquare]
+
 Move_Do.ResetEpRet:
 /*
 	; capture
@@ -213,6 +243,11 @@ Move_Do.ResetEpRet:
 		and   eax, 7
 		jnz   .Capture
 */
+        cmp  x1, MOVE_TYPE_CASTLE
+        beq  Move_Do.Castling
+        and  x0, x11, 7
+       cbnz  x11, Move_Do.Capture
+
 Move_Do.CaptureRet:
 /*
 	; move piece
@@ -221,20 +256,43 @@ Move_Do.CaptureRet:
 
 		xor   edx, edx
 		bts   rdx, r8
-	       push   rdx
+	      vmovq   xmm8, rdx
 		bts   rdx, r9
-	       push   rdx
+	      vmovq   xmm9, rdx
 		mov   eax, r10d
 		and   eax, 7
 		mov   byte[rbp+Pos.board+r8], 0
 		mov   byte[rbp+Pos.board+r9], r10l
 		xor   qword[rbp+Pos.typeBB+8*rax], rdx
 		xor   qword[rbp+Pos.typeBB+8*rsi], rdx
-
 	      movzx   eax, byte[rbp+Pos.pieceIdx+r8]
 		mov   byte[rbp+Pos.pieceList+rax], r9l
 		mov   byte[rbp+Pos.pieceIdx+r9], al
-
+*/
+        eor  x11, x8, x9
+        mov  x2, 1
+        lsl  x4, x2, x8
+        lsl  x2, x2, x9
+       fmov  d8, x4
+       fmov  d9, x2
+        eor  x2, x2, x4
+        and  x0, x10, 7
+        add  x16, x20, Pos.board
+       strb  wzr, [x16, x8]
+       strb  w10, [x16, x9]
+        ldr  x4, [x20, x0, lsl 3]
+        eor  x4, x4, x2
+        str  x4, [x20, x0, lsl 3]
+        ldr  x4, [x20, x6, lsl 3]
+        eor  x4, x4, x2
+        str  x4, [x20, x6, lsl 3]
+        add  x16, x20, Pos.pieceIdx
+       ldrb  w0, [x16, x8]
+        add  x16, x20, Pos.pieceList
+       strb  w9, [x16, x0]
+        add  x16, x20, Pos.pieceIdx
+       strb  w0, [x16, x9]
+/*
 	      movsx   rax, byte[IsPawnMasks+r10]
 		and   r11d, eax
 		shl   r10d, 6+3
@@ -260,12 +318,44 @@ Move_Do.CaptureRet:
 		cmp   r11d, 16
 		 je   .DoublePawn
 */
+        lea  x16, IsPawnMasks
+      ldrsb  x0, [x16, x10]
+        and  x11, x11, x0
+        lea  x16, Zobrist_Pieces
+        lea  x17, Scores_Pieces
+        add  x16, x16, x10, lsl 6+3
+        add  x17, x17, x10, lsl 6+3
+        ldr  x2, [x16, x8, lsl 3]
+        ldr  x4, [x16, x9, lsl 3]
+        eor  x2, x2, x4
+        ldr  d1, [x17, x8, lsl 3]
+        ldr  d2, [x17, x9, lsl 3]
+       fmov  d7, x2
+        eor  v5.8b, v5.8b, v5.8b
+        and  x2, x2, x0
+       fmov  d7, x2
+        eor  v4.8b, v4.8b, v7.8b
+        sub  v6.2s, v6.2s, v1.2s
+        add  v6.2s, v6.2s, v2.2s
+
+        mvn  w0, w0
+       ldrh  w4, [x21, sizeof.State+State.rule50]
+        and  w4, w4, w0
+       strh  w4, [x21, sizeof.State+State.rule50]
+
+        cmp  w1, MOVE_TYPE_PROM
+        bhs  Move_Do.Special
+        cmp  x11, 16
+        beq  Move_Do.DoublePawn
+
 Move_Do.SpecialRet:
 /*
 
 	; write remaining data to next state entry
 
-		pop   r9 r8 r10 rax rcx
+              movzx   eax, byte[rbx+State.givesCheck]
+              vmovq   r8, xmm8
+              vmovq   r9, xmm9
 	; r9 = to + from
 	; r8 = from
 	; r10 = from piece
@@ -298,23 +388,52 @@ Move_Do.SpecialRet:
 		bsf   r15, r15		; r15 = our king
 		bsf   r14, r14		; r14 = their king
 
-	       test   rax, rax
+	       test   eax, eax
 		jnz   .MoveIsCheck
 */
+       ldrb  w0, [x21, State.givesCheck]
+       fmov  x8, d8
+       fmov  x9, d9
+        eor  x6, x6, 1
+        add  x21, x21, sizeof.State
+        and  x10, x10, 7
+        str  w6, [x20, Pos.sideToMove]
+        str  x21, [x20, Pos.state]
+        
+        str  d5, [x21, State.key]
+        str  d4, [x21, State.pawnKey]
+        str  d3, [x21, State.materialKey]
+        str  d6, [x21, State.psq]
+
+        ldr  x4, [x20, 8*King]
+        ldr  x13, [x20, x6, lsl 3]
+        eor  x6, x6, 1
+        ldr  x12, [x20, x6, lsl 3]
+        and  x14, x12, x4
+        and  x15, x13, x4
+        eor  x7, x12, x13
+       rbit  x14, x14
+       rbit  x15, x15
+        clz  x14, x14
+        clz  x15, x15
+
+       cbnz  w0, Move_Do.MoveIsCheck
+        
+
 Move_Do.CheckersDone:
 /*
 		mov   qword[rbx+State.checkersBB], rax
 		jmp   SetCheckInfo.go
-
-
 */
+        str  xzr, [x21, State.checkersBB]
+          b  SetCheckInfo.go
+
+
 Move_Do.Capture:
 /*
 		mov   r12d, r11d
 		and   r12d, 8
 	; remove piece r11(=r12+rax) on to square r9
-
-
 		mov   rdi, qword[rbp+Pos.typeBB+r12]
 		mov   rdx, qword[rbp+Pos.typeBB+8*rax]
 		btr   rdi, r9
@@ -324,7 +443,22 @@ Move_Do.Capture:
 
 	      movzx   edi, byte[rbp+Pos.pieceEnd+r11]
 		and   edi, 15
+*/
+        and  x12, x11, 8
+        ldr  x7, [x21, x12]
+        ldr  x2, [x21, x0, lsl 3]
+        mov  x4, 1
+        lsl  x4, x4, x9
+        bic  x7, x7, x4
+        bic  x2, x2, x4
+        str  x7, [x20, x12]
+        str  x2, [x20, x0, lsl 3]
 
+        add  x16, x21, Pos.pieceEnd
+       ldrb  w7, [x16, x11]
+        and  w7, w7, 15
+
+/*
 	      movsx   rax, byte[IsPawnMasks+r11]
 		shl   r11d, 6+3
 		mov   rdx, qword[Zobrist_Pieces+r11+8*r9]
@@ -339,7 +473,26 @@ Move_Do.Capture:
 	     vpsubd   xmm6, xmm6, xmm1
 		shr   r11d, 6+3
 		mov   word[rbx+sizeof.State+State.rule50], 0
-
+*/
+        lea  x16, IsPawnMasks
+      ldrsb  x0, [x16, x11]
+        lea  x16, Zobrist_Pieces
+        lea  x17, Scores_Pieces
+        add  x16, x16, x11, lsl 6+3
+        add  x17, x17, x11, lsl 6+3
+        ldr  x2, [x16, x9, lsl 3]
+       fmov  d7, x2
+        eor  v5.8b, v5.8b, v7.8b
+        and  x2, x2, x0
+       fmov  d7, x2
+        eor  v4.8b, v4.8b, v7.8b
+        sub  x7, x7, 1
+        ldr  d7, [x16, x7, lsl 3]
+        eor  v3.8b, v3.8b, v7.8b
+        ldr  d1, [x17, x9, lsl 3]
+        sub  v6.2s, v6.2s, v1.2s
+       strh  w0, [x21, sizeof.State+State.rule50]
+/*
 	      movzx   edi, byte[rbp+Pos.pieceEnd+r11]
 		sub   edi, 1
 	      movzx   edx, byte[rbp+Pos.pieceList+rdi]
@@ -349,80 +502,134 @@ Move_Do.Capture:
 		mov   byte[rbp+Pos.pieceList+rax], dl
 		mov   byte[rbp+Pos.pieceList+rdi], 64
 		jmp   .CaptureRet
-
 */
+        add  x16, x21, Pos.pieceEnd
+       ldrb  w7, [x16, x11]
+        sub  w7, w7, 1
+        add  x16, x20, Pos.pieceList
+       ldrb  w2, [x20, x7]
+        add  x16, x20, Pos.pieceIdx
+       ldrb  w0, [x20, x9]
+        add  x16, x20, Pos.pieceEnd
+       strb  w7, [x16, x11]
+        add  x16, x20, Pos.pieceIdx
+       strb  w0, [x16, x2]
+        add  x16, x20, Pos.pieceList
+       strb  w2, [x16, x0]
+        mov  w0, 64
+       strb  w0, [x16, x7]
+          b  Move_Do.CaptureRet
+
 Move_Do.MoveIsCheck:
 /*
 		mov   rdx, qword[rbx+State.dcCandidates-sizeof.State]
 		mov   rax, qword[rbx+State.checkSq-sizeof.State+8*r10]
-		cmp   ecx, 1 shl 12
-		jae   .DoFull
+	       test   ecx, ecx
+		jnz   .DoFull
 		and   rax, r9
 	       test   rdx, r8
 		jnz   .DoFull
 		mov   qword[rbx+State.checkersBB], rax
-
 		jmp   SetCheckInfo.go
 */
+        ldr  x2, [x21, -1*sizeof.State+State.dcCandidates]
+        add  x16, x21, -1*sizeof.State+State.checkSq
+        ldr  x0, [x16, x10, lsl 3]
+       cbnz  w1, Move_Do.DoFull
+        and  x0, x0, x9
+        tst  x2, x8
+        bne  Move_Do.DoFull
+        str  x0, [x21, State.checkersBB]
+          b  SetCheckInfo.go
+
 Move_Do.DoFull:
 /*
 		mov   ecx, esi
 		xor   ecx, 1 shl (6+3)
-
 		mov   rax, qword[KingAttacks+8*r15]
 		and   rax, qword[rbp+Pos.typeBB+8*King]
-
 		mov   r8, qword[KnightAttacks+8*r15]
 		and   r8, qword[rbp+Pos.typeBB+8*Knight]
 		 or   rax, r8
-
 		mov   r8, qword[WhitePawnAttacks+rcx+8*r15]
 		and   r8, qword[rbp+Pos.typeBB+8*Pawn]
 		 or   rax, r8
-
 	RookAttacks   r8, r15, rdi, r9
 		mov   r9, qword[rbp+Pos.typeBB+8*Rook]
 		 or   r9, qword[rbp+Pos.typeBB+8*Queen]
 		and   r8, r9
 		 or   rax, r8
-
       BishopAttacks   r8, r15, rdi, r9
 		mov   r9, qword[rbp+Pos.typeBB+8*Bishop]
 		 or   r9, qword[rbp+Pos.typeBB+8*Queen]
 		and   r8, r9
 		 or   rax, r8
-
 		and   rax, r12
 		mov   qword[rbx+State.checkersBB], rax
-
-		mov   qword[rbp+Pos.state], rbx
-	       call   Position_IsLegal
-	       test   eax, eax
-		jnz   Move_Do_post_posill
-
 		jmp   SetCheckInfo.go
-
 */
+        eor  x1, x6, 1
+        lea  x16, PawnAttacks
+        add  x16, x16, x15, lsl 3
+        ldr  x0, [x16, KingAttacks-PawnAttacks]
+        ldr  x4, [x20, 8*King]
+        and  x0, x0, x4
+        ldr  x8, [x16, KnightAttacks-PawnAttacks]
+        ldr  x4, [x20, 8*Knight]
+        and  x8, x8, x4
+        orr  x0, x0, x8
+        add  x16, x16, x1, lsl 6+3
+        ldr  x8, [x16]
+        ldr  x4, [x20, 8*Pawn]
+        and  x8, x8, x4
+        orr  x0, x0, x8
+        ldr  x5, [x20, 8*Queen]
+        RookAttacks x8, x15, x7, x9, x1
+        ldr  x9, [x20, 8*Rook]
+        orr  x9, x9, x5
+        and  x8, x8, x9
+        orr  x0, x0, x8
+        BishopAttacks x8, x15, x7, x9, x1
+        ldr  x9, [x20, 8*Bishop]
+        orr  x9, x9, x5
+        and  x8, x8, x9
+        orr  x0, x0, x8
+        and  x0, x0, x12
+        str  x0, [x21, State.checkersBB]
+          b  SetCheckInfo.go
+
+        
+
+
 Move_Do.ResetEp:
 /*
 		and   eax, 7
 	      vmovq   xmm7, qword[Zobrist_Ep+8*rax]
 	      vpxor   xmm5, xmm5, xmm7
-
-
 		mov   byte[rbx+sizeof.State+State.epSquare], 64
 		jmp   .ResetEpRet
-
 */
+        lea  x16, Zobrist_Ep
+        and  w0, w0, 7
+        ldr  d7, [x16, x0, lsl 3]
+        eor  v5.8b, v5.8b, v7.8b
+        mov  w4, 64
+       strb  w4, [x21, sizeof.State+State.epSquare]
+          b  Move_Do.ResetEpRet
+
 Move_Do.Rights:
 /*
 		xor   edx, eax
 	      vmovq   xmm7, qword[Zobrist_Castling+8*rax]
 	      vpxor   xmm5, xmm5, xmm7
-
 		jmp   .RightsRet
-
 */
+        lea  x16, Zobrist_Castling
+        eor  w2, w2, w0
+        ldr  d7, [x16, x0, lsl 3]
+        eor  v5.8b, v5.8b, v7.8b
+          b  Move_Do.RightsRet
+
 Move_Do.DoublePawn:
 /*
 		mov   edx, esi
@@ -440,17 +647,21 @@ Move_Do.DoublePawn:
 	      vmovq   xmm7, qword[Zobrist_Ep+8*r8]
 	      vpxor   xmm5, xmm5, xmm7
 		jmp   .SpecialRet
-
 */
+        brk  0
+          b  Move_Do.SpecialRet
+
 Move_Do.Special:
 /*
 		xor   edx, edx
 		cmp   ecx, MOVE_TYPE_EPCAP
 		 je   .EpCapture
 */
+        brk  0
+
 Move_Do.Promotion:
 /*
-		lea   ecx, [rcx-MOVE_TYPE_PROM+8*rsi+Knight]
+		lea   r14d, [rcx-MOVE_TYPE_PROM+8*rsi+Knight]
 
 	      movzx   edi, byte[rbp+Pos.pieceEnd+r10]
 		sub   edi, 1
@@ -461,11 +672,11 @@ Move_Do.Promotion:
 		mov   byte[rbp+Pos.pieceList+rax], dl
 		mov   byte[rbp+Pos.pieceList+rdi], 64
 
-	      movzx   edx, byte[rbp+Pos.pieceEnd+rcx]
+	      movzx   edx, byte[rbp+Pos.pieceEnd+r14]
 		mov   byte[rbp+Pos.pieceIdx+r9], dl
 		mov   byte[rbp+Pos.pieceList+rdx], r9l
 		add   edx, 1
-		mov   byte[rbp+Pos.pieceEnd+rcx], dl
+		mov   byte[rbp+Pos.pieceEnd+r14], dl
 
 	; remove pawn r10 on square r9
 		mov   rdx, qword[rbp+Pos.typeBB+8*Pawn]
@@ -481,68 +692,72 @@ Move_Do.Promotion:
 	      vpxor   xmm3, xmm3, xmm7
 	      vmovq   xmm1, qword[Scores_Pieces+r10+8*r9]
 	     vpsubd   xmm6, xmm6, xmm1
-	; place piece ecx on square r9
-		mov   eax, ecx
+                shr   r10d, 6+3
+	; place piece r14 on square r9
+		mov   eax, r14d
 		and   eax, 7
 		mov   rdx, qword[rbp+Pos.typeBB+8*rax]
 		bts   rdx, r9
 		mov   qword[rbp+Pos.typeBB+8*rax], rdx
-		mov   byte[rbp+Pos.board+r9], cl
+		mov   byte[rbp+Pos.board+r9], r14l
 		and   rdx, qword[rbp+Pos.typeBB+8*rsi]
 	     popcnt   rax, rdx, r8
-		shl   ecx, 6+3
-	      vmovq   xmm7, qword[Zobrist_Pieces+rcx+8*r9]
+		shl   r14d, 6+3
+	      vmovq   xmm7, qword[Zobrist_Pieces+r14+8*r9]
 	      vpxor   xmm5, xmm5, xmm7
-	      vmovq   xmm7, qword[Zobrist_Pieces+rcx+8*(rax-1)]
+	      vmovq   xmm7, qword[Zobrist_Pieces+r14+8*(rax-1)]
 	      vpxor   xmm3, xmm3, xmm7
-	      vmovq   xmm1, qword[Scores_Pieces+rcx+8*r9]
+	      vmovq   xmm1, qword[Scores_Pieces+r14+8*r9]
 	     vpaddd   xmm6, xmm6, xmm1
 		jmp   .SpecialRet
-
-
 */
+        brk  0
+          b  Move_Do.SpecialRet
+
+
 Move_Do.EpCapture:
 /*
-	; remove pawn r10^8 on square ecx=r9+8*(2*esi-1)
-		lea   ecx, [2*rsi-1]
-		lea   ecx, [r9+8*rcx]
+	; remove pawn r10^8 on square r14=r9+8*(2*esi-1)
+		lea   r14d, [2*rsi-1]
+		lea   r14d, [r9+8*r14]
 		xor   r10, 8
 		xor   esi, 1
 		mov   rdx, qword[rbp+Pos.typeBB+8*Pawn]
 		mov   rdi, qword[rbp+Pos.typeBB+8*rsi]
-		btr   rdx, rcx
-		btr   rdi, rcx
+		btr   rdx, r14
+		btr   rdi, r14
 		mov   qword[rbp+Pos.typeBB+8*Pawn], rdx
 		mov   qword[rbp+Pos.typeBB+8*rsi], rdi
-		mov   byte[rbp+Pos.board+rcx], 0
+		mov   byte[rbp+Pos.board+r14], 0
 		and   rdi, rdx
 	     popcnt   rdi, rdi, rdx
 		shl   r10d, 6+3
-	      vmovq   xmm7, qword[Zobrist_Pieces+r10+8*rcx]
+	      vmovq   xmm7, qword[Zobrist_Pieces+r10+8*r14]
 	      vpxor   xmm5, xmm5, xmm7
 	      vpxor   xmm4, xmm4, xmm7
 	      vmovq   xmm7, qword[Zobrist_Pieces+r10+8*rdi]
 	      vpxor   xmm3, xmm3, xmm7
-	      vmovq   xmm1, qword[Scores_Pieces+r10+8*rcx]
+	      vmovq   xmm1, qword[Scores_Pieces+r10+8*r14]
 	     vpsubd   xmm6, xmm6, xmm1
+                shr   r10d, 6+3
+                ;xor   r10d, 8  ; not needed only care about lower 3 bits
 		lea   eax, [8*rsi+Pawn]
 		mov   word[rbx+sizeof.State+State.rule50], 0
 		mov   byte[rbx+sizeof.State+State.capturedPiece], al
-
 	      movzx   edi, byte[rbp+Pos.pieceEnd+8*rsi+Pawn]
 		sub   edi, 1
 	      movzx   edx, byte[rbp+Pos.pieceList+rdi]
-	      movzx   eax, byte[rbp+Pos.pieceIdx+rcx]
+	      movzx   eax, byte[rbp+Pos.pieceIdx+r14]
 		mov   byte[rbp+Pos.pieceEnd+8*rsi+Pawn], dil
 		mov   byte[rbp+Pos.pieceIdx+rdx], al
 		mov   byte[rbp+Pos.pieceList+rax], dl
 		mov   byte[rbp+Pos.pieceList+rdi], 64
-
 		xor   esi, 1
 		jmp   .SpecialRet
-
-
 */
+        brk  0
+          b  Move_Do.SpecialRet
+
 Move_Do.Castling:
 /*
 	; r8 = kfrom
@@ -551,10 +766,6 @@ Move_Do.Castling:
 	; edx = rto
 	; r10 = ourking
 	; r11 = our rook
-
-	       push   rax	    ; these are popped before exit
-	       push   rax	    ;   and not used because move type is special
-
 	; fix things caused by kingXrook encoding
 		mov   byte[rbx+sizeof.State+State.capturedPiece], 0
 
@@ -563,30 +774,29 @@ Move_Do.Castling:
 		and   edx, 56
 		cmp   r9d, r8d
 		sbb   eax, eax
-		lea   ecx, [rdx+4*rax+FILE_G]
+		lea   r14d, [rdx+4*rax+FILE_G]
 		lea   edx, [rdx+2*rax+FILE_F]
 		lea   r11d, [r10-King+Rook]
 
 		mov   byte[rbp+Pos.board+r8], 0
 		mov   byte[rbp+Pos.board+r9], 0
-		mov   byte[rbp+Pos.board+rcx], r10l
+		mov   byte[rbp+Pos.board+r14], r10l
 		mov   byte[rbp+Pos.board+rdx], r11l
-
 
 	  ;    movzx   eax, byte[rbp+Pos.pieceIdx+r8]
 	  ;    movzx   edi, byte[rbp+Pos.pieceIdx+r9]
-	  ;      mov   byte[rbp+Pos.pieceList+rax], cl
+	  ;      mov   byte[rbp+Pos.pieceList+rax], r14l
 	  ;      mov   byte[rbp+Pos.pieceList+rdi], dl
-	  ;      mov   byte[rbp+Pos.pieceIdx+rcx], al
+	  ;      mov   byte[rbp+Pos.pieceIdx+r14], al
 	  ;      mov   byte[rbp+Pos.pieceIdx+rdx], dil
 	  ; no! above not enough instructions! official stockfish has
 	  ;  castling rook moved to the back of the list
 	  ;  of course this for absolutely no good reason
 	      movzx   eax, byte[rbp+Pos.pieceIdx+r8]
 	      movzx   edi, byte[rbp+Pos.pieceIdx+r9]
-		mov   byte[rbp+Pos.pieceList+rax], cl
+		mov   byte[rbp+Pos.pieceList+rax], r14l
 		mov   byte[rbp+Pos.pieceList+rdi], dl
-		mov   byte[rbp+Pos.pieceIdx+rcx], al
+		mov   byte[rbp+Pos.pieceIdx+r14], al
 		mov   byte[rbp+Pos.pieceIdx+rdx], dil
 	; now move rook to the back of the list
 	      movzx   eax, byte[rbp+Pos.pieceEnd+r11]
@@ -602,13 +812,15 @@ Move_Do.Castling:
 	      movzx   r13d, byte[rbp+Pos.pieceIdx+r12]
 		mov   byte[rbp+Pos.pieceIdx+rdx], r13l
 		mov   byte[rbp+Pos.pieceIdx+r12], dil
+*/
 
+/*
 		shl   r10d, 6+3
 		shl   r11d, 6+3
 
 		mov   rax, qword[Zobrist_Pieces+r10+8*r8]
 		xor   rax, qword[Zobrist_Pieces+r11+8*r9]
-		xor   rax, qword[Zobrist_Pieces+r10+8*rcx]
+		xor   rax, qword[Zobrist_Pieces+r10+8*r14]
 		xor   rax, qword[Zobrist_Pieces+r11+8*rdx]
 	      vmovq   xmm7, rax
 	      vpxor   xmm5, xmm5, xmm7
@@ -617,24 +829,27 @@ Move_Do.Castling:
 	      vmovd   xmm2, dword[Scores_Pieces+r11+8*r9]
 	     vpsubd   xmm6, xmm6, xmm1
 	     vpsubd   xmm6, xmm6, xmm2
-	      vmovd   xmm1, dword[Scores_Pieces+r10+8*rcx]
+	      vmovd   xmm1, dword[Scores_Pieces+r10+8*r14]
 	      vmovd   xmm2, dword[Scores_Pieces+r11+8*rdx]
 	     vpaddd   xmm6, xmm6, xmm1
 	     vpaddd   xmm6, xmm6, xmm2
+                shr   r10d, 6+3
 
 		mov   rax, qword[rbp+Pos.typeBB+8*rsi]
-		mov   r10, qword[rbp+Pos.typeBB+8*King]
+		mov   r13, qword[rbp+Pos.typeBB+8*King]
 		mov   r11, qword[rbp+Pos.typeBB+8*Rook]
 		btr   rax, r8
 		btr   rax, r9
-		bts   rax, rcx
+		bts   rax, r14
 		bts   rax, rdx
-		btr   r10, r8
-		bts   r10, rcx
+		btr   r13, r8
+		bts   r13, r14
 		btr   r11, r9
 		bts   r11, rdx
 		mov   qword[rbp+Pos.typeBB+8*rsi], rax
-		mov   qword[rbp+Pos.typeBB+8*King], r10
+		mov   qword[rbp+Pos.typeBB+8*King], r13
 		mov   qword[rbp+Pos.typeBB+8*Rook], r11
 		jmp   .SpecialRet
 */
+        brk  0
+          b  Move_Do.SpecialRet

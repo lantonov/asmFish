@@ -1,5 +1,7 @@
 
 Gen_Legal:
+Display "Gen_Legal called\n"
+        ret
 /*
 	; in rbp address of position
 	;    rbx address of state

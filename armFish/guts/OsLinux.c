@@ -344,10 +344,10 @@ Os_VirtualAlloc:
         mov  x3, MAP_PRIVATE | MAP_ANONYMOUS
         mov  x2, 0x03
         mov  x0, 0
-Display "  mmap(size = %x1)"
+        Display "  mmap(size = %x1)"
         mov  x8, sys_mmap
         svc  0
-Display ":       %x0\n"
+        Display ":       %x0\n"
         tst  x0, x0
         bmi  Failed_sys_mmap_VirtualAlloc
         ldp  x29, x30, [sp], 16
@@ -361,10 +361,10 @@ Os_VirtualFree:
         cbz  x1, Os_VirtualFree.Null
         mov  x0, x1
         mov  x1, x2
-Display "munmap(size = %x1, addr = %x0)"
+        Display "munmap(size = %x1, addr = %x0)"
         mov  x8, sys_munmap
         svc  0
-Display ": %x0\n"
+        Display ": %x0\n"
         cmp  w0, 0
         bne  Failed_sys_unmap_VirtualFree
 Os_VirtualFree.Null:

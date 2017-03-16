@@ -110,6 +110,8 @@ sz_error_affinity1: .ascii "error: parsing affinity failed after \0"
 sz_error_affinity2: .ascii "; proceeding as all\0"
 
 sz_go:                  .ascii "go\0"
+sz_no:                  .ascii "no\0"
+sz_yes:                 .ascii "yes\0"
 sz_all:			.ascii "all\0"
 sz_low:			.ascii "low\0"
 sz_uci:			.ascii "uci\0"

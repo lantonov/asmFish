@@ -1,5 +1,5 @@
+Output:         .space 4096
 DisplayOutput:  .space 1024
-Output:         .space 1024
 
         .balign 16
 time:     .space sizeof.Time

@@ -12,6 +12,15 @@ RootMovesVec_Create:
 		pop   rbx
 		ret
 */
+        stp  x29, x30, [sp, -16]!
+        mov  x29, x1
+        mov  x1, ((sizeof.RootMove*MAX_MOVES)>> 0) & 0x0FFF
+       movk  x1, ((sizeof.RootMove*MAX_MOVES)>>16) & 0x0FFF, lsl 16
+         bl  Os_VirtualAllocNuma
+        str  x0, [x21, RootMovesVec.table]
+        str  x0, [x21, RootMovesVec.ender]  
+        ldp  x29, x30, [sp], 16
+        ret
 
 RootMovesVec_Destroy:
 /*
@@ -27,7 +36,16 @@ RootMovesVec_Destroy:
 		pop   rbx
 		ret
 */
-
+        stp  x29, x30, [sp, -16]!
+        mov  x29, x1
+        ldr  x1, [x21, RootMovesVec.table]
+        mov  x2, ((sizeof.RootMove*MAX_MOVES)>> 0) & 0x0FFF
+       movk  x2, ((sizeof.RootMove*MAX_MOVES)>>16) & 0x0FFF, lsl 16
+         bl  Os_VirtualFree
+        str  xzr, [x21, RootMovesVec.table]
+        str  xzr, [x21, RootMovesVec.ender]  
+        ldp  x29, x30, [sp], 16
+        ret
 
 
 
@@ -39,6 +57,9 @@ RootMovesVec_Clear:
 		mov   qword[rcx+RootMovesVec.ender], rax
 		ret
 */
+        ldr  x0, [x1, RootMovesVec.table]
+        str  x0, [x1, RootMovesVec.ender]
+        ret
 
 RootMovesVec_Empty:
 /*
@@ -51,6 +72,11 @@ RootMovesVec_Empty:
 		sbb   eax, eax
 		ret
 */
+        ldr  x0, [x1, RootMovesVec.table]
+        ldr  x1, [x1, RootMovesVec.ender]
+        sub  x0, x0, x1
+        ret
+
 RootMovesVec_Size:
 /*
 	; in: rcx address of RootMovesVec struct
@@ -64,7 +90,12 @@ RootMovesVec_Size:
 	     Assert   b, eax, MAX_MOVES, 'too many moves in RootMovesVec_Size'
 		ret
 */
-
+        ldr  x0, [x1, RootMovesVec.table]
+        ldr  x1, [x1, RootMovesVec.ender]
+        sub  x0, x0, x1
+        mov  x1, sizeof.RootMove
+       udiv  x0, x0, x1
+        ret
 
 RootMovesVec_PushBackMove:
 /*
@@ -79,6 +110,17 @@ RootMovesVec_PushBackMove:
 		mov   qword[rcx+RootMovesVec.ender], rax
 		ret
 */
+        ldr  x0, [x1, RootMovesVec.ender]
+        mov  w3, -VALUE_INFINITE
+        str  w3, [x0, RootMove.score]
+        str  w3, [x0, RootMove.prevScore]
+        mov  x3, 1
+        str  w3, [x0, RootMove.pvSize]
+        str  w2, [x0, RootMove.pv]
+        add  x0, x0, sizeof.RootMove
+        str  x0, [x1, RootMovesVec.ender]
+        ret
+
 RootMovesVec_Copy:
 /*
 	; in: rcx address of destination RootMovesVec struct
@@ -94,7 +136,19 @@ RootMovesVec_Copy:
 		pop   rdi rsi
 		ret
 */
+        mov  x8, x1
+        ldr  x0, [x1, RootMovesVec.table]
+        mov  x1, x2
+        ldr  x3, [x2, RootMovesVec.table]
+        ldr  x4, [x2, RootMovesVec.ender]
+        sub  x2, x4, x3
+         bl  MemoryCopy
+        str  x0, [x8, RootMovesVec.ender]
+        ret
+
 RootMovesVec_StableSort:
+Display "RootMovesVec_StableSort called\n"
+        ret
 /*
 	; in: rcx start RootMove
 	;     rdx end RootMove

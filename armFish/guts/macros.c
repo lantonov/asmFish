@@ -13,6 +13,34 @@
        csel  \Reg, \Reg, \RegMax, le
 .endm
 
+.macro Popcnt Reg0, Reg1, Temp2 // its ok if Reg0 and Reg1 are the same
+        lsr  Temp2, Reg1, 1
+        and  Temp2, Temp2, 6148914691236517205
+        sub  Temp2, Reg1, Temp2
+        and  Reg0, Temp2, 3689348814741910323
+        lsr  Temp2, Temp2, 2
+        and  Temp2, Temp2, 3689348814741910323
+        add  Temp2, Reg0, Temp2
+        mov  Reg0, 72340172838076673
+        add  Temp2, Temp2, Temp2, lsr 4
+        and  Temp2, Temp2, 1085102592571150095
+        mul  Reg0, Temp2, Reg0
+        lsr  Reg0, Reg0, 56
+.endm
+
+.macro Popcnt16 Reg0, Reg1, Temp2 // its ok if Reg0 and Reg1 are the same
+        lsr  Temp2, Reg1, 1
+        and  Temp2, Temp2, 6148914691236517205
+        sub  Temp2, Reg1, Temp2
+        lsr  Reg0, Temp2, 2
+        and  Temp2, Temp2, 3689348814741910323
+        and  Reg0, Reg0, 3689348814741910323
+        add  Temp2, Reg0, Temp2
+        mov  Reg0, 72340172838076673
+        mul  Reg0, Temp2, Reg0
+        lsr  Reg0, Reg0, 56
+.endm
+
 .macro lea Reg, Addr
        adrp  \Reg, \Addr
         add  \Reg, \Reg, :lo12:\Addr
@@ -32,23 +60,22 @@
 .endm
 
 .macro PushAll
-        stp  d30, d31, [sp, -16]!
-        stp  d28, d29, [sp, -16]!
-        stp  d26, d27, [sp, -16]!
-        stp  d24, d25, [sp, -16]!
-        stp  d22, d23, [sp, -16]!
-        stp  d20, d21, [sp, -16]!
-        stp  d18, d19, [sp, -16]!
-        stp  d16, d17, [sp, -16]!
-        stp  d14, d15, [sp, -16]!
-        stp  d12, d13, [sp, -16]!
-        stp  d10, d11, [sp, -16]!
-        stp  d8, d9, [sp, -16]!
-        stp  d6, d7, [sp, -16]!
-        stp  d4, d5, [sp, -16]!
-        stp  d2, d3, [sp, -16]!
-        stp  d0, d1, [sp, -16]!
-
+        sub  sp, sp, 16*4
+        st1  {v28.16b, v29.16b, v30.16b, v31.16b}, [sp]
+        sub  sp, sp, 16*4
+        st1  {v24.16b, v25.16b, v26.16b, v27.16b}, [sp]
+        sub  sp, sp, 16*4
+        st1  {v20.16b, v21.16b, v22.16b, v23.16b}, [sp]
+        sub  sp, sp, 16*4
+        st1  {v16.16b, v17.16b, v18.16b, v19.16b}, [sp]
+        sub  sp, sp, 16*4
+        st1  {v12.16b, v13.16b, v14.16b, v15.16b}, [sp]
+        sub  sp, sp, 16*4
+        st1  {v8.16b, v9.16b, v10.16b, v11.16b}, [sp]
+        sub  sp, sp, 16*4
+        st1  {v4.16b, v5.16b, v6.16b, v7.16b}, [sp]
+        sub  sp, sp, 16*4
+        st1  {v0.16b, v1.16b, v2.16b, v3.16b}, [sp]
         stp  x30, x0, [sp, -16]!
         stp  x28, x29, [sp, -16]!
         stp  x26, x27, [sp, -16]!
@@ -84,23 +111,23 @@
         ldp  x26, x27, [sp], 16
         ldp  x28, x29, [sp], 16
         ldp  x30, x0, [sp], 16
+        ld1  {v0.16b, v1.16b, v2.16b, v3.16b}, [sp]
+        add  sp, sp, 16*4
+        ld1  {v4.16b, v5.16b, v6.16b, v7.16b}, [sp]
+        add  sp, sp, 16*4
+        ld1  {v8.16b, v9.16b, v10.16b, v11.16b}, [sp]
+        add  sp, sp, 16*4
+        ld1  {v12.16b, v13.16b, v14.16b, v15.16b}, [sp]
+        add  sp, sp, 16*4
+        ld1  {v16.16b, v17.16b, v18.16b, v19.16b}, [sp]
+        add  sp, sp, 16*4
+        ld1  {v20.16b, v21.16b, v22.16b, v23.16b}, [sp]
+        add  sp, sp, 16*4
+        ld1  {v24.16b, v25.16b, v26.16b, v27.16b}, [sp]
+        add  sp, sp, 16*4
+        ld1  {v28.16b, v29.16b, v30.16b, v31.16b}, [sp]
+        add  sp, sp, 16*4
 
-        ldp  d0, d1, [sp], 16
-        ldp  d2, d3, [sp], 16
-        ldp  d4, d5, [sp], 16
-        ldp  d6, d7, [sp], 16
-        ldp  d8, d9, [sp], 16
-        ldp  d10, d11, [sp], 16
-        ldp  d12, d13, [sp], 16
-        ldp  d14, d15, [sp], 16
-        ldp  d16, d17, [sp], 16
-        ldp  d18, d19, [sp], 16
-        ldp  d20, d21, [sp], 16
-        ldp  d22, d23, [sp], 16
-        ldp  d24, d25, [sp], 16
-        ldp  d26, d27, [sp], 16
-        ldp  d28, d29, [sp], 16
-        ldp  d30, d31, [sp], 16
 .endm
 
 // Display a formated message. Use %[x,i,u]n for displaying
@@ -119,6 +146,7 @@ anom\@:
 anol\@:
         lea  x27, DisplayOutput
         mov  x2, sp
+        add  x3, sp, 32*8
          bl  PrintFancy
         lea  x1, DisplayOutput
          bl  Os_WriteOut

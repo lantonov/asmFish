@@ -14,6 +14,23 @@ THREAD_STACK_SIZE = 1048576
 PAWN_HASH_ENTRY_COUNT = 16384
 MATERIAL_HASH_ENTRY_COUNT = 8192
 
+RANK_8 = 7
+RANK_7 = 6
+RANK_6 = 5
+RANK_5 = 4
+RANK_4 = 3
+RANK_3 = 2
+RANK_2 = 1
+RANK_1 = 0
+
+FILE_H = 7
+FILE_G = 6
+FILE_F = 5
+FILE_E = 4
+FILE_D = 3
+FILE_C = 2
+FILE_B = 1
+FILE_A = 0
 
 SQ_A1 = (0+8*0)
 SQ_B1 = (1+8*0)
@@ -387,17 +404,22 @@ State.ply = 1*sizeof.rd + State.history
 State.skipEarlyPruning = 1*sizeof.rb + State.ply
 State._stack_end = 1*sizeof.rb + 2*sizeof.rb + State.skipEarlyPruning
 State._movepick_start = 0*sizeof.rb + State._stack_end
-State.cur = 0*sizeof.rb + State._movepick_start
-State.endMoves = 1*sizeof.rq + State.cur
-State.endBadCaptures = 1*sizeof.rq + State.endMoves
-State.stage = 1*sizeof.rq + State.endBadCaptures
-State.countermove = 1*sizeof.rq + State.stage
-State.depth = 1*sizeof.rd + State.countermove
-State.ttMove = 1*sizeof.rd + State.depth
-State.threshold = 1*sizeof.rd + State.ttMove
-State.recaptureSquare = 1*sizeof.rd + State.threshold
-State._movepick_end = 1*sizeof.rd + 3*sizeof.rd + State.recaptureSquare
-sizeof.State = 0*sizeof.rb + State._movepick_end
+State.cur               = 0*sizeof.rb + State._movepick_start
+State.endMoves          = 1*sizeof.rq + State.cur
+State.endBadCaptures    = 1*sizeof.rq + State.endMoves
+State.stage             = 1*sizeof.rq + State.endBadCaptures
+State.countermove       = 1*sizeof.rq + State.stage
+State.givesCheck        = 1*sizeof.rd + State.countermove
+State.ttMove            = 1*sizeof.rb + 3*sizeof.rb + State.givesCheck
+State.depth             = 1*sizeof.rd + State.ttMove
+State.threshold         = 1*sizeof.rd + State.depth
+State.recaptureSquare   = 1*sizeof.rd + State.threshold
+State._movepick_end     = 1*sizeof.rd + 2*sizeof.rd + State.recaptureSquare
+sizeof.State            = 0*sizeof.rb + State._movepick_end
+
+.if sizeof.State & 15
+ .error "sizeof.State is bad"
+.endif
 
 Limits.___ = 0
 Limits.nodes = 0 + Limits.___

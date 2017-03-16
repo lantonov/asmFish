@@ -119,13 +119,12 @@ Position_Init.CastlingLoop1:
         lea  x16, Zobrist_side
         str  x0, [x16]
 
-        add  x1, sp, Position_Init.prng
-         bl  Math_Rand_i
-        lea  x16, Zobrist_noPawns
-        str  x0, [x16]
+//        add  x1, sp, Position_Init.prng
+//         bl  Math_Rand_i
+//        lea  x16, Zobrist_noPawns
+//        str  x0, [x16]
 
-
-        ldr  x0, =0x00ff0000
+        mov  x0, 0x00ff0000
         lea  x16, IsPawnMasks
         str  x0, [x16, 0]
         str  x0, [x16, 8]
