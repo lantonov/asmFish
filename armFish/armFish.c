@@ -13,6 +13,7 @@ $ qemu-aarch64 ./armFish
 .include "guts/linux64.c"
 .include "guts/macros.c"
 .include "guts/AttackMacros.c"
+.include "guts/SliderBlockers.c"
 
 
 .section .data
@@ -26,10 +27,11 @@ $ qemu-aarch64 ./armFish
 .text
 .globl _start
 
-.include "guts/Endgame.c"
 _start:
 .include "guts/main.c"
 
+.include "guts/AttackersTo.c"
+.include "guts/Endgame.c"
 .include "guts/Think.c"
 .include "guts/Gen_Legal.c"
 .include "guts/CheckTime.c"
