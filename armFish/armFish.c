@@ -14,6 +14,7 @@ $ qemu-aarch64 ./armFish
 .include "guts/macros.c"
 .include "guts/AttackMacros.c"
 .include "guts/SliderBlockers.c"
+.include "guts/GenMacros.c"
 
 
 .section .data
@@ -34,6 +35,12 @@ _start:
 .include "guts/Endgame.c"
 .include "guts/Think.c"
 .include "guts/Gen_Legal.c"
+.include "guts/Gen_Evasions.c"
+.include "guts/Gen_NonEvasions.c"
+.include "guts/Gen_QuietChecks.c"
+.include "guts/Gen_Captures.c"
+.include "guts/Gen_Quiets.c"
+
 .include "guts/CheckTime.c"
 .include "guts/RootMoves.c"
 .include "guts/Move_GivesCheck.c"
