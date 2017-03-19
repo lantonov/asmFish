@@ -148,7 +148,7 @@ RootMovesVec_Copy:
 
 RootMovesVec_StableSort:
 Display "RootMovesVec_StableSort called\n"
-        ret
+        brk  0
 /*
 	; in: rcx start RootMove
 	;     rdx end RootMove

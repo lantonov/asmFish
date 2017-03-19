@@ -142,6 +142,13 @@ Rook   = 5
 Queen  = 6
 King   = 7
 
+CAPTURES     = 0
+QUIETS       = 1
+QUIET_CHECKS = 2
+EVASIONS     = 3
+NON_EVASIONS = 4
+LEGAL        = 5
+
 // piece values
 PawnValueMg   = 188
 KnightValueMg = 753

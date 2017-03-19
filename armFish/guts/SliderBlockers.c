@@ -38,46 +38,39 @@ local ..YesPinners, ..NoPinners, ..MoreThanOne
 }
 */
 .macro SliderBlockers result, sliders, sq, pinners, pieces, pieces_color, bb, snipers, snipersSqBB, tt, bishops, rooks
-        ldr  snipers, [x20, 8*Queen]
-       adrp  tt, RookAttacksPDEP
-        add  tt, tt, sq, lsl 3
-        orr  snipers, snipers, rooks
-        orr  bb, snipers, bishops
-Display "hello1\n"
-        ldr  snipersSqBB, [tt]
-        ldr  tt, [tt, BishopAttacksPDEP-RookAttacksPDEP]
-Display "hello15\n"
-        and  snipers, snipers, snipersSqBB
-        and  bb, bb, tt
-        orr  snipers, snipers, bb
-        lea  tt, BetweenBB
-        add  sq, tt, sq, lsl 6+3
-Display "hello2\n"
-       ands  snipers, snipers, sliders
-        beq  NoPinners\@
-YesPinners\@:
-Display "hello3\n"
-       rbit  tt, snipers
-        neg  snipersSqBB, snipers
-        clz  tt, tt
-        and  snipersSqBB, snipersSqBB, snipers
-        ldr  bb, [sq, tt, lsl 3]
-        and  bb, bb, pieces
-       ands  tt, bb, pieces_color
-       csel  snipersSqBB, tt, snipersSqBB, eq
-        sub  tt, bb, 1
-        and  tt, tt, bb
-       cbnz  tt, MoreThanOne\@
-        orr  result, result, bb
-        orr  pinners, pinners, snipersSqBB
-MoreThanOne\@:
-Display "hello4\n"
-
-        sub  tt, snipers, 1
-        and  snipers, snipers, tt
-       cbnz  snipers, YesPinners\@
-NoPinners\@:
-Display "hello5\n"
+        ldr  \snipers, [x20, 8*Queen]
+       adrp  \tt, RookAttacksPDEP
+        add  \tt, \tt, \sq, lsl 3
+        orr  \snipers, \snipers, \rooks
+        orr  \bb, \snipers, \bishops
+        ldr  \snipersSqBB, [\tt]
+        ldr  \tt, [\tt, BishopAttacksPDEP-RookAttacksPDEP]
+        and  \snipers, \snipers, \snipersSqBB
+        and  \bb, \bb, \tt
+        orr  \snipers, \snipers, \bb
+        lea  \tt, BetweenBB
+        add  \sq, \tt, \sq, lsl 6+3
+       ands  \snipers, \snipers, \sliders
+        beq  SliderBlockers.NoPinners\@
+SliderBlockers.YesPinners\@:
+       rbit  \tt, \snipers
+        neg  \snipersSqBB, \snipers
+        clz  \tt, \tt
+        and  \snipersSqBB, \snipersSqBB, \snipers
+        ldr  \bb, [\sq, \tt, lsl 3]
+        and  \bb, \bb, \pieces
+       ands  \tt, \bb, \pieces_color
+       csel  \snipersSqBB, \tt, \snipersSqBB, eq
+        sub  \tt, \bb, 1
+        and  \tt, \tt, \bb
+       cbnz  \tt, SliderBlockers.MoreThanOne\@
+        orr  \result, \result, \bb
+        orr  \pinners, \pinners, \snipersSqBB
+SliderBlockers.MoreThanOne\@:
+        sub  \tt, \snipers, 1
+        and  \snipers, \snipers, \tt
+       cbnz  \snipers, SliderBlockers.YesPinners\@
+SliderBlockers.NoPinners\@:
 .endm
 
 

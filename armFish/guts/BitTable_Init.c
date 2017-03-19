@@ -55,9 +55,9 @@ ncnt .req x10
 ocnt .req x11
 
 .macro KPKOffset Res, Tn, Wp, Wk, Bk
-        add  Res, Wk, Wp, lsl 6
-        add  Res, Bk, Res, lsl 6
-        add  Res, Tn, Res, lsl 1
+        add  \Res, \Wk, \Wp, lsl 6
+        add  \Res, \Bk, \Res, lsl 6
+        add  \Res, \Tn, \Res, lsl 1
 .endm
 
 // KPKEndgameTable[WhitePawn-8][WhiteKing] is a qword

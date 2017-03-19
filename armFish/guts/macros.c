@@ -14,31 +14,31 @@
 .endm
 
 .macro Popcnt Reg0, Reg1, Temp2 // its ok if Reg0 and Reg1 are the same
-        lsr  Temp2, Reg1, 1
-        and  Temp2, Temp2, 6148914691236517205
-        sub  Temp2, Reg1, Temp2
-        and  Reg0, Temp2, 3689348814741910323
-        lsr  Temp2, Temp2, 2
-        and  Temp2, Temp2, 3689348814741910323
-        add  Temp2, Reg0, Temp2
-        mov  Reg0, 72340172838076673
-        add  Temp2, Temp2, Temp2, lsr 4
-        and  Temp2, Temp2, 1085102592571150095
-        mul  Reg0, Temp2, Reg0
-        lsr  Reg0, Reg0, 56
+        lsr  \Temp2, \Reg1, 1
+        and  \Temp2, \Temp2, 6148914691236517205
+        sub  \Temp2, \Reg1, \Temp2
+        and  \Reg0, \Temp2, 3689348814741910323
+        lsr  \Temp2, \Temp2, 2
+        and  \Temp2, \Temp2, 3689348814741910323
+        add  \Temp2, \Reg0, \Temp2
+        mov  \Reg0, 72340172838076673
+        add  \Temp2, \Temp2, \Temp2, lsr 4
+        and  \Temp2, \Temp2, 1085102592571150095
+        mul  \Reg0, \Temp2, \Reg0
+        lsr  \Reg0, \Reg0, 56
 .endm
 
 .macro Popcnt16 Reg0, Reg1, Temp2 // its ok if Reg0 and Reg1 are the same
-        lsr  Temp2, Reg1, 1
-        and  Temp2, Temp2, 6148914691236517205
-        sub  Temp2, Reg1, Temp2
-        lsr  Reg0, Temp2, 2
-        and  Temp2, Temp2, 3689348814741910323
-        and  Reg0, Reg0, 3689348814741910323
-        add  Temp2, Reg0, Temp2
-        mov  Reg0, 72340172838076673
-        mul  Reg0, Temp2, Reg0
-        lsr  Reg0, Reg0, 56
+        lsr  \Temp2, \Reg1, 1
+        and  \Temp2, \Temp2, 6148914691236517205
+        sub  \Temp2, \Reg1, \Temp2
+        lsr  \Reg0, \Temp2, 2
+        and  \Temp2, \Temp2, 3689348814741910323
+        and  \Reg0, \Reg0, 3689348814741910323
+        add  \Temp2, \Reg0, \Temp2
+        mov  \Reg0, 72340172838076673
+        mul  \Reg0, \Temp2, \Reg0
+        lsr  \Reg0, \Reg0, 56
 .endm
 
 .macro lea Reg, Addr
@@ -48,9 +48,9 @@
 
 .macro AddSub T, A, B, C
  .if \T == White
-        sub  A, B, C
+        sub  \A, \B, \C
  .else
-        add  A, B, C
+        add  \A, \B, \C
  .endif    
 .endm
 
@@ -140,7 +140,7 @@
         adr  x1, anom\@
           b  anol\@
 anom\@:
-        .ascii \Mes
+        .ascii "\Mes"
         .byte 0
         .balign 4
 anol\@:

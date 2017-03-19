@@ -3,7 +3,8 @@ Move_GivesCheck:
 // in:  x20 Pos
 //      x21 State
 //      x1 move assumed to be psuedo legal
-// out: x0.byte = 0 if not check, otherwise != 0
+// out: x0 = 0 if not check
+//      x0 != 0 if check, the lowest bit of x0 is 1 
 /*
 	; in:  rbp  address of Pos
 	;      rbx  address of State - check info must be filled in
@@ -196,7 +197,7 @@ Move_GivesCheck.EpCapture:
        cset  x0, ne
         ret
 
-.PromBishop:
+Move_GivesCheck.PromBishop:
 /*
       BishopAttacks   rax, r9, rdx, r10
 		 bt   rax, rdi
