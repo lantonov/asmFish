@@ -7,7 +7,7 @@ run with
 $ qemu-aarch64 ./armFish
 */
 
-.altmacro
+//.altmacro
 
 .include "guts/def.c"
 .include "guts/linux64.c"
