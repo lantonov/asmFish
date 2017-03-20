@@ -31,6 +31,7 @@ $ qemu-aarch64 ./armFish
 _start:
 .include "guts/main.c"
 
+.include "guts/Castling.c"
 .include "guts/AttackersTo.c"
 .include "guts/Endgame.c"
 .include "guts/Think.c"
