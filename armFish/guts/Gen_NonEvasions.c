@@ -14,6 +14,7 @@ Gen_NonEvasions:
 	       test   eax, eax
 		jne   Gen_NonEvasions_Black
 */
+//Display "Gen_NonEvasions called\n"
         ldr  w0, [x20, Pos.sideToMove]
         ldr  x15, [x20, x0, lsl 3]
         mvn  x15, x15
@@ -41,8 +42,8 @@ Gen_NonEvasions_Black:
 		ret
        generate_jmp   Black, NON_EVASIONS
 */
-//        GenAll  Gen_NonEvasions_Black, Black, NON_EVASIONS
+        GenAll  Gen_NonEvasions_Black, Black, NON_EVASIONS
         ret
-//        GenPawnJmp  Gen_NonEvasions_Black, Black, NON_EVASIONS
-//        GenCastlingJmp  Gen_NonEvasions_Black, Black, NON_EVASIONS
+        GenPawnJmp  Gen_NonEvasions_Black, Black, NON_EVASIONS
+        GenCastlingJmp  Gen_NonEvasions_Black, Black, NON_EVASIONS
 

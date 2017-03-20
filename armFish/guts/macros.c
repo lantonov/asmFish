@@ -76,7 +76,7 @@
         st1  {v4.16b, v5.16b, v6.16b, v7.16b}, [sp]
         sub  sp, sp, 16*4
         st1  {v0.16b, v1.16b, v2.16b, v3.16b}, [sp]
-        stp  x30, x0, [sp, -16]!
+        stp  x30, xzr, [sp, -16]!
         stp  x28, x29, [sp, -16]!
         stp  x26, x27, [sp, -16]!
         stp  x24, x25, [sp, -16]!
@@ -92,6 +92,9 @@
         stp  x4, x5, [sp, -16]!
         stp  x2, x3, [sp, -16]!
         stp  x0, x1, [sp, -16]!
+        add  x0, sp, 8*32
+        str  x0, [sp, 8*31]
+        ldr  x0, [sp] 
 .endm
 
 .macro PopAll
@@ -110,7 +113,7 @@
         ldp  x24, x25, [sp], 16
         ldp  x26, x27, [sp], 16
         ldp  x28, x29, [sp], 16
-        ldp  x30, x0, [sp], 16
+        ldr  x30, [sp], 16
         ld1  {v0.16b, v1.16b, v2.16b, v3.16b}, [sp]
         add  sp, sp, 16*4
         ld1  {v4.16b, v5.16b, v6.16b, v7.16b}, [sp]

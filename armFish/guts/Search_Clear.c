@@ -1,5 +1,6 @@
 
 Search_Clear:
+Display "Search_Clear called\n"
 /*
 	       push   rbx rsi rdi
 
@@ -8,6 +9,7 @@ Search_Clear:
 
 		mov   esi, dword[threadPool.threadCnt]
 */
+        stp  x29, x30, [sp, -16]!
 Search_Clear.NextThread:
 /*
 		sub   esi, 1
@@ -38,3 +40,5 @@ Search_Clear.ThreadsDone:
 		pop   rdi rsi rbx
 		ret
 */
+        ldp  x29, x30, [sp], 16
+        ret

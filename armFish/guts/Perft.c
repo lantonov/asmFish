@@ -11,7 +11,18 @@ end virtual
 
 	 _chkstk_ms   rsp, .localsize
 		sub   rsp, .localsize
+*/
+Perft_Root.time = 0
+Perft_Root.movelist = 8 + Perft_Root.time
+Perft_Root.localsize = sizeof.ExtMove*MAX_MOVES + Perft_Root.movelist
+Perft_Root.localsize = (Perft_Root.localsize + 15) & -16
 
+        stp  x21, x30, [sp, -16]!
+        stp  x28, x29, [sp, -16]!
+        stp  x24, x25, [sp, -16]!
+        stp  x26, x27, [sp, -16]!
+        sub  sp, sp, Perft_Root.localsize
+/*
 		mov   rbx, qword[rbp+Pos.state]
 		mov   r15d, ecx
 		xor   r14, r14
@@ -27,6 +38,17 @@ end virtual
 		xor   eax, eax
 		mov   dword[rdi], eax
 */
+        ldr  x21, [x20, Pos.state]
+        mov  x25, x1
+        mov  x24, 0
+         bl  Os_GetTime
+        str  x0, [sp, Perft_Root.time]
+         bl  SetCheckInfo
+        add  x27, sp, Perft_Root.movelist
+        mov  x26, x27
+         bl  Gen_Legal
+        str  wzr, [x27]
+
 Perft_Root.MoveLoop:
 /*
 		mov   ecx, dword[rsi]
@@ -46,7 +68,21 @@ Perft_Root.MoveLoop:
 	       push   rax
 		mov   ecx, dword[rsi]
 	       call   Move_Undo
-
+*/
+        ldr  w1, [x26]
+        cbz  w1, Perft_Root.MoveLoopDone
+        ldr  w1, [x26]
+         bl  Move_GivesCheck
+        ldr  w1, [x26]        
+       strb  w0, [x21, State.givesCheck]
+        mov  x0, 1
+       subs  x1, x25, 1
+        bls  1f
+         bl  Perft_Branch
+1:      add  x24, x24, x0
+        mov  x29, x0
+         
+/*
 		lea   rdi, [Output]
 		mov   ecx, dword[rsi]
 		mov   edx, dword[rbp+Pos.chess960]
@@ -61,6 +97,25 @@ Perft_Root.MoveLoop:
 		add   rsi, sizeof.ExtMove
 		jmp   .MoveLoop
 */
+        lea  x27, Output
+        ldr  w1, [x26]
+        ldr  w2, [x20, Pos.chess960]
+         bl  PrintUciMove
+        mov  w0, ' '
+       strb  w0, [x27], 1
+        mov  w0, ':'
+       strb  w0, [x27], 1
+        mov  w0, ' '
+       strb  w0, [x27], 1
+        mov  w0, ' '
+       strb  w0, [x27], 1
+        mov  x0, x29
+         bl  PrintUInt
+        PrintNewLine
+         bl  Os_WriteOut_Output
+        add  x26, x26, sizeof.ExtMove
+          b  Perft_Root.MoveLoop
+
 Perft_Root.MoveLoopDone:
 /*
 	       call   _GetTime
@@ -112,13 +167,42 @@ Perft_Root.MoveLoopDone:
 
 	       call   _WriteOut_Output
 */
+         bl  Os_GetTime
+        lea  x27, Output
+        ldr  x4, [sp, Perft_Root.time]
+        sub  x1, x0, x4
+        str  x1, [sp, Perft_Root.time]
+        mov  x2, 1000
+        cmp  x1, 0
+       cinc  x1, x1, eq
+      scvtf  d0, x24
+      scvtf  d1, x1
+      scvtf  d2, x2
+       fmul  d0, d0, d2
+       fdiv  d0, d0, d1
+     fcvtzs  x2, d0
+        stp  x1, x24, [sp, -32]!
+        str  x2, [sp, 16]
+        lea  x1, sz_bench_format3
+        add  x2, sp, 0
+        add  x3, sp, 0
+//Display "perft here\n"
+         bl  PrintFancy
+        add  sp, sp, 32
+         bl  Os_WriteOut_Output
+
 Perft_Root.Done:
 /*
 		add   rsp, .localsize
 		pop   r15 r14 rdi rsi rbx
 		ret
 */
-
+        add  sp, sp, Perft_Root.localsize
+        ldp  x26, x27, [sp], 16
+        ldp  x24, x25, [sp], 16
+        ldp  x28, x29, [sp], 16
+        ldp  x21, x30, [sp], 16
+        ret
 
 
 Perft_Branch:
@@ -140,6 +224,19 @@ end virtual
 		cmp   ecx, 1
 		 ja   .DepthN
 */
+Perft_Branch.movelist = 0
+Perft_Branch.localsize = sizeof.ExtMove*MAX_MOVES + Perft_Branch.movelist
+Perft_Branch.localsize = (Perft_Branch.localsize + 15) & -16
+
+        stp  x26, x30, [sp, -16]!
+        stp  x24, x25, [sp, -16]!
+        sub  sp, sp, Perft_Branch.localsize
+       subs  x25, x1, 1
+        mov  x24, 0
+        add  x27, sp, Perft_Branch.movelist 
+        add  x26, sp, Perft_Branch.movelist 
+        bhi  Perft_Root.DepthN
+
 Perft_Root.Depth1:
 /*
 	       call   Gen_Legal
@@ -149,8 +246,15 @@ Perft_Root.Depth1:
 		add   rsp, .localsize
 		pop   r15 r14 rsi
 		ret
-
 */
+         bl  Gen_Legal
+        sub  x0, x27, x26
+        lsr  x0, x0, 3
+        add  sp, sp, Perft_Branch.localsize
+        ldp  x24, x25, [sp], 16
+        ldp  x26, x30, [sp], 16
+        ret
+
 Perft_Root.DepthN:
 /*
 	       call   Gen_Legal
@@ -161,6 +265,11 @@ Perft_Root.DepthN:
 	       test   ecx, ecx
 		 jz   .DepthNDone
 */
+         bl  Gen_Legal
+        ldr  w1, [x26]
+        str  wzr, [x27]
+        cbz  w1, Perft_Root.DepthNDone
+        
 Perft_Root.DepthNLoop:
 /*
 	       call   Move_GivesCheck
@@ -177,6 +286,19 @@ Perft_Root.DepthNLoop:
 	       test   ecx, ecx
 		jnz   .DepthNLoop
 */
+         bl  Move_GivesCheck
+        ldr  w1, [x26]
+       strb  w0, [x21, State.givesCheck]
+         bl  Move_Do__PerftGen_Branch
+        mov  x1, x25
+         bl  Perft_Branch
+        add  x24, x24, x0
+        ldr  w1, [x26]
+        add  x26, x26, sizeof.ExtMove
+         bl  Move_Undo
+        ldr  w1, [x26]
+       cbnz  w1, Perft_Root.DepthNLoop
+
 Perft_Root.DepthNDone:
 /*
 		mov   rax, r14
@@ -184,3 +306,8 @@ Perft_Root.DepthNDone:
 		pop   r15 r14 rsi
 		ret
 */
+        mov  x0, x24
+        add  sp, sp, Perft_Branch.localsize
+        ldp  x24, x25, [sp], 16
+        ldp  x26, x30, [sp], 16
+        ret

@@ -315,10 +315,13 @@ UciChoose:
          bl  CmpString
        cbnz  w0, UciBench
 
-
         lea  x1, sz_show
          bl  CmpString
        cbnz  w0, UciShow
+
+        lea  x1, sz_moves
+         bl  CmpString
+       cbnz  w0, UciMoves
 
 
 UciUnknown:
@@ -789,8 +792,8 @@ UciPosition.Start:
 */
         mov  x25, x26
         lea  x26, szStartFEN
-        lea  x16, options
-       ldrb  w1, [x16, Options.chess960]
+        lea  x7, options
+       ldrb  w1, [x7, Options.chess960]
          bl  Position_ParseFen
         mov  x26, x25
           b  UciPosition.check
@@ -827,14 +830,16 @@ UciPosition.moves:
 	       test   rax, rax
 		 jz   UciGetInput
 */
-        add  x1, sp, UciLoop.th1+Thread.rootPos
+        add  x1, sp, UciLoop.th1 + Thread.rootPos
          bl  Position_CopyTo
-        add  x20, sp, UciLoop.th1+Thread.rootPos
+        add  x20, sp, UciLoop.th1 + Thread.rootPos
          bl  SkipSpaces
         lea  x1, sz_moves
          bl  CmpString
         cbz  w0, UciGetInput
          bl  UciParseMoves
+
+Display "UciParseMoves returned %x0\n"
         cbz  x0, UciGetInput
 
 UciPosition.badmove:
@@ -853,10 +858,10 @@ UciPosition.badmove:
         lea  x27, Output
         lea  x1, sz_error_moves
          bl  PrintString
-        mov  x2, 6
+        mov  x1, 6
          bl  ParseToken
         PrintNewLine
-        add  x20, sp, UciLoop.th1+Thread.rootPos
+        add  x20, sp, UciLoop.th1 + Thread.rootPos
           b  UciWriteOut
 
 UciPosition.illegal:
@@ -917,8 +922,8 @@ UciParseMoves.done:
 		pop   rdi rsi rbx
 		ret
 */
-        stp  x21, x30, [sp, -16]
-        stp  x26, x27, [sp, -16]
+        stp  x21, x30, [sp, -16]!
+        stp  x26, x27, [sp, -16]!
 UciParseMoves.get_move:
          bl  SkipSpaces
         mov  x0, 0
@@ -934,10 +939,10 @@ UciParseMoves.get_move:
          bl  Position_SetExtraCapacity
         ldr  x21, [x20, Pos.state]
         mov  x1, x27
-        str  w27, [x21, sizeof.State+State.currentMove]
+        str  w27, [x21, sizeof.State + State.currentMove]
          bl  Move_GivesCheck
         mov  x1, x27
-        mov  x2, x0
+       strb  w0, [x21, State.givesCheck]
          bl  Move_Do__UciParseMoves
         ldr  w4, [x20, Pos.gamePly]
         add  w4, w4, 1
@@ -1802,6 +1807,7 @@ UciBench.nextpos:
 		cmp   rsi, BenchFensEnd
 		 jb   .nextpos
 */
+        lea  x27, Output
         cmp  x24, 0
        cinc  x1, x24, eq
        udiv  x2, x25, x1
@@ -1901,4 +1907,10 @@ UciShow:
          bl  Position_Print
           b  UciWriteOut
 
-
+UciMoves:
+/*
+	       call   UciParseMoves
+		jmp   UciShow
+*/
+         bl  UciParseMoves
+          b  UciShow

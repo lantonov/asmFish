@@ -52,15 +52,15 @@ szUciResponseEnd:
 
 
 
-
-
 sz_thread_format:
-        .ascii "info string node %s0 has threads\0"
+        .ascii "info string node %i0 has threads\0"
 sz_bench_format1:
         .ascii "*** bench hash %u0 threads %u1 depth %u2 realtime %u3 ***\n\0"
 sz_bench_format2:
         .ascii "%u0:  nodes: %u2, %u3 knps\n\0"
+sz_perft_format:
 sz_bench_format3:
+        .ascii "===========================\n"
         .ascii "Total time (ms) : %u0\n"
         .ascii "Nodes searched  : %u1\n"
         .ascii "Nodes/second    : %u2\n\0"

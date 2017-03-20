@@ -176,6 +176,9 @@ Move_Do:
 		and   al, dl
 		jnz   .Rights
 */
+
+Display "Move_Do called %x1\n"
+
         ldr  w16, [x20, Pos.sideToMove]
         lea  x7, Zobrist_side
         ldr  d15, [x7]
@@ -418,6 +421,8 @@ Move_Do.CheckersDone:
 		jmp   SetCheckInfo.go
 */
         str  xzr, [x21, State.checkersBB]
+Display "Move_Do exiting 1\n"
+
           b  SetCheckInfo.go
 
 
@@ -532,6 +537,8 @@ Move_Do.MoveIsCheck:
         tst  x2, x8
         bne  Move_Do.DoFull
         str  x0, [x21, State.checkersBB]
+
+Display "Move_Do exiting 2\n"
           b  SetCheckInfo.go
 
 Move_Do.DoFull:
@@ -588,6 +595,7 @@ Move_Do.DoFull:
         orr  x0, x0, x8
         and  x0, x0, x12
         str  x0, [x21, State.checkersBB]
+Display "Move_Do exiting 3\n"
           b  SetCheckInfo.go
 
         

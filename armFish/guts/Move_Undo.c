@@ -26,7 +26,24 @@ Move_Undo:
 
 		mov   eax, r10d
 		and   eax, 7
+*/
+        ldr  w16, [x20, Pos.sideToMove]
+        eor  x16, x16, 1
+       ubfx  x8, x1, 6, 6
+        and  x9, x1, 63
+        lsr  x1, x1, 12
 
+        add  x7, x20, Pos.board
+       ldrb  w11, [x21, State.capturedPiece]
+       ldrb  w10, [x7, x9]
+
+        mov  x4, 1
+        lsl  x2, x4, x8
+        lsl  x4, x4, x9
+        orr  x2, x2, x4
+
+        and  x0, x10, 7
+/*
 		sub   rbx, sizeof.State
 		mov   qword[rbp+Pos.state], rbx
 		mov   dword[rbp+Pos.sideToMove], esi
@@ -37,7 +54,24 @@ Move_Undo:
 
 		cmp   ecx, MOVE_TYPE_PROM
 		jae   .Special
+*/
+        sub  x21, x21, sizeof.State
 
+        str  x21, [x20, Pos.state]
+        str  x16, [x20, Pos.sideToMove]
+        add  x7, x20, Pos.board
+       strb  w10, [x7, x8]
+       strb  w11, [x7, x9]
+        ldr  x4, [x20, x0, lsl 3]
+        eor  x4, x4, x2
+        str  x4, [x20, x0, lsl 3]
+        ldr  x4, [x20, x16, lsl 3]
+        eor  x4, x4, x2
+        str  x4, [x20, x16, lsl 3]
+
+        cmp  x1, MOVE_TYPE_PROM
+        bhs  Move_Undo.Special
+/*
 	      movzx   eax, byte[rbp+Pos.pieceIdx+r9]
 		mov   byte[rbp+Pos.pieceList+rax], r8l
 		mov   byte[rbp+Pos.pieceIdx+r8], al
@@ -49,6 +83,16 @@ Move_Undo:
 		pop   rsi
 		ret
 */
+        add  x7, x20, Pos.pieceIdx
+       ldrb  w0, [x7, x9]
+        add  x7, x20, Pos.pieceList
+       strb  w0, [x7, x0]
+        add  x7, x20, Pos.pieceIdx
+       strb  w0, [x7, x8]
+        mov  x0, x11
+        and  x11, x11, 7
+       cbnz  x11, Move_Undo.Captured
+        ret
 
 Move_Undo.Captured:
 /*
@@ -66,8 +110,23 @@ Move_Undo.Captured:
 		pop   rsi
 		ret
 */
+        eor  x16, x16, 1
+        mov  x4, 1
+        lsl  x4, x4, x8
+        bic  x2, x2, x4
+        ldr  x4, [x20, x11, lsl 3]
+        orr  x4, x4, x2
+        ldr  x4, [x20, x11, lsl 3]
+        ldr  x4, [x20, x16, lsl 3]
+        orr  x4, x4, x2
+        ldr  x4, [x20, x16, lsl 3]
+        ret
+
 
 Move_Undo.Special:
+Display "Move_Undo.Special called\n"
+brk 0
+
 /*
 		xor   edx, edx
 		cmp   ecx, MOVE_TYPE_EPCAP

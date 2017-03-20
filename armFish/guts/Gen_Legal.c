@@ -24,6 +24,8 @@ Gen_Legal:
         stp  x24, x25, [sp, -16]!
         stp  x26, x30, [sp, -16]!
 
+//Display "Gen_Legal called\n"
+
         ldr  x0, [x21, State.checkersBB]
         mov  x26, x27
         ldr  x25, [x21, State.pinned]

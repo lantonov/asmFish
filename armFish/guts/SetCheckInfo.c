@@ -21,11 +21,11 @@ SetCheckInfo.AfterPrologue:
 		bsf   r15, r15		; r15 = our king
 		bsf   r14, r14		; r14 = their king
 */
-        ldr  w6, [x20, Pos.sideToMove]
+        ldr  w16, [x20, Pos.sideToMove]
         ldr  x4, [x20, 8*King]
-        ldr  x13, [x20, x6, lsl 3]
-        eor  x6, x6, 1
-        ldr  x12, [x20, x6, lsl 3]
+        ldr  x13, [x20, x16, lsl 3]
+        eor  x16, x16, 1
+        ldr  x12, [x20, x16, lsl 3]
         and  x14, x12, x4
         and  x15, x13, x4
         eor  x7, x12, x13
@@ -54,17 +54,17 @@ ProfileInc SetCheckInfo
 		mov   qword[rbx+State.checkSq+8*Queen], rax
 		mov   qword[rbx+State.checkSq+8*King], r11
 */
-        lea  x16, KnightAttacks
-        add  x17, x16, WhitePawnAttacks-KnightAttacks
-        add  x17, x17, x6, lsl 6+3
-        add  x10, x21, x6, lsl 3
+        lea  x6, KnightAttacks
+        add  x7, x6, WhitePawnAttacks-KnightAttacks
+        add  x7, x7, x16, lsl 6+3
+        add  x10, x21, x16, lsl 3
        strb  w14, [x21, State.ksq]
-        ldr  x0, [x17, x14, lsl 3]
-        ldr  x2, [x16, x14, lsl 3]
+        ldr  x0, [x7, x14, lsl 3]
+        ldr  x2, [x6, x14, lsl 3]
         str  x0, [x21, State.checkSq+8*Pawn]
         str  x2, [x21, State.checkSq+8*Knight]
-        BishopAttacks x0, x14, x7, x8, x9
-        RookAttacks x2, x14, x7, x8, x9
+        BishopAttacks x0, x14, x17, x8, x4
+        RookAttacks x2, x14, x17, x8, x4
         mov  x11, 0
         str  x0, [x21, State.checkSq+8*Bishop]
         str  x2, [x21, State.checkSq+8*Bishop]
@@ -106,8 +106,8 @@ ProfileInc SetCheckInfo
 		pop   r15 r14 r13 r12 rdi rsi
 		ret
 */
-        eor  x6, x6, 1
-        add  x10, x21, x6, lsl 3
+        eor  x16, x16, 1
+        add  x10, x21, x16, lsl 3
         mov  x11, 0
         mov  x0, 0
         SliderBlockers  x0, x12, x15, x11, x7, x13, x1, x2, x8, x9, x3, x4
@@ -115,6 +115,5 @@ ProfileInc SetCheckInfo
         str  x0, [x10, State.blockersForKing]
         and  x0, x0, x13
         str  x0, [x21, State.dcCandidates]
-        
         ret
 

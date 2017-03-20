@@ -6,7 +6,7 @@ aarch64|x86-64
 x0      rax
 x1      rcx
 x2      rdx
-x3      
+x3      rbx (leaf)
 x4      
 x5      
 x6      

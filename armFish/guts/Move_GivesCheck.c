@@ -76,6 +76,7 @@ Move_GivesCheck.Special.AfterPrologue:
 
 
 */
+
         lsr  x1, x1, 12
         ldr  w16, [x20, Pos.sideToMove]
        ldrb  w17, [x21, State.ksq]

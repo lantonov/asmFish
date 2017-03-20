@@ -462,6 +462,9 @@ match =Black, Us \{
  pawnsNotOn7 .req x11
  pawnsOn7 .req x12
  enemies  .req x13
+
+//Display "GenPawnMoves \ParentLabel, \Us, \Type called\n"
+
 /*
 		mov   rax, qword[rbp+Pos.typeBB+8*Pawn]
 		and   rax, qword[rbp+Pos.typeBB+8*Us]
@@ -791,6 +794,7 @@ else
 end if
 */
 .macro GenMoves Us, Pt, Checks
+//Display "GenMoves \Us, \Pt, \Checks called\n"
         add  x11, x20, Pos.pieceList+16*(8*\Us+\Pt)
        ldrb  w2, [x11]
         cmp  w2, 64
@@ -1017,11 +1021,11 @@ else
 		jnz   .CastlingDone
 */
 .macro GenCastlingJmp  ParentLabel, Us, Type
- .if Type != CAPTURES && Type != EVASIONS
+ .if \Type != CAPTURES && \Type != EVASIONS
   \ParentLabel\().CastlingOO:
   .if \Type == NON_EVASIONS
-        CastlingJmp  (2*\Us+0), CastlingOOGood\@, CastlingOODone\@
-   CastlingOOGood\@:
+        CastlingJmp  (2*\Us+0), GenCastlingJmp.CastlingOOGood\@, GenCastlingJmp.CastlingOODone\@
+   GenCastlingJmp.CastlingOOGood\@:
         ldr  w0, [x20, -Thread.rootPos + Thread.castling_movgen + 4*(2*\Us+0)]
         str  w0, [x27]
         add  x27, x27, sizeof.ExtMove
@@ -1035,7 +1039,7 @@ else
    .if \Type == QUIET_CHECKS
         ldr  w1, [x20, -Thread.rootPos + Thread.castling_movgen + 4*(2*\Us+0)]
         str  w1, [x27]
-       cbnz  w0, CheckOOQuiteCheck\@
+       cbnz  w0, GenCastlingJmp.CheckOOQuiteCheck\@
    .else
         and  w0, w0, sizeof.ExtMove
         ldr  w1, [x20, -Thread.rootPos + Thread.castling_movgen + 4*(2*\Us+0)]
@@ -1043,7 +1047,7 @@ else
         add  x27, x27, x0
    .endif
   .endif
- CastlingOODone\@:
+ GenCastlingJmp.CastlingOODone\@:
        ldrb  w0, [x21, State.castlingRights]
         ldr  x1, [x20, -Thread.rootPos + Thread.castling_path + 8*(2*\Us+1)]
         and  x0, x0, 2 << (2*\Us)
@@ -1083,10 +1087,10 @@ else
   end if
  end if
 */
-  \ParentLabel\().CastlingOO0:
+  \ParentLabel\().CastlingOOO:
   .if Type == NON_EVASIONS
-        CastlingJmp  (2*\Us+1), CastlingOOOGood\@, \ParentLabel\().CastlingDone
-   CastlingOOOGood\@:
+        CastlingJmp  (2*\Us+1), GenCastlingJmp.CastlingOOOGood\@, \ParentLabel\().CastlingDone
+   GenCastlingJmp.CastlingOOOGood\@:
         ldr  w0, [x20, -Thread.rootPos + Thread.castling_movgen + 4*(2*\Us+1)]
         str  w0, [x27]
         add  x27, x27, sizeof.ExtMove
@@ -1100,7 +1104,7 @@ else
    .if Type == QUIET_CHECKS
         ldr  w1, [x20, -Thread.rootPos + Thread.castling_movgen + 4*(2*\Us+1)]
         str  w1, [x27]
-       cbnz  w0, CheckOOOQuiteCheck\@
+       cbnz  w0, GenCastlingJmp.CheckOOOQuiteCheck\@
           b  \ParentLabel\().CastlingDone
    .else
         and  w0, w0, sizeof.ExtMove
@@ -1130,14 +1134,14 @@ end if
 }
 */
   .if Type == QUIET_CHECKS
-   CheckOOQuiteCheck\@:
+   GenCastlingJmp.CheckOOQuiteCheck\@:
          bl  Move_GivesCheck
-        cbz  w0, CastlingOODone\@
+        cbz  w0, GenCastlingJmp.CastlingOODone\@
         add  x27, x27, sizeof.ExtMove
-          b  CastlingOODone\@
-   CheckOOOQuiteCheck\@:
+          b  GenCastlingJmp.CastlingOODone\@
+   GenCastlingJmp.CheckOOOQuiteCheck\@:
          bl  Move_GivesCheck
-        cbz  w0, CastlingOODone\@
+        cbz  w0, GenCastlingJmp.CastlingOODone\@
         add  x27, x27, sizeof.ExtMove
           b  \ParentLabel\().CastlingDone
   .endif
@@ -1169,6 +1173,7 @@ else
 end if
 */
 .macro GenAll ParentLabel, Us, Type
+//Display "GenAll \ParentLabel, \Us, \Type called\n"
         GenPawnMoves \ParentLabel, \Us, \Type
         GenMoves  \Us, Knight, \Type
         GenMoves  \Us, Bishop, \Type
@@ -1255,5 +1260,6 @@ end if
         cbz  x2, \ParentLabel\().CastlingOOO
   \ParentLabel\().CastlingDone:
  .endif
+//Display "GenAll \ParentLabel, \Us, \Type exiting\n"
 .endm
 

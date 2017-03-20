@@ -154,9 +154,12 @@ PrintUciMove:
 		add   rdi, rdx
 		ret
 */
+        
+        stp   x29, x30, [sp, -16]!
          bl  _PrintUciMove
         str  x0, [x27]
         add  x27, x27, x2
+        ldp  x29, x30, [sp], 16
         ret
 
 _PrintUciMove:
@@ -290,6 +293,7 @@ end virtual
 ParseUciMove.moveList = 0
 ParseUciMove.localsize = sizeof.ExtMove*MAX_MOVES
 ParseUciMove.localsize = (ParseUciMove.localsize+15) & -16
+
         stp  x21, x30, [sp, -16]!
         stp  x26, x27, [sp, -16]!
         sub  sp, sp, ParseUciMove.localsize
@@ -333,6 +337,7 @@ ParseUciMove.localsize = (ParseUciMove.localsize+15) & -16
 		pop   rsi rdi rbx
 		ret
 */
+
         add  x27, sp, ParseUciMove.moveList
         ldr  x21, [x20, Pos.state]
          bl  SetCheckInfo
@@ -356,7 +361,7 @@ ParseUciMove.CheckNext:
         bne  ParseUciMove.CheckNext
         ldr  w0, [x27, ExtMove.move]
         add  sp, sp, ParseUciMove.localsize
-        ldp  x26, x27, [sp], 16
+        ldp  x2, x27, [sp], 16
         ldp  x21, x30, [sp], 16
         ret
 ParseUciMove.Failed:
@@ -707,22 +712,24 @@ GetLine.Realloc:
 
 
 MemoryCopy.Next:
-        sub  x2, x2, 1
        ldrb  w3, [x1], 1
        strb  w3, [x0], 1
 MemoryCopy:
 // copy x2 bytes from x1 to x0
 // advance x0 to the end of the block
-       cbnz  x2, MemoryCopy.Next
+// preserve every reg except x0, x1, x2
+       subs  x2, x2, 1        
+        bpl  MemoryCopy.Next
         ret
 
 
 MemoryFill.Next:
-        sub  x2, x2, 1
        strb  w1, [x0], 1
 MemoryFill:
 // fill x2 bytes from the lower byte in x1 to x0
 // advance x0 to the end of the block
-       cbnz  x2, MemoryFill.Next
+// preserve every reg except x0, x1, x2
+       subs  x2, x2, 1        
+        bpl  MemoryFill.Next
         ret
 
