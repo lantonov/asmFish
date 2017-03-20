@@ -86,7 +86,7 @@ Move_Undo:
         add  x7, x20, Pos.pieceIdx
        ldrb  w0, [x7, x9]
         add  x7, x20, Pos.pieceList
-       strb  w0, [x7, x0]
+       strb  w8, [x7, x0]
         add  x7, x20, Pos.pieceIdx
        strb  w0, [x7, x8]
         mov  x0, x11
@@ -116,17 +116,24 @@ Move_Undo.Captured:
         bic  x2, x2, x4
         ldr  x4, [x20, x11, lsl 3]
         orr  x4, x4, x2
-        ldr  x4, [x20, x11, lsl 3]
+        str  x4, [x20, x11, lsl 3]
         ldr  x4, [x20, x16, lsl 3]
         orr  x4, x4, x2
-        ldr  x4, [x20, x16, lsl 3]
+        str  x4, [x20, x16, lsl 3]
+
+        add  x7, x20, Pos.pieceEnd
+       ldrb  w1, [x7, x0]
+        add  x7, x20, Pos.pieceIdx
+       strb  w1, [x7, x9]
+        add  x7, x20, Pos.pieceList
+       strb  w9, [x7, x1]
+        add  x1, x1, 1
+        add  x7, x20, Pos.pieceEnd
+       strb  w1, [x7, x0]
         ret
 
 
 Move_Undo.Special:
-Display "Move_Undo.Special called\n"
-brk 0
-
 /*
 		xor   edx, edx
 		cmp   ecx, MOVE_TYPE_EPCAP
@@ -139,6 +146,17 @@ brk 0
 
 		 je   .EpCapture
 */
+        mov  x2, 0
+        cmp  x1, MOVE_TYPE_EPCAP
+        bhi  Move_Undo.Castle
+        add  x7, x20, Pos.pieceIdx
+       ldrb  w0, [x7, x9]
+        add  x7, x20, Pos.pieceList
+       strb  w8, [x7, x0]
+        add  x7, x20, Pos.pieceIdx
+       strb  w0, [x7, x8]
+        mov  x0, x11
+        beq  Move_Undo.EpCapture
 
 Move_Undo.Prom:
 /*
@@ -150,7 +168,23 @@ Move_Undo.Prom:
 		xor   qword[rbp+Pos.typeBB+8*rcx], rdx
 		mov   byte[rbp+Pos.board+r8], al
 		mov   byte[rbp+Pos.board+r9], r11l
-
+*/
+        mov  x0, Pawn
+        add  x0, x0, x16, lsl 3
+        add  x1, x1, -MOVE_TYPE_PROM + Knight
+        mov  x4, 1
+        lsl  x4, x4, x8
+        orr  x2, x2, x4
+        ldr  x4, [x20, 8*Pawn]
+        orr  x4, x4, x2
+        str  x4, [x20, 8*Pawn]
+        ldr  x4, [x20, x1, lsl 3]
+        eor  x4, x4, x2
+        str  x4, [x20, x1, lsl 3]
+        add  x7, x20, Pos.board
+       strb  w0, [x7, x8]
+       strb  w11, [x7, x9]
+/*
 	       push   rdi
 		lea   ecx, [8*rsi+rcx]
 	      movzx   edi, byte[rbp+Pos.pieceEnd+rcx]
@@ -161,7 +195,27 @@ Move_Undo.Prom:
 		mov   byte[rbp+Pos.pieceIdx+rdx], al
 		mov   byte[rbp+Pos.pieceList+rax], dl
 		mov   byte[rbp+Pos.pieceList+rdi], 64
+*/
+        add  x1, x1, x16, lsl 3
+        add  x7, x20, Pos.pieceEnd
+       ldrb  w17, [x7, x1]
+        sub  x17, x17, 1
+        add  x7, x20, Pos.pieceList
+       ldrb  w2, [x7, x17]
+        add  x7, x20, Pos.pieceIdx
+       ldrb  w0, [x7, x8]
 
+        add  x7, x20, Pos.pieceEnd
+       strb  w17, [x7, x1]
+        add  x7, x20, Pos.pieceIdx
+       strb  w0, [x7, x2]
+        add  x7, x20, Pos.pieceList
+       strb  w2, [x7, x0]
+        mov  w4, 64
+       strb  w4, [x7, x17]
+
+        
+/*
 	      movzx   edx, byte[rbp+Pos.pieceEnd+8*rsi+Pawn]
 		mov   byte[rbp+Pos.pieceIdx+r8], dl
 		mov   byte[rbp+Pos.pieceList+rdx], r8l
@@ -178,6 +232,21 @@ Move_Undo.Prom:
 		pop   rsi
 		ret
 */
+        add  x7, x20, Pos.pieceEnd + Pawn
+       ldrb  w2, [x7, x16, lsl 3]
+        add  x7, x20, Pos.pieceIdx
+       strb  w2, [x7, x8]
+        add  x7, x20, Pos.pieceList
+       strb  w8, [x7, x2]
+        add  x2, x2, 1
+        add  x7, x20, Pos.pieceEnd + Pawn
+       strb  w2, [x7, x16, lsl 3]
+        mov  x0, x11
+
+        mov  x2, 0
+        and  x11, x11, 7
+       cbnz  x11, Move_Undo.PromCapture
+        ret
 
 Move_Undo.PromCapture:
 /*
@@ -195,6 +264,27 @@ Move_Undo.PromCapture:
 		pop   rsi
 		ret
 */
+        eor  x16, x16, 1
+        mov  x4, 1
+        lsl  x4, x4, x9
+        orr  x2, x2, x4
+        ldr  x4, [x20, x11, lsl 3]
+        orr  x4, x4, x2
+        str  x4, [x20, x11, lsl 3]
+        ldr  x4, [x20, x16, lsl 3]
+        orr  x4, x4, x2
+        str  x4, [x20, x16, lsl 3]
+
+        add  x7, x20, Pos.pieceEnd
+       ldrb  w1, [x7, x0]
+        add  x7, x20, Pos.pieceIdx
+       strb  w1, [x7, x9]
+        add  x7, x20, Pos.pieceList
+       strb  w9, [x7, x1]
+        add  x1, x1, 1
+        add  x7, x20, Pos.pieceEnd
+       strb  w1, [x7, x0]
+        ret
 
 Move_Undo.EpCapture:
 /*
@@ -214,12 +304,39 @@ Move_Undo.EpCapture:
 		mov   byte[rbp+Pos.pieceList+rax], cl
 		add   eax, 1
 		mov   byte[rbp+Pos.pieceEnd+r11], al
-
 		pop   rsi
 		ret
 */
+        lsl  x1, x16, 1
+        sub  x1, x1, 1
+        add  x1, x9, x1, lsl 3
+        eor  x16, x16, 1
+        mov  x4, 1
+        lsl  x4, x4, x1
+        orr  x2, x2, x4
+        ldr  x4, [x20, 8*Pawn]
+        orr  x4, x4, x2
+        str  x4, [x20, 8*Pawn]
+        ldr  x4, [x20, x16, lsl 3]
+        orr  x4, x4, x2
+        str  x4, [x20, x16, lsl 3]
+        add  x7, x20, Pos.board
+       strb  wzr, [x7, x9]
+       strb  w11, [x7, x1]
+        add  x7, x20, Pos.pieceEnd
+       ldrb  w0, [x7, x11]
+        add  x7, x20, Pos.pieceIdx
+       strb  w0, [x7, x1]
+        add  x7, x20, Pos.pieceList
+       strb  w1, [x7, x0]
+        add  x0, x0, 1
+        add  x7, x20, Pos.pieceEnd
+       strb  w1, [x7, x11]
+        ret
 
 Move_Undo.Castle:
+Display "Move_Undo.Castle called\n"
+brk 0
 /*
 	; r8 = kfrom
 	; r9 = rfrom
