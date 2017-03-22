@@ -838,8 +838,6 @@ UciPosition.moves:
          bl  CmpString
         cbz  w0, UciGetInput
          bl  UciParseMoves
-
-Display "UciParseMoves returned %x0\n"
         cbz  x0, UciGetInput
 
 UciPosition.badmove:

@@ -140,8 +140,8 @@ Position_SetState.Empty:
         ldr  x2, [x20, 8*King]
         ldr  x4, [x20, x1, lsl 3]
         and  x2, x2, x4
-       rbit  x4, x2
-        clz  x2, x4
+       rbit  x2, x2
+        clz  x2, x2
          bl  AttackersTo_Side
         str  x0, [x21, State.checkersBB]
          bl  SetCheckInfo
@@ -196,9 +196,9 @@ Position_VerifyState:
         lea  x7, Zobrist_Castling
         ldr  x4, [x7, x2, lsl 3]
         eor  x15, x15, x4
-        cmp  x2, 64
+        cmp  x1, 64
         bhs  1f
-        and  x2, x2, 7
+        and  x1, x1, 7
         lea  x7, Zobrist_Ep
         ldr  x4, [x7, x1, lsl 3]
         eor  x15, x15, x4
@@ -328,14 +328,6 @@ Position_VerifyState.Failed:
         add  sp, sp, 64
         ldp  x21, x30, [sp], 16
         ret
-
-
-
-
-
-
-
-
 
 
 
@@ -1014,7 +1006,6 @@ Position_IsLegal.VerifyKingCapture:
         cbz  w0, Position_IsLegal.Failed
          bl  Position_VerifyPieceLists
         cbz  w0, Position_IsLegal.Failed
-
         mov  w0, 0
         ldp  x21, x30, [sp], 16
         ret
@@ -1434,8 +1425,8 @@ Position_ParseFen.MoveNumber:
         add  x0, x2, x0, lsl 1
         str  w0, [x20, Pos.gamePly]
 
-         bl  Position_SetState
          bl  Position_SetPieceLists
+         bl  Position_SetState
          bl  Position_IsLegal
        cbnz  w0, Position_ParseFen.Failed
 
@@ -1608,6 +1599,7 @@ SetCastlingRights.have_rook_sq:
 
         add  x11, x20, -Thread.rootPos+Thread.castling_ksqpath
         add  x11, x11, x15, lsl 3
+        mov  x0, 0
         str  xzr, [x11]
         cmp  x7, x9
        csel  x12, x7, x9, lo
@@ -1725,7 +1717,7 @@ SetCastlingRights.rook_loop_done:
 
 		xor   eax, eax
 */
-        add  x16, x20, -Thread.rootPos+Thread.castling_path
+        add  x16, x20, -Thread.rootPos + Thread.castling_path
         str  x0, [x16, x15, lsl 3]
 
         mov  w0, MOVE_TYPE_CASTLE

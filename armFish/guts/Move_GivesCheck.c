@@ -89,15 +89,20 @@ Move_GivesCheck.Special.AfterPrologue:
         mov  x4, 1
         lsl  x4, x4, x9
         orr  x2, x2, x4
-        adr  x4, Move_GivesCheck.JmpTable - 4*MOVE_TYPE_PROM
+        adr  x4, Move_GivesCheck.JmpTable
         ldr  w0, [x4, x1, lsl 2]
         adr  x4, Move_GivesCheck
         add  x0, x0, x4
          br  x0
 Move_GivesCheck.JmpTable:
+        .word 1
+        .word 1
+        .word 1
+        .word 1
         .word Move_GivesCheck.PromKnight - Move_GivesCheck
         .word Move_GivesCheck.PromBishop - Move_GivesCheck
         .word Move_GivesCheck.PromRook - Move_GivesCheck
+        .word Move_GivesCheck.PromQueen - Move_GivesCheck
         .word Move_GivesCheck.EpCapture - Move_GivesCheck
         .word 1
         .word 1
@@ -179,7 +184,7 @@ Move_GivesCheck.EpCapture:
 */
         lsl  x1, x16, 1
         sub  x1, x1, 1
-        add  x1, x9, x1, lsl 8
+        add  x1, x9, x1, lsl 3
         ldr  x8, [x20, 8*Bishop]
         ldr  x9, [x20, 8*Rook]
         mov  x4, 1
@@ -193,7 +198,7 @@ Move_GivesCheck.EpCapture:
         and  x0, x0, x8
         and  x11, x11, x9
         orr  x0, x0, x11
-        ldr  x4, [x20, x6, lsl 3]
+        ldr  x4, [x20, x16, lsl 3]
         tst  x0, x4
        cset  x0, ne
         ret

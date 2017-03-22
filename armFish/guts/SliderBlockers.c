@@ -18,6 +18,28 @@ local ..YesPinners, ..NoPinners, ..MoreThanOne
 		lea   s, [BetweenBB+s]
 		and   snipers, sliders
 		 jz   ..NoPinners
+*/
+.macro SliderBlockers result, sliders, sq, pinners, pieces, pieces_color, bb, snipers, snipersSqBB, tt, bishops, rooks, temp
+        ldr  \snipers, [x20, 8*Queen]
+        mov  \bb, \snipers
+
+        orr  \snipers, \snipers, \rooks
+        lea  \temp, RookAttacksPDEP
+        ldr  \tt, [\temp, \sq, lsl 3]
+        and  \snipers, \snipers, \tt
+
+        orr  \bb, \bb, \bishops
+        lea  \temp, BishopAttacksPDEP
+        ldr  \tt, [\temp, \sq, lsl 3]
+        and  \bb, \bb, \tt
+
+        orr  \snipers, \snipers, \bb
+
+        lea  \tt, BetweenBB
+        add  \sq, \tt, \sq, lsl 9
+       ands  \snipers, \snipers, \sliders
+        beq  SliderBlockers.NoPinners\@
+/*
 ..YesPinners:
 	       blsi   snipersSqBB, snipers
 		bsf   t, snipers
@@ -37,21 +59,6 @@ local ..YesPinners, ..NoPinners, ..MoreThanOne
 ..NoPinners:
 }
 */
-.macro SliderBlockers result, sliders, sq, pinners, pieces, pieces_color, bb, snipers, snipersSqBB, tt, bishops, rooks
-        ldr  \snipers, [x20, 8*Queen]
-       adrp  \tt, RookAttacksPDEP
-        add  \tt, \tt, \sq, lsl 3
-        orr  \snipers, \snipers, \rooks
-        orr  \bb, \snipers, \bishops
-        ldr  \snipersSqBB, [\tt]
-        ldr  \tt, [\tt, BishopAttacksPDEP-RookAttacksPDEP]
-        and  \snipers, \snipers, \snipersSqBB
-        and  \bb, \bb, \tt
-        orr  \snipers, \snipers, \bb
-        lea  \tt, BetweenBB
-        add  \sq, \tt, \sq, lsl 6+3
-       ands  \snipers, \snipers, \sliders
-        beq  SliderBlockers.NoPinners\@
 SliderBlockers.YesPinners\@:
        rbit  \tt, \snipers
         neg  \snipersSqBB, \snipers

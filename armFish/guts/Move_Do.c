@@ -177,14 +177,13 @@ Move_Do:
 		jnz   .Rights
 */
 
-Display "Move_Do called %x1\n"
-
         ldr  w16, [x20, Pos.sideToMove]
         lea  x7, Zobrist_side
         ldr  d15, [x7]
        ubfx  x8, x1, 6, 6
         and  x9, x1, 63
         lsr  x1, x1, 12
+
         add  x6, x20, Pos.board
        ldrb  w10, [x6, x8]
        ldrb  w11, [x6, x9]
@@ -334,9 +333,9 @@ Move_Do.CaptureRet:
         add  v6.2s, v6.2s, v2.2s
 
         mvn  w0, w0
-       ldrh  w4, [x21, sizeof.State+State.rule50]
+       ldrh  w4, [x21, 1*sizeof.State + State.rule50]
         and  w4, w4, w0
-       strh  w4, [x21, sizeof.State+State.rule50]
+       //strh  w4, [x21, 1*sizeof.State + State.rule50]
 
         cmp  w1, MOVE_TYPE_PROM
         bhs  Move_Do.Special
@@ -421,8 +420,6 @@ Move_Do.CheckersDone:
 		jmp   SetCheckInfo.go
 */
         str  xzr, [x21, State.checkersBB]
-Display "Move_Do exiting 1\n"
-
           b  SetCheckInfo.go
 
 
@@ -442,8 +439,8 @@ Move_Do.Capture:
 		and   edi, 15
 */
         and  x12, x11, 8
-        ldr  x17, [x21, x12]
-        ldr  x2, [x21, x0, lsl 3]
+        ldr  x17, [x20, x12]
+        ldr  x2, [x20, x0, lsl 3]
         mov  x4, 1
         lsl  x4, x4, x9
         bic  x17, x17, x4
@@ -488,7 +485,7 @@ Move_Do.Capture:
         eor  v3.8b, v3.8b, v7.8b
         ldr  d1, [x7, x9, lsl 3]
         sub  v6.2s, v6.2s, v1.2s
-       strh  w0, [x21, sizeof.State+State.rule50]
+       strh  w0, [x21, sizeof.State + State.rule50]
 /*
 	      movzx   edi, byte[rbp+Pos.pieceEnd+r11]
 		sub   edi, 1
@@ -500,7 +497,7 @@ Move_Do.Capture:
 		mov   byte[rbp+Pos.pieceList+rdi], 64
 		jmp   .CaptureRet
 */
-        add  x7, x21, Pos.pieceEnd
+        add  x7, x20, Pos.pieceEnd
        ldrb  w17, [x7, x11]
         sub  w17, w17, 1
         add  x7, x20, Pos.pieceList
@@ -513,8 +510,8 @@ Move_Do.Capture:
        strb  w0, [x7, x2]
         add  x7, x20, Pos.pieceList
        strb  w2, [x7, x0]
-        mov  w0, 64
-       strb  w0, [x16, x17]
+        mov  w4, 64
+       strb  w4, [x7, x17]
           b  Move_Do.CaptureRet
 
 Move_Do.MoveIsCheck:
@@ -537,8 +534,6 @@ Move_Do.MoveIsCheck:
         tst  x2, x8
         bne  Move_Do.DoFull
         str  x0, [x21, State.checkersBB]
-
-Display "Move_Do exiting 2\n"
           b  SetCheckInfo.go
 
 Move_Do.DoFull:
@@ -595,7 +590,6 @@ Move_Do.DoFull:
         orr  x0, x0, x8
         and  x0, x0, x12
         str  x0, [x21, State.checkersBB]
-Display "Move_Do exiting 3\n"
           b  SetCheckInfo.go
 
         
@@ -653,6 +647,7 @@ Move_Do.DoublePawn:
         add  x8, x8, x9
         lsr  x8, x8, 1
         ldr  x0, [x7, x8, lsl 3]
+
         eor  x2, x16, 1
         ldr  x4, [x20, 8*Pawn]
         and  x0, x0, x4
@@ -710,8 +705,8 @@ Move_Do.Promotion:
        strb  w0, [x7, x2]
         add  x7, x20, Pos.pieceList
        strb  w2, [x7, x0]
-        mov  w0, 64
-       strb  w0, [x7, x7]
+        mov  w4, 64
+       strb  w4, [x7, x7]
 
         add  x7, x20, Pos.pieceEnd
        ldrb  w2, [x7, x14]
@@ -751,15 +746,15 @@ Move_Do.Promotion:
         Popcnt  x0, x2, x8
         lea  x6, Zobrist_Pieces
         lea  x7, Scores_Pieces
-        add  x6, x6, x10, lsl 6+3
-        add  x7, x7, x10, lsl 6+3
+        add  x6, x6, x10, lsl 9
+        add  x7, x7, x10, lsl 9
         ldr  d7, [x6, x9, lsl 3]
         eor  v5.8b, v5.8b, v7.8b
         eor  v4.8b, v4.8b, v7.8b
         ldr  d7, [x6, x0, lsl 3]
         eor  v3.8b, v3.8b, v7.8b
         ldr  d1, [x7, x9, lsl 3]
-        sub  v6.2s, v6.2s, v7.2s
+        sub  v6.2s, v6.2s, v1.2s
 /*
 	; place piece r14 on square r9
 		mov   eax, r14d
@@ -793,8 +788,8 @@ Move_Do.Promotion:
         sub  x0, x0, 1
         lea  x6, Zobrist_Pieces
         lea  x7, Scores_Pieces
-        add  x6, x6, x14, lsl 6+3
-        add  x7, x7, x14, lsl 6+3
+        add  x6, x6, x14, lsl 9
+        add  x7, x7, x14, lsl 9
         ldr  d7, [x6, x9, lsl 3]
         eor  v5.8b, v5.8b, v7.8b
         ldr  d7, [x6, x0, lsl 3]
@@ -836,21 +831,21 @@ Move_Do.EpCapture:
         eor  x10, x10, 8
         eor  x16, x16, 1
         ldr  x2, [x20, 8*Pawn]
-        ldr  x17, [x20, x6, lsl 3]
+        ldr  x17, [x20, x16, lsl 3]
         mov  x4, 1
         lsl  x4, x4, x14
         bic  x2, x2, x4
         bic  x17, x17, x4
         str  x2, [x20, 8*Pawn]
-        str  x17, [x20, x6, lsl 3]
-        add  x16, x20, Pos.board
-       strb  wzr, [x16, x14]
+        str  x17, [x20, x16, lsl 3]
+        add  x7, x20, Pos.board
+       strb  wzr, [x7, x14]
         and  x17, x17, x2
         Popcnt  x17, x17, x2
         lea  x6, Zobrist_Pieces
         lea  x7, Scores_Pieces
-        add  x6, x6, x10, lsl 6+3
-        add  x7, x7, x10, lsl 6+3
+        add  x6, x6, x10, lsl 9
+        add  x7, x7, x10, lsl 9
         ldr  d7, [x6, x14, lsl 3]
         eor  v5.8b, v5.8b, v7.8b
         eor  v4.8b, v4.8b, v7.8b
@@ -875,25 +870,25 @@ Move_Do.EpCapture:
 		jmp   .SpecialRet
 */
         mov  x0, Pawn
-        add  x0, x0, x6, lsl 3
+        add  x0, x0, x16, lsl 3
        strh  wzr, [x21, 1*sizeof.State + State.rule50]
        strb  w0, [x21, 1*sizeof.State + State.capturedPiece]
         add  x6, x20, x16, lsl 3
-       ldrb  w7, [x6, Pos.pieceEnd + Pawn]
-        sub  w7, w7, 1
+       ldrb  w17, [x6, Pos.pieceEnd + Pawn]
+        sub  w17, w17, 1
         add  x6, x20, Pos.pieceList
        ldrb  w2, [x6, x17]
         add  x6, x20, Pos.pieceIdx
        ldrb  w0, [x6, x14]
         add  x6, x20, x16, lsl 3
-       strb  w7, [x6, Pos.pieceEnd + Pawn]
+       strb  w17, [x6, Pos.pieceEnd + Pawn]
         add  x6, x20, Pos.pieceIdx
-       strb  w0, [x16, x2]
+       strb  w0, [x6, x2]
         add  x6, x20, Pos.pieceList
        strb  w2, [x6, x0]
         mov  w0, 64
        strb  w0, [x6, x17]
-        eor  x6, x6, 1
+        eor  x16, x16, 1
         
           b  Move_Do.SpecialRet
 
@@ -944,16 +939,16 @@ Move_Do.Castling:
        strb  wzr, [x7, x9]
        strb  w10, [x7, x14]
        strb  w11, [x7, x2]
-        
+
         add  x7, x20, Pos.pieceIdx
        ldrb  w0, [x7, x8]
        ldrb  w17, [x7, x9]
         add  x7, x20, Pos.pieceList
        strb  w14, [x7, x0]
        strb  w2, [x7, x17]
-        add  x16, x20, Pos.pieceIdx
-       strb  w0, [x16, x14]
-       strb  w17, [x16, x2]
+        add  x7, x20, Pos.pieceIdx
+       strb  w0, [x7, x14]
+       strb  w17, [x7, x2]
 /*
 	; now move rook to the back of the list
 	      movzx   eax, byte[rbp+Pos.pieceEnd+r11]
@@ -970,20 +965,20 @@ Move_Do.Castling:
 		mov   byte[rbp+Pos.pieceIdx+rdx], r13l
 		mov   byte[rbp+Pos.pieceIdx+r12], dil
 */
-        add  x16, x20, Pos.pieceEnd
-       ldrb  w0, [x16, x11]
+        add  x7, x20, Pos.pieceEnd
+       ldrb  w0, [x7, x11]
         sub  w0, w0, 1
-        add  x16, x20, Pos.pieceList
-       ldrb  w12, [x16, x0]
-       ldrb  w2, [x16, x7]
-       ldrb  w13, [x16, x0]
-       strb  w13, [x16, x7]
-       strb  w2, [x16, x0]
-        add  x16, x20, Pos.pieceIdx
-       ldrb  w7, [x16, x2]
-       ldrb  w13, [x16, x12]
-       strb  w13, [x16, x2]
-       strb  w7, [x16, x12]
+        add  x7, x20, Pos.pieceList
+       ldrb  w12, [x7, x0]
+       ldrb  w2, [x7, x17]
+       ldrb  w13, [x7, x0]
+       strb  w13, [x7, x17]
+       strb  w2, [x7, x0]
+        add  x7, x20, Pos.pieceIdx
+       ldrb  w17, [x7, x2]
+       ldrb  w13, [x7, x12]
+       strb  w13, [x7, x2]
+       strb  w17, [x7, x12]
 /*
 		shl   r10d, 6+3
 		shl   r11d, 6+3
@@ -1005,25 +1000,25 @@ Move_Do.Castling:
 	     vpaddd   xmm6, xmm6, xmm2
                 shr   r10d, 6+3
 */
-        lea  x17, Zobrist_Pieces
-        add  x16, x17, x10, lsl 6+3
-        add  x17, x17, x11, lsl 6+3
-        ldr  d7, [x16, x8, lsl 3]
+        lea  x7, Zobrist_Pieces
+        add  x6, x7, x10, lsl 6+3
+        add  x7, x7, x11, lsl 6+3
+        ldr  d7, [x6, x8, lsl 3]
         eor  v5.8b, v5.8b, v7.8b
-        ldr  d7, [x17, x9, lsl 3]
+        ldr  d7, [x7, x9, lsl 3]
         eor  v5.8b, v5.8b, v7.8b
-        ldr  d7, [x16, x14, lsl 3]
+        ldr  d7, [x6, x14, lsl 3]
         eor  v5.8b, v5.8b, v7.8b
-        ldr  d7, [x17, x2, lsl 3]
+        ldr  d7, [x7, x2, lsl 3]
         eor  v5.8b, v5.8b, v7.8b
-        add  x16, x16, Scores_Pieces - Zobrist_Pieces
-        add  x17, x17, Scores_Pieces - Zobrist_Pieces
-        ldr  d1, [x16, x8, lsl 3]
-        ldr  d2, [x17, x9, lsl 3]
+        add  x6, x6, Scores_Pieces - Zobrist_Pieces
+        add  x7, x7, Scores_Pieces - Zobrist_Pieces
+        ldr  d1, [x6, x8, lsl 3]
+        ldr  d2, [x7, x9, lsl 3]
         sub  v6.2s, v6.2s, v1.2s
         sub  v6.2s, v6.2s, v2.2s
-        ldr  d1, [x16, x14, lsl 3]
-        ldr  d2, [x17, x2, lsl 3]
+        ldr  d1, [x6, x14, lsl 3]
+        ldr  d2, [x7, x2, lsl 3]
         add  v6.2s, v6.2s, v1.2s
         add  v6.2s, v6.2s, v2.2s
 /*
@@ -1031,7 +1026,7 @@ Move_Do.Castling:
 		mov   r13, qword[rbp+Pos.typeBB+8*King]
 		mov   r11, qword[rbp+Pos.typeBB+8*Rook]
 */
-        ldr  x0, [x20, x6, lsl 3]
+        ldr  x0, [x20, x16, lsl 3]
         ldr  x13, [x20, 8*King]
         ldr  x11, [x20, 8*Rook]
 //		btr   rax, r8
@@ -1072,7 +1067,7 @@ Move_Do.Castling:
 		mov   qword[rbp+Pos.typeBB+8*Rook], r11
 		jmp   .SpecialRet
 */
-        str  x0, [x20, x6, lsl 3]
+        str  x0, [x20, x16, lsl 3]
         str  x13, [x20, 8*King]
         str  x11, [x20, 8*Rook]
           b  Move_Do.SpecialRet

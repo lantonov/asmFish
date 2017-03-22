@@ -28,7 +28,7 @@ SetCheckInfo.AfterPrologue:
         ldr  x12, [x20, x16, lsl 3]
         and  x14, x12, x4
         and  x15, x13, x4
-        eor  x7, x12, x13
+        eor  x17, x12, x13
        rbit  x14, x14
        rbit  x15, x15
         clz  x14, x14
@@ -67,7 +67,7 @@ ProfileInc SetCheckInfo
         RookAttacks x2, x14, x17, x8, x4
         mov  x11, 0
         str  x0, [x21, State.checkSq+8*Bishop]
-        str  x2, [x21, State.checkSq+8*Bishop]
+        str  x2, [x21, State.checkSq+8*Rook]
         orr  x0, x0, x2
         str  x0, [x21, State.checkSq+8*Queen]
         str  xzr, [x21, State.checkSq+8*King]
@@ -85,7 +85,7 @@ ProfileInc SetCheckInfo
         mov  x0, 0
         ldr  x3, [x20, 8*Bishop]
         ldr  x4, [x20, 8*Rook]
-        SliderBlockers  x0, x13, x14, x11, x7, x12, x1, x2, x8, x9, x3, x4
+        SliderBlockers  x0, x13, x14, x11, x17, x12, x1, x2, x8, x9, x3, x4, x5
         str  x11, [x10, State.pinnersForKing]
         str  x0, [x10, State.blockersForKing]
         and  x0, x0, x13
@@ -110,10 +110,19 @@ ProfileInc SetCheckInfo
         add  x10, x21, x16, lsl 3
         mov  x11, 0
         mov  x0, 0
-        SliderBlockers  x0, x12, x15, x11, x7, x13, x1, x2, x8, x9, x3, x4
+//Display "calling SliderBlockers\n"
+//Display "result = %x0\n"
+//Display "sliders = %x12\n"
+//Display "sq = %x15\n"
+//Display "pinners = %x11\n"
+//Display "pieces = %x17\n"
+//Display "pieces_color = %x13\n"
+        SliderBlockers  x0, x12, x15, x11, x17, x13, x1, x2, x8, x9, x3, x4, x5
+//Display "SliderBlockers returned  %x0 %x11\n"
+
         str  x11, [x10, State.pinnersForKing]
         str  x0, [x10, State.blockersForKing]
         and  x0, x0, x13
-        str  x0, [x21, State.dcCandidates]
+        str  x0, [x21, State.pinned]
         ret
 

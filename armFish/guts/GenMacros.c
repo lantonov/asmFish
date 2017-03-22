@@ -171,7 +171,7 @@ local ..ksq_loop
 */
 CastlingJmp.ksq_loop\@:
         add  x7, x20, -Thread.rootPos + Thread.castling_ksqpath + 8*(\Rights)
-       ldrb  w0, [x7, x11]
+       ldrb  w2, [x7, x11]
         RookAttacks  x0, x2, x14, x8, x4
         tst  x0, x10
         bne  \JmpFalse
@@ -179,7 +179,7 @@ CastlingJmp.ksq_loop\@:
         tst  x0, x9
         bne  \JmpFalse
         sub  x11, x11, 1
-       cbnz  x11, CastlingJmp.ksq_loop\@        
+       cbnz  x11, CastlingJmp.ksq_loop\@
 .endm
 
 
@@ -393,7 +393,7 @@ end if
         add  x27, x27, sizeof.ExtMove
         sub  x1, x8, 1
        ands  x8, x8, x1
-        beq  \ParentLabel\().CaptureEp
+        bne  \ParentLabel\().CaptureEp
           b  \ParentLabel\().CaptureEpDone
  .endif
 .endm
@@ -487,10 +487,10 @@ end if
         mov  pawnsOn7, TRank7BB
         bic  pawnsNotOn7, x0, pawnsOn7
         and  pawnsOn7, pawnsOn7, x0
- .if Type == EVASIONS
+ .if \Type == EVASIONS
         ldr  enemies, [x20, 8*Them]
         and  enemies, enemies, x15
- .elseif Type == CAPTURES
+ .elseif \Type == CAPTURES
         mov  enemies, x15
  .else
         ldr  enemies, [x20, 8*Them]
@@ -533,7 +533,7 @@ end if
         and  bb2, bb2, bb1
         ShiftBB  Up, bb2, bb2
         and  bb2, bb2, eS
-  .if Type == EVASIONS
+  .if \Type == EVASIONS
         and  bb1, bb1, x15
         and  bb2, bb2, x15
   .endif
@@ -700,6 +700,7 @@ end if
         cbz  bb1, GenPawnMoves.CaptureRightDone\@
    GenPawnMoves.CaptureRight\@:
        rbit  x0, bb1
+        clz  x0, x0
         add  x0, x0, x0, lsl 6
         sub  x0, x0, Right << 6
         str  w0, [x27]
@@ -711,8 +712,9 @@ end if
         cbz  bb2, GenPawnMoves.CaptureLeftDone\@
    GenPawnMoves.CaptureLeft\@:
        rbit  x0, bb2
+        clz  x0, x0
         add  x0, x0, x0, lsl 6
-        sub  x0, x0, Right << 6
+        sub  x0, x0, Left << 6
         str  w0, [x27]
         add  x27, x27, sizeof.ExtMove
         sub  x1, bb2, 1
@@ -752,7 +754,7 @@ end if
        tbnz  x4, 0, GenPawnMoves.EpDone\@
   .endif
         AttacksFromPawn  Them, bb1, x2, x7
-        orr  x0, x0, MOVE_TYPE_EPCAP << 12
+        orr  x2, x2, MOVE_TYPE_EPCAP << 12
        ands  bb1, bb1, pawnsNotOn7
         bne  \ParentLabel\().CaptureEp
   \ParentLabel\().CaptureEpDone:
@@ -837,7 +839,7 @@ if Checks eq QUIET_CHECKS
  end if
 else
 */
- .if Checks == QUIET_CHECKS
+ .if \Checks == QUIET_CHECKS
         ldr  x10, [x21, State.checkSq + 8*\Pt]
         ldr  x16, [x21, State.dcCandidates]
   .if \Pt == Bishop
@@ -1088,7 +1090,7 @@ else
  end if
 */
   \ParentLabel\().CastlingOOO:
-  .if Type == NON_EVASIONS
+  .if \Type == NON_EVASIONS
         CastlingJmp  (2*\Us+1), GenCastlingJmp.CastlingOOOGood\@, \ParentLabel\().CastlingDone
    GenCastlingJmp.CastlingOOOGood\@:
         ldr  w0, [x20, -Thread.rootPos + Thread.castling_movgen + 4*(2*\Us+1)]
@@ -1096,12 +1098,12 @@ else
         add  x27, x27, sizeof.ExtMove
           b  \ParentLabel\().CastlingDone
   .else
-   .if Us == White
+   .if \Us == White
          bl  CastleOOOLegal_White
    .elseif Us == Black
          bl  CastleOOOLegal_Black
    .endif
-   .if Type == QUIET_CHECKS
+   .if \Type == QUIET_CHECKS
         ldr  w1, [x20, -Thread.rootPos + Thread.castling_movgen + 4*(2*\Us+1)]
         str  w1, [x27]
        cbnz  w0, GenCastlingJmp.CheckOOOQuiteCheck\@
@@ -1133,7 +1135,7 @@ end if
   generate_pawn_jmp   Us, Type
 }
 */
-  .if Type == QUIET_CHECKS
+  .if \Type == QUIET_CHECKS
    GenCastlingJmp.CheckOOQuiteCheck\@:
          bl  Move_GivesCheck
         cbz  w0, GenCastlingJmp.CastlingOODone\@
@@ -1226,6 +1228,7 @@ end if
         add  x27, x27, sizeof.ExtMove
         sub  x8, x1, 1
        ands  x1, x1, x8
+        bne  GenAll.KingMoves\@
   GenAll.KingMovesDone\@:
  .endif
 /*

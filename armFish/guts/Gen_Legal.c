@@ -64,6 +64,7 @@ Gen_Legal.GenDone:
         mov  w0, w2
         cmp  x26, x27
         beq  Gen_Legal.FilterDone
+       cbnz  x25, Gen_Legal.FilterYesPinned
 
 Gen_Legal.FilterNoPinned:
 /*
@@ -109,6 +110,7 @@ Gen_Legal.KingMove:
 		shl   ecx, 6+3
 		mov   rcx, qword[PawnAttacks+rcx+8*rax]
 */
+
         and  x0, x0, 63
         lea  x7, PawnAttacks
         add  x7, x7, x23, lsl 9
@@ -129,7 +131,7 @@ Gen_Legal.KingMove:
 */
         ldr  x9, [x20, x23, lsl 3]
         eor  x4, x23, 1
-        ldr  x10, [x20, x23, lsl 3]
+        ldr  x10, [x20, x4, lsl 3]
         orr  x9, x9, x10
 /*
 	; pawn
@@ -263,8 +265,8 @@ Gen_Legal.FilterYesPinned:
         bhs  Gen_Legal.EpCapture
         lsr  w1, w1, 6
         and  w0, w0, 0x0FFF
-        lsr  x4, x15, x1
-       tbnz  x4, 0,Gen_Legal.FilterYesPinnedWeArePinned
+        lsr  x4, x25, x1
+       tbnz  x4, 0, Gen_Legal.FilterYesPinnedWeArePinned
 
 Gen_Legal.FilterYesPinnedLegal:
 /*
@@ -289,7 +291,7 @@ Gen_Legal.FilterYesPinnedWeArePinned:
 */
         lea  x7, LineBB
         ldr  x4, [x7, x0, lsl 3]
-        tst  x12, x4
+        tst  x22, x4
         bne  Gen_Legal.FilterYesPinnedLegal
 
 Gen_Legal.FilterYesPinnedIllegal:
@@ -315,6 +317,7 @@ Gen_Legal.FilterYesPinnedIllegal:
           b  Gen_Legal.FilterDone
 
 Gen_Legal.EpCapture:
+//Display "Gen_Legal.EpCapture called\n"
 /*
 	; for ep captures, just make the move and test if our king is attacked
 		xor   r13d, 1
@@ -324,7 +327,7 @@ Gen_Legal.EpCapture:
 		shr   r9d, 6
 */
         eor  x4, x23, 1
-        ldr  x10, [x20, x23, lsl 3]
+        ldr  x10, [x20, x4, lsl 3]
         lsr  x9, x24, 6
 /*
 	; all pieces
@@ -339,7 +342,7 @@ Gen_Legal.EpCapture:
 		shr   ecx, 6
 		btr   rdx, rcx
 */
-        lsr  x6, x6, 6
+        lsr  x1, x1, 6
         mov  x4, 1
         lsl  x4, x4, x1
         bic  x2, x2, x4
@@ -363,7 +366,7 @@ Gen_Legal.EpCapture:
         add  x1, x0, x1, lsl 3
         mov  x4, 1
         lsl  x4, x4, x1
-        bic  x2, x2, x1
+        bic  x2, x2, x4
 /*
 	; check for rook attacks
 	RookAttacks   rax, r9, rdx, r8
@@ -397,5 +400,7 @@ Gen_Legal.EpCapture:
         and  x1, x1, x10
         tst  x0, x1
         bne  Gen_Legal.FilterIllegalChoose
+
+//Display "it is legal\n"
           b  Gen_Legal.FilterLegalChoose
 

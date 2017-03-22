@@ -84,7 +84,7 @@ Gen_Evasions.SlidersDone:
         lsl  x14, x14, 6
        rbit  x0, x12
         clz  x0, x0
-       cbnz  x12, Gen_Evasions.KingMoveDone
+        cbz  x12, Gen_Evasions.KingMoveDone
 Gen_Evasions.NextKingMove:
 /*
 	       blsr   r12, r12, r8
@@ -94,6 +94,7 @@ Gen_Evasions.NextKingMove:
 		bsf   rax, r12
 		jnz   .NextKingMove
 */
+
         sub  x8, x12, 1
         and  x12, x12, x8
         orr  x0, x0, x14
@@ -101,7 +102,7 @@ Gen_Evasions.NextKingMove:
         add  x27, x27, sizeof.ExtMove
        rbit  x0, x12
         clz  x0, x0
-       cbnz  x12, Gen_Evasions.KingMoveDone
+       cbnz  x12, Gen_Evasions.NextKingMove
 Gen_Evasions.KingMoveDone:
 /*
 ; if there are multiple checkers, only king moves can be evasions
@@ -121,13 +122,12 @@ Gen_Evasions.KingMoveDone:
         sub  x0, x1, 1
         tst  x0, x1
         bne  Gen_Evasions_White.Ret
-       rbit  x0, x2
+       rbit  x0, x1
         clz  x0, x0
         lea  x7, BetweenBB
         add  x7, x7, x9
         ldr  x15, [x7, x0, lsl 3]
         orr  x15, x15, x1
-
         ldr  x14, [x20, 8*White]
         ldr  x4, [x20, 8*Black]
         orr  x14, x14, x4

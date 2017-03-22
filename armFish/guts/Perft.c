@@ -75,12 +75,15 @@ Perft_Root.MoveLoop:
          bl  Move_GivesCheck
         ldr  w1, [x26]        
        strb  w0, [x21, State.givesCheck]
+         bl  Move_Do__PerftGen_Root
         mov  x0, 1
        subs  x1, x25, 1
         bls  1f
          bl  Perft_Branch
 1:      add  x24, x24, x0
         mov  x29, x0
+        ldr  w1, [x26]        
+         bl  Move_Undo
          
 /*
 		lea   rdi, [Output]
@@ -186,7 +189,6 @@ Perft_Root.MoveLoopDone:
         lea  x1, sz_bench_format3
         add  x2, sp, 0
         add  x3, sp, 0
-//Display "perft here\n"
          bl  PrintFancy
         add  sp, sp, 32
          bl  Os_WriteOut_Output
@@ -231,13 +233,15 @@ Perft_Branch.localsize = (Perft_Branch.localsize + 15) & -16
         stp  x26, x30, [sp, -16]!
         stp  x24, x25, [sp, -16]!
         sub  sp, sp, Perft_Branch.localsize
+
+        sub  x25, x1, 1
        subs  x25, x1, 1
         mov  x24, 0
         add  x27, sp, Perft_Branch.movelist 
         add  x26, sp, Perft_Branch.movelist 
-        bhi  Perft_Root.DepthN
+        bhi  Perft_Branch.DepthN
 
-Perft_Root.Depth1:
+Perft_Branch.Depth1:
 /*
 	       call   Gen_Legal
 		mov   rax, rdi
@@ -250,12 +254,13 @@ Perft_Root.Depth1:
          bl  Gen_Legal
         sub  x0, x27, x26
         lsr  x0, x0, 3
+
         add  sp, sp, Perft_Branch.localsize
         ldp  x24, x25, [sp], 16
         ldp  x26, x30, [sp], 16
         ret
 
-Perft_Root.DepthN:
+Perft_Branch.DepthN:
 /*
 	       call   Gen_Legal
 		xor   eax, eax
@@ -266,11 +271,11 @@ Perft_Root.DepthN:
 		 jz   .DepthNDone
 */
          bl  Gen_Legal
-        ldr  w1, [x26]
         str  wzr, [x27]
-        cbz  w1, Perft_Root.DepthNDone
+        ldr  w1, [x26]
+        cbz  w1, Perft_Branch.DepthNDone
         
-Perft_Root.DepthNLoop:
+Perft_Branch.DepthNLoop:
 /*
 	       call   Move_GivesCheck
 		mov   edx, eax
@@ -297,9 +302,9 @@ Perft_Root.DepthNLoop:
         add  x26, x26, sizeof.ExtMove
          bl  Move_Undo
         ldr  w1, [x26]
-       cbnz  w1, Perft_Root.DepthNLoop
+       cbnz  w1, Perft_Branch.DepthNLoop
 
-Perft_Root.DepthNDone:
+Perft_Branch.DepthNDone:
 /*
 		mov   rax, r14
 		add   rsp, .localsize

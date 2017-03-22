@@ -58,7 +58,7 @@ Move_Undo:
         sub  x21, x21, sizeof.State
 
         str  x21, [x20, Pos.state]
-        str  x16, [x20, Pos.sideToMove]
+        str  w16, [x20, Pos.sideToMove]
         add  x7, x20, Pos.board
        strb  w10, [x7, x8]
        strb  w11, [x7, x9]
@@ -232,15 +232,15 @@ Move_Undo.Prom:
 		pop   rsi
 		ret
 */
-        add  x7, x20, Pos.pieceEnd + Pawn
-       ldrb  w2, [x7, x16, lsl 3]
+        add  x7, x20, x16, lsl 3
+       ldrb  w2, [x7, Pos.pieceEnd + Pawn]
         add  x7, x20, Pos.pieceIdx
        strb  w2, [x7, x8]
         add  x7, x20, Pos.pieceList
        strb  w8, [x7, x2]
         add  x2, x2, 1
-        add  x7, x20, Pos.pieceEnd + Pawn
-       strb  w2, [x7, x16, lsl 3]
+        add  x7, x20, x16, lsl 3
+       strb  w2, [x7, Pos.pieceEnd + Pawn]
         mov  x0, x11
 
         mov  x2, 0
@@ -331,12 +331,10 @@ Move_Undo.EpCapture:
        strb  w1, [x7, x0]
         add  x0, x0, 1
         add  x7, x20, Pos.pieceEnd
-       strb  w1, [x7, x11]
+       strb  w0, [x7, x11]
         ret
 
 Move_Undo.Castle:
-Display "Move_Undo.Castle called\n"
-brk 0
 /*
 	; r8 = kfrom
 	; r9 = rfrom
@@ -348,7 +346,20 @@ brk 0
 		bts   rdx, r9
 		xor   qword[rbp+Pos.typeBB+8*rax], rdx
 		xor   qword[rbp+Pos.typeBB+8*rsi], rdx
-
+*/
+        mov  x4, 1
+        lsl  x4, x4, x8
+        orr  x2, x2, x4
+        mov  x4, 1
+        lsl  x4, x4, x9
+        orr  x2, x2, x4
+        ldr  x4, [x20, x0, lsl 3]
+        eor  x4, x4, x2
+        ldr  x4, [x20, x0, lsl 3]
+        ldr  x4, [x20, x16, lsl 3]
+        eor  x4, x4, x2
+        ldr  x4, [x20, x16, lsl 3]
+/*
 		lea   r10d, [8*rsi+King]
 		lea   r11d, [8*rsi+Rook]
 		mov   edx, r8d
@@ -362,17 +373,25 @@ brk 0
 		mov   byte[rbp+Pos.board+rdx], 0
 		mov   byte[rbp+Pos.board+r8], r10l
 		mov   byte[rbp+Pos.board+r9], r11l
-
+*/
+        mov  x10, King
+        add  x10, x10, x16, lsl 3
+        mov  x11, Rook
+        add  x11, x11, x16, lsl 3
+        and  x2, x8, 56
+        cmp  x9, x8
+       cset  x0, hi
+        add  x1, x2, x0, lsl 2
+        add  x2, x2, x0, lsl 1
+        add  x1, x1, FILE_C
+        add  x2, x2, FILE_D
+        add  x7, x20, Pos.board
+       strb  wzr, [x7, x1]
+       strb  wzr, [x7, x2]
+       strb  w10, [x7, x8]
+       strb  w11, [x7, x9]
+/*
 	       push   rdi
-	  ;    movzx   eax, byte[rbp+Pos.pieceIdx+rcx]
-	  ;    movzx   edi, byte[rbp+Pos.pieceIdx+rdx]
-	  ;      mov   byte[rbp+Pos.pieceList+rax], r8l
-	  ;      mov   byte[rbp+Pos.pieceList+rdi], r9l
-	  ;      mov   byte[rbp+Pos.pieceIdx+r8], al
-	  ;      mov   byte[rbp+Pos.pieceIdx+r9], dil
-	  ; no! above not enough instructions! official stockfish has
-	  ;  castling rook moved to the back of the list
-	  ;  of course this for absolutely no good reason
 
 	      movzx   eax, byte[rbp+Pos.pieceIdx+rcx]
 	      movzx   edi, byte[rbp+Pos.pieceIdx+rdx]
@@ -380,6 +399,17 @@ brk 0
 		mov   byte[rbp+Pos.pieceList+rdi], r9l
 		mov   byte[rbp+Pos.pieceIdx+r8], al
 		mov   byte[rbp+Pos.pieceIdx+r9], dil
+*/
+        add  x7, x20, Pos.pieceIdx
+       ldrb  w0, [x7, x1]
+       ldrb  w17, [x7, x2]
+        add  x7, x20, Pos.pieceList
+       strb  w8, [x7, x0]
+       strb  w9, [x7, x17]
+        add  x7, x20, Pos.pieceIdx
+       strb  w0, [x7, x8]
+       strb  w17, [x7, x9]
+/*
 	; now move rook to the back of the list
 	      movzx   eax, byte[rbp+Pos.pieceEnd+r11]
 		sub   eax, 1
@@ -395,18 +425,63 @@ brk 0
 		mov   byte[rbp+Pos.pieceIdx+r9], r11l
 		mov   byte[rbp+Pos.pieceIdx+r10], dil
 		pop   rdi
-
+*/
+        add  x7, x20, Pos.pieceEnd
+       ldrb  w0, [x7, x11]
+        sub  w0, w0, 1
+        add  x7, x20, Pos.pieceList
+       ldrb  w10, [x7, x0]
+       ldrb  w9, [x7, x17]
+       ldrb  w11, [x7, x0]
+       strb  w11, [x7, x17]
+       strb  w9, [x7, x0]
+        add  x7, x20, Pos.pieceIdx
+       ldrb  w17, [x7, x9]
+       ldrb  w11, [x7, x10]
+       strb  w11, [x7, x9]
+       strb  w17, [x7, x10]
+/*
 		mov   rax, qword[rbp+Pos.typeBB+8*rsi]
 		mov   r10, qword[rbp+Pos.typeBB+8*King]
 		mov   r11, qword[rbp+Pos.typeBB+8*Rook]
-		btr   rax, rcx
-		btr   rax, rdx
-		bts   rax, r8
-		bts   rax, r9
-		btr   r10, rcx
-		bts   r10, r8
-		btr   r11, rdx
-		bts   r11, r9
+*/
+        ldr  x0, [x20, x16, lsl 3]
+        ldr  x10, [x20, 8*King]
+        ldr  x11, [x20, 8*Rook]        
+//		btr   rax, rcx
+        mov  x4, 1
+        lsl  x4, x4, x1
+        bic  x0, x0, x4
+//		btr   rax, rdx
+        mov  x4, 1
+        lsl  x4, x4, x2
+        bic  x0, x0, x4
+//		bts   rax, r8
+        mov  x4, 1
+        lsl  x4, x4, x8
+        orr  x0, x0, x4
+//		bts   rax, r9
+        mov  x4, 1
+        lsl  x4, x4, x9
+        orr  x0, x0, x4
+//		btr   r10, rcx
+        mov  x4, 1
+        lsl  x4, x4, x1
+        bic  x10, x10, x4
+//		bts   r10, r8
+        mov  x4, 1
+        lsl  x4, x4, x8
+        orr  x10, x10, x4
+//		btr   r11, rdx
+        mov  x4, 1
+        lsl  x4, x4, x2
+        bic  x11, x11, x4
+
+//		bts   r11, r9
+        mov  x4, 1
+        lsl  x4, x4, x9
+        orr  x11, x11, x4
+/*
 		mov   qword[rbp+Pos.typeBB+8*rsi], rax
 		mov   qword[rbp+Pos.typeBB+8*King], r10
 		mov   qword[rbp+Pos.typeBB+8*Rook], r11
@@ -414,4 +489,7 @@ brk 0
 		pop   rsi
 		ret
 */
-
+        str  x0, [x20, x16, lsl 3]
+        str  x10, [x20, 8*King]
+        str  x11, [x20, 8*Rook]
+        ret
