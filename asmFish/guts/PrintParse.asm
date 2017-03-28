@@ -19,10 +19,6 @@ PrintScore_Uci:
 		cmp   ecx, -VALUE_NONE
 		 je   .nNone
 		 jl   .bad
-		cmp   ecx, +VALUE_INFINITE
-		 je   .pInf
-		cmp   ecx, -VALUE_INFINITE
-		 je   .nInf
 		cmp   ecx, +VALUE_MATE-MAX_PLY
 		jge   .pMate
 		cmp   ecx, -VALUE_MATE+MAX_PLY
@@ -66,14 +62,6 @@ PrintScore_Uci:
 		mov   eax, 'NONE'
 	      stosd
 		ret
-.nInf:
-		mov   al,'-'
-	      stosb
-.pInf:
-		mov   rax, 'INFINITE'
-	      stosq
-		ret
-
 .bad:
 		mov   eax, 'bad '
 	      stosd
