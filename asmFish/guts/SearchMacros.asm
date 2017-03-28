@@ -823,46 +823,33 @@ end if
 	       call   Move_GivesCheck
 		mov   byte[rbx+State.givesCheck], al
 
-		mov   edx, dword[.depth]
+		mov   edi, dword[.depth]
 	      movzx   ecx, byte[.improving]
 	       imul   ecx, 16*4
-		mov   ecx, dword[FutilityMoveCounts+rcx+4*rdx]
+		mov   ecx, dword[FutilityMoveCounts+rcx+4*rdi]
 		sub   ecx, dword[.moveCount]
 		sub   ecx, 1
-		sub   edx, 16*ONE_PLY
-		and   edx, ecx
-		sar   edx, 31
-		mov   byte[.moveCountPruning], dl
+		sub   edi, 16*ONE_PLY
+		and   edi, ecx
+		sar   edi, 31
+		mov   byte[.moveCountPruning], dil
 
+                not   edi
+                and   edi, eax  ; edi = givesCheck && !moveCountPruning
 
       ; Step 12. Extend checks
-		mov   ecx, dword[.move]
-	       test   eax, eax
-		 jz   .12dont_extend
-	       test   edx, edx
-		jnz   .12dont_extend
-	SeeSignTest   .12extend_oneply
-	       test   eax, eax
-		 jz   .12dont_extend
-.12extend_oneply:
-		mov   dword[.extension], 1
-.12dont_extend:
-
 		mov   al, byte[.singularExtensionNode]
-	       test   al, al
-		 jz   .12done
 		mov   ecx, dword[.move]
+	       test   al, al
+		 jz   .12else
 		cmp   ecx, dword[.ttMove]
-		jne   .12done
-		mov   eax, dword[.extension]
-	       test   eax, eax
-		jnz   .12done
+		jne   .12else
 	       call   Move_IsLegal
 		mov   edx, dword[.ttValue]
 		mov   r8d, dword[.depth]
 		mov   r9l, byte[.cutNode]
 	       test   eax, eax
-		 jz   .12done
+		 jz   .12else
 		mov   eax, -VALUE_MATE
 		sub   edx, r8d
 		sub   edx, r8d
@@ -892,8 +879,17 @@ end if
 		mov   qword[rbx+State.stage], r12
 		mov   qword[rbx+State.ttMove], r13
 		mov   qword[rbx+State.countermove], r14
-
-
+                jmp   .12done
+.12else:
+                mov   ecx, dword[.move]
+               test   edi, edi
+                 jz   .12dont_extend
+	SeeSignTest   .12extend_oneply
+	       test   eax, eax
+		 jz   .12dont_extend
+.12extend_oneply:
+		mov   dword[.extension], 1
+.12dont_extend:
 .12done:
 
 
