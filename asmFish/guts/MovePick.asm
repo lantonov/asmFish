@@ -151,6 +151,8 @@ MovePick_QUIETS:
 		mov   eax, dword[r14]
 		cmp   r14, r15
 		jae   .WhileDone
+               test   esi, dword[r14+ExtMove.value]
+                 js   .WhileDone
 		add   r14, sizeof.ExtMove
 		cmp   eax, dword[rbx+State.ttMove]
 		 je   MovePick_QUIETS

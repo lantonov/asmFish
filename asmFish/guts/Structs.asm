@@ -97,7 +97,7 @@ ends
 
 struct ExtMove	 ; holds moves for gen/pick
  move	rd 1
- score	rd 1
+ value	rd 1
 ends
 if sizeof.ExtMove <> 8
  err

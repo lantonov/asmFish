@@ -25,7 +25,7 @@ Search_Init:
 	  vcvtsi2sd   xmm0, xmm0, edx
 	       call   Math_Log_d_d
 	     vmulsd   xmm1, xmm0, xmm7
-	     vmulsd   xmm1, xmm1, xmm6
+	     vdivsd   xmm1, xmm1, qword[.constd_1p95]
 		xor   r8d, r8d
 		lea   rcx, [r13*4]
 	     vaddsd   xmm1, xmm1, xmm6
@@ -98,6 +98,7 @@ Search_Init:
 
 
 align 8
+.constd_1p95 dq 1.95
 ._2729: dq 3FE0000000000000H				      ; 1AB0 _ 0.5
 ._2736: dq 4007333333333333H				      ; 1AE8 _ 2.9
 ._2731: dq 3FFCCCCCCCCCCCCDH				      ; 1AC0 _ 1.8

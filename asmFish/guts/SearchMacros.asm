@@ -63,14 +63,14 @@ virtual at rsp
   .success		  rd 1	; for tb
   .rbeta		  rd 1
   .moved_piece_to_sq	  rd 1
-                          rb 1
+  .skipQuiets             rb 1  ; -1 for true
   .singularExtensionNode  rb 1
   .improving		  rb 1
   .captureOrPromotion	  rb 1	; nonzero for true
   .doFullDepthSearch	  rb 1
   .cutNode		  rb 1	; -1 for true
   .ttHit		  rb 1
-  .moveCountPruning	  rb 1
+  .moveCountPruning	  rb 1  ; -1 for true
   .quietsSearched	  rd 64
 if .PvNode eq 1
   .pv	rd MAX_PLY+1
@@ -506,6 +506,7 @@ end if
 		mov   dword[rbx+State.ttMove], edi
 
 .9moveloop:
+                xor   esi, esi
 	GetNextMove
 		mov   dword[.move], eax
 		mov   ecx, eax
@@ -711,7 +712,7 @@ end if
 		mov   byte[.improving], al   ; should be 0 or 1
 
 
-
+                mov   byte[.skipQuiets], 0
     if .RootNode eq 1
 		mov   byte[.singularExtensionNode], 0
     else
@@ -752,7 +753,8 @@ end if
 	      align   8
 .MovePickLoop:	     ; this is the head of the loop
 
-	GetNextMove
+              movsx   esi, byte[.skipQuiets]
+        GetNextMove
 		mov   dword[.move], eax
 	       test   eax, eax
 		 jz   .MovePickDone
@@ -770,7 +772,6 @@ end if
 		cmp   eax, dword[rcx+RootMove.pv+4*0]
 		lea   rcx, [rcx+sizeof.RootMove]
 		jne   @b
-
 	end if
 
 		mov   eax, dword[.moveCount]
@@ -944,6 +945,7 @@ end if
 
 	; Move count based pruning
 		mov   al, byte[.moveCountPruning]
+                 or   byte[.skipQuiets], al
 	       test   al, al
 		jnz   .MovePickLoop
 

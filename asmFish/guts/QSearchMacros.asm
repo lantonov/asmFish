@@ -278,7 +278,7 @@ end if
 
 	      align   8
 .MovePickLoop:
-
+                xor   esi, esi
 	GetNextMove
 		mov   dword[.move], eax
 	       test   eax, eax
