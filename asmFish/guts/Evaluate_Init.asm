@@ -34,14 +34,6 @@ Evaluate_Init:
 		mov   ecx, 4*8*8
 	  rep movsd
 
-
-		lea   rdi, [ThreatBySafePawn]
-		lea   rsi, [.ThreatBySafePawn]
-		mov   ecx, 8
-	  rep movsd
-		lea   rsi, [.ThreatBySafePawn]
-		mov   ecx, 8
-	  rep movsd
 		lea   rdi, [Threat_Minor]
 		lea   rsi, [.Threat_Minor]
 		mov   ecx, 8
@@ -247,17 +239,6 @@ align 4
  dd  0,    60,	144, 39, 13 , 0,0,0
  dd  0,  -290, -274, 57, 41 , 0,0,0
 
-
-
-.ThreatBySafePawn:
- dd (0 shl 16) + (0)
- dd (0 shl 16) + (0)
- dd (0 shl 16) + (0)
- dd (176 shl 16) + (139)
- dd (131 shl 16) + (127)
- dd (217 shl 16) + (218)
- dd (203 shl 16) + (215)
- dd (0 shl 16) + (0)
 
 .Threat_Minor:
  dd (0 shl 16) + (0)

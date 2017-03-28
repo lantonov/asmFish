@@ -487,7 +487,6 @@ StormDanger_Unblocked	   rd 8*8
 StormDanger_BlockedByPawn  rd 8*8
 StormDanger_BlockedByKing  rd 8*8
 KingFlank                  rq 8
-ThreatBySafePawn           rd 16
 Threat_Minor               rd 16
 Threat_Rook                rd 16
 PassedRank                 rd 8
