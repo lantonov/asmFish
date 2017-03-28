@@ -496,6 +496,7 @@ PassedFile                 rd 8
 DoMaterialEval_Data:
 .QuadraticOurs:            rd 8*6
 .QuadraticTheirs:          rd 8*6
+PawnsSet                   rd 16
 
 
 

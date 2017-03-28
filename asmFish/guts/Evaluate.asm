@@ -2102,7 +2102,11 @@ match =Black, Us \{
 
 		lea   r8, [rsp+4*0]	;  pieceCount[Us]
 		lea   r9, [rsp+4*8]	;  pieceCount[Them]
-		xor   eax, eax		; bonus
+		mov   eax, dword[r8+4*Pawn]
+                mov   eax, dword[PawnsSet+4*rax]
+		mov   ecx, dword[r9+4*Pawn]
+                mov   ecx, dword[PawnsSet+4*rcx]
+                sub   eax, ecx
 		xor   r15d, r15d
 .ColorLoop:
 		xor   r10d, r10d	; partial index into quadatic

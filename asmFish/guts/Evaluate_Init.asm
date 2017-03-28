@@ -91,6 +91,11 @@ Evaluate_Init:
                 mov   ecx, 4*8
           rep movsd
 
+                lea   rsi, [.PawnsSet]
+                lea   rdi, [PawnsSet]
+                mov   ecx, 9
+          rep movsd
+
 		pop   rdi rsi rbx
 		ret
 
@@ -339,11 +344,12 @@ align 4
  dd (-13 shl 16) + (-7)
  dd (-10 shl 16) + (-7)
 
-;.Linear:
-;        dd 0, 1667, -168,-1027, -166,  238, -138,    0
+.PawnsSet:
+        dd 24, -32, 107, -51, 117, -9, -126, -21, 31
+
 .QuadraticOurs:
 	dd 0, 1667,    0,    0,    0,	 0,    0,    0
-	dd 0,	40,    2,    0,    0,	 0,    0,    0
+	dd 0,	40,    0,    0,    0,	 0,    0,    0
 	dd 0,	32,  255,   -3,    0,	 0,    0,    0
 	dd 0,	 0,  104,    4,    0,	 0,    0,    0
 	dd 0,  -26,   -2,   47,  105, -149,    0,    0
