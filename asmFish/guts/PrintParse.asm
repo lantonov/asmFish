@@ -13,15 +13,11 @@ StringLength:
 ;;;;;;;;;;;;;;;;;; scores ;;;;;;;;;;;;;;;;;;;
 
 PrintScore_Uci:
-		cmp   ecx, +VALUE_NONE
-		 je   .pNone
-		 jg   .bad
-		cmp   ecx, -VALUE_NONE
-		 je   .nNone
-		 jl   .bad
-		cmp   ecx, +VALUE_MATE-MAX_PLY
+                mov   edx, VALUE_MATE + 1
+		cmp   ecx, +VALUE_MATE_IN_MAX_PLY
 		jge   .pMate
-		cmp   ecx, -VALUE_MATE+MAX_PLY
+                mov   edx, -VALUE_MATE
+		cmp   ecx, -VALUE_MATE_IN_MAX_PLY
 		jle   .nMate
 
 		mov   eax, 'cp '
@@ -31,45 +27,21 @@ PrintScore_Uci:
 		mov   eax, ecx
 		mov   ecx, 100
 	       imul   eax, ecx
-		cdq
 		mov   ecx, PawnValueEg
+.divideNPrint:
+		cdq
 	       idiv   ecx
 	     movsxd   rax, eax
-	       call   PrintSignedInteger
-		ret
+	        jmp   PrintSignedInteger
 .pMate:
+.nMate:
 		mov   rax, 'mate '
 	      stosq
 		sub   rdi, 3
-		mov   eax, VALUE_MATE+1
-		sub   eax, ecx
-		shr   eax, 1
-	       call   PrintUnsignedInteger
-		ret
-.nMate:
-		mov   rax, 'mate -'
-	      stosq
-		sub   rdi, 2
-		mov   eax, VALUE_MATE
-		add   eax, ecx
-		shr   eax, 1
-	       call   PrintUnsignedInteger
-		ret
-.nNone:
-		mov   al,'-'
-	      stosb
-.pNone:
-		mov   eax, 'NONE'
-	      stosd
-		ret
-.bad:
-		mov   eax, 'bad '
-	      stosd
-	     movsxd   rax, ecx
-		jmp   PrintSignedInteger
-
-
-
+                mov   eax, edx
+                sub   eax, ecx
+                mov   ecx, 2
+		jmp   .divideNPrint
 
 
 

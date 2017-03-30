@@ -103,6 +103,10 @@ SEP_CHAR equ ':'
  HistoryStats_Max equ 268435456
  CmhDeadOffset =  4*(64*16)*(64*8)
 
+; depths for search
+ ONE_PLY = 1
+ MAX_PLY = 128
+ MAX_SYZYGY_PLY = 20 ; how many times can the syzygy probe recurse?
 
  VALUE_ZERO	 = 0
  VALUE_DRAW	 = 0
@@ -110,8 +114,8 @@ SEP_CHAR equ ':'
  VALUE_MATE	 = 32000
  VALUE_INFINITE  = 32001
  VALUE_NONE	 = 32002
- VALUE_MATE_IN_MAX_PLY	=  VALUE_MATE - 2 * MAX_PLY
- VALUE_MATED_IN_MAX_PLY = -VALUE_MATE_IN_MAX_PLY
+ VALUE_MATE_IN_MAX_PLY	= +VALUE_MATE - MAX_PLY
+ VALUE_MATED_IN_MAX_PLY = -VALUE_MATE + MAX_PLY
 
  PHASE_MIDGAME	      = 128
 
@@ -121,11 +125,6 @@ SEP_CHAR equ ':'
  SCALE_FACTOR_MAX     = 128
  SCALE_FACTOR_NONE    = 255
 
-
-; depths for search
- ONE_PLY = 1
- MAX_PLY = 128
- MAX_SYZYGY_PLY = 20 ; how many times can the syzygy probe recurse?
 
  DEPTH_QS_CHECKS     =	0
  DEPTH_QS_NO_CHECKS  = -1
