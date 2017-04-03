@@ -1048,16 +1048,18 @@ _ZL7open_tbPKcS0_:
 	push	rsi					
 	push	rbx					
 	sub	rsp, 328				
-	xor	esi, esi				
+	or	esi, -1
+        add     dword[tb_total_cnt], 1
 	lea	rbx, [rsp+40H]				
 	mov	rdi, rcx				
 	mov	rbp, rdx				
-?_099:	cmp	dword [ _ZL9num_paths], esi		
-	jle	?_100					
+?_099:	
+        add     esi, 1
+        cmp	esi, dword[_ZL9num_paths]
+	jae	?_100					
 	mov	rax, qword [ _ZL5paths] 	
 	mov	rcx, rbx				
 	mov	rdx, qword [rax+rsi*8]			
-	inc	rsi
 	call	strcpy					
 	lea	rdx, [ ?_338]			
 	mov	rcx, rbx				
@@ -1071,10 +1073,13 @@ _ZL7open_tbPKcS0_:
 	mov	rcx, rbx
 	call	_FileOpenRead
 	cmp	rax, -1 				
-	jz	?_099					
-	jmp	?_101					
-
-?_100:	or	rax, 0FFFFFFFFFFFFFFFFH 		
+	jz	?_099
+        mov	rcx, qword[_ZL5paths]
+	mov	edx, dword[_ZL9num_paths]
+	add	edx, esi
+	add	dword[rcx+8*rdx+0], 1
+	jmp	?_101
+?_100:	or	rax, -1
 ?_101:	add	rsp, 328				
 	pop	rbx					
 	pop	rsi					
@@ -1766,6 +1771,7 @@ _ZN13TablebaseCore4initEPKc:
 	xor	eax, eax
 	mov	qword [ _ZL11path_string], rax
 	mov	qword [ _ZL5paths], rax
+        mov     dword[tb_total_cnt], eax
 
 ?_176:	cmp	esi, dword [ _ZL11TBnum_piece]	
 	jge	?_177					
@@ -1914,73 +1920,12 @@ _ZN13TablebaseCore4initEPKc:
 	xor	eax, eax				
 	cmp	al, byte [rbx]
 	je	?_233
-	mov	rdi, rbx
-	or	rcx, 0FFFFFFFFFFFFFFFFH 		
-	repne scasb					
-	not	rcx					
-	call	malloc					
-	mov	rdx, rbx				
-	xor	ebx, ebx				
-	mov	rcx, rax				
-	mov	rsi, rax				
-	mov	qword [ _ZL11path_string], rax	
-	call	strcpy					
-	xor	eax, eax				
-?_196:	movsxd	rdx, eax				
-	xor	ecx, ecx				
-	add	rdx, rsi				
-	cmp	byte [rdx], SEP_CHAR
-	setne	cl					
-	add	ebx, ecx				
-?_197:	mov	cl, byte [rdx]				
-	mov	r8, rdx 				
-	inc	rdx					
-	cmp	cl, SEP_CHAR
-	jz	?_198					
-	test	cl, cl					
-	jz	?_198					
-	inc	eax					
-	jmp	?_197					
-
-?_198:	test	cl, cl					
-	jz	?_199					
-	mov	byte [r8], 0				
-	inc	eax					
-	jmp	?_196					
-
-?_199:	movsxd	rcx, ebx				
-	mov	dword [ _ZL9num_paths], ebx		
-	shl	rcx, 3					
-	call	malloc					
-	xor	ecx, ecx				
-	xor	r8d, r8d				
-	mov	qword [ _ZL5paths], rax 	
-?_200:	cmp	ebx, ecx				
-	jle	?_204					
-	movsxd	rdx, r8d				
-	add	rdx, rsi				
-?_201:	mov	r9, rdx 				
-	inc	rdx					
-	cmp	byte [rdx-1H], 0			
-	jnz	?_202					
-	inc	r8d					
-	jmp	?_201					
-
-?_202:	mov	qword [rax+rcx*8], r9			
-	movsxd	r9, r8d 				
-	xor	edx, edx				
-	add	r9, rsi 				
-?_203:	lea	r10d, [r8+rdx]				
-	inc	rdx					
-	cmp	byte [r9+rdx-1H], 0			
-	jnz	?_203					
-	mov	r8d, r10d				
-	inc	rcx					
-	jmp	?_200					
+	call	Tablebase_HandlePathStrings
 
 ?_204:
 	lea	rcx, [_ZL8TB_mutex]
 	call	_MutexCreate
+
 
 	lea	rdx, [ _ZL7TB_hash]
 	mov	dword [ _ZL10TBnum_pawn], 0		
@@ -2083,7 +2028,6 @@ _ZN13TablebaseCore4initEPKc:
 	inc	rsi					
 	cmp	rsi, 5					
 	jnz	?_213
-
 
 	xor	esi, esi				
 ?_216:	mov	r14b, byte [r13+rsi]			
@@ -2245,8 +2189,113 @@ _ZN13TablebaseCore4initEPKc:
 	pop	r15					
 	ret						
 
-_ZN13TablebaseCore15probe_wdl_tableER8PositionPi:
 
+Tablebase_HandlePathStrings:
+	; rbx is the address of the string
+	push	rsi rdi rbp
+	mov	rcx, rbx
+	call	StringLength
+	lea	ecx, [rax+1]
+	call	malloc
+	mov	qword[_ZL11path_string], rax
+	mov	rdx, rbx
+	mov	rcx, rax
+	call	strcpy
+	mov	rbp, rsp
+	mov	rsi, qword[_ZL11path_string]
+	xor	ebx, ebx	; ebx num_paths
+.GetNewPath:
+	call	SkipSpaces
+	push	rsi		; start of path
+	add	ebx, 1
+.GetNextChar:
+	lodsb
+	cmp	al, ' '
+	jb	.DoneGettingPaths
+	cmp	al, SEP_CHAR
+	jne	.GetNextChar
+.GotSep:
+	mov	byte[rsi-1], 0
+	jmp	.GetNewPath
+.DoneGettingPaths:
+	mov	byte[rsi-1], 0
+	mov	dword[_ZL9num_paths], ebx
+	imul	ecx, ebx, 16
+	call	malloc
+	mov	qword[_ZL5paths], rax
+	mov	edx, ebx
+.PopPath:
+	sub	edx, 1
+	lea	ecx, [rdx+rbx]
+	jl	.PopPathDone
+	pop	qword[rax+8*rdx]     ; pathstring
+	mov	qword[rax+8*rcx], 0  ; tbs found
+	jmp	.PopPath
+.PopPathDone:
+	pop	rbp rdi rsi
+	ret
+
+
+TableBase_DisplayInfo:
+               push   rbx rsi rdi
+		xor   esi, esi
+.PrintNext:
+		lea   rdi, [Output]
+		cmp   esi, dword[_ZL9num_paths]
+		jae   .PrintDone
+		mov   rax, 'info str'
+	      stosq
+		mov   rax, 'ing foun'
+	      stosq
+		mov   eax, 'd '
+	      stosw
+		mov   eax, esi
+		add   eax, dword[_ZL9num_paths]
+		mov   rcx, qword[_ZL5paths]
+		mov   eax, dword[rcx+8*rax]
+	       call   PrintUnsignedInteger
+		mov   rax, ' tableba'
+	      stosq
+		mov   rax, 'ses in "'
+	      stosq
+		mov   rcx, qword[_ZL5paths]
+		mov   rcx, [rcx+8*rsi]
+	       call   PrintString
+                mov   al, '"'
+              stosb
+       PrintNewLine
+	       call   _WriteOut_Output
+		add   esi, 1
+		jmp   .PrintNext
+.PrintDone:
+		lea   rdi, [Output]
+		mov   rax, 'info str'
+	      stosq
+		mov   rax, 'ing foun'
+	      stosq
+		mov   eax, 'd '
+	      stosw
+		mov   eax, dword[_ZL10TBnum_pawn]
+		add   eax, dword[_ZL11TBnum_piece]
+	       call   PrintUnsignedInteger
+		mov   eax, ' of '
+	      stosd
+		mov   eax, dword[tb_total_cnt]
+	       call   PrintUnsignedInteger
+		mov   rax, ' tableba'
+	      stosq
+		mov   eax, 'ses'
+	      stosd
+		sub   rdi, 1
+       PrintNewLine
+	       call   _WriteOut_Output
+                pop   rdi rsi rbx
+                ret
+
+
+
+
+_ZN13TablebaseCore15probe_wdl_tableER8PositionPi:
 	push	r15					
 	push	r14					
 	push	r13					

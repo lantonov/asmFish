@@ -396,6 +396,9 @@ _ZL10TBnum_pawn:
 _ZL11TBnum_piece:
 	rd    1
 
+; let n = num_paths
+; the paths are stored in paths[0],...,path[n-1]
+; the counts of found tbs are stored in paths[n],...,paths[2n-1]
 _ZL5paths:
 	rq    1
 
@@ -405,8 +408,13 @@ _ZL11path_string:
 _ZL9num_paths:
 	rd    1
 
+
 _ZL11initialized:
 	rb    4
 
+tb_total_cnt:
+        rd 1
+
+align 16
 _ZL8TB_mutex:
 	rq    6
