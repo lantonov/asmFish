@@ -1454,11 +1454,12 @@ end if
 		mov   r13d, eax
 	       imul   eax, eax
 		lea   r10d, [rax+2*r13-2]
+                mov   r14d, dword[.excludedMove]
 	; r15d = offset of [piece_on(prevSq),prevSq]
 	; r12d = move
 	; r13d = depth
 	; r10d = bonus
-
+        ; r14d = excludedMove
 		mov   edi, dword[.bestValue]
 		cmp   dword[.moveCount], 0
 		 je   .20Mate
@@ -1491,13 +1492,12 @@ end if
 
 .20Mate:
 		mov   rax, qword[rbx+State.checkersBB]
-		mov   edx, dword[.excludedMove]
 		mov   ecx, dword[rbp+Pos.sideToMove]
 	      movzx   edi, byte[rbx+State.ply]
 		sub   edi, VALUE_MATE
 	       test   rax, rax
 	      cmovz   edi, dword[DrawValue+4*rcx]
-	       test   edx, edx
+	       test   r14d, r14d
 	     cmovnz   edi, dword[.alpha]
 		jmp   .20TTStore
 .20CheckBonus:
@@ -1520,9 +1520,11 @@ end if
 		mov   r8, qword[.tte]
 		shr   r9, 48
 		mov   edx, edi
+               test   r14d, r14d
+                jnz   .ReturnBestValue
 		cmp   ecx, 2*VALUE_MATE_IN_MAX_PLY
 		jae   .20ValueToTT
-	.20ValueToTTRet:
+.20ValueToTTRet:
     if .PvNode eq 0
 		mov   eax, dword[.bestMove]
 		xor   esi, esi
@@ -1539,8 +1541,8 @@ end if
 	     cmovge   esi, ecx
     end if
       MainHash_Save   .ltte, r8, r9w, edx, sil, byte[.depth], eax, word[rbx+State.staticEval]
+.ReturnBestValue:
 		mov   eax, edi
-
 .Return:
 		add   rsp, .localsize
 		pop   r15 r14 r13 r12 rdi rsi rbx
