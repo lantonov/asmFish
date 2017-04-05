@@ -309,7 +309,11 @@ end if
 		add   eax, ecx
 		cmp   eax, dword[.alpha]
 		 jg   .6skip
-
+     if USE_MATEFINDER eq 1
+                lea   eax, [rcx+2*VALUE_KNOWN_WIN-1]
+                cmp   eax, 4*VALUE_KNOWN_WIN-1
+                jae   .6skip
+     end if
 		mov   ecx, dword[.alpha]
 		xor   r8d, r8d
 		cmp   edx, ONE_PLY
@@ -331,7 +335,7 @@ end if
 
 
 	; Step 7. Futility pruning: child node (skipped when in check)
-    if .RootNode eq 0
+    if ((.RootNode eq 0) & (USE_MATEFINDER eq 0)) | ((.PvNode eq 0) & (USE_MATEFINDER eq 1))
 		mov   edx, dword[.depth]
 		mov   ecx, dword[rbp+Pos.sideToMove]
 		cmp   edx, 7*ONE_PLY
@@ -343,9 +347,17 @@ end if
 		add   edx, eax
 		cmp   edx, dword[.beta]
 		 jl   .7skip
+     if USE_MATEFINDER eq 0
 	      movzx   ecx, word[rbx+State.npMaterial+2*rcx]
 	       test   ecx, ecx
 		jnz   .Return
+     else
+	        mov   ecx, dword[rbx+State.npMaterial]
+	       test   ecx, 0x0FFFF
+		 jz   .7skip
+                shr   ecx, 16
+                jnz   .Return
+     end if
 .7skip:
     end if
 
@@ -360,15 +372,58 @@ end if
 		mov   ecx, dword[rbp+Pos.sideToMove]
 		cmp   esi, dword[.eval]
 		 jg   .8skip
-	      movzx   ecx, word[rbx+State.npMaterial+2*rcx]
 		add   esi, 35*6
+     if USE_MATEFINDER eq 0
+	      movzx   ecx, word[rbx+State.npMaterial+2*rcx]
 	       test   ecx, ecx
 		 jz   .8skip
+     else
+                mov   r8d, dword[.eval]
+	        mov   ecx, dword[rbx+State.npMaterial]
+	       test   ecx, 0x0FFFF
+		 jz   .8skip
+                shr   ecx, 16
+                 jz   .8skip
+                add   r8d, 2*VALUE_KNOWN_WIN-1
+                cmp   r8d, 4*VALUE_KNOWN_WIN-1
+                jae   .8skip
+     end if
 		sub   edx, 13*ONE_PLY
 		sub   eax, esi
 		and   edx, eax
 		 js   .8skip
 
+    if USE_MATEFINDER eq 1
+                mov   edx, dword[.depth]
+                cmp   edx, 4
+                jbe   .8do
+                sub   rsp, MAX_MOVES*sizeof.ExtMove
+                mov   rdi, rsp
+               call   Gen_Legal
+                xor   ecx, ecx
+                xor   eax, eax
+                mov   rdx, rsp
+                cmp   rdx, rdi
+                jae   .8skip
+        @@:
+                mov   r8d, [rdx+ExtMove.move]
+                shr   r8d, 6
+                and   r8d, 63
+                cmp   byte[rbp+Pos.board+r8], King
+               sete   r8l
+                add   ecx, r8d
+                add   rdx, sizeof.ExtMove
+                add   eax, 1
+                cmp   rdx, rdi
+                 jb   @b
+                add   rsp, MAX_MOVES*sizeof.ExtMove
+               test   ecx, ecx
+                 jz   .8skip
+                cmp   eax, 6
+                 jb   .8skip
+    end if
+
+.8do:
 		mov   eax, CmhDeadOffset
 		add   rax, qword[rbp+Pos.counterMoveHistory]
 		mov   dword[rbx+State.currentMove], MOVE_NULL
@@ -458,6 +513,14 @@ end if
 		add   eax, VALUE_MATE_IN_MAX_PLY-1
 		cmp   eax, 2*(VALUE_MATE_IN_MAX_PLY-1)
 		 ja   .9skip
+     if USE_MATEFINDER
+                mov   eax, dword[.eval]
+               test   byte[rbx+State.ply], 1
+                 jz   .9skip
+                add   eax, 2*VALUE_KNOWN_WIN-1
+                cmp   eax, 4*VALUE_KNOWN_WIN-1
+                jae   .9skip
+     end if
 
 	     Assert   ne, dword[rbx-1*sizeof.State+State.currentMove], 0	, 'assertion dword[rbx-1*sizeof.State+State.currentMove] != MOVE_NONE failed in Search.Step9'
 	     Assert   ne, dword[rbx-1*sizeof.State+State.currentMove], MOVE_NULL, 'assertion dword[rbx-1*sizeof.State+State.currentMove] != MOVE_NULL failed in Search.Step9'
@@ -913,7 +976,7 @@ end if
 
 	; edx = depth
 
-    if .RootNode eq 0
+    if ((.RootNode eq 0) & (USE_MATEFINDER eq 0)) | ((.PvNode eq 0) & (USE_MATEFINDER eq 1))
 
 		mov   ecx, dword[.bestValue]
 	      movzx   esi, word[rbx+State.npMaterial+2*0]
@@ -1057,6 +1120,16 @@ end if
 		 jl   .15skip
 		cmp   ecx, 1
 		jbe   .15skip
+    if USE_MATEFINDER
+                cmp   dl, [rbp-Thread.rootPos+Thread.maxPly]
+                jae   .15skip
+                cmp   [rbx-1*sizeof.State+State.ply], 3
+                 ja   @f
+                cmp   edx, 16
+                jae   .15skip
+        @@:
+    end if
+
 		mov   r8l, byte[.captureOrPromotion]
 	       test   r8l, r8l
 		 jz   @f
