@@ -397,7 +397,6 @@ end if
                 mov   edx, dword[.depth]
                 cmp   edx, 4
                 jbe   .8do
-                jmp   .8skip
                 sub   rsp, MAX_MOVES*sizeof.ExtMove
                 mov   rdi, rsp
                call   Gen_Legal
