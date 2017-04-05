@@ -16,4 +16,3 @@ set "datestamp=%YYYY%-%MM%-%DD%" & set "timestamp=%HH%%Min%%Sec%" & set "fullsta
 "asmFish\fasm.exe" "asmFish\pedantFishL_base.asm"   -m 50000 "Linux\pedantFishL_%datestamp%_base"
 "asmFish\fasm.exe" "asmFish\pedantFishL_popcnt.asm" -m 50000 "Linux\pedantFishL_%datestamp%_popcnt"
 "asmFish\fasm.exe" "asmFish\pedantFishL_bmi2.asm"   -m 50000 "Linux\pedantFishL_%datestamp%_bmi2"
-

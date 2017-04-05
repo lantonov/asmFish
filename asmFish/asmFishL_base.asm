@@ -16,7 +16,7 @@ VERBOSE 	 equ 0	;  LOTS of print           find subtle bugs:  0=off, 1=general d
 PROFILE 	 equ 0	;  counts in the code      view these with profile command after running bench
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; optional features 0 or 1
-USE_MATEFINDER   equ 0  ; less pruning
+USE_MATEFINDER	 equ 0	; less pruning
 USE_CURRMOVE	 equ 1	; printing feature, spamlike
 USE_HASHFULL	 equ 1	; printing feature
 USE_SELDEPTH	 equ 1	; printing feature
