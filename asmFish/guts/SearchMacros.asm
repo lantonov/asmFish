@@ -397,6 +397,7 @@ end if
                 mov   edx, dword[.depth]
                 cmp   edx, 4
                 jbe   .8do
+                jmp   .8skip
                 sub   rsp, MAX_MOVES*sizeof.ExtMove
                 mov   rdi, rsp
                call   Gen_Legal
@@ -404,8 +405,8 @@ end if
                 xor   eax, eax
                 mov   rdx, rsp
                 cmp   rdx, rdi
-                jae   .8skip
-        @@:
+                jae   .8loopdone
+    .8loop:
                 mov   r8d, [rdx+ExtMove.move]
                 shr   r8d, 6
                 and   r8d, 63
@@ -415,7 +416,8 @@ end if
                 add   rdx, sizeof.ExtMove
                 add   eax, 1
                 cmp   rdx, rdi
-                 jb   @b
+                 jb   .8loop
+    .8loopdone:
                 add   rsp, MAX_MOVES*sizeof.ExtMove
                test   ecx, ecx
                  jz   .8skip
