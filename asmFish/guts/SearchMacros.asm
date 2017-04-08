@@ -1251,6 +1251,15 @@ end if
 	      cmovs   edi, ecx
 
 .15ReadyToSearch:
+        if USE_MATEFINDER
+;                mov   eax, dword[.depth]
+;              movzx   edx, byte[rbx-1*sizeof.State+State.ply]
+;                shr   eax, 1
+;                sub   eax, edx
+;                sar   eax, 31
+;                and   edi, eax
+        end if
+
 		mov   eax, 1
 		mov   r8d, dword[.newDepth]
 		sub   r8d, edi
@@ -1722,7 +1731,6 @@ end if
 
 .ReturnTTValue_Penalty:
 
-		lea   r10d, [r10+2*(r13+1)+1]
 		and   ecx, 64*64-1
 		mov   r8d, dword[rbp+Pos.sideToMove]
 		shl   r8d, 12+2
