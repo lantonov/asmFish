@@ -63,6 +63,7 @@ virtual at rsp
   .success		  rd 1	; for tb
   .rbeta		  rd 1
   .moved_piece_to_sq	  rd 1
+  .reductionOffset        rd 1
   .skipQuiets             rb 1  ; -1 for true
   .singularExtensionNode  rb 1
   .improving		  rb 1
@@ -776,6 +777,18 @@ end if
 		mov   byte[.improving], al   ; should be 0 or 1
 
 
+		mov   esi, 63
+	      movzx   eax, byte[.improving]
+		mov   edx, dword[.depth]
+		mov   ecx, edx
+		cmp   edx, esi
+	      cmova   ecx, esi
+		lea   eax, [8*rax]
+		lea   eax, [8*rax+rcx]
+                shl   eax, 6
+                mov   dword[.reductionOffset], eax
+
+
                 mov   byte[.skipQuiets], 0
     if .RootNode eq 1
 		mov   byte[.singularExtensionNode], 0
@@ -889,7 +902,7 @@ end if
 
 		mov   edi, dword[.depth]
 	      movzx   ecx, byte[.improving]
-	       imul   ecx, 16*4
+	        shl   ecx, 4+2
 		mov   ecx, dword[FutilityMoveCounts+rcx+4*rdi]
 		sub   ecx, dword[.moveCount]
 		sub   ecx, 1
@@ -1012,19 +1025,11 @@ end if
 
 		mov   edi, dword[.newDepth]
 		mov   esi, 63
-	      movzx   eax, byte[.improving]
-		;mov   ecx, dword[.depth]
-		mov   ecx, edx
-		cmp   edx, esi
-	      cmova   ecx, esi
-		lea   eax, [8*rax]
-		lea   eax, [8*rax+rcx]
 		mov   ecx, dword[.moveCount]
 		cmp   ecx, esi
 	      cmova   ecx, esi
-		lea   eax, [8*rax]
-		lea   eax, [8*rax+rcx]
-		sub   edi, dword[Reductions+4*(rax+2*64*64*.PvNode)]
+                add   ecx, dword[.reductionOffset]
+		sub   edi, dword[Reductions+4*(rcx+2*64*64*.PvNode)]
 	; edi = lmrDepth
 
 	; Countermoves based pruning
@@ -1141,18 +1146,10 @@ end if
 	@@:
 
 		mov   esi, 63
-	      movzx   eax, byte[.improving]
-		;mov   edx, dword[.depth]
-		cmp   edx, esi
-	      cmova   edx, esi
-	       imul   eax, 64
-		add   eax, edx
-		;mov   ecx, dword[.moveCount]
 		cmp   ecx, esi
 	      cmova   ecx, esi
-	       imul   eax, 64
-		add   eax, ecx
-		mov   edi, dword[Reductions+4*(rax+2*64*64*.PvNode)]
+                add   ecx, dword[.reductionOffset]
+		mov   edi, dword[Reductions+4*(rcx+2*64*64*.PvNode)]
 
 	       test   r8l, r8l
 		 jz   .15NotCaptureOrPromotion
