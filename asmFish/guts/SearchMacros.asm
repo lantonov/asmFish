@@ -979,28 +979,29 @@ end if
 
     if ((.RootNode eq 0) & (USE_MATEFINDER eq 0)) | ((.PvNode eq 0) & (USE_MATEFINDER eq 1))
 
+                mov   r8d, dword[rbp+Pos.sideToMove]
 		mov   ecx, dword[.bestValue]
 	      movzx   esi, word[rbx+State.npMaterial+2*0]
 		add   eax, ecx
 		cmp   ecx, VALUE_MATED_IN_MAX_PLY
 		jle   .13done
+              movzx   ecx, word[rbx+State.npMaterial+2*r8]
+               test   ecx, ecx
+                 jz   .13done
 		mov   al, byte[.captureOrPromotion]
 	      movzx   ecx, word[rbx+State.npMaterial+2*1]
 		add   esi, ecx
 		 or   al, byte[rbx+State.givesCheck]
 		jnz   .13else
-		mov   eax, dword[rbp+Pos.sideToMove]
-		lea   ecx, [8*rax+Pawn]
+		lea   ecx, [8*r8+Pawn]
 		cmp   esi, 5000
 		jae   .13do
 		cmp   r14d, ecx
 		jne   .13do
-		mov   ecx, r12d
-		shr   ecx, 3
-	       imul   eax, 7
-		xor   ecx, eax
-		cmp   ecx, RANK_4
-		 ja   .13else
+	       imul   r8d, 56
+                xor   r8d, r12d
+		cmp   r8d, SQ_A5
+		jae   .13else
 .13do:
 
 	; Move count based pruning
