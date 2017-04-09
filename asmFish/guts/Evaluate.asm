@@ -603,13 +603,10 @@ match =Black, Us
 
 
 	; Compute the king danger score and subtract it from the evaluation
-		mov   eax, 2*BishopValueMg
 	       test   edi, edi
 		 js   ..AllDone
 	       imul   edi, edi
 		shr   edi, 12
-		cmp   edi, eax
-	      cmova   edi, eax
 		shl   edi, 16
 		sub   esi, edi
 
