@@ -8,6 +8,7 @@ OtherCheck		equ (( 10 shl 16) + ( 10))
 CloseEnemies		equ ((	7 shl 16) + (  0))
 PawnlessFlank		equ (( 20 shl 16) + ( 80))
 ThreatByHangingPawn	equ (( 71 shl 16) + ( 61))
+ThreatBySafePawn        equ ((182 shl 16) + (175))
 ThreatByRank		equ (( 16 shl 16) + (  3))
 Hanging 		equ (( 48 shl 16) + ( 27))
 ThreatByPawnPush	equ (( 38 shl 16) + ( 22))
@@ -929,14 +930,10 @@ match =Black, Us
 		and   eax, ThreatByHangingPawn
 	     addsub   esi, eax
 
-	       test   r9, r9
-		 jz   ..SafeThreatsDone
-..SafeThreatsLoop:
-		bsf   rax, r9
-	      movzx   eax, byte[rbp+Pos.board+rax]
-	     addsub   esi, dword[ThreatBySafePawn+4*rax]
-	       blsr   r9, r9, rcx
-		jnz   ..SafeThreatsLoop
+             popcnt   rcx, r9, rax
+               imul   ecx, ThreatBySafePawn
+	     addsub   esi, ecx
+
 ..SafeThreatsDone:
 
                 mov   r9, qword[.ei.attackedBy2+8*Us]
@@ -2102,7 +2099,11 @@ match =Black, Us \{
 
 		lea   r8, [rsp+4*0]	;  pieceCount[Us]
 		lea   r9, [rsp+4*8]	;  pieceCount[Them]
-		xor   eax, eax		; bonus
+		mov   eax, dword[r8+4*Pawn]
+                mov   eax, dword[PawnsSet+4*rax]
+		mov   ecx, dword[r9+4*Pawn]
+                mov   ecx, dword[PawnsSet+4*rcx]
+                sub   eax, ecx
 		xor   r15d, r15d
 .ColorLoop:
 		xor   r10d, r10d	; partial index into quadatic

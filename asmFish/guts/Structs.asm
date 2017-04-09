@@ -97,7 +97,7 @@ ends
 
 struct ExtMove	 ; holds moves for gen/pick
  move	rd 1
- score	rd 1
+ value	rd 1
 ends
 if sizeof.ExtMove <> 8
  err
@@ -198,11 +198,13 @@ _movepick_start rb 0
  endBadCaptures  rq 1
  stage		 rq 1
  countermove	   rd 1
- depth		   rd 1
+ givesCheck        rb 1
+                   rb 3
  ttMove 	   rd 1
+ depth		   rd 1
  threshold	   rd 1
  recaptureSquare   rd 1
-		   rd 3
+		   rd 2
 _movepick_end rb 0
 ends
 

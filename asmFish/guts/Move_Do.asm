@@ -133,7 +133,6 @@ Move_Do:
 	;     edx  move is check
 
 	       push   rsi rdi r12 r13 r14 r15
-	       push   rcx rdx
 
         ; stack is unaligned at this point
 
@@ -209,8 +208,6 @@ ProfileInc Move_Do
 	      movzx   r10d, byte[rbp+Pos.board+r8]     ; r10 = FROM PIECE
 	      movzx   r11d, byte[rbp+Pos.board+r9]     ; r11 = TO PIECE
 
-	       push   r10
-
 	      vmovq   xmm5, qword[rbx+State.key]
 	      vmovq   xmm4, qword[rbx+State.pawnKey]
 	      vmovq   xmm3, qword[rbx+State.materialKey]
@@ -252,9 +249,9 @@ ProfileInc Move_Do
 
 		xor   edx, edx
 		bts   rdx, r8
-	       push   rdx
+	      vmovq   xmm8, rdx
 		bts   rdx, r9
-	       push   rdx
+	      vmovq   xmm9, rdx
 		mov   eax, r10d
 		and   eax, 7
 		mov   byte[rbp+Pos.board+r8], 0
@@ -295,7 +292,9 @@ end if
 
 	; write remaining data to next state entry
 
-		pop   r9 r8 r10 rax rcx
+              movzx   eax, byte[rbx+State.givesCheck]
+              vmovq   r8, xmm8
+              vmovq   r9, xmm9
 	; r9 = to + from
 	; r8 = from
 	; r10 = from piece
@@ -328,7 +327,7 @@ end if
 		bsf   r15, r15		; r15 = our king
 		bsf   r14, r14		; r14 = their king
 
-	       test   rax, rax
+	       test   eax, eax
 		jnz   .MoveIsCheck
 .CheckersDone:
 		mov   qword[rbx+State.checkersBB], rax
@@ -410,8 +409,8 @@ end if
 .MoveIsCheck:
 		mov   rdx, qword[rbx+State.dcCandidates-sizeof.State]
 		mov   rax, qword[rbx+State.checkSq-sizeof.State+8*r10]
-		cmp   ecx, 1 shl 12
-		jae   .DoFull
+	       test   ecx, ecx
+		jnz   .DoFull
 		and   rax, r9
 	       test   rdx, r8
 		jnz   .DoFull
@@ -510,7 +509,7 @@ match =1, DEBUG {
 		 je   .EpCapture
 
 .Promotion:
-		lea   ecx, [rcx-MOVE_TYPE_PROM+8*rsi+Knight]
+		lea   r14d, [rcx-MOVE_TYPE_PROM+8*rsi+Knight]
 
 
 if PEDANTIC
@@ -523,11 +522,11 @@ if PEDANTIC
 		mov   byte[rbp+Pos.pieceList+rax], dl
 		mov   byte[rbp+Pos.pieceList+rdi], 64
 
-	      movzx   edx, byte[rbp+Pos.pieceEnd+rcx]
+	      movzx   edx, byte[rbp+Pos.pieceEnd+r14]
 		mov   byte[rbp+Pos.pieceIdx+r9], dl
 		mov   byte[rbp+Pos.pieceList+rdx], r9l
 		add   edx, 1
-		mov   byte[rbp+Pos.pieceEnd+rcx], dl
+		mov   byte[rbp+Pos.pieceEnd+r14], dl
 end if
 
 	; remove pawn r10 on square r9
@@ -544,21 +543,22 @@ end if
 	      vpxor   xmm3, xmm3, xmm7
 	      vmovq   xmm1, qword[Scores_Pieces+r10+8*r9]
 	     vpsubd   xmm6, xmm6, xmm1
-	; place piece ecx on square r9
-		mov   eax, ecx
+                shr   r10d, 6+3
+	; place piece r14 on square r9
+		mov   eax, r14d
 		and   eax, 7
 		mov   rdx, qword[rbp+Pos.typeBB+8*rax]
 		bts   rdx, r9
 		mov   qword[rbp+Pos.typeBB+8*rax], rdx
-		mov   byte[rbp+Pos.board+r9], cl
+		mov   byte[rbp+Pos.board+r9], r14l
 		and   rdx, qword[rbp+Pos.typeBB+8*rsi]
 	     popcnt   rax, rdx, r8
-		shl   ecx, 6+3
-	      vmovq   xmm7, qword[Zobrist_Pieces+rcx+8*r9]
+		shl   r14d, 6+3
+	      vmovq   xmm7, qword[Zobrist_Pieces+r14+8*r9]
 	      vpxor   xmm5, xmm5, xmm7
-	      vmovq   xmm7, qword[Zobrist_Pieces+rcx+8*(rax-1)]
+	      vmovq   xmm7, qword[Zobrist_Pieces+r14+8*(rax-1)]
 	      vpxor   xmm3, xmm3, xmm7
-	      vmovq   xmm1, qword[Scores_Pieces+rcx+8*r9]
+	      vmovq   xmm1, qword[Scores_Pieces+r14+8*r9]
 	     vpaddd   xmm6, xmm6, xmm1
 		jmp   .SpecialRet
 
@@ -566,28 +566,30 @@ end if
 
 	      align   8
 .EpCapture:
-	; remove pawn r10^8 on square ecx=r9+8*(2*esi-1)
-		lea   ecx, [2*rsi-1]
-		lea   ecx, [r9+8*rcx]
+	; remove pawn r10^8 on square r14=r9+8*(2*esi-1)
+		lea   r14d, [2*rsi-1]
+		lea   r14d, [r9+8*r14]
 		xor   r10, 8
 		xor   esi, 1
 		mov   rdx, qword[rbp+Pos.typeBB+8*Pawn]
 		mov   rdi, qword[rbp+Pos.typeBB+8*rsi]
-		btr   rdx, rcx
-		btr   rdi, rcx
+		btr   rdx, r14
+		btr   rdi, r14
 		mov   qword[rbp+Pos.typeBB+8*Pawn], rdx
 		mov   qword[rbp+Pos.typeBB+8*rsi], rdi
-		mov   byte[rbp+Pos.board+rcx], 0
+		mov   byte[rbp+Pos.board+r14], 0
 		and   rdi, rdx
 	     popcnt   rdi, rdi, rdx
 		shl   r10d, 6+3
-	      vmovq   xmm7, qword[Zobrist_Pieces+r10+8*rcx]
+	      vmovq   xmm7, qword[Zobrist_Pieces+r10+8*r14]
 	      vpxor   xmm5, xmm5, xmm7
 	      vpxor   xmm4, xmm4, xmm7
 	      vmovq   xmm7, qword[Zobrist_Pieces+r10+8*rdi]
 	      vpxor   xmm3, xmm3, xmm7
-	      vmovq   xmm1, qword[Scores_Pieces+r10+8*rcx]
+	      vmovq   xmm1, qword[Scores_Pieces+r10+8*r14]
 	     vpsubd   xmm6, xmm6, xmm1
+                shr   r10d, 6+3
+                ;xor   r10d, 8  ; not needed only care about lower 3 bits
 		lea   eax, [8*rsi+Pawn]
 		mov   word[rbx+sizeof.State+State.rule50], 0
 		mov   byte[rbx+sizeof.State+State.capturedPiece], al
@@ -595,7 +597,7 @@ if PEDANTIC
 	      movzx   edi, byte[rbp+Pos.pieceEnd+8*rsi+Pawn]
 		sub   edi, 1
 	      movzx   edx, byte[rbp+Pos.pieceList+rdi]
-	      movzx   eax, byte[rbp+Pos.pieceIdx+rcx]
+	      movzx   eax, byte[rbp+Pos.pieceIdx+r14]
 		mov   byte[rbp+Pos.pieceEnd+8*rsi+Pawn], dil
 		mov   byte[rbp+Pos.pieceIdx+rdx], al
 		mov   byte[rbp+Pos.pieceList+rax], dl
@@ -622,9 +624,6 @@ match =1, DEBUG {
 		jne   Move_Do_badcas
 @@:
 }
-	       push   rax	    ; these are popped before exit
-	       push   rax	    ;   and not used because move type is special
-
 	; fix things caused by kingXrook encoding
 		mov   byte[rbx+sizeof.State+State.capturedPiece], 0
 
@@ -633,30 +632,30 @@ match =1, DEBUG {
 		and   edx, 56
 		cmp   r9d, r8d
 		sbb   eax, eax
-		lea   ecx, [rdx+4*rax+FILE_G]
+		lea   r14d, [rdx+4*rax+FILE_G]
 		lea   edx, [rdx+2*rax+FILE_F]
 		lea   r11d, [r10-King+Rook]
 
 		mov   byte[rbp+Pos.board+r8], 0
 		mov   byte[rbp+Pos.board+r9], 0
-		mov   byte[rbp+Pos.board+rcx], r10l
+		mov   byte[rbp+Pos.board+r14], r10l
 		mov   byte[rbp+Pos.board+rdx], r11l
 
 if PEDANTIC
 	  ;    movzx   eax, byte[rbp+Pos.pieceIdx+r8]
 	  ;    movzx   edi, byte[rbp+Pos.pieceIdx+r9]
-	  ;      mov   byte[rbp+Pos.pieceList+rax], cl
+	  ;      mov   byte[rbp+Pos.pieceList+rax], r14l
 	  ;      mov   byte[rbp+Pos.pieceList+rdi], dl
-	  ;      mov   byte[rbp+Pos.pieceIdx+rcx], al
+	  ;      mov   byte[rbp+Pos.pieceIdx+r14], al
 	  ;      mov   byte[rbp+Pos.pieceIdx+rdx], dil
 	  ; no! above not enough instructions! official stockfish has
 	  ;  castling rook moved to the back of the list
 	  ;  of course this for absolutely no good reason
 	      movzx   eax, byte[rbp+Pos.pieceIdx+r8]
 	      movzx   edi, byte[rbp+Pos.pieceIdx+r9]
-		mov   byte[rbp+Pos.pieceList+rax], cl
+		mov   byte[rbp+Pos.pieceList+rax], r14l
 		mov   byte[rbp+Pos.pieceList+rdi], dl
-		mov   byte[rbp+Pos.pieceIdx+rcx], al
+		mov   byte[rbp+Pos.pieceIdx+r14], al
 		mov   byte[rbp+Pos.pieceIdx+rdx], dil
 	; now move rook to the back of the list
 	      movzx   eax, byte[rbp+Pos.pieceEnd+r11]
@@ -680,7 +679,7 @@ end if
 
 		mov   rax, qword[Zobrist_Pieces+r10+8*r8]
 		xor   rax, qword[Zobrist_Pieces+r11+8*r9]
-		xor   rax, qword[Zobrist_Pieces+r10+8*rcx]
+		xor   rax, qword[Zobrist_Pieces+r10+8*r14]
 		xor   rax, qword[Zobrist_Pieces+r11+8*rdx]
 	      vmovq   xmm7, rax
 	      vpxor   xmm5, xmm5, xmm7
@@ -689,24 +688,25 @@ end if
 	      vmovd   xmm2, dword[Scores_Pieces+r11+8*r9]
 	     vpsubd   xmm6, xmm6, xmm1
 	     vpsubd   xmm6, xmm6, xmm2
-	      vmovd   xmm1, dword[Scores_Pieces+r10+8*rcx]
+	      vmovd   xmm1, dword[Scores_Pieces+r10+8*r14]
 	      vmovd   xmm2, dword[Scores_Pieces+r11+8*rdx]
 	     vpaddd   xmm6, xmm6, xmm1
 	     vpaddd   xmm6, xmm6, xmm2
+                shr   r10d, 6+3
 
 		mov   rax, qword[rbp+Pos.typeBB+8*rsi]
-		mov   r10, qword[rbp+Pos.typeBB+8*King]
+		mov   r13, qword[rbp+Pos.typeBB+8*King]
 		mov   r11, qword[rbp+Pos.typeBB+8*Rook]
 		btr   rax, r8
 		btr   rax, r9
-		bts   rax, rcx
+		bts   rax, r14
 		bts   rax, rdx
-		btr   r10, r8
-		bts   r10, rcx
+		btr   r13, r8
+		bts   r13, r14
 		btr   r11, r9
 		bts   r11, rdx
 		mov   qword[rbp+Pos.typeBB+8*rsi], rax
-		mov   qword[rbp+Pos.typeBB+8*King], r10
+		mov   qword[rbp+Pos.typeBB+8*King], r13
 		mov   qword[rbp+Pos.typeBB+8*Rook], r11
 		jmp   .SpecialRet
 

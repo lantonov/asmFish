@@ -566,7 +566,7 @@ UciParseMoves:
 		mov   dword[rbx+sizeof.State+State.currentMove], edi
 	       call   Move_GivesCheck
 		mov   ecx, edi
-		mov   edx, eax
+		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__UciParseMoves
 	; when VERBOSE<>2, domove/undomove don't update gamePly
 if VERBOSE <> 2
@@ -883,22 +883,8 @@ if USE_SYZYGY
 		jae   @b
 		mov   byte[rsi], 0
 	       call   TableBase_Init
-		lea   rdi, [Output]
-		mov   rax, 'info str'
-	      stosq
-		mov   rax, 'ing foun'
-	      stosq
-		mov   eax, 'd '
-	      stosw
-		mov   eax, dword[_ZL10TBnum_pawn]
-		add   eax, dword[_ZL11TBnum_piece]
-	       call   PrintUnsignedInteger
-		mov   rax, ' tableba'
-	      stosq
-		mov   eax, 'ses'
-	      stosd
-		sub   rdi, 1
-		jmp   UciWriteOut_NewLine
+               call   TableBase_DisplayInfo
+                jmp   UciGetInput
 end if
 
 .HashFile:

@@ -2,27 +2,27 @@
 macro UpdateCmStats ss, offset, bonus32, absbonus, t1 {
 	; bonus32 is 32*bonus
 	; absbonus is abs(bonus)
-        ; clobbers rax, rcx, rdx, t1
+	; clobbers rax, rcx, rdx, t1
 
 	     Assert   b, absbonus, 324, 'assertion abs(bonus)<324 failed in UpdateCmStats'
 
 local ..over1, ..over2, ..over3
 
 		mov   t1, qword[ss-1*sizeof.State+State.counterMoves]
-	       test   t1, t1
-		 jz   ..over1
+		cmp   dword[ss-1*sizeof.State+State.currentMove], 1
+		 jl   ..over1
 	apply_bonus   (t1+4*(offset)), bonus32, absbonus, 936
 ..over1:
 
 		mov   t1, qword[ss-2*sizeof.State+State.counterMoves]
-	       test   t1, t1
-		 jz   ..over2
+		cmp   dword[ss-2*sizeof.State+State.currentMove], 1
+		 jl   ..over2
 	apply_bonus   (t1+4*(offset)), bonus32, absbonus, 936
 ..over2:
 
 		mov   t1, qword[ss-4*sizeof.State+State.counterMoves]
-	       test   t1, t1
-		 jz   ..over3
+		cmp   dword[ss-4*sizeof.State+State.currentMove], 1
+		 jl   ..over3
 	apply_bonus   (t1+4*(offset)), bonus32, absbonus, 936
 ..over3:
 
@@ -33,8 +33,8 @@ local ..over1, ..over2, ..over3
 
 macro UpdateStats move, quiets, quietsCnt, bonus32, absbonus, prevOffset {
 
-        ; clobbers rax, rcx, rdx, r8, r9
-        ; it also might clobber rsi and change the sign of bonus32
+	; clobbers rax, rcx, rdx, r8, r9
+	; it also might clobber rsi and change the sign of bonus32
 
 local ..DontUpdateKillers, ..DontUpdateOpp, ..BonusTooBig, ..NextQuiet, ..Return
 
@@ -57,9 +57,8 @@ end if
 ..DontUpdateKillers:
 
 
-		mov   r8, qword[rbx-1*sizeof.State+State.counterMoves]
-	       test   r8, r8
-		 jz   ..DontUpdateOpp
+		cmp   dword[rbx-1*sizeof.State+State.currentMove], 1
+		 jl   ..DontUpdateOpp
 		mov   r8, qword[rbp+Pos.counterMoves]
 		mov   dword[r8+4*prevOffset], move
 ..DontUpdateOpp:
@@ -127,4 +126,3 @@ end if
 ..Return:
 
 }
-

@@ -34,14 +34,6 @@ Evaluate_Init:
 		mov   ecx, 4*8*8
 	  rep movsd
 
-
-		lea   rdi, [ThreatBySafePawn]
-		lea   rsi, [.ThreatBySafePawn]
-		mov   ecx, 8
-	  rep movsd
-		lea   rsi, [.ThreatBySafePawn]
-		mov   ecx, 8
-	  rep movsd
 		lea   rdi, [Threat_Minor]
 		lea   rsi, [.Threat_Minor]
 		mov   ecx, 8
@@ -89,6 +81,11 @@ Evaluate_Init:
                 lea   rsi, [.Protector_Knight]
                 lea   rdi, [Protector_Knight]
                 mov   ecx, 4*8
+          rep movsd
+
+                lea   rsi, [.PawnsSet]
+                lea   rdi, [PawnsSet]
+                mov   ecx, 9
           rep movsd
 
 		pop   rdi rsi rbx
@@ -243,17 +240,6 @@ align 4
  dd  0,  -290, -274, 57, 41 , 0,0,0
 
 
-
-.ThreatBySafePawn:
- dd (0 shl 16) + (0)
- dd (0 shl 16) + (0)
- dd (0 shl 16) + (0)
- dd (176 shl 16) + (139)
- dd (131 shl 16) + (127)
- dd (217 shl 16) + (218)
- dd (203 shl 16) + (215)
- dd (0 shl 16) + (0)
-
 .Threat_Minor:
  dd (0 shl 16) + (0)
  dd (0 shl 16) + (0)
@@ -339,11 +325,12 @@ align 4
  dd (-13 shl 16) + (-7)
  dd (-10 shl 16) + (-7)
 
-;.Linear:
-;        dd 0, 1667, -168,-1027, -166,  238, -138,    0
+.PawnsSet:
+        dd 24, -32, 107, -51, 117, -9, -126, -21, 31
+
 .QuadraticOurs:
 	dd 0, 1667,    0,    0,    0,	 0,    0,    0
-	dd 0,	40,    2,    0,    0,	 0,    0,    0
+	dd 0,	40,    0,    0,    0,	 0,    0,    0
 	dd 0,	32,  255,   -3,    0,	 0,    0,    0
 	dd 0,	 0,  104,    4,    0,	 0,    0,    0
 	dd 0,  -26,   -2,   47,  105, -149,    0,    0

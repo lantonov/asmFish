@@ -16,6 +16,10 @@ if (not CPU_HAS_BMI1) and CPU_HAS_BMI2
 	  err
 end if
 
+if (not USE_SELDEPTH) and USE_MATEFINDER
+        display 'ERROR: USE_MATEFINDER requires USE_SELDEPTH'
+        err
+end if
 
 
 
@@ -487,7 +491,6 @@ StormDanger_Unblocked	   rd 8*8
 StormDanger_BlockedByPawn  rd 8*8
 StormDanger_BlockedByKing  rd 8*8
 KingFlank                  rq 8
-ThreatBySafePawn           rd 16
 Threat_Minor               rd 16
 Threat_Rook                rd 16
 PassedRank                 rd 8
@@ -496,6 +499,7 @@ PassedFile                 rd 8
 DoMaterialEval_Data:
 .QuadraticOurs:            rd 8*6
 .QuadraticTheirs:          rd 8*6
+PawnsSet                   rd 16
 
 
 

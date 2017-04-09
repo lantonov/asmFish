@@ -14,15 +14,15 @@ CURRMOVE_MIN_TIME equ 3000
 
 
 ; some bounds
-MAX_MOVES equ 224       ; maximum number of pseudo legal moves for any position
-AVG_MOVES equ 96        ; safe average number of moves per position, used for memory allocation
+MAX_MOVES equ 224	; maximum number of pseudo legal moves for any position
+AVG_MOVES equ 96	; safe average number of moves per position, used for memory allocation
 MAX_THREADS equ 256
 MAX_NUMANODES equ 32
-MAX_LINUXCPUS equ 512                   ; should be a multiple of 64
-MAX_HASH_LOG2MB equ 16                  ; max hash size is (2^MAX_HASH_LOG2MB) MiB
+MAX_LINUXCPUS equ 512			; should be a multiple of 64
+MAX_HASH_LOG2MB equ 16			; max hash size is (2^MAX_HASH_LOG2MB) MiB
 THREAD_STACK_SIZE equ 1048576
-PAWN_HASH_ENTRY_COUNT equ 16384         ; should be a power of 2
-MATERIAL_HASH_ENTRY_COUNT equ 8192      ; should be a power of 2
+PAWN_HASH_ENTRY_COUNT equ 16384 	; should be a power of 2
+MATERIAL_HASH_ENTRY_COUNT equ 8192	; should be a power of 2
 
 
 match ='W', VERSION_OS {
@@ -101,7 +101,12 @@ SEP_CHAR equ ':'
 
 ; values from stats tables
  HistoryStats_Max equ 268435456
+ CmhDeadOffset =  4*(64*16)*(64*8)
 
+; depths for search
+ ONE_PLY = 1
+ MAX_PLY = 128
+ MAX_SYZYGY_PLY = 20 ; how many times can the syzygy probe recurse?
 
  VALUE_ZERO	 = 0
  VALUE_DRAW	 = 0
@@ -109,8 +114,8 @@ SEP_CHAR equ ':'
  VALUE_MATE	 = 32000
  VALUE_INFINITE  = 32001
  VALUE_NONE	 = 32002
- VALUE_MATE_IN_MAX_PLY	=  VALUE_MATE - 2 * MAX_PLY
- VALUE_MATED_IN_MAX_PLY = -VALUE_MATE_IN_MAX_PLY
+ VALUE_MATE_IN_MAX_PLY	= +VALUE_MATE - MAX_PLY
+ VALUE_MATED_IN_MAX_PLY = -VALUE_MATE + MAX_PLY
 
  PHASE_MIDGAME	      = 128
 
@@ -121,9 +126,6 @@ SEP_CHAR equ ':'
  SCALE_FACTOR_NONE    = 255
 
 
-; depths for search
- ONE_PLY = 1
- MAX_PLY = 128
  DEPTH_QS_CHECKS     =	0
  DEPTH_QS_NO_CHECKS  = -1
  DEPTH_QS_RECAPTURES = -5

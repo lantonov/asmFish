@@ -63,7 +63,7 @@ virtual at rsp
   .futilityBase   rd 1
 
   .inCheck		   rb 1   ;  104
-  .givesCheck		   rb 1   ;  105
+                           rb 1   ;  105
   .singularExtensionNode   rb 1   ;  106
   .improving		   rb 1   ;  107
   .captureOrPromotion	   rb 1   ;  108
@@ -278,7 +278,7 @@ end if
 
 	      align   8
 .MovePickLoop:
-
+                xor   esi, esi
 	GetNextMove
 		mov   dword[.move], eax
 	       test   eax, eax
@@ -288,10 +288,8 @@ end if
 	; check for check and get address of search function
 		mov   ecx, eax
 	       call   Move_GivesCheck
-
-
-		mov   byte[.givesCheck], al
-	      movsx   r13d, al
+		mov   byte[rbx+State.givesCheck], al
+	        mov   r13d, eax
 	if .PvNode eq 1
 		lea   rdx, [QSearch_Pv_NoCheck]
 		lea   rcx, [QSearch_Pv_InCheck]
@@ -399,7 +397,6 @@ end if
 
 	; make the move
 		mov   ecx, dword[.move]
-	      movzx   edx, byte[.givesCheck]
 		mov   dword[rbx+State.currentMove], ecx
 		mov   rsi, qword[.searchFxn]
 	       call   Move_Do__QSearch
