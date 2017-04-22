@@ -28,6 +28,12 @@ Search_Clear:
 		xor   eax, eax
 	  rep stosd
 
+                mov   rdi, qword[rbx+Thread.rootPos.counterMoveHistory]
+                add   rdi, CmhDeadOffset
+		mov   ecx, 16*64
+		mov   eax, CounterMovePruneThreshold - 1
+	  rep stosd
+
 		jmp   .NextThread
 .ThreadsDone:
 

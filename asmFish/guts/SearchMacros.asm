@@ -48,9 +48,6 @@ virtual at rsp
   .predictedDepth	  rd 1
   .moveCount		  rd 1
   .quietCount		  rd 1
-  .check_cm	rd 1
-  .check_fm	rd 1
-  .check_fm2	rd 1
   .alpha		  rd 1
   .beta 		  rd 1
   .depth		  rd 1
@@ -686,42 +683,9 @@ if PEDANTIC
 end if
 
 
-	; not sure if these need to be stored on the fxn stack as well
-;                mov   rax, qword[rbx-1*sizeof.State+State.counterMoves]
-;                mov   rcx, qword[rbx-2*sizeof.State+State.counterMoves]
-;                mov   rdx, qword[rbx-4*sizeof.State+State.counterMoves]
-;                mov   qword[.cmh], rax
-;                mov   qword[.fmh], rcx
-;                mov   qword[.fmh2], rdx
-
-;.CMH  equ qword[.cmh]
-;.FMH  equ qword[.fmh]
-;.FMH2 equ qword[.fmh2]
-
-
 .CMH  equ (rbx-1*sizeof.State+State.counterMoves)
 .FMH  equ (rbx-2*sizeof.State+State.counterMoves)
 .FMH2 equ (rbx-4*sizeof.State+State.counterMoves)
-	; !cm_ok => check_cm < 0
-	;           check_cm >= 0 otherwise
-	; !fm_ok => check_fm < 0
-	;           check_fm >= 0 otherwise
-	; !fm_ok || (cm_ok && fm_ok) => check_fm2 < 0
-	;                               check_fm2 >= 0 otherwise
-		mov   eax, dword[rbx-1*sizeof.State+State.currentMove]
-		mov   ecx, dword[rbx-2*sizeof.State+State.currentMove]
-		mov   edx, dword[rbx-4*sizeof.State+State.currentMove]
-		sub   eax, 1
-		sub   ecx, 1
-		sub   edx, 1
-		mov   dword[.check_cm], eax
-		mov   dword[.check_fm], ecx
-		not   eax
-		not   ecx
-		and   eax, ecx
-		 or   edx, eax
-		mov   dword[.check_fm2], edx
-
 
 
 	; initialize move pick
@@ -1035,19 +999,16 @@ end if
 	; Countermoves based pruning
 		mov   r8, qword[.CMH]
 		mov   r9, qword[.FMH]
-		mov   r10, qword[.FMH2]
 		lea   r11, [8*r14]
 		lea   r11, [8*r11+r13]
 		mov   eax, dword[r8+4*r11]
 		mov   ecx, dword[r9+4*r11]
-		mov   edx, dword[r10+4*r11]
-		 or   eax, dword[.check_cm]
-		 or   ecx, dword[.check_fm]
-		 or   edx, dword[.check_fm2]
 		cmp   edi, 3*ONE_PLY
 		jge   .13DontSkip2
+        if CounterMovePruneThreshold <> 0       ; code assumes
+          err         
+        end if
 		and   eax, ecx
-	       test   eax, edx
 		 js   .MovePickLoop
 	.13DontSkip2:
 
@@ -1526,6 +1487,7 @@ end if
 	; Step 20. Check for mate and stalemate
 
 		mov   eax, dword[rbx-1*sizeof.State+State.currentMove]
+                lea   esi, [rax-1]
 		and   eax, 63
 	      movzx   ecx, byte[rbp+Pos.board+rax]
 		shl   ecx, 6
@@ -1584,7 +1546,7 @@ end if
 .20CheckBonus:
 	; we already checked that bestMove = 0
 		lea   edx, [r13-3*ONE_PLY]
-		 or   edx, dword[.check_cm]
+		 or   edx, esi
 		 js   .20TTStore
 		cmp   byte[rbx+State.capturedPiece], 0
 		jne   .20TTStore

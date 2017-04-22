@@ -100,8 +100,9 @@ SEP_CHAR equ ':'
  Eval_Tempo equ 20
 
 ; values from stats tables
- HistoryStats_Max equ 268435456
- CmhDeadOffset =  4*(64*16)*(64*8)
+ HistoryStats_Max  = 268435456
+ CmhDeadOffset     =  4*(8*64)*(16*64)
+ CounterMovePruneThreshold = 0
 
 ; depths for search
  ONE_PLY = 1
