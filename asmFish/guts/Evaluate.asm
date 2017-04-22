@@ -1335,10 +1335,6 @@ match =Black, Us
 	end if
 		 or   rax, rcx
 	     popcnt   rax, rax, rdx
-		mov   ecx, 16
-		cmp   eax, ecx
-	      cmova   eax, ecx
-
 
 	      movzx   ecx, byte[rdi+PawnEntry.openFiles]
 		add   ecx, ecx
@@ -1347,9 +1343,7 @@ match =Black, Us
 	       imul   edx, edx
 
 	       imul   eax, edx
-		xor   edx, edx
-		mov   ecx, 18
-	       idiv   ecx
+		shr   eax, 4    ; eax>0 so division by 16 is easy
 		shl   eax, 16
 
 	     addsub   esi, eax
