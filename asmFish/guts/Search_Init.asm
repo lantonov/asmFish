@@ -4,7 +4,6 @@ Search_Init:
 		lea   r12, [Reductions]
 		xor   ebp, ebp
 		xor   ebx, ebx
-	     vmovsd   xmm6, qword[._2729]
 ._0048:
 		mov   rax, rbp
 		mov   esi, ebp
@@ -28,7 +27,7 @@ Search_Init:
 	     vdivsd   xmm1, xmm1, qword[.constd_1p95]
 		xor   r8d, r8d
 		lea   rcx, [r13*4]
-	     vaddsd   xmm1, xmm1, xmm6
+	     vaddsd   xmm1, xmm1, qword[.constd_0p5]
 	 vcvttsd2si   r8d, xmm1
 		lea   r9d, [r8-1H]
 	       test   r9d, r9d
@@ -53,34 +52,32 @@ Search_Init:
 		mov   ebp, 1
 		jmp   ._0048
 ._0052:
-	     vmovsd   xmm6, qword[._2731]
+
+
 		xor   ebp, ebp
-	      vpxor   xmm13, xmm13, xmm13
-	     vmovsd   xmm12, qword[._2732]
-		lea   r14, [FutilityMoveCounts]
-	     vmovsd   xmm11, qword[._2733]
-		lea   rdi, [r14+16*4]
-	     vmovsd   xmm10, qword[._2734]
-	     vmovsd   xmm8, qword[._2735]
-	     vmovsd   xmm7, qword[._2736]
-._0053:
-	      vpxor   xmm9, xmm9, xmm9
-	  vcvtsi2sd   xmm9, xmm9, ebp
-	    vmovapd   xmm1, xmm6
-	     vaddsd   xmm0, xmm9, xmm13
+	     vmovsd   xmm6, qword[.constd_2p4]
+	     vmovsd   xmm7, qword[.constd_0p74]
+	     vmovsd   xmm8, qword[.constd_5p0]
+	     vmovsd   xmm9, qword[.constd_1p0]
+.FutilityLoop:
+	  vcvtsi2sd   xmm0, xmm0, ebp
+	     vmovsd   xmm1, qword[.constd_1p78]
 	       call   Math_Power_d_dd
 	    vmovapd   xmm1, xmm6
-	   vfmaddsd   xmm0, xmm0, xmm12, xmm11
-	 vcvttsd2si   r10d, xmm0
-	     vaddsd   xmm0, xmm9, xmm10
-		mov   dword[r14+rbp*4], r10d
+	   vfmaddsd   xmm0, xmm0, xmm7, xmm6
+	 vcvttsd2si   eax, xmm0
+		mov   dword[FutilityMoveCounts+rbp*4], eax
+
+	  vcvtsi2sd   xmm0, xmm0, ebp
+	     vmovsd   xmm1, qword[.constd_2p0]
 	       call   Math_Power_d_dd
-	   vfmaddsd   xmm0, xmm0, xmm8, xmm7
-	 vcvttsd2si   r11d, xmm0
-		mov   dword[rdi+rbp*4], r11d
-		add   rbp, 1
-		cmp   rbp, 16
-		jnz   ._0053
+	   vfmaddsd   xmm0, xmm0, xmm9, xmm8
+	 vcvttsd2si   eax, xmm0
+		mov   dword[FutilityMoveCounts+(rbp+16)*4], eax
+
+		add   ebp, 1
+		cmp   ebp, 16
+		 jb   .FutilityLoop
 
 
                 lea   rsi, [.RazorMargin]
@@ -98,16 +95,15 @@ Search_Init:
 
 
 align 8
-.constd_1p95 dq 1.95
-._2729: dq 3FE0000000000000H				      ; 1AB0 _ 0.5
-._2736: dq 4007333333333333H				      ; 1AE8 _ 2.9
-._2731: dq 3FFCCCCCCCCCCCCDH				      ; 1AC0 _ 1.8
-._2732: dq 3FE8BC6A7EF9DB23H				      ; 1AC8 _ 0.773
-._2733: dq 4003333333333333H				      ; 1AD0 _ 2.4
-._2734: dq 3FDF5C28F5C28F5CH				      ; 1AD8 _ 0.49
-._2735: dq 3FF0B851EB851EB8H				      ; 1AE0 _ 1.045
+.constd_0p5     dq 0.5
+.constd_1p95    dq 1.95
 
-
+.constd_2p4     dq 2.4
+.constd_0p74    dq 0.74
+.constd_5p0     dq 5.0
+.constd_1p0     dq 1.0
+.constd_1p78    dq 1.78
+.constd_2p0     dq 2.0
 
 .RazorMargin             dd 483, 570, 603, 554
 ._CaptureOrPromotion_or  db  0,-1,-1, 0
