@@ -135,14 +135,44 @@ MovePick_QUIET_GEN:
 	       call   Gen_Quiets
 		mov   r15, rdi
 	ScoreQuiets   r12, rdi
-		mov   r12, r14
-		mov   r13, r15
-		mov   eax, dword[rbx+State.depth]
-		cmp   eax, 3
-		jge   .JustSort
-	 Partition2   r12, r13
-.JustSort:
-      InsertionSort   r14, r13, r11, r12
+
+        ; partial insertion sort
+                lea   r10, [r14+sizeof.ExtMove]
+                mov   edx, -2147483648
+                xor   eax, eax
+                cmp   dword[rbx+State.depth], 3*ONE_PLY
+              cmovl   edx, eax
+                mov   r8, r10
+                cmp   r10, r15
+                jae   .SortDone
+.SortLoop:
+                mov   edi, dword[r8+ExtMove.value]
+                mov   r9, qword[r8+ExtMove.move]
+                cmp   edi, edx
+                 jl   .SortLoopSkip
+                mov   rax, qword[r10]
+                mov   qword[r8], rax
+                mov   rcx, r10
+                cmp   r10, r14
+                 je   .SortInnerDone
+.SortInner:
+                mov   r11, qword[rcx-sizeof.ExtMove]
+                lea   rax, [rcx-sizeof.ExtMove]
+                cmp   edi, dword[rcx-sizeof.ExtMove+ExtMove.value]
+                jle   .SortInnerDone
+                mov   qword[rcx], r11
+                mov   rcx, rax
+                cmp   rax, r14
+                jne   .SortInner
+.SortInnerDone:
+                add   r10, sizeof.ExtMove
+                mov   qword[rcx], r9
+.SortLoopSkip:
+                add   r8, sizeof.ExtMove
+                cmp   r8, r15
+                 jb   .SortLoop
+.SortDone:
+
 		lea   rdx, [MovePick_QUIETS]
 		mov   qword[rbx+State.stage], rdx
 
