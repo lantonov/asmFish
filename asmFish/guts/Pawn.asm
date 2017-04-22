@@ -105,31 +105,32 @@ end if
 		neg   r11
 		sbb   r11d, r11d
 	; r11d = opposed
-		lea   eax, [rcx+Up]
-		 bt   r13, rax
-		sbb   eax, eax
-		and   eax, Doubled
-		sub   esi, eax
-	; doubled is taken care of
 		mov   rdx, qword[AdjacentFilesBB+8*rdx]
 	; rdx = adjacent_files_bb(f)
-		mov   rax, qword[PawnAttacks+8*(64*Us+rcx)]
-		and   rax, r14
-	; rax = lever
 		mov   r10, qword[PassedPawnMask+8*(64*Us+rcx)]
 		and   r10, r14
 	; r10 = stoppers
 		mov   r8d, ecx
 		shr   r8d, 3
 		mov   r8, qword[RankBB+8*r8-Up]
-	; r8 = supported  (will be after and with r9)
 		mov   r9, r13
 		and   r9, rdx
 	; r9 = neighbours
+		and   r8, r9
+	; r8 = supported
+		lea   eax, [rcx-Up]
+		 bt   r13, rax
+                mov   rax, r8           ; dirty trick relies on fact
+                sbb   rax, 0            ; that r8>0 as signed qword
+                lea   eax, [rsi-Doubled]
+              cmovs   esi, eax
+	; doubled is taken care of
+		mov   rax, qword[PawnAttacks+8*(64*Us+rcx)]
+               test   r9, r9
 		 jz   ..Neighbours_False
 ..Neighbours_True:
-		and   r8, r9
-	       test   rax, rax
+		and   rax, r14
+	; rax = lever
 	     cmovnz   eax, dword[Lever+4*r12]
 		lea   esi, [rsi+rax]
 		jnz   ..TestUnsupported
@@ -167,11 +168,10 @@ end if
 		jmp   ..Continue
 
 ..Neighbours_False:
-	       test   rax, rax
+		and   rax, r14
 	     cmovnz   eax, dword[Lever+4*r12]
 		lea   esi, [rsi+rax]
 
-		and   r8, r9
 		mov   eax, r11d
 		and   eax, Isolated0-Isolated1
 		lea   esi, [rsi+rax-Isolated0]
