@@ -138,10 +138,7 @@ MovePick_QUIET_GEN:
 
         ; partial insertion sort
                 lea   r10, [r14+sizeof.ExtMove]
-                mov   edx, -2147483648
-                xor   eax, eax
-                cmp   dword[rbx+State.depth], 3*ONE_PLY
-              cmovl   edx, eax
+               imul   edx, dword[rbx+State.depth], -4000
                 mov   r8, r10
                 cmp   r10, r15
                 jae   .SortDone
