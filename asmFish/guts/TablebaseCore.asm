@@ -1769,9 +1769,12 @@ _ZN13TablebaseCore4initEPKc:
 	call	free
 
 	xor	eax, eax
-	mov	qword [ _ZL11path_string], rax
-	mov	qword [ _ZL5paths], rax
+	mov	qword[_ZL11path_string], rax
+	mov	qword[_ZL5paths], rax
         mov     dword[tb_total_cnt], eax
+        mov     dword[_ZL9num_paths], eax
+        mov	dword[_ZL10TBnum_pawn], eax
+        mov	dword[_ZL11TBnum_piece], eax
 
 ?_176:	cmp	esi, dword [ _ZL11TBnum_piece]	
 	jge	?_177					
