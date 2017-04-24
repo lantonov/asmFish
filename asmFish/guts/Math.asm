@@ -40,13 +40,17 @@ Math_Exp_d_d:
 	       push   rbx
 		sub   rsp, 32
 	      movsd   qword[rsp+8H], xmm0
-		fld   qword[rsp+8H]
+
+        ; set precision
 	      fwait
 	     fnstcw   word[rsp+1CH]
 	      fwait
 	     fnstcw   word[rsp+1EH]
-		 or   word[rsp+1EH], 0C00H
+		and   word[rsp+1EH], 0xF3FF     ; round nearest
+		 or   word[rsp+1EH], 0x0300     ; 80 bit precision
 	      fldcw   word[rsp+1EH]
+
+		fld   qword[rsp+8H]
 	     fldl2e
 	      fmulp   st1, st0
 		fld   st0
@@ -61,8 +65,11 @@ Math_Exp_d_d:
 	     fscale
 	       fstp   st1
 	      fmulp   st1, st0
-	      fldcw   word[rsp+1CH]
 	       fstp   qword[rsp+8H]
+
+        ; restore precision
+	      fldcw   word[rsp+1CH]
+
 	      movsd   xmm0, qword[rsp+8H]
 		add   rsp, 32
 		pop   rbx
@@ -73,18 +80,25 @@ Math_Log_d_d:
 	       push   rbx
 		sub   rsp, 32
 	     vmovsd   qword[rsp+8H], xmm0
-		fld   qword[rsp+8H]
+
+        ; set precision
 	      fwait
 	     fnstcw   word[rsp+1CH]
 	      fwait
 	     fnstcw   word[rsp+1EH]
-		 or   word[rsp+1EH], 0C00H
+		and   word[rsp+1EH], 0xF3FF     ; round nearest
+		 or   word[rsp+1EH], 0x0300     ; 80 bit precision
 	      fldcw   word[rsp+1EH]
+
+		fld   qword[rsp+8H]
 	     fldln2
 	       fxch   st1
 	      fyl2x
-	      fldcw   word[rsp+1CH]
 	       fstp   qword[rsp+8H]
+
+        ; restore precision
+	      fldcw   word[rsp+1CH]
+
 	     vmovsd   xmm0, qword[rsp+8H]
 		add   rsp, 32
 		pop   rbx
@@ -147,6 +161,16 @@ Math_Power_d_dd:
 	       push   rsi
 	       push   rbx
 		sub   rsp, 40
+
+        ; set precision
+	      fwait
+	     fnstcw   word[rsp+1CH]
+	      fwait
+	     fnstcw   word[rsp+1EH]
+		and   word[rsp+1EH], 0xF3FF     ; round nearest
+		 or   word[rsp+1EH], 0x0300     ; 80 bit precision
+	      fldcw   word[rsp+1EH]
+
 	      movsd   qword[rsp+8H], xmm0
 		fld   qword[rsp+8H]
 	      movsd   qword[rsp+8H], xmm1
@@ -170,12 +194,6 @@ Math_Power_d_dd:
 	       fld1
 		jmp   ._036
 ._035:
-	      fwait
-	     fnstcw   word[rsp+1CH]
-	      fwait
-	     fnstcw   word[rsp+1EH]
-		 or   word[rsp+1EH], 0C00H
-	      fldcw   word[rsp+1EH]
 	       fld1
 	       fxch   st1
 	      fyl2x
@@ -192,9 +210,12 @@ Math_Power_d_dd:
 	     fscale
 	       fstp   st1
 	      fmulp   st1, st0
-	      fldcw   word[rsp+1CH]
 ._036:
 	       fstp   qword[rsp+8H]
+
+        ; restore precision
+	      fldcw   word[rsp+1CH]
+
 	      movsd   xmm0, qword[rsp+8H]
 		add   rsp, 40
 		pop   rbx
