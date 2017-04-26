@@ -10,21 +10,29 @@ can also interact with the engine as follows.
 
 Besides the usual uci commands there are the following:
 
-show:   (VERBOSE>0) Prints out the internal rep of the position.
-moves:  (VERBOSE>0) Makes the succeeding moves then does 'show'.
-undo:   (VERBOSE>0) Undoes one or a certain number of moves
-donull: (VERBOSE>0) Does a null move.
-eval:   (VERBOSE>0) Displays evaluation.
-perft:  Usual move generation verification. Use like 'perft 7'.
-bench:  Usual bench command. Use like stockfish or the more readable form
-        'bench hash 16 threads 1 depth 13 realtime 0'. These are the defaults.
-wait:   Waits for the main search thread to finish. Use with caution
-        (esp. on an infinite search). This is useful when feeding commands
-        via the command line. The command 'wait' can be used after 'go'
-        to ensure that engine doesn't quit before finishing.
-profile: (PROFILE>0) Displays profile info and then clears it.
-brain2polyglot: (USE_BOOK=1) convert cerebellum library book to polyglot format.
-        Use like 'brain2polyglot depth 50 in "Cerebellum_light.bin" out "polybook.bin"'
+        *** included by default ***
+perft:          Usual move generation verification. Use like 'perft 7'.
+bench:          Usual bench command. Use like stockfish or the more readable form
+                'bench hash 16 threads 1 depth 13 realtime 0'. These are the defaults.
+wait:           Waits for the main search thread to finish. Use with caution
+                (esp. on an infinite search). This is useful when feeding commands
+                via the command line. The command 'wait' can be used after 'go'
+                to ensure that engine doesn't quit before finishing.
+
+        *** VERBOSE assemble option ***
+show:           Prints out the internal rep of the position.
+moves:          Makes the succeeding moves then does 'show'.
+undo:           Undoes one or a certain number of moves
+donull:         Does a null move.
+eval:           Displays evaluation.
+
+        *** PROFILE assemble option ***
+profile:        Displays profile info and then clears it.
+
+        *** USE_BOOK assemble option ***
+bookprobe:      Display book entries from current pos. Use like 'bookprobe 3'.
+brain2polyglot: convert cerebellum library book to polyglot format.
+                Use like 'brain2polyglot depth 50 in "Cerebellum_light.bin" out "polybook.bin"'
 
 
 Besides the usual uci options there are the following:
@@ -44,11 +52,15 @@ NodeAffinity:   The default is "all". Here is the behavior:
                     but nodes 1, 2 and 3 share per-node memory with node 0
                 if you want to see the detected cores/nodes in your machine
                     run "setoption name NodeAffinity value all"
-Priority:       Try to set the prority of the process. The default is 'none',
+Priority:       Try to set the priority of the process. The default is 'none',
                 which runs the engine which whichever priority it was started.
 TTFile:         Set the location of the file for TTSave and TTLoad.
 TTSave:         Saves the current hash table to TTFile.
 TTLoad:         Loads the current hash table while possibily changing the size.
+
+        *** USE_WEAKNESS assemble option ***
+UCI_LimitStrength: make the engine play at certain level
+UCI_Elo:        level at which to play
 
         *** USE_SYZYGY assemble option ***
 SyzygyProbeDepth: Don't probe if plies from root is less than this.

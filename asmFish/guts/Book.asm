@@ -104,7 +104,7 @@ Book_Load:
               lodsw
                xchg   al, ah
               stosw
-                cmp   eax, 1
+                cmp   ax, 1
                 adc   r9, 0
             ; learn
               lodsd
@@ -300,9 +300,9 @@ Book_GetMove:
                push   r15 r14 r13 r12 rbx rsi rdi
 virtual at rsp
  .move       rd 1
- .weight      rd 1
- .ponder    rd 1
-                rd 1
+ .weight     rd 1
+ .ponder     rd 1
+             rd 1
  .moveList   rb MAX_MOVES*sizeof.ExtBookMove
  .lend       rb 0
 end virtual
@@ -366,8 +366,8 @@ end virtual
 .FindPonder:
                 mov   ecx, dword[.move]
                call   Move_GivesCheck
-                mov   edx, eax
                 mov   ecx, dword[.move]
+                mov   byte[rbx+State.givesCheck], al
                call   Move_Do__PerftGen_Root
                 lea   rcx, [.moveList]
                call   Book_Probe
