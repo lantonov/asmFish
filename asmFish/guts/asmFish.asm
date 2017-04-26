@@ -164,6 +164,8 @@ if USE_BOOK
 	NewLineData
 	db 'option name BestBookMove type check default false'
 	NewLineData
+        db 'option name BookDepth type spin default 100 min -10 max 100'
+        NewLineData
 end if
 
 
@@ -195,6 +197,7 @@ sz_error_hashread  db 'error: could not read hash file ',0
 sz_error_hashsave  db 'error: could not save hash file ',0
 sz_error_affinity1 db 'error: parsing affinity failed after "',0
 sz_error_affinity2 db '"; proceeding as "all"',0
+sz_empty           db '<empty>',0
 
 sz_go			db 'go',0
 sz_all			db 'all',0
@@ -263,6 +266,7 @@ end if
 if USE_BOOK
 sz_ownbook		db 'ownbook',0
 sz_bookfile		db 'bookfile',0
+sz_bookdepth            db 'bookdepth',0
 sz_bestbookmove 	db 'bestbookmove',0
 end if
 

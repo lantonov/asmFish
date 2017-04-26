@@ -462,17 +462,25 @@ end if
 		 je   .mate
 
 if USE_BOOK
-		xor   eax, eax
-		cmp   al, byte[limits.useTimeMgmt]
-		 je   @f
-		cmp   al, byte[book.use]
-		 je   @f
-		cmp   rax, qword[book.buffer]
-		 je   @f
-	       call   Book_GetMove
-	       test   eax, eax
-		jnz   .PlayBookMove
-	@@:
+        ; if we are pondering then we still want to search
+        ; even if the result of the search will be discarded
+                xor   esi, esi
+                mov   dword[book.move], esi
+                mov   dword[book.weight], esi
+                mov   dword[book.ponder], esi
+                cmp   sil, byte[book.ownBook]
+                 je   @f
+                cmp   rsi, qword[book.buffer]
+                 je   @f
+               call   Book_GetMove
+                mov   dword[book.move], eax
+                mov   dword[book.weight], edx
+                mov   dword[book.ponder], ecx
+                cmp   sil, byte[limits.ponder]
+                jne   @f
+               test   eax, eax
+                jnz   .search_done
+        @@:
 end if
 
 	; start workers
@@ -518,6 +526,13 @@ end if
 		jmp   .next_worker2
 	.workers_done2:
 
+if USE_BOOK
+        ; must do after waiting for workers
+        ; since ponder could have started the workers
+                mov   esi, dword[book.move]
+               test   esi, esi
+                jnz   .play_book_move
+end if
 
 	; check for mate again
 		mov   r8, qword[rbp+Pos.rootMovesVec+RootMovesVec.ender]
@@ -584,35 +599,48 @@ if USE_WEAKNESS
 end if
 
 if USE_BOOK
-.PlayBookMove:
-	; eax is move
-	; edx is weight
-		mov   esi, eax
+.play_book_move:
+        ; esi book move
 
-		lea   rdi, [Output]
-		mov   rax, 'info dep'
-	      stosq
-		mov   rax, 'th 0 sco'
-	      stosq
-		mov   rax, 're cp '
-	      stosq
-		sub   rdi, 2
-		mov   eax, edx
-	       call   PrintUnsignedInteger
+                lea   rdi, [Output]
+                mov   rax, 'info str'
+              stosq
+                mov   eax, 'ing '
+              stosd
+                mov   rax, 'playing '
+              stosq
+                mov   rax, 'book mov'
+              stosq
+                mov   rax, 'e weight'
+              stosq
+                mov   al, ' '
+              stosb
+                mov   eax, dword[book.weight]
+               call   PrintUnsignedInteger
        PrintNewLine
-	       call   _WriteOut_Output
+               call   _WriteOut_Output
 
-		lea   rdi, [Output]
-		mov   rax, 'bestmove'
-	      stosq
-		mov   al, ' '
-	      stosb
-		mov   ecx, esi
-	      movzx   edx, byte[rbp+Pos.chess960]
-	       call   PrintUciMove
+                lea   rdi, [Output]
+                mov   rax, 'bestmove'
+              stosq
+                mov   al, ' '
+              stosb
+                mov   ecx, esi
+              movzx   edx, byte[rbp+Pos.chess960]
+               call   PrintUciMove
+
+                mov   ecx, dword[book.ponder]
+               test   ecx, ecx
+                 jz   .NoBookPonder
+                mov   rax, ' ponder '
+              stosq
+              movzx   edx, byte[rbp+Pos.chess960]
+               call   PrintUciMove
+  .NoBookPonder:
+
        PrintNewLine
-	       call   _WriteOut_Output
-		jmp   .return
+               call   _WriteOut_Output
+                jmp   .return
 end if
 
 

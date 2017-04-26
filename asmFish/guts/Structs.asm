@@ -464,17 +464,17 @@ ends
 
 struct Book
  buffer        rq 1
- lastPosition  rq 1
- aktPosition   rq 1
- seed	       rq 1
- lastAnzPieces	rd 1
- aktAnzPieces	rd 1
- searchCounter	rd 1
- entryCount	rd 1
- skipSearch   rb 1
- use	      rb 1
+ seed          rq 1
+ entryCount   rd 1
+ failCount    rd 1
+ bookDepth    rd 1
+ ownBook      rb 1
  bestBookMove rb 1
-	      rb 13
+              rb 2
+ move   rd 1
+ weight rd 1
+ ponder rd 1
+        rd 1
 ends
 
 struct Brain
@@ -524,8 +524,17 @@ if sizeof.PolyglotEntry <> 16
  err
 end if
 
+; after a book is loaded, its entries are stored in BookEntry struct
 struct BookEntry
- key	rq 1
- move	rw 1
+ key    rq 1
+ move   rw 1
  weight rw 1
 ends
+
+; moves found in a book are stored in ExtBookMove struct
+struct ExtBookMove
+ move   rd 1
+ weight rd 1
+ total  rd 1
+ends
+

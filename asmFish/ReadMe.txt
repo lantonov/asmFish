@@ -23,12 +23,13 @@ wait:   Waits for the main search thread to finish. Use with caution
         via the command line. The command 'wait' can be used after 'go'
         to ensure that engine doesn't quit before finishing.
 profile: (PROFILE>0) Displays profile info and then clears it.
-brain2polyglot: (BOOK>0) convert cerebellum library book to polyglto format.
+brain2polyglot: (USE_BOOK=1) convert cerebellum library book to polyglot format.
         Use like 'brain2polyglot depth 50 in "Cerebellum_light.bin" out "polybook.bin"'
 
 
 Besides the usual uci options there are the following:
 
+        *** included by default ***
 LargePages:     Try to use large pages when allocating the hash. Hash and
                 threads are only allocated when receiving 'isready' or 'go'.
 NodeAffinity:   The default is "all". Here is the behavior:
@@ -48,10 +49,41 @@ Priority:       Try to set the prority of the process. The default is 'none',
 TTFile:         Set the location of the file for TTSave and TTLoad.
 TTSave:         Saves the current hash table to TTFile.
 TTLoad:         Loads the current hash table while possibily changing the size.
+
+        *** USE_SYZYGY assemble option ***
 SyzygyProbeDepth: Don't probe if plies from root is less than this.
 SyzygyProbeLimit: Don't probe if number of board pieces is bigger than this.
 Syzygy50MoveRule: Consider 50 move rule when probing.
-SyzygyPath:     Path to syzygy tablebases. 
-OwnBook:        Lookup position in book if possible.
+SyzygyPath:     Path to syzygy tablebases.
+
+        *** USE_BOOK assemble option ***
+OwnBook:        Lookup position in book if possible. Ponder moves are also selected
+                from the book when possible
 BookFile:       Loads polyglot book into engine.
-BestBookMove:   Use only the best moves from the book.
+BestBookMove:   Use only the best moves from the book (highest weight)
+BookDepth:
+                BookDepth <= 0:
+                suppose the lines the book from the current position are
+                T0:     h2h3(30) c5d4(10) e3d4(14) g4h5(10) g2g4(11) 
+                        h2h3(30) g4h5(5) 
+                        d4c5(17) d6c5(17) b1c3(7) 
+                the moves g2g4(11), g4h5(5) and b1c3(7) are leaves and don't lead
+                to a position in the book. Triming off these leaves three times,
+                T1:     h2h3(30) c5d4(10) e3d4(14) g4h5(10)
+                        d4c5(17) d6c5(17)
+                T2:     h2h3(30) c5d4(10) e3d4(14)
+                        d4c5(17)
+                T3:     h2h3(30) c5d4(10)
+                If BookDepth = 0 the book is probed as if it were in T0 (unchanged)
+                If BookDepth =-1 the book is probed as if it were in T1 (leaves off)
+                If BookDepth =-2 the book is probed as if it were in T2 (trime twice)
+                If BookDepth =-3 the book is probed as if it were in T3 (trime trice)
+                So with BookDepth <= -3, the move d4c5 is not considered.
+                With BookDepth <= -5, the move h2h3 is also not considered.
+
+                BookDepth >= 1:
+                Book is not probed if gameply >= BookDepth
+                
+                
+
+

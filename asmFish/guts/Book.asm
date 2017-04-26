@@ -1,358 +1,631 @@
 
-Book_Destroy:
-	       push   rbx
-		mov   rcx, qword[book.buffer]
-	       imul   edx, dword[book.entryCount], sizeof.BookEntry
-	       call   _VirtualFree
-		pop   rbx
 Book_Create:
-	       push   rbx
-	       call   _GetTime
-		lea   rcx, [book]
-		xor   rdx, rax
-		 or   rdx, 1
-		xor   eax, eax
-		mov   qword[rcx+Book.seed], rdx
-		mov   dword[rcx+Book.entryCount], eax
-		mov   qword[rcx+Book.lastPosition], rax
-		mov   qword[rcx+Book.aktPosition], rax
-		mov   dword[rcx+Book.lastAnzPieces], eax
-		mov   dword[rcx+Book.aktAnzPieces], eax
-		mov   dword[rcx+Book.searchCounter], eax
-		mov   qword[rcx+Book.buffer], rax
-		mov   byte[rcx+Book.skipSearch], al
-		pop   rbx
-		ret
+               push   rbx
+                lea   rbx, [book]
+               call   _GetTime
+                xor   rdx, rax
+                 or   rdx, 1
+                xor   eax, eax
+                mov   qword[rbx+Book.seed], rdx
+                mov   dword[rbx+Book.entryCount], eax
+                mov   qword[rbx+Book.buffer], rax
+                mov   byte[rbx+Book.ownBook], al
+                mov   byte[rbx+Book.bookDepth], 100
+                pop   rbx
+
+Book_Refresh:
+                mov   dword[book.failCount], 0
+                ret
+
+Book_Destroy:
+               push   rbx
+                lea   rbx, [book]
+                mov   rcx, qword[rbx+Book.buffer]
+               imul   edx, dword[rbx+Book.entryCount], sizeof.BookEntry
+               call   _VirtualFree
+                xor   eax, eax
+                mov   dword[rbx+Book.entryCount], eax
+                mov   qword[rbx+Book.buffer], rax
+                pop   rbx
+                ret
+
 
 Book_Load:
-	; in: rsi file string
-	       push   rbx rsi rdi r14 r15
+        ; in: rsi file string
+               push   rbx rsi rdi r14 r15
 
-	       call   Book_Destroy
+               call   Book_Destroy
 
-	; find terminator and replace it with null
-	       call   SkipSpaces
-		mov   rcx, rsi
-	@@:	add   rcx, 1
-		cmp   byte[rcx], ' '
-		jae   @b
-		mov   byte[rcx], 0
+        ; find terminator and replace it with null
+               call   SkipSpaces
+                mov   rcx, rsi
+        @@:     add   rcx, 1
+                cmp   byte[rcx], ' '
+                jae   @b
+                mov   byte[rcx], 0
 
-		mov   rcx, rsi
-	       call   _FileOpenRead
-		cmp   rax, -1
-		 je   .Failed
-		mov   r15, rax
-		mov   rcx, rax
-	       call   _FileSize
-		cmp   rax, 1 shl 28
-		jae   .FailedAndClose
-		cmp   eax, 16
-		 jb   .FailedAndClose
-	       test   eax, 15
-		jnz   .FailedAndClose
-		shr   eax, 4
-		mov   dword[book.entryCount], eax
+                lea   rcx, [sz_empty]
+               call   CmpString
+               test   eax, eax
+                jnz   .Return
 
-	; space for reading
-	       imul   ecx, dword[book.entryCount], 16
-	       call   _VirtualAlloc
-		mov   r14, rax
-	       imul   ecx, dword[book.entryCount], sizeof.BookEntry
-	       call   _VirtualAlloc
-		mov   qword[book.buffer], rax
+                mov   rcx, rsi
+               call   _FileOpenRead
+                cmp   rax, -1
+                 je   .Failed
+                mov   r15, rax
+                mov   rcx, rax
+               call   _FileSize
+                cmp   rax, 1 shl 28
+                jae   .FailedAndClose
+                cmp   eax, 16
+                 jb   .FailedAndClose
+               test   eax, 15
+                jnz   .FailedAndClose
+                shr   eax, 4
+                mov   dword[book.entryCount], eax
 
-	; read polyglot book into r14
-		mov   rcx, r15
-		mov   rdx, r14
-	       imul   r8d, dword[book.entryCount], 16
-	       call   _FileRead
-	       test   eax, eax
-		 jz   .Failed
+        ; space for reading
+               imul   ecx, dword[book.entryCount], 16
+               call   _VirtualAlloc
+                mov   r14, rax
+               imul   ecx, dword[book.entryCount], sizeof.BookEntry
+               call   _VirtualAlloc
+                mov   qword[book.buffer], rax
 
-	; get the entries
-		mov   rsi, r14
-		mov   rdi, qword[book.buffer]
-		mov   ecx, dword[book.entryCount]
-		xor   edx, edx
-		xor   r8, r8
-	.NextEntry:
-	    ; key
-	      lodsq
-	      bswap   rax
-	      stosq
-		cmp   rax, r8
-		adc   edx, 0
-		mov   r8, rax
-	    ; move
-	      lodsw
-	       xchg   al, ah
-	      stosw
-	    ; weight
-	      lodsw
-	       xchg   al, ah
-	      stosw
-	    ; learn
-	      lodsd
-		sub   ecx, 1
-		jnz   .NextEntry
+        ; read polyglot book into r14
+                mov   rcx, r15
+                mov   rdx, r14
+               imul   r8d, dword[book.entryCount], 16
+               call   _FileRead
+               test   eax, eax
+                 jz   .Failed
 
-	; check if all entries are ordered
-	       test   edx, edx
-		 jz   .InOrder
-AD String, 'info string undefined behaviour from unsorted keys in polyglot book'
+        ; get the entries
+                mov   rsi, r14
+                mov   rdi, qword[book.buffer]
+                mov   ecx, dword[book.entryCount]
+                xor   edx, edx
+                xor   r8, r8
+                xor   r9, r9
+        .NextEntry:
+            ; key
+              lodsq
+              bswap   rax
+              stosq
+                cmp   rax, r8
+                adc   edx, 0
+                mov   r8, rax
+            ; move
+              lodsw
+               xchg   al, ah
+              stosw
+            ; weight
+              lodsw
+               xchg   al, ah
+              stosw
+                cmp   eax, 1
+                adc   r9, 0
+            ; learn
+              lodsd
+                sub   ecx, 1
+                jnz   .NextEntry
+AD String, 'info string '
+AD Int32, qword[book.entryCount]
+AD String, ' entries in book ('
+AD Int32, r9
+AD String, ' entries have zero weight)'
 AD NewLine
-	.InOrder:
 
-	; free space r14
-		mov   rcx, r14
-	       imul   edx, dword[book.entryCount], 16
-	       call   _VirtualFree
+        ; check if all entries are ordered
+               test   edx, edx
+                 jz   .InOrder
+AD String, 'info string undefined behaviour from unsorted keys'
+AD NewLine
+        .InOrder:
+
+        ; free space r14
+                mov   rcx, r14
+               imul   edx, dword[book.entryCount], 16
+               call   _VirtualFree
+
+        ; start "in book"
+               call   Book_Refresh
 
 .Return:
-		pop   r15 r14 rdi rsi rbx
-		ret
+                pop   r15 r14 rdi rsi rbx
+                ret
 
 .FailedAndClose:
-		mov   rcx, r15
-	       call   _FileClose
+                mov   rcx, r15
+               call   _FileClose
 .Failed:
-		lea   rdi, [Output]
-		mov   rax, 'info str'
-	      stosq
-		mov   rax, 'ing bad '
-	      stosq
-		mov   rax, 'bookfile'
-	      stosq
+                lea   rdi, [Output]
+                mov   rax, 'info str'
+              stosq
+                mov   rax, 'ing bad '
+              stosq
+                mov   rax, 'bookfile'
+              stosq
        PrintNewLine
-	       call   _WriteOut_Output
-	       call   Book_Destroy
-		jmp   .Return
+               call   _WriteOut_Output
+               call   Book_Destroy
+                jmp   .Return
 
 
-
-
-
-
-	; convert a move to internal format without the special type
+        ; convert a move to internal format without the special type
 macro PlotglotMove2Move reg {
 local  ..notSpecial
-	       test   reg, (-1) shl 12
-		 jz   ..notSpecial
-		add   reg, (-1) shl 12
+               test   reg, (-1) shl 12
+                 jz   ..notSpecial
+                add   reg, (-1) shl 12
 ..notSpecial:
 
 }
 
-Book_GetMove:
-	; in: rbp address of position
-	;     rbx address of state
-	; out: eax move
-	;      edx its weight in polyglot book
-	;           undefined if eax=MOVE_NONE
+Book_Probe:
+        ; in: rbp address of position
+        ;     rbx address of state
+        ;     rcx address to write null terminated move list
+        ;         entries are ExtBookMove struct
+        ; out: eax best book move, MOVE_NONE iff no moves found
+        ;          could be a move with zero weight
+        ;      ecx total weight, total weight of found moves
+        ;      edx weight of move eax
 
-	       push   rsi rdi r11 r12 r13 r14 r15
+               push   r15 r14 r13 r12 rbx rsi rdi
 virtual at rsp
- .completedDepth rq 1
- .moveList   rq MAX_MOVES
- .lend	     rb 0
+ .moveList   rq 1
+ .legalList  rb MAX_MOVES*sizeof.ExtMove
+ .lend       rb 0
 end virtual
 .localsize = ((.lend-rsp+15) and (-16))
-	 _chkstk_ms   rsp, .localsize
-		sub   rsp, .localsize
+         _chkstk_ms   rsp, .localsize
+                sub   rsp, .localsize
+                mov   qword[.moveList], rcx
 
-		mov   r15, qword[book.buffer]
-	     Assert   ne, r15, 0, 'Assertion book.buffer != NULL failed in Book_GetMove'
+                lea   rdi, [.legalList]
+               call   Gen_Legal
+                xor   eax, eax
+              stosd
 
-		mov   rax, qword[rbp+Pos.typeBB+8*White]
-		 or   rax, qword[rbp+Pos.typeBB+8*Black]
-		mov   qword[book.aktPosition], rax
-	     popcnt   rax, rax, rcx
-		mov   qword[book.aktAnzPieces], rax
-		cmp   byte[book.skipSearch], 0
-		 je   .Skip
-		mov   rax, qword[book.aktPosition]
-		xor   rax, qword[book.lastPosition]
-	     popcnt   rax, rax, rcx
-		cmp   eax, 4
-		 ja   .ResetSkip
-		mov   eax, dword[book.aktAnzPieces]
-		sub   eax, dword[book.lastAnzPieces]
-		 jg   .ResetSkip
-		cmp   eax, -2
-		jge   .Skip
-.ResetSkip:
-		mov   byte[book.skipSearch], 0
-.Skip:
+               call   Position_PolyglotKey
 
-		mov   rax, qword[book.aktPosition]
-		mov   edx, dword[book.aktAnzPieces]
-		mov   qword[book.lastPosition], rax
-		mov   dword[book.lastAnzPieces], edx
-
-		xor   eax, eax
-		cmp   al, byte[book.skipSearch]
-		 je   .Probe
-.Return:
-		add   rsp, .localsize
-		pop   r15 r14 r13 r12 r11 rdi rsi
-		ret
-
-
-.Out:
-		xor   eax, eax
-		mov   ecx, dword[book.searchCounter]
-		add   ecx, 1
-		mov   dword[book.searchCounter], ecx
-		cmp   ecx, 3
-		 jb   .Return
-		mov   byte[book.skipSearch], -1
-		mov   dword[book.searchCounter], eax
-		jmp   .Return
-
-
-.Probe:
-
-	       call   Position_PolyglotKey
-		mov   r12, rax
-	       imul   r14d, dword[book.entryCount], sizeof.BookEntry
-		add   r14, r15
-
-	; r12 is the key we want
-	; r14 is the address of the end of the book
-	; r15 is the address of the start of the book
+                mov   r13, rax
+        ; r13 is the key we want
+                mov   r15, qword[book.buffer]
+               imul   r14d, dword[book.entryCount], sizeof.BookEntry
+                add   r14, r15
+        ; r14 is the address of the end of the book
+        ; r15 is the address of the start of the book
+                mov   rdi, qword[.moveList]
+                xor   r10d, r10d
+                xor   r11d, r11d
+                xor   r12d, r12d
+        ; r10d is best book move
+        ; r11d is total weight
+        ; r12d is weight of best book move
+               test   r15, r15
+                 jz   .EntriesDone  ; no book
 
 .Split:
-	; at this point the entry is in [r15,r14) if it is in the book
-		mov   rax, r14
-		sub   rax, r15
-		xor   edx, edx
-		mov   ecx, sizeof.BookEntry
-		cmp   r15, r14
-		jae   .Out	; if r15>=r14, then the entry is not in the book
-		div   rcx
-		shr   rax, 1
-		mul   rcx	   
-		lea   rsi, [r15+rax]
-		cmp   r12, qword[rsi+BookEntry.key]
-	      cmove   r15, rsi
-		 je   .Found	; we have found the key, but it might not be the first one
-	      cmovb   r14, rsi
-		lea   rsi, [rsi+sizeof.BookEntry]
-	      cmova   r15, rsi
-		jmp   .Split
+        ; at this point the entry is in [r15,r14) if it is in the book
+
+                mov   rax, r14
+                sub   rax, r15
+                xor   edx, edx
+                mov   ecx, sizeof.BookEntry
+                cmp   r15, r14
+                jae   .EntriesDone     ; if r15>=r14, then the entry is not in the book
+                div   rcx
+                shr   rax, 1
+                mul   rcx          
+                lea   rsi, [r15+rax]
+                cmp   r13, qword[rsi+BookEntry.key]
+              cmove   r15, rsi
+                 je   .Found    ; we have found the key, but it might not be the first one
+              cmovb   r14, rsi
+                lea   rsi, [rsi+sizeof.BookEntry]
+              cmova   r15, rsi
+                jmp   .Split
 .Found:
-	; at this point r15 is the address of a matching entry 
-		sub   r15, sizeof.BookEntry
-		cmp   r15, qword[book.buffer]
-		 jb   .FoundFirst
-		cmp   r12, qword[r15+BookEntry.key]
 
-
-
-		 je   .Found		 
-
-
+        ; at this point r15 is the address of a matching entry 
+                sub   r15, sizeof.BookEntry
+                cmp   r15, qword[book.buffer]
+                 jb   .FoundFirst
+                cmp   r13, qword[r15+BookEntry.key]
+                 je   .Found             
 .FoundFirst:
-	; at this point r15+sizeof.BookEntry is the address of the first matching entry
+        ; at this point r15+sizeof.BookEntry is the address of the first matching entry
 
-	; edi is going to be the number of legal moves found in the book
-		xor   edi, edi
-	; r13d is going to be the total weight
-		xor   r13d, r13d
-	; r11d is going to be the maximum weight
-		xor   r11d, r11d
+                mov   r9d, AVG_MOVES - 1
 .NextEntry:
-		add   r15, sizeof.BookEntry
-		cmp   r15, r14
-		jae   .EntriesDone
-		cmp   r12, qword[r15+BookEntry.key]
-		jne   .EntriesDone
+                add   r15, sizeof.BookEntry
+                cmp   r15, r14
+                jae   .EntriesDone
+                cmp   r13, qword[r15+BookEntry.key]
+                jne   .EntriesDone
 
-	      movzx   esi, word[r15+BookEntry.move]
-  PlotglotMove2Move   esi
-		mov   rdx, qword[rbp+Pos.rootMovesVec.table]
+              movzx   edx, word[r15+BookEntry.move]
+              movzx   esi, word[r15+BookEntry.weight]
+  PlotglotMove2Move   edx
+                lea   r8, [.legalList]
     .CheckLegalLoop:
-		cmp   rdx, qword[rbp+Pos.rootMovesVec.ender]
-		jae   .NextEntry
-		mov   eax, dword[rdx+RootMove.pv+4*0]
-		mov   ecx, esi
-		xor   ecx, eax
-		add   rdx, sizeof.RootMove
-	       test   ecx, 0x03FFF
-		jnz   .CheckLegalLoop
-	      movzx   ecx, word[r15+BookEntry.weight]
-		add   r13d, ecx
-		mov   dword[.moveList+8*rdi+0], eax
-		mov   dword[.moveList+8*rdi+4], ecx
-		cmp   r11d, ecx
-	      cmovb   r11d, ecx
-		add   edi, 1
-		cmp   edi, MAX_MOVES
-		 jb   .NextEntry
+                mov   eax, dword[r8+ExtMove.move]
+               test   eax, eax
+                 jz   .NextEntry
+                mov   ecx, edx
+                xor   ecx, eax
+                add   r8, sizeof.ExtMove
+               test   ecx, 0x03FFF
+                jnz   .CheckLegalLoop
+                mov   dword[rdi+ExtBookMove.move], eax
+                mov   dword[rdi+ExtBookMove.weight], esi
+                mov   dword[rdi+ExtBookMove.total], r11d
+                cmp   esi, r12d
+             cmovae   r10d, eax
+             cmovae   r12d, esi
+                add   rdi, sizeof.ExtBookMove
+                add   r11d, esi
+                sub   r9d, 1
+                jns   .NextEntry  ; guard against books with too many entries for this pos
+
 .EntriesDone:
-		xor   esi, esi
-	       test   edi, edi
-		 jz   .NoMoves
-	       test   r13d, r13d
-		 jz   .ZeroTotal
+                mov   eax, r10d  ; best book move
+                mov   ecx, r11d  ; total weight
+                mov   edx, r12d  ; best weight
+                mov   dword[rdi+ExtBookMove.move], 0
+                mov   dword[rdi+ExtBookMove.weight], 0
+                mov   dword[rdi+ExtBookMove.total], -1
+                add   rsp, .localsize
+                pop   rdi rsi rbx r12 r13 r14 r15
+                ret
 
-	; if BestBookMove option is set, only choose the best moves
-		cmp   byte[book.bestBookMove], 0
-		jne   .FindBestMoves
-		
-	; get edx = a random number in [0,r13)
-		lea   rcx, [book.seed]
-	       call   Math_Rand_i
-		xor   edx, edx
 
-		div   r13d
-		xor   ecx, ecx
-		mov   r8d, edx
-      .NextMove:
-		mov   eax, dword[.moveList+8*rsi+0]
-		mov   edx, dword[.moveList+8*rsi+4]
-		add   ecx, edx
-		cmp   r8d, ecx
-		 jb   .Return
-		add   esi, 1
-		cmp   esi, edi
-		 jb   .NextMove
-	; we shouldn't get here, just return last move in list
-		jmp   .Return
 
-.FindBestMoves:
-	; filter out moves with weight < r11d
-	; and choose one of them randomly
-		xor   esi, esi
-		xor   ecx, ecx
-    .FindBestMoves_Loop:
-		mov   eax, dword[.moveList+8*rcx+0]
-		mov   dword[.moveList+8*rsi], eax
-		add   esi, 1
-		cmp   dword[.moveList+8*rcx+4], r11d
-		sbb   esi, 0	; move esi back one if weight < r11d
-		add   ecx, 1
-		cmp   ecx, edi
-		 jb   .FindBestMoves_Loop
-		
-	; esi is the number of best moves, it shouldn't be zero
-	       test   esi, esi
-		 jz   .NoMoves
-		mov   edi, esi
 
-.ZeroTotal:
-	; just pick a random move:
-		lea   rcx, [book.seed]
-	       call   Math_Rand_i
-		xor   edx, edx
-		div   edi
-		mov   eax, dword[.moveList+8*rdx+0]
-		mov   edx, dword[.moveList+8*rdx+4]
-		jmp   .Return
-.NoMoves:
-		xor   eax, eax
-		jmp   .Return
+
+
+Book_GetMove:
+        ; in: rbp address of position
+        ;     rbx address of state
+        ; out: eax move
+        ;      edx its weight in polyglot book
+        ;          undefined if eax=MOVE_NONE
+        ;      ecx ponder move
+        ;          undefined if eax=MOVE_NONE
+        ;          could be MOVE_NONE
+
+               push   r15 r14 r13 r12 rbx rsi rdi
+virtual at rsp
+ .move       rd 1
+ .weight      rd 1
+ .ponder    rd 1
+                rd 1
+ .moveList   rb MAX_MOVES*sizeof.ExtBookMove
+ .lend       rb 0
+end virtual
+.localsize = ((.lend-rsp+15) and (-16))
+         _chkstk_ms   rsp, .localsize
+                sub   rsp, .localsize
+                cmp   dword[book.failCount], 3     ; 3 strikes and out
+                 jb   .TryBook
+.ReturnNone:
+                xor   eax, eax
+                xor   edx, edx
+                xor   ecx, ecx
+.Return:
+                add   rsp, .localsize
+                pop   rdi rsi rbx r12 r13 r14 r15
+                ret
+.Failed:
+                inc   dword[book.failCount]
+                jmp   .ReturnNone
+.TryBook:
+                mov   ecx, dword[book.bookDepth]
+                sub   ecx, 1
+               test   ecx, ecx
+                jns   .BookDepthPositive
+.BookDepthNegative:
+                lea   rdi, [.moveList]
+               call   Book_Probe_NegDepth
+                jmp   .ChooseMove
+.BookDepthPositive:
+                add   ecx, 1
+                cmp   ecx, dword[rbp+Pos.gamePly]
+                jbe   .ReturnNone
+                lea   rcx, [.moveList]
+               call   Book_Probe
+.ChooseMove:
+                mov   esi, ecx
+               test   eax, eax
+                 jz   .Failed
+               test   ecx, ecx
+                 jz   .FoundMove     ; all weights are zero
+                cmp   byte[book.bestBookMove], 0
+                jne   .FoundMove
+                lea   rcx, [book.seed]
+               call   Math_Rand_i
+                xor   edx, edx
+                div   rsi
+                mov   esi, edx
+                lea   rdi, [.moveList]
+.MoveLoop:
+                mov   ecx, dword[rdi+ExtBookMove.move]
+                mov   r8d, dword[rdi+ExtBookMove.weight]
+                cmp   esi, dword[rdi+ExtBookMove.total]
+             cmovae   eax, ecx
+             cmovae   edx, r8d
+                add   rdi, sizeof.ExtBookMove
+               test   ecx, ecx
+                jnz   .MoveLoop
+.FoundMove:
+                mov   dword[.move], eax
+                mov   dword[.weight], edx
+.FindPonder:
+                mov   ecx, dword[.move]
+               call   Move_GivesCheck
+                mov   edx, eax
+                mov   ecx, dword[.move]
+               call   Move_Do__PerftGen_Root
+                lea   rcx, [.moveList]
+               call   Book_Probe
+               test   eax, eax
+                jnz   .FoundPonder
+
+        ; choose a ponder move here
+        ; not implemented yet
+
+.FoundPonder:
+                mov   dword[.ponder], eax
+                mov   ecx, dword[.move]
+               call   Move_Undo
+                mov   eax, dword[.move]
+                mov   edx, dword[.weight]
+                mov   ecx, dword[.ponder]
+                jmp   .Return
+
+
+Book_Probe_NegDepth:
+        ; in: rbp address of position
+        ;     rbx address of state
+        ;     ecx depth remaining (ecx<0)
+        ;         ecx = -1 simply checks if pos is in the book
+        ;         ecx = -2 checks if there is a move in the book
+        ;                  leading to another position in the book
+        ;         ect.
+        ;     rdi buffer for list of moves
+        ;
+        ; out: move list at rdi is filled with moves (null terminated)
+        ;      eax best book move, MOVE_NONE iff no moves found
+        ;          could be a move with zero weight
+        ;      ecx total weight, total weight of found moves
+        ;      edx weight of move eax
+
+               push   r15 r14 r13 r12 rbx rsi rdi
+virtual at rsp
+ .succ       rd 1
+             rd 1
+ .moveList   rb AVG_MOVES*sizeof.ExtBookMove
+ .lend       rb 0
+end virtual
+.localsize = ((.lend-rsp+15) and (-16))
+         _chkstk_ms   rsp, .localsize
+                sub   rsp, .localsize
+
+                lea   r15d, [rcx+1]
+
+                xor   r12d, r12d
+                xor   r13d, r13d
+                xor   r14d, r14d
+        ; r12d is best book move
+        ; r13d is total weight
+        ; r14d is weight of best book move
+
+                lea   rcx, [.moveList]
+               call   Book_Probe
+               test   eax, eax
+                 jz   .Return
+
+                xor   r13d, r13d
+                lea   rsi, [.moveList-sizeof.ExtBookMove]
+.MoveLoop:
+                add   rsi, sizeof.ExtBookMove
+                mov   ecx, dword[rsi+ExtBookMove.move]
+               test   ecx, ecx
+                 jz   .Return
+               call   Move_GivesCheck
+                mov   ecx, dword[rsi+ExtBookMove.move]
+                mov   byte[rbx+State.givesCheck], al
+               call   Move_Do__PerftGen_Root
+                mov   ecx, r15d
+               call   Book_Probe_NegDepth_Child
+                mov   dword[.succ], eax
+                mov   ecx, dword[rsi+ExtBookMove.move]
+               call   Move_Undo
+                mov   eax, dword[.succ]
+               test   eax, eax
+                 jz   .MoveLoop
+                mov   eax, dword[rsi+ExtBookMove.move]
+                mov   ecx, dword[rsi+ExtBookMove.weight]
+                mov   dword[rdi+ExtBookMove.move], eax
+                mov   dword[rdi+ExtBookMove.weight], ecx
+                mov   dword[rdi+ExtBookMove.total], r13d
+                cmp   ecx, r12d
+             cmovae   r12d, eax
+             cmovae   r14d, ecx
+                add   rdi, sizeof.ExtBookMove
+                add   r13d, ecx
+                jmp   .MoveLoop                
+.Return:
+                mov   eax, r12d  ; best book move
+                mov   ecx, r13d  ; total weight
+                mov   edx, r14d  ; best weight
+                mov   dword[rdi+ExtBookMove.move], 0
+                mov   dword[rdi+ExtBookMove.weight], 0
+                mov   dword[rdi+ExtBookMove.total], -1
+                add   rsp, .localsize
+                pop   rdi rsi rbx r12 r13 r14 r15
+                ret
+
+
+
+Book_Probe_NegDepth_Child:
+        ; in: rbp address of position
+        ;     rbx address of state
+        ;     ecx depth remaining (ecx <= 0)
+        ;         ecx = 0 always returns true
+        ;         ecx = -1 simply checks if pos is in the book
+        ;         ecx = -2 checks if there is a move in the book
+        ;                  leading to another position in the book
+        ;         ect.
+        ; out: eax = 0 if there is no line with enough depth
+        ;      eax = -1 if there is a line
+
+               push   r15 r14 r13 r12 rbx rsi rdi
+virtual at rsp
+ .moveList   rb AVG_MOVES*sizeof.ExtBookMove
+ .lend       rb 0
+end virtual
+.localsize = ((.lend-rsp+15) and (-16))
+         _chkstk_ms   rsp, .localsize
+                sub   rsp, .localsize
+
+                mov   r15d, ecx
+               test   ecx, ecx
+                jns   .ReturnTrue
+
+                lea   rcx, [.moveList]
+               call   Book_Probe
+               test   eax, eax
+                 jz   .Return
+
+                lea   rdi, [.moveList]
+                add   r15d, 1
+                jns   .ReturnTrue
+.MoveLoop:
+                mov   ecx, dword[rdi+ExtBookMove.move]
+                xor   eax, eax
+               test   ecx, ecx
+                 jz   .Return
+               call   Move_GivesCheck
+                mov   ecx, dword[rdi+ExtBookMove.move]
+                mov   byte[rbx+State.givesCheck], al
+               call   Move_Do__PerftGen_Root
+                mov   ecx, r15d
+               call   Book_Probe_NegDepth_Child
+                mov   esi, eax
+                mov   ecx, dword[rdi+ExtBookMove.move]
+               call   Move_Undo
+                add   rdi, sizeof.ExtBookMove
+               test   esi, esi
+                 jz   .MoveLoop
+.ReturnTrue:
+                 or   eax, -1
+.Return:
+                add   rsp, .localsize
+                pop   rdi rsi rbx r12 r13 r14 r15
+                ret
+
+
+Book_DisplayProbe:
+        ; in: rbp address of position
+        ;     rsi cmd string
+               push   rbx rdi r13
+               call   SkipSpaces
+               call   ParseInteger
+      ClampUnsigned   eax, 1, 12
+                mov   ecx, eax
+                xor   edx, edx
+                xor   r13d, r13d
+                mov   rbx, qword[rbp+Pos.state]
+               call   Book_DisplayProbeHelper
+                pop   r13 rdi rbx
+                ret
+
+
+Book_DisplayProbeHelper:
+        ; in: rbp address of position
+        ;     rbx address of state
+        ;     ecx depth remaining (ecx<0)
+        ;         ecx = 0 simply checks if pos is in the book
+        ;         ecx = 1 checks if there is a move in the book
+        ;                 leading to another position in the book
+        ;         ect.
+        ;     edx cursor offset
+
+               push   r15 r14 rbx rsi rdi
+virtual at rsp
+ .moveList   rb AVG_MOVES*sizeof.ExtBookMove
+ .lend       rb 0
+end virtual
+.localsize = ((.lend-rsp+15) and (-16))
+         _chkstk_ms   rsp, .localsize
+                sub   rsp, .localsize
+
+                sub   ecx, 1
+                mov   r15d, ecx
+                mov   r14d, edx
+                 js   .ReturnNL
+                lea   rcx, [.moveList]
+               call   Book_Probe
+                lea   rsi, [.moveList]
+               test   eax, eax
+                 jz   .ReturnNL
+.MoveLoop:
+                mov   ecx, dword[rsi+ExtBookMove.move]
+               test   ecx, ecx
+                 jz   .Return
+               call   Move_GivesCheck
+                mov   ecx, dword[rsi+ExtBookMove.move]
+                mov   byte[rbx+State.givesCheck], al
+
+                mov   ecx, r14d
+                sub   ecx, r13d
+                jbe   .Good
+                lea   rdi, [Output]
+                mov   al, ' '
+          rep stosb
+                call  _WriteOut_Output
+.Good:
+
+                lea   rdi, [Output]
+                mov   ecx, dword[rsi+ExtBookMove.move]
+                mov   edx, dword[rbp+Pos.chess960]
+               call   PrintUciMove
+                mov   al, '('
+              stosb
+                mov   eax, dword[rsi+ExtBookMove.weight]
+               call   PrintUnsignedInteger
+                mov   eax, ') '
+              stosw
+                lea   rcx, [Output]
+                lea   r13, [r14+rdi]
+                sub   r13, rcx
+               call   _WriteOut
+
+                mov   ecx, dword[rsi+ExtBookMove.move]
+               call   Move_Do__PerftGen_Root
+                mov   ecx, r15d
+                mov   edx, r13d
+               call   Book_DisplayProbeHelper
+                mov   ecx, dword[rsi+ExtBookMove.move]
+               call   Move_Undo
+                add   rsi, sizeof.ExtBookMove
+                jmp   .MoveLoop
+.ReturnNL:
+                lea   rcx, [sz_NewLine]
+                lea   rdi, [sz_NewLineEnd]
+               call   _WriteOut
+                xor   r13, r13
+.Return:
+                add   rsp, .localsize
+                pop   rdi rsi rbx r14 r15
+                ret
+
+
+
 
 
 

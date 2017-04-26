@@ -78,6 +78,9 @@ UciNewGame:
 		xor   ecx, ecx
 	       call   Position_ParseFEN
 	       call   Search_Clear
+if USE_BOOK>0
+               call   Book_Refresh
+end if
 		jmp   UciGetInput
 
 
@@ -228,15 +231,20 @@ if VERBOSE > 0
 		jnz   UciEval
 end if
 
-if USE_BOOK
-	     szcall   CmpString, 'brain2polyglot'
-	       test   eax, eax
-		 jz   @f
-	       call   Brain2Polyglot
-		jmp   UciGetInput
-	@@:
+if USE_BOOK > 0
+             szcall   CmpString, 'bookprobe'
+               test   eax, eax
+                 jz   @f
+               call   Book_DisplayProbe
+                jmp   UciGetInput
+        @@:
 
-
+             szcall   CmpString, 'brain2polyglot'
+               test   eax, eax
+                 jz   @f
+               call   Brain2Polyglot
+                jmp   UciGetInput
+        @@:
 end if
 
 if PROFILE > 0
@@ -307,10 +315,17 @@ UciIsReady:
 ;;;;;;;;;;;;;
 
 UciPonderHit:
-		mov   al, byte[signals.stopOnPonderhit]
-	       test   al, al
-		jnz   .stop
-		mov   byte[limits.ponder], al
+              movzx   eax, byte[signals.stopOnPonderhit]
+               test   al, al
+                jnz   .stop
+                mov   byte[limits.ponder], al
+if USE_BOOK
+        ; if have a book move, the search should be stopped
+                cmp   eax, dword[book.move]
+                 je   @f
+                mov   byte[signals.stop], -1
+        @@:
+end if
         ; we are now switching to normal search mode
         ; check the time in case we have to abort the search asap
                call   CheckTime
@@ -745,6 +760,11 @@ if USE_BOOK
 	       test   eax, eax
 		jnz   .CheckValue
 
+                lea   rcx, [sz_bookdepth]
+               call   CmpStringCaseless
+                lea   rbx, [.BookDepth]
+               test   eax, eax
+                jnz   .CheckValue
 end if
 
 if USE_WEAKNESS
@@ -1001,16 +1021,19 @@ if USE_BOOK
 .BookFile:
 	       call   Book_Load
 		jmp   UciGetInput
-
 .OwnBook:
 	       call   ParseBoole
-		mov   byte[book.use], al
+		mov   byte[book.ownBook], al
 		jmp   UciGetInput
-
 .BestBookMove:
 	       call   ParseBoole
 		mov   byte[book.bestBookMove], al
 		jmp   UciGetInput
+.BookDepth:
+               call   ParseInteger
+        ClampSigned   eax, -10, 100
+                mov   dword[book.bookDepth], eax
+                jmp   UciGetInput
 end if
 
 
