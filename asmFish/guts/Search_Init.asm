@@ -105,7 +105,7 @@ align 8
 .constd_1p78    dq 1.78
 .constd_2p0     dq 2.0
 
-.RazorMargin             dd 483, 570, 603, 554
+.RazorMargin             dd 0, 570, 603, 554
 ._CaptureOrPromotion_or  db  0,-1,-1, 0
 ._CaptureOrPromotion_and db -1,-1,-1, 0
 
