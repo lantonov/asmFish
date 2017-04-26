@@ -1,14 +1,11 @@
-The algorithm for making polyglot-compatible Cerebellum is the following (thanks to Dillon):
+The algorithm for making polyglot-compatible Cerebellum book is the following:
 
-1. Download the entire https://github.com/lantonov/asmFish folder. 
-2. Download the latest Cerebellum book from http://www.zipproth.de/#cerebellum_deutsch and unzip it in the directory with FASM.EXE
-3. Open pedantFishW_popcnt.asm in a txt editor (ex. Notepad). 
-4. On line (24) "USE_BOOK equ 0" change "USE_BOOK equ 1". This is the enabling. 
-5. In a command prompt enter the following: fasm pedantFishW_popcnt.asm pedantFishW_popcnt.exe
-6. Open the newly compiled pedantFishW_popcnt.exe with enabled book handling functions and then you are ready to execute generating.
-7. Example: brain2polyglot depth 1024 in "Cerebellum_light.bin" out "polybook.bin"
+1. Download the latest Cerebellum book from http://www.zipproth.de/#cerebellum_deutsch and unzip it in some directory
+2. Download Cerebellum2polyglot_Linux if you are on Linux or Cerebellum2polyglot_Windows.exe if you are on Windows in the same directory as the Cerebellum book. 
+3. Start the respective engine 
+4. Enter a command similar to 'brain2polyglot depth 1024 in "Cerebellum_light.bin" out "polybook.bin"' to start translation
 
-This procedure is much shortened by the 2 engines included here: Cerebellum2polyglot_Linux and Cerebellum2polyglot_Windows.exe. Just download the latest Cerebellum book, put it in the same directory as the engine, fire the latter and use a command similar to brain2polyglot depth 1024 in "Cerebellum_light.bin" out "polybook.bin" to start translation. The engines have been tweaked so that the maximum number of moves searched are 512 (1024 plies), more than enough for most purposes. However, the more depth searched the slower the translation, so in practice 220-250 plies (110-125 moves) is enough to capture more than 99.9% of the positions in the original book. To speed up things, you can increase the threads with setoption name Threads value <whatever you have>.
+The engines have been tweaked so that the maximum number of moves searched are 512 (1024 plies), more than enough for most purposes. However, the more depth searched the slower the translation, so in practice 220-250 plies (110-125 moves) is enough to capture more than 99.9% of the positions in the original book. To speed up things, you can increase the threads with setoption name Threads value <whatever you have>.
 
 Below is a translating session with the latest Cerebellum (2016-12-08). I cannot include the Cerebellum-polyglot book itself because its size is > 78 MB, and the maximal size that GitHub allows for upload is 25 MB.
 
