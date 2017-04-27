@@ -452,7 +452,7 @@ end virtual
                 mov   dword[rdi+ExtBookMove.move], eax
                 mov   dword[rdi+ExtBookMove.weight], ecx
                 mov   dword[rdi+ExtBookMove.total], r13d
-                cmp   ecx, r12d
+                cmp   ecx, r14d
              cmovae   r12d, eax
              cmovae   r14d, ecx
                 add   rdi, sizeof.ExtBookMove
