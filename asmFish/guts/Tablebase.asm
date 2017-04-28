@@ -1,16 +1,5 @@
 
 
-; todo: _ZN13TablebaseCore14MaxCardinalityE should be renamed Tablebase_MaxCardinality
-; and then _ZN13TablebaseCore14MaxCardinalityE can be elliminated
-
-TableBase_Init:
-		sub   rsp, 8*5
-	       call   _ZN13TablebaseCore4initEPKc
-		mov   eax, dword[_ZN13TablebaseCore14MaxCardinalityE]
-		mov   dword[Tablebase_MaxCardinality], eax
-		add   rsp, 8*5
-		ret
-
 
 
 Tablebase_ProbeAB:

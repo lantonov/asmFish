@@ -896,14 +896,21 @@ end if
 
 if USE_SYZYGY
 .SyzygyPath:
+        ; if path is <empty>, send NULL to init
+                lea   rcx, [sz_empty]
+               call   CmpString
+                xor   ecx, ecx
+               test   eax, eax
+                jnz   .SyzygyPathDone
 	; find terminator and replace it with zero
 		mov   rcx, rsi
 	@@:	add   rsi, 1
 		cmp   byte[rsi], ' '
 		jae   @b
 		mov   byte[rsi], 0
-	       call   TableBase_Init
-               call   TableBase_DisplayInfo
+.SyzygyPathDone:
+	       call   Tablebase_Init
+               call   Tablebase_DisplayInfo
                 jmp   UciGetInput
 end if
 

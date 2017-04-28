@@ -1445,10 +1445,10 @@ _ZL7init_tbPc.constprop.4:
 	sete	byte [rbx+1AH]				
 	test	r9d, r9d				
 	setg	dl					
-	cmp	r8d, dword [ _ZN13TablebaseCore14MaxCardinalityE]
+	cmp	r8d, dword [Tablebase_MaxCardinality]
 	mov	byte [rbx+1BH], dl			
 	jle	?_140					
-	mov	dword [ _ZN13TablebaseCore14MaxCardinalityE], r8d
+	mov	dword [Tablebase_MaxCardinality], r8d
 ?_140:	test	dl, dl					
 	jz	?_142					
 	test	eax, eax				
@@ -1742,7 +1742,9 @@ _ZL14free_wdl_entryP7TBEntry:
 	ret						
 
 
-_ZN13TablebaseCore4initEPKc:
+Tablebase_Init:
+        ; in: rcx address of path string
+        ;         use 0 for behavior of <empty> 
 
 	push	r15					
 	push	r14					
@@ -1752,60 +1754,75 @@ _ZN13TablebaseCore4initEPKc:
 	push	rdi					
 	push	rsi					
 	push	rbx					
-	sub	rsp, 72 				
-	cmp	byte [ _ZL11initialized], 0		
-	mov	rbx, rcx				
-	jnz	?_175					
-	lea	r9, [ _ZL8binomial]			
-	xor	r10d, r10d				
-	mov	rcx, r9 				
-	jmp	?_182					
+	sub	rsp, 72
+        mov     rbx, rcx                                
+        cmp     byte [ _ZL11initialized], 0             
+        jz      ?_DoInit
 
-?_175:	mov	rcx, qword [ _ZL11path_string]	
-	lea	rdi, [ _ZL8TB_piece]		
-	xor	esi, esi				
-	call	free					
-	mov	rcx, qword [ _ZL5paths] 	
-	call	free
+        ; table core is initialized as this point
+        mov     rax, qword[_ZL11path_string]
+        test    rax, rax
+        jz      ?_NothingToFree
+        lea     rcx, [_ZL8TB_mutex]
+        call    _MutexDestroy
+        mov     rcx, qword[_ZL11path_string]
+        call    free
+        mov     rcx, qword[_ZL5paths]
+        call    free
+?_NothingToFree:
 
-	xor	eax, eax
-	mov	qword[_ZL11path_string], rax
-	mov	qword[_ZL5paths], rax
+        lea     rdi, [ _ZL8TB_piece]
+        xor     esi, esi
+?_176:  cmp     esi, dword [ _ZL11TBnum_piece]
+        jge     ?_177                                   
+        mov     rcx, rdi                                
+        inc     esi                                     
+        call    _ZL14free_wdl_entryP7TBEntry
+        mov     ecx, 120    ; need to zero out the entry
+        xor     eax, eax    ; all pointers and data
+        rep stosb           ; are invalid now
+        jmp     ?_176
+
+?_177:  lea     rdi, [ _ZL7TB_pawn]                     
+        xor     esi, esi                                
+?_178:  cmp     esi, dword [ _ZL10TBnum_pawn]   
+        jge     ?_179                                   
+        mov     rcx, rdi                                
+        inc     esi                                     
+        call    _ZL14free_wdl_entryP7TBEntry
+        mov     ecx, 384    ; need to zero out the entry
+        xor     eax, eax    ; all pointers and data
+        rep stosb           ; are invalid now
+        jmp     ?_178
+?_179:
+        xor     esi, esi                                
+?_180:
+        mov     rcx, qword[?_334+rsi]
+        test    rcx, rcx                                
+        jz      ?_181
+        call    _ZL14free_dtz_entryP7TBEntry
+        mov     qword[?_334+rsi], 0     ; this pointer was just freed
+?_181:  add     rsi, 24                                 
+        cmp     rsi, 24*64
+        jb      ?_180
+
+        xor     eax, eax
+        mov     qword[_ZL11path_string], rax
+        mov     qword[_ZL5paths], rax
         mov     dword[tb_total_cnt], eax
         mov     dword[_ZL9num_paths], eax
-        mov	dword[_ZL10TBnum_pawn], eax
-        mov	dword[_ZL11TBnum_piece], eax
+        mov     dword[_ZL10TBnum_pawn], eax
+        mov     dword[_ZL11TBnum_piece], eax
+        jmp     ?_CheckPath
 
-?_176:	cmp	esi, dword [ _ZL11TBnum_piece]	
-	jge	?_177					
-	mov	rcx, rdi				
-	inc	esi					
-	add	rdi, 120				
-	call	_ZL14free_wdl_entryP7TBEntry		
-	jmp	?_176					
-
-?_177:	lea	rdi, [ _ZL7TB_pawn]			
-	xor	esi, esi				
-?_178:	cmp	esi, dword [ _ZL10TBnum_pawn]	
-	jge	?_179					
-	mov	rcx, rdi				
-	inc	esi					
-	add	rdi, 384				
-	call	_ZL14free_wdl_entryP7TBEntry		
-	jmp	?_178					
-
-?_179:	xor	esi, esi				
-?_180:	lea	rax, [ ?_334]			
-	mov	rcx, qword [rax+rsi]			
-	test	rcx, rcx				
-	jz	?_181					
-	call	_ZL14free_dtz_entryP7TBEntry		
-?_181:	add	rsi, 24 				
-	cmp	rsi, 1536				
-	jnz	?_180					
-	jmp	?_195					
-
-?_182:	xor	r8d, r8d				
+?_DoInit:
+        ; table core is not initialized as this point
+        lea     r9, [ _ZL8binomial]                     
+        xor     r10d, r10d                              
+        mov     rcx, r9
+?_182:
+        ; initialization loop
+        xor     r8d, r8d
 ?_183:	mov	eax, r8d				
 	mov	r11d, 1 				
 	mov	edx, 1					
@@ -1916,25 +1933,23 @@ _ZN13TablebaseCore4initEPKc:
 	jne	?_186					
 	mov	byte [ _ZL11initialized], 1
 
-?_195:
-	mov	rax, qword[sz_emptyfile]
-	cmp	rax, qword[rbx]
-	je	?_233
+?_CheckPath:
+        test    rbx, rbx
+	jz      ?_233
 	xor	eax, eax				
 	cmp	al, byte [rbx]
 	je	?_233
-	call	Tablebase_HandlePathStrings
 
-?_204:
+        ; have path string at this point
+	call	Tablebase_HandlePathStrings
 	lea	rcx, [_ZL8TB_mutex]
 	call	_MutexCreate
-
 
 	lea	rdx, [ _ZL7TB_hash]
 	mov	dword [ _ZL10TBnum_pawn], 0		
 	lea	rcx, [ _ZL7TB_pawn]
 	mov	dword [ _ZL11TBnum_piece], 0	
-	mov	dword [ _ZN13TablebaseCore14MaxCardinalityE], 0
+	mov	dword [Tablebase_MaxCardinality], 0
 ?_205:	xor	eax, eax				
 ?_206:	mov	qword [rdx+rax], 0			
 	mov	qword [rdx+rax+8H], 0			
@@ -2209,6 +2224,7 @@ Tablebase_HandlePathStrings:
 	xor	ebx, ebx	; ebx num_paths
 .GetNewPath:
 	call	SkipSpaces
+        push    0               ; tbs found
 	push	rsi		; start of path
 	add	ebx, 1
 .GetNextChar:
@@ -2224,22 +2240,22 @@ Tablebase_HandlePathStrings:
 	mov	byte[rsi-1], 0
 	mov	dword[_ZL9num_paths], ebx
 	imul	ecx, ebx, 16
-	call	malloc
+	call	malloc                  ; 16 byte aligned
 	mov	qword[_ZL5paths], rax
 	mov	edx, ebx
 .PopPath:
 	sub	edx, 1
 	lea	ecx, [rdx+rbx]
 	jl	.PopPathDone
-	pop	qword[rax+8*rdx]     ; pathstring
-	mov	qword[rax+8*rcx], 0  ; tbs found
+	pop	qword[rax+8*rdx]        ; pathstring
+	pop     qword[rax+8*rcx]        ; 0 (tbs found)
 	jmp	.PopPath
 .PopPathDone:
 	pop	rbp rdi rsi
 	ret
 
 
-TableBase_DisplayInfo:
+Tablebase_DisplayInfo:
                push   rbx rsi rdi
 		xor   esi, esi
 .PrintNext:

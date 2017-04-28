@@ -354,8 +354,16 @@ wdl_to_Value5:
 WDLtoDTZ db -1,-101,0,101,1
 
 align 64
-_ZN13TablebaseCore14MaxCardinalityE:
-	rd    16
+;_ZN13TablebaseCore14MaxCardinalityE:
+;	rd    16
+Tablebase_MaxCardinality   rd 1
+Tablebase_Cardinality      rd 1
+Tablebase_ProbeDepth       rd 1
+Tablebase_Score            rd 1
+Tablebase_RootInTB         rb 1    ; boole 0 or -1
+Tablebase_UseRule50        rb 1    ; boole 0 or -1
+                           rb 2
+                           rd 11
 
 _ZL7pfactor:
 	rb    128

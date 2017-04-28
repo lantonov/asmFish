@@ -520,16 +520,6 @@ PushToCorners              rb 64
 PushClose                  rb 8
 PushAway                   rb 8
 
-;;;;;;;;;;;;;; data for tablebase ;;;;;;;;;;;;;;
-
-align 16
-Tablebase_Cardinality      rd 1
-Tablebase_MaxCardinality   rd 1
-Tablebase_ProbeDepth       rd 1
-Tablebase_Score            rd 1
-Tablebase_RootInTB         rb 1    ; boole 0 or -1
-Tablebase_UseRule50        rb 1    ; boole 0 or -1
-
 
 
 ;;;; make a section for tb   todo: this should be merged with previous two sections
@@ -709,8 +699,8 @@ match =0, VERBOSE {
 		xor   ecx, ecx
 	       call   ThreadPool_Create
 if USE_SYZYGY
-		lea   rcx, [sz_emptyfile]
-	       call   TableBase_Init
+		xor   ecx, ecx
+	       call   Tablebase_Init
 end if
 if USE_BOOK
 	       call   Book_Create
@@ -737,8 +727,8 @@ if USE_BOOK
 	       call   Book_Destroy
 end if
 if USE_SYZYGY
-		lea   rcx, [sz_emptyfile]
-	       call   TableBase_Init
+		xor   ecx, ecx
+	       call   Tablebase_Init
 end if
 	       call   ThreadPool_Destroy
 	       call   MainHash_Destroy

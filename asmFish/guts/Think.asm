@@ -910,6 +910,7 @@ if VERBOSE<2
 	       call   PrintUnsignedInteger
 end if
 
+if USE_SYZYGY
 	      movsx   r13d, byte[Tablebase_RootInTB]
 		mov   eax, r12d
 		cdq
@@ -919,6 +920,7 @@ end if
 		sar   eax, 31
 		and   r13d, eax
 	     cmovnz   r12d, dword[Tablebase_Score]
+end if
 
 		mov   rax, ' score '
 	      stosq
