@@ -96,6 +96,7 @@ end virtual
 		mov   dword[.alpha], ecx
 		mov   dword[.beta], edx
 		mov   dword[.depth], r8d
+             Assert   le, r8d, 0, 'assertion depth<=0 failed in qsearch'
 
 	      movzx   eax, byte[rbx-1*sizeof.State+State.ply]
 		add   eax, 1
@@ -343,25 +344,26 @@ end if
 .SkipFutilityPruning:
 	end if
 
-	; prepare pieces for Zobrist look up
-		shl   r14d, 6+3
-		shl   r15d, 6+3
 
 	; do not search moves with negative see value
 	if InCheck eq 0
 		lea   eax, [rsi-MOVE_TYPE_PROM]
+		shl   r14d, 9
+		shl   r15d, 9
 		cmp   eax, 4
 		 jb   .DontContinue
 	else
-		mov   eax, dword[rbp+Pos.sideToMove]
-		cmp   edi, VALUE_MATED_IN_MAX_PLY
-		jle   .DontContinue
-
 	     Assert   ne, esi, MOVE_TYPE_CASTLE, 'castling encountered in qsearch<InCheck=true>'
+
+		mov   eax, VALUE_MATED_IN_MAX_PLY
+                sub   eax, edi
+		shl   r14d, 9
+		shl   r15d, 9
+		jnz   .DontContinue
 		cmp   esi, MOVE_TYPE_PROM
 		jae   .DontContinue	   ; catch MOVE_TYPE_EPCAP
-	       test   r15d, r15d
-		jnz   .DontContinue
+               test   eax, dword[.depth]
+                jns   .DontContinue
 	end if
 
 
