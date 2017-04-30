@@ -204,7 +204,7 @@ _movepick_start rb 0
  depth		   rd 1
  threshold	   rd 1
  recaptureSquare   rd 1
-		   rd 2
+ mpKillers         rd 2
 _movepick_end rb 0
 ends
 

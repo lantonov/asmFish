@@ -47,7 +47,7 @@ MovePick_GOOD_CAPTURES:
 		mov   qword[rbx+State.stage], rdx
 
 	; first killer
-		mov   edi, dword[rbx+State.killers+4*0]
+		mov   edi, dword[rbx+State.mpKillers+4*0]
 		mov   eax, edi
 		mov   ecx, edi
 		and   eax, 63
@@ -74,7 +74,7 @@ MovePick_GOOD_CAPTURES:
 MovePick_KILLERS:
 		lea   rdx, [MovePick_KILLERS2]
 		mov   qword[rbx+State.stage], rdx
-		mov   edi, dword[rbx+State.killers+4*1]
+		mov   edi, dword[rbx+State.mpKillers+4*1]
 		mov   eax, edi
 		mov   ecx, edi
 		and   eax, 63
@@ -110,9 +110,9 @@ MovePick_KILLERS2:
 		 jz   MovePick_QUIET_GEN
 		cmp   edi, dword[rbx+State.ttMove]
 		 je   MovePick_QUIET_GEN
-		cmp   edi, dword[rbx+State.killers+4*0]
+		cmp   edi, dword[rbx+State.mpKillers+4*0]
 		 je   MovePick_QUIET_GEN
-		cmp   edi, dword[rbx+State.killers+4*1]
+		cmp   edi, dword[rbx+State.mpKillers+4*1]
 		 je   MovePick_QUIET_GEN
 		cmp   edi, MOVE_TYPE_EPCAP shl 12
 		jae   .special
@@ -183,9 +183,9 @@ MovePick_QUIETS:
 		add   r14, sizeof.ExtMove
 		cmp   eax, dword[rbx+State.ttMove]
 		 je   MovePick_QUIETS
-		cmp   eax, dword[rbx+State.killers+4*0]
+		cmp   eax, dword[rbx+State.mpKillers+4*0]
 		 je   MovePick_QUIETS
-		cmp   eax, dword[rbx+State.killers+4*1]
+		cmp   eax, dword[rbx+State.mpKillers+4*1]
 		 je   MovePick_QUIETS
 		cmp   eax, dword[rbx+State.countermove]
 		 je   MovePick_QUIETS

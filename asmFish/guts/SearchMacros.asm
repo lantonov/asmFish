@@ -167,8 +167,7 @@ end if
 		mov   dword[rbx+0*sizeof.State+State.currentMove], eax
 		mov   qword[rbx+0*sizeof.State+State.counterMoves], rcx
 		mov   byte[rbx+1*sizeof.State+State.skipEarlyPruning], al
-		mov   dword[rbx+2*sizeof.State+State.killers+4*0], eax
-		mov   dword[rbx+2*sizeof.State+State.killers+4*1], eax
+		mov   qword[rbx+2*sizeof.State+State.killers], rax
 
 if USE_SYZYGY
     if .RootNode eq 0
@@ -718,8 +717,10 @@ end if
 		lea   r14, [MovePick_EVASIONS]
 	.NoTTMove:
 		mov   r8, qword[rbx+State.checkersBB]
+                mov   rax, qword[rbx+State.killers]
 	       test   r8, r8
 	     cmovnz   r15, r14
+                mov   qword[rbx+State.mpKillers], rax
 		mov   dword[rbx+State.ttMove], edi
 		mov   qword[rbx+State.stage], r15
 
@@ -908,6 +909,7 @@ end if
 		mov   r12, qword[rbx+State.stage]
 		mov   r13, qword[rbx+State.ttMove]      ; ttMove and Depth
 		mov   r14, qword[rbx+State.countermove] ; counter move and gives check
+                mov   r15, qword[rbx+State.mpKillers]
 	       call   Search_NonPv
 		xor   ecx, ecx
 		mov   byte[rbx+State.skipEarlyPruning], cl
@@ -920,6 +922,7 @@ end if
 		mov   qword[rbx+State.stage], r12
 		mov   qword[rbx+State.ttMove], r13
 		mov   qword[rbx+State.countermove], r14
+                mov   qword[rbx+State.mpKillers], r15
                 jmp   .12done
 .12else:
                 mov   ecx, dword[.move]
