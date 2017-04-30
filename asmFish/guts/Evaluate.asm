@@ -485,14 +485,10 @@ match =Black, Us
 	       andn   r9, r9, qword[.ei.kingRing+8*Us]
 		and   r9, AttackedByThem
 	; r9=b
-		mov   eax, 820
 	       test   edi, edi
 		 jz   ..AllDone
 
-
 	       imul   edi, dword[.ei.kingAttackersWeight+4*Them]
-		cmp   edi, eax
-	      cmovg   edi, eax
 	       imul   eax, dword[.ei.kingAdjacentZoneAttacksCount+4*Them], 103
 		add   edi, eax
 	     popcnt   rax, r8, rcx
