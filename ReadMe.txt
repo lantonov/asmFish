@@ -9,11 +9,10 @@ Run make.bat to automatically assemble the windows/linux sources for the three c
   - base: should run on any 64bit x86 cpu
   - popcnt: generate popcnt instruction
   - bmi2: use instructions introduced in haswell
-Besides the three cpu capabilities, this project now comes in two flavours
-  - asmFish: trim off the cruft in official stockfish and make a lean and mean chess engine
-  - pedantFish: match bench signature of official stockfish to catch search/eval bugs more easily
-More flavors are planned for the future, including mateFish and hybridFish (provided Mohammed takes up the project again).
-  
+You can customize your assemble of asmFish by setting various flags in the file.
+For example, USE_BOOK equ 1 will include several book features.
+
+
 If you observe a crash/misbehaviour in asmFish, please raise an issue here and give me the following information:
   - name of the executable that crashed/misbehaved
   - exception code and exception offset in the case of a crash
@@ -33,12 +32,9 @@ A: With this approach the critical functions would still need to conform to the 
    it simple. Note that compiler output was used in the case of Ronald de Man's syzygy
    probing code, as this is not speed critical but cumbersome to write by hand.
 
-Q: Is asmFish the same as official stockfish?
-A: It is 99.9% official stockfish as there are some inconsequential functional differences in 
-   official that were deemed too silly to put into asmFish. Piece lists are the prime offender
-   here. You can get 100% official stockfish in deterministic searches by setting
-   PEDANTIC equ 1 compile option. The changes can be viewed at
-   https://github.com/lantonov/asmFish/search?q=PEDANTIC
+Q: Is asmFish search the same as official stockfish?
+A: It does now that PEDANTIC = 1 is the default! The changes previously thought to be
+   inconsequential lose about 2 Elo in a head-to-head matchup.
    
 Q: Where can I find the executable files of the old versions ?
 A: All older versions of asmFish/pedantFish are in the branch https://github.com/lantonov/asmFish/tree/executables

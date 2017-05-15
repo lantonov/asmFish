@@ -10,12 +10,12 @@ CPU_HAS_AVX1	 equ 0	;  256 bit floating point       probably only used for memor
 CPU_HAS_AVX2	 equ 0	;  256 bit integer + fmadd      probably not used
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; compile options 0 or 1
-PEDANTIC	 equ 0	;  follow official stockfish exactly so that bench signature matches
 DEBUG		 equ 0	;  turns on the asserts    detecting critical bugs: should be no functional change
 VERBOSE 	 equ 0	;  LOTS of print           find subtle bugs:  0=off, 1=general debug, 2=search debug, 3=eval debug
 PROFILE 	 equ 0	;  counts in the code      view these with profile command after running bench
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; optional features 0 or 1
+PEDANTIC	 equ 1	;  follow official stockfish exactly so that bench signature matches
 USE_MATEFINDER	 equ 0	; less pruning
 USE_CURRMOVE	 equ 1	; printing feature, spamlike
 USE_HASHFULL	 equ 1	; printing feature
