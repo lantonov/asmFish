@@ -1059,7 +1059,8 @@ macro EvalPassedPawns Us {
 	; add to dword[.ei.score]
 
 local addsub, subadd, Them, Up, s, PiecesUs, PiecesThem
-local ..NextPawn, ..AllDone, ..AddToBonus, ..Continue, ..DontScaleDown
+local ..NextPawn, ..AllDone, ..AddToBonus, ..Continue
+local ..DoScaleDown, ..DontScaleDown
 
 match =White, Us
 \{
@@ -1215,9 +1216,12 @@ ProfileInc EvalPassedPawns
 		sar   ecx, 16
 	      movsx   eax, si
 		mov   r10, qword[rbp+Pos.typeBB+8*Pawn]
+               test   r10, qword[ForwardBB+8*(64*Us+s)]
+                jnz   ..DoScaleDown
 		and   r10, PiecesThem
 	       test   r10, qword[PassedPawnMask+8*(r8+64*(Us))]
 		 jz   ..DontScaleDown
+..DoScaleDown:
 		cdq
 		sub   eax, edx
 		sar   eax, 1

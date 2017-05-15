@@ -88,8 +88,8 @@ BookDepth:
                 T3:     h2h3(30) c5d4(10)
                 If BookDepth = 0 the book is probed as if it were in T0 (unchanged)
                 If BookDepth =-1 the book is probed as if it were in T1 (leaves off)
-                If BookDepth =-2 the book is probed as if it were in T2 (trime twice)
-                If BookDepth =-3 the book is probed as if it were in T3 (trime trice)
+                If BookDepth =-2 the book is probed as if it were in T2 (trim twice)
+                If BookDepth =-3 the book is probed as if it were in T3 (trim trice)
                 So with BookDepth <= -3, the move d4c5 is not considered.
                 With BookDepth <= -5, the move h2h3 is also not considered.
 

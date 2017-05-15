@@ -291,7 +291,7 @@ macro blsi a,b,t {
 
 
 ; a = And(Not(b),c)
-; flags are not handled consistently
+; sign and zero flags are handled consistently
 macro andn a,b,c {
  match =1, CPU_HAS_BMI1 \{
 	       andn  a,b,c

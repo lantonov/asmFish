@@ -6,9 +6,9 @@ macro EvalPawns Us {
 	; out esi score
 local Them, Up, Right, Left
 local Isolated0, Isolated1, Backward0, Backward1, Unsupported, Doubled
-local ..NextPiece, ..AllDone, ..WritePawnSpan
+local ..NextPiece, ..AllDone, ..Done, ..WritePawnSpan
 local ..Neighbours_True, ..Lever_False, ..TestUnsupported
-local ..Lever_True, ..Neighbours_False, ..Continue, ..NoPassed
+local ..Lever_True, ..Neighbours_False, ..Continue, ..NoPassed, ..PopLoop
 
 match =White, Us
 \{
@@ -197,8 +197,9 @@ end if
 	     cmovnz   edx, dword[Connected+4*r11]
 		add   esi, edx
 	; connected is taken care of
-	     popcnt   r8, r8, rax
-	; r8 = popcnt(supported)
+	     popcnt   r11, r8, rax
+        ; r8 = supported
+	; r11 = popcnt(supported)
 
 		mov   rax, qword[PawnAttacks+8*(64*Us+rcx)]
 		and   rax, r14
@@ -207,6 +208,8 @@ end if
 		and   rdx, r14
 	; rdx = leverPush
 
+                mov   r12, r10
+
 	       test   r13, qword[ForwardBB+8*(64*Us+rcx)]
 		jnz   ..NoPassed
 		xor   r10, rax
@@ -214,16 +217,42 @@ end if
 		jnz   ..NoPassed
 	     popcnt   rax, rax, r10
 	     popcnt   rdx, rdx, r10
-		sub   r8, rax
+		sub   r11, rax
 		sub   r9, rdx
-		 or   r8, r9
+		 or   r11, r9
 		 js   ..NoPassed
 		mov   eax, 1
 		shl   rax, cl
 		 or   qword[rdi+PawnEntry.passedPawns+8*Us], rax
+                jmp   ..Done
 ..NoPassed:
-	; passed pawns is taken care of
-
+                lea   eax, [rcx+Up]
+                btc   r12, rax
+	if Us eq White
+                shl   r8, 8
+		cmp   ecx, SQ_A5
+		 jb   ..Done
+	else if Us eq Black
+                shr   r8, 8
+		cmp   ecx, SQ_A5
+		jae   ..Done
+	end if
+               test   r12, r12
+                jnz   ..Done
+               andn   r8, r14, r8
+                 jz   ..Done
+..PopLoop:
+                bsf   r9, r8
+                xor   eax, eax
+                mov   r9, qword[PawnAttacks+8*(64*Us+r9)]
+                and   r9, r14
+               blsr   rdx, r9
+               setz   al                
+		shl   rax, cl
+		 or   qword[rdi+PawnEntry.passedPawns+8*Us], rax
+               blsr   r8, r8, rax
+                jnz   ..PopLoop
+..Done:
 
 if PEDANTIC
 	      movzx   ecx, byte[r15]
