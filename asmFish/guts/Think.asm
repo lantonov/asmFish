@@ -855,9 +855,15 @@ end if
 
 		xor   r15d, r15d
 .multipv_loop:
+	       imul   esi, r15d, sizeof.RootMove
+		add   rsi, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
+                mov   ecx, dword[rsi+RootMove.score]
+                cmp   ecx, -VALUE_INFINITE
+              setne   cl
 		xor   eax, eax
 		cmp   r15d, dword[rbp-Thread.rootPos+Thread.PVIdx]
 	      setbe   al
+                and   eax, ecx
 
 		mov   ecx, dword[.depth]
 		sub   ecx, 1
@@ -868,8 +874,6 @@ end if
 
 		lea   rdi, [.output]
 
-	       imul   esi, r15d, sizeof.RootMove
-		add   rsi, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
 		mov   r12d, dword[rsi+4*rax]
 
 		mov   rax, 'info dep'
@@ -951,13 +955,14 @@ end if
 		mov   rax, qword[.nodes]
 	       call   PrintUnsignedInteger
 
+if USE_SYZYGY
 		mov   rax, ' tbhits '
 	      stosq
 		mov   rax, qword[.tbHits]
 	       call   PrintUnsignedInteger
+end if
 
 if USE_HASHFULL
-if VERBOSE<2
 		mov   ecx, dword[.hashfull]
 	       test   ecx, ecx
 		 js   @f
@@ -968,7 +973,6 @@ if VERBOSE<2
 		mov   eax, ecx
 	       call   PrintUnsignedInteger
 	@@:
-end if
 end if
 
 		mov   eax, ' pv'

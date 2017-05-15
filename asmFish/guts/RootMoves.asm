@@ -163,8 +163,12 @@ RootMovesVec_StableSort:
 		jbe   .l2d
 		mov   eax, dword[r12-1*sizeof.RootMove+RootMove.score]
 		cmp   eax, dword[rsp+RootMove.score]
-		jge   .l2d
-		mov   rdi, r12
+		 jg   .l2d
+                 jl   .less
+		mov   eax, dword[r12-1*sizeof.RootMove+RootMove.prevScore]
+		cmp   eax, dword[rsp+RootMove.prevScore]
+                jge   .l2d
+.less:          mov   rdi, r12
 		sub   r12, sizeof.RootMove
 		mov   rsi, r12
 		mov   ecx, sizeof.RootMove/4
