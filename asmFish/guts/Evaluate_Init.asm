@@ -77,11 +77,6 @@ Evaluate_Init:
 	      stosq
 	      stosq
 
-        ; copy Knight, Bishop, Rook, and Queen all at once
-                lea   rsi, [.Protector_Knight]
-                lea   rdi, [Protector_Knight]
-                mov   ecx, 4*8
-          rep movsd
 
                 lea   rsi, [.PawnsSet]
                 lea   rdi, [PawnsSet]
@@ -284,46 +279,6 @@ align 4
  dd 0
 
 
-
-.Protector_Knight:
- dd (  0 shl 16) + (  0)
- dd (  7 shl 16) + (  9)
- dd (  7 shl 16) + (  1)
- dd (  1 shl 16) + (  5)
- dd (-10 shl 16) + ( -4)
- dd ( -1 shl 16) + ( -4)
- dd ( -7 shl 16) + ( -3)
- dd (-16 shl 16) + (-10)
-
-.Protector_Bishop:
- dd (  0 shl 16) + ( 0)
- dd ( 11 shl 16) + ( 8)
- dd ( -7 shl 16) + (-1)
- dd ( -1 shl 16) + (-2)
- dd ( -1 shl 16) + (-7)
- dd (-11 shl 16) + (-3)
- dd ( -9 shl 16) + (-1)
- dd (-16 shl 16) + (-1)
-
-.Protector_Rook:
- dd (  0 shl 16) + ( 0)
- dd ( 10 shl 16) + ( 0)
- dd ( -2 shl 16) + ( 2)
- dd ( -5 shl 16) + ( 4)
- dd ( -6 shl 16) + ( 2)
- dd (-14 shl 16) + (-3)
- dd ( -2 shl 16) + (-9)
- dd (-12 shl 16) + (-7)
-
-.Protector_Queen:
- dd (  0 shl 16) + ( 0)
- dd (  3 shl 16) + (-5)
- dd (  2 shl 16) + (-5)
- dd ( -4 shl 16) + ( 0)
- dd ( -9 shl 16) + (-6)
- dd ( -4 shl 16) + ( 7)
- dd (-13 shl 16) + (-7)
- dd (-10 shl 16) + (-7)
 
 .PawnsSet:
         dd 24, -32, 107, -51, 117, -9, -126, -21, 31

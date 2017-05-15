@@ -121,24 +121,24 @@ match =Knight, Pt \{
 	Outpost1	  equ ((33 shl 16) + (9))
 	KingAttackWeight  equ 78
 	MobilityBonus	  equ MobilityBonus_Knight
-        ProtectorBonus    equ Protector_Knight
+        KingProtector_Pt  equ ((-3 shl 16) + (-5))
 \}
 match =Bishop, Pt \{
 	Outpost0	  equ (( 9 shl 16) + (2))
 	Outpost1	  equ ((14 shl 16) + (4))
 	KingAttackWeight  equ 56
 	MobilityBonus	  equ MobilityBonus_Bishop
-        ProtectorBonus    equ Protector_Bishop
+        KingProtector_Pt  equ ((-4 shl 16) + (-3))
 \}
 match =Rook, Pt \{
 	KingAttackWeight  equ 45
 	MobilityBonus	  equ MobilityBonus_Rook
-        ProtectorBonus    equ Protector_Rook
+        KingProtector_Pt  equ ((-3 shl 16) + (0))
 \}
 match =Queen, Pt \{
 	KingAttackWeight  equ 11
 	MobilityBonus	  equ MobilityBonus_Queen
-        ProtectorBonus    equ Protector_Queen
+        KingProtector_Pt  equ ((-1 shl 16) + (1))
 \}
 
 	     Assert   e, rdi, qword[.ei.pi], 'assertion rdi=qword[.ei.pi] failed in EvalPieces'
@@ -235,7 +235,8 @@ end if
 
                 lea   eax, [8*r8]
               movzx   eax, byte[SquareDistance+8*rax+r14]
-	     addsub   esi, dword[ProtectorBonus+4*rax]
+               imul   eax, KingProtector_Pt
+	     addsub   esi, eax
 
 
 if (Pt in <Knight, Bishop>)
@@ -503,7 +504,7 @@ match =Black, Us
 	       test   PiecesThem, qword[rbp+Pos.typeBB+8*Queen]
 		lea   eax, [rdi-848]
 	      cmovz   edi, eax
-	; the following does edi += - 6*mg_value(score)/5 - 5
+	; the following does edi += - 28*mg_value(score)/25 - 5
 		lea   ecx, [rsi+0x08000]
 		sar   ecx, 16
 		lea   edx, [4*rcx]

@@ -479,10 +479,6 @@ DrawValue	        rd 2    ; it is updated when threads start to think
 
 align 64
 Connected rd 2*2*2*8
-Protector_Knight rd 8
-Protector_Bishop rd 8
-Protector_Rook   rd 8
-Protector_Queen  rd 8
 MobilityBonus_Knight rd 16
 MobilityBonus_Bishop rd 16
 MobilityBonus_Rook   rd 16
