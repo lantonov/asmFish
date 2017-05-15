@@ -449,9 +449,9 @@ match =Black, Us
 	Camp		equ (Rank4BB or Rank5BB or Rank6BB or Rank7BB or Rank8BB)
 \}
 
-	QueenCheck	  equ 810
-	RookCheck	  equ 888
-	BishopCheck	  equ 400
+	QueenCheck	  equ 780
+	RookCheck	  equ 880
+	BishopCheck	  equ 435
 	KnightCheck	  equ 790
 
 	     Assert   e, rdi, qword[.ei.pi], 'assertion rdi=qword[.ei.pi] failed in EvalKing'
@@ -489,29 +489,30 @@ match =Black, Us
 		 jz   ..AllDone
 
 	       imul   edi, dword[.ei.kingAttackersWeight+4*Them]
-	       imul   eax, dword[.ei.kingAdjacentZoneAttacksCount+4*Them], 103
+	       imul   eax, dword[.ei.kingAdjacentZoneAttacksCount+4*Them], 102
 		add   edi, eax
 	     popcnt   rax, r8, rcx
-	       imul   eax, 190
+	       imul   eax, 201
 		add   edi, eax
 	     popcnt   rax, r9, rcx
 		mov   rdx, qword[.ei.pinnedPieces+8*Us]
 		neg   rdx
 		adc   eax, 0
-	       imul   eax, 142
+	       imul   eax, 143
 		add   edi, eax
 	       test   PiecesThem, qword[rbp+Pos.typeBB+8*Queen]
-		lea   eax, [rdi-810]
+		lea   eax, [rdi-848]
 	      cmovz   edi, eax
 	; the following does edi += - 6*mg_value(score)/5 - 5
-		lea   edx, [rsi+0x08000]
-		sar   edx, 16
-		lea   ecx, [3*rdx]
-                add   ecx, ecx
-		mov   eax, 0x66666667
-	       imul   ecx
-		sar   ecx, 31
-		sar   edx, 1
+		lea   ecx, [rsi+0x08000]
+		sar   ecx, 16
+		lea   edx, [4*rcx]
+                shl   ecx, 5
+                mov   eax, 0x51EB851F
+                sub   ecx, edx
+               imul   ecx
+                sar   ecx, 31
+                sar   edx, 3
 		lea   edi, [rdi+rcx-5]
 		sub   edi, edx
 	; edi = kingDanger
