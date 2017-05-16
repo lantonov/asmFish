@@ -42,30 +42,41 @@ match =Black, Us
 
 	      movzx   ecx, word[rbx+State.npMaterial+2*Us]
 
-		mov   rdx, qword[.ei.attackedBy+8*(8*Them+King)]
-		 or   qword[.ei.attackedBy+8*(8*Them+0)], rdx
-		mov   rax, qword[rdi+PawnEntry.pawnAttacks+8*Us]
-		mov   qword[.ei.attackedBy+8*(8*Us+Pawn)], rax
-		 or   qword[.ei.attackedBy+8*(8*Us+0)], rax
-		and   rax, qword[.ei.attackedBy+8*(8*Us+King)]
-		mov   qword[.ei.attackedBy2+8*Us], rax
+                mov   eax, dword[.ei.ksq+4*Them]
+        if Them eq White
+                cmp   eax, SQ_A2
+               setb   al
+        else
+                cmp   eax, SQ_A8
+              setae   al
+        end if
+
+		mov   r9, qword[.ei.attackedBy+8*(8*Them+King)]
+		 or   qword[.ei.attackedBy+8*(8*Them+0)], r9
+		mov   r10, qword[rdi+PawnEntry.pawnAttacks+8*Us]
+		mov   qword[.ei.attackedBy+8*(8*Us+Pawn)], r10
+		 or   qword[.ei.attackedBy+8*(8*Us+0)], r10
 	; rdx = b
 
 		xor   r8, r8
-		xor   r9d, r9d
+		xor   edx, edx
 		cmp   ecx, QueenValueMg
 		 jb   ..NotUsed 	; 10.49%
-		mov   r8, rdx
+		mov   r8, r9
+                neg   rax
 	   shift_bb   Down, r8
-		 or   r8, rdx
-		and   rdx, qword[.ei.attackedBy+8*(8*Us+Pawn)]
-	     popcnt   r9, rdx, rcx
-		xor   eax, eax
+                and   r8, rax
+		 or   r8, r9
+		and   r9, r10
+	     popcnt   rdx, r9, rcx
+                xor   eax, eax
 		mov   dword[.ei.kingAttackersWeight+4*Us], eax
 		mov   dword[.ei.kingAdjacentZoneAttacksCount+4*Us], eax
 ..NotUsed:
 		mov   qword[.ei.kingRing+8*Them], r8
-		mov   dword[.ei.kingAttackersCount+4*Us], r9d
+		mov   dword[.ei.kingAttackersCount+4*Us], edx
+		and   r10, qword[.ei.attackedBy+8*(8*Us+King)]
+		mov   qword[.ei.attackedBy2+8*Us], r10
 
 }
 
