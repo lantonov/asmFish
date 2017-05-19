@@ -11,3 +11,10 @@ set "datestamp=%YYYY%-%MM%-%DD%" & set "timestamp=%HH%%Min%%Sec%" & set "fullsta
 "asmFish\fasm.exe" "asmFish\asmFishL_popcnt.asm"    -m 50000 "Linux\asmFishL_%datestamp%_popcnt"
 "asmFish\fasm.exe" "asmFish\asmFishL_bmi2.asm"      -m 50000 "Linux\asmFishL_%datestamp%_bmi2"
 
+"asmFish\fasm.exe" "asmFish\mateFishW_base.asm"      -m 50000 "Matefinder\mateFishW_%datestamp%_base.exe"
+"asmFish\fasm.exe" "asmFish\mateFishW_popcnt.asm"    -m 50000 "Matefinder\mateFishW_%datestamp%_popcnt.exe"
+"asmFish\fasm.exe" "asmFish\mateFishW_bmi2.asm"      -m 50000 "Matefinder\mateFishW_%datestamp%_bmi2.exe"
+"asmFish\fasm.exe" "asmFish\mateFishL_base.asm"      -m 50000 "Matefinder\mateFishL_%datestamp%_base"
+"asmFish\fasm.exe" "asmFish\mateFishL_popcnt.asm"    -m 50000 "Matefinder\mateFishL_%datestamp%_popcnt"
+"asmFish\fasm.exe" "asmFish\mateFishL_bmi2.asm"      -m 50000 "Matefinder\mateFishL_%datestamp%_bmi2"
+
