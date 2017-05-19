@@ -1,0 +1,381 @@
+MoveHorizon = 50
+/*
+MoveHorizon equ 50
+MaxRatio    equ 7.09
+StealRatio  equ 0.35
+XScale      equ 7.64
+XShift      equ 58.4
+mSkew       equ -0.183
+*/
+TimeMng_Init:
+/*
+	; in: ecx color us
+	;     edx ply
+
+virtual at rsp
+  .ply   rd 1
+  .lend  rb 0
+end virtual
+.localsize = ((.lend-rsp+15) and (-16))
+
+	       push   rbx rsi rdi r12 r13 r14 r15
+	 _chkstk_ms   rsp, .localsize
+		sub   rsp, .localsize
+ AssertStackAligned   'TimeMng_Init'
+
+		mov   esi, ecx
+		mov   dword[.ply], edx
+*/
+TimeMng_Init:
+
+TimeMng_Init.ply       = 0
+TimeMng_Init.lend      = sizeof.rd + TimeMng_Init.ply
+TimeMng_Init.localsize = (TimeMng_Init.lend + 15) & -16
+
+        stp  x21, x30, [sp, -16]!
+        stp  x26, x27, [sp, -16]!
+        stp  x22, x23, [sp, -16]!
+        stp  x24, x25, [sp, -16]!
+        sub  sp, sp, TimeMng_Init.localsize
+
+        mov  w26, w1
+        str  w2, [sp, TimeMng_Init.ply]
+        
+
+/*
+GD String, 'ply: '
+GD Int32, qword[.ply]
+GD String, ' inc: '
+GD Int32, qword[limits.incr+4*rsi]
+GD String, ' time: '
+GD Int32, qword[limits.time+4*rsi]
+GD String, ' movestogo: '
+GD Int32, qword[limits.movestogo]
+GD NewLine
+*/
+/*
+		mov   rax, qword[limits.startTime]
+		mov   qword[time.startTime], rax
+*/
+        lea  x6, limits
+        ldr  x0, [x6, Limits.startTime]
+        lea  x6, time
+        str  x0, [x6, Time.startTime]
+/*
+		mov   eax, dword[limits.time+4*rsi]
+		mov   ecx, dword[options.minThinkTime]
+		cmp   eax, ecx
+	      cmovb   eax, ecx
+		mov   r12d, eax
+		mov   r13d, eax
+	; r12d = optimumTime
+	; r13d = maximumTime
+*/
+        lea  x6, limits + Limits.time
+        ldr  w0, [x6, x26, lsl 2]
+        lea  x6, options
+        ldr  w1, [x6, Options.minThinkTime]
+        cmp  w0, w1
+       csel  w0, w1, w0, lo
+        mov  w22, w0
+        mov  w23, w0
+
+/*
+		mov   eax, dword[limits.movestogo]
+		mov   ecx, MoveHorizon
+	       test   eax, eax
+	      cmovz   eax, ecx
+		cmp   eax, ecx
+	      cmova   eax, ecx
+		mov   r14d, eax
+	; r14d = MaxMTG
+
+		xor   edi, edi
+*/
+        lea  x6, limits
+        ldr  w0, [x6, Limits.movestogo]
+        mov  w1, MoveHorizon
+        tst  w0, w0
+       csel  w0, w1, w0, eq
+        cmp  w0, w1
+       csel  w0, w1, w0, hi
+        mov  w14, w0
+
+        mov  w27, 0
+
+TimeMng_Init.loop:
+/*
+		add   edi, 1
+		cmp   edi, r14d
+		 ja   .loopdone
+*/
+        add  w27, w27, 1
+        cmp  w27, w24
+        bhi  TimeMng_Init.loopdone
+/*
+		mov   eax, 40
+		cmp   eax, edi
+	      cmova   eax, edi
+		add   eax, 2
+		mov   edx, dword[options.moveOverhead]
+		mul   rdx
+		mov   ecx, dword[limits.time+4*rsi]
+		sub   rcx, rax
+		mov   eax, dword[limits.incr+4*rsi]
+		lea   edx, [rdi-1]
+		mul   rdx
+		xor   edx, edx
+		add   rcx, rax
+	      cmovs   rcx, rdx
+		mov   rbx, rcx
+*/
+        mov  w0, 40
+        cmp  w0, w27
+       csel  w0, w27, w0, hi
+        add  w0, w0, 2
+        lea  x6, options
+        ldr  w2, [x6, Options.moveOverhead]
+        mul  x0, x0, x2
+        lea  x6, limits + Limits.time
+        ldr  w1, [x6, x26, lsl 2]
+        sub  x1, x1, x0
+        lea  x6, limits + Limits.incr
+        ldr  w0, [x6, x26, lsl 2]
+        sub  w2, w27, 1
+        mul  x0, x0, x2
+       adds  x1, x1, x0
+       csel  x1, xzr, x1, mi
+        mov  x21, x1
+
+/*
+		mov   edx, edi
+		mov   r8d, dword[.ply]
+	     vmovsd   xmm4, qword[constd.1p0]
+	     vxorps   xmm5, xmm5, xmm5
+	       call   .remaining
+		mov   edx, dword[options.minThinkTime]
+		add   rax, rdx
+		cmp   r12, rax
+	      cmova   r12, rax
+*/
+        mov  w2, w27
+        ldr  w8, [sp, TimeMng_Init.ply]
+       fmov  d4, 1.0
+       fmov  d5, xzr
+         bl  TimeMng_Init.remaining
+        lea  x6, options
+        ldr  w2, [x6, Options.minThinkTime]
+        add  x0, x0, x2
+        cmp  x22, x0
+       csel  x22, x0, x22, hi
+
+/*
+		mov   rcx, rbx
+		mov   edx, edi
+		mov   r8d, dword[.ply]
+	     vmovsd   xmm4, qword[.MaxRatio]
+	     vmovsd   xmm5, qword[.StealRatio]
+	       call   .remaining
+		mov   edx, dword[options.minThinkTime]
+		add   rax, rdx
+		cmp   r13, rax
+	      cmova   r13, rax
+
+		jmp   .loop
+*/
+        mov  x1, x21
+        mov  w2, w27
+        ldr  w8, [sp, TimeMng_Init.ply]
+        ldr  d4, TimeMng_Init.MaxRatio
+        ldr  d5, TimeMng_Init.StealRatio
+         bl  TimeMng_Init.remaining
+        lea  x6, options
+        ldr  w2, [x6, Options.minThinkTime]
+        add  w0, w0, w2
+        cmp  x23, x0
+       csel  x23, x0, x23, hi
+          b  TimeMng_Init.loop
+
+TimeMng_Init.loopdone:
+/*
+		mov   al, byte[options.ponder]
+	       test   al, al
+		 jz   .noponder
+		mov   rcx, r12
+		shr   rcx, 2
+		add   r12, rcx
+*/
+       ldrb  w0, [x6, Options.ponder]
+        cbz  w0, TimeMng_Init.noponder
+        add  x22, x22, x22, lsr 2
+
+TimeMng_Init.noponder:
+/*
+		mov   qword[time.optimumTime], r12
+		mov   qword[time.maximumTime], r13
+GD String, 'optimumTime: '
+GD Int64, r12
+GD String, ' maximumTime: '
+GD Int64, r13
+GD NewLine
+		add   rsp, .localsize
+		pop   r15 r14 r13 r12 rdi rsi rbx
+		ret
+*/
+        lea  x6, time
+        str  x22, [x6, Time.optimumTime]
+        str  x23, [x6, Time.maximumTime]
+        add  sp, sp, TimeMng_Init.localsize
+        stp  x24, x25, [sp], 16
+        stp  x22, x23, [sp], 16
+        stp  x26, x27, [sp], 16
+        stp  x21, x30, [sp], 16
+        ret
+
+
+TimeMng_Init.remaining:
+/*
+	; in: ecx myTime
+	;     edx movesToGo >= 1
+	;     r8d ply
+	;     xmm4 TMaxRatio
+	;     xmm5 TStealRatio
+	;     edx = movestogo
+
+	     vxorps   xmm2, xmm2, xmm2
+	  vcvtsi2sd   xmm3, xmm3, rcx
+	; xmm3 = myTime
+
+               call   .move_importance
+	  vcvtsi2sd   xmm1, xmm1, dword[options.slowMover]
+	     vmulsd   xmm6, xmm0, xmm1
+	     vdivsd   xmm6, xmm6, qword[.100p0]
+	; xmm6 = moveImportance
+	     vxorps   xmm2, xmm2, xmm2
+		lea   ecx, [r8+2*rdx]
+*/
+       fmov  d2, xzr
+      scvtf  d3, x1
+         bl  TimeMng_Init.move_importance
+        lea  x6, options
+        ldr  w4, [x6, Options.slowMover]
+      scvtf  d1, w4
+       fmul  d6, d0, d1
+        ldr  d7, TimeMng_Init.constd.100p0
+       fdiv  d6, d6, d7
+       fmov  d2, xzr
+        add  w1, w8, w2, lsl 1
+
+TimeMng_Init.otherLoop:
+/*
+		add   r8d, 2
+		cmp   r8d, ecx
+		jae   .otherDone
+               call   .move_importance
+	     vaddsd   xmm2, xmm2, xmm0
+		jmp   .otherLoop
+*/
+        add  w8, w8, 2
+        cmp  w8, w1
+        bhs  TimeMng_Init.otherDone
+         bl  TimeMng_Init.move_importance
+       fadd  d2, d2, d0
+          b  TimeMng_Init.otherLoop
+
+TimeMng_Init.otherDone:
+/*
+	; xmm2 = otherMovesImportance
+	     vmulsd   xmm4, xmm4, xmm6
+	     vmulsd   xmm5, xmm5, xmm2
+	     vaddsd   xmm0, xmm4, xmm2
+	     vdivsd   xmm4, xmm4, xmm0
+	     vaddsd   xmm5, xmm5, xmm6
+	     vaddsd   xmm0, xmm6, xmm2
+	     vdivsd   xmm5, xmm5, xmm0
+	     vminsd   xmm4, xmm4, xmm5
+	     vmulsd   xmm3, xmm3, xmm4
+	 vcvttsd2si   rax, xmm3
+		ret
+*/
+       fmul  d4, d4, d6
+       fmul  d5, d5, d2
+       fadd  d0, d4, d2
+       fdiv  d4, d4, d0
+       fadd  d5, d5, d6
+       fadd  d0, d6, d2
+       fdiv  d5, d5, d0
+       fmin  d4, d4, d5
+       fmul  d3, d3, d4
+     fcvtzs  x0, d3
+        ldp  x29, x30, [sp], 16
+        ret
+
+TimeMng_Init.move_importance:
+/*
+        ; in: r8d ply
+        ; out: xmm0
+	  vcvtsi2sd   xmm0, xmm0, r8d
+	     vsubsd   xmm0, xmm0, qword[.XShift]
+	     vdivsd   xmm0, xmm0, qword[.XScale]
+	       call   Math_Exp_d_d
+	     vaddsd   xmm0, xmm0, qword[constd.1p0]
+	     vmovsd   xmm1, qword[.mSkew]
+	       call   Math_Power_d_dd
+	     vaddsd   xmm0, xmm0, qword[.mind]
+                ret
+*/
+        stp  x1, x30, [sp, -16]!
+        stp  x2, x8, [sp, -16]!
+        stp  d1, d2, [sp, -16]!
+        stp  d3, d4, [sp, -16]!
+        stp  d5, d6, [sp, -16]!
+      scvtf  d0, w8
+        ldr  d1, TimeMng_Init.XShift
+        ldr  d2, TimeMng_Init.XScale
+       fsub  d0, d0, d1
+       fdiv  d0, d0, d2
+         bl  Math_exp_d_d
+       fmov  d2, 1.0
+       fadd  d0, d0, d2
+        ldr  d1, TimeMng_Init.mSkew
+         bl  Math_pow_d_dd
+        ldr  d1, TimeMng_Init.mind
+       fadd  d0, d0, d1
+        ldp  d5, d6, [sp], 16
+        ldp  d3, d4, [sp], 16
+        ldp  d1, d2, [sp], 16
+        ldp  x2, x8, [sp], 16
+        ldp  x1, x30, [sp], 16
+        ret
+
+/*
+MoveHorizon equ 50
+MaxRatio    equ 7.09
+StealRatio  equ 0.35
+XScale      equ 7.64
+XShift      equ 58.4
+mSkew       equ -0.183
+*/
+        .balign 8
+TimeMng_Init.XShift:
+        .word 858993459
+        .word 1078801203
+TimeMng_Init.XScale:
+        .word 687194767
+        .word 1075744604
+TimeMng_Init.mSkew:
+        .word 1133871366
+        .word -1077449589
+TimeMng_Init.MaxRatio:
+        .word 4123168604
+        .word 1075600424
+TimeMng_Init.StealRatio:
+        .word 1717986918
+        .word 1071015526
+TimeMng_Init.mind:
+        .word   0
+        .word   1048576
+TimeMng_Init.constd.100p0:
+        .word   0
+        .word   1079574528
+

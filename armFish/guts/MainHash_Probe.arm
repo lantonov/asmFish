@@ -1,0 +1,162 @@
+/*
+	      align   16
+*/
+MainHash_Probe:
+/*
+	; in:   rcx  key
+	; out:  rax  address of entry
+	;       rdx  edx == -1 if found
+	;            edx == 0  if not found
+	;       rcx  entry (8 bytes)
+
+ProfileInc MainHash_Probe
+
+		mov   rax, qword[mainHash.mask]
+		and   rax, rcx
+		shl   rax, 5
+		mov   r8, rcx
+		shr   rcx, 48
+		add   rax, qword[mainHash.table]
+	      movzx   r11d, byte[mainHash.date]
+*/
+        lea  x0, mainHash
+       ldrb  w11, [x0, MainHash.date]
+        ldr  x4, [x0, MainHash.mask]
+        ldr  x0, [x0, MainHash.table]
+        and  x4, x4, x1
+        lsr  x1, x1, 48
+        add  x0, x0, x4, lsl 5
+
+/*
+		mov   rdx, qword[rax+8*3]
+	      movsx   r8d, word[rax]
+	       test   dx, dx
+		 jz   .Found
+		cmp   dx, cx
+		 je   .FoundRefresh
+		shr   rdx, 16
+		add   rax, 8
+	      movsx   r9d, word[rax]
+	       test   dx, dx
+		 jz   .Found
+		cmp   dx, cx
+		 je   .FoundRefresh
+		shr   rdx, 16
+		add   rax, 8
+	      movsx   r10d, word[rax]
+	       test   dx, dx
+		 jz   .Found
+		cmp   dx, cx
+		 je   .FoundRefresh
+*/
+        ldr  x2, [x0, 8*3]
+      ldrsh  w8, [x0]
+       ands  w4, w2, 0x0FFFF
+       ubfx  x5, x2, 16, 16
+       ubfx  x6, x2, 32, 16
+        beq  MainHash_Probe.Found
+        cmp  w4, w1
+        beq  MainHash_Probe.FoundRefresh
+      ldrsh  w9, [x0, 8]!
+        cbz  w6, MainHash_Probe.Found
+        cmp  w6, w1
+        beq  MainHash_Probe.FoundRefresh
+      ldrsh  w10, [x0, 8]!
+        cbz  w6, MainHash_Probe.Found
+        cmp  w6, w1
+        beq  MainHash_Probe.FoundRefresh
+/*
+		add   r11d, 259
+		sub   rax, 8*2
+*/
+        add  w11, w11, 259
+/*
+	      movzx   ecx, r8l
+		sar   r8d, 8
+		mov   edx, r11d
+		sub   edx, ecx
+		and   edx, 0x0FC
+		add   edx, edx
+		sub   r8d, edx
+*/
+        and  w1, w8, 0x0FF
+        asr  w8, w8, 8
+        sub  w2, w11, w1
+        and  w2, w2, 0x0FC
+        sub  w8, w8, w2, lsl 1
+/*
+	      movzx   ecx, r9l
+		sar   r9d, 8
+		mov   edx, r11d
+		sub   edx, ecx
+		and   edx, 0x0FC
+		add   edx, edx
+		sub   r9d, edx
+*/
+        and  w1, w9, 0x0FF
+        asr  w9, w9, 8
+        sub  w2, w11, w1
+        and  w2, w2, 0x0FC
+        sub  w9, w9, w2, lsl 1
+/*
+	      movzx   ecx, r10l
+		sar   r10d, 8
+		mov   edx, r11d
+		sub   edx, ecx
+		and   edx, 0x0FC
+		add   edx, edx
+		sub   r10d, edx
+*/
+        and  w1, w10, 0x0FF
+        asr  w10, w10, 8
+        sub  w2, w11, w1
+        and  w2, w2, 0x0FC
+        sub  w10, w10, w2, lsl 1
+
+/*
+		lea   rcx, [rax+8*1]
+		lea   rdx, [rax+8*2]
+		cmp   r8d, r9d
+	      cmovg   r8d, r9d
+	      cmovg   rax, rcx
+		cmp   r8d, r10d
+	      cmovg   rax, rdx
+*/
+        sub  x1, x0, 8*1
+        sub  x2, x0, 8*2
+        cmp  w8, w9
+       csel  w8, w9, w8, gt
+       csel  x2, x1, x2, gt
+        cmp  w8, w10
+       csel  x0, x0, x2, gt
+
+
+
+
+MainHash_Probe.Found:
+/*
+		mov   rcx, VALUE_NONE shl (8*MainHashEntry.value)
+		xor   edx, edx
+		ret
+*/
+        mov  x1, VALUE_NONE << (8*MainHashEntry.value)
+        mov  w2, wzr
+        ret
+/*
+	      align   8
+*/
+MainHash_Probe.FoundRefresh:
+/*
+		mov   rcx, qword[rax]
+		and   rcx, 0xFFFFFFFFFFFFFF03
+		 or   rcx, r11
+		mov   byte[rax+MainHashEntry.genBound], cl
+		 or   edx, -1
+		ret
+*/
+        ldr  x1, [x0]
+        and  x1, x1, ~ 0x0FC
+        orr  x1, x1, x11
+       strb  w1, [x0, MainHashEntry.genBound]
+        mov  w2, -1
+        ret

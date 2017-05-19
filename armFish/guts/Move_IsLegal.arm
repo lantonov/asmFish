@@ -1,0 +1,294 @@
+
+Move_IsLegal:
+/*
+	; in: rbp  address of Pos
+	;     rbx  address of State - pinned member must be filled in
+	;     ecx  move - assumed to pass IsMovePseudoLegal test
+	; out: eax =  0 if move is not legal
+	;      eax = -1 if move is legal
+
+ProfileInc Move_IsLegal
+
+	       push   r13 r14 r15
+*/
+/*
+		mov   edx, ecx
+		shr   edx, 12
+	; edx = move type
+		mov   eax, ecx
+		and   eax, 64*64-1
+	; load next move
+*/
+        lsr  w2, w1, 12
+        and  w0, w1, 64*64-1
+
+/*
+		mov   r15, qword[rbx+State.pinned]
+		mov   r13d, dword[rbp+Pos.sideToMove]
+		mov   r11, qword[rbp+Pos.typeBB+8*King]
+		and   r11, qword[rbp+Pos.typeBB+8*r13]
+		bsf   r14, r11
+	; r14 = our king square
+	; r11 = our king bitboard
+*/
+        ldr  x15, [x21, State.pinned]
+        ldr  w13, [x20, Pos.sideToMove]
+        ldr  x11, [x20, 8*King]
+        ldr  x4, [x20, x13, lsl 3]
+       rbit  x14, x11
+        clz  x14, x14
+/*
+		shr   ecx, 6
+		and   ecx, 63
+	; ecx = source square
+
+ProfileInc moveUnpack
+*/
+       ubfx  w1, w1, 6, 6
+
+/*
+	; pseudo legal castling moves are always legal
+	; ep captures require special attention
+		cmp   edx, MOVE_TYPE_EPCAP
+		jae   .Special
+*/
+        cmp  w2, MOVE_TYPE_EPCAP
+        bhs  Move_IsLegal.Special
+/*
+	; if we are moving king, have to check destination square
+		 bt   r11, rcx
+		 jc   .KingMove
+*/
+        lsr  x4, x11, x1
+       tbnz  x4, 0, Move_IsLegal.KingMove
+/*
+	; if piece is not pinned, then move is legal
+		 bt   r15, rcx
+		 jc   .CheckPinned
+		 or   eax, -1
+		pop   r15 r14 r13
+		ret
+*/
+        lsr  x4, x15, x1
+       tbnz  x4, 0, Move_IsLegal.CheckPinned
+        mov  w0, -1
+        ret
+
+Move_IsLegal.CheckPinned:
+/*
+	; if something is pinned, its movement should be aligned with our king
+		and   r11, qword[LineBB+8*rax]
+		neg   r11
+		sbb   eax, eax
+		pop   r15 r14 r13
+		ret
+*/
+        lea  x6, LineBB
+        ldr  x4, [x6, x0, lsl 3]
+        tst  x4, x11
+       cset  w0, ne
+        neg  w0, w0
+        ret
+
+Move_IsLegal.KingMove:
+/*
+	; if they have an attacker to king's destination square, then move is illegal
+		and   eax, 63
+		mov   ecx, r13d
+		shl   ecx, 6+3
+		mov   rcx, qword[PawnAttacks+rcx+8*rax]
+*/
+        and  x0, x0, 63
+        lea  x7, PawnAttacks
+        add  x7, x7, x13, lsl 9
+        ldr  x1, [x7, x0, lsl 3]
+/*
+		mov   r9, qword[rbp+Pos.typeBB+8*r13]
+		xor   r13d, 1
+		mov   r10, qword[rbp+Pos.typeBB+8*r13]
+		 or   r9, r10
+		xor   r13d, 1
+*/
+        ldr  x9, [x20, x13, lsl 3]
+        eor  x4, x13, 1
+        ldr  x10, [x20, x4, lsl 3]
+        orr  x9, x9, x10
+/*
+	; pawn
+		and   rcx, qword[rbp+Pos.typeBB+8*Pawn]
+	       test   rcx, r10
+		jnz   .Illegal
+*/
+        ldr  x4, [x20, 8*Pawn]
+        and  x1, x1, x4
+        tst  x1, x10
+        bne  Move_IsLegal.Illegal
+/*
+	; king
+		mov   rdx, qword[KingAttacks+8*rax]
+		and   rdx, qword[rbp+Pos.typeBB+8*King]
+	       test   rdx, r10
+		jnz   .Illegal
+*/
+        lea  x7, KingAttacks
+        ldr  x2, [x7, x0, lsl 3]
+        ldr  x4, [x20, 8*King]
+        and  x2, x2, x4
+        tst  x2, x10
+        bne  Move_IsLegal.Illegal
+/*
+	; knight
+		mov   rdx, qword[KnightAttacks+8*rax]
+		and   rdx, qword[rbp+Pos.typeBB+8*Knight]
+	       test   rdx, r10
+		jnz   .Illegal
+*/
+        lea  x7, KnightAttacks
+        ldr  x2, [x7, x0, lsl 3]
+        ldr  x4, [x20, 8*Knight]
+        and  x2, x2, x4
+        tst  x2, x10
+        bne  Move_IsLegal.Illegal
+/*
+	; bishop + queen
+      BishopAttacks   rdx, rax, r9, r8
+		mov   r8, qword[rbp+Pos.typeBB+8*Bishop]
+		 or   r8, qword[rbp+Pos.typeBB+8*Queen]
+		and   r8, r10
+	       test   rdx, r8
+		jnz   .Illegal
+*/
+        BishopAttacks  x2, x0, x9, x8, x4
+        ldr  x8, [x20, 8*Bishop]
+        ldr  x4, [x20, 8*Queen]
+        orr  x8, x8, x4
+        and  x8, x8, x10
+        tst  x2, x8
+        bne  Move_IsLegal.Illegal
+/*
+	; rook + queen
+	RookAttacks   rdx, rax, r9, r8
+		mov   r8, qword[rbp+Pos.typeBB+8*Rook]
+		 or   r8, qword[rbp+Pos.typeBB+8*Queen]
+		and   r8, r10
+	       test   rdx, r8
+		jnz   .Illegal
+*/
+        RookAttacks  x2, x0, x9, x8, x4
+        ldr  x8, [x20, 8*Rook]
+        ldr  x4, [x20, 8*Queen]
+        orr  x8, x8, x4
+        and  x8, x8, x10
+        tst  x2, x8
+        bne  Move_IsLegal.Illegal
+
+
+Move_IsLegal.Legal:
+/*
+		 or   eax, -1
+		pop   r15 r14 r13
+		ret
+*/
+        mov  w0, -1
+        ret
+
+Move_IsLegal.Illegal:
+/*
+		xor   eax, eax
+		pop   r15 r14 r13
+		ret
+*/
+        mov  w0, 0
+        ret
+
+Move_IsLegal.Special:
+/*
+	; pseudo legal castling moves are always legal
+		cmp   edx, MOVE_TYPE_CASTLE
+		jae   .Legal
+*/
+        cmp  w2, MOVE_TYPE_CASTLE
+        bhs  Move_IsLegal.Legal
+
+Move_IsLegal.EpCapture:
+/*
+	; for ep captures, just make the move and test if our king is attacked
+		xor   r13d, 1
+		mov   r10, qword[rbp+Pos.typeBB+8*r13]
+		xor   r13d, 1
+	; all pieces
+		mov   rdx, qword[rbp+Pos.typeBB+8*White]
+		 or   rdx, qword[rbp+Pos.typeBB+8*Black]
+*/
+        eor  x4, x23, 1
+        ldr  x10, [x20, x4, lsl 3]
+        ldr  x2, [x20, 8*White]
+        ldr  x4, [x20, 8*Black]
+        orr  x2, x2, x4
+/*
+	; remove source square
+		btr   rdx, rcx
+*/
+        mov  x4, 1
+        lsl  x4, x4, x1
+        bic  x2, x2, x4
+/*
+	; add destination square (ep square)
+		and   eax, 63
+		bts   rdx, rax
+*/
+        and  x0, x0, 63
+        mov  x4, 1
+        lsl  x4, x4, x0
+        orr  x2, x2, x4
+/*
+	; get queens
+		mov   r9, qword[rbp+Pos.typeBB+8*Queen]
+	; remove captured pawn
+		lea   ecx, [2*r13-1]
+		lea   ecx, [rax+8*rcx]
+		btr   rdx, rcx
+*/
+        ldr  x9, [x20, 8*Queen]
+        lsl  x1, x13, 1
+        sub  x1, x1, 1
+        add  x1, x0, x1, lsl 3
+        mov  x4, 1
+        lsl  x4, x4, x1
+        bic  x2, x2, x4
+/*
+	; check for rook attacks
+	RookAttacks   rax, r14, rdx, r8
+		mov   rcx, qword[rbp+Pos.typeBB+8*Rook]
+		 or   rcx, r9
+		and   rcx, r10
+	       test   rax, rcx
+		jnz   .Illegal
+*/
+        RookAttacks  x0, x14, x2, x8, x4
+        ldr  x1, [x20, 8*Rook]
+        orr  x1, x1, x9
+        and  x1, x1, x10
+        tst  x0, x1
+        bne  Move_IsLegal.Illegal
+/*
+	; check for bishop attacks
+      BishopAttacks   rax, r14, rdx, r8
+		mov   rcx, qword[rbp+Pos.typeBB+8*Bishop]
+		 or   rcx, r9
+		and   rcx, r10
+	       test   rax, rcx
+		jnz   .Illegal
+		 or   eax, -1
+		pop   r15 r14 r13
+		ret
+*/
+        BishopAttacks  x0, x14, x2, x8, x4
+        ldr  x1, [x20, 8*Bishop]
+        orr  x1, x1, x9
+        and  x1, x1, x10
+        tst  x0, x1
+        bne  Move_IsLegal.Illegal
+        mov  w0, -1
+        ret
+

@@ -1,0 +1,88 @@
+/*
+assemble and link with
+$ aarch64-linux-gnu-as -c armFish.arm -o armFish.o
+$ aarch64-linux-gnu-ld -static -o armFish armFish.o
+
+run with
+$ qemu-aarch64 ./armFish
+*/
+
+//.altmacro
+
+.include "guts/def.arm"
+.include "guts/linux64.arm"
+.include "guts/macros.arm"
+.include "guts/AttackMacros.arm"
+.include "guts/SliderBlockers.arm"
+.include "guts/GenMacros.arm"
+.include "guts/MovePickMacros.arm"
+
+
+.section .data
+.include "guts/dataSection.arm"
+
+
+.section .bss
+.include "guts/bssSection.arm"
+
+
+.text
+.globl _start
+
+_start:
+
+Search_Root:
+        stp  x29, x30, [sp, -16]!
+        Display "Search_Root called"
+        ldp  x29, x30, [sp], 16
+        ret
+
+.include "guts/main.arm"
+
+.include "guts/Castling.arm"
+.include "guts/AttackersTo.arm"
+.include "guts/Endgame.arm"
+.include "guts/Think.arm"
+.include "guts/Gen_Legal.arm"
+.include "guts/Gen_Evasions.arm"
+.include "guts/Gen_NonEvasions.arm"
+.include "guts/Gen_QuietChecks.arm"
+.include "guts/Gen_Captures.arm"
+.include "guts/Gen_Quiets.arm"
+.include "guts/EasyMoveMng.arm"
+.include "guts/TimeMng.arm"
+.include "guts/MainHash_Probe.arm"
+.include "guts/Move_DoNull.arm"
+.include "guts/Move_IsLegal.arm"
+.include "guts/Move_IsPseudoLegal.arm"
+.include "guts/MovePick.arm"
+
+.include "guts/CheckTime.arm"
+.include "guts/RootMoves.arm"
+.include "guts/Move_GivesCheck.arm"
+.include "guts/Move_Undo.arm"
+.include "guts/Move_Do.arm"
+.include "guts/SetCheckInfo.arm"
+.include "guts/Search_Clear.arm"
+.include "guts/Perft.arm"
+.include "guts/Limits.arm"
+.include "guts/Thread.arm"
+.include "guts/ThreadPool.arm"
+.include "guts/Position.arm"
+.include "guts/Uci.arm"
+.include "guts/Math.arm"
+.include "guts/OsLinux.arm"
+.include "guts/PrintParse.arm"
+.include "guts/MainHash.arm"
+
+.include "guts/BitBoard_Init.arm"
+.include "guts/Gen_Init.arm"
+.include "guts/Position_Init.arm"
+.include "guts/BitTable_Init.arm"
+.include "guts/Search_Init.arm"
+.include "guts/Evaluate_Init.arm"
+.include "guts/Pawn_Init.arm"
+.include "guts/Endgame_Init.arm"
+
+
+

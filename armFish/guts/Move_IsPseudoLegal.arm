@@ -1,0 +1,883 @@
+
+Move_IsPseudoLegal:
+/*
+	; in: rbp address of Pos
+	;     rbx address of State
+	;     ecx move
+	; out: rax = 0 if move is not pseudo legal
+	;      rax !=0 if move is pseudo legal      could be anything nonzero
+	;
+	;  we need to make sure the move is legal for the special types
+	;    promotion
+	;    castling
+	;    epcapture
+	;  so we also require checkinfo to be set
+
+ProfileInc Move_IsPseudoLegal
+
+	       push   rsi rdi r12 r13 r14 r15
+*/
+/*
+		mov   eax, dword[rbp+Pos.sideToMove]
+		mov   esi, eax
+		xor   eax, 1
+*/
+        ldr  w16, [x20, Pos.sideToMove]
+        eor  w0, w16, 1
+/*
+	; r8d = from
+	; r9d = to
+		mov   r8d, ecx
+		shr   r8d, 6
+		and   r8d, 63
+		mov   r9d, ecx
+		and   r9d, 63
+
+ProfileInc moveUnpack
+*/
+       ubfx  w8, w1, 6, 6
+        and  w9, w1, 63
+/*
+	; r11 = FROM PIECE
+	      movzx   r11d, byte[rbp+Pos.board+r8]
+*/
+        add  x6, x20, x8
+       ldrb  w11, [x6, Pos.board]
+/*
+	; r14 = bitboard of our pieces
+	; r15 = bitboard of all pieces
+		mov   r14, qword[rbp+Pos.typeBB+8*rsi]
+		mov   r15, qword[rbp+Pos.typeBB+8*rax]
+		 or   r15, r14
+*/
+        ldr  x14, [x20, x16, lsl 3]
+        ldr  x15, [x20, x0, lsl 3]
+        orr  x15, x15, x14
+/*
+	; ecx = MOVE_TYPE
+	; rdi = bitboard of to square r9d
+	; r10 = -(MOVE_TYPE==0) & rdi
+	; eax = move
+		mov   eax, ecx
+		shr   ecx, 12
+		cmp   ecx, 1
+		sbb   r10, r10
+		xor   edi, edi
+		bts   rdi, r9
+		and   r10, rdi
+*/
+        mov  w0, w1
+        mov  x17, 1
+        lsl  x17, x17, x9
+        lsr  w1, w1, 12
+        tst  w1, w1
+       csel  x10, x17, xzr, eq
+/*
+	; r13 = checkers
+	; r12 = -1 if checkers!=0
+	;     =  0 if checkers==0
+		mov   r12, qword[rbx+State.checkersBB]
+		mov   r13, r12
+		neg   r12
+		sbb   r12, r12
+*/
+        ldr  x13, [x21, State.checkersBB]
+        tst  x13, x13
+      csetm  x12, ne
+/*
+	; make sure that our piece is on from square
+		and   r11d, 7
+		 bt   r14, r8
+		jnc   .ReturnFalse
+
+		cmp   ecx, MOVE_TYPE_PROM
+		jae   .Special
+*/
+        and  w11, w11, 7
+        lsr  x4, x14, x8
+        tbz  x4, 0, Move_IsPseudoLegal.ReturnFalse
+/*
+	; make sure that we don't capture our own piece
+		mov   eax, dword[.JmpTable+4*r11]
+		 bt   r14, r9
+		 jc   .ReturnFalse
+
+		jmp   rax
+align 8
+.JmpTable:
+		dd .NoPiece
+		dd .NoPiece
+		dd .Pawn
+		dd .Knight
+		dd .Bishop
+		dd .Rook
+		dd .Queen
+		dd .King
+*/
+        
+        adr  x4, Move_IsPseudoLegal.JmpTable
+        ldr  w0, [x4, x11, lsl 2]
+        adr  x4, Move_GivesCheck
+        add  x0, x0, x4
+        lsr  x5, x14, x9
+       tbnz  x5, 0, Move_IsPseudoLegal.ReturnFalse
+         br  x0
+Move_IsPseudoLegal.JmpTable:
+        .word Move_IsPseudoLegal.NoPiece - Move_IsPseudoLegal
+        .word Move_IsPseudoLegal.NoPiece - Move_IsPseudoLegal
+        .word Move_IsPseudoLegal.Pawn - Move_IsPseudoLegal
+        .word Move_IsPseudoLegal.Knight - Move_IsPseudoLegal
+        .word Move_IsPseudoLegal.Bishop - Move_IsPseudoLegal
+        .word Move_IsPseudoLegal.Rook - Move_IsPseudoLegal
+        .word Move_IsPseudoLegal.Queen - Move_IsPseudoLegal
+        .word Move_IsPseudoLegal.King - Move_IsPseudoLegal
+
+
+Move_IsPseudoLegal.NoPiece:
+Move_IsPseudoLegal.ReturnFalse:
+/*
+		xor   eax, eax
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+        mov  w0, 0
+        ret
+
+
+Move_IsPseudoLegal.Knight:
+/*
+		mov   rax, qword[KnightAttacks+8*r8]
+		and   rax, r10
+	       test   rax, r12
+		jnz   .Checkers
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+        lea  x6, KnightAttacks
+        ldr  x0, [x6, x8, lsl 3]
+        and  x0, x0, x10
+        tst  x0, x12
+        bne  Move_IsPseudoLegal.Checkers
+        ret
+
+Move_IsPseudoLegal.Bishop:
+/*
+      BishopAttacks   rax, r8, r15, r11
+		and   rax, r10
+	       test   rax, r12
+		jnz   .Checkers
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+        BishopAttacks  x0, x8, x15, x11, x4
+        and  x0, x0, x10
+        tst  x0, x12
+        bne  Move_IsPseudoLegal.Checkers
+        ret
+
+Move_IsPseudoLegal.Rook:
+/*
+	RookAttacks   rax, r8, r15, r11
+		and   rax, r10
+	       test   rax, r12
+		jnz   .Checkers
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+        RookAttacks  x0, x8, x15, x11, x4
+        and  x0, x0, x10
+        tst  x0, x12
+        bne  Move_IsPseudoLegal.Checkers
+        ret
+
+Move_IsPseudoLegal.Queen:
+/*
+	RookAttacks   rax, r8, r15, r11
+      BishopAttacks   r9, r8, r15, r11
+		 or   rax, r9
+		and   rax, r10
+	       test   rax, r12
+		jnz   .Checkers
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+        RookAttacks  x0, x8, x15, x11, x4
+        BishopAttacks  x9, x8, x15, x11, x4
+        orr  x0, x0, x9
+        and  x0, x0, x10
+        tst  x0, x12
+        bne  Move_IsPseudoLegal.Checkers
+        ret
+
+Move_IsPseudoLegal.Checkers:
+/*
+	; if moving P|R|B|Q and in check, filter some moves out
+		mov   rcx, qword [rbp+Pos.typeBB+8*King]
+		bsf   rax, r13
+		shl   eax, 6+3
+		and   rcx, r14
+		bsf   rcx, rcx
+		mov   rax, qword[BetweenBB+rax+8*rcx]
+		 or   rax, r13
+*/
+        ldr  x1, [x20, 8*King]
+       rbit  x0, x13
+        clz  x0, x0
+        lea  x6, BetweenBB
+        add  x6, x6, x0, lsl 9
+        and  x1, x1, x14
+       rbit  x1, x1
+        clz  x1, x1
+        ldr  x0, [x6, x1, lsl 3]
+        orr  x0, x0, x13
+
+/*
+	; if more than one checker, must move king
+		lea   rcx, [r13-1]
+	       test   rcx, r13
+		jnz   .ReturnFalse
+*/
+        sub  x1, x13, 1
+        tst  x1, x13
+        bne  Move_IsPseudoLegal.ReturnFalse
+
+/*
+	; move must be a blocking evasion or a capture of the checking piece
+		and   rax, rdi
+
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+        and  x0, x0, x17
+        ret
+
+Move_IsPseudoLegal.Pawn:
+/*
+		mov   r11d, esi
+		shl   r11d, 6+3
+		mov   rdx, 0x00FFFFFFFFFFFF00
+		mov   eax, r8d
+		xor   eax, r9d
+		cmp   eax, 16
+		 je   .DoublePawn
+		xor   eax, eax
+		xor   esi, 1
+		lea   ecx, [2*rsi-1]
+		lea   ecx, [r8+8*rcx]
+		bts   rax, rcx
+	       andn   rax, r15, rax
+		mov   rcx, [rbp+Pos.typeBB+8*rsi]
+		and   rcx, qword[PawnAttacks+r11+8*r8]
+		 or   rax, rcx
+		and   rax, rdx
+*/
+        lsl  w11, w16, 9
+        mov  x2, 72057594037927680
+        eor  w0, w8, w9
+        cmp  w0, 16
+        beq  Move_IsPseudoLegal.DoublePawn
+        eor  w16, w16, 1
+        mov  x0, 1
+        add  x1, x16, x16
+        sub  x1, x1, 1
+        add  x1, x8, x1, lsl 3
+        lsl  x0, x0, x1
+        bic  x0, x0, x15
+        ldr  x1, [x20, x16, lsl 3]
+        lea  x6, PawnAttacks
+        add  x6, x6, x11
+        ldr  x4, [x6, x8, lsl 3]
+        and  x1, x1, x4
+        orr  x0, x0, x1
+        and  x0, x0, x2
+/*
+		and   rax, r10
+	       test   rax, r12
+		jnz   .Checkers
+
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+        and  x0, x0, x10
+        tst  x0, x12
+        bne  Move_IsPseudoLegal.Checkers
+        ret
+
+Move_IsPseudoLegal.DoublePawn:
+/*
+	; make sure that two squares are clear
+		lea   eax, [r8+r9]
+		shr   eax, 1
+		mov   rdx, rdi
+		bts   rdx, rax
+	       test   rdx, r15
+		jnz   .DPawnReturnFalse
+*/
+        add  x0, x8, x9
+        lsr  x0, x0, 1
+        mov  x2, 1
+        lsl  x2, x2, x0
+        orr  x2, x2, x17
+        tst  x2, x15
+        bne  Move_IsPseudoLegal.DPawnReturnFalse
+/*
+	; make sure that from is on home
+		mov   eax, r8d
+		shr   eax, 3
+		lea   ecx, [1+5*rsi]
+		cmp   eax, ecx
+		jne   .DPawnReturnFalse
+		 or   eax, -1
+	       test   r12, r12
+		jnz   .Checkers
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+        lsr  w0, w8, 3
+        add  w1, w16, w16, lsl 2
+        add  w1, w1, 1
+        cmp  w0, w1
+        bne  Move_IsPseudoLegal.DPawnReturnFalse
+        mov  w0, -1
+       cbnz  x12, Move_IsPseudoLegal.Checkers
+
+Move_IsPseudoLegal.DPawnReturnFalse:
+/*
+		xor   eax, eax
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+        mov  w0, 0
+        ret
+
+
+Move_IsPseudoLegal.King:
+/*
+		mov   r11d, esi
+		shl   r11d, 6+3
+		mov   rdx, qword[rbx+State.checkersBB]
+		mov   rax, qword[KingAttacks+8*r8]
+		and   rax, r10
+	       test   rax, r12
+		jnz   .KingCheckers
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+        lsl  w11, w15, 9
+        ldr  x2, [x21, State.checkersBB]
+        lea  x6, KingAttacks
+        ldr  x0, [x6, x8, lsl 3]
+        and  x0, x0, x10
+        tst  x0, x12
+        bne  Move_IsPseudoLegal.KingCheckers
+        ret
+
+Move_IsPseudoLegal.KingCheckers:
+/*
+	; r14 = their pieces
+	; r15 = pieces ^ our king
+	       andn   r14, r14, r15
+		btr   r15, r8
+*/
+        bic  x14, x15, x14
+        mov  x4, 1
+        lsl  x4, x4, x8
+        bic  x15, x15, x4
+/*
+		mov   rax, qword[KingAttacks+8*r9]
+		and   rax, qword[rbp+Pos.typeBB+8*King]
+*/
+        lea  x6, KingAttacks
+        ldr  x0, [x6, x9, lsl 3]
+        ldr  x4, [x20, 8*King]
+        and  x0, x0, x4
+/*
+		mov   rdx, qword[KnightAttacks+8*r9]
+		and   rdx, qword[rbp+Pos.typeBB+8*Knight]
+		 or   rax, rdx
+*/
+        lea  x6, KnightAttacks
+        ldr  x2, [x6, x9, lsl 3]
+        ldr  x4, [x20, 8*Knight]
+        and  x2, x2, x4
+        orr  x0, x0, x2
+/*
+		mov   rdx, qword[PawnAttacks+r11+8*r9]
+		and   rdx, qword[rbp+Pos.typeBB+8*Pawn]
+		 or   rax, rdx
+*/
+        lea  x6, PawnAttacks
+        add  x6, x6, x11
+        ldr  x2, [x6, x9, lsl 3]
+        ldr  x4, [x20, 8*Pawn]
+        and  x2, x2, x4
+        orr  x0, x0, x2
+/*
+	RookAttacks   rdx, r9, r15, r10
+		mov   rcx, qword[rbp+Pos.typeBB+8*Rook]
+		 or   rcx, qword[rbp+Pos.typeBB+8*Queen]
+		and   rdx, rcx
+		 or   rax, rdx
+*/
+        RookAttacks  x2, x9, x15, x10, x4
+        ldr  x1, [x20, 8*Rook]
+        ldr  x4, [x20, 8*Queen]
+        orr  x1, x1, x4
+        and  x2, x2, x1
+        orr  x0, x0, x2
+/*
+      BishopAttacks   rdx, r9, r15, r10
+		mov   rcx, qword[rbp+Pos.typeBB+8*Bishop]
+		 or   rcx, qword[rbp+Pos.typeBB+8*Queen]
+		and   rdx, rcx
+		 or   rax, rdx
+*/
+        BishopAttacks  x2, x9, x15, x10, x4
+        ldr  x1, [x20, 8*Bishop]
+        ldr  x4, [x20, 8*Queen]
+        orr  x1, x1, x4
+        and  x2, x2, x1
+        orr  x0, x0, x2
+/*
+		and   rax, r14
+		cmp   rax, 1
+		sbb   eax, eax
+
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+        tst  x0, x14        
+      csetm  w0, eq
+        ret
+
+Move_IsPseudoLegal.Special:
+/*
+		cmp   ecx, MOVE_TYPE_EPCAP
+		 je   .EpCapture
+		jae   .Castle
+*/
+        cmp  w1, MOVE_TYPE_EPCAP
+        beq  Move_IsPseudoLegal.EpCapture
+        bhs  Move_IsPseudoLegal.Castle
+
+Move_IsPseudoLegal.Promotion:
+/*
+		cmp   r11d, Pawn
+		jne   .ReturnFalse
+		 bt   r14, r9
+		 jc   .ReturnFalse
+*/
+        cmp  w11, Pawn
+        bne  Move_IsPseudoLegal.ReturnFalse
+        lsr  x4, x14, x9
+       tbnz  x4, 0, Move_IsPseudoLegal.ReturnFalse
+/*
+		mov   r11d, esi
+		shl   r11d, 6+3
+
+		lea   ecx, [rsi-1]
+		xor   esi, 1
+		and   ecx, 56
+		mov   edx, 0x0FF
+		shl   rdx, cl
+
+		xor   eax, eax
+*/
+        lsl  w11, w16, 9
+        sub  w1, w16, 1
+        eor  w16, w16, 1
+        and  w1, w1, 56
+        mov  x2, 255
+        lsl  x2, x2, x1
+/*
+		lea   ecx, [2*rsi-1]
+		lea   ecx, [r8+8*rcx]
+		bts   rax, rcx
+	       andn   rax, r15, rax
+		mov   rcx, [rbp+Pos.typeBB+8*rsi]
+		and   rcx, qword[PawnAttacks+r11+8*r8]
+		 or   rax, rcx
+		and   rax, rdx
+*/
+        add  w1, w16, w16
+        sub  w1, w1, 1
+        add  w1, w8, w1, lsl 3
+        mov  x0, 1
+        lsl  x0, x0, x1
+        bic  x0, x0, x15
+        ldr  x1, [x20, x16, lsl 3]
+        lea  x6, PawnAttacks
+        add  x6, x6, x11
+        ldr  x4, [x6, x8, lsl 3]
+        and  x1, x1, x4
+        orr  x0, x0, x1
+        and  x0, x0, x2
+/*
+		xor   esi, 1
+
+		and   rax, rdi
+		 jz   .ReturnFalse
+	       test   rax, r12
+		jnz   .PromotionCheckers
+	; we are not in check so make sure pawn is not pinned
+*/
+        eor  w16, w16, 1
+       ands  x0, x0, x17
+        beq  Move_IsPseudoLegal.ReturnFalse
+        tst  x0, x12
+        bne  Move_IsPseudoLegal.PromotionCheckers
+
+Move_IsPseudoLegal.PromotionCheckPinned:
+/*
+		 or   eax, -1
+		mov   rcx, qword[rbx+State.pinned]
+		 bt   rcx, r8
+		jnc   @f
+
+		shl   r8d, 6+3
+		mov   rax, qword[rbp+Pos.typeBB+8*King]
+		and   rax, qword[rbp+Pos.typeBB+8*rsi]
+		and   rax, qword[LineBB+r8+8*r9]
+@@:
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+        mov  w0, -1
+        ldr  x1, [x21, State.pinned]
+        lsr  x4, x1, x8
+       tbnz  x4, 0, 1f
+        lsl  w8, w8, 9
+        ldr  x0, [x20, 8*King]
+        ldr  x4, [x20, x16, lsl 3]
+        and  x0, x0, x4
+        lea  x6, LineBB
+        add  x6, x6, x8
+        ldr  x4, [x6, x9, lsl 3]
+        and  x0, x0, x4
+1:
+        ret
+
+Move_IsPseudoLegal.PromotionCheckers:
+/*
+	; if moving P|R|B|Q and in check, filter some moves out
+		mov   rcx, qword [rbp+Pos.typeBB+8*King]
+		bsf   rax, r13
+		shl   eax, 6+3
+		and   rcx, r14
+		bsf   rcx, rcx
+		mov   rax, qword[BetweenBB+rax+8*rcx]
+		 or   rax, r13
+*/
+        ldr  x1, [x20, 8*King]
+       rbit  x0, x13
+        clz  x0, x0
+        lea  x6, BetweenBB
+        add  x6, x6, x0, lsl 9
+        and  x1, x1, x14
+       rbit  x1, x1
+        clz  x1, x1
+        ldr  x0, [x6, x1, lsl 3]
+        orr  x0, x0, x13
+
+/*
+	; if more than one checker, must move king
+		lea   rcx, [r13-1]
+	       test   rcx, r13
+		jnz   .ReturnFalse
+*/
+        sub  x1, x13, 1
+        tst  x1, x13
+        bne  Move_IsPseudoLegal.ReturnFalse
+
+/*
+	; move must be a blocking evasion or a capture of the checking piece
+	       test   rax, rdi
+		 jz   .ReturnFalse
+		jmp   .PromotionCheckPinned
+*/
+        and  x0, x0, x17
+       cbnz  x0, Move_IsPseudoLegal.PromotionCheckPinned
+        ret        
+ 
+
+
+Move_IsPseudoLegal.EpCapture:
+/*
+	; make sure destination is empty
+		 bt   r15, r9
+		 jc   .ReturnFalse
+*/
+        lsr  x4, x15, x9
+       tbnz  x4, 0, Move_IsPseudoLegal.ReturnFalse
+/*
+	; make sure that it is our pawn moving
+		mov   eax, r11d
+		and   eax, 7
+		cmp   eax, Pawn
+		jne   .ReturnFalse
+*/
+        and  w0, w11, 7
+        cmp  w0, Pawn
+        bne  Move_IsPseudoLegal.ReturnFalse
+/*
+	; make sure to is epsquare
+		cmp   r9l, byte[rbx+State.epSquare]
+		jne   .ReturnFalse
+*/
+       ldrb  w4, [x21, State.epSquare]
+        cmp  w9, w4
+        bne  Move_IsPseudoLegal.ReturnFalse
+/*
+	; make sure from->to is a pawn attack
+		mov   r11d, esi
+		shl   r11d, 6+3
+		mov   rax, qword[PawnAttacks+r11+8*r8]
+		 bt   rax, r9
+		jnc   .ReturnFalse
+*/
+        lea  x6, PawnAttacks
+        add  x6, x6, x11, lsl 9
+        ldr  x0, [x6, x8, lsl 3]
+        lsr  x4, x0, x9
+        tbz  x4, 0, Move_IsPseudoLegal.ReturnFalse
+/*
+	; make sure capsq=r10=r9+pawnpush is their pawn
+		lea   r10d, [2*rsi-1]
+		lea   r10d, [r9+8*r10]
+		xor   esi, 1
+		lea   eax, [Pawn+8*rsi]
+		cmp   al, byte[rbp+Pos.board+r10]
+		jne   .ReturnFalse
+*/
+        add  x10, x16, x16
+        sub  x10, x10, 1
+        add  x10, x9, x10, lsl 3
+        eor  x16, x16, 1
+        mov  w0, Pawn
+        add  w0, w0, w16, lsl 3
+        add  x6, x20, Pos.board
+       ldrb  w4, [x6, x10]
+        cmp  w0, w4
+        bne  Move_IsPseudoLegal.ReturnFalse
+/*
+	; rdi = ksq = square<KING>(us)
+		mov   rdi, qword[rbp+Pos.typeBB+8*King]
+		and   rdi, r14
+		bsf   rdi, rdi
+*/
+        ldr  x17, [x20, 8*King]
+        and  x17, x17, x14
+       rbit  x17, x17
+        clz  x17, x17
+/*
+	; r15 = occupied = (pieces() ^ from ^ capsq) | to
+		btr   r15, r8
+		btr   r15, r10
+		bts   r15, r9
+*/
+        mov  x4, 1
+        lsl  x4, x4, x8
+        bic  x15, x15, x4
+        mov  x4, 1
+        lsl  x4, x4, x10
+        bic  x15, x15, x4
+        mov  x4, 1
+        lsl  x4, x4, x9
+        orr  x15, x15, x4
+/*
+	; r14 = their pieces
+		mov   r14, qword[rbp+Pos.typeBB+8*rsi]
+*/
+        ldr  x14, [x20, x16, lsl 3]
+/*
+	; check for rook attacks
+	RookAttacks   rax, rdi, r15, rdx
+		mov   rcx, qword[rbp+Pos.typeBB+8*Rook]
+		 or   rcx, qword[rbp+Pos.typeBB+8*Queen]
+		and   rcx, r14
+	       test   rax, rcx
+		jnz   .ReturnFalse
+*/
+        RookAttacks  x0, x17, x15, x2, x4
+        ldr  x1, [x20, 8*Rook]
+        ldr  x4, [x20, 8*Queen]
+        orr  x1, x1, x4
+        and  x1, x1, x14
+        tst  x0, x1
+        bne  Move_IsPseudoLegal.ReturnFalse
+/*
+	; check for bishop attacks
+      BishopAttacks   rax, rdi, r15, rdx
+		mov   rcx, qword[rbp+Pos.typeBB+8*Bishop]
+		 or   rcx, qword[rbp+Pos.typeBB+8*Queen]
+		and   rcx, r14
+	       test   rax, rcx
+		jnz   .ReturnFalse
+*/
+        BishopAttacks  x0, x17, x15, x2, x4
+        ldr  x1, [x20, 8*Bishop]
+        ldr  x4, [x20, 8*Queen]
+        orr  x1, x1, x4
+        and  x1, x1, x14
+        tst  x0, x1
+        bne  Move_IsPseudoLegal.ReturnFalse
+/*
+		 or   eax, -1
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+        mov  w0, -1
+        ret
+
+
+
+Move_IsPseudoLegal.Castle:
+/*
+	; CastlingJmp expects
+	;     r13  their pieces
+	;     r14  all pieces
+	       andn   r13, r14, r15
+		mov   r14, r15
+	       test   r12, r12
+		jnz   .CastleReturnFalse
+		cmp   ecx, MOVE_TYPE_CASTLE
+		jne   .ReturnFalse
+	       test   esi, esi
+		jnz   .CastleBlack
+*/
+        bic  x13, x15, x14
+        mov  x14, x15
+       cbnz  x12, Move_IsPseudoLegal.CastleReturnFalse
+        cmp  w1, MOVE_TYPE_CASTLE
+        bne  Move_IsPseudoLegal.ReturnFalse
+       cbnz  w16, Move_IsPseudoLegal.CastleBlack
+
+Move_IsPseudoLegal.CastleWhite:
+/*
+		cmp   eax, dword[rbp-Thread.rootPos+Thread.castling_movgen+4*0]
+		 je   .CastleCheck_WhiteOO
+		cmp   eax, dword[rbp-Thread.rootPos+Thread.castling_movgen+4*1]
+		 je   .CastleCheck_WhiteOOO
+*/
+        ldr  w4, [x20, -Thread.rootPos + Thread.castling_movgen + 4*0]
+        cmp  w0, w4
+        beq  Move_IsPseudoLegal.CastleCheck_WhiteOO
+        ldr  w4, [x20, -Thread.rootPos + Thread.castling_movgen + 4*1]
+        cmp  w0, w4
+        beq  Move_IsPseudoLegal.CastleCheck_WhiteOOO
+
+Move_IsPseudoLegal.CastleReturnFalse:
+/*
+		xor   eax, eax
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+        mov  w0, 0
+        ret
+
+Move_IsPseudoLegal.CastleBlack:
+/*
+		cmp   eax, dword[rbp-Thread.rootPos+Thread.castling_movgen+4*2]
+		 je   .CastleCheck_BlackOO
+		cmp   eax, dword[rbp-Thread.rootPos+Thread.castling_movgen+4*3]
+		 je   .CastleCheck_BlackOOO
+		jmp   .CastleReturnFalse
+*/
+        ldr  w4, [x20, -Thread.rootPos + Thread.castling_movgen + 4*2]
+        cmp  w0, w4
+        beq  Move_IsPseudoLegal.CastleCheck_BlackOO
+        ldr  w4, [x20, -Thread.rootPos + Thread.castling_movgen + 4*3]
+        cmp  w0, w4
+        beq  Move_IsPseudoLegal.CastleCheck_BlackOOO
+          b  Move_IsPseudoLegal.CastleReturnFalse
+
+
+
+Move_IsPseudoLegal.CastleCheck_WhiteOO:
+/*
+	      movzx   eax, byte[rbx+State.castlingRights]
+		mov   rcx, qword[rbp-Thread.rootPos+Thread.castling_path+8*0]
+		and   rcx, r15
+		and   eax, 1 shl 0
+		xor   eax, 1 shl 0
+		 or   rax, rcx
+		jnz   .ReturnFalse
+	       call   CastleOOLegal_White
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+       ldrb  w0, [x21, State.castlingRights]
+        ldr  x1, [x20, -Thread.rootPos + Thread.castling_path + 8*2]
+        and  x1, x1, x15
+        and  w0, w0, 1 << 2
+        eor  w0, w0, 1 << 2
+        orr  x0, x0, x1
+       cbnz  x0, Move_IsPseudoLegal.CastleReturnFalse
+          b  CastleOOLegal_Black
+
+Move_IsPseudoLegal.CastleCheck_BlackOO:
+/*
+	      movzx   eax, byte[rbx+State.castlingRights]
+		mov   rcx, qword[rbp-Thread.rootPos+Thread.castling_path+8*2]
+		and   rcx, r15
+		and   eax, 1 shl 2
+		xor   eax, 1 shl 2
+		 or   rax, rcx
+		jnz   .CastleReturnFalse
+	       call   CastleOOLegal_Black
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+       ldrb  w0, [x21, State.castlingRights]
+        ldr  x1, [x20, -Thread.rootPos + Thread.castling_path + 8*2]
+        and  x1, x1, x15
+        and  w0, w0, 1 << 2
+        eor  w0, w0, 1 << 2
+        orr  x0, x0, x1
+       cbnz  x0, Move_IsPseudoLegal.CastleReturnFalse
+          b  CastleOOLegal_Black
+
+Move_IsPseudoLegal.CastleCheck_WhiteOOO:
+/*
+	      movzx   eax, byte[rbx+State.castlingRights]
+		mov   rcx, qword[rbp-Thread.rootPos+Thread.castling_path+8*1]
+		and   rcx, r15
+		and   eax, 1 shl 1
+		xor   eax, 1 shl 1
+		 or   rax, rcx
+		jnz   .CastleReturnFalse
+	       call   CastleOOOLegal_White
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+       ldrb  w0, [x21, State.castlingRights]
+        ldr  x1, [x20, -Thread.rootPos + Thread.castling_path + 8*1]
+        and  x1, x1, x15
+        and  w0, w0, 1 << 1
+        eor  w0, w0, 1 << 1
+        orr  x0, x0, x1
+       cbnz  x0, Move_IsPseudoLegal.CastleReturnFalse
+          b  CastleOOOLegal_White
+
+Move_IsPseudoLegal.CastleCheck_BlackOOO:
+/*
+	      movzx   eax, byte[rbx+State.castlingRights]
+		mov   rcx, qword[rbp-Thread.rootPos+Thread.castling_path+8*3]
+		and   rcx, r15
+		and   eax, 1 shl 3
+		xor   eax, 1 shl 3
+		 or   rax, rcx
+		jnz   .CastleReturnFalse
+	       call   CastleOOOLegal_Black
+		pop   r15 r14 r13 r12 rdi rsi
+		ret
+*/
+       ldrb  w0, [x21, State.castlingRights]
+        ldr  x1, [x20, -Thread.rootPos + Thread.castling_path + 8*3]
+        and  x1, x1, x15
+        and  w0, w0, 1 << 3
+        eor  w0, w0, 1 << 3
+        orr  x0, x0, x1
+       cbnz  x0, Move_IsPseudoLegal.CastleReturnFalse
+          b  CastleOOOLegal_Black
+
