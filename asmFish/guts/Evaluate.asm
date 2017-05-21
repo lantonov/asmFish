@@ -614,6 +614,9 @@ match =Black, Us
 	; Compute the king danger score and subtract it from the evaluation
 	       test   edi, edi
 		 js   ..AllDone
+                mov   eax, edi
+                shr   eax, 4                ; kingDanger>=0 here
+                sub   esi, eax
 	       imul   edi, edi
 		shr   edi, 12
 		shl   edi, 16
