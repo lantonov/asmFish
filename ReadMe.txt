@@ -34,7 +34,9 @@ A: With this approach the critical functions would still need to conform to the 
 
 Q: Is asmFish search the same as official stockfish?
 A: It does now that PEDANTIC = 1 is the default! The changes previously thought to be
-   inconsequential lose about 2 Elo in a head-to-head matchup.
+   inconsequential lose about 2 Elo in a head-to-head matchup. The functionality when using
+   syzygy is not 100% identical because asmFish uses Ronald's original alpha-beta search while
+   official stockfish does not. This causes minor differences due to the piece lists.
    
 Q: Where can I find the executable files of the old versions ?
 A: All older versions of asmFish/pedantFish are in the branch https://github.com/lantonov/asmFish/tree/executables

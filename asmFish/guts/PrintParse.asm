@@ -14,10 +14,10 @@ StringLength:
 
 PrintScore_Uci:
                 mov   edx, VALUE_MATE + 1
-		cmp   ecx, +VALUE_MATE_IN_MAX_PLY
+		cmp   ecx, VALUE_MATE - MAX_PLY
 		jge   .pMate
                 mov   edx, -VALUE_MATE
-		cmp   ecx, -VALUE_MATE_IN_MAX_PLY
+		cmp   ecx, -VALUE_MATE + MAX_PLY
 		jle   .nMate
 
 		mov   eax, 'cp '
