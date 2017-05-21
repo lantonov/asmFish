@@ -60,8 +60,8 @@ match =Black, Us
 
 		xor   r8, r8
 		xor   edx, edx
-		cmp   ecx, QueenValueMg
-		 jb   ..NotUsed 	; 10.49%
+		cmp   ecx, RookValueMg + KnightValueMg
+		 jb   ..NotUsed
 		mov   r8, r9
                 neg   rax
 	   shift_bb   Down, r8
@@ -486,6 +486,15 @@ match =Black, Us
 ..KingSafetyDoneRet:
 
 		mov   edi, dword[.ei.kingAttackersCount+4*Them]
+if PEDANTIC
+              movzx   ecx, byte[rbp+Pos.pieceEnd+(8*Them+Queen)]
+		and   ecx, 15
+else
+                mov   rcx, qword[rbp+Pos.typeBB+8*Them]
+                and   rcx, qword[rbp+Pos.typeBB+8*Queen]
+             popcnt   rcx, rcx, r8
+end if
+                add   ecx, edi
 
 		mov   r8, qword[.ei.attackedBy2+8*Us]
 	       andn   r8, r8, qword[.ei.attackedBy+8*(8*Us+King)]
@@ -497,8 +506,8 @@ match =Black, Us
 	       andn   r9, r9, qword[.ei.kingRing+8*Us]
 		and   r9, AttackedByThem
 	; r9=b
-	       test   edi, edi
-		 jz   ..AllDone
+	        cmp   ecx, 2
+		 jb   ..AllDone
 
 	       imul   edi, dword[.ei.kingAttackersWeight+4*Them]
 	       imul   eax, dword[.ei.kingAdjacentZoneAttacksCount+4*Them], 102
@@ -515,17 +524,14 @@ match =Black, Us
 	       test   PiecesThem, qword[rbp+Pos.typeBB+8*Queen]
 		lea   eax, [rdi-848]
 	      cmovz   edi, eax
-	; the following does edi += - 28*mg_value(score)/25 - 5
+	; the following does edi += - 5*mg_value(score)/8 + 40
 		lea   ecx, [rsi+0x08000]
+                add   edi, 40
 		sar   ecx, 16
-		lea   edx, [4*rcx]
-                shl   ecx, 5
-                mov   eax, 0x51EB851F
-                sub   ecx, edx
-               imul   ecx
-                sar   ecx, 31
+		lea   edx, [9*rcx]
+		lea   eax, [9*rcx+7]
+              cmovs   edx, eax
                 sar   edx, 3
-		lea   edi, [rdi+rcx-5]
 		sub   edi, edx
 	; edi = kingDanger
 
