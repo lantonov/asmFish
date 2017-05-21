@@ -37,7 +37,7 @@
 - the sequence of states is stored as a vector as opposed to a linked list
   - the size of this container should expand and shrink automatically in the gui thread
   - the size of vector of states used in search threads is fixed on thread creation
-    - we only need 100+MAX_PLY entries for a search thread
+    - we only need 100+MAX_PLY+MAX_SYZYGY_PLY entries for a search thread
 - Move_Do does no prefetching
 
 5. asm notes:
@@ -57,10 +57,10 @@
 - windows uses only window kernel functions for now
 
 7. notes about fasm:
-- mov x, y	is a definition that actually executes in your program (zeroth)
-- cmp x, y	is a condition that actually executes in your program (zeroth)
-- x = y 	is a definition/condition that is handled by the assembler (first)
-- x eq y	is a condition that is handled by the parser (second)
-- match =x,y	is a condition that is handled by the preprocessor (third)
-- x equ y	is a definition of x that is handled by the preprocessor (third)
-- x fix y	is a definition of x that is handled by prepreprocessor (fourth)
+- mov x, y	is a definition that actually executes in your program
+- cmp x, y	is a condition that actually executes in your program
+- x = y 	is a definition/condition that is handled by the assembler
+- x eq y	is a condition that is handled by the parser in assembly stage
+- match =x,y	is a condition that is handled by the preprocessor
+- x equ y	is a definition of x that is handled by the preprocessor
+- x fix y	is a definition of x that is handled by prepreprocessor

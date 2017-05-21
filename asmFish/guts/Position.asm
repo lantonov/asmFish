@@ -146,7 +146,7 @@ Position_VerifyState:
 		xor   r15, qword[Zobrist_Ep+8*rcx]
 	@@:
 
-		xor   r14, r14
+		mov   r14, [Zobrist_noPawns]
 		xor   r13, r13
 
 	      vpxor   xmm0, xmm0, xmm0	; npMaterial

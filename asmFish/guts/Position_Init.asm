@@ -56,6 +56,10 @@ end virtual
 	       call   Math_Rand_i
 		mov   qword[Zobrist_side], rax
 
+		lea   rcx, [.prng]
+	       call   Math_Rand_i
+		mov   qword[Zobrist_noPawns], rax
+
 		mov   rax, 00FF0000H
 		mov   qword[IsPawnMasks+0], rax
 		mov   qword[IsPawnMasks+8], rax
