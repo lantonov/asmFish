@@ -3,7 +3,8 @@
 ; which is about half of nps/core (the other half comes from qsearch). Higher setting are 
 ; dangerous but lower settings lead to increased polling of the time
 ; MIN_RESETCNT should be fairly low, not more than 50, say.
-MAX_RESETCNT equ 200000
+; official sf polls the timer every 4096 calls, which is much too often
+MAX_RESETCNT equ 100000
 MIN_RESETCNT equ 40
 
 ; if USE_SPAMFILTER, wait at least this ms before writing out info string
