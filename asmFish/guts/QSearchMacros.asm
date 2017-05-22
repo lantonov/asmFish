@@ -108,6 +108,7 @@ end virtual
 		mov   qword[rbx+1*sizeof.State+State.pv], r8
 		mov   dword[r9], edx
 	end if
+                mov   dword[.moveCount], 2
 		mov   dword[.bestMove], edx
 		mov   dword[rbx+State.currentMove], edx
 		mov   byte[rbx+State.ply], al
@@ -273,21 +274,19 @@ end virtual
     .MovePickNoTTMove:
 		mov   dword[rbx+State.ttMove], edi
 		mov   qword[rbx+State.stage], r15
-if DEBUG
-		mov   qword[.stage], r15
-end if
 
 	      align   8
 .MovePickLoop:
                 xor   esi, esi
 	GetNextMove
 		mov   dword[.move], eax
+		mov   ecx, eax
 	       test   eax, eax
 		 jz   .MovePickDone
 
+                sub   [.moveCount], 1
 
 	; check for check and get address of search function
-		mov   ecx, eax
 	       call   Move_GivesCheck
 		mov   byte[rbx+State.givesCheck], al
 	        mov   r13d, eax
@@ -358,11 +357,13 @@ end if
 		mov   eax, VALUE_MATED_IN_MAX_PLY
                 sub   eax, edi
 		shl   r14d, 9
+                mov   edx, dword[.moveCount]
 		shl   r15d, 9
 		jnz   .DontContinue
+                 or   edx, dword[.depth]
 		cmp   esi, MOVE_TYPE_PROM
 		jae   .DontContinue	   ; catch MOVE_TYPE_EPCAP
-               test   eax, dword[.depth]
+               test   eax, edx
                 jns   .DontContinue
 	end if
 
@@ -394,7 +395,9 @@ end if
 	; check for legality
 		mov   ecx, dword[.move]
 	       call   Move_IsLegal
-	       test   rax, rax
+                lea   edx, [rax+1]
+                add   dword[.moveCount], edx
+	       test   eax, eax
 		 jz   .MovePickLoop
 
 	; make the move

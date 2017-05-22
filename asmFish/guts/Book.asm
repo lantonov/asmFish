@@ -10,7 +10,7 @@ Book_Create:
                 mov   dword[rbx+Book.entryCount], eax
                 mov   qword[rbx+Book.buffer], rax
                 mov   byte[rbx+Book.ownBook], al
-                mov   byte[rbx+Book.bookDepth], 100
+                mov   dword[rbx+Book.bookDepth], 100
                 pop   rbx
 
 Book_Refresh:
