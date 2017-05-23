@@ -178,10 +178,19 @@ Evaluate_Init:
 		pop   rdi rsi rbx
 		ret
 */
+        ldr  x0, Evaluate_Init.SeeSignBitMask
+        lea  x6, SeeSignBitMask
+        str  x0, [x6]
+Display "SeeSignBitMask: %x0\n"
+
         ldp  x29, x30, [sp], -16
         ret
 
-        .balign 4
+        .balign 8
+Evaluate_Init.SeeSignBitMask: // 0x7c00406070787c7c
+ .word  0x70787c7c
+ .word  0x7c004060
+
 Evaluate_Init.MobilityBonus_Knight:
  .word (-75 << 16) + (-76)
  .word (-57 << 16) + (-54)

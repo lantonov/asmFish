@@ -17,12 +17,12 @@ PrintScore_Uci:
 	       imul   eax, ecx
 		mov   ecx, PawnValueEg
 */
-        mov  w2, VALUE_MATE + 1
-        mov  w4, +VALUE_MATE_IN_MAX_PLY
+        mov  w2, + VALUE_MATE + 1
+        mov  w4, + VALUE_MATE - MAX_PLY
         cmp  w1, w4
         bge  PrintScore_Uci.pMate
-        mov  w2, -VALUE_MATE
-        mov  w4, -VALUE_MATE_IN_MAX_PLY
+        mov  w2, - VALUE_MATE
+        mov  w4, - VALUE_MATE + MAX_PLY
         cmp  w1, w4
         ble  PrintScore_Uci.nMate
 

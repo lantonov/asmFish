@@ -1,0 +1,1162 @@
+
+/*
+macro QSearch NT, InCheck {
+	; in:
+	;  rbp: address of Pos struct in thread struct
+	;  rbx: address of State
+	;  ecx: alpha
+	;  edx: beta
+	;  r8d: depth
+
+;jmp _Evaluate
+
+match =_PV_NODE, NT \{
+ match =1, InCheck \\{
+   ProfileInc QSearch_PV_TRUE
+ \\}
+ match =0, InCheck \\{
+   ProfileInc QSearch_PV_FALSE
+ \\}
+
+ .PvNode equ 1
+ \}
+
+match =_NONPV_NODE, NT \{
+ match =1, InCheck \\{
+   ProfileInc QSearch_NONPV_TRUE
+ \\}
+ match =0, InCheck \\{
+   ProfileInc QSearch_NONPV_FALSE
+ \\}
+
+ .PvNode equ 0
+\}
+*/
+.macro QSearch PvNode, InCheck
+
+
+/*
+virtual at rsp
+  .tte	     rq 1      ; 0
+  .ltte      rq 1      ; 8
+  .searchFxn rq 1      ; 16
+  .stage rq 1
+  .ttMove	  rd 1 ; 24
+  .ttValue	  rd 1
+  .ttDepth	  rd 1
+  .move 	  rd 1
+  .excludedMove   rd 1
+  .bestMove	  rd 1
+  .ext		  rd 1
+  .newDepth	  rd 1
+  .predictedDepth rd 1
+  .moveCount	  rd 1
+  .oldAlpha	  rd 1
+  .alpha	  rd 1
+  .beta 	  rd 1
+  .depth	  rd 1
+  .bestValue	  rd 1
+  .value	  rd 1
+  .eval 	  rd 1
+  .nullValue	  rd 1
+  .futilityValue  rd 1
+  .futilityBase   rd 1
+  .inCheck		   rb 1   ;  104
+                           rb 1   ;  105
+  .singularExtensionNode   rb 1   ;  106
+  .improving		   rb 1   ;  107
+  .captureOrPromotion	   rb 1   ;  108
+  .dangerous		   rb 1   ;  109
+  .doFullDepthSearch	   rb 1   ;  110
+  .cutNode		   rb 1   ;  111
+  .ttHit		   rb 1
+			   rb 7
+if .PvNode eq 1
+  ._pv		   rd MAX_PLY+1
+end if
+
+  .lend rb 0
+end virtual
+.localsize = ((.lend-rsp+15) and (-16))
+
+	       push   rbx rsi rdi r12 r13 r14 r15
+	 _chkstk_ms   rsp, .localsize
+		sub   rsp, .localsize
+*/   
+QSearch.tte                     = 0
+QSearch.ltte                    = 1*sizeof.rq + QSearch.tte
+QSearch.searchFxn               = 1*sizeof.rq + QSearch.ltte
+QSearch.stage                   = 1*sizeof.rq + QSearch.searchFxn
+QSearch.ttMove                  = 1*sizeof.rq + QSearch.stage
+QSearch.ttValue 	        = 1*sizeof.rd + QSearch.ttMove
+QSearch.ttDepth 	        = 1*sizeof.rd + QSearch.ttValue
+QSearch.move	         	= 1*sizeof.rd + QSearch.ttDepth
+QSearch.excludedMove	        = 1*sizeof.rd + QSearch.move
+QSearch.bestMove		= 1*sizeof.rd + QSearch.excludedMove
+QSearch.ext	                = 1*sizeof.rd + QSearch.bestMove
+QSearch.newDepth                = 1*sizeof.rd + QSearch.ext
+QSearch.predictedDepth          = 1*sizeof.rd + QSearch.newDepth
+QSearch.moveCount		= 1*sizeof.rd + QSearch.predictedDepth
+QSearch.oldAlpha 		= 1*sizeof.rd + QSearch.moveCount
+QSearch.alpha		        = 1*sizeof.rd + QSearch.oldAlpha
+QSearch.beta	                = 1*sizeof.rd + QSearch.alpha
+QSearch.depth		        = 1*sizeof.rd + QSearch.beta
+QSearch.bestValue 		= 1*sizeof.rd + QSearch.depth
+QSearch.value	                = 1*sizeof.rd + QSearch.bestValue
+QSearch.eval	                = 1*sizeof.rd + QSearch.value
+QSearch.nullValue               = 1*sizeof.rd + QSearch.eval
+QSearch.futilityValue	        = 1*sizeof.rd + QSearch.nullValue
+QSearch.futilityBase	        = 1*sizeof.rd + QSearch.futilityValue
+QSearch.inCheck                 = 1*sizeof.rd + QSearch.futilityBase
+QSearch.singularExtensionNode   = 1*sizeof.rb + 1*sizeof.rb + QSearch.inCheck
+QSearch.improving               = 1*sizeof.rb + QSearch.singularExtensionNode
+QSearch.captureOrPromotion      = 1*sizeof.rb + QSearch.improving
+QSearch.dangerous               = 1*sizeof.rb + QSearch.captureOrPromotion
+QSearch.doFullDepthSearch       = 1*sizeof.rb + QSearch.dangerous
+QSearch.cutNode                 = 1*sizeof.rb + QSearch.doFullDepthSearch
+QSearch.ttHit                   = 1*sizeof.rb + QSearch.cutNode
+ .if \PvNode == 1
+QSearch.pv                      = 1*sizeof.rb + 7*sizeof.rb + QSearch.ttHit
+QSearch.lend                    = (MAX_PLY+1)*sizeof.rd + QSearch.pv
+ .else
+QSearch.lend                    = 1*sizeof.rb + 7*sizeof.rb + QSearch.ttHit
+ .endif
+QSearch.localsize = (QSearch.lend+15) && -16
+
+        stp  x21, x30, [sp, -16]
+        stp  x26, x27, [sp, -16]
+        stp  x22, x23, [sp, -16]
+        stp  x24, x25, [sp, -16]
+        sub  sp, sp, QSearch.localsize
+
+/*
+		mov   dword[.alpha], ecx
+		mov   dword[.beta], edx
+		mov   dword[.depth], r8d
+             Assert   le, r8d, 0, 'assertion depth<=0 failed in qsearch'
+
+	      movzx   eax, byte[rbx-1*sizeof.State+State.ply]
+		add   eax, 1
+		xor   edx, edx
+	if .PvNode eq 1
+		lea   r8, [._pv]
+		mov   r9, qword[rbx+State.pv]
+		mov   dword[.oldAlpha], ecx
+		mov   qword[rbx+1*sizeof.State+State.pv], r8
+		mov   dword[r9], edx
+	end if
+		mov   dword[.bestMove], edx
+		mov   dword[rbx+State.currentMove], edx
+		mov   byte[rbx+State.ply], al
+
+	; check for instant draw or max ply
+	      movzx   edx, word[rbx+State.rule50]
+	      movzx   rcx, word[rbx+State.pliesFromNull]
+		mov   r8, qword[rbx+State.key]
+		cmp   eax, MAX_PLY
+		jae   .AbortSearch_PlyBigger
+*/
+        str  w1, [sp, QSearch.alpha]
+        str  w2, [sp, QSearch.beta]
+        str  w8, [sp, QSearch.depth]
+       ldrb  w0, [x21, -1*sizeof.State + State.ply]
+        add  w0, w0, 1
+        mov  w2, 0
+ .if \PvNode == 1
+        add  x8, sp, QSearch.pv
+        ldr  x9, [x21, State.pv]
+        str  w1, [sp, QSearch.oldAlpha]
+        str  x8, [x21, 1*sizeof.State + State.pv]
+        str  w2, [x9]
+ .endif
+        str  w2, [sp, QSearch.bestMove]
+        str  w2, [x21, State.currentMove]
+       strb  w0, [x21, State.ply]
+
+       ldrh  w2, [x21, State.rule50]
+       ldrh  w1, [x21, State.pliesFromNull]
+        ldr  x8, [x21, State.key]
+        cmp  w0, MAX_PLY
+        bhs  QSearch.AbortSearch_PlyBigger\@
+
+/*
+	; ss->ply < MAX_PLY holds at this point, so if we should
+	;   go to .AbortSearch_PlySmaller if a draw is detected
+	  PosIsDraw   .AbortSearch_PlySmaller, .CheckDraw_Cold, .CheckDraw_ColdRet
+
+	if InCheck eq 1
+		mov   r12d, DEPTH_QS_CHECKS
+		mov   dword[.ttDepth],r12d
+	else
+		mov   eax, DEPTH_QS_CHECKS
+		mov   r12d, DEPTH_QS_NO_CHECKS
+		cmp   eax, dword[.depth]
+	     cmovle   r12d, eax
+		mov   dword[.ttDepth], r12d
+	end if
+*/
+        PosIsDraw  QSearch.AbortSearch_PlySmaller\@, QSearch.CheckDraw_Cold\@, QSearch.CheckDraw_ColdRet\@
+ .if \InCheck == 1
+        mov  w22, DEPTH_QS_CHECKS
+        str  w22, [sp, QSearch.ttDepth]
+ .else
+        ldr  w0, DEPTH_QS_CHECKS
+        mov  w22, DEPTH_QS_NO_CHECKS
+        ldr  w4, [sp, QSearch.depth]
+        cmp  w0, w4
+       csel  w22, w0, w22, le
+        str  w22, [sp, QSearch.ttDepth]
+ .endif
+/*
+	; transposition table lookup
+		mov   rcx, qword[rbx+State.key]
+		sub   r12d, 1
+	       call   MainHash_Probe
+
+		mov   qword[.tte], rax
+		mov   qword[.ltte], rcx
+		mov   byte[.ttHit], dl
+		mov   rdi, rcx
+		sar   rdi, 48
+	      movsx   eax, ch
+		sub   r12d, eax
+		sar   r12d, 31
+	; r12d = 0 if tte.depth <  ttDepth
+	;      =-1 if tte.depth >= ttDepth
+		shr   rcx, 16
+		mov   r13d, edx
+	      movzx   ecx, cx
+		mov   dword[.ttMove], ecx
+		mov   dword[.ttValue], edi
+
+		lea   r8d, [rdi+VALUE_MATE_IN_MAX_PLY]
+	       test   edx, edx
+		 jz   .DontReturnTTValue
+
+		mov   eax, edi
+		sub   eax, dword[.beta]
+		sar   eax, 31
+	; eax = 0 if ttValue<beta
+	;     =-1 if ttvalue>=beta
+		cmp   edi, VALUE_NONE
+		 je   .DontReturnTTValue
+		cmp   r8d, 2*VALUE_MATE_IN_MAX_PLY
+		jae   .ValueFromTT
+*/
+        ldr  w1, [x21, State.key]
+        sub  w22, w22, 1
+         bl  MainHash_Probe
+
+        str  x0, [sp, QSearch.tte]
+        str  x1, [sp, QSearch.ltte]
+       strb  w2, [sp, QSearch.ttHit]
+        asr  x27, x1, 48
+       sbfx  w0, w1, 8, 8
+        sub  w22, w22, w0
+        asr  w22, w22, 31
+        lsr  x1, x1, 16
+        mov  w23, w2
+       ubfx  w1, w1, 0, 16
+        str  w1, [sp, QSearch.ttMove]
+        str  w27, [sp, QSearch.ttValue]
+
+        mov  w4, VALUE_MATE_IN_MAX_PLY
+        add  w8, w27, w4
+        cbz  w2, QSearch.DontReturnTTValue\@
+
+        mov  w0, w27
+        ldr  w4, [sp, QSearch.beta]
+        sub  w0, w0, w4
+        asr  w0, w0, 31
+
+        mov  w4, VALUE_NONE
+        cmp  w27, w4
+        beq  QSearch.DontReturnTTValue\@
+        mov  w4, VALUE_MATE_IN_MAX_PLY
+        cmp  w8, w4, lsl 1
+        bhs  QSearch.ValueFromTT\@
+
+QSearch.ValueFromTTRet\@:
+/*
+	if .PvNode eq 0
+		add   eax, 2
+	; eax = 2 if ttValue<beta     ie BOUND_UPPER
+	;     = 1 if ttvalue>=beta    ie BOUND_LOWER
+		and   eax, r12d
+	       test   al, byte[.ltte+MainHashEntry.genBound]
+		mov   eax, edi
+		jnz   .ReturnB;.ReturnTTValue
+	end if
+*/
+ .if \PvNode == 0
+        add  w0, w0, 2
+        and  w0, w0, w22
+       ldrb  w4, [sp, QSearch.ltte + MainHashEntry.genBound]
+        tst  w0, w4
+        mov  w0, w27
+        bne  QSearch.ReturnB\@
+ .endif
+
+QSearch.DontReturnTTValue\@:
+/*
+	; Evaluate the position statically
+	;  r13d = ttHit
+
+	if InCheck eq 1
+		mov   eax, -VALUE_INFINITE
+		mov   dword[rbx+State.staticEval], VALUE_NONE
+		mov   dword[.bestValue], eax
+		mov   dword[.futilityBase], eax
+	else
+		mov   edx, dword[rbx-1*sizeof.State+State.currentMove]
+	       test   r13d, r13d
+		 jz   .StaticValueNoTTHit
+*/
+ .if \InCheck == 1
+        mov  w0, -VALUE_INFINITE
+        mov  w4, VALUE_NONE
+        str  w4, [x21, State.staticEval]
+        str  w0, [sp, QSearch.bestValue]
+        str  w0, [sp, QSearch.futilityBase]
+ .else
+        ldr  w2, [x21, -1*sizeof.State + State.currentMove]
+        cbz  w23, QSearch.StaticValueNoTTHit\@
+
+QSearch.StaticValueYesTTHit\@:
+/*
+	      movsx   eax, word[.ltte+MainHashEntry.eval]
+		cmp   eax, VALUE_NONE
+		jne   @f
+	       call   Evaluate
+	@@:	xor   ecx, ecx
+		mov   dword[rbx+State.staticEval], eax
+		cmp   edi, eax
+	       setg   cl
+		add   ecx, 1
+	; ecx = 2 if ttValue > bestValue   ie BOUND_LOWER
+	;     = 1 if ttValue <=bestValue   ie BOUND_UPPER
+		cmp   edi, VALUE_NONE
+		 je   .StaticValueDone
+	       test   cl, byte[.ltte+MainHashEntry.genBound]
+	     cmovnz   eax, edi
+		jmp   .StaticValueDone
+*/
+      ldrsh  w0, [sp, QSearch.ltte + MainHashEntry.eval]
+        mov  w4, VALUE_NONE
+        cmp  w0, w4
+        bne  1f
+         bl  Evaluate
+1:      mov  x1, 0
+        str  w0, [x21, State.staticEval]
+        cmp  w27, w0
+       cset  w1, gt
+        add  w1, w1, 1
+        mov  w4, VALUE_NONE
+        cmp  w27, w4
+        beq  QSearch.StaticValueDone\@
+       ldrb  w4, [sp, QSearch.ltte + MainHashEntry.genBound]
+       csel  w0, w27, w0, ne
+          b  QSearch.StaticValueDone\@
+        
+
+QSearch.StaticValueNoTTHit\@:
+/*
+		mov   eax, dword[rbx+State.staticEval-1*sizeof.State]
+		neg   eax
+		add   eax, 2*Eval_Tempo
+		cmp   edx, MOVE_NULL
+		 je   @f
+	       call   Evaluate
+	@@:	mov   dword[rbx+State.staticEval], eax
+*/
+        ldr  w0, [x21, -1*sizeof.State + State.staticEval]
+        neg  w0, w0
+        add  w0, w0, 2*Eval_Tempo
+        mov  w4, MOVE_NULL
+        cmp  w2, w4
+        beq  1f
+         bl  Evaluate
+1:      str  w0, [x21, State.staticEval]
+
+QSearch.StaticValueDone\@:
+/*
+		mov   dword[.bestValue], eax
+
+	; Return immediately if static value is at least beta
+		cmp   eax, dword[.beta]
+		jge   .ReturnStaticValue
+
+
+    if .PvNode eq 1
+		mov   ecx, dword[.alpha]
+		cmp   ecx, eax
+	      cmovl   ecx, eax
+		mov   dword[.alpha], ecx
+    end if
+		add   eax, 128
+		mov   dword[.futilityBase], eax
+
+    end if ; InCheck eq 1
+*/
+        str  w0, [sp, QSearch.bestValue]
+        ldr  w4, [sp, QSearch.beta]
+        cmp  w0, w4
+        bge  QSearch.ReturnStaticValue\@
+  .if \PvNode == 1
+        ldr  w1, [sp, QSearch.alpha]
+        cmp  w1, w0
+       csel  w1, w0, w1, lt
+        str  w1, [sp, QSearch.alpha]
+  .endif
+        add  w0, w0, 128
+        str  w0, [sp, QSearch.futilityBase]
+ .endif
+
+/*
+	; initialize move picker
+		mov   ecx, dword[.ttMove]
+	if InCheck eq 1
+		lea   r15, [MovePick_ALL_EVASIONS]
+		lea   r14, [MovePick_EVASIONS]
+	else
+		mov   edx, dword[.depth]
+		lea   r15, [MovePick_QCAPTURES_CHECKS_GEN]
+		lea   r14, [MovePick_QSEARCH_WITH_CHECKS]
+		cmp   edx, DEPTH_QS_NO_CHECKS
+		 jg   .MovePickInitGo
+		lea   r15, [MovePick_QCAPTURES_NO_CHECKS_GEN]
+		lea   r14, [MovePick_QSEARCH_WITHOUT_CHECKS]
+		cmp   edx, DEPTH_QS_RECAPTURES
+		 jg   .MovePickInitGo
+		lea   r15, [MovePick_RECAPTURES_GEN]
+		mov   eax, dword[rbx-1*sizeof.State+State.currentMove]
+		and   eax, 63
+		mov   dword[rbx+State.recaptureSquare], eax
+		xor   edi, edi
+		jmp   .MovePickNoTTMove
+	end if
+*/
+        ldr  w1, [sp, QSearch.ttMove]
+ .if \InCheck == 1
+        adr  x25, MovePick_ALL_EVASIONS
+        adr  x24, MovePick_EVASIONS
+ .else
+        ldr  w2, [sp, QSearch.depth]
+        adr  x25, MovePick_QCAPTURES_CHECKS_GEN
+        adr  x24, MovePick_QSEARCH_WITH_CHECKS
+        cmp  w2, DEPTH_QS_NO_CHECKS
+        bgt  QSearch.MovePickInitGo\@
+        adr  x25, MovePick_QCAPTURES_NO_CHECKS_GEN
+        adr  x24, MovePick_QSEARCH_WITHOUT_CHECKS
+        cmp  w2, DEPTH_QS_RECAPTURES
+        bgt  QSearch.MovePickInitGo\@
+        adr  x25, MovePick_RECAPTURES_GEN
+        ldr  w0, [x21, -1*sizeof.State + State.currentMove]
+        and  w0, w0, 63
+        str  w0, [x21, State.recaptureSquare]
+        mov  w27, 0
+          b  QSearch.MovePickNoTTMove\@
+ .endif
+QSearch.MovePickInitGo\@:
+/*
+		mov   edi, ecx
+	       test   ecx, ecx
+		 jz   .MovePickNoTTMove
+	       call   Move_IsPseudoLegal
+	       test   rax, rax
+	      cmovz   edi, eax
+	     cmovnz   r15, r14
+*/
+        mov  w27, w1
+        cbz  w1, QSearch.MovePickNoTTMove\@
+         bl  Move_IsPseudoLegal
+        tst  x0, x0
+       csel  w27, w0, w27, eq
+       csel  x25, x24, x25, ne
+
+QSearch.MovePickNoTTMove\@:
+/*
+		mov   dword[rbx+State.ttMove], edi
+		mov   qword[rbx+State.stage], r15
+if DEBUG
+		mov   qword[.stage], r15
+end if
+
+*/
+        str  w27, [x21, State.ttMove]
+        str  x25, [x21, State.stage]
+
+QSearch.MovePickLoop\@:
+/*
+                xor   esi, esi
+	GetNextMove
+		mov   dword[.move], eax
+	       test   eax, eax
+		 jz   .MovePickDone
+
+
+	; check for check and get address of search function
+		mov   ecx, eax
+	       call   Move_GivesCheck
+		mov   byte[rbx+State.givesCheck], al
+	        mov   r13d, eax
+	if .PvNode eq 1
+		lea   rdx, [QSearch_Pv_NoCheck]
+		lea   rcx, [QSearch_Pv_InCheck]
+	else
+		lea   rdx, [QSearch_NonPv_NoCheck]
+		lea   rcx, [QSearch_NonPv_InCheck]
+	end if
+	       test   eax, eax
+	     cmovnz   rdx, rcx
+		mov   qword[.searchFxn], rdx
+*/
+        mov  w26, 0
+        GetNextMove
+        str  w0, [sp, QSearch.move]
+        cbz  w0, QSearch.MovePickDone\@
+        mov  w2, w0
+         bl  Move_GivesCheck
+       strb  w0, [x21, State.givesCheck]
+        mov  w23, w0
+ .if \PvNode == 1
+        adr  x2, QSearch_Pv_NoCheck
+        adr  x1, QSearch_Pv_InCheck
+ .else
+        adr  x2, QSearch_NonPv_NoCheck
+        adr  x1, QSearch_NonPv_InCheck
+ .endif
+        tst  w0, w0
+       csel  x2, x1, x2, ne
+        str  x1, [sp, QSearch.searchFxn]
+
+/*
+		mov   ecx, dword[.move]
+		mov   edi, dword[.bestValue]
+		mov   esi, ecx
+		shr   esi, 12
+
+		mov   r8d, ecx
+		shr   r8d, 6
+		and   r8d, 63			      ; r8d = from
+	      movzx   eax, byte[rbp+Pos.board+r8]     ; r14d = from piece
+		mov   r14d, eax
+
+		mov   r9d, ecx
+		and   r9d, 63			       ; r9d = to
+	      movzx   r15d, byte[rbp+Pos.board+r9]     ; r15d = to piece
+*/
+        ldr  w1, [sp, QSearch.move]
+        ldr  w27, [sp, QSearch.bestValue]
+        lsr  w26, w1, 12
+       ubfx  w8, w1, 6, 6
+        add  x6, x20, Pos.board
+       ldrb  w0, [x6, x8]
+        mov  w24, w0
+        and  w9, w1, 63
+        add  x6, x20, Pos.board
+       ldrb  w25, [x6, x9]
+/*
+		; futility pruning
+	if InCheck eq 0
+		mov   r12d, dword[.futilityBase]
+	       test   r13d, r13d
+		jnz   .SkipFutilityPruning
+		and   eax, 7
+		cmp   r12d, -VALUE_KNOWN_WIN
+		jle   .SkipFutilityPruning
+
+		mov   edx, dword[rbp+Pos.sideToMove]
+		neg   edx
+		cmp   eax, Pawn
+		 je   .CheckAdvancedPawnPush
+*/
+ .if \InCheck == 0
+        ldr  w22, [sp, QSearch.futilityBase]
+       cbnz  w23, QSearch.SkipFutilityPruning\@
+        and  w0, w0, 7
+        mov  w4, -VALUE_KNOWN_WIN
+        cmp  w22, w4
+        ble  QSearch.SkipFutilityPruning\@
+        ldr  w2, [x20, Pos.sideToMove]
+        neg  w2, w2
+        cmp  w0, Pawn
+        beq  QSearch.CheckAdvancedPawnPush\@
+
+QSearch.DoFutilityPruning\@:
+/*
+
+		mov   edx, dword[PieceValue_EG+4*r15]
+		add   edx, r12d
+		cmp   edx, dword[.alpha]
+		jle   .ContinueFromFutilityValue
+		cmp   r12d, dword[.alpha]
+		jle   .ContinueFromFutilityBase
+*/
+        lea  x6, PieceValue_EG
+        ldr  w2, [x6, x25, lsl 2]
+        add  w2, w2, w22
+        ldr  w4, [sp, QSearch.alpha]
+        cmp  w2, w4
+        ble  QSearch.ContinueFromFutilityValue\@
+        ldr  w4, [sp, QSearch.alpha]
+        cmp  w22, w4
+        ble  QSearch.ContinueFromFutilityBase\@
+
+QSearch.SkipFutilityPruning\@:
+/*
+	end if
+*/
+ .endif
+
+/*
+	; do not search moves with negative see value
+	if InCheck eq 0
+		lea   eax, [rsi-MOVE_TYPE_PROM]
+		shl   r14d, 9
+		shl   r15d, 9
+		cmp   eax, 4
+		 jb   .DontContinue
+	else
+	     Assert   ne, esi, MOVE_TYPE_CASTLE, 'castling encountered in qsearch<InCheck=true>'
+
+		mov   eax, VALUE_MATED_IN_MAX_PLY
+                sub   eax, edi
+		shl   r14d, 9
+		shl   r15d, 9
+		jnz   .DontContinue
+		cmp   esi, MOVE_TYPE_PROM
+		jae   .DontContinue	   ; catch MOVE_TYPE_EPCAP
+               test   eax, dword[.depth]
+                jns   .DontContinue
+	end if
+
+
+	SeeSignTest   .DontContinue
+		mov   ecx, dword[.move]
+	       test   eax, eax
+		 jz   .MovePickLoop
+*/
+ .if \InCheck == 0
+        sub  w0, w26, MOVE_TYPE_PROM
+        lsl  w24, w24, 9
+        lsl  w25, w25, 9
+        cmp  w0, 4
+        blo  QSearch.DontContinue\@
+ .else
+        mov  w0, VALUE_MATED_IN_MAX_PLY
+        sub  w0, w0, w27
+        lsl  w24, w24, 9
+        lsl  w25, w25, 9
+       cbnz  w25, QSearch.DontContinue\@
+        cmp  w26, MOVE_TYPE_PROM
+        bhs  QSearch.DontContinue\@
+        ldr  w4, [sp, QSearch.depth]
+        and  w4, w4, w0
+        tbz  w4, 31, QSearch.DontContinue\@
+ .endif
+        SeeSignTest  QSearch.DontContinue\@
+        ldr  w2, [sp, QSearch.move]
+        cbz  w0, QSearch.MovePickLoop\@
+
+QSearch.DontContinue\@:
+/*
+
+	; speculative prefetch
+		mov   edx, ecx
+		and   edx, 63				; edx = to
+		shr   ecx, 6
+		and   ecx, 63				; ecx = from
+		mov   rax, qword[rbx+State.key]
+		xor   rax, qword[Zobrist_side]
+		xor   rax, qword[Zobrist_Pieces+r14+8*rcx]
+		xor   rax, qword[Zobrist_Pieces+r14+8*rdx]
+		xor   rax, qword[Zobrist_Pieces+r15+8*rdx]
+		and   rax, qword[mainHash.mask]
+		shl   rax, 5
+		add   rax, qword[mainHash.table]
+	prefetchnta   [rax]
+
+
+	; check for legality
+		mov   ecx, dword[.move]
+	       call   Move_IsLegal
+	       test   rax, rax
+		 jz   .MovePickLoop
+*/
+        and  w2, w1, 63
+       ubfx  w1, w1, 6, 6
+        ldr  x0, [x21, State.key]
+        lea  x6, Zobrist_side
+        ldr  x4, [x6]
+        eor  x0, x0, x4
+        ldr  x6, Zobrist_Pieces
+        add  x6, x6, x14
+        ldr  x4, [x5, x1, lsl 3]
+        eor  x0, x0, x4
+        ldr  x6, Zobrist_Pieces
+        add  x6, x6, x14
+        ldr  x4, [x5, x2, lsl 3]
+        eor  x0, x0, x4
+        ldr  x6, Zobrist_Pieces
+        add  x6, x6, x15
+        ldr  x4, [x5, x2, lsl 3]
+        eor  x0, x0, x4
+        lea  x6, mainHash + MainHash.mask
+        ldr  x4, [x6]
+        and  x0, x0, x4
+        lsl  x0, x0, 5
+        lea  x6, mainHash + MainHash.table
+        ldr  x4, [x6]
+        add  x0, x0, x4
+       prfm  PLDL1KEEP, [x0]
+
+        ldr  w1, [sp, QSearch.move]
+         bl  Move_IsLegal
+        cbz  x0, QSearch.MovePickLoop\@
+        
+
+/*
+	; make the move
+		mov   ecx, dword[.move]
+		mov   dword[rbx+State.currentMove], ecx
+		mov   rsi, qword[.searchFxn]
+	       call   Move_Do__QSearch
+
+	; search the move
+		mov   ecx, dword[.beta]
+		neg   ecx
+		mov   edx, dword[.alpha]
+		neg   edx
+		mov   r8d, dword[.depth]
+		sub   r8d, 1
+	       call   rsi
+		neg   eax
+		mov   edi, eax
+		mov   dword[.value], eax
+
+	; undo the move
+		mov   ecx, dword[.move]
+	       call   Move_Undo
+
+	; check for new best move
+		cmp   edi, dword[.bestValue]
+		jle   .MovePickLoop
+		mov   dword[.bestValue], edi
+		cmp   edi, dword[.alpha]
+		jle   .MovePickLoop
+*/
+        ldr  w1, [sp, QSearch.move]
+        str  w1, [x21, State.currentMove]
+        ldr  x26, [sp, QSearch.searchFxn]
+         bl  Move_Do__QSearch
+
+        ldr  w1, [sp, QSearch.beta]
+        neg  w1, w1
+        ldr  w2, [sp, QSearch.alpha]
+        neg  w2, w2
+        ldr  w8, [sp, QSearch.depth]
+        sub  w8, w8, 1
+        blr  x26
+        neg  w0, w0
+        mov  w27, w0
+        str  w0, [sp, QSearch.value]
+
+        ldr  w1, [sp, QSearch.move]
+         bl  Move_Undo
+
+        ldr  w4, [sp, QSearch.bestValue]
+        cmp  w27, w4
+        ble  QSearch.MovePickLoop\@
+        str  w27, [sp, QSearch.bestValue]
+        ldr  w4, [sp, QSearch.alpha]
+        cmp  w27, w4
+        ble  QSearch.MovePickLoop\@
+
+/*
+     if .PvNode eq 1
+		mov   ecx, dword[.move]
+		mov   r8, qword[rbx+0*sizeof.State+State.pv]
+		mov   r9, qword[rbx+1*sizeof.State+State.pv]
+		xor   eax, eax
+		mov   dword[r8], ecx
+		add   r8, 4
+	       test   r9, r9
+		 jz   .pv_copy_end
+*/
+ .if \PvNode == 1
+        ldr  w1, [sp, QSearch.move]
+        ldr  x8, [x21, 0*sizeof.State + State.pv]
+        ldr  x9, [x21, 1*sizeof.State + State.pv]
+        mov  w0, 0
+        str  w1, [x8]
+        add  x8, x8, 4
+        cbz  x9, QSearch.pv_copy_end\@
+
+QSearch.pv_copy_loop\@:
+/*
+		mov   eax, dword[r9]
+		add   r9, 4
+*/
+        ldr  w0, [x9]
+        add  x9, x9, 4
+QSearch.pv_copy_end\@:
+/*
+		mov   dword[r8], eax
+		add   r8, 4
+	       test   eax, eax
+		jnz   .pv_copy_loop
+
+		cmp   edi, dword[.beta]
+		jge   .FailHigh
+		mov   dword[.alpha], edi
+		mov   dword[.bestMove], ecx
+
+		jmp   .MovePickLoop
+    end if
+*/
+        str  w0, [x8]
+        add  x8, x8, 4
+       cbnz  w0, QSearch.pv_copy_loop\@
+
+        ldr  w4, [sp, QSearch.beta]
+        cmp  w27, w4
+        bge  QSearch.FailHigh\@
+        str  w27, [sp, Search.alpha]
+        str  w1, [sp, Search.bestMove]
+          b  QSearch.MovePickLoop\@
+ .endif
+QSearch.FailHigh\@:
+/*
+		mov   r9, qword[rbx+State.key]
+		mov   r8, qword[.tte]
+		shr   r9, 48
+		mov   edx, edi
+		lea   ecx, [rdi+VALUE_MATE_IN_MAX_PLY]
+		cmp   ecx, 2*VALUE_MATE_IN_MAX_PLY
+		jae   .FailHighValueToTT
+*/
+        ldr  x9, [x21, State.key]
+        ldr  x8, [sp, QSearch.tte]
+        lsr  x9, x9, 48
+        mov  w2, w27
+        mov  w4, VALUE_MATE_IN_MAX_PLY
+        add  w1, w27, w4
+        cmp  w1, w4, lsl 1
+        bhs  QSearch.FailHighValueToTT\@
+
+QSearch.FailHighValueToTTRet\@:
+/*
+		mov   eax, dword[.move]
+      MainHash_Save   .ltte, r8, r9w, edx, BOUND_LOWER, byte[.ttDepth], eax, word[rbx+State.staticEval]
+		mov   eax, edi
+		jmp   .ReturnD
+*/
+        ldr  w1, [sp, QSearch.move]
+        mov  w3, BOUND_LOWER
+       ldrb  w5, [sp, QSearch.ttDepth]
+       ldrh  w7, [x21, State.staticEval]
+        MainHash_Save  QSearch.ltte, x8, w9, w2, w3, w5, w0, w7
+        mov  w0, w27
+          b  QSearch.ReturnD\@
+
+QSearch.FailHighValueToTT\@:
+/*
+	      movzx   edx, byte[rbx+State.ply]
+		mov   eax, edi
+		sar   eax, 31
+		xor   edx, eax
+		sub   edx, eax
+		add   edx, edi
+		jmp   .FailHighValueToTTRet
+*/
+       ldrb  w2, [x21, State.ply]
+        asr  w0, w27, 31
+        eor  w2, w2, w0
+        sub  w2, w2, w0
+        add  w2, w2, w27
+          b  QSearch.FailHighValueToTTRet\@
+
+QSearch.MovePickDone\@:
+/*
+		mov   r9, qword[rbx+State.key]
+		mov   edi, dword[.bestValue]
+		lea   ecx, [rdi+VALUE_MATE_IN_MAX_PLY]
+
+	if InCheck eq 1
+	      movzx   eax, byte[rbx+State.ply]
+		sub   eax, VALUE_MATE
+		cmp   edi, -VALUE_INFINITE
+		 je   .ReturnE
+	end if
+
+	if .PvNode eq 1
+		mov   esi, dword[.oldAlpha]
+		sub   esi, edi
+		sar   esi, 31
+	end if
+		mov   r8, qword[.tte]
+		shr   r9, 48
+		mov   edx, edi
+		cmp   ecx, 2*VALUE_MATE_IN_MAX_PLY
+		jae   .ValueToTT
+*/
+        ldr  x9, [x21, State.key]
+        ldr  w27, [sp, QSearch.bestValue]
+        mov  w4, VALUE_MATE_IN_MAX_PLY
+        add  w1, w27, w4
+ .if \InCheck == 1
+       ldrb  w0, [x21, State.ply]
+        mov  w4, VALUE_MATE
+        sub  w0, w0, w4
+        mov  w4, -VALUE_INFINITE
+        cmp  w0, w4
+        beq  QSearch.ReturnE\@
+ .endif
+
+ .if \PvNode
+        ldr  w26, [sp, QSearch.oldAlpha]
+        sub  w26, w26, w27
+        asr  w26, w26, 31
+ .endif
+        ldr  x8, [sp, QSearch.tte]
+        lsr  x9, x9, 48
+        mov  w2, w27
+        mov  w4, VALUE_MATE_IN_MAX_PLY
+        cmp  w1, w4, lsl 1
+        bhs  QSearch.ValueToTT\@
+
+QSearch.ValueToTTRet\@:
+/*
+
+	if .PvNode eq 0
+		mov   eax, dword[.bestMove]
+      MainHash_Save   .ltte, r8, r9w, edx, BOUND_UPPER, byte[.ttDepth], eax, word[rbx+State.staticEval]
+	else
+		mov   eax, dword[.bestMove]
+		and   esi, BOUND_EXACT-BOUND_UPPER
+		add   esi, BOUND_UPPER
+      MainHash_Save   .ltte, r8, r9w, edx, sil, byte[.ttDepth], eax, word[rbx+State.staticEval]
+	end if
+		mov   eax, edi
+
+match =2, VERBOSE \{
+		jmp   .ReturnF
+\}
+*/
+ .if \PvNode == 0
+        ldr  w0, [sp, QSearch.bestMove]
+        mov  w3, BOUND_UPPER
+       ldrb  w5, [sp, QSearch.ttDepth]
+       ldrh  w7, [x21, State.staticEval]
+        MainHash_Save QSearch.ltte, x8, w9, w2, w3, w5, w0, w7
+ .else
+        ldr  w0, [sp, QSearch.bestMove]
+        and  w26, w26, BOUND_EXACT-BOUND_UPPER
+        add  w26, w26, BOUND_UPPER
+       ldrb  w5, [sp, QSearch.ttDepth]
+       ldrh  w7, [x21, State.staticEval]
+        MainHash_Save QSearch.ltte, x8, w9, w2, w26, w5, w0, w7
+ .endif
+        mov  w0, w27
+QSearch.ReturnA\@:
+QSearch.ReturnB\@:
+QSearch.ReturnC\@:
+QSearch.ReturnD\@:
+QSearch.ReturnE\@:
+QSearch.ReturnF\@:
+QSearch.Return\@:
+/*
+		add   rsp, .localsize
+		pop   r15 r14 r13 r12 rdi rsi rbx
+		ret
+
+
+    if InCheck eq 0
+
+*/
+
+        add  sp, sp, QSearch.localsize
+        ldp  x24, x25, [sp], 16
+        ldp  x22, x23, [sp], 16
+        ldp  x26, x27, [sp], 16
+        ldp  x21, x30, [sp], 16
+        ret
+
+ .if \InCheck == 0
+QSearch.CheckAdvancedPawnPush\@:
+/*
+		and   edx, 7
+		shr   r8d, 3
+		xor   edx, r8d
+		cmp   edx, 4
+		 jb   .DoFutilityPruning
+		jmp   .SkipFutilityPruning
+*/
+        and  w2, w2, 7
+        lsr  w8, w8, 3
+        eor  w2, w2, w8
+        cmp  w2, 4
+        blo  QSearch.DoFutilityPruning\@
+          b  QSearch.SkipFutilityPruning\@
+
+QSearch.ContinueFromFutilityBase\@:
+/*
+		mov   edx, 1
+	       call   SeeTestGe
+		mov   ecx, dword[.move]
+		mov   edx, r12d
+	       test   eax, eax
+		jnz   .SkipFutilityPruning
+*/
+        mov  w2, 1
+         bl  SeeTestGe
+        ldr  w1, [sp, QSearch.move]
+        mov  w2, w22
+       cbnz  w0, QSearch.SkipFutilityPruning\@
+
+QSearch.ContinueFromFutilityValue\@:
+/*
+		cmp   edi, edx
+	      cmovl   edi, edx
+		mov   dword[.bestValue], edi
+		jmp   .MovePickLoop
+    end if
+*/
+        cmp  w27, w2
+       csel  w27, w2, w27, lt
+        str  w27, [sp, QSearch.bestValue]
+          b  QSearch.MovePickLoop\@
+ .endif
+
+QSearch.AbortSearch_PlyBigger\@:
+/*
+		xor   eax, eax
+		cmp   rax, qword[rbx+State.checkersBB]
+		jne   .ReturnA
+	       call   Evaluate
+		jmp   .ReturnA
+*/
+        mov  w0, 0
+        ldr  x4, [x21, State.checkersBB]
+       cbnz  x4, QSearch.ReturnA\@
+         bl  Evaluate
+          b  QSearch.ReturnA\@
+
+QSearch.AbortSearch_PlySmaller\@:
+/*
+		xor   eax, eax
+		jmp   .ReturnA
+
+*/
+        mov  w0, 0
+          b  QSearch.ReturnA\@
+
+QSearch.ReturnStaticValue\@:
+/*
+		mov   r8, qword[.tte]
+		mov   r9, qword[rbx+State.key]
+		shr   r9, 48
+		mov   edx, eax
+	       test   r13d, r13d
+		jnz   .ReturnC
+		add   eax, VALUE_MATE_IN_MAX_PLY
+		cmp   eax, 2*VALUE_MATE_IN_MAX_PLY
+		jae   .ReturnStaticValue_ValueToTT
+*/
+        ldr  x8, [sp, QSearch.tte]
+        ldr  x9, [x21, State.key]
+        lsr  x9, x9, 48
+        mov  w2, w0
+       cbnz  w23, QSearch.ReturnC\@
+        mov  w4, VALUE_MATE_IN_MAX_PLY
+        add  w0, w0, w4
+	cmp  w0, w4, lsl 1
+        bhs  QSearch.ReturnStaticValue_ValueToTT\@
+
+
+QSearch.ReturnStaticValue_ValueToTTRet\@:
+/*
+      MainHash_Save   .ltte, r8, r9w, edx, BOUND_LOWER, DEPTH_NONE, 0, word[rbx+State.staticEval]
+		mov   eax, dword[.bestValue]
+		jmp   .ReturnC
+
+*/
+        mov  w3, BOUND_LOWER
+        mov  w4, DEPTH_NONE
+       ldrh  w7, [x21, State.staticEval]
+        MainHash_Save  QSearch.ltte, x9, w9, w2, w3, w5, w0, w7
+        ldr  w0, [sp, QSearch.bestValue]
+          b  QSearch.ReturnC\@
+
+QSearch.ReturnStaticValue_ValueToTT\@:
+/*
+	      movzx   ecx, byte[rbx+State.ply]
+		mov   eax, edx
+		sar   eax, 31
+		xor   ecx, eax
+		sub   edx, eax
+		add   edx, ecx
+		jmp   .ReturnStaticValue_ValueToTTRet
+*/
+       ldrb  w1, [x21, State.ply]
+        asr  w0, w2, 31
+        eor  w1, w1, w0
+        sub  w2, w2, w0
+        add  w2, w2, w1
+          b  QSearch.ReturnStaticValue_ValueToTTRet\@
+
+QSearch.ValueFromTT\@:
+/*
+	; value in edi is not VALUE_NONE
+	      movzx   r8d, byte[rbx+State.ply]
+		mov   r9d, edi
+		sar   r9d, 31
+		xor   r8d, r9d
+		add   edi, r9d
+		sub   edi, r8d
+		mov   dword[.ttValue], edi
+		mov   eax, edi
+		sub   eax, dword[.beta]
+		sar   eax, 31
+		jmp   .ValueFromTTRet
+*/
+       ldrb  w8, [x21, State.ply]
+        asr  w9, w27, 31
+        eor  w8, w8, w9
+        add  w27, w27, w9
+        sub  w27, w27, w8
+        str  s27, [sp, QSearch.ttValue]
+        mov  w0, w27
+        ldr  w4, [sp, QSearch.beta]
+        sub  w0, w0, w4
+        asr  w0, w0, 31
+          b  QSearch.ValueFromTTRet\@
+
+QSearch.ValueToTT\@:
+/*
+	      movzx   edx, byte[rbx+State.ply]
+		mov   eax, edi
+		sar   eax, 31
+		xor   edx, eax
+		sub   edx, eax
+		add   edx, edi
+		jmp   .ValueToTTRet
+*/
+        ldr  w2, [x21, State.ply]
+        asr  w2, w27, 31
+        eor  w2, w2, w0
+        sub  w2, w2, w0
+        add  w2, w2, w27
+          b  QSearch.ValueToTTRet\@
+
+QSearch.CheckDraw_Cold\@:
+/*
+     PosIsDraw_Cold   .AbortSearch_PlySmaller, .CheckDraw_ColdRet
+
+
+}
+*/
+        PosIsDraw_Cold  QSearch.AbortSearch_PlySmaller\@, QSearch.CheckDraw_ColdRet\@
+
+.endm

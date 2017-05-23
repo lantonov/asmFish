@@ -8,14 +8,26 @@ $ qemu-aarch64 ./armFish
 */
 
 //.altmacro
+USE_CURRMOVE   = 1
+USE_SELDEPTH   = 1
+//USE_MATEFINDER = 0
+//USE_SYZYGY     = 0
+
 
 .include "guts/def.arm"
 .include "guts/linux64.arm"
 .include "guts/macros.arm"
+
 .include "guts/AttackMacros.arm"
 .include "guts/SliderBlockers.arm"
 .include "guts/GenMacros.arm"
 .include "guts/MovePickMacros.arm"
+.include "guts/UpdateStats.arm"
+.include "guts/MainHashMacros.arm"
+.include "guts/SearchMacros.arm"
+.include "guts/QSearchMacros.arm"
+.include "guts/PosIsDrawMacro.arm"
+.include "guts/Pawn.arm"
 
 
 .section .data
@@ -30,15 +42,7 @@ $ qemu-aarch64 ./armFish
 .globl _start
 
 _start:
-
-Search_Root:
-        stp  x29, x30, [sp, -16]!
-        Display "Search_Root called"
-        ldp  x29, x30, [sp], 16
-        ret
-
 .include "guts/main.arm"
-
 .include "guts/Castling.arm"
 .include "guts/AttackersTo.arm"
 .include "guts/Endgame.arm"
@@ -56,6 +60,24 @@ Search_Root:
 .include "guts/Move_IsLegal.arm"
 .include "guts/Move_IsPseudoLegal.arm"
 .include "guts/MovePick.arm"
+.include "guts/SeeTest.arm"
+.include "guts/Evaluate.arm"
+
+Search_Root:
+        Search 1, 1
+Search_Pv:
+        Search 1, 0
+Search_NonPv:
+        Search 0, 0
+
+QSearch_NonPv_NoCheck:
+        QSearch 0, 0
+QSearch_NonPv_InCheck:
+        QSearch 0, 1
+QSearch_Pv_InCheck:
+        QSearch 1, 1
+QSearch_Pv_NoCheck:
+        QSearch 1, 0
 
 .include "guts/CheckTime.arm"
 .include "guts/RootMoves.arm"
@@ -83,6 +105,3 @@ Search_Root:
 .include "guts/Evaluate_Init.arm"
 .include "guts/Pawn_Init.arm"
 .include "guts/Endgame_Init.arm"
-
-
-

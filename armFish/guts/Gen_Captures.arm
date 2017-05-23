@@ -1,26 +1,46 @@
 Gen_Captures:
-        brk  0
-/*
-	; in rbp address of position
-	;    rbx address of state
-	; io rdi address to write moves
+//	; in rbp address of position
+//	;    rbx address of state
+//	; io rdi address to write moves
+//
+//	       push   rsi r12 r13 r14 r15
+//		mov   r14, qword[rbp+Pos.typeBB+8*White]
+//		 or   r14, qword[rbp+Pos.typeBB+8*Black]
+//		cmp   byte[rbp+Pos.sideToMove],0
+//		jne   Gen_Captures_Black
+        ldr  x14, [x20, Pos.typeBB+8*White]
+        ldr  x4, [x20, Pos.typeBB+8*Black]
+        orr  x14, x14, x4
+       ldrb  w4, [x20, Pos.sideToMove]
+       cbnz  w4, Gen_Captures_Black
 
-	       push   rsi r12 r13 r14 r15
-		mov   r14, qword[rbp+Pos.typeBB+8*White]
-		 or   r14, qword[rbp+Pos.typeBB+8*Black]
-		cmp   byte[rbp+Pos.sideToMove],0
-		jne   Gen_Captures_Black
+//Gen_Captures_White:
 Gen_Captures_White:
-		mov   r15, qword[rbp+Pos.typeBB+8*Black]
-       generate_all   White, CAPTURES
-		pop   r15 r14 r13 r12 rsi
-		ret
-       generate_jmp  White, CAPTURES
+//		mov   r15, qword[rbp+Pos.typeBB+8*Black]
+        add  x6, x20, Pos.typeBB
+        ldr  x15, [x6, 8*Black]
+//       generate_all   White, CAPTURES
+        GenAll  Gen_Captures_White, White, CAPTURES
 
+//		pop   r15 r14 r13 r12 rsi
+//		ret
+        ret
+//       generate_jmp  White, CAPTURES
+        GenPawnJmp  Gen_Captures_White, White, CAPTURES
+        GenCastlingJmp  Gen_Captures_White, White, CAPTURES
+
+//
+//Gen_Captures_Black:
 Gen_Captures_Black:
-		mov   r15, qword[rbp+Pos.typeBB+8*White]
-       generate_all   Black, CAPTURES
-		pop   r15 r14 r13 r12 rsi
-		ret
-       generate_jmp   Black, CAPTURES
-*/
+//		mov   r15, qword[rbp+Pos.typeBB+8*White]
+        add  x6, x20, Pos.typeBB
+        ldr  x15, [x6, 8*White]
+//       generate_all   Black, CAPTURES
+        GenAll  Gen_Captures_Black, Black, CAPTURES
+//		pop   r15 r14 r13 r12 rsi
+//		ret
+        ret
+//       generate_jmp   Black, CAPTURES
+        GenPawnJmp  Gen_Captures_Black, Black, CAPTURES
+        GenCastlingJmp  Gen_Captures_Black, Black, CAPTURES
+

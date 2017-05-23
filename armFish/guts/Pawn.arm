@@ -1,0 +1,522 @@
+/*
+macro EvalPawns Us {
+	; in  rbp address of Pos struct
+	;     rbx address of State struct
+	;     rdi address of pawn table entry
+	; out esi score
+local Them, Up, Right, Left
+local Isolated0, Isolated1, Backward0, Backward1, Unsupported, Doubled
+local ..NextPiece, ..AllDone, ..Done, ..WritePawnSpan
+local ..Neighbours_True, ..Lever_False, ..TestUnsupported
+local ..Lever_True, ..Neighbours_False, ..Continue, ..NoPassed, ..PopLoop
+
+match =White, Us
+\{
+	Them  equ Black
+	Up    equ DELTA_N
+	Right equ DELTA_NE
+	Left  equ DELTA_NW
+\}
+
+match =Black, Us
+\{
+	Them  equ White
+	Up    equ DELTA_S
+	Right equ DELTA_SW
+	Left  equ DELTA_SE
+\}
+	Isolated0 equ ((45 shl 16) + (40))
+	Isolated1 equ ((30 shl 16) + (27))
+	Backward0 equ ((56 shl 16) + (33))
+	Backward1 equ ((41 shl 16) + (19))
+	Unsupported equ ((17 shl 16) + (8))
+	Doubled equ ((18 shl 16) + (38))
+*/
+.macro EvalPawns Us
+ .if \Us == White
+        Them  = Black
+        Up    = DELTA_N
+        Right = DELTA_NE
+        Left  = DELTA_NW
+ .else
+        Them  = White
+        Up    = DELTA_S
+        Right = DELTA_SW
+        Left  = DELTA_SE
+ .endif
+	Isolated0   = ((45 << 16) + (40))
+	Isolated1   = ((30 << 16) + (27))
+	Backward0   = ((56 << 16) + (33))
+	Backward1   = ((41 << 16) + (19))
+	Unsupported = ((17 << 16) + (8))
+	Doubled     = ((18 << 16) + (38))
+        
+/*
+		xor   eax, eax
+		mov   qword[rdi+PawnEntry.passedPawns+8*Us], rax
+		mov   qword[rdi+PawnEntry.pawnAttacksSpan+8*Us], rax
+		mov   byte[rdi+PawnEntry.kingSquares+Us], 64
+		mov   byte[rdi+PawnEntry.semiopenFiles+Us], 0xFF
+
+		mov   r15, qword[rbp+Pos.typeBB+8*Pawn]
+		mov   r14, r15
+		and   r14, qword[rbp+Pos.typeBB+8*Them]
+		and   r15, qword[rbp+Pos.typeBB+8*Us]
+		mov   r13, r15
+	; r14 = their pawns
+	; r13 = our pawns     = r15
+*/
+        str  xzr, [x17, PawnEntry.passedPawns + 8*Us]
+        str  xzr, [x17, PawnEntry.pawnAttacksSpan + 8*Us]
+        mov  w4, 64
+       strb  w4, [x17, PawnEntry.kingSquares + Us]
+        mov  w4, 255
+       strb  w4, [x17, PawnEntry.kingSquares + Us]
+
+        ldr  x15, [x20, Pos.typeBB + 8*Pawn]
+        mov  x14, x15
+        ldr  x4, [x20, Pos.typeBB + 8*Them]
+        and  x14, x14, x4
+        ldr  x4, [x20, Pos.typeBB + 8*Us]
+        and  x15, x15, x4
+        mov  x13, x15
+
+/*
+		mov   rax, r15
+	   shift_bb   Right, rax, rcx
+		mov   rdx, r15
+	   shift_bb   Left, rdx, rcx
+		 or   rax, rdx
+		mov   qword[rdi+PawnEntry.pawnAttacks+8*Us], rax
+*/
+        ShiftBB Right, x0, x15
+        ShiftBB Right, x2, x15
+        orr  x0, x0, x2
+        str  x0, [x15, PawnEntry.pawnAttacks + 8*Us]
+/*
+		mov   rax, LightSquares
+		and   rax, r15
+	     popcnt   rax, rax, rcx
+		mov   rdx, DarkSquares
+		and   rdx, r15
+	     popcnt   rdx, rdx, rcx
+		mov   byte[rdi+PawnEntry.pawnsOnSquares+2*Us+White], al
+		mov   byte[rdi+PawnEntry.pawnsOnSquares+2*Us+Black], dl
+
+		xor   esi, esi
+	; esi = score
+
+	       test   r15, r15
+		 jz   ..AllDone
+*/
+        and  x0, x15, LightSquares
+        Popcnt  x0, x0, x1
+        and  x2, x15, LightSquares
+        Popcnt  x2, x2, x1
+       strb  w0, [x17, PawnEntry.pawnsOnSquares + 2*Us + White]
+       strb  w2, [x17, PawnEntry.pawnsOnSquares + 2*Us + Black]
+
+        mov  w16, 0
+        cbz  x15, EvalPawns.AllDone
+
+/*
+if PEDANTIC
+
+		lea   r15, [rbp+Pos.pieceList+16*(8*Us+Pawn)]
+	      movzx   ecx, byte[rbp+Pos.pieceList+16*(8*Us+Pawn)]
+..NextPiece:
+		add   r15, 1
+
+else
+
+..NextPiece:
+		bsf   rcx, r15
+	       blsr   r15, r15, rax
+
+end if
+*/
+
+        add  x15, x20,  Pos.pieceList + 16*(8*Us + Pawn)
+       ldrb  w1, [x20, Pos.pieceList + 16*(8*Us + Pawn)]
+EvalPawns.NextPiece\@:
+        add  w15, w15, 1
+
+/*
+		mov   edx, ecx
+		and   edx, 7
+		mov   r12d, ecx
+		shr   r12d, 3
+	if Us eq Black
+		xor   r12d, 7
+	end if
+	; ecx = s, edx = f, r12d = relative_rank(Us, s)
+
+	      movzx   eax, byte[rdi+PawnEntry.semiopenFiles+Us]
+		btr   eax, edx
+		mov   byte[rdi+PawnEntry.semiopenFiles+Us], al
+		mov   rax, [PawnAttackSpan+8*(64*Us+rcx)]
+		 or   qword[rdi+PawnEntry.pawnAttacksSpan+8*Us], rax
+*/
+        and  w2, w1, 7
+        lsr  w12, w1, 3
+ .if \Us == Black
+        eor  w12, w12, 7
+ .endif
+       ldrb  w0, [x17, PawnEntry.semiopenFiles + Us]
+        mov  w4, 1
+        lsl  w4, w4, w2
+       strb  w0, [x17, PawnEntry.semiopenFiles + Us]
+        lea  x6, PawnAttackSpan + 8*(64*Us)
+        ldr  x0, [x6, x1, lsl 3]
+        ldr  x4, [x17, PawnEntry.pawnAttacksSpan + 8*Us]
+        orr  x4, x4, x0
+        str  x4, [x17, PawnEntry.pawnAttacksSpan + 8*Us]
+
+/*
+		mov   r11, r14
+		and   r11, qword[ForwardBB+8*(64*Us+rcx)]
+		neg   r11
+		sbb   r11d, r11d
+	; r11d = opposed
+		mov   rdx, qword[AdjacentFilesBB+8*rdx]
+	; rdx = adjacent_files_bb(f)
+		mov   r10, qword[PassedPawnMask+8*(64*Us+rcx)]
+		and   r10, r14
+	; r10 = stoppers
+		mov   r8d, ecx
+		shr   r8d, 3
+		mov   r8, qword[RankBB+8*r8-Up]
+		mov   r9, r13
+		and   r9, rdx
+	; r9 = neighbours
+		and   r8, r9
+	; r8 = supported
+		lea   eax, [rcx-Up]
+		 bt   r13, rax
+                mov   rax, r8           ; dirty trick relies on fact
+                sbb   rax, 0            ; that r8>0 as signed qword
+                lea   eax, [rsi-Doubled]
+              cmovs   esi, eax
+	; doubled is taken care of
+		mov   rax, qword[PawnAttacks+8*(64*Us+rcx)]
+               test   r9, r9
+		 jz   ..Neighbours_False
+*/
+        lea  x6, ForwardBB + 8*(64*Us)
+        ldr  x11, [x6, x1, lsl 3]
+        tst  x11, x14
+      csetm  w11, ne
+        lea  x6, AdjacentFilesBB
+        ldr  x2, [x6, x2, lsl 3]
+        lea  x6, PassedPawnMask + 8*(64*Us)
+        ldr  x10, [x6, x1, lsl 3]
+        and  x10, x10, x14
+        lsr  w8, w1, 3
+        lea  x6, RankBB - Up
+        ldr  x8, [x6, x8, lsl 3]
+        and  x9, x13, x2
+        and  x8, x8, x9
+        sub  w0, w1, Up
+        mov  w4, 1
+        lsl  w4, w4, x0
+        tst  x4, x13
+       ccmp  x8, xzr, 0, ne
+        sub  w4, w16, Doubled
+       csel  w16, w4, w16, eq
+        lea  x6, PawnAttacks + 8*(64*Us)
+        ldr  x0, [x6, x1, lsl 3]
+        cbz  x9, EvalPawns.Neighbours_False\@
+
+EvalPawns.Neighbours_True\@:
+/*
+		and   rax, r14
+	; rax = lever
+	     cmovnz   eax, dword[Lever+4*r12]
+		lea   esi, [rsi+rax]
+		jnz   ..TestUnsupported
+*/
+       ands  x0, x0, x14
+        lea  x6, Lever
+        ldr  w4, [x6, x12, lsl 2]
+       csel  w0, w4, w0, ne
+        add  w16, w16, w0
+        bne  EvalPawns.TestUnsupported\@
+
+EvalPawns.Lever_False\@:
+/*
+		mov   rax, r9
+		 or   rax, r10
+	if Us eq White
+		cmp   ecx, SQ_A5
+		jae   ..TestUnsupported
+	else if Us eq Black
+		cmp   ecx, SQ_A5
+		 jb   ..TestUnsupported
+	end if
+	if Us eq White
+		bsf   rax, rax
+	else if Us eq Black
+		bsr   rax, rax
+	end if
+		shr   eax, 3
+		mov   rax, qword[RankBB+8*rax]
+		and   rdx, rax
+	   shift_bb   Up, rdx
+		 or   rdx, rax
+		mov   eax, r11d
+		and   eax, Backward0-Backward1
+		lea   eax, [rsi+rax-Backward0]
+	       test   rdx, r10
+	     cmovnz   esi, eax
+		jnz   ..Continue
+*/
+        orr  x0, x9, x10
+ .if \Us == White
+        cmp  w1, SQ_A5
+        bhs  EvalPawns.TestUnsupported\@
+ .else
+        cmp  w1, SQ_A5
+        blo  EvalPawns.TestUnsupported\@
+ .endif
+ .if \Us == White
+       rbit  x0, x0
+        clz  x0, x0
+ .else
+        clz  x0, x0
+        eor  x0, x0, 63
+ .endif
+        lsr  w0, w0, 3
+        lea  x6, RankBB
+        ldr  x0, [x6, x0, lsl 3]
+        and  x2, x2, x0
+        ShiftBB Up, x2, x2
+        orr  x2, x2, x0
+        mov  w0, Backward0-Backward1
+        and  w0, w0, w11
+        sub  w0, w0, Backward0
+        add  w0, w0, w16
+        tst  x2, x10
+       csel  w16, w0, w16, ne
+        bne  EvalPawns.Continue\@
+
+EvalPawns.TestUnsupported\@:
+/*
+		cmp   r8, 1
+		sbb   eax, eax
+		and   eax, Unsupported
+		sub   esi, eax
+		jmp   ..Continue
+*/
+        tst  x8, x8
+        sub  w4, w16, Unsupported
+       csel  x16, x4, x16, eq
+          b  EvalPawns.Continue\@
+
+EvalPawns.Neighbours_False\@:
+/*
+		and   rax, r14
+	     cmovnz   eax, dword[Lever+4*r12]
+		lea   esi, [rsi+rax]
+
+		mov   eax, r11d
+		and   eax, Isolated0-Isolated1
+		lea   esi, [rsi+rax-Isolated0]
+*/
+       ands  x0, x0, x14
+        lea  x16, Lever
+        ldr  x4, [x16, x12, lsl 2]
+       csel  w0, w4, w0, ne
+        add  w16, w16, w0
+
+        mov  w0, Isolated0 - Isolated1
+        and  w0, w0, w11
+        sub  w16, w16, Isolated0
+        add  w16, w16, w0
+
+EvalPawns.Continue\@:
+/*
+	; at this point we have taken care of
+	;       backwards, neighbours, supported, lever
+
+		neg   r11d
+		mov   edx, ecx
+		shr   edx, 3
+		mov   rdx, qword[RankBB+8*rdx]
+		and   rdx, r9
+	     popcnt   r9, rdx, rax
+	; r9 = popcnt(phalanx)
+		neg   rdx
+		adc   r11d, r11d
+	       blsr   rax, r8
+		neg   rax
+		adc   r11d, r11d
+		lea   r11d, [8*r11+r12]
+		 or   rdx, r8
+	     cmovnz   edx, dword[Connected+4*r11]
+		add   esi, edx
+	; connected is taken care of
+	     popcnt   r11, r8, rax
+        ; r8 = supported
+	; r11 = popcnt(supported)
+*/
+        neg  w11, w11
+        lsr  w2, w1, 3
+        lea  x6, RankBB
+        ldr  x2, [x6, x2, lsl 3]
+        and  x2, x2, x9
+        Popcnt  x9, x2, x0
+        tst  x9, x9
+       cinc  w4, w11, ne
+        add  w11, w11, w4
+        sub  x8, x0, 1
+       ands  x0, x0, x8
+       cinc  w4, w11, ne
+        add  w11, w11, w4
+        add  w11, w12, w11, lsl 3
+        orr  x2, x2, x8
+        tst  x2, x2
+        lea  x6, Connected
+        ldr  w4, [x6, x11, lsl 2]
+       csel  w2, w4, w2, ne
+        add  w16, w16, w2
+        Popcnt  x11, x8, x0
+
+/*
+		mov   rax, qword[PawnAttacks+8*(64*Us+rcx)]
+		and   rax, r14
+	; rax = lever
+		mov   rdx, qword[PawnAttacks+8*(64*Us+rcx+Up)]
+		and   rdx, r14
+	; rdx = leverPush
+
+                mov   r12, r10
+*/
+        lea  x6, PawnAttacks + 8*(64*Us)
+        ldr  x0, [x6, x1, lsl 3]
+        and  x0, x0, x14
+        lea  x6, PawnAttacks + 8*(64*Us + Up)
+        ldr  x2, [x6, x1, lsl 3]
+        and  x2, x2, x14
+        mov  x12, x10
+
+/*
+	       test   r13, qword[ForwardBB+8*(64*Us+rcx)]
+		jnz   ..NoPassed
+		xor   r10, rax
+		xor   r10, rdx
+		jnz   ..NoPassed
+	     popcnt   rax, rax, r10
+	     popcnt   rdx, rdx, r10
+		sub   r11, rax
+		sub   r9, rdx
+		 or   r11, r9
+		 js   ..NoPassed
+		mov   eax, 1
+		shl   rax, cl
+		 or   qword[rdi+PawnEntry.passedPawns+8*Us], rax
+                jmp   ..Done
+*/
+        lea  x6, ForwardBB + 8*(64*Us)
+        ldr  x4, [x4, x1, lsl 3]
+        tst  x13, x4
+        bne  EvalPawns.NoPassed\@
+        eor  x10, x10, x0
+        eor  x10, x10, x2
+       cbnz  x10, EvalPawns.NoPassed\@
+        Popcnt  x0, x0, x10
+        Popcnt  x2, x2, x10
+        cmp  w0, w1
+       ccmp  w2, w3, 0, cs
+        bcc  EvalPawns.NoPassed\@
+        mov  x0, 1
+        lsl  x0, x0, x1
+        ldr  x4, [x17, PawnEntry.passedPawns + 8*Us]
+        orr  x4, x4, x0
+        str  x4, [x17, PawnEntry.passedPawns + 8*Us]
+          b  EvalPawns.Done\@        
+
+EvalPawns.NoPassed\@:
+/*
+                lea   eax, [rcx+Up]
+                btc   r12, rax
+	if Us eq White
+                shl   r8, 8
+		cmp   ecx, SQ_A5
+		 jb   ..Done
+	else if Us eq Black
+                shr   r8, 8
+		cmp   ecx, SQ_A5
+		jae   ..Done
+	end if
+               test   r12, r12
+                jnz   ..Done
+               andn   r8, r14, r8
+                 jz   ..Done
+*/
+        add  w0, w1, Up
+        mov  x4, 1
+        lsl  x4, x4, x0
+        eor  x12, x12, x4
+ .if \Us == White
+        lsl  x8, x8, 8
+        cmp  w1, SQ_A5
+        blo  EvalPawns.Done\@
+ .else
+        lsr  x8, x8, 8
+        cmp  w1, SQ_A5
+        bhs  EvalPawns.Done\@
+ .endif
+       cbnz  x12, EvalPawns.Done\@
+       bics  x8, x8, x14
+        beq  EvalPawns.Done\@
+
+EvalPawns.PopLoop\@:
+/*
+                bsf   r9, r8
+                xor   eax, eax
+                mov   r9, qword[PawnAttacks+8*(64*Us+r9)]
+                and   r9, r14
+               blsr   rdx, r9
+               setz   al                
+		shl   rax, cl
+		 or   qword[rdi+PawnEntry.passedPawns+8*Us], rax
+               blsr   r8, r8, rax
+                jnz   ..PopLoop
+*/
+       rbit  x9, x8
+        clz  x9, x9
+        lea  x6, PawnAttacks+8*(64*Us)
+        ldr  x9, [x6, x9, lsl 3]
+        and  x9, x9, x14
+        sub  x9, x2, 1
+       ands  x2, x2, x9
+       cset  w0, eq
+        lsl  x0, x0, x1
+        ldr  x4, [x17, PawnEntry.passedPawns + 8*Us]
+        orr  x4, x4, x0
+        str  x4, [x17, PawnEntry.passedPawns + 8*Us]
+        sub  x0, x8, 1
+        and  x8, x8, x0
+       cbnz  x8, EvalPawns.PopLoop\@
+
+EvalPawns.Done\@:
+/*
+if PEDANTIC
+	      movzx   ecx, byte[r15]
+		cmp   ecx, 64
+		 jb   ..NextPiece
+
+else
+	       test   r15, r15
+		jnz   ..NextPiece
+end if
+*/
+       ldrb  w1, [x15]
+        cmp  w1, 64
+        blo  EvalPawns.NextPiece\@
+
+EvalPawns.AllDone\@:
+/*
+}
+*/
+.endm

@@ -596,7 +596,7 @@ end if
         bic  x1, eS, x1
         ldr  x4, [x21, State.dcCandidates]
        ands  x0, x0, x4
-        beq  GenPawnMoves.SkipDCPawns
+        beq  GenPawnMoves.SkipDCPawns\@
         ShiftBB  Up, x0, x0
         and  x0, x0, x1
         mov  x1, TRank3BB
@@ -847,13 +847,13 @@ else
         ldr  x0, [x7, x2, lsl 3]
         and  x0, x0, x10
         tst  x0, x15
-        beq  InnerDone\@
+        beq  GenMoves.InnerDone\@
   .elseif \Pt == Rook
         lea  x7, RookAttacksPDEP
         ldr  x0, [x7, x2, lsl 3]
         and  x0, x0, x10
         tst  x0, x15
-        beq  InnerDone\@
+        beq  GenMoves.InnerDone\@
   .elseif \Pt == Queen
         lea  x7, BishopAttacksPDEP
         ldr  x0, [x7, x2, lsl 3]
@@ -862,7 +862,7 @@ else
         orr  x0, x0, x4
         and  x0, x0, x10
         tst  x0, x15
-        beq  InnerDone\@
+        beq  GenMoves.InnerDone\@
   .endif
         lsr  x4, x16, x2
        tbnz  x4, 0, GenMoves.InnerDone\@

@@ -1,0 +1,607 @@
+/*
+// Test whether see(m) >= value.
+int see_test(Pos *pos, Move m, int value)
+{
+  if (type_of_m(m) == CASTLING)
+    return 0 >= value;
+
+  Square from = from_sq(m), to = to_sq(m);
+  Bitboard occ = pieces();
+
+  int swap = PieceValue[MG][piece_on(to)] - value;
+  if (type_of_m(m) == ENPASSANT) {
+    assert(pos_stm() == color_of(piece_on(from)));
+    occ ^= sq_bb(to - pawn_push(pos_stm())); // Remove the captured pawn
+    swap += PieceValue[MG][PAWN];
+  }
+  if (swap < 0)
+    return 0;
+
+  swap = PieceValue[MG][piece_on(from)] - swap;
+  if (swap <= 0)
+    return 1;
+
+  occ ^= sq_bb(from) ^ sq_bb(to);
+  Bitboard attackers = attackers_to_occ(to, occ) & occ;
+  int stm = color_of(piece_on(from)) ^ 1;
+  int res = 1;
+  Bitboard stmAttackers;
+
+  while (1) {
+    stmAttackers = attackers & pieces_c(stm);
+    if (   (stmAttackers & pinned_pieces(pos, stm))
+        && (pos->st->pinnersForKing[stm] & occ) == pos->st->pinnersForKing[stm])
+      stmAttackers &= ~pinned_pieces(pos, stm);
+    if (!stmAttackers) break;
+    Bitboard bb;
+    int captured;
+    for (captured = PAWN; captured < KING; captured++)
+      if ((bb = stmAttackers & pieces_p(captured)))
+        break;
+    if (captured == KING) {
+      stm ^= 1;
+      stmAttackers = attackers & pieces_c(stm);
+      // Introduce error also present in official Stockfish.
+      if (   (stmAttackers & pinned_pieces(pos, stm))
+          && (pos->st->pinnersForKing[stm] & occ) == pos->st->pinnersForKing[stm])
+        stmAttackers &= ~pinned_pieces(pos, stm);
+      return stmAttackers ? res : res ^ 1;
+    }
+    swap = PieceValue[MG][captured] - swap;
+    res ^= 1;
+    // Next line tests alternately for swap < 0 and swap <= 0.
+    if (swap < res) return res;
+    occ ^= (bb & -bb);
+    if (captured & 1) // PAWN, BISHOP, QUEEN
+      attackers |= attacks_bb_bishop(to, occ) & pieces_pp(BISHOP, QUEEN);
+    if (captured & 4) // ROOK, QUEEN
+      attackers |= attacks_bb_rook(to, occ) & pieces_pp(ROOK, QUEEN);
+    attackers &= occ;
+    stm ^= 1;
+  }
+
+  return res;
+}
+*/
+
+
+SeeTestGe:
+/*
+	; in: rbp address of Pos
+	;     rbx address of State
+	;     ecx capture move
+	;     edx value
+	; out: eax = 1 if  see >= edx
+	;      eax = 0 if  see <  edx
+
+from         equ r8
+from_d       equ r8d
+to           equ r9
+to_d         equ r9d
+stm	     equ rsi
+stm_d	     equ esi
+attackers    equ r15
+occupied     equ r14
+bb	     equ r13
+stmAttackers equ r12
+swap	     equ edx
+res	     equ eax
+*/
+from         .req x8
+from_d       .req w8
+to           .req x9
+to_d         .req w9
+stm	     .req x16
+stm_d	     .req w16
+attackers    .req x15
+occupied     .req x14
+bb	     .req x13
+stmAttackers .req x12
+swap	     .req w2
+res	     .req w0
+/*
+	; r8 = from
+	; r9 = to
+		mov   r8d, ecx
+		shr   r8d, 6
+		and   r8d, 63
+		mov   r9d, ecx
+		and   r9d, 63
+*/
+       ubfx  w8, w1, 6, 6
+        and  w9, w1, 63
+
+SeeTestGe.HaveFromTo:
+
+/*
+ProfileInc SeeTest
+
+if DEBUG
+	       push   rcx rdx r8 r9
+		and   ecx, 15 shl 12
+		shl   r8d, 6
+		add   ecx, r8d
+		add   ecx, r9d
+		mov   dword[rbp+Pos.debugDWORD1], ecx
+		mov   dword[rbp+Pos.debugDWORD2], edx
+	       call   See
+		pop   r9 r8 rdx rcx
+		cmp   eax, edx
+	      setge   al
+	      movzx   eax, al
+	       push   rax
+end if
+	       push   r12 r13 r14 r15 rsi rdi
+
+		mov   occupied, qword[rbp+Pos.typeBB+8*White]
+		 or   occupied, qword[rbp+Pos.typeBB+8*Black]
+		btr   occupied, from
+		btc   occupied, to
+*/
+        ldr  occupied, [x20, 8*White]
+        ldr  x4, [x20, 8*Black]
+        orr  occupied, occupied, x4
+        mov  x4, 1
+        lsl  x4, x4, from
+        bic  occupied, occupied, x4
+        mov  x4, 1
+        lsl  x4, x4, to
+        eor  occupied, occupied, x4
+
+/*
+	; r10 = bishops + queens
+	; r11 = rooks + queens
+		mov   rdi, qword[rbp+Pos.typeBB+8*Queen]
+		mov   r10, qword[rbp+Pos.typeBB+8*Bishop]
+		mov   r11, qword[rbp+Pos.typeBB+8*Rook]
+		 or   r10, rdi
+		 or   r11, rdi
+
+		neg   swap
+		xor   res, res
+
+		cmp   ecx, MOVE_TYPE_EPCAP shl 12
+		jae   .Special
+
+	      movzx   ecx, byte[rbp+Pos.board+to]
+		add   swap, dword[PieceValue_MG+4*rcx]
+		cmp   swap, res
+		 jl   .Return	; 2.35%
+*/
+        ldr  x17, [x20, Pos.typeBB + 8*Queen]
+        ldr  x10, [x20, Pos.typeBB + 8*Bishop]
+        ldr  x11, [x20, Pos.typeBB + 8*Rook]
+        orr  x10, x10, x17
+        orr  x11, x11, x17
+
+        neg  swap, swap
+        mov  res, 0
+        cmp  w1, MOVE_TYPE_EPCAP << 12
+        bhs  SeeTestGe.Special
+
+        add  x6, x20, Pos.board
+       ldrb  w1, [x6, to]
+        lea  x6, PieceValue_MG
+        ldr  w4, [x6, x1, lsl 2]
+        add  swap, swap, w4
+        cmp  swap, res
+        blt  SeeTestGe.Return
+
+SeeTestGe.EpCaptureRet:
+/*
+		xor   res, 1   ; .res = 1
+		neg   swap
+	      movzx   stm_d, byte[rbp+Pos.board+from]
+		add   swap, dword[PieceValue_MG+4*stm]	; use piece_on(from)
+		and   stm_d, 8
+		cmp   swap, res
+		 jl   .Return	; 13.63%
+
+	; at this point .from register r8 is free
+	;  rdi, rcx are also free
+*/
+        eor  res, res, 1
+        neg  swap, swap
+        add  x6, x20, Pos.board
+       ldrb  stm_d, [x6, from]
+        lea  x6, PieceValue_MG
+        ldr  w4, [x6, stm, lsl 2]
+        add  swap, swap, w4
+        and  stm_d, stm_d, 8
+        cmp  swap, res
+        blt  SeeTestGe.Return
+/*
+		mov   attackers, qword[KingAttacks+8*to]
+		and   attackers, qword[rbp+Pos.typeBB+8*King]
+		mov   rdi, qword[BlackPawnAttacks+8*to]
+		and   rdi, qword[rbp+Pos.typeBB+8*White]
+		and   rdi, qword[rbp+Pos.typeBB+8*Pawn]
+		 or   attackers, rdi
+		mov   rdi, qword[WhitePawnAttacks+8*to]
+		and   rdi, qword[rbp+Pos.typeBB+8*Black]
+		and   rdi, qword[rbp+Pos.typeBB+8*Pawn]
+		 or   attackers, rdi
+*/
+        lea  x6, KingAttacks
+        ldr  attackers, [x6, to, lsl 3]
+        ldr  x4, [x20, Pos.typeBB + 8*King]
+        and  attackers, attackers, x4
+        lea  x6, BlackPawnAttacks
+        ldr  x17, [x6, to, lsl 3]
+        ldr  x4, [x20, Pos.typeBB + 8*White]
+        and  x17, x17, x4
+        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
+        and  x17, x17, x4
+        orr  attackers, attackers, x17
+        lea  x6, WhitePawnAttacks
+        ldr  x17, [x6, to, lsl 3]
+        ldr  x4, [x20, Pos.typeBB + 8*Black]
+        and  x17, x17, x4
+        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
+        and  x17, x17, x4
+        orr  attackers, attackers, x17
+/*
+		mov   rdi, qword[KnightAttacks+8*to]
+		and   rdi, qword[rbp+Pos.typeBB+8*Knight]
+		 or   attackers, rdi
+	RookAttacks   rdi, to, occupied, r8
+		and   rdi, r11
+		 or   attackers, rdi
+      BishopAttacks   rdi, to, occupied, r8
+		and   rdi, r10
+		 or   attackers, rdi
+*/
+        lea  x6, KnightAttacks
+        ldr  x17, [x6, to, lsl 3]
+        ldr  x4, [x20, Pos.typeBB + 8*Knight]
+        and  x17, x17, x4
+        orr  attackers, attackers, x17
+        RookAttacks  x17, to, occupied, x8, x4
+        and  x17, x17, x11
+        orr  attackers, attackers, x17
+        BishopAttacks  x17, to, occupied, x8, x4
+        and  x17, x17, x10
+        orr  attackers, attackers, x17
+
+
+SeeTestGe.Loop:
+/*
+		xor   stm_d, 8
+		and   attackers, occupied
+
+	; modified old
+		mov   stmAttackers, qword[rbp+Pos.typeBB+stm]
+		and   stmAttackers, attackers
+		 jz   .Return	; 44.45%
+	       test   stmAttackers, qword[rbx+State.blockersForKing+stm]
+		 jz   @f	; 98.90%
+		mov   rdi, qword[rbx+State.pinnersForKing+stm]
+		and   rdi, occupied
+		cmp   rdi, qword[rbx+State.pinnersForKing+stm]
+		jne   @f	; 53.42%
+		mov   rcx, qword[rbx+State.blockersForKing+stm]
+		not   rcx
+		and   stmAttackers, rcx
+		 jz   .Return	; 45.06%
+	@@:
+*/
+        eor  stm_d, stm_d, 8
+        and  attackers, attackers, occupied
+
+        add  x6, x20, Pos.typeBB
+        ldr  stmAttackers, [x6, stm]
+       ands  stmAttackers, stmAttackers, attackers
+        beq  SeeTestGe.Return
+        add  x6, x21, State.blockersForKing
+        ldr  x4, [x6, stm]
+        tst  stmAttackers, x4
+        beq  1f
+        add  x6, x21, State.pinnersForKing
+        ldr  x17, [x6, stm]
+        and  x17, x17, occupied
+        add  x6, x21, State.pinnersForKing
+        ldr  x4, [x6, stm]
+        cmp  x17, x4
+        bne  1f
+        add  x6, x21, State.blockersForKing
+        ldr  x1, [x6, stm]
+        mvn  x1, x1
+       ands  stmAttackers, stmAttackers, x1
+        beq  SeeTestGe.Return
+1:
+
+/*
+		neg   swap
+		xor   res, 1
+
+		mov   bb, qword[rbp+Pos.typeBB+8*Pawn]
+		and   bb, stmAttackers
+		jnz   .FoundPawn
+
+		mov   bb, qword[rbp+Pos.typeBB+8*Knight]
+		and   bb, stmAttackers
+		jnz   .FoundKnight
+*/
+        neg  swap, swap
+        eor  res, res, 1
+
+        ldr  bb, [x20, Pos.typeBB+8*Pawn]
+       ands  bb, bb, stmAttackers
+        bne  SeeTestGe.FoundPawn
+
+        ldr  bb, [x20, Pos.typeBB+8*Knight]
+       ands  bb, bb, stmAttackers
+        bne  SeeTestGe.FoundKnight
+
+/*
+		mov   bb, qword[rbp+Pos.typeBB+8*Bishop]
+		and   bb, stmAttackers
+		jnz   .FoundBishop
+
+		mov   bb, qword[rbp+Pos.typeBB+8*Rook]
+		and   bb, stmAttackers
+		jnz   .FoundRook
+
+		mov   bb, qword[rbp+Pos.typeBB+8*Queen]
+		and   bb, stmAttackers
+		jnz   .FoundQueen
+*/
+        ldr  bb, [x20, Pos.typeBB+8*Bishop]
+       ands  bb, bb, stmAttackers
+        bne  SeeTestGe.FoundBishop
+
+        ldr  bb, [x20, Pos.typeBB+8*Rook]
+       ands  bb, bb, stmAttackers
+        bne  SeeTestGe.FoundRook
+
+        ldr  bb, [x20, Pos.typeBB+8*Queen]
+       ands  bb, bb, stmAttackers
+        bne  SeeTestGe.FoundQueen
+
+SeeTestGe.FoundKing:
+/*
+		xor   stm_d, 8
+		mov   stmAttackers, qword[rbp+Pos.typeBB+stm]
+		and   stmAttackers, attackers
+	; .res has already been flipped so we must do
+	;    return stmAttackers ? res^1 : res;
+		neg   stmAttackers
+		adc   res, 0
+		and   res, 1
+*/
+        eor  stm_d, stm_d, 8
+        add  x6, x20, Pos.typeBB
+        ldr  stmAttackers, [x6, stm]
+       ands  stmAttackers, stmAttackers, attackers
+       cinc  w0, w0, ne
+        and  w0, w0, 1
+        
+
+SeeTestGe.Return:
+/*
+		pop   rdi rsi r15 r14 r13 r12
+if DEBUG
+		pop   rcx
+		cmp   eax, ecx
+		jne   SeeTest_Error
+end if
+		ret
+*/
+        ret
+
+SeeTestGe.FoundQueen:
+/*
+		add   swap, QueenValueMg
+		cmp   swap, res
+		 jl   .Return
+
+	       blsi   bb, bb, r8
+		xor   occupied, bb
+      BishopAttacks   rdi, to, occupied, r8
+		and   rdi, r10
+		 or   attackers, rdi
+	RookAttacks   rdi, to, occupied, r8
+		and   rdi, r11
+		 or   attackers, rdi
+		jmp   .Loop
+*/
+        add  swap, swap, QueenValueMg
+        cmp  swap, res
+        blt  SeeTestGe.Return
+
+        sub  x8, bb, 1
+        and  bb, bb, x8
+        eor  occupied, occupied, bb
+        BishopAttacks  x17, to, occupied, x8, x4
+        and  x17, x17, x10
+        orr  attackers, attackers, x17
+        RookAttacks  x17, to, occupied, x8, x4
+        and  x17, x17, x11
+        orr  attackers, attackers, x17
+          b  SeeTestGe.Loop
+
+SeeTestGe.FoundRook:
+/*
+		add   swap, RookValueMg
+		cmp   swap, res
+		 jl   .Return
+
+	       blsi   bb, bb, r8
+		xor   occupied, bb
+	RookAttacks   rdi, to, occupied, r8
+		and   rdi, r11
+		 or   attackers, rdi
+		jmp   .Loop
+*/
+        add  swap, swap, RookValueMg
+        cmp  swap, res
+        blt  SeeTestGe.Return
+
+        sub  x8, bb, 1
+        and  bb, bb, x8
+        eor  occupied, occupied, bb
+        RookAttacks  x17, to, occupied, x8, x4
+        and  x17, x17, x11
+        orr  attackers, attackers, x17
+          b  SeeTestGe.Loop
+
+SeeTestGe.FoundBishop:
+/*
+		add   swap, BishopValueMg-PawnValueMg
+*/
+        add  swap, swap, BishopValueMg - PawnValueMg
+
+SeeTestGe.FoundPawn:
+/*
+		add   swap, PawnValueMg
+		cmp   swap, res
+		 jl   .Return
+
+	       blsi   bb, bb, rcx
+		xor   occupied, bb
+      BishopAttacks   rdi, to, occupied, r8
+		and   rdi, r10
+		 or   attackers, rdi
+		jmp   .Loop
+*/
+        add  swap, swap, PawnValueMg
+        cmp  swap, res
+        blt  SeeTestGe.Return
+
+        sub  x1, bb, 1
+        and  bb, bb, x1
+        eor  occupied, occupied, bb
+        BishopAttacks  x17, to, occupied, x8, x4
+        and  x17, x17, x10
+        orr  attackers, attackers, x17
+          b  SeeTestGe.Loop
+
+
+SeeTestGe.FoundKnight:
+/*
+		add   swap, KnightValueMg
+		cmp   swap, res
+		 jl   .Return
+
+	       blsi   bb, bb, rcx
+		xor   occupied, bb
+		jmp   .Loop
+*/
+        add  swap, swap, KnightValueMg
+        cmp  swap, res
+        blt  SeeTestGe.Return
+        sub  x1, bb, 1
+        and  bb, bb, x1
+        eor  occupied, occupied, bb
+          b  SeeTestGe.Loop
+
+SeeTestGe.Special:
+/*
+	; if we get here, .swap = -value
+	;            and  .res = 0
+		cmp   ecx, MOVE_TYPE_CASTLE shl 12
+		jae   .Castle
+		mov   ecx, dword[rbp+Pos.sideToMove]
+		shl   ecx, 3
+		lea   ecx, [to+2*rcx-8]
+		btr   occupied, rcx
+		add   swap, PawnValueMg
+		cmp   swap, res
+		jge   .EpCaptureRet
+*/
+        cmp  w1, MOVE_TYPE_CASTLE << 12
+        bhs  SeeTestGe.Castle
+        ldr  w1, [x20, Pos.sideToMove]
+        add  x1, to, x1, lsl 4
+        sub  w1, w1, 8
+        mov  x4, 1
+        lsl  x4, x4, x1
+        bic  occupied, occupied, x4
+        add  swap, swap, PawnValueMg
+        cmp  swap, res
+        bge  SeeTestGe.EpCaptureRet
+
+        
+
+SeeTestGe.ReturnSpecial:
+/*
+
+		pop   rdi rsi r15 r14 r13 r12
+if DEBUG
+		pop   rcx
+		cmp   eax, ecx
+		jne   SeeTest_Error
+end if
+		ret
+*/
+        ret
+
+SeeTestGe.Castle:
+/*
+	; return 0 <= swap
+		cmp   swap, 0x80000000
+		adc   res, res
+		jmp   .ReturnSpecial
+*/
+        cmp  swap, 0
+       cset  res, ge
+        ret
+
+/*
+if DEBUG
+SeeTest_Error:
+		lea   rdi, [Output]
+	       push   rcx rax
+	     szcall   PrintString, 'SeeTest mismatch: SeeTest = '
+		pop   rax
+	       call   PrintUnsignedInteger
+	     szcall   PrintString, 'while (See >= value) = '
+		pop   rax
+	       call   PrintUnsignedInteger
+PrintNewLine
+		mov   rax, 'move:   '
+	      stosq
+		mov   ecx, dword[rbp+Pos.debugDWORD1]
+		mov   edx, dword[rbp+Pos.chess960]
+	       call  PrintUciMoveLong
+PrintNewLine
+		mov   rax, 'value:  '
+	      stosq
+	     movsxd   rax, dword[rbp+Pos.debugDWORD2]
+	       call   PrintSignedInteger
+PrintNewLine
+		mov   qword[rbp+Pos.state], rbx
+	       call   Position_PrintSmall
+		lea   rdi, [Output]
+	       call   _ErrorBox
+int3
+end if
+*/
+
+/*
+restore from
+restore from_d
+restore to
+restore to_d
+restore stm
+restore stm_d
+restore attackers
+restore occupied
+restore bb
+restore stmAttackers
+restore swap
+restore res
+*/
+.unreq from
+.unreq from_d
+.unreq to
+.unreq to_d
+.unreq stm
+.unreq stm_d
+.unreq attackers
+.unreq occupied
+.unreq bb
+.unreq stmAttackers
+.unreq swap
+.unreq res
+

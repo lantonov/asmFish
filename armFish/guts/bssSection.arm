@@ -111,6 +111,7 @@ PassedFile:                 .space 4*8
 DoMaterialEval_Data:
 DoMaterialEval_Data.QuadraticOurs:     .space 4*8*6
 DoMaterialEval_Data.QuadraticTheirs:   .space 4*8*6
+SeeSignBitMask:         .space 8
 
 
 // data for endgames

@@ -1,0 +1,128 @@
+/*
+;bool Position::is_draw(int ply) const {
+;  if (st->rule50 > 99 && (!checkers() || MoveList<LEGAL>(*this).size()))
+;      return true;
+;  int end = std::min(st->rule50, st->pliesFromNull);
+;  if (end < 4) return false;
+;  StateInfo* stp = st->previous->previous;
+;  int cnt = 0;
+;  for (int i = 4; i <= end; i += 2) {
+;      stp = stp->previous->previous;
+;      // At root position ply is 1, so return a draw score if a position
+;      // repeats once earlier but after or at the root, or repeats twice
+;      // strictly before the root.
+;      if (   stp->key == st->key
+;          && ++cnt + (ply - i > 0) == 2)
+;          return true;
+;  }
+;  return false;
+;}
+
+macro PosIsDraw WeHaveADraw, coldlabel, coldreturnlabel {
+; in    rbp  address of Position
+;       rbx  address of State
+;       edx  word[rbx+State.rule50]
+;       ecx  word[rbx+State.pliesFromNull]
+;       r8   qword[rbx+State.key]
+;       eax  ply
+;
+; out: should jump to WeHaveADraw in case of a draw
+;       otherwise fall through
+;       r12-r15 should be preserved
+local ..CheckNext, ..noDraw, ..KeysDontMatch
+*/
+.macro PosIsDraw WeHaveADraw, coldlabel, coldreturnlabel
+/*
+		cmp   edx, 100
+		jae   coldlabel
+*/
+        cmp  w2, 100
+        bhs  \coldlabel
+\coldreturnlabel:
+/*
+		cmp   edx, ecx
+	      cmova   edx, ecx
+		cmp   edx, 4
+		 jb   ..noDraw
+	       imul   r10, rdx, -sizeof.State	; r10 = end
+		mov   r9, -4*sizeof.State	; r9 = i
+		sub   eax, 5			; eax = ply-i-1
+		xor   ecx, ecx			; ecx = -cnt
+*/
+        cmp  w2, w1
+       csel  w2, w1, w2, hi
+        cmp  w2, 4
+        blo  PosIsDraw.noDraw\@
+        mov  x4, -sizeof.State
+        mul  w10, w2, w4
+        lsl  x9, x4, 2
+        sub  w0, w0, 5
+        mov  w1, 0
+PosIsDraw.CheckNext\@:
+/*
+		cdq				; get the sign of ply-i-1
+		cmp   r8, qword[rbx+r9+State.key]
+		jne   ..KeysDontMatch
+		cmp   ecx, edx			; 1+cnt + (ply-i>0) == 2 is the same as
+		 je   WeHaveADraw		; -cnt == sign(ply-i-1)
+		sub   ecx, 1
+*/
+        asr  w2, w0, 31
+        add  x6, x21, State.key
+        ldr  x4, [x6, x9]
+        cmp  x8, x4
+        bne  PosIsDraw.KeysDontMatch\@
+        cmp  w1, w2
+        beq  \WeHaveADraw
+        sub  w1, w1, 1
+
+PosIsDraw.KeysDontMatch\@:
+/*
+		sub   r9, 2*sizeof.State
+		sub   eax, 2
+		cmp   r9, r10
+		jae   ..CheckNext
+*/
+        sub  x9, x9, 2*sizeof.State
+        sub  w0, w0, 2
+        cmp  x9, x10
+        bhs  PosIsDraw.CheckNext\@
+
+PosIsDraw.noDraw\@:
+/*
+}
+*/
+.endm
+
+/*
+; this macro should be headed by the coldlabel argument of the PosIsDraw macro
+macro PosIsDraw_Cold WeHaveADraw, coldreturnlabel {
+		mov   r11, qword[rbx+State.checkersBB]	; don't clobber eax
+	       test   r11, r11				; as it holds ply 
+		 jz   WeHaveADraw		; draw if we are not in check
+	       push   rax rcx rdx r8 r9 rdi
+		mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
+	       call   Gen_Legal
+		cmp   rdi, qword[rbx-1*sizeof.State+State.endMoves]
+		pop   rdi r9 r8 rdx rcx rax
+		jne   WeHaveADraw		; draw if we have some moves
+		jmp   coldreturnlabel		; otherwise fall through
+}
+*/
+.macro PosIsDraw_Cold WeHaveADraw, coldreturnlabel
+        ldr  x11, [x21, State.checkersBB]
+        cbz  x11, \WeHaveADraw
+        stp  x0, x1, [sp, -16]!
+        stp  x2, x8, [sp, -16]!
+        stp  x9, x17, [sp, -16]!
+        ldr  x17, [x21, -1*sizeof.State + State.endMoves]
+         bl  Gen_Legal
+        ldr  x4, [x21, -1*sizeof.State + State.endMoves]
+        cmp  x17, x4
+        ldp  x9, x17, [sp], 16
+        ldp  x2, x8, [sp], 16
+        ldp  x0, x1, [sp], 16
+        beq  \WeHaveADraw
+          b  \coldreturnlabel
+.endm
+

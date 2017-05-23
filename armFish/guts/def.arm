@@ -129,7 +129,7 @@ MOVE_TYPE_NORMAL = 0
 MOVE_TYPE_PROM   = 4
 MOVE_TYPE_EPCAP  = 8
 MOVE_TYPE_CASTLE = 12
-// special moves (should be negative as 32bit quantities)
+// special moves (should be <=0 as 32bit quantities)
 MOVE_NONE    = 0
 MOVE_NULL    = 65 + 0x0FFFFF000
 

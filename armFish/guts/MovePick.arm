@@ -741,7 +741,7 @@ MovePick_PROBCUT_2:
         cmp  w1, w4
         beq  MovePick_PROBCUT_2
         ldr  w2, [x21, State.threshold]
-         bl  GetTestGe
+         bl  SeeTestGe
         cbz  w0, MovePick_PROBCUT_2
         mov  w0, w27
          br  x29
