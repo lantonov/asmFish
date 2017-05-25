@@ -336,7 +336,7 @@ _ThreadCreate:
 	; allocate memory for the thread stack
 		mov   ecx, THREAD_STACK_SIZE
 		mov   edx, dword[r12+NumaNode.nodeNumber]
-	       call   _VirtualAllocNuma_GrowsDown
+	       call   _VirtualAllocNuma
 		mov   qword[r13+ThreadHandle.stackAddress], rax
 		mov   rsi, rax
 	; create child
@@ -494,12 +494,6 @@ _Sleep:
 ; memory ;
 ;;;;;;;;;;
 
-
-_VirtualAllocNuma_GrowsDown:	 ; this is called to allocate stack on created thread
-	; rcx is size
-	; edx is numa node
-		mov   r10d, MAP_PRIVATE or MAP_ANONYMOUS or MAP_GROWSDOWN
-		jmp   _VirtualAllocNuma.go
 
 _VirtualAllocNuma:
 	; rcx is size
