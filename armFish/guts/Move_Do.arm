@@ -177,6 +177,8 @@ Move_Do:
 		jnz   .Rights
 */
 
+Display "Move_Do(move=%m1)\n"
+
         ldr  w16, [x20, Pos.sideToMove]
         lea  x7, Zobrist_side
         ldr  d15, [x7]
@@ -229,6 +231,9 @@ Move_Do.RightsRet:
        strb  w0, [x21, 1*sizeof.State + State.epSquare]
 
 Move_Do.ResetEpRet:
+
+
+
 /*
 	; capture
 		mov   eax, r11d
@@ -312,6 +317,7 @@ Move_Do.CaptureRet:
 		cmp   r11d, 16
 		 je   .DoublePawn
 */
+
         lea  x7, IsPawnMasks
       ldrsb  x0, [x7, x10]
         and  x11, x11, x0
@@ -343,6 +349,7 @@ Move_Do.CaptureRet:
         beq  Move_Do.DoublePawn
 
 Move_Do.SpecialRet:
+
 /*
 
 	; write remaining data to next state entry
@@ -438,6 +445,7 @@ Move_Do.Capture:
 	      movzx   edi, byte[rbp+Pos.pieceEnd+r11]
 		and   edi, 15
 */
+
         and  x12, x11, 8
         ldr  x17, [x20, x12]
         ldr  x2, [x20, x0, lsl 3]
@@ -485,7 +493,7 @@ Move_Do.Capture:
         eor  v3.8b, v3.8b, v7.8b
         ldr  d1, [x7, x9, lsl 3]
         sub  v6.2s, v6.2s, v1.2s
-       strh  w0, [x21, sizeof.State + State.rule50]
+       strh  wzr, [x21, sizeof.State + State.rule50]
 /*
 	      movzx   edi, byte[rbp+Pos.pieceEnd+r11]
 		sub   edi, 1
@@ -512,6 +520,7 @@ Move_Do.Capture:
        strb  w2, [x7, x0]
         mov  w4, 64
        strb  w4, [x7, x17]
+
           b  Move_Do.CaptureRet
 
 Move_Do.MoveIsCheck:
@@ -562,29 +571,31 @@ Move_Do.DoFull:
 		mov   qword[rbx+State.checkersBB], rax
 		jmp   SetCheckInfo.go
 */
+
+
         eor  x1, x16, 1
         lea  x7, PawnAttacks
         add  x7, x7, x15, lsl 3
         ldr  x0, [x7, KingAttacks-PawnAttacks]
-        ldr  x4, [x20, 8*King]
+        ldr  x4, [x20, Pos.typeBB + 8*King]
         and  x0, x0, x4
         ldr  x8, [x7, KnightAttacks-PawnAttacks]
-        ldr  x4, [x20, 8*Knight]
+        ldr  x4, [x20, Pos.typeBB + 8*Knight]
         and  x8, x8, x4
         orr  x0, x0, x8
         add  x7, x7, x1, lsl 6+3
         ldr  x8, [x7]
-        ldr  x4, [x20, 8*Pawn]
+        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
         and  x8, x8, x4
         orr  x0, x0, x8
-        ldr  x5, [x20, 8*Queen]
+        ldr  x5, [x20, Pos.typeBB + 8*Queen]
         RookAttacks x8, x15, x17, x9, x1
-        ldr  x9, [x20, 8*Rook]
+        ldr  x9, [x20, Pos.typeBB + 8*Rook]
         orr  x9, x9, x5
         and  x8, x8, x9
         orr  x0, x0, x8
         BishopAttacks x8, x15, x17, x9, x1
-        ldr  x9, [x20, 8*Bishop]
+        ldr  x9, [x20, Pos.typeBB + 8*Bishop]
         orr  x9, x9, x5
         and  x8, x8, x9
         orr  x0, x0, x8

@@ -1,4 +1,5 @@
 
+Display "BAD\n"
 Move_Undo:
 /*
 	; in: rbp  address of Pos
@@ -27,6 +28,8 @@ Move_Undo:
 		mov   eax, r10d
 		and   eax, 7
 */
+Display "Move_Undo(move=%m1)\n"
+
         ldr  w16, [x20, Pos.sideToMove]
         eor  x16, x16, 1
        ubfx  x8, x1, 6, 6
@@ -62,12 +65,13 @@ Move_Undo:
         add  x7, x20, Pos.board
        strb  w10, [x7, x8]
        strb  w11, [x7, x9]
-        ldr  x4, [x20, x0, lsl 3]
+        add  x6, x20, Pos.typeBB
+        ldr  x4, [x6, x0, lsl 3]
         eor  x4, x4, x2
-        str  x4, [x20, x0, lsl 3]
-        ldr  x4, [x20, x16, lsl 3]
+        str  x4, [x6, x0, lsl 3]
+        ldr  x4, [x6, x16, lsl 3]
         eor  x4, x4, x2
-        str  x4, [x20, x16, lsl 3]
+        str  x4, [x6, x16, lsl 3]
 
         cmp  x1, MOVE_TYPE_PROM
         bhs  Move_Undo.Special
@@ -175,12 +179,13 @@ Move_Undo.Prom:
         mov  x4, 1
         lsl  x4, x4, x8
         orr  x2, x2, x4
-        ldr  x4, [x20, 8*Pawn]
+        add  x6, x20, Pos.typeBB
+        ldr  x4, [x6, 8*Pawn]
         orr  x4, x4, x2
-        str  x4, [x20, 8*Pawn]
-        ldr  x4, [x20, x1, lsl 3]
+        str  x4, [x6, 8*Pawn]
+        ldr  x4, [x6, x1, lsl 3]
         eor  x4, x4, x2
-        str  x4, [x20, x1, lsl 3]
+        str  x4, [x6, x1, lsl 3]
         add  x7, x20, Pos.board
        strb  w0, [x7, x8]
        strb  w11, [x7, x9]
@@ -489,7 +494,9 @@ Move_Undo.Castle:
 		pop   rsi
 		ret
 */
-        str  x0, [x20, x16, lsl 3]
-        str  x10, [x20, 8*King]
-        str  x11, [x20, 8*Rook]
+        add  x6, x20, Pos.typeBB
+        str  x0, [x6, x16, lsl 3]
+        str  x10, [x20, Pos.typeBB + 8*King]
+        str  x11, [x20, Pos.typeBB + 8*Rook]
         ret
+

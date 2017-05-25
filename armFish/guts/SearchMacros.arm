@@ -121,7 +121,7 @@ Search.lend = (MAX_PLY+1)*sizeof.rd + Search.pv
  .else
 Search.lend = 64*sizeof.rd          + Search.quietsSearched
  .endif
-Search.localsize = (Search.lend+15) && -16
+Search.localsize = (Search.lend+15) & -16
 
 
 /*
@@ -138,12 +138,18 @@ match =1, DEBUG \{
 	     Assert   b, al, 2, 'assertion .cutNode == 0 or -1 failed in Search'
 \}
 */
-        stp  x21, x22, [sp, -16]
-        stp  x23, x24, [sp, -16]
-        stp  x25, x26, [sp, -16]
-        stp  x27, x28, [sp, -16]
-        stp  x29, x30, [sp, -16]
+        stp  x21, x22, [sp, -16]!
+        stp  x23, x24, [sp, -16]!
+        stp  x25, x26, [sp, -16]!
+        stp  x27, x28, [sp, -16]!
+        stp  x29, x30, [sp, -16]!
         sub  sp, sp, Search.localsize
+        str  w1, [sp, Search.alpha]
+        str  w2, [sp, Search.beta]
+        str  w8, [sp, Search.depth]
+       strb  w9, [sp, Search.cutNode]
+
+Display "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called\n"
 
 //	; Step 1. initialize node
 //		xor   eax, eax
@@ -248,7 +254,7 @@ Search.dontchecktime\@:
 //		mov   ecx, dword[.alpha]
         ldr  w1, [sp, Search.alpha]
 //		mov   edx, dword[.beta]
-        ldr  w1, [sp, Search.beta]
+        ldr  w2, [sp, Search.beta]
 //		mov   eax, r12d
 //		sub   eax, VALUE_MATE
         mov  w4, VALUE_MATE
@@ -313,6 +319,7 @@ Search.dontchecktime\@:
 //    end if
 //end if
 //
+Display "Search Step 4\n"
 //	; Step 4. transposition table look up
 //		mov   ecx, dword[rbx+State.excludedMove]
         ldr  w1, [x21, State.excludedMove]
@@ -325,6 +332,10 @@ Search.dontchecktime\@:
         str  x1, [sp, Search.posKey]
 //	       call   MainHash_Probe
          bl  MainHash_Probe
+
+Display "ltte = %X1\n"
+
+
 //		mov   qword[.tte], rax
         str  x0, [sp, Search.tte]
 //		mov   qword[.ltte], rcx
@@ -419,6 +430,7 @@ Search.DontReturnTTValue\@:
 //end if
 //
 //
+Display "Search Step 5\n"
 //	; step 5. evaluate the position statically
 //		mov   eax, VALUE_NONE
         mov  w0, VALUE_NONE
@@ -582,6 +594,7 @@ Search.6skip\@:
 //
 //
 //	; Step 7. Futility pruning: child node (skipped when in check)
+Display "Search Step 7\n"
 //    if ((.RootNode eq 0) & (USE_MATEFINDER eq 0)) | ((.PvNode eq 0) & (USE_MATEFINDER eq 1))
  .if \RootNode == 0
 //		mov   edx, dword[.depth]
@@ -632,6 +645,7 @@ Search.7skip\@:
 //
 //
 //
+Display "Search Step 8\n"
 //	; Step 8. Null move search with verification search (is omitted in PV nodes)
 //    if .PvNode eq 0
  .if \PvNode == 1
@@ -718,6 +732,7 @@ Search.8do\@:
         mov  w0, CmhDeadOffset
 //		add   rax, qword[rbp+Pos.counterMoveHistory]
         ldr  x4, [x20, Pos.counterMoveHistory]
+        add  x0, x0, x4
 //		mov   dword[rbx+State.currentMove], MOVE_NULL
         mov  w4, MOVE_NULL
         str  w4, [x21, State.currentMove]
@@ -872,15 +887,16 @@ Search.8skip\@:
 //
 //
 //
+Display "Search Step 9\n"
 //	; Step 9. ProbCut (skipped when in check)
 //    if .PvNode eq 0
- .if PvNode == 0
+ .if \PvNode == 0
 //		mov   eax, dword[.depth]
         ldr  w0, [sp, Search.depth]
 //		cmp   eax, 5*ONE_PLY
 //		 jl   .9skip
         cmp  w0, 5*ONE_PLY
-        blt  Search.9Skip\@
+        blt  Search.9skip\@
 //		mov   eax, dword[.beta]
         ldr  w0, [sp, Search.beta]
 //		add   eax, VALUE_MATE_IN_MAX_PLY-1
@@ -890,7 +906,7 @@ Search.8skip\@:
 //		 ja   .9skip
         mov  w4, VALUE_MATE_IN_MAX_PLY-1
         cmp  w0, w4, lsl 1
-        bhi  Search.9skip
+        bhi  Search.9skip\@
 //     if USE_MATEFINDER
 //                mov   eax, dword[.eval]
 //               test   byte[rbx+State.ply], 1
@@ -948,11 +964,11 @@ Search.8skip\@:
 //		cmp   eax, MOVE_TYPE_CASTLE
 //		 je   .9NoTTMove
         cmp  w0, MOVE_TYPE_CASTLE
-        beq  Search.9NoTTMove
+        beq  Search.9NoTTMove\@
 //		cmp   eax, MOVE_TYPE_EPCAP
 //		 je   @f
         cmp  w0, MOVE_TYPE_EPCAP
-        beq  1F
+        beq  1f
 //	       test   edx, edx
 //		 jz   .9NoTTMove
         cbz  w2, Search.9NoTTMove\@
@@ -966,19 +982,19 @@ Search.8skip\@:
 //		mov   ecx, dword[.ttMove]
         ldr  w1, [sp, Search.ttMove]
 //		mov   edx, dword[rbx+State.threshold]
-        ldr  w2, [x21, State,threshold]
+        ldr  w2, [x21, State.threshold]
 //	       call   SeeTestGe
          bl  SeeTestGe
 //	       test   eax, eax
 //		 jz   .9NoTTMove
-        cbz  w0, Search.9NoTTMove
+        cbz  w0, Search.9NoTTMove\@
 //		mov   edi, dword[.ttMove]
         ldr  w27, [sp, Search.ttMove]
 //		lea   r15, [MovePick_PROBCUT]
         adr  x25, MovePick_PROBCUT
 //.9NoTTMove:	mov   qword[rbx+State.stage], r15
 Search.9NoTTMove\@:
-        str  x25, [x21, State.state]
+        str  x25, [x21, State.stage]
 //		mov   dword[rbx+State.ttMove], edi
         str  w27, [x21, State.ttMove]
 //
@@ -987,7 +1003,7 @@ Search.9moveloop\@:
 //                xor   esi, esi
         mov  w26, 0
 //	GetNextMove
-        GetNestMove
+        GetNextMove
 //		mov   dword[.move], eax
         str  w0, [sp, Search.move]
 //		mov   ecx, eax
@@ -996,7 +1012,7 @@ Search.9moveloop\@:
 //		 jz   .9moveloop_done
         cbz  w0, Search.9moveloop_done\@
 //	       call   Move_IsLegal
-         bl  call   Move_IsLegal
+         bl  Move_IsLegal
 //	       test   eax, eax
 //		 jz   .9moveloop
         cbz  w0, Search.9moveloop\@
@@ -1012,7 +1028,7 @@ Search.9moveloop\@:
 //		and   ecx, 63
         and  w1, w1, 63
 //	      movzx   eax, byte[rbp+Pos.board+rax]
-        add  w6, x20, Pos.board
+        add  x6, x20, Pos.board
        strb  w0, [x6, x0]
 //		shl   eax, 6
 //		add   eax, ecx
@@ -1020,14 +1036,14 @@ Search.9moveloop\@:
 //		shl   eax, 2+4+6
 //		add   rax, qword[rbp+Pos.counterMoveHistory]
         ldr  x4, [x20, Pos.counterMoveHistory]
-        add  x0, x4, x0, 12
+        add  x0, x4, x0, lsl 12
 //		mov   qword[rbx+State.counterMoves], rax
         str  x0, [x21, State.counterMoves]
 //
 //		mov   ecx, dword[.move]
         ldr  w1, [sp, Search.move]
 //	       call   Move_GivesCheck
-         bl  Move_GiveCheck
+         bl  Move_GivesCheck
 //		mov   ecx, dword[.move]
         ldr  w1, [sp, Search.move]
 //		mov   byte[rbx+State.givesCheck], al
@@ -1078,6 +1094,7 @@ Search.9skip\@:
 //
 //
 //
+Display "Search Step 10\n"
 //	; Step 10. Internal iterative deepening (skipped when in check)
 //
 //		mov   r8d, dword[.depth]
@@ -1162,6 +1179,8 @@ Search.10skip\@:
 //.moves_loop:	    ; this is actually not the head of the loop
 //;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 Search.moves_loop\@:
+Display "Search.moves_loop\n"
+
 //
 //
 //if PEDANTIC
@@ -1195,7 +1214,7 @@ Search.moves_loop\@:
         ldr  w2, [sp, Search.depth]
 //
 //		mov   dword[rbx+State.depth], edx
-        ldr  w2, [x21, State.depth]
+        str  w2, [x21, State.depth]
 //
 //		mov   rdi, qword[rbp+Pos.counterMoves]
         ldr  x27, [x20, Pos.counterMoves]
@@ -1226,6 +1245,7 @@ Search.moves_loop\@:
         cbz  w1, Search.NoTTMove\@
 //	       call   Move_IsPseudoLegal
          bl  Move_IsPseudoLegal
+
 //	       test   rax, rax
 //	      cmovz   edi, eax
 //		 jz   .NoTTMove
@@ -1263,7 +1283,7 @@ Search.NoTTMove\@:
         ldr  w2, [x21, -0*sizeof.State+State.staticEval]
 //		mov   ecx, dword[rbx-2*sizeof.State+State.staticEval]
         add  x6, x21, -2*sizeof.State
-        ldr  w2, [x6, State.staticEval]
+        ldr  w1, [x6, State.staticEval]
 //		cmp   edx, ecx
 //	      setge   al
         cmp  w2, w1
@@ -1383,6 +1403,8 @@ Search.NoTTMove\@:
 //	      align   8
 //.MovePickLoop:	     ; this is the head of the loop
 Search.MovePickLoop\@:
+Display "Search.MovePickLoop\n"
+
 //
 //              movsx   esi, byte[.skipQuiets]
       ldrsb  w26, [sp, Search.skipQuiets]
@@ -1390,6 +1412,7 @@ Search.MovePickLoop\@:
         GetNextMove
 //		mov   dword[.move], eax
         str  w0, [sp, Search.move]
+Display "Search.move = %m0\n"
 //	       test   eax, eax
 //		 jz   .MovePickDone
         cbz  w0, Search.MovePickDone\@
@@ -1405,9 +1428,9 @@ Search.MovePickLoop\@:
  .if \RootNode == 1
 //	       imul   ecx, dword[rbp-Thread.rootPos+Thread.PVIdx], sizeof.RootMove
         add  x6, x20, -Thread.rootPos
-        ldr  w2, [x6, Thread.PVIdx]
+        ldr  w1, [x6, Thread.PVIdx]
         mov  w4, sizeof.RootMove
-        mul  w2, w2, w4
+        mul  w1, w1, w4
 //		add   rcx, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
         ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
         add  x1, x1, x4
@@ -1429,15 +1452,25 @@ Search.MovePickLoop\@:
  .endif
 //
 //		mov   eax, dword[.moveCount]
+        ldr  w0, [sp, Search.moveCount]
 //		add   eax, 1
+        add  w0, w0, 1
 //		mov   dword[rbx+State.moveCount], eax
+        str  w0, [x21, State.moveCount]
 //		mov   dword[.moveCount], eax
+        str  w0, [sp, Search.moveCount]
+
 //
 //		xor   eax, eax
+        mov  w0, 0
 //	if .PvNode eq 1
+ .if \PvNode == 1
 //		mov   qword[rbx+1*sizeof.State+State.pv], rax
+        str  x0, [x21, 1*sizeof.State + State.pv]
 //	end if
+ .endif
 //		mov   dword[.extension], eax
+        str  w0, [sp, Search.extension]
 //
 //if USE_CURRMOVE
  .if USE_CURRMOVE
@@ -1503,10 +1536,11 @@ Search.PrintCurrentMoveRet\@:
         and  w0, w0, w4
 //		mov   byte[.captureOrPromotion], al
        strb  w0, [sp, Search.captureOrPromotion]
+Display "capProm %i0\n"
 //
 //
 //		mov   ecx, dword[.move]
-        ldr  w2, [sp, Search.move]
+        ldr  w1, [sp, Search.move]
 //	       call   Move_GivesCheck
          bl  Move_GivesCheck
 //		mov   byte[rbx+State.givesCheck], al
@@ -1514,19 +1548,23 @@ Search.PrintCurrentMoveRet\@:
 //
 //		mov   edi, dword[.depth]
         ldr  w27, [sp, Search.depth]
+Display "stuff %i27, "
 //	      movzx   ecx, byte[.improving]
        ldrb  w1, [sp, Search.improving]
+Display "%i1, "
 //	        shl   ecx, 4+2
         lsl  w1, w1, 6
 //		mov   ecx, dword[FutilityMoveCounts+rcx+4*rdi]
         lea  x6, FutilityMoveCounts
         add  x6, x6, x1
         ldr  w1, [x6, x27, lsl 2]
+Display "%i1, "
 //		sub   ecx, dword[.moveCount]
         ldr  w4, [sp, Search.moveCount]
         sub  w1, w1, w4
 //		sub   ecx, 1
         sub  w1, w1, 1
+Display "%i1, "
 //		sub   edi, 16*ONE_PLY
         sub  w27, w27, 16*ONE_PLY
 //		and   edi, ecx
@@ -1534,13 +1572,15 @@ Search.PrintCurrentMoveRet\@:
 //		sar   edi, 31
         asr  w27, w27, 31
 //		mov   byte[.moveCountPruning], dil
-        str  w27, [sp, Search.moveCountPruning]
+       strb  w27, [sp, Search.moveCountPruning]
+Display "%i27\n"
 //
 //                not   edi
         mvn  w27, w27
 //                and   edi, eax  ; edi = givesCheck && !moveCountPruning
         and  w27, w27, w0
 //
+Display "Search Step 12\n"
 //      ; Step 12. Extend checks
 //		mov   al, byte[.singularExtensionNode]
        ldrb  w0, [sp, Search.singularExtensionNode]
@@ -1648,6 +1688,7 @@ Search.12done\@:
 //
 //
 //
+Display "Search Step 13\n"
 //	; Step 13. Pruning at shallow depth
 //
 //		mov   r12d, dword[.move]
@@ -1686,7 +1727,8 @@ Search.12done\@:
 //                mov   r8d, dword[rbp+Pos.sideToMove]
         ldr  w8, [x20, Pos.sideToMove]
 //		mov   ecx, dword[.bestValue]
-        ldr  w2, [sp, Search.bestValue]
+        ldr  w1, [sp, Search.bestValue]
+Display "bv%i1"
 //	      movzx   esi, word[rbx+State.npMaterial+2*0]
        ldrh  w26, [x21, State.npMaterial + 2*0]
 //		add   eax, ecx
@@ -1699,11 +1741,13 @@ Search.12done\@:
 //              movzx   ecx, word[rbx+State.npMaterial+2*r8]
         add  x6, x21, State.npMaterial
        ldrh  w1, [x6, x8, lsl 1]
+Display "np%i1"
 //               test   ecx, ecx
 //                 jz   .13done
         cbz  w1, Search.13done\@
 //		mov   al, byte[.captureOrPromotion]
        ldrb  w0, [sp, Search.captureOrPromotion]
+Display "cp%i0"
 //	      movzx   ecx, word[rbx+State.npMaterial+2*1]
        ldrh  w1, [x21, State.npMaterial + 2*1]
 //		add   esi, ecx
@@ -1712,6 +1756,7 @@ Search.12done\@:
 //		jnz   .13else
        ldrb  w4, [x21, State.givesCheck]
         orr  w0, w0, w4
+Display "al%i0"
        cbnz  w0, Search.13else\@
 //		lea   ecx, [8*r8+Pawn]
         mov  w1, Pawn
@@ -1736,6 +1781,7 @@ Search.12done\@:
         bhs  Search.13else\@
 //.13do:
 Search.13do\@:
+Display "Search.13do\n"
 //
 //	; Move count based pruning
 //		mov   al, byte[.moveCountPruning]
@@ -1783,6 +1829,9 @@ Search.13do\@:
         ldr  w1, [x9, x11, lsl 2]
 //		cmp   edi, 3*ONE_PLY
 //		jge   .13DontSkip2
+
+Display "pair: %i0, %i1\n"
+
         cmp  w27, 3*ONE_PLY
         bge  Search.13DontSkip2\@
 //        if CounterMovePruneThreshold <> 0       ; code assumes
@@ -1794,6 +1843,7 @@ Search.13do\@:
        tbnz  w0, 31, Search.MovePickLoop\@
 //	.13DontSkip2:
 Search.13DontSkip2\@:
+Display "Search.13DontSkip2\n"
 //
 //	; Futility pruning: parent node
 //		xor   edx, edx
@@ -1803,7 +1853,7 @@ Search.13DontSkip2\@:
 //		 jg   .13done
         bgt  Search.13done\@
 //		 je   .13check_see
-        beq  Search.13done\@
+        beq  Search.13check_see\@
 //	       test   edi, edi
         tst  w27, w27
 //	      cmovs   edi, edx
@@ -1828,6 +1878,7 @@ Search.13DontSkip2\@:
         ble  Search.MovePickLoop\@
 //.13check_see:
 Search.13check_see\@:
+Display "Search.13check_see\n"
 //	; Prune moves with negative SEE at low depths
 //		mov   ecx, dword[.move]
         ldr  w1, [sp, Search.move]
@@ -1845,6 +1896,7 @@ Search.13check_see\@:
           b  Search.13done\@
 //.13else:
 Search.13else\@:
+Display "Search.13else\n"
 //		mov   ecx, dword[.move]
         ldr  w1, [sp, Search.move]
 //		cmp   edx, 7*ONE_PLY
@@ -1930,6 +1982,7 @@ Search.13done\@:
         lsl  w0, w0, 12
 //		add   rax, qword[rbp+Pos.counterMoveHistory]
         ldr  x4, [x20, Pos.counterMoveHistory]
+        add  x0, x0, x4
 //		mov   dword[rbx+State.currentMove], ecx
         str  w1, [x21, State.currentMove]
 //		mov   qword[rbx+State.counterMoves], rax
@@ -1940,6 +1993,7 @@ Search.13done\@:
          bl  Move_Do__Search
 //
 //
+Display "Search Step 15\n"
 //	; Step 15. Reduced depth search (LMR)
 //		mov   edx, dword[.depth]
         ldr  w2, [sp, Search.depth]
@@ -2007,50 +2061,96 @@ Search.15NotCaptureOrPromotion\@:
 //
 //
 //		mov   r12d, dword[.move]
+        ldr  w22, [sp, Search.move]
 //		shr   r12d, 6
+        lsr  w22, w22, 6
 //		and   r12d, 63				; r12d = from
+        and  w22, w22, 63
 //		mov   r13d, dword[.move]
+        ldr  w23, [sp, Search.move]
 //		and   r13d, 63				; r13d = to
+        and  w23, w23, 63
 //	      movzx   r14d, byte[rbp+Pos.board+r12]	; r14d = from piece   should be 0
+        add  x6, x20, Pos.board
+       ldrb  w24, [x6, x22]
 //	      movzx   r15d, byte[rbp+Pos.board+r13]	; r15d = to piece
+        add  x6, x20, Pos.board
+       ldrb  w25, [x6, x23]
 //
 //		cmp   byte[.cutNode], 0
 //		 jz   .15testA
+       ldrb  w4, [sp, Search.cutNode]
+        cbz  w4, Search.15testA\@
 //		add   edi, 2*ONE_PLY
+        add  w27, w27, 2*ONE_PLY
 //		jmp   .15skipA
+          b  Search.15skip\@
 //.15testA:
 Search.15testA\@:
 //		mov   ecx, dword[.move]
+        ldr  w1, [sp, Search.move]
 //		cmp   ecx, MOVE_TYPE_PROM shl 12
 //		jae   .15skipA
+        cmp  w1, MOVE_TYPE_PROM << 12
+        bhs  Search.15skipA\@
 //		mov   r9d, r12d
+        mov  w9, w22
 //		mov   r8d, r13d
+        mov  w8, w23
 //		xor   edx, edx
+        mov  w2, 0
 //	       call   SeeTestGe.HaveFromTo
+         bl  SeeTestGe.HaveFromTo
 //	       test   eax, eax
 //		jnz   .15skipA
+       cbnz  w0, Search.15skipA\@
 //		sub   edi, 2*ONE_PLY
+        sub  w27, w27,2*ONE_PLY
 //.15skipA:
 Search.15skipA\@:
 //
 //		mov   ecx, dword[.move]
+        ldr  w1, [sp, Search.move]
 //		and   ecx, 64*64-1
+        and  w1, w1, 64*64-1
 //		mov   edx, dword[.moved_piece_to_sq]
+        ldr  w2, [sp, Search.moved_piece_to_sq]
 //		mov   r9, qword[.CMH-1*sizeof.State]
+        add  x6, x21, -1*sizeof.State+State.counterMoves - 1*sizeof.State
+        ldr  x9, [x6]
 //		mov   r10, qword[.FMH-1*sizeof.State]
+        add  x6, x21, -2*sizeof.State+State.counterMoves - 1*sizeof.State
+        ldr  x10, [x6]
 //		mov   r11, qword[.FMH2-1*sizeof.State]
+        add  x6, x21, -4*sizeof.State+State.counterMoves - 1*sizeof.State
+        ldr  x11, [x6]
 //		mov   eax, dword[rbp+Pos.sideToMove]
+        ldr  w0, [x20, Pos.sideToMove]
 //		xor   eax, 1
+        eor  w0, w0, 1
 //		shl   eax, 12+2
+        lsl  w0, w0, 14
 //		add   rax, qword[rbp+Pos.history]
+        ldr  x4, [x20, Pos.history]
+        add  x0, x0, x4
 //		mov   eax, dword[rax+4*rcx]
+        ldr  w0, [x0, x1, lsl 2]
 //		sub   eax, 4000
+        sub  w0, w0, 4000
 //
 //		mov   ecx, dword[rbx-2*sizeof.State+State.history]
+        add  x6, x21, -2*sizeof.State
+        ldr  w1, [x6, State.history]
 //
 //		add   eax, dword[r9+4*rdx]
+        ldr  w4, [x9, x2, lsl 2]
+        add  w0, w0, w4
 //		add   eax, dword[r10+4*rdx]
+        ldr  w4, [x10, x2, lsl 2]
+        add  w0, w0, w4
 //		add   eax, dword[r11+4*rdx]
+        ldr  w4, [x11, x2, lsl 2]
+        add  w0, w0, w4
 //
 //; if a>0 and b<0
 //;   d=d-1
@@ -2221,7 +2321,7 @@ Search.15dontdofulldepthsearch\@:
 //		mov   qword[rbx+State.pv], rax
         str  x0, [x21, State.pv]
 //		mov   dword[rax], 0
-        str  xzr, [x0]
+        str  wzr, [x0]
 //
 //		xor   r9, r9
         mov  x9, 0
@@ -2270,6 +2370,7 @@ Search.15dontdofulldepthsearch\@:
 //.15skip:
 Search.15skip\@:
 //
+Display "Search Step 16\n"
 //	; Step 16. full depth search   this is for when step 15 is skipped
 //    if .PvNode eq 1
  .if \PvNode == 1
@@ -2283,6 +2384,7 @@ Search.15skip\@:
 //
 // .FullDepthSearch:
 Search.FullDepthSearch\@:
+Display "Search.FullDepthSearch\n"
 //		xor   r9, r9
         mov  x9, 0
 //		mov   r8d, dword[.newDepth]
@@ -2330,14 +2432,14 @@ Search.FullDepthSearch\@:
 //		cmp   edi, dword[.alpha]
 //		jle   .SkipFullPvSearch
         ldr  w4, [sp, Search.alpha]
-        cmp  w27, w24
+        cmp  w27, w4
         ble  Search.SkipFullPvSearch\@
 //	if .RootNode eq 0
   .if \RootNode == 0
 //		cmp   edi, dword[.beta]
 //		jge   .SkipFullPvSearch
         ldr  w4, [sp, Search.beta]
-        cmp  w27, w24
+        cmp  w27, w4
         bge  Search.SkipFullPvSearch\@
 //	end if
   .endif
@@ -2345,12 +2447,13 @@ Search.FullDepthSearch\@:
 //
 // .DoFullPvSearch:
 Search.DoFullPvSearch\@:
+Display "Search.DoFullPvSearch\n"
 //		lea   rax, [.pv]
         add  x0, sp, Search.pv
 //		mov   qword[rbx+State.pv], rax
         str  x0, [x21, State.pv]
 //		mov   dword[rax], 0
-        str  xzr, [x0]
+        str  wzr, [x0]
 //
 //		xor   r9, r9
         mov  x9, 0
@@ -2402,11 +2505,13 @@ Search.SkipFullPvSearch\@:
 //.17entry:
 Search.17entry\@:
 //		mov   ecx, dword[.move]
+Display "Search Step 17\n"
         ldr  w1, [sp, Search.move]
 //	       call   Move_Undo
          bl  Move_Undo
 //
 //	; Step 18. Check for new best move
+Display "Search Step 18\n"
 //
 //		mov   edi, dword[.value]
         ldr  w27, [sp, Search.value]
@@ -2423,7 +2528,7 @@ Search.17entry\@:
 //		mov   ecx, dword[.move]
         ldr  w1, [sp, Search.move]
 //		mov   rdx, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
-        ldr  x2, [x21, Pos.rootMovesVec + RootMovesVec.table]
+        ldr  x2, [x20, Pos.rootMovesVec + RootMovesVec.table]
 //		lea   rdx, [rdx-sizeof.RootMove]
         sub  x2, x2, sizeof.RootMove
 //	.FindRootMove:
@@ -2459,16 +2564,18 @@ Search.FindRootMove\@:
         ldr  d0, [x6, Thread.bestMoveChanges]
 //	     vaddsd   xmm0, xmm0, qword[constd.1p0]
        fmov  d4, 1.0
-        add  d0, d0, d1
+        add  d0, d0, d4
 //	     vmovsd   qword[rbp-Thread.rootPos+Thread.bestMoveChanges], xmm0
         add  x6, x20, -Thread.rootPos
         str  d0, [x6, Thread.bestMoveChanges]
 //.FoundRootMove1:
 Search.FoundRootMove1\@:
+
 //		mov   r10d, edi
         mov  w10, w27
 //		mov   rcx, qword[rbx+1*sizeof.State+State.pv]
-        ldr  w1, [x21, 1*sizeof.State + State.pv]
+        ldr  x1, [x21, 1*sizeof.State + State.pv]
+
 //		jmp   .CopyRootPvw
           b  Search.CopyRootPvw\@
 //    .CopyRootPv:
@@ -2600,12 +2707,14 @@ Search.18NoNewBestValue\@:
 //		mov   dword[.quietsSearched+4*rax], ecx
         add  x6, sp, Search.quietsSearched
         str  w1, [x6, x0, lsl 2]
+
 //		add   eax, 1
         add  w0, w0, 1
 //		mov   dword[.quietCount], eax
         str  w0, [sp, Search.quietCount]
 //.18Done:
 Search.18Done\@:
+
 //
 //		jmp   .MovePickLoop
           b  Search.MovePickLoop\@
@@ -2617,6 +2726,7 @@ Search.18Done\@:
 Search.MovePickDone\@:
 //
 //
+Display "Search step 20\n"
 //	; Step 20. Check for mate and stalemate
 //
 //		mov   eax, dword[rbx-1*sizeof.State+State.currentMove]
@@ -2671,7 +2781,7 @@ Search.20Quiet\@:
         lsr  w2, w2, 14
 //	      movzx   eax, byte[rbp+Pos.board+rax]
         add  x6, x20, Pos.board
-        ldr  w0, [x6, x0]
+       ldrb  w0, [x6, x0]
 //		 or   al, byte[_CaptureOrPromotion_or+rdx]
         lea  x6, _CaptureOrPromotion_or
        ldrb  w4, [x6, x2]
@@ -2685,7 +2795,7 @@ Search.20Quiet\@:
 //	UpdateStats   r12d, .quietsSearched, dword[.quietCount], r11d, r10d, r15
         add  x3, sp, Search.quietsSearched
         ldr  w5, [sp, Search.quietCount]
-        UpdateStats  w22, x3, 1, w5, w11, w10, x15
+        UpdateStats  w22, x3, 1, w5, w11, w10, x25
 //
 //.20Quiet_SkipUpdateStats:
 Search.20Quiet_SkipUpdateStats\@:
@@ -2830,7 +2940,10 @@ Search.Return\@:
 //		add   rsp, .localsize
 //		pop   r15 r14 r13 r12 rdi rsi rbx
 //		ret
-        sub  sp, sp, Search.localsize
+
+Display "Search returning %i0\n"
+
+        add  sp, sp, Search.localsize
         ldp  x29, x30, [sp], 16
         ldp  x27, x28, [sp], 16
         ldp  x25, x26, [sp], 16
@@ -2881,7 +2994,7 @@ Search.AbortSearch_PlyBigger\@:
 //		mov   eax, dword[rbp+Pos.sideToMove]
         ldr  w0, [x20, Pos.sideToMove]
 //		mov   eax, dword[DrawValue+4*rax]
-        ldr  x6, DrawValue
+        lea  x6, DrawValue
         ldr  w0, [x6, x0, lsl 2]
 //	       test   rcx, rcx
 //		 jz   .Return
@@ -3038,6 +3151,7 @@ Search.ReturnTTValue_Penalty\@:
         bhs  Search.Return\@
 //
 //	apply_bonus   r8, r11d, r10d, 324
+Display "HU%i1|"
         ldr  w0, [x8]
         mov  w1, 324
         ApplyBonus w0, w2, w11, w10, w1

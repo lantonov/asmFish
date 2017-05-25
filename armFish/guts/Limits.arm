@@ -15,19 +15,46 @@ Limits_Init:
 		pop   rdi rsi rbx
 		ret
 */
+        stp  x21, x30, [sp, -16]!
+        stp  x26, x27, [sp, -16]!
+        mov  x21, x1
+         bl  Os_GetTime
+        mov  x26, x0
+        mov  x0, x21
+        mov  x1, 0
+        mov  x2, sizeof.Limits
+         bl  MemoryFill
+        str  x26, [x21, Limits.startTime]
+        mov  w4, -1
+       strb  w4, [x21, Limits.useTimeMgmt]
+        ldp  x26, x27, [sp], 16
+        ldp  x21, x30, [sp], 16
+        ret
+
 Limits_Set:
-/*
-        ; in: rcx address of of LimitsType struct
-        ;      set useTimeMgmt member
-              movzx   eax, byte[rcx+Limits.infinite]
-                 or   eax, dword[rcx+Limits.mate]
-                 or   eax, dword[rcx+Limits.movetime]
-                 or   eax, dword[rcx+Limits.depth]
-                 or   rax, qword[rcx+Limits.nodes]
-               setz   al
-                mov   byte[rcx+Limits.useTimeMgmt], al
-                ret
-*/
+//        ; in: rcx address of of LimitsType struct
+//        ;      set useTimeMgmt member
+//              movzx   eax, byte[rcx+Limits.infinite]
+       ldrb  w0, [x1, Limits.infinite]
+//                 or   eax, dword[rcx+Limits.mate]
+        ldr  w4, [x1, Limits.mate]
+        orr  w0, w0, w4
+//                 or   eax, dword[rcx+Limits.movetime]
+        ldr  w4, [x1, Limits.movetime]
+        orr  w0, w0, w4
+//                 or   eax, dword[rcx+Limits.depth]
+        ldr  w4, [x1, Limits.depth]
+        orr  w0, w0, w4
+//                 or   rax, qword[rcx+Limits.nodes]
+        ldr  x4, [x1, Limits.nodes]
+        orr  x0, x0, x4
+        tst  x0, x0
+//               setz   al
+       cset  w0, eq
+//                mov   byte[rcx+Limits.useTimeMgmt], al
+       strb  w0, [x1, Limits.useTimeMgmt]
+//                ret
+        ret
 
 Limits_Copy:
 /*
@@ -41,3 +68,7 @@ Limits_Copy:
 		pop   rdi rsi
 		ret
 */
+        mov  x0, x1
+        mov  x1, x2
+        mov  w2, sizeof.Limits
+          b  MemoryCopy

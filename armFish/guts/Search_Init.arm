@@ -58,31 +58,29 @@ Search_Init.L2:
         cmp  x20, 2
         bne  Search_Init.L5
 
-       fmov  d12, xzr
         lea  x19, (FutilityMoveCounts + 64)
-        ldr  d8, Search_Init.LC0
-        ldr  d11, Search_Init.LC1
-        ldr  d10, Search_Init.LC2
         mov  w20, 0
-        ldr  d9, Search_Init.LC3
 Search_Init.L6:
-      scvtf  d13, w20
-       fmov  d1, d8
-        add  w20, w20, 1
-       fadd  d0, d13, d12
+      scvtf  d0, w20
+        ldr  d1, Search_Init.constd_1p78
          bl  Math_pow_d_dd
-      fmadd  d0, d0, d11, d10
-       fmov  d1, d8
+        ldr  d1, Search_Init.constd_0p74
+        ldr  d2, Search_Init.constd_2p4
+      fmadd  d0, d0, d1, d2
      fcvtzs  w0, d0
-       fadd  d0, d13, d9
         str  w0, [x19, -64]
+Display "%i0, "
+      scvtf  d0, w20
+       fmov  d1, 2.0
          bl  Math_pow_d_dd
-        ldr  d1, Search_Init.LC4
-        cmp  w20, 16
-        ldr  d2, Search_Init.LC5
+       fmov  d1, 1.0
+       fmov  d2, 5.0
       fmadd  d0, d0, d1, d2
      fcvtzs  w0, d0
         str  w0, [x19], 4
+Display "%i0\n"
+        add  w20, w20, 1
+        cmp  w20, 16
         bne  Search_Init.L6
 
         lea  x0, RazorMargin
@@ -104,6 +102,17 @@ Search_Init.L6:
         ldr  x27, [sp, 80]
         ldp  x29, x30, [sp], 144
         ret
+
+Search_Init.constd_1p78:
+        .word   1202590843
+        .word   1073511137
+Search_Init.constd_0p74:
+        .word   2061584302
+        .word   1072147988
+Search_Init.constd_2p4:
+        .word   858993459
+        .word   1073951539
+        
 
 Search_Init.LC0:
         .word   3435973837

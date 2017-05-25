@@ -26,6 +26,8 @@ macro apply_bonus address, bonus32, absbonus, denominator {
         add  \X, \X, \bonus32
        sdiv  \T, \T, \denominator
         sub  \X, \X, \T
+mov w4, \X
+Display "u%i4|"
 .endm
 
 
@@ -52,6 +54,7 @@ macro GetNextMove {
 // adr(x29)+br for call, br(x29) for return
 // x22, x23, x24, x25, x27, x29 clobered
         ldr  x0, [x21, State.stage]
+//Display "stage: %X0\n"
         ldr  x24, [x21, State.cur]
         ldr  x25, [x21, State.endMoves]
         adr  x29, GetNextMove.return\@
@@ -59,6 +62,8 @@ macro GetNextMove {
 GetNextMove.return\@:
         str  x24, [x21, State.cur]
         str  x25, [x21, State.endMoves]
+//Display "*** State: %X21  endMoves: %X25\n"
+
 .endm
 
 
@@ -450,17 +455,21 @@ local ..Loop, ..Done, ..TestLoop
 ScoreQuiets.Loop\@:
         ldr  w1, [\start, ExtMove.move]
         and  w0, w1, 64*64-1
+Display "h%i0"
         ldr  w0, [x8, x0, lsl 2]
+Display ",%i0|"
+
        ubfx  w2, w1, 6, 6
         and  w1, w1, 63
         add  x6, x20, Pos.board
        ldrb  w2, [x6, x2]
         add  w2, w1, w2, lsl 6
+        add  \start, \start, sizeof.ExtMove
         ldr  w4, [x9, x2, lsl 2]
         add  w0, w0, w4
         ldr  w4, [x10, x2, lsl 2]
         add  w0, w0, w4
-        ldr  w4, [x10, x2, lsl 2]
+        ldr  w4, [x11, x2, lsl 2]
         add  w0, w0, w4
         str  w0, [\start, -1*sizeof.ExtMove + ExtMove.value]
         cmp  \start, \ender

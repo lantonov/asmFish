@@ -99,7 +99,7 @@ GD NewLine
        csel  w0, w1, w0, eq
         cmp  w0, w1
        csel  w0, w1, w0, hi
-        mov  w14, w0
+        mov  w24, w0
 
         mov  w27, 0
 
@@ -205,6 +205,7 @@ TimeMng_Init.loopdone:
 		shr   rcx, 2
 		add   r12, rcx
 */
+        lea  x6, options
        ldrb  w0, [x6, Options.ponder]
         cbz  w0, TimeMng_Init.noponder
         add  x22, x22, x22, lsr 2
@@ -225,11 +226,12 @@ GD NewLine
         lea  x6, time
         str  x22, [x6, Time.optimumTime]
         str  x23, [x6, Time.maximumTime]
+Display "time.optimumTime = %i22 ,  time.maximumTime = %i23\n"
         add  sp, sp, TimeMng_Init.localsize
-        stp  x24, x25, [sp], 16
-        stp  x22, x23, [sp], 16
-        stp  x26, x27, [sp], 16
-        stp  x21, x30, [sp], 16
+        ldp  x24, x25, [sp], 16
+        ldp  x22, x23, [sp], 16
+        ldp  x26, x27, [sp], 16
+        ldp  x21, x30, [sp], 16
         ret
 
 
@@ -254,6 +256,8 @@ TimeMng_Init.remaining:
 	     vxorps   xmm2, xmm2, xmm2
 		lea   ecx, [r8+2*rdx]
 */
+        stp  x29, x30, [sp, -16]!
+
        fmov  d2, xzr
       scvtf  d3, x1
          bl  TimeMng_Init.move_importance

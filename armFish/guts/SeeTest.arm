@@ -113,6 +113,8 @@ res	     .req w0
 
 SeeTestGe.HaveFromTo:
 
+Display "SeeTest move=%m1\n"
+
 /*
 ProfileInc SeeTest
 
@@ -138,8 +140,8 @@ end if
 		btr   occupied, from
 		btc   occupied, to
 */
-        ldr  occupied, [x20, 8*White]
-        ldr  x4, [x20, 8*Black]
+        ldr  occupied, [x20, Pos.typeBB + 8*White]
+        ldr  x4, [x20, Pos.typeBB + 8*Black]
         orr  occupied, occupied, x4
         mov  x4, 1
         lsl  x4, x4, from
@@ -210,84 +212,87 @@ SeeTestGe.EpCaptureRet:
         and  stm_d, stm_d, 8
         cmp  swap, res
         blt  SeeTestGe.Return
-/*
-		mov   attackers, qword[KingAttacks+8*to]
-		and   attackers, qword[rbp+Pos.typeBB+8*King]
-		mov   rdi, qword[BlackPawnAttacks+8*to]
-		and   rdi, qword[rbp+Pos.typeBB+8*White]
-		and   rdi, qword[rbp+Pos.typeBB+8*Pawn]
-		 or   attackers, rdi
-		mov   rdi, qword[WhitePawnAttacks+8*to]
-		and   rdi, qword[rbp+Pos.typeBB+8*Black]
-		and   rdi, qword[rbp+Pos.typeBB+8*Pawn]
-		 or   attackers, rdi
-*/
+
+//		mov   attackers, qword[KingAttacks+8*to]
         lea  x6, KingAttacks
         ldr  attackers, [x6, to, lsl 3]
+//		and   attackers, qword[rbp+Pos.typeBB+8*King]
         ldr  x4, [x20, Pos.typeBB + 8*King]
         and  attackers, attackers, x4
+//		mov   rdi, qword[BlackPawnAttacks+8*to]
         lea  x6, BlackPawnAttacks
         ldr  x17, [x6, to, lsl 3]
+//		and   rdi, qword[rbp+Pos.typeBB+8*White]
         ldr  x4, [x20, Pos.typeBB + 8*White]
         and  x17, x17, x4
+//		and   rdi, qword[rbp+Pos.typeBB+8*Pawn]
         ldr  x4, [x20, Pos.typeBB + 8*Pawn]
         and  x17, x17, x4
+//		 or   attackers, rdi
         orr  attackers, attackers, x17
+//		mov   rdi, qword[WhitePawnAttacks+8*to]
         lea  x6, WhitePawnAttacks
         ldr  x17, [x6, to, lsl 3]
+//		and   rdi, qword[rbp+Pos.typeBB+8*Black]
         ldr  x4, [x20, Pos.typeBB + 8*Black]
         and  x17, x17, x4
+//		and   rdi, qword[rbp+Pos.typeBB+8*Pawn]
         ldr  x4, [x20, Pos.typeBB + 8*Pawn]
         and  x17, x17, x4
+//		 or   attackers, rdi
         orr  attackers, attackers, x17
-/*
-		mov   rdi, qword[KnightAttacks+8*to]
-		and   rdi, qword[rbp+Pos.typeBB+8*Knight]
-		 or   attackers, rdi
-	RookAttacks   rdi, to, occupied, r8
-		and   rdi, r11
-		 or   attackers, rdi
-      BishopAttacks   rdi, to, occupied, r8
-		and   rdi, r10
-		 or   attackers, rdi
-*/
+
+//		mov   rdi, qword[KnightAttacks+8*to]
         lea  x6, KnightAttacks
         ldr  x17, [x6, to, lsl 3]
+//		and   rdi, qword[rbp+Pos.typeBB+8*Knight]
         ldr  x4, [x20, Pos.typeBB + 8*Knight]
         and  x17, x17, x4
+//		 or   attackers, rdi
         orr  attackers, attackers, x17
+//	RookAttacks   rdi, to, occupied, r8
         RookAttacks  x17, to, occupied, x8, x4
+//		and   rdi, r11
         and  x17, x17, x11
+//		 or   attackers, rdi
         orr  attackers, attackers, x17
+//      BishopAttacks   rdi, to, occupied, r8
         BishopAttacks  x17, to, occupied, x8, x4
+//		and   rdi, r10
         and  x17, x17, x10
+//		 or   attackers, rdi
         orr  attackers, attackers, x17
 
 
 SeeTestGe.Loop:
+Display "SeeTestGe.Loop\n"
+
 /*
 		xor   stm_d, 8
 		and   attackers, occupied
+*/
+        eor  stm_d, stm_d, 8
+        and  attackers, attackers, occupied
 
+        mov  w4, swap
+Display "%i4, "
+Display "%X15, "
+
+        add  x6, x21, State.blockersForKing
+        ldr  x4, [x6, stm]
+Display "%X4, "
+        add  x6, x21, State.pinnersForKing
+        ldr  x4, [x6, stm]
+Display "%X4\n"
+
+/*
 	; modified old
 		mov   stmAttackers, qword[rbp+Pos.typeBB+stm]
 		and   stmAttackers, attackers
 		 jz   .Return	; 44.45%
 	       test   stmAttackers, qword[rbx+State.blockersForKing+stm]
 		 jz   @f	; 98.90%
-		mov   rdi, qword[rbx+State.pinnersForKing+stm]
-		and   rdi, occupied
-		cmp   rdi, qword[rbx+State.pinnersForKing+stm]
-		jne   @f	; 53.42%
-		mov   rcx, qword[rbx+State.blockersForKing+stm]
-		not   rcx
-		and   stmAttackers, rcx
-		 jz   .Return	; 45.06%
-	@@:
 */
-        eor  stm_d, stm_d, 8
-        and  attackers, attackers, occupied
-
         add  x6, x20, Pos.typeBB
         ldr  stmAttackers, [x6, stm]
        ands  stmAttackers, stmAttackers, attackers
@@ -296,6 +301,12 @@ SeeTestGe.Loop:
         ldr  x4, [x6, stm]
         tst  stmAttackers, x4
         beq  1f
+/*
+		mov   rdi, qword[rbx+State.pinnersForKing+stm]
+		and   rdi, occupied
+		cmp   rdi, qword[rbx+State.pinnersForKing+stm]
+		jne   @f	; 53.42%
+*/
         add  x6, x21, State.pinnersForKing
         ldr  x17, [x6, stm]
         and  x17, x17, occupied
@@ -303,6 +314,13 @@ SeeTestGe.Loop:
         ldr  x4, [x6, stm]
         cmp  x17, x4
         bne  1f
+/*
+		mov   rcx, qword[rbx+State.blockersForKing+stm]
+		not   rcx
+		and   stmAttackers, rcx
+		 jz   .Return	; 45.06%
+	@@:
+*/
         add  x6, x21, State.blockersForKing
         ldr  x1, [x6, stm]
         mvn  x1, x1
@@ -325,11 +343,11 @@ SeeTestGe.Loop:
         neg  swap, swap
         eor  res, res, 1
 
-        ldr  bb, [x20, Pos.typeBB+8*Pawn]
+        ldr  bb, [x20, Pos.typeBB + 8*Pawn]
        ands  bb, bb, stmAttackers
         bne  SeeTestGe.FoundPawn
 
-        ldr  bb, [x20, Pos.typeBB+8*Knight]
+        ldr  bb, [x20, Pos.typeBB + 8*Knight]
        ands  bb, bb, stmAttackers
         bne  SeeTestGe.FoundKnight
 
@@ -346,19 +364,20 @@ SeeTestGe.Loop:
 		and   bb, stmAttackers
 		jnz   .FoundQueen
 */
-        ldr  bb, [x20, Pos.typeBB+8*Bishop]
+        ldr  bb, [x20, Pos.typeBB + 8*Bishop]
        ands  bb, bb, stmAttackers
         bne  SeeTestGe.FoundBishop
 
-        ldr  bb, [x20, Pos.typeBB+8*Rook]
+        ldr  bb, [x20, Pos.typeBB + 8*Rook]
        ands  bb, bb, stmAttackers
         bne  SeeTestGe.FoundRook
 
-        ldr  bb, [x20, Pos.typeBB+8*Queen]
+        ldr  bb, [x20, Pos.typeBB + 8*Queen]
        ands  bb, bb, stmAttackers
         bne  SeeTestGe.FoundQueen
 
 SeeTestGe.FoundKing:
+Display "SeeTestGe.FoundKing\n"
 /*
 		xor   stm_d, 8
 		mov   stmAttackers, qword[rbp+Pos.typeBB+stm]
@@ -378,6 +397,7 @@ SeeTestGe.FoundKing:
         
 
 SeeTestGe.Return:
+Display "SeeTestGe.Return %i0\n"
 /*
 		pop   rdi rsi r15 r14 r13 r12
 if DEBUG
@@ -390,6 +410,7 @@ end if
         ret
 
 SeeTestGe.FoundQueen:
+Display "SeeTestGe.FoundQueen\n"
 /*
 		add   swap, QueenValueMg
 		cmp   swap, res
@@ -409,7 +430,7 @@ SeeTestGe.FoundQueen:
         cmp  swap, res
         blt  SeeTestGe.Return
 
-        sub  x8, bb, 1
+        neg  x8, bb
         and  bb, bb, x8
         eor  occupied, occupied, bb
         BishopAttacks  x17, to, occupied, x8, x4
@@ -421,6 +442,7 @@ SeeTestGe.FoundQueen:
           b  SeeTestGe.Loop
 
 SeeTestGe.FoundRook:
+Display "SeeTestGe.FoundRook\n"
 /*
 		add   swap, RookValueMg
 		cmp   swap, res
@@ -437,7 +459,7 @@ SeeTestGe.FoundRook:
         cmp  swap, res
         blt  SeeTestGe.Return
 
-        sub  x8, bb, 1
+        neg  x8, bb
         and  bb, bb, x8
         eor  occupied, occupied, bb
         RookAttacks  x17, to, occupied, x8, x4
@@ -446,12 +468,14 @@ SeeTestGe.FoundRook:
           b  SeeTestGe.Loop
 
 SeeTestGe.FoundBishop:
+Display "SeeTestGe.FoundBishop\n"
 /*
 		add   swap, BishopValueMg-PawnValueMg
 */
         add  swap, swap, BishopValueMg - PawnValueMg
 
 SeeTestGe.FoundPawn:
+Display "SeeTestGe.FoundPawn\n"
 /*
 		add   swap, PawnValueMg
 		cmp   swap, res
@@ -468,7 +492,7 @@ SeeTestGe.FoundPawn:
         cmp  swap, res
         blt  SeeTestGe.Return
 
-        sub  x1, bb, 1
+        neg  x1, bb
         and  bb, bb, x1
         eor  occupied, occupied, bb
         BishopAttacks  x17, to, occupied, x8, x4
@@ -478,6 +502,7 @@ SeeTestGe.FoundPawn:
 
 
 SeeTestGe.FoundKnight:
+Display "SeeTestGe.FoundKnight\n"
 /*
 		add   swap, KnightValueMg
 		cmp   swap, res
@@ -490,12 +515,13 @@ SeeTestGe.FoundKnight:
         add  swap, swap, KnightValueMg
         cmp  swap, res
         blt  SeeTestGe.Return
-        sub  x1, bb, 1
+        neg  x1, bb
         and  bb, bb, x1
         eor  occupied, occupied, bb
           b  SeeTestGe.Loop
 
 SeeTestGe.Special:
+Display "SeeTestGe.Special\n"
 /*
 	; if we get here, .swap = -value
 	;            and  .res = 0
@@ -524,6 +550,7 @@ SeeTestGe.Special:
         
 
 SeeTestGe.ReturnSpecial:
+Display "SeeTestGe.ReturnSpecial\n"
 /*
 
 		pop   rdi rsi r15 r14 r13 r12
@@ -537,6 +564,7 @@ end if
         ret
 
 SeeTestGe.Castle:
+Display "SeeTestGe.Castle\n"
 /*
 	; return 0 <= swap
 		cmp   swap, 0x80000000

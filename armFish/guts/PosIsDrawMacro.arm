@@ -54,7 +54,7 @@ local ..CheckNext, ..noDraw, ..KeysDontMatch
         cmp  w2, 4
         blo  PosIsDraw.noDraw\@
         mov  x4, -sizeof.State
-        mul  w10, w2, w4
+        mul  x10, x2, x4
         lsl  x9, x4, 2
         sub  w0, w0, 5
         mov  w1, 0
@@ -110,15 +110,16 @@ macro PosIsDraw_Cold WeHaveADraw, coldreturnlabel {
 }
 */
 .macro PosIsDraw_Cold WeHaveADraw, coldreturnlabel
+brk 0
         ldr  x11, [x21, State.checkersBB]
         cbz  x11, \WeHaveADraw
         stp  x0, x1, [sp, -16]!
         stp  x2, x8, [sp, -16]!
         stp  x9, x17, [sp, -16]!
-        ldr  x17, [x21, -1*sizeof.State + State.endMoves]
+        ldr  x27, [x21, -1*sizeof.State + State.endMoves]
          bl  Gen_Legal
         ldr  x4, [x21, -1*sizeof.State + State.endMoves]
-        cmp  x17, x4
+        cmp  x27, x4
         ldp  x9, x17, [sp], 16
         ldp  x2, x8, [sp], 16
         ldp  x0, x1, [sp], 16

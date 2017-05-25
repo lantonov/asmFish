@@ -14,9 +14,9 @@ ThreadPool_Create:
          bl  Os_SetThreadPoolInfo
         mov  x1, 0
          bl  Thread_Create
-        mov  x0, 1
-        lea  x16, threadPool+ThreadPool.threadCnt
-        str  w0, [x16]
+        mov  w4, 1
+        lea  x6, threadPool
+        str  w4, [x6, ThreadPool.threadCnt]
         ldp  x21, x30, [sp], 16
         ret
 
@@ -26,9 +26,9 @@ ThreadPool_Destroy:
 		mov   edi, dword[threadPool.threadCnt]
 */
         stp  x21, x30, [sp, -16]!
-        stp  x14, x15, [sp, -16]!
-        lea  x16, [threadPool+ThreadPool.threadCnt]
-        ldr  w15, [x16]
+        stp  x26, x27, [sp, -16]!
+        lea  x6, threadPool
+        ldr  w27, [x6, ThreadPool.threadCnt]
 
 ThreadPool_Destroy.NextThread:
 /*
@@ -42,17 +42,18 @@ ThreadPool_Destroy.NextThread:
 	       imul   ebx, dword[threadPool.nodeCnt], sizeof.NumaNode
 		add   rbx, rdi
 */
-        sub  x1, x15, 1
+        sub  w1, w27, 1
          bl  Thread_Delete
-        sub  x15, x15, 1
-       cbnz  x15, ThreadPool_Destroy.NextThread
-        lea  x16, threadPool+ThreadPool.threadCnt
-        str  w15, [x16]
-        lea  x15, threadPool+ThreadPool.nodeTable
-        lea  x16, threadPool+ThreadPool.nodeCnt
-        ldr  w4, [x16]
+        sub  x27, x27, 1
+       cbnz  x27, ThreadPool_Destroy.NextThread
+        lea  x6, threadPool
+        str  wzr, [x6, ThreadPool.threadCnt]
+
+        lea  x27, threadPool + ThreadPool.nodeTable
+        lea  x6, threadPool + ThreadPool.nodeCnt
+        ldr  w4, [x6]
         mov  w5, sizeof.NumaNode
-       madd  x21, x4, x5, x15
+       madd  x21, x4, x5, x27
 ThreadPool_Destroy.NextNumaNode:
 /*
 		mov   rcx, qword[rdi+NumaNode.cmhTable]
@@ -66,14 +67,14 @@ ThreadPool_Destroy.NextNumaNode:
 		pop   rbx rdi rsi
 		ret
 */
-        ldr  x1, [x15, NumaNode.cmhTable]
+        ldr  x1, [x27, NumaNode.cmhTable]
         mov  x2, sizeof.CounterMoveHistoryStats
          bl  Os_VirtualFree
-        str  xzr, [x15, NumaNode.cmhTable]
-        add  x15, x15, sizeof.NumaNode
-        cmp  x15, x21
+        str  xzr, [x27, NumaNode.cmhTable]
+        add  x27, x27, sizeof.NumaNode
+        cmp  x27, x21
         blo  ThreadPool_Destroy.NextNumaNode
-        ldp  x14, x15, [sp], 16
+        ldp  x26, x27, [sp], 16
         ldp  x21, x30, [sp], 16
         ret
 
@@ -86,12 +87,13 @@ ThreadPool_ReadOptions:
 		 je   .Skip
 */
         stp  x21, x30, [sp, -16]!
-        stp  x14, x15, [sp, -16]!
-        lea  x16, options+Options.threads
-        ldr  w14, [x16]
-        lea  x16, threadPool+ThreadPool.threadCnt
-        ldr  w15, [x16]
-        cmp  w14, w15
+        stp  x26, x27, [sp, -16]!
+Display "ThreadPool_ReadOptions called\n"
+        lea  x6, options
+        ldr  w26, [x6, Options.threads]
+        lea  x6, threadPool
+        ldr  w27, [x6, ThreadPool.threadCnt]
+        cmp  w27, w26
         beq  ThreadPool_ReadOptions.Skip
 
 ThreadPool_ReadOptions.CheckCreate:
@@ -99,7 +101,7 @@ ThreadPool_ReadOptions.CheckCreate:
 		cmp   edi, esi
 		 jb   .Create
 */
-        cmp  x15, x14
+        cmp  w27, w26
         blo  ThreadPool_ReadOptions.Create
 
 ThreadPool_ReadOptions.CheckDelete:
@@ -108,7 +110,7 @@ ThreadPool_ReadOptions.CheckDelete:
 		 ja   .Delete
 	       call   ThreadPool_DisplayThreadDistribution
 */
-        cmp  w15, w14
+        cmp  w27, w26
         bhi  ThreadPool_ReadOptions.Delete
          bl  ThreadPool_DisplayThreadDistribution
 ThreadPool_ReadOptions.Skip:
@@ -116,7 +118,8 @@ ThreadPool_ReadOptions.Skip:
 		pop   rdi rsi rbx
 		ret
 */
-        ldp  x14, x15, [sp], 16
+Display "ThreadPool_ReadOptions returning\n"
+        ldp  x26, x27, [sp], 16
         ldp  x21, x30, [sp], 16
         ret
 ThreadPool_ReadOptions.Create:
@@ -127,11 +130,11 @@ ThreadPool_ReadOptions.Create:
 		mov   dword[threadPool.threadCnt], edi
 		jmp   .CheckCreate
 */
-        mov  w1, w15
+        mov  w1, w27
          bl  Thread_Create
-        add  w15, w15, 1
-        lea  x16, threadPool+ThreadPool.threadCnt
-        str  w15, [x16]
+        add  w27, w27, 1
+        lea  x6, threadPool
+        str  w27, [x6, ThreadPool.threadCnt]
           b  ThreadPool_ReadOptions.CheckCreate
 ThreadPool_ReadOptions.Delete:
 /*
@@ -141,11 +144,11 @@ ThreadPool_ReadOptions.Delete:
 		mov   dword[threadPool.threadCnt], edi
 		jmp   .CheckDelete
 */
-        sub  w15, w15, 1
-        mov  w1, w15
+        sub  w27, w27, 1
+        mov  w1, w27
          bl  Thread_Delete
-        lea  x16, threadPool+ThreadPool.threadCnt
-        str  w15, [x16]
+        lea  x6, threadPool+ThreadPool.threadCnt
+        str  w27, [x6]
           b  ThreadPool_ReadOptions.CheckDelete
 
 ThreadPool_NodesSearched_TbHits:
@@ -162,14 +165,14 @@ ThreadPool_NodesSearched_TbHits:
 		 jb   .next_thread
 		ret
 */
-        lea  x4, threadPool+ThreadPool.threadCnt
-        lea  x5, threadPool+ThreadPool.threadTable
+        lea  x4, threadPool + ThreadPool.threadCnt
+        lea  x5, threadPool + ThreadPool.threadTable
         ldr  w4, [x4]
         mov  w1, 0
-        mov  x1, 0
+        mov  x0, 0
         mov  x2, 0
 ThreadPool_NodesSearched_TbHits.next_thread:
-        ldr  x8, [x5, x0, lsl 3]
+        ldr  x8, [x5, x1, lsl 3]
         ldr  x6, [x8, Thread.nodes]
         ldr  x7, [x8, Thread.tbHits]
         add  x0, x0, x6
@@ -188,14 +191,16 @@ ThreadPool_DisplayThreadDistribution:
 		add   r15, rsi
 */
         stp  x21, x30, [sp, -16]!
-        stp  x14, x15, [sp, -16]!
+        stp  x26, x27, [sp, -16]!
         stp  x24, x25, [sp, -16]!
-        lea  x15, Output
-        lea  x14, threadPool+ThreadPool.nodeTable
-        lea  x16, threadPool+ThreadPool.nodeCnt
-        ldr  w4, [x16]
+        lea  x27, Output
+        lea  x26, threadPool + ThreadPool.nodeTable
+        lea  x6, threadPool + ThreadPool.nodeCnt
+        ldr  w4, [x6]
         mov  x5, sizeof.NumaNode
-       madd  x25, x4, x5, x14
+       madd  x25, x4, x5, x26
+
+Display "ThreadPool_DisplayThreadDistribution called\n"
 
 ThreadPool_DisplayThreadDistribution.NextNode:
 /*
@@ -214,12 +219,14 @@ ThreadPool_DisplayThreadDistribution.NextNode:
 		 or   ebx, -1
 */
         lea  x1, sz_thread_format
-      ldrsw  x0, [x14, NumaNode.nodeNumber]
-        sub  sp, sp, 16
-        str  x0, [sp]
+        ldr  w0, [x26, NumaNode.nodeNumber]
+        str  x0, [sp, -32]!
         add  x2, sp, 0
+        mov  x3, 0
          bl  PrintFancy
-        add  sp, sp, 16
+        add  sp, sp, 32
+
+Display "ThreadPool_DisplayThreadDistribution after fancy\n"
 
         mov  w21, -1
 ThreadPool_DisplayThreadDistribution.ThreadLoop:
@@ -237,13 +244,18 @@ ThreadPool_DisplayThreadDistribution.ThreadLoop:
 		jmp   .ThreadLoop
 */
         add  w21, w21, 1
-        lea  x16, threadPool+ThreadPool.threadCnt
-        ldr  w4, [x16]
+        lea  x6, threadPool
+        ldr  w4, [x6, ThreadPool.threadCnt]
         cmp  w21, w4
         bhs  ThreadPool_DisplayThreadDistribution.ThreadLoopDone
+        lea  x6, threadPool + ThreadPool.threadTable
+        ldr  x0, [x6, x21, lsl 3]
+        ldr  x4, [x0, Thread.numaNode]
+        cmp  x26, x4
+        bne  ThreadPool_DisplayThreadDistribution.ThreadLoop
         mov  w0, ' '
-       strb  w0, [x15], 1
-        mov  x0, x21
+       strb  w0, [x27], 1
+        mov  w0, w21
          bl  PrintUInt
           b  ThreadPool_DisplayThreadDistribution.ThreadLoop
 
@@ -256,8 +268,8 @@ ThreadPool_DisplayThreadDistribution.ThreadLoopDone:
 	       call   _WriteOut_Output
 */
         PrintNewLine
-        add  x14, x14, sizeof.NumaNode
-        cmp  x14, x15
+        add  x26, x26, sizeof.NumaNode
+        cmp  x26, x25
         blo  ThreadPool_DisplayThreadDistribution.NextNode
          bl  Os_WriteOut_Output
 
@@ -266,8 +278,9 @@ ThreadPool_DisplayThreadDistribution.Return:
 		pop   r15 r14 rdi rsi rbx
 		ret
 */
+Display "ThreadPool_DisplayThreadDistribution returning\n"
         ldp  x24, x25, [sp], 16
-        ldp  x14, x15, [sp], 16
+        ldp  x26, x27, [sp], 16
         ldp  x21, x30, [sp], 16
         ret
 
@@ -284,15 +297,7 @@ virtual at rsp
   .lend rb 0
 end virtual
 .localsize = ((.lend-rsp+15) and (-16))
-*/
-        stp  x20, x30, [sp, -16]!
-        stp  x21, x14, [sp, -16]!
-        stp  x15, x23, [sp, -16]!
-        stp  x24, x25, [sp, -16]!
-ThreadPool_StartThinking.moveList = 0
-ThreadPool_StartThinking.lend = sizeof.ExtMove*MAX_MOVES + ThreadPool_StartThinking.moveList
-ThreadPool_StartThinking.localsize = (ThreadPool_StartThinking.lend + 15) & -16
-/*
+
 	 _chkstk_ms   rsp, .localsize
 		sub   rsp, .localsize
 		mov   rsi, rcx
@@ -302,14 +307,24 @@ ThreadPool_StartThinking.localsize = (ThreadPool_StartThinking.lend + 15) & -16
 	; r15 = gui position
 	; r14 = main thread
 */
+ThreadPool_StartThinking.moveList = 0
+ThreadPool_StartThinking.lend = sizeof.ExtMove*MAX_MOVES + ThreadPool_StartThinking.moveList
+ThreadPool_StartThinking.localsize = (ThreadPool_StartThinking.lend + 15) & -16
+
+        stp  x20, x30, [sp, -16]!
+        stp  x21, x26, [sp, -16]!
+        stp  x27, x23, [sp, -16]!
+        stp  x24, x25, [sp, -16]!
         sub  sp, sp, ThreadPool_StartThinking.localsize
-        mov  x14, x1
-        mov  x25, x21
-        lea  x16, threadPool+ThreadPool.threadTable+8*0
-        ldr  x24, [x16]
+
+        mov  x26, x1
+        mov  x25, x20
+        lea  x6, threadPool
+        ldr  x24, [x6, ThreadPool.threadTable + 8*0]
 /*
 		mov   rcx, r14
 	       call   Thread_WaitForSearchFinished
+
 		xor   eax, eax
 		mov   byte[signals.stop], al
 		mov   byte[signals.stopOnPonderhit], al
@@ -319,34 +334,44 @@ ThreadPool_StartThinking.localsize = (ThreadPool_StartThinking.lend + 15) & -16
 */
         mov  x1, x24
          bl  Thread_WaitForSearchFinished
-        lea  x16, signals
-       strb  w0, [x16, Signals.stop]
-       strb  w0, [x16, Signals.stopOnPonderhit]
+        mov  w0, 0
+        lea  x6, signals
+       strb  w0, [x6, Signals.stop]
+       strb  w0, [x6, Signals.stopOnPonderhit]
         lea  x1, limits
-        mov  x2, x14
+        mov  x2, x26
          bl  Limits_Copy
 
 /*
-	lea   rcx, [rbx+Thread.rootPos]
+	; copy to mainThread
+
+if PEDANTIC
+	; position is passed to threads by first converting to a fen
+	;   and then parsing this fen string
+	; the net effect is a fixed order on piece lists
+	       call   Position_SetPieceLists
+end if
+
+		lea   rcx, [r14+Thread.rootPos]
 	       call   Position_CopyToSearch
 		xor   eax, eax
-		mov   dword[rbx+Thread.rootDepth], eax
-		mov   qword[rbx+Thread.nodes], rax
-		mov   qword[rbx+Thread.tbHits], rax
-		mov   byte[rbx+Thread.maxPly], al
+		mov   dword[r14+Thread.rootDepth], eax
+		mov   qword[r14+Thread.nodes], rax
+		mov   qword[r14+Thread.tbHits], rax
+		mov   byte[r14+Thread.maxPly], al
                 mov   dword[r14+Thread.resetCnt], eax
-                mov   dword[r14+Thread.callsCnt], MAX_RESETCNT  ; main thread already has min
+                mov   dword[r14+Thread.callsCnt], MIN_RESETCNT  ; check time asap
 */
          bl  Position_SetPieceLists
         add  x1, x24, Thread.rootPos
          bl  Position_CopyToSearch
-        mov  w0, MIN_RESETCNT
         str  wzr, [x24, Thread.rootDepth]
         str  xzr, [x24, Thread.nodes]
         str  xzr, [x24, Thread.tbHits]
        strb  wzr, [x24, Thread.maxPly]
         str  wzr, [x24, Thread.resetCnt]
-        str  w0, [x24, Thread.callsCnt]
+        mov  w4, MIN_RESETCNT
+        str  w4, [x24, Thread.callsCnt]
 /*
 		lea   rsi, [limits.moveVec]
 		lea   rdi, [.moveList]
@@ -356,10 +381,10 @@ ThreadPool_StartThinking.localsize = (ThreadPool_StartThinking.lend + 15) & -16
 		mov   rbx, qword[rbp+Pos.state]
 	       call   Gen_Legal
 */
-        lea  x14, limits+Limits.moveVec
-        add  x15, sp, ThreadPool_StartThinking.moveList
-        lea  x16, limits+Limits.moveVecSize
-        ldr  w1, [x16]
+        lea  x26, limits+Limits.moveVec
+        add  x27, sp, ThreadPool_StartThinking.moveList
+        lea  x6, limits+Limits.moveVecSize
+        ldr  w1, [x6]
        cbnz  w1, ThreadPool_StartThinking.use_searchmoves
         ldr  x21, [x20, Pos.state]
          bl  Gen_Legal
@@ -369,8 +394,8 @@ ThreadPool_StartThinking.have_moves:
 		lea   rcx, [r14+Thread.rootPos+Pos.rootMovesVec]
 	       call   RootMovesVec_Clear
 */
-        add  x14, sp, ThreadPool_StartThinking.moveList
-        add  x1, x24, Thread.rootPos+Pos.rootMovesVec
+        add  x26, sp, ThreadPool_StartThinking.moveList
+        add  x1, x24, Thread.rootPos + Pos.rootMovesVec
          bl  RootMovesVec_Clear
 ThreadPool_StartThinking.push_moves:
 /*
@@ -382,11 +407,11 @@ ThreadPool_StartThinking.push_moves:
 	       call   RootMovesVec_PushBackMove
 		jmp   .push_moves
 */
-        cmp  x14, x15
+        cmp  x26, x27
         bhs  ThreadPool_StartThinking.push_moves_done
-        add  x1, x24, Thread.rootPos+Pos.rootMovesVec
-        ldr  w2, [x14, ExtMove.move]
-        add  x14, x14, sizeof.ExtMove
+        add  x1, x24, Thread.rootPos + Pos.rootMovesVec
+        ldr  w2, [x26, ExtMove.move]
+        add  x26, x26, sizeof.ExtMove
          bl  RootMovesVec_PushBackMove
           b  ThreadPool_StartThinking.push_moves
 
@@ -395,6 +420,34 @@ ThreadPool_StartThinking.push_moves_done:
 	; the main thread should get the position for tb move filtering
 		lea   rbp, [r14+Thread.rootPos]
 		mov   rbx, qword[rbp+Pos.state]
+
+if USE_SYZYGY
+	; Skip TB probing when no TB found
+		mov   dl, byte[options.syzygy50MoveRule]
+		mov   byte[Tablebase_RootInTB], 0
+		mov   byte[Tablebase_UseRule50], dl
+		mov   eax, dword[options.syzygyProbeLimit]
+		mov   ecx, dword[options.syzygyProbeDepth]
+		xor   edx, edx
+		cmp   eax, dword[Tablebase_MaxCardinality]
+	      cmovg   eax, dword[Tablebase_MaxCardinality]
+	      cmovg   ecx, edx
+		mov   dword[Tablebase_Cardinality], eax
+		mov   dword[Tablebase_ProbeDepth], ecx
+	; filter moves
+		mov   rcx, qword[rbp+Pos.typeBB+8*White]
+		 or   rcx, qword[rbp+Pos.typeBB+8*Black]
+	     popcnt   rcx, rcx, rdx
+		mov   rdx, qword[rbp+Pos.rootMovesVec.ender]
+		cmp   rdx, qword[rbp+Pos.rootMovesVec.table]
+		jbe   .check_tb_ret
+		sub   eax, ecx
+		sar   eax, 31
+		 or   al, byte[rbx+State.castlingRights]
+		 jz   .check_tb
+.check_tb_ret:
+end if
+
 	; copy original position to workers
 		xor   eax, eax
 		mov   rbp, r15
@@ -402,18 +455,18 @@ ThreadPool_StartThinking.push_moves_done:
 		mov   qword[rsi+Thread.nodes], rax  ;filtering moves may have incremented mainThread.nodes
 		xor   edi, edi
 */
-        add  x20, x24, Thread.rootPos
-        ldr  x21, [x20, Pos.state]
+        mov  w0, 0
         mov  x20, x25
-        mov  x14, x24
-        str  xzr, [x14, Thread.nodes]
-        mov  x15, 0
+        mov  x26, x24
+        str  x0, [x26, Thread.nodes]
+        mov  w27, 0
 ThreadPool_StartThinking.next_thread:
 /*
 		add   edi,1
 		cmp   edi, dword[threadPool.threadCnt]
 		jae   .thread_copy_done
 		mov   rbx, qword[threadPool.threadTable+8*rdi]
+
 		lea   rcx, [rbx+Thread.rootPos]
 	       call   Position_CopyToSearch
 		xor   eax, eax
@@ -424,30 +477,33 @@ ThreadPool_StartThinking.next_thread:
                 mov   dword[r14+Thread.resetCnt], eax
                 mov   dword[r14+Thread.callsCnt], MAX_RESETCNT  ; main thread already has min
 
+
 	; copy the filtered moves of main thread to worker thread
 		mov   rax, qword[rbx+Thread.rootPos.rootMovesVec.table]
 		mov   rdx, qword[rsi+Thread.rootPos.rootMovesVec.table]
 */
-        add  x15, x15, 1
-        lea  x16, threadPool+ThreadPool.threadCnt
-        ldr  w4, [x16]
-        cmp  x15, x4
+        add  w27, w27, 1
+        lea  x6, threadPool
+        ldr  w4, [x6, ThreadPool.threadCnt]
+        cmp  w27, w4
         bhs  ThreadPool_StartThinking.thread_copy_done
-        lea  x16, threadPool+ThreadPool.threadTable
-        ldr  x21, [x16, x15, lsl 3]
+        lea  x6, threadPool + ThreadPool.threadTable
+        ldr  x21, [x6, x27, lsl 3]
+
         add  x1, x21, Thread.rootPos
          bl  Position_CopyToSearch
-        mov  w0, (MAX_RESETCNT>>0 ) & 0x0ff
-       movk  w0, (MAX_RESETCNT>>16) & 0x0ff, lsl 16
-        str  wzr, [x21, Thread.rootDepth]
-        str  xzr, [x21, Thread.nodes]
-        str  xzr, [x21, Thread.tbHits]
-       strb  wzr, [x21, Thread.maxPly]
-        str  wzr, [x21, Thread.resetCnt]
-        str  w0, [x21, Thread.callsCnt]
+        mov  w0, 0
+        str  w0, [x21, Thread.rootDepth]
+        str  x0, [x21, Thread.nodes]
+        str  x0, [x21, Thread.tbHits]
+       strb  w0, [x21, Thread.maxPly]
+        str  w0, [x24, Thread.resetCnt]
+        mov  w4, (MAX_RESETCNT>>0 ) & 0x0ff
+       movk  w4, (MAX_RESETCNT>>16) & 0x0ff, lsl 16
+        str  w4, [x24, Thread.callsCnt]
 
-        ldr  x0, [x21, Thread.rootPos+Pos.rootMovesVec+RootMovesVec.table]
-        ldr  x2, [x14, Thread.rootPos+Pos.rootMovesVec+RootMovesVec.table]
+        ldr  x0, [x21, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.table]
+        ldr  x2, [x26, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.table]
         
 ThreadPool_StartThinking.copy_moves_loop:
 /*
@@ -461,13 +517,13 @@ ThreadPool_StartThinking.copy_moves_loop:
 		add   rdx, sizeof.RootMove
 		jmp   .copy_moves_loop
 */
-        ldr  x4, [x14, Thread.rootPos+Pos.rootMovesVec+RootMovesVec.ender]
+        ldr  x4, [x26, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.ender]
         cmp  x2, x4
         bhs  ThreadPool_StartThinking.copy_moves_done
         ldp  x4, x5, [x2]
         ldp  x6, x7, [x2, 16]
-        ldp  x4, x5, [x0]
-        ldp  x6, x7, [x0, 16]
+        stp  x4, x5, [x0]
+        stp  x6, x7, [x0, 16]
         add  x0, x0, sizeof.RootMove
         add  x2, x2, sizeof.RootMove
           b  ThreadPool_StartThinking.copy_moves_loop
@@ -475,6 +531,7 @@ ThreadPool_StartThinking.copy_moves_loop:
 ThreadPool_StartThinking.copy_moves_done:
 /*
 		mov   qword[rbx+Thread.rootPos.rootMovesVec.ender], rax
+
 		jmp   .next_thread
 */
         str  x0, [x21, Thread.rootPos+Pos.rootMovesVec+RootMovesVec.ender]
@@ -483,21 +540,57 @@ ThreadPool_StartThinking.thread_copy_done:
 /*
 		mov   rcx, r14
 	       call   Thread_StartSearching
+
 		add   rsp, .localsize
 		pop   r15 r14 r13 rdi rsi rbx rbp
 		ret
 */
+
         mov  x1, x24
          bl  Thread_StartSearching
+
         add  sp, sp, ThreadPool_StartThinking.localsize
-        stp  x24, x25, [sp, -16]!
-        stp  x15, x23, [sp, -16]!
-        stp  x21, x14, [sp, -16]!
-        stp  x20, x30, [sp, -16]!
+        ldp  x24, x25, [sp], 16
+        ldp  x27, x23, [sp], 16
+        ldp  x21, x26, [sp], 16
+        ldp  x20, x30, [sp], 16
         ret
 
-ThreadPool_StartThinking.use_searchmoves:
 /*
+if USE_SYZYGY
+.check_tb:
+	       call   Tablebase_RootProbe
+		mov   byte[Tablebase_RootInTB], al
+		xor   edx, edx
+	       test   eax, eax
+		jnz   .root_in
+	       call   Tablebase_RootProbeWDL
+		mov   byte[Tablebase_RootInTB], al
+		xor   edx, edx
+	       test   eax, eax
+		 jz   .check_tb_ret
+		cmp   edx, dword[Tablebase_Score]
+	      cmovl   edx, dword[Tablebase_Cardinality]
+    .root_in:
+		mov   dword[Tablebase_Cardinality], edx
+		lea   rcx, [rbp+Pos.rootMovesVec]
+	       call   RootMovesVec_Size
+		mov   qword[rbp-Thread.rootPos+Thread.tbHits], rax
+	      movzx   edx, byte[Tablebase_UseRule50]
+		mov   eax, dword[Tablebase_Score]
+	       test   dl, dl
+		jnz   .check_tb_ret
+		mov   ecx, VALUE_MATE - MAX_PLY - 1
+		cmp   eax, edx
+	      cmovg   eax, ecx
+		neg   ecx
+		cmp   eax, edx
+	      cmovl   eax, ecx
+		mov   dword[Tablebase_Score], eax
+		jmp   .check_tb_ret
+end if
+
+.use_searchmoves:
 	; use the moves obtained from 'searchmoves' command
 	; these have already been checked for legality
 		xor   eax, eax
@@ -507,8 +600,10 @@ ThreadPool_StartThinking.use_searchmoves:
 		jnz   .use_searchmoves
 		jmp   .have_moves
 */
-       ldrh  w0, [x14], 2
-        str  x0, [x15], 8
+ThreadPool_StartThinking.use_searchmoves:
+
+       ldrh  w0, [x26], 2
+        str  x0, [x27], 8
         sub  w1, w1, 1
        cbnz  w1, ThreadPool_StartThinking.use_searchmoves
           b  ThreadPool_StartThinking.have_moves

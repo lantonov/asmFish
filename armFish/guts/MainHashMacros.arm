@@ -141,5 +141,5 @@ MainHash_Save.done\@:
 */
         ldr  x0, [sp, \lcopy]
         str  x0, [\entr]
-
+Display "hash save: %X0\n"
 .endm

@@ -181,7 +181,6 @@ Evaluate_Init:
         ldr  x0, Evaluate_Init.SeeSignBitMask
         lea  x6, SeeSignBitMask
         str  x0, [x6]
-Display "SeeSignBitMask: %x0\n"
 
         ldp  x29, x30, [sp], -16
         ret

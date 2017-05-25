@@ -17,10 +17,6 @@ end virtual
 	 _chkstk_ms   rsp, .localsize
 		sub   rsp, .localsize
 */
-        stp  x20, x30, [sp, -16]!
-        stp  x21, x26, [sp, -16]!
-        stp  x27, x23, [sp, -16]!
-        stp  x24, x25, [sp, -16]!
 Thread_Think.completedDepth = 0
 Thread_Think.alpha          = sizeof.rd + Thread_Think.completedDepth
 Thread_Think.beta	    = sizeof.rd + Thread_Think.alpha
@@ -30,7 +26,12 @@ Thread_Think.easyMove       = sizeof.rd + Thread_Think.bestValue
 Thread_Think.multiPV        = sizeof.rd + Thread_Think.easyMove
 Thread_Think.lend	    = sizeof.rd + Thread_Think.multiPV
 Thread_Think.localsize      = (ThreadPool_StartThinking.lend + 15) & -16
+        stp  x20, x30, [sp, -16]!
+        stp  x21, x26, [sp, -16]!
+        stp  x27, x23, [sp, -16]!
+        stp  x24, x25, [sp, -16]!
         sub  sp, sp, Thread_Think.localsize
+//Display "Thread_Think called\n"
         
 /*
 		lea   rbp, [rcx+Thread.rootPos]
@@ -141,6 +142,7 @@ Thread_Think.skip_easymove:
         ldr  w25, [x20, -Thread.rootPos + Thread.rootDepth]
 
 Thread_Think.id_loop:
+//Display "Thread_Think.id_loop rootDepth = %i25\n"
 /*
 		xor   eax, eax
 		mov   ecx, dword[limits.depth]
@@ -222,6 +224,7 @@ Thread_Think.loopSkipPly:
           b  Thread_Think.save_prev_score
 
 Thread_Think.age_out:
+//Display "Thread_Think.age_out\n"
 /*
 	; Age out PV variability metric
 	     vmovsd   xmm0, qword[rbp-Thread.rootPos+Thread.bestMoveChanges]
@@ -229,13 +232,13 @@ Thread_Think.age_out:
 		mov   byte[rbp-Thread.rootPos+Thread.failedLow], 0
 	     vmovsd   qword[rbp-Thread.rootPos+Thread.bestMoveChanges], xmm0
 */
-        add  x7, x20, -Thread.rootPos
-        ldr  d0, [x27, Thread.bestMoveChanges]
+        add  x6, x20, -Thread.rootPos
+        ldr  d0, [x6, Thread.bestMoveChanges]
         lea  x4, constd.0p505
         ldr  d1, [x4]
        fmul  d0, d0, d1
-       strb  wzr, [x27, Thread.failedLow]
-        str  d0, [x27, Thread.bestMoveChanges]
+       strb  wzr, [x6, Thread.failedLow]
+        str  d0, [x6, Thread.bestMoveChanges]
 
 Thread_Think.save_prev_score:
 /*
@@ -273,6 +276,7 @@ end if
 */
         mov  w24, -1
 Thread_Think.multipv_loop:
+//Display "Thread_Think.multipv_loop\n"
 /*
 		add   r14d, 1
 		mov   al, byte[signals.stop]
@@ -358,12 +362,14 @@ Thread_Think.search_loop:
          bl  Search_Root
         mov  w22, w0
         str  w0, [sp, Thread_Think.bestValue]
+
         mov  w4, sizeof.RootMove
         mul  w1, w24, w4
         ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
         add  x1, x1, x4
         ldr  x2, [x20, Pos.rootMovesVec + RootMovesVec.ender]
          bl  RootMovesVec_StableSort
+//Display "RootMovesVec_StableSort returned\n"
 /*
 	; If search has been stopped, break immediately. Sorting and writing PV back to TT is safe because RootMoves is still valid, although it refers to the previous iteration.
 		mov   al, byte[signals.stop]
@@ -834,6 +840,7 @@ Thread_Think.done:
 		pop   r15 r14 r13 rdi rsi rbx rbp
 		ret
 */
+//Display "Thread_Think returning\n"
         add  sp, sp, Thread_Think.localsize
         ldp  x24, x25, [sp], 16
         ldp  x27, x23, [sp], 16
@@ -854,7 +861,21 @@ MainThread_Think:
 		mov   ecx, dword[rbp+Pos.sideToMove]
 		mov   edx, dword[rbp+Pos.gamePly]
 	       call   TimeMng_Init
+*/
+        stp  x20, x30, [sp, -16]!
+        stp  x21, x26, [sp, -16]!
+        stp  x27, x25, [sp, -16]!
 
+//Display "MainThread_Think called\n"
+
+        add  x20, x1, Thread.rootPos
+        ldr  x21, [x20, Pos.state]
+
+        ldr  w1, [x20, Pos.sideToMove]
+        ldr  w2, [x20, Pos.gamePly]
+         bl  TimeMng_Init
+
+/*
 		mov   eax, dword[options.contempt]
 		cdq
 	       imul   eax, PawnValueEg
@@ -869,16 +890,6 @@ MainThread_Think:
 		mov   dword[DrawValue+4*rax], ecx
 		add   byte[mainHash.date], 4
 */
-        stp  x20, x30, [sp, -16]!
-        stp  x21, x26, [sp, -16]!
-        stp  x27, x25, [sp, -16]!
-        add  x20, x1, Thread.rootPos
-        ldr  x21, [x20, Pos.state]
-
-        ldr  w1, [x20, Pos.sideToMove]
-        ldr  w2, [x20, Pos.gamePly]
-         bl  TimeMng_Init
-
         lea  x6, options
         ldr  w0, [x6, Options.contempt]
         mov  w1, PawnValueEg
@@ -896,7 +907,7 @@ MainThread_Think:
         lea  x6, mainHash
         ldr  w4, [x6, MainHash.date]
         add  w4, w4, 4
-        ldr  w4, [x6, MainHash.date]
+        str  w4, [x6, MainHash.date]
 
 /*
 if USE_WEAKNESS
@@ -949,6 +960,7 @@ end if
         mov  w26, 0
 
 MainThread_Think.next_worker:
+
 /*
 		add   esi, 1
 		cmp   esi, dword[threadPool.threadCnt]
@@ -1093,7 +1105,7 @@ end if
         lea  x6, limits
         ldr  w4, [x6, Limits.depth]
         orr  w0, w0, w4
-       ldrb  w4, [x0, -Thread.rootPos + Thread.easyMovePlayed]
+       ldrb  w4, [x20, -Thread.rootPos + Thread.easyMovePlayed]
         orr  w0, w0, w4
        cbnz  w0, MainThread_Think.best_done
         ldr  x1, [x20, Pos.rootMovesVec+RootMovesVec.table]
@@ -1296,11 +1308,11 @@ end virtual
 		sub   rsp, .localsize
 		mov   rsi, rcx
 */
-        stp  x30, x26, [sp, -16]!
-        stp  x27, x25, [sp, -16]!
 DisplayMove_Uci.output    = 0
 DisplayMove_Uci.lend      = 32*sizeof.rb + DisplayMove_Uci.output
 DisplayMove_Uci.localsize = (DisplayMove_Uci.lend + 15) & -16
+        stp  x30, x26, [sp, -16]!
+        stp  x27, x25, [sp, -16]!
         sub  sp, sp, DisplayMove_Uci.localsize
         mov  x26, x1
 /*
@@ -1324,8 +1336,24 @@ DisplayMove_Uci.localsize = (DisplayMove_Uci.lend + 15) & -16
 	       call   PrintUciMove
 */
         add  x27, sp, DisplayMove_Uci.output
-        adr  x1, DisplayMove_Uci.sz1
-         bl  PrintString
+        mov  w0, 'b'
+       strb  w0, [x27], 1
+        mov  w0, 'e'
+       strb  w0, [x27], 1
+        mov  w0, 's'
+       strb  w0, [x27], 1
+        mov  w0, 't'
+       strb  w0, [x27], 1
+        mov  w0, 'm'
+       strb  w0, [x27], 1
+        mov  w0, 'o'
+       strb  w0, [x27], 1
+        mov  w0, 'v'
+       strb  w0, [x27], 1
+        mov  w0, 'e'
+       strb  w0, [x27], 1
+        mov  w0, ' '
+       strb  w0, [x27], 1
         ldr  x1, [x26, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.table]
         ldr  w1, [x1, 0*sizeof.RootMove + RootMove.pv + 4*0]
        ldrb  w2, [x26, Thread.rootPos + Pos.chess960]
@@ -1349,9 +1377,22 @@ DisplayMove_Uci.have_ponder_from_tt:
 	      movzx   edx, byte[rsi+Thread.rootPos+Pos.chess960]
 	       call   PrintUciMove
 */
-        adr  x1, DisplayMove_Uci.sz2
-         bl  PrintString
-        ldr  x1, [x26, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.table]
+        mov  w0, ' '
+       strb  w0, [x27], 1
+        mov  w0, 'p'
+       strb  w0, [x27], 1
+        mov  w0, 'o'
+       strb  w0, [x27], 1
+        mov  w0, 'n'
+       strb  w0, [x27], 1
+        mov  w0, 'd'
+       strb  w0, [x27], 1
+        mov  w0, 'e'
+       strb  w0, [x27], 1
+        mov  w0, 'r'
+       strb  w0, [x27], 1
+        mov  w0, ' '
+       strb  w0, [x27], 1
         ldr  w1, [x1, 0*sizeof.RootMove + RootMove.pv + 4*1]
        ldrb  w2, [x26, Thread.rootPos + Pos.chess960]
          bl  PrintUciMove
@@ -1393,13 +1434,6 @@ DisplayMove_Uci.get_ponder_from_tt:
        cbnz  w0, DisplayMove_Uci.have_ponder_from_tt
           b  DisplayMove_Uci.skip_ponder
 
-DisplayMove_Uci.sz1:
-        .ascii "bestmove \0"
-DisplayMove_Uci.sz2:
-        .ascii " ponder \0"
-        .balign 4
-
-
 ExtractPonderFromTT:
 /*
 	; in: rcx address of position
@@ -1412,14 +1446,14 @@ end virtual
 	 _chkstk_ms   rsp, .localsize
 		sub   rsp, .localsize
 */
+ExtractPonderFromTT.movelist  = 0
+ExtractPonderFromTT.lend      = sizeof.ExtMove*MAX_MOVES + ExtractPonderFromTT.movelist
+ExtractPonderFromTT.localsize = (ExtractPonderFromTT.lend + 15) & -16
         stp  x20, x30, [sp, -16]!
         stp  x21, x26, [sp, -16]!
         stp  x27, x23, [sp, -16]!
         stp  x24, x25, [sp, -16]!
-ExtractPonderFromTT.movelist  = 0
-ExtractPonderFromTT.lend      = sizeof.ExtMove*MAX_MOVES + ExtractPonderFromTT.movelist
-ExtractPonderFromTT.localsize = (ExtractPonderFromTT.lend + 15) & -16
-        sub  sp, sp, DisplayMove_Uci.localsize
+        sub  sp, sp, ExtractPonderFromTT.localsize
 
 /*
 		mov   r15, qword[rcx+Pos.rootMovesVec+RootMovesVec.table]
@@ -1459,7 +1493,7 @@ ExtractPonderFromTT.localsize = (ExtractPonderFromTT.lend + 15) & -16
         ldr  x1, [x21, State.key]
          bl  MainHash_Probe
         lsr  w26, w1, 16
-        mov  w14, 0
+        mov  w24, 0
         cbz  w2, ExtractPonderFromTT.done
         add  x27, sp, ExtractPonderFromTT.movelist
          bl  Gen_Legal
@@ -1505,7 +1539,8 @@ ExtractPonderFromTT.Return:
 		pop   r15 r14 r13 rdi rsi rbx rbp
 		ret
 */
-        add  sp, sp, DisplayMove_Uci.localsize
+
+        add  sp, sp, ExtractPonderFromTT.localsize
         ldp  x24, x25, [sp], 16
         ldp  x27, x23, [sp], 16
         ldp  x21, x26, [sp], 16
@@ -1546,10 +1581,6 @@ end virtual
 		mov   qword[.elapsed], r9
 		mov   dword[.multiPV], r10d
 */
-        stp  x21, x30, [sp, -16]!
-        stp  x26, x27, [sp, -16]!
-        stp  x22, x23, [sp, -16]!
-        stp  x24, x25, [sp, -16]!
 DisplayInfo_Uci.elapsed  = 0
 DisplayInfo_Uci.nodes    = sizeof.rq + DisplayInfo_Uci.elapsed
 DisplayInfo_Uci.tbHits   = sizeof.rq + DisplayInfo_Uci.nodes
@@ -1562,13 +1593,17 @@ DisplayInfo_Uci.hashfull = sizeof.rd + DisplayInfo_Uci.multiPV
 DisplayInfo_Uci.output   = sizeof.rd + sizeof.rd + DisplayInfo_Uci.hashfull
 DisplayInfo_Uci.lend     = 8*MAX_PLY*sizeof.rb + DisplayInfo_Uci.output
 DisplayInfo_Uci.localsize = (DisplayInfo_Uci.lend + 15) & -16
+
+        stp  x21, x30, [sp, -16]!
+        stp  x26, x27, [sp, -16]!
+        stp  x22, x23, [sp, -16]!
+        stp  x24, x25, [sp, -16]!
         sub  sp, sp, DisplayInfo_Uci.localsize
         str  w1, [sp, DisplayInfo_Uci.depth]
         str  w2, [sp, DisplayInfo_Uci.alpha]
         str  w8, [sp, DisplayInfo_Uci.beta]
         str  x9, [sp, DisplayInfo_Uci.elapsed]
         str  w10, [sp, DisplayInfo_Uci.multiPV]
-
 
 /*
 	     Assert   ne, r10d, 0, 'assertion dword[.multiPV]!=0 in Position_WriteOutUciInfo failed'
@@ -1595,6 +1630,13 @@ if USE_HASHFULL
 	@@:	mov   dword[.hashfull], eax
 end if
 */
+.if USE_HASHFULL
+        mov  w0, -1
+        cmp  x9, 1000
+        blo  1f
+         bl  MainHash_HashFull
+1:      str  w0, [sp, DisplayInfo_Uci.hashfull]
+.endif
 /*
 	       call   ThreadPool_NodesSearched_TbHits
 		mov   qword[.nodes], rax
@@ -1624,7 +1666,7 @@ end if
        fdiv  d0, d0, d1
      fcvtzu  x0, d0
         str  x0, [sp, DisplayInfo_Uci.nps]
-        mov  w15, 0
+        mov  w25, 0
 
 DisplayInfo_Uci.multipv_loop:
 /*
@@ -1666,8 +1708,9 @@ DisplayInfo_Uci.multipv_loop:
         ldr  w4, [x7, Thread.PVIdx]
         mov  w5, -VALUE_INFINITE
         cmp  w1, w5
-       ccmp  w25, w4, 2, eq
+       ccmp  w25, w4, 0, ne
        cset  w0, ls
+
 
         ldr  w1, [sp, DisplayInfo_Uci.depth]
         sub  w1, w1, 1
@@ -1675,7 +1718,7 @@ DisplayInfo_Uci.multipv_loop:
         cbz  w2, DisplayInfo_Uci.multipv_cont
         add  w1, w1, w0
         add  x27, sp, DisplayInfo_Uci.output
-        ldr  w12, [x26, x0, lsl 2]
+        ldr  w22, [x26, x0, lsl 2]
         mov  w0, 'i'
        strb  w0, [x27], 1
         mov  w0, 'n'
@@ -1701,7 +1744,6 @@ DisplayInfo_Uci.multipv_loop:
         mov  w0, w1
          bl  PrintUInt
 
-
 /*
 if USE_SELDEPTH
 		mov   rax, ' seldept'
@@ -1712,6 +1754,32 @@ if USE_SELDEPTH
 	       call   PrintUnsignedInteger
 end if
 */
+.if USE_SELDEPTH
+        mov  w0, ' '
+       strb  w0, [x27], 1
+        mov  w0, 's'
+       strb  w0, [x27], 1
+        mov  w0, 'e'
+       strb  w0, [x27], 1
+        mov  w0, 'l'
+       strb  w0, [x27], 1
+        mov  w0, 'd'
+       strb  w0, [x27], 1
+        mov  w0, 'e'
+       strb  w0, [x27], 1
+        mov  w0, 'p'
+       strb  w0, [x27], 1
+        mov  w0, 't'
+       strb  w0, [x27], 1
+        mov  w0, 'h'
+       strb  w0, [x27], 1
+        mov  w0, ' '
+       strb  w0, [x27], 1
+        add  x6, x20, -Thread.rootPos
+       ldrb  w0, [x6, Thread.maxPly]
+         bl  PrintUInt
+        
+.endif
 /*
 		mov   al, ' '
 	      stosb
@@ -1914,6 +1982,33 @@ if USE_HASHFULL
 	@@:
 end if
 */
+.if USE_HASHFULL
+        ldr  w1, [sp, DisplayInfo_Uci.hashfull]
+       tbnz  w1, 31, 1f
+        mov  w0, ' '
+       strb  w0, [x27], 1
+        mov  w0, 'h'
+       strb  w0, [x27], 1
+        mov  w0, 'a'
+       strb  w0, [x27], 1
+        mov  w0, 's'
+       strb  w0, [x27], 1
+        mov  w0, 'h'
+       strb  w0, [x27], 1
+        mov  w0, 'f'
+       strb  w0, [x27], 1
+        mov  w0, 'u'
+       strb  w0, [x27], 1
+        mov  w0, 'l'
+       strb  w0, [x27], 1
+        mov  w0, 'l'
+       strb  w0, [x27], 1
+        mov  w0, ' '
+       strb  w0, [x27], 1
+        mov  w0, w1
+         bl  PrintUInt
+1:
+.endif
 /*
 		mov   eax, ' pv'
 	      stosd
@@ -1982,10 +2077,10 @@ DisplayInfo_Uci.return:
 		pop   r15 r14 r13 r12 rdi rsi rbx
 */
         add  sp, sp, DisplayInfo_Uci.localsize
-        stp  x24, x25, [sp], 16
-        stp  x22, x23, [sp], 16
-        stp  x26, x27, [sp], 16
-        stp  x21, x30, [sp], 16
+        ldp  x24, x25, [sp], 16
+        ldp  x22, x23, [sp], 16
+        ldp  x26, x27, [sp], 16
+        ldp  x21, x30, [sp], 16
 
 DisplayMove_None:
 DisplayInfo_None:

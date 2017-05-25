@@ -52,9 +52,9 @@ UciLoop.localsize = (UciLoop.localsize + 15) & (-16)
 /*
 	        mov   byte[options.displayInfoMove], -1
 */
-        lea  x16, options
+        lea  x6, options
         mov  w4, -1
-       strb  w4, [x16, Options.displayInfoMove]
+       strb  w4, [x6, Options.displayInfoMove]
 /*
 		xor   eax, eax
 		mov   qword[UciLoop.th1.rootPos.stateTable], rax
@@ -390,7 +390,8 @@ UciUci:
 */
         lea  x1, szUciResponse
         lea  x27, szUciResponseEnd
-         bl  UciWriteOut
+         bl  Os_WriteOut
+          b  UciGetInput
 
 UciIsReady:
 /*
@@ -485,9 +486,11 @@ UciSync:
 */
         stp  x21, x30, [sp, -16]!
          bl  MainHash_ReadOptions
+Display "UciSync hash returned\n"
          bl  ThreadPool_ReadOptions
-        lea  x16, options
-       strb  wzr, [x16, Options.changed]
+Display "UciSync thread returned\n"
+        lea  x6, options
+       strb  wzr, [x6, Options.changed]
         ldp  x21, x30, [sp], 16
         ret
 
@@ -961,8 +964,8 @@ UciSetOption:
 	       test   al, al
 		jnz   .Error
 */
-        lea  x16, threadPool
-        ldr  x0, [x16, ThreadPool.threadTable+8*0]
+        lea  x6, threadPool
+        ldr  x0, [x6, ThreadPool.threadTable+8*0]
        ldrb  w0, [x0, Thread.searching]
         lea  x1, sz_error_think
        cbnz  w0, UciSetOption.Error
@@ -1166,7 +1169,7 @@ UciSetOption.CheckValue:
         lea  x1, sz_value
          bl  CmpString
         lea  x1, sz_error_value
-       cbnz  w0, UciSetOption.Error
+        cbz  w0, UciSetOption.Error
          bl  SkipSpaces
          br  x21
 

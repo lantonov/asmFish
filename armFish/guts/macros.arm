@@ -41,9 +41,29 @@
         lsr  \Reg0, \Reg0, 56
 .endm
 
+// this gets the address of a label that is too far away for adr instruction
 .macro lea Reg, Addr
        adrp  \Reg, \Addr
         add  \Reg, \Reg, :lo12:\Addr
+.endm
+
+// this loads a 32bit quantity into a register when one instruction is not enough
+.macro mov32 reg, num
+        mov  \reg, ((\num) & 0x00000FFFF)
+       movk  \reg, ((\num) & 0x0FFFF0000) >> 16, lsl 16
+.endm
+// this loads a 48bit quantity into a register when one instruction is not enough
+.macro mov48 reg, num
+        mov  \reg, ((\num) & 0x000000000FFFF)
+       movk  \reg, ((\num) & 0x00000FFFF0000) >> 16, lsl 16
+       movk  \reg, ((\num) & 0x0FFFF00000000) >> 32, lsl 32
+.endm
+// this loads a 64bit quantity into a register when one instruction is not enough
+.macro mov64 reg, num
+        mov  \reg, ((\num) & 0x0000000000000FFFF)
+       movk  \reg, ((\num) & 0x000000000FFFF0000) >> 16, lsl 16
+       movk  \reg, ((\num) & 0x00000FFFF00000000) >> 32, lsl 32
+       movk  \reg, ((\num) & 0x0FFFF000000000000) >> 48, lsl 48
 .endm
 
 .macro AddSub T, A, B, C
@@ -137,6 +157,7 @@
 // register xn in hex, signed or unsigned.
 // ex: Display "sq: %i14  sq: %i15  line: %x0  bet: %x1\n"
 .macro Display Mes
+/*
         PushAll
         lea  x1, DisplayLock
          bl  Os_MutexLock
@@ -156,13 +177,16 @@ anol\@:
         lea  x1, DisplayLock
          bl  Os_MutexUnlock
         PopAll
+*/
 .endm
 
 .macro DisplayPause
+/*
         PushAll
         mov  x1, 100
          bl  Os_Sleep
-        PopAll     
+        PopAll
+*/
 .endm
 
 .macro ToLower Reg

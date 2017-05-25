@@ -10,6 +10,7 @@ $ qemu-aarch64 ./armFish
 //.altmacro
 USE_CURRMOVE   = 1
 USE_SELDEPTH   = 1
+USE_HASHFULL   = 1
 //USE_MATEFINDER = 0
 //USE_SYZYGY     = 0
 

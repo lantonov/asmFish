@@ -25,6 +25,8 @@ Gen_Evasions:
 		bsf   rdx, rsi
 		 jz   .SlidersDone
 */
+        stp  x29, x30, [sp, -16]!
+
         ldr  w13, [x20, Pos.sideToMove]
         ldr  x14, [x20, 8*King]
         ldr  x4, [x20, x13, lsl 3]
@@ -139,6 +141,7 @@ Gen_Evasions_White:
 */
         GenAll  Gen_Evasions_White, White, EVASIONS
 Gen_Evasions_White.Ret:
+        ldp  x29, x30, [sp], 16
         ret
 /*
                 pop   r15 r14 r13 r12 rsi
@@ -158,6 +161,7 @@ Gen_Evasions_Black:
        generate_jmp   Black, EVASIONS
 */
         GenAll  Gen_Evasions_Black, Black, EVASIONS
+        ldp  x29, x30, [sp], 16
         ret
         GenPawnJmp  Gen_Evasions_Black, Black, EVASIONS
         GenCastlingJmp  Gen_Evasions_Black, Black, EVASIONS

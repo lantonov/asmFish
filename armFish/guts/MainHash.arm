@@ -1,21 +1,20 @@
 
 MainHash_Create:
         stp  x21, x30, [sp, -16]!
-        stp  x14, x15, [sp, -16]!
+        stp  x26, x27, [sp, -16]!
         lea  x21, mainHash
-        lea  x14, options
-        ldr  w14, [x14, Options.hash]
-        str  w14, [x21, MainHash.sizeMB]
-        lsl  x1, x14, 20
+        mov  w26, 15
+        str  w26, [x21, MainHash.sizeMB]
+        lsl  x26, x26, 20
+        mov  x1, x26
          bl  Os_VirtualAlloc
-        mov  x2, 0
-        lsl  x14, x14, 20-5
-        sub  x14, x14, 1
+        lsr  x26, x26, 5
+        sub  x26, x26, 1
         str  x0, [x21, MainHash.table]
-        str  x14, [x21, MainHash.mask]
-        str  x2, [x21, MainHash.lpSize]
-       strb  w2, [x21, MainHash.date]
-        ldp  x14, x15, [sp], 16
+        str  x26, [x21, MainHash.mask]
+        str  xzr, [x21, MainHash.lpSize]
+       strb  wzr, [x21, MainHash.date]
+        ldp  x26, x27, [sp], 16
         ldp  x21, x30, [sp], 16
         ret
 
@@ -23,60 +22,61 @@ MainHash_Create:
 MainHash_ReadOptions:
         stp  x29, x30, [sp, -16]!
         stp  x20, x21, [sp, -16]!
-        stp  x14, x15, [sp, -16]!
+        stp  x26, x27, [sp, -16]!
         lea  x29, mainHash
         lea  x20, options
         ldr  w1, [x20, Options.hash]
         mov  x2, MAX_HASH_LOG2MB
         clz  x0, x1
+        eor  x0, x0, 63
         cmp  x0, x2
        csel  x0, x2, x0, hi
-        mov  x14, 1
-        lsl  x14, x14, x0
-        ldr  x15, [x29, MainHash.lpSize]
+        mov  x26, 1
+        lsl  x26, x26, x0
+        ldr  x27, [x29, MainHash.lpSize]
        ldrb  w21, [x20, Options.largePages]
         ldr  w4, [x29, MainHash.sizeMB]
-        cmp  w14, w4
+        cmp  w26, w4
         bne  MainHash_ReadOptions.NoMatch
-        orr  x4, x15, x21
-        cbz  x4, MainHash_ReadOptions.Skip
-        cmp  x15, 0
-       ccmp  x21, 0, 0b0100, ne
-        bne  MainHash_ReadOptions.Skip
+        tst  x27, x27
+       cset  w0, eq
+        eor  w0, w0, w27
+       tbnz  w0, 0, MainHash_ReadOptions.Skip
 MainHash_ReadOptions.NoMatch:
+Display "MainHash_ReadOptions.NoMatch\n"
          bl  MainHash_Free
-        str  w14, [x29, MainHash.sizeMB]
-        lsl  x14, x14, 20
-        cbz  x21, MainHash_ReadOptions.NoLP
-        mov  x1, x14
+        str  w26, [x29, MainHash.sizeMB]
+        lsl  x26, x26, 20
+        cbz  w21, MainHash_ReadOptions.NoLP
+        mov  x1, x26
          bl  Os_VirtualAlloc_LargePages
        cbnz  x0, MainHash_ReadOptions.Done
 MainHash_ReadOptions.NoLP:
-        mov  x1, x14
+        mov  x1, x26
          bl  Os_VirtualAlloc
         mov  x2, 0
 MainHash_ReadOptions.Done:
-        lsr  x14, x14, 5
-        sub  x14, x14, 1
+        lsr  x26, x26, 5
+        sub  x26, x26, 1
         str  x0, [x29, MainHash.table]
-        str  x14, [x29, MainHash.mask]
+        str  x26, [x29, MainHash.mask]
         str  x2, [x29, MainHash.lpSize]
        strb  wzr, [x29, MainHash.date]
          bl  MainHash_DisplayInfo
 MainHash_ReadOptions.Skip:
-        ldp  x14, x15, [sp], 16
+        ldp  x26, x27, [sp], 16
         ldp  x20, x21, [sp], 16
         ldp  x29, x30, [sp], 16
         ret
 
 
 MainHash_DisplayInfo:
-        stp  x15, x30, [sp, -16]!
+        stp  x27, x30, [sp, -16]!
         sub  sp, sp, 64
-        lea  x15, Output
-        lea  x4, mainHash
-        ldr  x0, [x4, MainHash.sizeMB]
-        ldr  x1, [x4, MainHash.lpSize]
+        lea  x27, Output
+        lea  x6, mainHash
+        ldr  x0, [x6, MainHash.sizeMB]
+        ldr  x1, [x6, MainHash.lpSize]
         lea  x2, LargePageMinSize
         ldr  x2, [x2]
         stp  x0, x2, [sp]
@@ -85,10 +85,11 @@ MainHash_DisplayInfo:
         tst  x1, x1
        csel  x1, x3, x4, eq
         add  x2, sp, 0
+        mov  x3, 0
          bl  PrintFancy
          bl  Os_WriteOut_Output
         add  sp, sp, 64
-        ldp  x15, x30, [sp], 16
+        ldp  x27, x30, [sp], 16
         ret
 MainHash_DisplayInfo.nolp:
         .ascii "info string hash set to %u0 MB no large pages\n\0"
@@ -99,11 +100,11 @@ MainHash_DisplayInfo.yeslp:
 
 MainHash_Clear:
         lea  x0, mainHash
-        ldr  x2, [x0, MainHash.sizeMB]
-        ldr  x0, [x0, MainHash.table]
-        lsl  x2, x2, 20
-        mov  x1, 0
-          b  MemoryFill
+        ldr  w1, [x0, MainHash.sizeMB]
+        ldr  x17, [x0, MainHash.table]
+        lsl  x1, x1, 20-3
+        mov  x0, 0
+          b  RepStosq
 
 
 MainHash_Destroy:
@@ -117,9 +118,33 @@ MainHash_Free:
         tst  x0, x0
        csel  x2, x0, x2, ne
          bl  Os_VirtualFree
-        mov  x0, 0
-        str  x0, [x29, MainHash.table]
-        str  x0, [x29, MainHash.lpSize]
-        str  x0, [x29, MainHash.sizeMB]
+        str  xzr, [x29, MainHash.table]
+        str  xzr, [x29, MainHash.lpSize]
+        str  xzr, [x29, MainHash.sizeMB]
         ldp  x29, x30, [sp], 16
+        ret
+
+MainHash_HashFull:
+        lea  x6, mainHash
+        mov  w0, 0
+        ldr  x8, [x6, MainHash.table]
+       ldrb  w4, [x6, MainHash.date]
+        mov  w5, 32*(1000/3)
+        add  x9, x8, x5
+MainHash_HasFull.NextCluster:
+       ldrb  w1, [x8, 8*0 + MainHashEntry.genBound]
+       ldrb  w2, [x8, 8*1 + MainHashEntry.genBound]
+       ldrb  w3, [x8, 8*2 + MainHashEntry.genBound]
+        eor  w1, w1, w4
+        eor  w2, w2, w4
+        eor  w3, w3, w4
+        add  x8, x8, 32
+       ands  w1, w1, -4
+       cinc  w0, w0, eq
+       ands  w2, w2, -4
+       cinc  w0, w0, eq
+       ands  w3, w3, -4
+       cinc  w0, w0, eq
+        cmp  x8, x9
+        blo  MainHash_HasFull.NextCluster
         ret

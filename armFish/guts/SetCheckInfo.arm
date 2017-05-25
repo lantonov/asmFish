@@ -71,6 +71,8 @@ ProfileInc SetCheckInfo
         orr  x0, x0, x2
         str  x0, [x21, State.checkSq+8*Queen]
         str  xzr, [x21, State.checkSq+8*King]
+
+
 /*
 	; for their king
 		xor   eax, eax
@@ -106,6 +108,7 @@ ProfileInc SetCheckInfo
 		pop   r15 r14 r13 r12 rdi rsi
 		ret
 */
+
         eor  x16, x16, 1
         add  x10, x21, x16, lsl 3
         mov  x11, 0
@@ -124,5 +127,7 @@ ProfileInc SetCheckInfo
         str  x0, [x10, State.blockersForKing]
         and  x0, x0, x13
         str  x0, [x21, State.pinned]
+
+
         ret
 

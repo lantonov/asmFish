@@ -12,6 +12,8 @@ Gen_Quiets:
 		cmp   byte [rbp+Pos.sideToMove], 0
 		jne   Gen_Quiets_Black
 */
+        stp  x29, x30, [sp, -16]!
+
         ldr  x15, [x20, Pos.typeBB + 8*White]
         ldr  x4, [x20, Pos.typeBB + 8*Black]
         orr  x15, x15, x4
@@ -27,6 +29,7 @@ Gen_Quiets_White:
        generate_jmp   White, QUIETS
 */
         GenAll  Gen_Quiets_White, White, QUIETS
+        ldp  x29, x30, [sp], 16
         ret
         GenPawnJmp  Gen_Quiets_White, White, QUIETS
         GenCastlingJmp  Gen_Quiets_White, White, QUIETS
@@ -39,6 +42,7 @@ Gen_Quiets_Black:
        generate_jmp   Black, QUIETS
 */
         GenAll  Gen_Quiets_Black, Black, QUIETS
+        ldp  x29, x30, [sp], 16
         ret
         GenPawnJmp  Gen_Quiets_Black, Black, QUIETS
         GenCastlingJmp  Gen_Quiets_Black, Black, QUIETS

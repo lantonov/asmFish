@@ -19,13 +19,13 @@ ProfileInc MainHash_Probe
 		add   rax, qword[mainHash.table]
 	      movzx   r11d, byte[mainHash.date]
 */
-        lea  x0, mainHash
-       ldrb  w11, [x0, MainHash.date]
-        ldr  x4, [x0, MainHash.mask]
-        ldr  x0, [x0, MainHash.table]
+        lea  x6, mainHash
+        ldr  x4, [x6, MainHash.mask]
+        ldr  x0, [x6, MainHash.table]
         and  x4, x4, x1
         lsr  x1, x1, 48
         add  x0, x0, x4, lsl 5
+       ldrb  w11, [x6, MainHash.date]
 
 /*
 		mov   rdx, qword[rax+8*3]
@@ -58,8 +58,8 @@ ProfileInc MainHash_Probe
         cmp  w4, w1
         beq  MainHash_Probe.FoundRefresh
       ldrsh  w9, [x0, 8]!
-        cbz  w6, MainHash_Probe.Found
-        cmp  w6, w1
+        cbz  w5, MainHash_Probe.Found
+        cmp  w5, w1
         beq  MainHash_Probe.FoundRefresh
       ldrsh  w10, [x0, 8]!
         cbz  w6, MainHash_Probe.Found

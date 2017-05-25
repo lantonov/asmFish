@@ -22,7 +22,7 @@ Position_Init:
 		cmp   ebx, 2
 		 jb   .l
 */
-        ldr  x0, = 1070372
+      mov32  x0, 1070372
         str  x0, [sp, Position_Init.prng]
 
         mov  x21, 0

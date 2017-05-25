@@ -99,6 +99,7 @@ PrintString:
 PrintFancy:
 // in: x1 address of source string
 //     x2 address of dword array
+//     x3 address of qword array, could be null
 // io: x27 string with ie %x3 replaced by x1[3] ect
         stp  x29, x30, [sp, -16]!
         stp  x28, x26, [sp, -16]!
@@ -122,28 +123,56 @@ PrintFancy.GotOne:
        ldrb  w24, [x26], 1   
          bl  ParseInteger
         and  x0, x0, 31
+        cbz  x29, 1f
         add  x1, x29, x0, lsl 4
-        ld1  {V0.16b}, [x1]
+        ld1  {v0.16b}, [x1]
+1:
         ldr  x0, [x28, x0, lsl 3]
-        adr  x1, PrintHex
-        adr  x2, PrintInt
-        adr  x3, PrintUInt
-        adr  x4, PrintDouble
-        adr  x5, PrintDoubleVec
-        adr  x6, PrintHexVec
-        cmp  w24, 'i'
-       csel  x1, x1, x2, ne
-        cmp  w24, 'u'
-       csel  x1, x1, x3, ne
-        cmp  w24, 'd'
-       csel  x1, x1, x4, ne
-        cmp  w24, 'D'
-       csel  x1, x1, x5, ne
-        cmp  w24, 'X'
-       csel  x1, x1, x6, ne
-        blr  x1
-          b  PrintFancy.Loop
+        mov  x1, x0
+        mov  x2, 0
+        mov  x3, 0
 
+        cmp  w24, 'x'   // 32 bit signed integer
+        adr  x4, PrintHex32
+       csel  x3, x4, x3, eq
+        cmp  w24, 'X'   // 32 bit signed integer
+        adr  x4, PrintHex
+       csel  x3, x4, x3, eq
+
+
+        cmp  w24, 'i'   // 32 bit signed integer
+        adr  x4, PrintInt32
+       csel  x3, x4, x3, eq
+        cmp  w24, 'I'   // 64 bit signed integer
+        adr  x4, PrintInt
+       csel  x3, x4, x3, eq
+
+        cmp  w24, 'u'   // 32 bit unsigned integer
+        adr  x4, PrintUInt32
+       csel  x3, x4, x3, eq
+        cmp  w24, 'U'   // 64 bit unsigned integer
+        adr  x4, PrintUInt
+       csel  x3, x4, x3, eq
+
+        cmp  w24, 'm'   // move
+        adr  x4, PrintUciMove
+       csel  x3, x4, x3, eq
+
+
+        cmp  w24, 'd'
+        adr  x4, PrintDouble
+       csel  x3, x4, x3, eq
+        cmp  w24, 'D'
+        adr  x4, PrintDoubleVec
+       csel  x3, x4, x3, eq
+
+        cmp  w24, 'V'
+        adr  x4, PrintHexVec
+       csel  x3, x4, x3, eq
+
+        cbz  x3, PrintFancy.Loop
+        blr  x3
+          b  PrintFancy.Loop
 
 CmpString:
 // if beginning of string at x26 matches null terminated string at x1
@@ -530,7 +559,10 @@ ParseSquare.error:
         mov  x0, 65
         ret
 
-
+PrintHex32:
+        lsl  x0, x0, 32
+        mov  w4, 8
+          b  PrintHex.Next
 PrintHex:
 // in: x0
 // io: x27 string
@@ -619,7 +651,11 @@ PrintDouble:
         ldp  x29, x30, [sp], 16
         ret
 
-
+PrintUInt32:
+       uxtw  x0, w0
+          b  PrintUInt
+PrintInt32:
+       sxtw  x0, w0
 PrintInt:
 PrintSInt:
 // in: x0 signed integer
@@ -810,3 +846,58 @@ MemoryFill:
         bpl  MemoryFill.Next
         ret
 
+
+
+RepMovsb.Next:
+       ldrb  w4, [x16], 1
+       strb  w4, [x17], 1
+RepMovsb:
+// in: x16 source
+//     x17 destination
+//     x1 number of 1 byte chunks to move
+       subs  x1, x1, 1
+        bpl  RepMovsb.Next
+        ret
+
+RepMovsd.Next:
+        ldr  w4, [x16], 4
+        str  w4, [x17], 4
+RepMovsd:
+// in: x16 source
+//     x17 destination
+//     x1 number of 4 byte chunks to move
+       subs  x1, x1, 1
+        bpl  RepMovsd.Next
+        ret
+
+RepMovsq.Next:
+        ldr  x4, [x16], 8
+        str  x4, [x17], 8
+RepMovsq:
+// in: x16 source
+//     x17 destination
+//     x1 number of 8 byte chunks to move
+       subs  x1, x1, 1
+        bpl  RepMovsq.Next
+        ret
+
+
+RepStosd.Next:
+        str  w0, [x17], 4
+RepStosd:
+// in: w0 4 bytes to store
+//     x17 destination
+//     x1 number of 4 byte chunks to move
+       subs  x1, x1, 1
+        bpl  RepStosd.Next
+        ret
+
+RepStosq.Next:
+        str  x0, [x17], 8
+RepStosq:
+// in: x0 8 bytes to store
+//     x17 destination
+//     x1 number of 8 byte chunks to move
+       subs  x1, x1, 1
+        bpl  RepStosq.Next
+        ret

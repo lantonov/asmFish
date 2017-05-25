@@ -2116,91 +2116,147 @@ Position_CopyTo.alloc:
         str  x0, [x23, Pos.stateEnd]
           b  Position_CopyTo.copy_states
 
+//Position_CopyToSearch:
 Position_CopyToSearch:
-/*
-	; rbp address of source position
-	; rcx address of destination position
-	;  up to Pos._copy_size is copied
-	;  and state array is copied
-	; enough elements are copied for
-	;   draw by 50 move detection
-	;   referencing ss-5 and ss+2 in search
+//	; rbp address of source position
+//	; rcx address of destination position
+//	;  up to Pos._copy_size is copied
+//	;  and state array is copied
+//	; enough elements are copied for
+//	;   draw by 50 move detection
+//	;   referencing ss-5 and ss+2 in search
+//
+//	       push   rsi rdi r13
+        stp  x26, x30, [sp, -16]!
+        stp  x27, x23, [sp, -16]!
 
-	       push   rsi rdi r13
-		mov   r13, rcx
+//		mov   r13, rcx
+        mov  x23, x1
+//
+//	; copy castling data
+//		mov   ecx, Thread.castling_end-Thread.castling_start
+//		lea   rsi, [rbp-Thread.rootPos+Thread.castling_start]
+//		lea   rdi, [r13-Thread.rootPos+Thread.castling_start]
+//	  rep movsb
+        mov  w2, Thread.castling_end - Thread.castling_start
+        add  x1, x20, -Thread.rootPos + Thread.castling_start
+        add  x0, x23, -Thread.rootPos + Thread.castling_start
+         bl  MemoryCopy
+//
+//	; copy basic position info
+//		lea   rsi, [rbp]
+//		lea   rdi, [r13]
+//		mov   ecx, Pos._copy_size/8
+//	  rep movsq
+        mov  w2, Pos._copy_size
+        mov  x1, x20
+        mov  x0, x23
+         bl  MemoryCopy
+//
+//	; if destination has no table, we need to alloc
+//		mov   r9, qword[r13+Pos.stateTable]
+        ldr  x9, [x23, Pos.stateTable]
+//	       test   r9, r9
+//		 jz   .alloc
+        cbz  x9, Position_CopyToSearch.alloc
+//
+//	; rcx = capacity of states in destination
+//	; if rcx < MAX_PLY+102, we need to realloc
+//		mov   rdx, qword[r13+Pos.stateEnd]
+        ldr  x2, [x23, Pos.stateEnd]
+//		sub   rdx, r9
+        sub  x2, x2, x9
+//		cmp   rdx, sizeof.State*(100+MAX_PLY+2+MAX_SYZYGY_PLY)
+//		 jb   .realloc
+        mov  w4, (100+MAX_PLY+2+MAX_SYZYGY_PLY)
+        mov  w5, sizeof.State
+        mul  w4, w4, w5
+        cmp  x2, x4
+        blo  Position_CopyToSearch.realloc
 
-	; copy castling data
-		mov   ecx, Thread.castling_end-Thread.castling_start
-		lea   rsi, [rbp-Thread.rootPos+Thread.castling_start]
-		lea   rdi, [r13-Thread.rootPos+Thread.castling_start]
-	  rep movsb
-
-	; copy basic position info
-		lea   rsi, [rbp]
-		lea   rdi, [r13]
-		mov   ecx, Pos._copy_size/8
-	  rep movsq
-
-	; if destination has no table, we need to alloc
-		mov   r9, qword[r13+Pos.stateTable]
-	       test   r9, r9
-		 jz   .alloc
-
-	; rcx = capacity of states in destination
-	; if rcx < MAX_PLY+102, we need to realloc
-		mov   rdx, qword[r13+Pos.stateEnd]
-		sub   rdx, r9
-		cmp   rdx, sizeof.State*(100+MAX_PLY+2)
-		 jb   .realloc
-*/
+//.copy_states:
 Position_CopyToSearch.copy_states:
-/*	; r9 = address of its state table
-	; r8 = address of our state table
-		mov   r8, qword[rbp+Pos.stateTable]
-
-		mov   r10, qword[rbp+Pos.state]
-		lea   r11, [r9+100*sizeof.State]
-		mov   qword[r13+Pos.state], r11
-*/
+//	; r9 = address of its state table
+//	; r8 = address of our state table
+//		mov   r8, qword[rbp+Pos.stateTable]
+        ldr  x8, [x20, Pos.stateTable]
+//
+//		mov   r10, qword[rbp+Pos.state]
+        ldr  x10, [x20, Pos.state]
+//		lea   r11, [r9+100*sizeof.State]
+        mov  w4, 100*sizeof.State
+        add  x11, x9, x4
+//		mov   qword[r13+Pos.state], r11
+        str  x11, [x23, Pos.state]
+//.loop:
 Position_CopyToSearch.loop:
-/*		mov   rsi, r10
-		mov   rdi, r11
-		mov   ecx, sizeof.State/8
-	  rep movsq
-	; make sure that pliesFromNull never references a state past the beginning
-	;  we don't want to fall of the cliff when checking 50 move rule
-		mov   edx, 100
-	      movzx   eax, word[r11+State.pliesFromNull]
-		cmp   eax, edx
-	      cmova   eax, edx
-		mov   word[r11+State.pliesFromNull], ax
-
-		sub   r10, sizeof.State
-		sub   r11, sizeof.State
-		cmp   r11, r9
-		 jb   .done
-		cmp   r10, r8
-		jae   .loop
-*/
+//		mov   rsi, r10
+//		mov   rdi, r11
+//		mov   ecx, sizeof.State/8
+//	  rep movsq
+        mov  x1, x10
+        mov  x0, x11
+        mov  w2, sizeof.State
+         bl  MemoryCopy
+//	; make sure that pliesFromNull never references a state past the beginning
+//	;  we don't want to fall of the cliff when checking 50 move rule
+//		mov   edx, 100
+        mov  w2, 100
+//	      movzx   eax, word[r11+State.pliesFromNull]
+       ldrh  w0, [x11, State.pliesFromNull]
+//		cmp   eax, edx
+        cmp  w0, w2
+//	      cmova   eax, edx
+       csel  w0, w2, w0, hi
+//		mov   word[r11+State.pliesFromNull], ax
+       strh  w0, [x11, State.pliesFromNull]        
+//
+//		sub   r10, sizeof.State
+        sub  x10, x10, sizeof.State
+//		sub   r11, sizeof.State
+        sub  x11, x11, sizeof.State
+//		cmp   r11, r9
+//		 jb   .done
+        cmp  x11, x9
+        blo  Position_CopyToSearch.done
+//		cmp   r10, r8
+//		jae   .loop
+        cmp  x10, x8
+        bhs  Position_CopyToSearch.loop
+//.done:
 Position_CopyToSearch.done:
-/*		pop   r13 rdi rsi
-		ret
-
-*/
+//		pop   r13 rdi rsi
+        ldp  x27, x23, [sp], 16
+        ldp  x26, x30, [sp], 16
+//		ret
+        ret
+//
+//.realloc:
 Position_CopyToSearch.realloc:
-/*		mov   rcx, r9
-		; rdx already has the size
-	       call   _VirtualFree
-*/
+//		mov   rcx, r9
+        mov  x1, x9
+//		; rdx already has the size
+//	       call   _VirtualFree
+         bl  Os_VirtualFree
+//.alloc:
 Position_CopyToSearch.alloc:
-/*		mov   ecx, sizeof.State*(100+MAX_PLY+2)
-	       call   _VirtualAlloc
-		mov   r9, rax
-		mov   qword[r13+Pos.stateTable], rax
-		lea   rax, [rax+sizeof.State*(100+MAX_PLY+2)]
-		mov   qword[r13+Pos.stateEnd], rax
-		jmp   .copy_states
-*/
+//		mov   ecx, sizeof.State*(100+MAX_PLY+2+MAX_SYZYGY_PLY)
+      mov32  w1, sizeof.State*(100+MAX_PLY+2+MAX_SYZYGY_PLY)
+//	       call   _VirtualAlloc
+         bl  Os_VirtualAlloc
+//		mov   r9, rax
+        mov  x9, x0
+//		mov   qword[r13+Pos.stateTable], rax
+        str  x0, [x23, Pos.stateTable]
+//		add   rax, sizeof.State*(100+MAX_PLY+2+MAX_SYZYGY_PLY)
+        mov  w4, (100+MAX_PLY+2+MAX_SYZYGY_PLY)
+        mov  w5, sizeof.State
+        mul  w4, w4, w5
+        add  x0, x0, x4
+//		mov   qword[r13+Pos.stateEnd], rax
+        str  x0, [x23, Pos.stateEnd]
+//		jmp   .copy_states
+          b  Position_CopyToSearch.copy_states
 
 
 

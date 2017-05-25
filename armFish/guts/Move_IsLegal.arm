@@ -11,6 +11,7 @@ ProfileInc Move_IsLegal
 
 	       push   r13 r14 r15
 */
+//Display "Move_IsLegal(move=%m1) called\n"
 /*
 		mov   edx, ecx
 		shr   edx, 12
@@ -34,7 +35,8 @@ ProfileInc Move_IsLegal
         ldr  x15, [x21, State.pinned]
         ldr  w13, [x20, Pos.sideToMove]
         ldr  x11, [x20, 8*King]
-        ldr  x4, [x20, x13, lsl 3]
+        add  x6, x20, Pos.typeBB
+        ldr  x4, [x6, x13, lsl 3]
        rbit  x14, x11
         clz  x14, x14
 /*

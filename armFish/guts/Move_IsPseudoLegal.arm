@@ -41,8 +41,8 @@ ProfileInc moveUnpack
 	; r11 = FROM PIECE
 	      movzx   r11d, byte[rbp+Pos.board+r8]
 */
-        add  x6, x20, x8
-       ldrb  w11, [x6, Pos.board]
+        add  x6, x20, Pos.board
+       ldrb  w11, [x6, x8]
 /*
 	; r14 = bitboard of our pieces
 	; r15 = bitboard of all pieces
@@ -50,8 +50,9 @@ ProfileInc moveUnpack
 		mov   r15, qword[rbp+Pos.typeBB+8*rax]
 		 or   r15, r14
 */
-        ldr  x14, [x20, x16, lsl 3]
-        ldr  x15, [x20, x0, lsl 3]
+        add  x6, x20, Pos.typeBB
+        ldr  x14, [x6, x16, lsl 3]
+        ldr  x15, [x6, x0, lsl 3]
         orr  x15, x15, x14
 /*
 	; ecx = MOVE_TYPE
@@ -116,8 +117,9 @@ align 8
 */
         
         adr  x4, Move_IsPseudoLegal.JmpTable
+
         ldr  w0, [x4, x11, lsl 2]
-        adr  x4, Move_GivesCheck
+        adr  x4, Move_IsPseudoLegal
         add  x0, x0, x4
         lsr  x5, x14, x9
        tbnz  x5, 0, Move_IsPseudoLegal.ReturnFalse
@@ -220,7 +222,7 @@ Move_IsPseudoLegal.Checkers:
 		mov   rax, qword[BetweenBB+rax+8*rcx]
 		 or   rax, r13
 */
-        ldr  x1, [x20, 8*King]
+        ldr  x1, [x20, Pos.typeBB + 8*King]
        rbit  x0, x13
         clz  x0, x0
         lea  x6, BetweenBB
@@ -283,7 +285,8 @@ Move_IsPseudoLegal.Pawn:
         add  x1, x8, x1, lsl 3
         lsl  x0, x0, x1
         bic  x0, x0, x15
-        ldr  x1, [x20, x16, lsl 3]
+        add  x6, x20, Pos.typeBB
+        ldr  x1, [x6, x16, lsl 3]
         lea  x6, PawnAttacks
         add  x6, x6, x11
         ldr  x4, [x6, x8, lsl 3]
@@ -340,6 +343,7 @@ Move_IsPseudoLegal.DoublePawn:
         bne  Move_IsPseudoLegal.DPawnReturnFalse
         mov  w0, -1
        cbnz  x12, Move_IsPseudoLegal.Checkers
+        ret
 
 Move_IsPseudoLegal.DPawnReturnFalse:
 /*
@@ -363,7 +367,7 @@ Move_IsPseudoLegal.King:
 		pop   r15 r14 r13 r12 rdi rsi
 		ret
 */
-        lsl  w11, w15, 9
+        lsl  w11, w16, 9
         ldr  x2, [x21, State.checkersBB]
         lea  x6, KingAttacks
         ldr  x0, [x6, x8, lsl 3]
@@ -389,7 +393,7 @@ Move_IsPseudoLegal.KingCheckers:
 */
         lea  x6, KingAttacks
         ldr  x0, [x6, x9, lsl 3]
-        ldr  x4, [x20, 8*King]
+        ldr  x4, [x20, Pos.typeBB + 8*King]
         and  x0, x0, x4
 /*
 		mov   rdx, qword[KnightAttacks+8*r9]
@@ -398,7 +402,7 @@ Move_IsPseudoLegal.KingCheckers:
 */
         lea  x6, KnightAttacks
         ldr  x2, [x6, x9, lsl 3]
-        ldr  x4, [x20, 8*Knight]
+        ldr  x4, [x20, Pos.typeBB + 8*Knight]
         and  x2, x2, x4
         orr  x0, x0, x2
 /*
@@ -409,7 +413,7 @@ Move_IsPseudoLegal.KingCheckers:
         lea  x6, PawnAttacks
         add  x6, x6, x11
         ldr  x2, [x6, x9, lsl 3]
-        ldr  x4, [x20, 8*Pawn]
+        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
         and  x2, x2, x4
         orr  x0, x0, x2
 /*
@@ -420,8 +424,8 @@ Move_IsPseudoLegal.KingCheckers:
 		 or   rax, rdx
 */
         RookAttacks  x2, x9, x15, x10, x4
-        ldr  x1, [x20, 8*Rook]
-        ldr  x4, [x20, 8*Queen]
+        ldr  x1, [x20, Pos.typeBB + 8*Rook]
+        ldr  x4, [x20, Pos.typeBB + 8*Queen]
         orr  x1, x1, x4
         and  x2, x2, x1
         orr  x0, x0, x2
@@ -433,8 +437,8 @@ Move_IsPseudoLegal.KingCheckers:
 		 or   rax, rdx
 */
         BishopAttacks  x2, x9, x15, x10, x4
-        ldr  x1, [x20, 8*Bishop]
-        ldr  x4, [x20, 8*Queen]
+        ldr  x1, [x20, Pos.typeBB + 8*Bishop]
+        ldr  x4, [x20, Pos.typeBB + 8*Queen]
         orr  x1, x1, x4
         and  x2, x2, x1
         orr  x0, x0, x2
@@ -505,7 +509,8 @@ Move_IsPseudoLegal.Promotion:
         mov  x0, 1
         lsl  x0, x0, x1
         bic  x0, x0, x15
-        ldr  x1, [x20, x16, lsl 3]
+        add  x6, x20, Pos.typeBB
+        ldr  x1, [x6, x16, lsl 3]
         lea  x6, PawnAttacks
         add  x6, x6, x11
         ldr  x4, [x6, x8, lsl 3]
@@ -545,10 +550,11 @@ Move_IsPseudoLegal.PromotionCheckPinned:
         mov  w0, -1
         ldr  x1, [x21, State.pinned]
         lsr  x4, x1, x8
-       tbnz  x4, 0, 1f
+        tbz  x4, 0, 1f
         lsl  w8, w8, 9
-        ldr  x0, [x20, 8*King]
-        ldr  x4, [x20, x16, lsl 3]
+        ldr  x0, [x20, Pos.typeBB + 8*King]
+        add  x6, x20, Pos.typeBB
+        ldr  x4, [x6, x16, lsl 3]
         and  x0, x0, x4
         lea  x6, LineBB
         add  x6, x6, x8
@@ -568,7 +574,7 @@ Move_IsPseudoLegal.PromotionCheckers:
 		mov   rax, qword[BetweenBB+rax+8*rcx]
 		 or   rax, r13
 */
-        ldr  x1, [x20, 8*King]
+        ldr  x1, [x20, Pos.typeBB + 8*King]
        rbit  x0, x13
         clz  x0, x0
         lea  x6, BetweenBB
@@ -595,9 +601,9 @@ Move_IsPseudoLegal.PromotionCheckers:
 		 jz   .ReturnFalse
 		jmp   .PromotionCheckPinned
 */
-        and  x0, x0, x17
-       cbnz  x0, Move_IsPseudoLegal.PromotionCheckPinned
-        ret        
+        tst  x0, x17
+        beq  Move_IsPseudoLegal.ReturnFalse
+          b  Move_IsPseudoLegal.PromotionCheckPinned       
  
 
 
@@ -635,8 +641,9 @@ Move_IsPseudoLegal.EpCapture:
 		 bt   rax, r9
 		jnc   .ReturnFalse
 */
+        lsl  w11, w16, 9
         lea  x6, PawnAttacks
-        add  x6, x6, x11, lsl 9
+        add  x6, x6, x11
         ldr  x0, [x6, x8, lsl 3]
         lsr  x4, x0, x9
         tbz  x4, 0, Move_IsPseudoLegal.ReturnFalse
@@ -665,7 +672,7 @@ Move_IsPseudoLegal.EpCapture:
 		and   rdi, r14
 		bsf   rdi, rdi
 */
-        ldr  x17, [x20, 8*King]
+        ldr  x17, [x20, Pos.typeBB + 8*King]
         and  x17, x17, x14
        rbit  x17, x17
         clz  x17, x17
@@ -688,7 +695,8 @@ Move_IsPseudoLegal.EpCapture:
 	; r14 = their pieces
 		mov   r14, qword[rbp+Pos.typeBB+8*rsi]
 */
-        ldr  x14, [x20, x16, lsl 3]
+        add  x6, x20, Pos.typeBB
+        ldr  x14, [x6, x16, lsl 3]
 /*
 	; check for rook attacks
 	RookAttacks   rax, rdi, r15, rdx
@@ -699,8 +707,8 @@ Move_IsPseudoLegal.EpCapture:
 		jnz   .ReturnFalse
 */
         RookAttacks  x0, x17, x15, x2, x4
-        ldr  x1, [x20, 8*Rook]
-        ldr  x4, [x20, 8*Queen]
+        ldr  x1, [x20, Pos.typeBB + 8*Rook]
+        ldr  x4, [x20, Pos.typeBB + 8*Queen]
         orr  x1, x1, x4
         and  x1, x1, x14
         tst  x0, x1
@@ -715,8 +723,8 @@ Move_IsPseudoLegal.EpCapture:
 		jnz   .ReturnFalse
 */
         BishopAttacks  x0, x17, x15, x2, x4
-        ldr  x1, [x20, 8*Bishop]
-        ldr  x4, [x20, 8*Queen]
+        ldr  x1, [x20, Pos.typeBB + 8*Bishop]
+        ldr  x4, [x20, Pos.typeBB + 8*Queen]
         orr  x1, x1, x4
         and  x1, x1, x14
         tst  x0, x1
@@ -809,11 +817,11 @@ Move_IsPseudoLegal.CastleCheck_WhiteOO:
        ldrb  w0, [x21, State.castlingRights]
         ldr  x1, [x20, -Thread.rootPos + Thread.castling_path + 8*2]
         and  x1, x1, x15
-        and  w0, w0, 1 << 2
-        eor  w0, w0, 1 << 2
+        and  w0, w0, 1 << 0
+        eor  w0, w0, 1 << 0
         orr  x0, x0, x1
        cbnz  x0, Move_IsPseudoLegal.CastleReturnFalse
-          b  CastleOOLegal_Black
+          b  CastleOOLegal_White
 
 Move_IsPseudoLegal.CastleCheck_BlackOO:
 /*

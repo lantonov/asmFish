@@ -1426,6 +1426,7 @@ ShelterStorm1:
 
 
 Evaluate:
+Display "Evaluate called\n"
       ldrsh  w0, [x21, State.psq]
         ret
         

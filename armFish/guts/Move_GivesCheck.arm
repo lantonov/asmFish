@@ -29,6 +29,7 @@ Move_GivesCheck:
 		cmp   ecx, MOVE_TYPE_PROM shl 12
 		jae   .Special
 */
+//Display "Move_GivesCheck(move=%m1)\n"
        ubfx  x8, x1, 6, 6
         and  x9, x1, 63
         ldr  x11, [x21, State.dcCandidates]
@@ -50,6 +51,7 @@ Move_GivesCheck.Ret:
 /*
 		ret
 */
+//Display "Move_GivesCheck returning %i0\n"
         ret
 
 Move_GivesCheck.Special:
@@ -80,8 +82,8 @@ Move_GivesCheck.Special.AfterPrologue:
         lsr  x1, x1, 12
         ldr  w16, [x20, Pos.sideToMove]
        ldrb  w17, [x21, State.ksq]
-        ldr  x2, [x20, 8*White]
-        ldr  x4, [x20, 8*Black]
+        ldr  x2, [x20, Pos.typeBB + 8*White]
+        ldr  x4, [x20, Pos.typeBB + 8*Black]
         orr  x2, x2, x4
         mov  x4, 1
         lsl  x4, x4, x8
@@ -90,24 +92,28 @@ Move_GivesCheck.Special.AfterPrologue:
         lsl  x4, x4, x9
         orr  x2, x2, x4
         adr  x4, Move_GivesCheck.JmpTable
+//Display "Move_GivesCheck move type = %u1\n"
         ldr  w0, [x4, x1, lsl 2]
         adr  x4, Move_GivesCheck
         add  x0, x0, x4
          br  x0
 Move_GivesCheck.JmpTable:
-        .word 1
-        .word 1
-        .word 1
-        .word 1
+        .word Move_GivesCheck.bad - Move_GivesCheck
+        .word Move_GivesCheck.bad - Move_GivesCheck
+        .word Move_GivesCheck.bad - Move_GivesCheck
+        .word Move_GivesCheck.bad - Move_GivesCheck
         .word Move_GivesCheck.PromKnight - Move_GivesCheck
         .word Move_GivesCheck.PromBishop - Move_GivesCheck
         .word Move_GivesCheck.PromRook - Move_GivesCheck
         .word Move_GivesCheck.PromQueen - Move_GivesCheck
         .word Move_GivesCheck.EpCapture - Move_GivesCheck
-        .word 1
-        .word 1
-        .word 1
+        .word Move_GivesCheck.bad - Move_GivesCheck
+        .word Move_GivesCheck.bad - Move_GivesCheck
+        .word Move_GivesCheck.bad - Move_GivesCheck
         .word Move_GivesCheck.Castling - Move_GivesCheck
+        .word Move_GivesCheck.bad - Move_GivesCheck
+        .word Move_GivesCheck.bad - Move_GivesCheck
+        .word Move_GivesCheck.bad - Move_GivesCheck
 
 Move_GivesCheck.Castling:
 /*
@@ -143,6 +149,7 @@ Move_GivesCheck.Castling:
         lsr  x0, x0, x17
         and  w0, w0, 1
         neg  w0, w0
+//Display "Move_GivesCheck returning %i0\n"
         ret
 
 Move_GivesCheck.PromQueen:
@@ -161,6 +168,7 @@ Move_GivesCheck.PromQueen:
         lsr  x0, x0, x17
         and  w0, w0, 1
         neg  w0, w0
+//Display "Move_GivesCheck returning %i0\n"
         ret
 
 Move_GivesCheck.EpCapture:
@@ -204,6 +212,7 @@ Move_GivesCheck.EpCapture:
         tst  x0, x4
        cset  x0, ne
         neg  w0, w0
+//Display "Move_GivesCheck returning %i0\n"
         ret
 
 Move_GivesCheck.PromBishop:
@@ -219,6 +228,7 @@ Move_GivesCheck.PromBishop:
         lsr  x0, x0, x17
         and  w0, w0, 1
         neg  w0, w0
+//Display "Move_GivesCheck returning %i0\n"
         ret
 Move_GivesCheck.PromRook:
 /*
@@ -232,6 +242,7 @@ Move_GivesCheck.PromRook:
         lsr  x0, x0, x17
         and  w0, w0, 1
         neg  w0, w0
+//Display "Move_GivesCheck returning %i0\n"
         ret
 
 Move_GivesCheck.PromKnight:
@@ -246,6 +257,7 @@ Move_GivesCheck.PromKnight:
         ldr  x0, [x7, x9, lsl 3]
         and  w0, w0, 1
         neg  w0, w0
+//Display "Move_GivesCheck returning %i0\n"
         ret        
         
 Move_GivesCheck.DiscoveredCheck:
@@ -268,6 +280,7 @@ Move_GivesCheck.DiscoveredCheck:
         lsr  x0, x0, x17
        tbnz  x0, 0, Move_GivesCheck.DiscoveredCheckRet
         mov  w0, -1
+//Display "Move_GivesCheck returning %i0\n"
         ret
 
 Move_GivesCheck.DiscoveredCheckRet:
@@ -281,5 +294,11 @@ Move_GivesCheck.DiscoveredCheckRet:
         mov  w0, 0
         cmp  x1, MOVE_TYPE_PROM << 12
         bhs  Move_GivesCheck.Special.AfterPrologue
+//Display "Move_GivesCheck returning %i0\n"
         ret
+
+
+Move_GivesCheck.bad:
+Display "Move_GivesCheck.bad\n"
+brk 0
 

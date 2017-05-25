@@ -188,7 +188,7 @@ Perft_Root.MoveLoopDone:
         str  x2, [sp, 16]
         lea  x1, sz_bench_format3
         add  x2, sp, 0
-        add  x3, sp, 0
+        mov  x3, 0
          bl  PrintFancy
         add  sp, sp, 32
          bl  Os_WriteOut_Output

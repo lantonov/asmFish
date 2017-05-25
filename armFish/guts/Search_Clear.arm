@@ -10,10 +10,10 @@ Search_Clear:
 */
         stp  x29, x30, [sp, -16]!
          bl  MainHash_Clear
-        lea  x7, mainHash
-       strb  wzr, [x7, MainHash.date]
-        lea  x7, threadPool
-        ldr  w16, [x7, ThreadPool.threadCnt]
+        lea  x6, mainHash
+       strb  wzr, [x6, MainHash.date]
+        lea  x6, threadPool
+        ldr  w16, [x6, ThreadPool.threadCnt]
 
 Search_Clear.NextThread:
 /*
@@ -27,11 +27,11 @@ Search_Clear.NextThread:
 */
        subs  x16, x16, 1
         bmi  Search_Clear.ThreadsDone
-        lea  x7, threadPool
-        add  x7, x7, ThreadPool.threadTable
-        ldr  x14, [x7, x16, lsl 3]
+        lea  x6, threadPool
+        add  x6, x6, ThreadPool.threadTable
+        ldr  x3, [x6, x16, lsl 3]
         mov  w4, VALUE_INFINITE
-        str  w4, [x14, Thread.previousScore]
+        str  w4, [x3, Thread.previousScore]
 /*
 	; clear thread stats
 		mov   rdi, qword[rbx+Thread.rootPos.history]
@@ -39,10 +39,10 @@ Search_Clear.NextThread:
 		xor   eax, eax
 	  rep stosd
 */
-        ldr  x0, [x14, Thread.rootPos + Pos.history]
-        mov  x1, 0
-        mov  x2, sizeof.HistoryStats + sizeof.MoveStats
-         bl  MemoryFill
+        ldr  x17, [x3, Thread.rootPos + Pos.history]
+        mov  w1, (sizeof.HistoryStats + sizeof.MoveStats)/4
+        mov  w0, 0
+         bl  RepStosd
 /*
 	; clear cmh table - some overlap possible here
 		mov   rdi, qword[rbx+Thread.rootPos.counterMoveHistory]
@@ -52,10 +52,23 @@ Search_Clear.NextThread:
 
 		jmp   .NextThread
 */
-        ldr  x0, [x14, Thread.rootPos + Pos.counterMoveHistory]
-        mov  x1, 0
-        mov  x2, sizeof.CounterMoveHistoryStats
-         bl  MemoryFill
+        ldr  x17, [x3, Thread.rootPos + Pos.counterMoveHistory]
+        mov  w1, (sizeof.CounterMoveHistoryStats)/4
+        mov  w0, 0
+         bl  RepStosd
+/*
+                mov   rdi, qword[rbx+Thread.rootPos.counterMoveHistory]
+                add   rdi, CmhDeadOffset
+		mov   ecx, 16*64
+		mov   eax, CounterMovePruneThreshold - 1
+	  rep stosd
+*/
+        ldr  x17, [x3, Thread.rootPos + Pos.counterMoveHistory]
+        add  x17, x17, CmhDeadOffset
+        mov  w1, 16*64
+        mov  w0, CounterMovePruneThreshold - 1
+         bl  RepStosd
+
           b  Search_Clear.NextThread
 
 Search_Clear.ThreadsDone:
