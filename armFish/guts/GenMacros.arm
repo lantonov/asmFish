@@ -126,9 +126,6 @@ local ..ksq_loop
 		 jz   JmpTrue
 */
 .macro CastlingJmp Rights, JmpTrue, JmpFalse
-
-Display 1,"CastlingJmp\n"
-
         ldr  x0, [x20, 8*Pawn]
         ldr  x4, [x20, 8*King]
         orr  x0, x0, x4
@@ -173,7 +170,6 @@ Display 1,"CastlingJmp\n"
 }
 */
 CastlingJmp.ksq_loop\@:
-Display 1,"CastlingJmp.ksq_loop\n"
         add  x7, x20, -Thread.rootPos + Thread.castling_ksqpath + 8*(\Rights)
        ldrb  w2, [x7, x11]
         RookAttacks  x0, x2, x14, x8, x4
@@ -758,7 +754,7 @@ end if
         bhs  GenPawnMoves.EpDone\@
   .if \Type == EVASIONS
         lsr  x4, x15, x0
-       tbnz  x4, 0, GenPawnMoves.EpDone\@
+        tbz  x4, 0, GenPawnMoves.EpDone\@
   .endif
         AttacksFromPawn  Them, bb1, x2, x7
         orr  x2, x2, MOVE_TYPE_EPCAP << 12
@@ -1107,7 +1103,7 @@ else
   .else
    .if \Us == White
          bl  CastleOOOLegal_White
-   .elseif Us == Black
+   .else
          bl  CastleOOOLegal_Black
    .endif
 
@@ -1183,7 +1179,6 @@ else
 end if
 */
 .macro GenAll ParentLabel, Us, Type
-//Display "GenAll \ParentLabel, \Us, \Type called\n"
         GenPawnMoves \ParentLabel, \Us, \Type
         GenMoves  \Us, Knight, \Type
         GenMoves  \Us, Bishop, \Type
@@ -1191,6 +1186,7 @@ end if
         GenMoves  \Us, Queen, \Type
  .if \Type != CAPTURES && \Type != EVASIONS
        ldrb  w9, [x21, State.castlingRights]
+Display 2, "cr: %i9\n"
         ldr  x10, [x20, -Thread.rootPos + Thread.castling_path + 8*(2*\Us+0)]
         ldr  x11, [x20, -Thread.rootPos + Thread.castling_path + 8*(2*\Us+1)]
         and  x10, x10, x14
@@ -1218,8 +1214,8 @@ else
 end if
 */
  .if \Type != QUIET_CHECKS && \Type != EVASIONS
-        ldr  x16, [x20, 8*King]
-        ldr  x4, [x20, 8*\Us]
+        ldr  x16, [x20, Pos.typeBB + 8*King]
+        ldr  x4, [x20, Pos.typeBB + 8*\Us]
         and  x16, x16, x4
        rbit  x2, x16
         clz  x2, x2

@@ -357,13 +357,12 @@ Thread_Think.search_loop:
 */
         ldr  w1, [sp, Thread_Think.alpha]
         ldr  w2, [sp, Thread_Think.beta]
-Display 1, "alpha = %i1, beta = %i2\n"
         mov  w8, w25
         mov  w9, 0
          bl  Search_Root
         mov  w22, w0
         str  w0, [sp, Thread_Think.bestValue]
-Display 1, "bestValue = %i0\n"
+Display 2, "bestValue = %i0\n"
 
         mov  w4, sizeof.RootMove
         mul  w1, w24, w4
@@ -400,15 +399,18 @@ match =0, VERBOSE {
 		jbe   .dont_print_pv
 }
 */
+
         ldr  w4, [x20, -Thread.rootPos + Thread.idx]
        cbnz  w4, Thread_Think.dont_print_pv
         ldr  w0, [sp, Thread_Think.multiPV]
         cmp  w0, 1
         bne  Thread_Think.dont_print_pv
         ldr  w4, [sp, Thread_Think.alpha]
+Display 2,"alpha: %i4\n"
         cmp  w22, w4
         ble  1f
         ldr  w4, [sp, Thread_Think.beta]
+Display 2,"beta: %i4\n"
         cmp  w22, w4        
         blt  Thread_Think.dont_print_pv
 1:       bl  Os_GetTime
@@ -577,8 +579,10 @@ match =0, VERBOSE {
         ldr  w4, [sp, Thread_Think.multiPV]
         cmp  w0, w4
         beq  Thread_Think.print_pv2
+.if VERBOSE == 0
         cmp  x9, 3000
         blo  Thread_Think.multipv_loop
+.endif
 
 Thread_Think.print_pv2:
 /*
@@ -1725,6 +1729,9 @@ DisplayInfo_Uci.multipv_loop:
         add  w1, w1, w0
         add  x27, sp, DisplayInfo_Uci.output
         ldr  w22, [x26, x0, lsl 2]
+
+Display 2,"score: %i22\n"
+
         mov  w0, 'i'
        strb  w0, [x27], 1
         mov  w0, 'n'
@@ -1909,7 +1916,9 @@ end if
 		cmp   r12d, dword[.alpha]
 		 jg   .no_bound
 */
-       cbnz  w23, DisplayInfo_Uci.no_bound
+
+//       cbnz  w23, DisplayInfo_Uci.no_bound
+
         add  x7, x20, -Thread.rootPos
         ldr  w4, [x7, Thread.PVIdx]
         cmp  w25, w4

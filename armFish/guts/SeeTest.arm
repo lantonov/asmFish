@@ -113,7 +113,7 @@ res	     .req w0
 
 SeeTestGe.HaveFromTo:
 
-Display 2, "SeeTest move=%m1\n"
+Display 2, "SeeTest move=%m1 (%i1)\n"
 
 /*
 ProfileInc SeeTest

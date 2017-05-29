@@ -69,13 +69,13 @@ sz_thread_format:
 sz_bench_format1:
         .ascii "*** bench hash %u0 threads %u1 depth %u2 realtime %u3 ***\n\0"
 sz_bench_format2:
-        .ascii "%u0:  nodes: %u1, %u2 knps\n\0"
+        .ascii "%U0:  nodes: %U1, %U2 knps\n\0"
 sz_perft_format:
 sz_bench_format3:
         .ascii "===========================\n"
-        .ascii "Total time (ms) : %u0\n"
-        .ascii "Nodes searched  : %u1\n"
-        .ascii "Nodes/second    : %u2\n\0"
+        .ascii "Total time (ms) : %U0\n"
+        .ascii "Nodes searched  : %U1\n"
+        .ascii "Nodes/second    : %U2\n\0"
 sz_hash_cleared:
         .ascii "info string hash cleared\0"
 

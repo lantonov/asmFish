@@ -1493,7 +1493,7 @@ UciBench:
 
 		lea   rdi, [.parse_hash]
 */
-        mov  x22, 5
+        mov  x22, 9
         mov  x23, 1
         mov  x24, 16
         mov  x25, 0
@@ -1632,43 +1632,7 @@ UciBench.parse_realtime:
        cset  x27, ne
           b  UciBench.parse_loop
 UciBench.parse_done:
-/*
-		lea   rdi, [Output]
-		mov   eax, '*** '
-	      stosd
-		mov   rax, 'bench ha'
-	      stosq
-		mov   eax, 'sh '
-	      stosd
-		sub   rdi, 1
-		mov   eax, r14d
-	       call   PrintUnsignedInteger
-		mov   rax, ' threads'
-	      stosq
-		mov   al, ' '
-	      stosb
-		mov   eax, r13d
-	       call   PrintUnsignedInteger
-		mov   rax, ' depth '
-	      stosq
-		sub   rdi, 1
-		mov   eax, r12d
-	       call   PrintUnsignedInteger
-		mov   rax, ' realtim'
-	      stosq
-		mov   eax, 'e '
-	      stosw
-		mov   eax, r15d
-	       call   PrintUnsignedInteger
-		mov   eax, ' ***'
-	      stosd
-       PrintNewLine
-	       call   _WriteOut_Output
-		mov   dword[options.hash], r14d
-	       call   MainHash_ReadOptions
-		mov   dword[options.threads], r13d
-	       call   ThreadPool_ReadOptions
-*/
+
         stp  x22, x25, [sp, -16]!
         stp  x24, x23, [sp, -16]!
         lea  x27, Output
@@ -1683,7 +1647,6 @@ UciBench.parse_done:
         str  w23, [x16, Options.threads]
          bl  MainHash_ReadOptions
          bl  ThreadPool_ReadOptions
-
 /*
 		xor   eax, eax
 		mov   qword[UciLoop.nodes], rax
@@ -1765,50 +1728,8 @@ UciBench.nextpos:
         add  x5, x5, x0
         str  x4, [sp, UciLoop.time]
         str  x5, [sp, UciLoop.nodes]
+        mov  x25, x0
 
-/*
-		lea   rdi, [Output]
-		mov   rax, r13
-	       call   PrintUnsignedInteger
-		mov   al, ':'
-	      stosb
-		lea   ecx, [rdi-Output]
-		neg   ecx
-		add   ecx, 8
-		 js   @f
-		mov   al, ' '
-	  rep stosb
-		@@:
-
-		mov   rax, 'nodes:  '
-	      stosq
-		mov   rax, r15
-	       call   PrintUnsignedInteger
-		lea   ecx, [rdi-Output]
-		neg   ecx
-		add   ecx, 32
-		 js   @f
-		mov   al, ' '
-	  rep stosb
-		@@:
-
-		mov   rcx, r14
-		cmp   r14, 1
-		adc   rcx, 0
-		mov   rax, r15
-		xor   edx, edx
-		div   rcx
-	       call   PrintUnsignedInteger
-		mov   al, ' '
-	      stosb
-		mov   eax, 'knps'
-	      stosd
-       PrintNewLine
-	       call   _WriteOut_Output
-
-		cmp   rsi, BenchFensEnd
-		 jb   .nextpos
-*/
         lea  x27, Output
         cmp  x24, 0
        cinc  x1, x24, eq
@@ -1826,74 +1747,25 @@ UciBench.nextpos:
         cmp  x26, x6
         blo  UciBench.nextpos
 
-/*
-	       call   _SetPriority_Normal
+         bl  Os_SetPriority_Normal
 
-
-		lea   rdi, [Output]
-		mov   al, '='
-		mov   ecx, 27
-	  rep stosb
-       PrintNewLine
-
-		mov   rax, 'Total ti'
-	      stosq
-		mov   rax, 'me (ms) '
-	      stosq
-		mov   ax, ': '
-	      stosw
-		mov   rax, qword[UciLoop.time]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-		mov   rax, 'Nodes se'
-	      stosq
-		mov   rax, 'arched  '
-	      stosq
-		mov   ax, ': '
-	      stosw
-		mov   rax, qword[UciLoop.nodes]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-		mov   rax, 'Nodes/se'
-	      stosq
-		mov   rax, 'cond    '
-	      stosq
-		mov   ax, ': '
-	      stosw
-
-		mov   rax, qword[UciLoop.nodes]
-		mov   ecx, 1000
-		mul   rcx
-		mov   rcx, qword[UciLoop.time]
-		cmp   rcx, 1
-		adc   rcx, 0
-		div   rcx
-	       call   PrintUnsignedInteger
-       PrintNewLine
-	       call   _WriteOut_Output
-		mov   byte[options.displayInfoMove], -1
-
-
-		jmp   UciGetInput
-*/
         lea  x27, Output        
-        ldr  x0, [sp, UciLoop.nodes]
-        ldr  x1, [sp, UciLoop.time]
+        ldr  x0, [sp, UciLoop.time]
+        ldr  x1, [sp, UciLoop.nodes]
         mov  x2, 1000
-        cmp  x1, 0
-       cinc  x1, x1, eq
+        cmp  x0, 0
+       cinc  x0, x0, eq
       scvtf  d0, x0
       scvtf  d1, x1
       scvtf  d2, x2
-       fmul  d0, d0, d2
-       fdiv  d0, d0, d1
-     fcvtzs  x2, d0
+       fmul  d2, d2, d1
+       fdiv  d2, d2, d0
+     fcvtzs  x2, d2
         stp  x0, x1, [sp, -32]!
         str  x2, [sp, 16]
         lea  x1, sz_bench_format3
         add  x2, sp, 0
+        add  x3, sp, 0
          bl  PrintFancy
         add  sp, sp, 32
          bl  Os_WriteOut_Output                

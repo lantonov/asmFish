@@ -7,7 +7,7 @@ run with
 $ qemu-aarch64 ./armFish
 */
 
-DEBUG   = 1
+DEBUG   = 0
 VERBOSE = 0
 USE_CURRMOVE   = 1
 USE_SELDEPTH   = 1

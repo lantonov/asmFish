@@ -315,40 +315,40 @@ _PrintUciMove:
 		cmp   ecx, 4
 		 jb   .Promotion
 */
-       ubfx  x8, x1, 6, 6
-        and  x9, x1, 63
+       ubfx  w8, w1, 6, 6
+        and  w9, w1, 63
         mov  w0, 'N' + ('O'<<8)
        movk  w0, 'N' + ('E'<<8), lsl 16
-        cbz  x1, _PrintUciMove.Return
+        cbz  w1, _PrintUciMove.Return
         mov  w0, 'N' + ('U'<<8)
        movk  w0, 'L' + ('L'<<8), lsl 16
         tst  w1, w1
         bmi  _PrintUciMove.Return
-        cmp  x9, x8
-       cset  x0, hi
-        and  x10, x9, 56
-        add  x10, x10, x0, lsl 2
-        add  x10, x10, FILE_C
-        lsr  x1, x1, 12
-        cmp  x1, MOVE_TYPE_CASTLE
-       ccmp  x2, 0, 0, eq
-       csel  x9, x10, x9, eq
+        cmp  w9, w8
+       cset  w0, hi
+        and  w10, w9, 56
+        add  w10, w10, w0, lsl 2
+        add  w10, w10, FILE_C
+        lsr  w1, w1, 12
+        cmp  w1, MOVE_TYPE_CASTLE
+       ccmp  w2, 0, 0, eq
+       csel  w9, w10, w9, eq
         
-        mov  x0, 'a' + ('1'<<8)
-        and  x2, x9, 56
-        add  x0, x0, x2, lsl 5
-        and  x9, x9, 7
-        add  x0, x0, x9
+        mov  w0, 'a' + ('1'<<8)
+        and  w2, w9, 56
+        add  w0, w0, w2, lsl 5
+        and  w9, w9, 7
+        add  w0, w0, w9
         
-        mov  x3, 'a' + ('1'<<8)
-        and  x2, x8, 56
-        add  x3, x3, x2, lsl 5
-        and  x8, x8, 7
-        add  x3, x3, x8
+        mov  w3, 'a' + ('1'<<8)
+        and  w2, w8, 56
+        add  w3, w3, w2, lsl 5
+        and  w8, w8, 7
+        add  w3, w3, w8
 
-        add  x0, x3, x0, lsl 16
-        sub  x1, x1, MOVE_TYPE_PROM
-        cmp  x1, 4
+        add  w0, w3, w0, lsl 16
+        sub  w1, w1, MOVE_TYPE_PROM
+        cmp  w1, 4
         blo  _PrintUciMove.Promotion
 
 _PrintUciMove.Return:
@@ -356,7 +356,7 @@ _PrintUciMove.Return:
 		mov   edx, 4
 		ret
 */
-        mov  x2, 4
+        mov  w2, 4
         ret
 _PrintUciMove.Promotion:
 /*
@@ -372,7 +372,7 @@ _PrintUciMove.Promotion:
         adr  x3, _PrintUciMove.lookup
        ldrb  w3, [x3, x1]
         add  x0, x0, x3, lsl 32
-        mov  x2, 5
+        mov  w2, 5
         ret
 
 _PrintUciMove.lookup:

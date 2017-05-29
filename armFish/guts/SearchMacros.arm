@@ -631,19 +631,17 @@ Display 2, "Search Step 7\n"
         blt  Search.7skip\@
 //     if USE_MATEFINDER eq 0
 //	      movzx   ecx, word[rbx+State.npMaterial+2*rcx]
+        add  x6, x21, x1, lsl 1
+       ldrh  w1, [x6, State.npMaterial]
+       cbnz  w1, Search.Return\@
 //	       test   ecx, ecx
 //		jnz   .Return
 //     else
 //	        mov   ecx, dword[rbx+State.npMaterial]
-        ldr  w1, [x21, State.npMaterial]
 //	       test   ecx, 0x0FFFF
 //		 jz   .7skip
-        tst  w1, 0x0FFFF
-        beq  Search.7skip\@
 //                shr   ecx, 16
 //                jnz   .Return
-        lsr  w1, w1, 16
-       cbnz  w1, Search.Return\@
 //     end if
 //.7skip:
 Search.7skip\@:

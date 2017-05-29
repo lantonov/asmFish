@@ -28,14 +28,15 @@ Gen_Evasions:
         stp  x29, x30, [sp, -16]!
 
         ldr  w13, [x20, Pos.sideToMove]
-        ldr  x14, [x20, 8*King]
-        ldr  x4, [x20, x13, lsl 3]
+        ldr  x14, [x20, Pos.typeBB + 8*King]
+        add  x6, x20, Pos.typeBB
+        ldr  x4, [x6, x13, lsl 3]
         and  x14, x14, x4
        rbit  x14, x14
         clz  x14, x14
 
-        ldr  x16, [x20, 8*Pawn]
-        ldr  x4, [x20, 8*Knight]
+        ldr  x16, [x20, Pos.typeBB + 8*Pawn]
+        ldr  x4, [x20, Pos.typeBB + 8*Knight]
         orr  x16, x16, x4
         ldr  x4, [x21, State.checkersBB]
         bic  x16, x4, x16
@@ -78,7 +79,8 @@ Gen_Evasions.SlidersDone:
 		bsf   rax, r12
 		 jz   .KingMoveDone
 */
-        ldr  x16, [x20, x13, lsl 3]
+        add  x6, x20, Pos.typeBB
+        ldr  x16, [x6, x13, lsl 3]
         lea  x7, KingAttacks
         ldr  x4,  [x7, x14, lsl 3]
         bic  x16, x4, x16
@@ -130,8 +132,8 @@ Gen_Evasions.KingMoveDone:
         add  x7, x7, x9
         ldr  x15, [x7, x0, lsl 3]
         orr  x15, x15, x1
-        ldr  x14, [x20, 8*White]
-        ldr  x4, [x20, 8*Black]
+        ldr  x14, [x20, Pos.typeBB + 8*White]
+        ldr  x4, [x20, Pos.typeBB + 8*Black]
         orr  x14, x14, x4
        cbnz  w13, Gen_Evasions_Black
 
