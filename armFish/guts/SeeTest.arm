@@ -113,7 +113,7 @@ res	     .req w0
 
 SeeTestGe.HaveFromTo:
 
-Display "SeeTest move=%m1\n"
+Display 2, "SeeTest move=%m1\n"
 
 /*
 ProfileInc SeeTest
@@ -265,7 +265,7 @@ SeeTestGe.EpCaptureRet:
 
 
 SeeTestGe.Loop:
-Display "SeeTestGe.Loop\n"
+Display 2, "SeeTestGe.Loop\n"
 
 /*
 		xor   stm_d, 8
@@ -275,15 +275,15 @@ Display "SeeTestGe.Loop\n"
         and  attackers, attackers, occupied
 
         mov  w4, swap
-Display "%i4, "
-Display "%X15, "
+Display 2, "%i4, "
+Display 2, "%X15, "
 
         add  x6, x21, State.blockersForKing
         ldr  x4, [x6, stm]
-Display "%X4, "
+Display 2, "%X4, "
         add  x6, x21, State.pinnersForKing
         ldr  x4, [x6, stm]
-Display "%X4\n"
+Display 2, "%X4\n"
 
 /*
 	; modified old
@@ -377,7 +377,7 @@ Display "%X4\n"
         bne  SeeTestGe.FoundQueen
 
 SeeTestGe.FoundKing:
-Display "SeeTestGe.FoundKing\n"
+Display 2, "SeeTestGe.FoundKing\n"
 /*
 		xor   stm_d, 8
 		mov   stmAttackers, qword[rbp+Pos.typeBB+stm]
@@ -397,7 +397,7 @@ Display "SeeTestGe.FoundKing\n"
         
 
 SeeTestGe.Return:
-Display "SeeTestGe.Return %i0\n"
+Display 2, "SeeTestGe.Return %i0\n"
 /*
 		pop   rdi rsi r15 r14 r13 r12
 if DEBUG
@@ -410,7 +410,7 @@ end if
         ret
 
 SeeTestGe.FoundQueen:
-Display "SeeTestGe.FoundQueen\n"
+Display 2, "SeeTestGe.FoundQueen\n"
 /*
 		add   swap, QueenValueMg
 		cmp   swap, res
@@ -442,7 +442,7 @@ Display "SeeTestGe.FoundQueen\n"
           b  SeeTestGe.Loop
 
 SeeTestGe.FoundRook:
-Display "SeeTestGe.FoundRook\n"
+Display 2, "SeeTestGe.FoundRook\n"
 /*
 		add   swap, RookValueMg
 		cmp   swap, res
@@ -468,14 +468,14 @@ Display "SeeTestGe.FoundRook\n"
           b  SeeTestGe.Loop
 
 SeeTestGe.FoundBishop:
-Display "SeeTestGe.FoundBishop\n"
+Display 2, "SeeTestGe.FoundBishop\n"
 /*
 		add   swap, BishopValueMg-PawnValueMg
 */
         add  swap, swap, BishopValueMg - PawnValueMg
 
 SeeTestGe.FoundPawn:
-Display "SeeTestGe.FoundPawn\n"
+Display 2, "SeeTestGe.FoundPawn\n"
 /*
 		add   swap, PawnValueMg
 		cmp   swap, res
@@ -502,7 +502,7 @@ Display "SeeTestGe.FoundPawn\n"
 
 
 SeeTestGe.FoundKnight:
-Display "SeeTestGe.FoundKnight\n"
+Display 2, "SeeTestGe.FoundKnight\n"
 /*
 		add   swap, KnightValueMg
 		cmp   swap, res
@@ -521,7 +521,7 @@ Display "SeeTestGe.FoundKnight\n"
           b  SeeTestGe.Loop
 
 SeeTestGe.Special:
-Display "SeeTestGe.Special\n"
+Display 2, "SeeTestGe.Special\n"
 /*
 	; if we get here, .swap = -value
 	;            and  .res = 0
@@ -550,7 +550,7 @@ Display "SeeTestGe.Special\n"
         
 
 SeeTestGe.ReturnSpecial:
-Display "SeeTestGe.ReturnSpecial\n"
+Display 2, "SeeTestGe.ReturnSpecial %i0\n"
 /*
 
 		pop   rdi rsi r15 r14 r13 r12
@@ -564,7 +564,7 @@ end if
         ret
 
 SeeTestGe.Castle:
-Display "SeeTestGe.Castle\n"
+Display 2, "SeeTestGe.Castle\n"
 /*
 	; return 0 <= swap
 		cmp   swap, 0x80000000
@@ -573,7 +573,7 @@ Display "SeeTestGe.Castle\n"
 */
         cmp  swap, 0
        cset  res, ge
-        ret
+          b  SeeTestGe.ReturnSpecial
 
 /*
 if DEBUG

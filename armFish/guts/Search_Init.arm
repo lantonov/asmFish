@@ -4,7 +4,7 @@ Search_Init:
         stp  x23, x24, [sp, 48]
         lea  x24, Reductions
         stp  d8, d9, [sp, 88]
-       fmov  d9, 5.0e-1
+        ldr  d9, Search_Init.constd_1p95
         stp  x19, x20, [sp, 16]
         mov  x20, 0
         stp  x25, x26, [sp, 64]
@@ -33,7 +33,7 @@ Search_Init.L3:
          bl  Math_log_d_d
        fmul  d0, d8, d0
         add  x2, x21, 32768
-       fmul  d0, d0, d9
+       fdiv  d0, d0, d9
      fcvtas  w0, d0
        subs  w1, w0, #1
         str  w0, [x21]
@@ -69,7 +69,6 @@ Search_Init.L6:
       fmadd  d0, d0, d1, d2
      fcvtzs  w0, d0
         str  w0, [x19, -64]
-Display "%i0, "
       scvtf  d0, w20
        fmov  d1, 2.0
          bl  Math_pow_d_dd
@@ -78,7 +77,6 @@ Display "%i0, "
       fmadd  d0, d0, d1, d2
      fcvtzs  w0, d0
         str  w0, [x19], 4
-Display "%i0\n"
         add  w20, w20, 1
         cmp  w20, 16
         bne  Search_Init.L6
@@ -103,6 +101,9 @@ Display "%i0\n"
         ldp  x29, x30, [sp], 144
         ret
 
+Search_Init.constd_1p95:
+        .word   858993459
+        .word   1073689395
 Search_Init.constd_1p78:
         .word   1202590843
         .word   1073511137

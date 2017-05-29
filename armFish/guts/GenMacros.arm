@@ -126,6 +126,9 @@ local ..ksq_loop
 		 jz   JmpTrue
 */
 .macro CastlingJmp Rights, JmpTrue, JmpFalse
+
+Display 1,"CastlingJmp\n"
+
         ldr  x0, [x20, 8*Pawn]
         ldr  x4, [x20, 8*King]
         orr  x0, x0, x4
@@ -170,6 +173,7 @@ local ..ksq_loop
 }
 */
 CastlingJmp.ksq_loop\@:
+Display 1,"CastlingJmp.ksq_loop\n"
         add  x7, x20, -Thread.rootPos + Thread.castling_ksqpath + 8*(\Rights)
        ldrb  w2, [x7, x11]
         RookAttacks  x0, x2, x14, x8, x4
@@ -261,6 +265,7 @@ GenProm.Outer\@:
         add  x0, x2, x2, lsl 6
         lea  x7, KnightAttacks
         ldr  x4, [x7, x2, lsl 3]
+        tst  x1, x4
         beq  GenProm.InnerDone\@
         mov  x4, 64*64*(MOVE_TYPE_PROM+0) - 64*\Delta
         add  x0, x0, x4
@@ -560,29 +565,6 @@ end if
 		 or   .b2, rcx
     .SkipDCPawns:
 	end if
-	       test   .b1, .b1
-		 jz   .SinglePushDone
-    .SinglePush:
-		bsf   rax, .b1
-	       imul   eax, (1 shl 6) + (1 shl 0)
-		sub   eax, (Up shl 6) + (0 shl 0)
-		mov   dword[rdi], eax
-		lea   rdi, [rdi+sizeof.ExtMove]
-	       blsr   .b1, .b1, rcx
-		jnz   .SinglePush
-    .SinglePushDone:
-	       test   .b2, .b2
-		 jz   .DoublePushDone
-    .DoublePush:
-		bsf   rax, .b2
-	       imul   eax, (1 shl 6) + (1 shl 0)
-		sub   eax, ((Up+Up) shl 6)
-		mov   dword[rdi], eax
-		lea   rdi, [rdi+sizeof.ExtMove]
-	       blsr   .b2, .b2, rcx
-		jnz   .DoublePush
-    .DoublePushDone:
- end if
 */
   .if \Type == QUIET_CHECKS
        ldrb  w2, [x21, State.ksq]
@@ -607,6 +589,31 @@ end if
         orr  bb2, bb2, x1
    GenPawnMoves.SkipDCPawns\@:        
   .endif
+/*
+	       test   .b1, .b1
+		 jz   .SinglePushDone
+    .SinglePush:
+		bsf   rax, .b1
+	       imul   eax, (1 shl 6) + (1 shl 0)
+		sub   eax, (Up shl 6) + (0 shl 0)
+		mov   dword[rdi], eax
+		lea   rdi, [rdi+sizeof.ExtMove]
+	       blsr   .b1, .b1, rcx
+		jnz   .SinglePush
+    .SinglePushDone:
+	       test   .b2, .b2
+		 jz   .DoublePushDone
+    .DoublePush:
+		bsf   rax, .b2
+	       imul   eax, (1 shl 6) + (1 shl 0)
+		sub   eax, ((Up+Up) shl 6)
+		mov   dword[rdi], eax
+		lea   rdi, [rdi+sizeof.ExtMove]
+	       blsr   .b2, .b2, rcx
+		jnz   .DoublePush
+    .DoublePushDone:
+ end if
+*/
         cbz  bb1, GenPawnMoves.SinglePushDone\@
   GenPawnMoves.SinglePush\@:
        rbit  x0, bb1
@@ -1103,6 +1110,7 @@ else
    .elseif Us == Black
          bl  CastleOOOLegal_Black
    .endif
+
    .if \Type == QUIET_CHECKS
         ldr  w1, [x20, -Thread.rootPos + Thread.castling_movgen + 4*(2*\Us+1)]
         str  w1, [x27]
@@ -1143,7 +1151,7 @@ end if
           b  GenCastlingJmp.CastlingOODone\@
    GenCastlingJmp.CheckOOOQuiteCheck\@:
          bl  Move_GivesCheck
-        cbz  w0, GenCastlingJmp.CastlingOODone\@
+        cbz  w0, \ParentLabel\().CastlingDone
         add  x27, x27, sizeof.ExtMove
           b  \ParentLabel\().CastlingDone
   .endif
@@ -1256,7 +1264,7 @@ end if
         eor  x9, x9, 1 << (2*\Us)
         and  x2, x2, 2 << (2*\Us)
         eor  x2, x2, 2 << (2*\Us)
-        ldr  x13, [x20, 8*(\Us^1)]
+        ldr  x13, [x20, Pos.typeBB + 8*(\Us^1)]
         orr  x9, x9, x10
         cbz  x9, \ParentLabel\().CastlingOO
         orr  x2, x2, x11

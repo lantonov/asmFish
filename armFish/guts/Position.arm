@@ -276,18 +276,30 @@ Position_VerifyState.Empty:
         add  x16, x16, 1
         tbz  x16, 6, Position_VerifyState.NextSquare
         ldr  x4, [x21, State.key]
+
+mov x28, 20
+//Display "key %X4, expected key: %X15\n"
+
         cmp  x4, x15
         bne  Position_VerifyState.Failed
+mov x28, 21
+//Display "vs1"
         ldr  x4, [x21, State.pawnKey]
         cmp  x4, x14
         bne  Position_VerifyState.Failed
+mov x28, 22
+//Display "vs2"
         ldr  x4, [x21, State.materialKey]
         cmp  x4, x13
         bne  Position_VerifyState.Failed
+mov x28, 23
+//Display "vs3"
        fmov  x0, d0
         ldr  x4, [x21, State.psq]
         cmp  x4, x0
         bne  Position_VerifyState.Failed
+mov x28, 24
+//Display "vs4"
 /*
 		mov   ecx, dword[rbp+Pos.sideToMove]
 		mov   rdx, qword[rbp+Pos.typeBB+8*King]
@@ -303,15 +315,17 @@ Position_VerifyState.Empty:
 		ret
 */
         ldr  w1, [x20, Pos.sideToMove]
-        ldr  x2, [x20, 8*King]
-        ldr  x4, [x20, x1, lsl 3]
+        add  x6, x20, Pos.typeBB
+        ldr  x2, [x20, Pos.typeBB + 8*King]
+        ldr  x4, [x6, x1, lsl 3]
         and  x2, x2, x4
-       rbit  x4, x2
-        clz  x2, x4
+       rbit  x2, x2
+        clz  x2, x2
          bl  AttackersTo_Side
         ldr  x4, [x21, State.checkersBB]
         cmp  x0, x4
         bne  Position_VerifyState.Failed
+//Display "vs5"
 
         mov  w0, -1
         add  sp, sp, 64
@@ -643,18 +657,25 @@ Position_IsLegal:
 		jae   .Failed
 */
         stp  x21, x30, [sp, -16]!
+        stp  x28, x29, [sp, -16]!
 
-        ldr  x0, [x20, 8*White]
-        ldr  x1, [x20, 8*Black]
+mov x28,20
+
+        ldr  x0, [x20, Pos.typeBB + 8*White]
+        ldr  x1, [x20, Pos.typeBB + 8*Black]
         tst  x0, x1
         bne  Position_IsLegal.Failed
         
+mov x28,1
+
         Popcnt  x0, x0, x8
         cmp  x0, 16
         bhi  Position_IsLegal.Failed
         Popcnt  x1, x1, x8
         cmp  x1, 16
         bhi  Position_IsLegal.Failed
+
+mov x28,2
 
         ldr  x21, [x20, Pos.state]
         ldr  x4, [x21, State.checkersBB]
@@ -688,7 +709,9 @@ Position_IsLegal.VerifyKings:
         cmp  x0, 1
         bne  Position_IsLegal.Failed
 
+
 Position_IsLegal.VerifyPawns:
+mov x28,3
 /*
 		mov   rax, 0xFF000000000000FF
 	       test   rax, qword[rbp+Pos.typeBB+8*Pawn]
@@ -701,6 +724,7 @@ Position_IsLegal.VerifyPawns:
         bne  Position_IsLegal.Failed
 
 Position_IsLegal.VerifyPieces:
+mov x28,4
 /*
 		mov   rcx, qword[rbp+Pos.typeBB+8*White]
 		mov   r9, rcx
@@ -819,6 +843,7 @@ irps p, Pawn Knight Bishop Rook Queen {
 
         mov  x2, 0
 
+mov x28,5
 Position_IsLegal.VerifyBoard:
 /*
 	      movzx   eax, byte[rbp+Pos.board+rdx]
@@ -891,6 +916,7 @@ Position_IsLegal.next:
         tbz  x2, 6, Position_IsLegal.VerifyBoard
 
 Position_IsLegal.VerifyEp:
+mov x28,7
 /*
 	      movzx   ecx, byte [rbx+State.epSquare]
 		cmp   ecx, 64
@@ -967,6 +993,7 @@ Position_IsLegal.VerifyEpDone:
 
 
 Position_IsLegal.VerifyKingCapture:
+mov x28,8
 /*
 	; make sure we can't capture their king
 	      movzx   ecx, byte[rbp+Pos.sideToMove]
@@ -1002,11 +1029,14 @@ Position_IsLegal.VerifyKingCapture:
 	       test   eax, eax
 		 jz   .Failed
 */
+mov x28,9
          bl  Position_VerifyState
         cbz  w0, Position_IsLegal.Failed
+mov x28,10
          bl  Position_VerifyPieceLists
         cbz  w0, Position_IsLegal.Failed
         mov  w0, 0
+        ldp  x28, x29, [sp], 16
         ldp  x21, x30, [sp], 16
         ret
 Position_IsLegal.Failed:
@@ -1015,7 +1045,8 @@ Position_IsLegal.Failed:
 		pop   rdi rbx
 		ret
 */
-        mov  w0, -1
+        mov  w0, w28
+        ldp  x28, x29, [sp], 16
         ldp  x21, x30, [sp], 16
         ret
 
@@ -1878,7 +1909,18 @@ Position_PrintFen.cont:
 		cmp   byte[rbp+Pos.sideToMove], 0
 	     cmovne   eax, ecx
 	      stosw
+*/
+        mov  w0, ' '
+       strb  w0, [x27, -1]
+        mov  w0, ('w'<<0) + (' '<<8)
+        mov  w1, ('b'<<0) + (' '<<8)
+        ldr  w4, [x20, Pos.sideToMove]
+        tst  w4, w4
+       csel  w0, w1, w0, ne
+       strh  w0, [x27], 2
 
+
+/*
 	; castling
 	      movzx   ecx, byte[rbx+State.castlingRights]
 		mov   byte[rdi], '-'
@@ -1896,7 +1938,43 @@ Position_PrintFen.cont:
 		 bt   ecx, i
 		adc   rdi, 0
 	}
+*/
 
+       ldrb  w1, [x21, State.castlingRights]
+        mov  w4, '-'
+       strb  w4, [x27]
+        tst  w1, w1
+       cinc  x27, x27, eq
+
+        mov  w0, ('K'<<0) + ('Q'<<8)
+       movk  w0, ('k'<<0) + ('q'<<8), lsl 16
+        ldr  w2, [x20, -Thread.rootPos+Thread.castling_rfrom]
+        mov  w4, 0x07070707
+        and  w2, w2, w4
+        mov  w4, ('A'<<0) + ('A'<<8)
+       movk  w4, ('a'<<0) + ('a'<<8), lsl 16
+        add  w2, w2, w4
+        ldr  w4, [x20, Pos.chess960]
+        tst  w4, w4
+       csel  w0, w2, w0, ne
+
+       strb  w0, [x27]
+        lsr  w0, w0, 8
+        tst  x1, 1
+       cinc  x27, x27, ne
+       strb  w0, [x27]
+        lsr  w0, w0, 8
+        tst  x1, 2
+       cinc  x27, x27, ne
+       strb  w0, [x27]
+        lsr  w0, w0, 8
+        tst  x1, 4
+       cinc  x27, x27, ne
+       strb  w0, [x27]
+        lsr  w0, w0, 8
+        tst  x1, 8
+       cinc  x27, x27, ne
+/*
 	; ep
 		mov   eax, ' '
 	      stosb
@@ -1921,49 +1999,6 @@ Position_PrintFen.cont:
 		pop   rbx
 		ret
 */
-        mov  w0, ' '
-       strb  w0, [x27, -1]
-        mov  w0, ('w'<<0) + (' '<<8)
-        mov  w1, ('b'<<0) + (' '<<8)
-        ldr  w4, [x20, Pos.sideToMove]
-        tst  w4, w4
-       csel  w0, w2, w0, ne
-       strh  w0, [x27], 2
-
-       ldrb  w1, [x21, State.castlingRights]
-        mov  w0, '-'
-       strb  w0, [x27]
-        tst  w1, w1
-       cinc  x27, x27, eq
-
-        mov  w0, ('K'<<0) + ('Q'<<8)
-       movk  w0, ('k'<<0) + ('q'<<8), lsl 16
-        ldr  w2, [x20, -Thread.rootPos+Thread.castling_rfrom]
-        mov  w4, 0x07070707
-        and  w2, w2, w4
-        mov  w4, ('A'<<0) + ('A'<<8)
-       movk  w4, ('a'<<0) + ('a'<<8), lsl 16
-        add  w2, w2, w4
-        ldr  w4, [x21, Pos.chess960]
-        tst  w4, w4
-       csel  w0, w2, w0, ne
-
-       strb  w0, [x27]
-        lsr  w0, w0, 8
-        tst  x1, 1
-       cinc  x27, x27, ne
-       strb  w0, [x27]
-        lsr  w0, w0, 8
-        tst  x1, 2
-       cinc  x27, x27, ne
-       strb  w0, [x27]
-        lsr  w0, w0, 8
-        tst  x1, 4
-       cinc  x27, x27, ne
-       strb  w0, [x27]
-        lsr  w0, w0, 8
-        tst  x1, 8
-       cinc  x27, x27, ne
 
         mov  w0, ' '
        strb  w0, [x27], 1
@@ -2379,6 +2414,52 @@ PrintBitboardCompact.Done:
         ret
 
 
+
+Position_PrintSmall:
+        stp  x21, x30, [sp, -16]!
+        ldr  x21, [x20, Pos.state]
+
+        mov  w0, 's'
+       strb  w0, [x27], 1
+        mov  w0, 'i'
+       strb  w0, [x27], 1
+        mov  w0, 'd'
+       strb  w0, [x27], 1
+        mov  w0, 'e'
+       strb  w0, [x27], 1
+        mov  w0, ' '
+       strb  w0, [x27], 1
+
+        ldr  w0, [x20, Pos.sideToMove]
+        mov  w1, 'w'
+        mov  w2, 'b'
+        tst  w0, w0
+       csel  w0, w1, w2, eq
+       strb  w0, [x27], 1
+        PrintNewLine        
+
+        mov  x1, 0
+1:
+        eor  x3, x1, 56
+        add  x6, x20, Pos.board
+       ldrb  w2, [x6, x3]
+        lea  x6, PieceToChar
+       ldrb  w2, [x6, x2] 
+        add  w2, w2, (' '<<8) + 10<<16
+        mov  w0, '*'
+        add  w0, w0, (' '<<8) + 10<<16
+       ldrb  w4, [x21, State.epSquare]
+        cmp  x3, x4
+       csel  w0, w2, w0, ne
+        str  w0, [x27], 2
+        add  x1, x1, 1
+        tst  x1, 7
+       cinc  x27, x27, eq
+        tbz  x1, 6, 1b
+
+        ldp  x21, x30, [sp], 16
+        ret
+
 Position_Print:
 
 Position_Print.moveList = 0
@@ -2699,19 +2780,10 @@ Position_Print.localsize = (Position_Print.localsize+15)&-16
         PrintNewLine
 
 
+
         adr  x1, Position_Print.sz_Gen_Legal
          bl  PrintString
-/*
-		mov   r15, rdi
-		mov   rbx, qword[rbp+Pos.state]
-		lea   rdi, [.moveList]
-	       call   Gen_Legal
-		xor   eax, eax
-		mov   qword[rdi], rax
-		mov   rdi, r15
-		lea   rsi, [.moveList]
-		xor   r14d, r14d
-*/
+
         mov  x25, x27
         ldr  x21, [x20, Pos.state]
         add  x27, sp, Position_Print.moveList
@@ -2720,23 +2792,7 @@ Position_Print.localsize = (Position_Print.localsize+15)&-16
         mov  x27, x25
         add  x26, sp, Position_Print.moveList
         mov  x24, 0
-
 Position_Print.NextMove:
-/*
-		mov   eax, dword[rsi]
-		add   rsi, sizeof.ExtMove
-		mov   ecx, eax
-		mov   edx, dword[rbp+Pos.chess960]
-	       test   eax, eax
-		 jz   .MoveListDone
-	       call   PrintUciMove
-		add   r14d, 1
-		and   r14d, 7
-		 jz   .MoveListNL
-		mov   al, ' '
-	      stosb
-		jmp   .MoveList
-*/
         ldr  w0, [x26]
         add  x26, x26, sizeof.ExtMove
         mov  x1, x0
@@ -2751,14 +2807,6 @@ Position_Print.NextMove:
           b  Position_Print.NextMove
 
 Position_Print.MoveListNL:
-/*
-		mov   al, 10
-	      stosb
-		mov   rax,'        '
-	      stosq
-	      stosq
-		jmp   .MoveList
-*/
         PrintNewLine
         mov  x0, x27
         mov  x1, ' '
@@ -2768,8 +2816,8 @@ Position_Print.MoveListNL:
           b  Position_Print.NextMove
 Position_Print.MoveListDone:
 
-        PrintNewLine
 
+        PrintNewLine
         add  sp, sp, Position_Print.localsize
         ldp  x25, x26, [sp], 16
         ldp  x23, x24, [sp], 16

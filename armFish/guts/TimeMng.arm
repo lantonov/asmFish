@@ -226,7 +226,7 @@ GD NewLine
         lea  x6, time
         str  x22, [x6, Time.optimumTime]
         str  x23, [x6, Time.maximumTime]
-Display "time.optimumTime = %i22 ,  time.maximumTime = %i23\n"
+//Display "time.optimumTime = %i22 ,  time.maximumTime = %i23\n"
         add  sp, sp, TimeMng_Init.localsize
         ldp  x24, x25, [sp], 16
         ldp  x22, x23, [sp], 16

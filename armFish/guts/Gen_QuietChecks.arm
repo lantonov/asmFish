@@ -31,7 +31,7 @@ Gen_QuietChecks.PopLoop:
 		jmp   qword[.JmpTable+8*r12]
 */
        rbit  x13, x14
-        clz  x13, x14
+        clz  x13, x13
         sub  x0, x14, 1
         and  x14, x14, x0
         add  x6, x20, Pos.board
@@ -68,7 +68,7 @@ Gen_QuietChecks.AttacksFromRet:
 	       test   rsi, rsi
 		 jz   .MoveLoopDone
 */
-        lsl  w23, w23, 6
+        lsl  w13, w13, 6
         cbz  x16, Gen_QuietChecks.MoveLoopDone
 
 Gen_QuietChecks.MoveLoop:

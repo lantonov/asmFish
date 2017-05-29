@@ -1426,7 +1426,9 @@ ShelterStorm1:
 
 
 Evaluate:
-Display "Evaluate called\n"
+      ldrsh  w0, [x21, State.psq + 2*0]
+      ldrsh  w1, [x21, State.psq + 2*1]
+Display 2, "Evaluate called %i0, %i1\n"
       ldrsh  w0, [x21, State.psq]
         ret
         

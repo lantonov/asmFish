@@ -486,9 +486,7 @@ UciSync:
 */
         stp  x21, x30, [sp, -16]!
          bl  MainHash_ReadOptions
-Display "UciSync hash returned\n"
          bl  ThreadPool_ReadOptions
-Display "UciSync thread returned\n"
         lea  x6, options
        strb  wzr, [x6, Options.changed]
         ldp  x21, x30, [sp], 16
@@ -1495,7 +1493,7 @@ UciBench:
 
 		lea   rdi, [.parse_hash]
 */
-        mov  x22, 13
+        mov  x22, 5
         mov  x23, 1
         mov  x24, 16
         mov  x25, 0
@@ -1517,15 +1515,16 @@ UciBench.parse_loop:
 		@@:
 */
          bl  SkipSpaces
-       ldrb  w1, [x26]
-        cmp  w1, ' '
+       ldrb  w0, [x26]
+        cmp  w0, ' '
         blo  UciBench.parse_done
-        sub  w0, w1, '0'
-        cmp  w0, 10
-        bhs  UciBench.GotToken
-        cbz  x27, UciBench.parse_done
+        cmp  w0, '1'
+        blo  1f
+        cmp  w0, '9'
+        bhi  1f
+        cbz  x27, 1f
          br  x27
-UciBench.GotToken:
+1:
 /*
 		lea   rcx, [sz_threads]
 	       call   CmpString
@@ -1678,6 +1677,7 @@ UciBench.parse_done:
          bl  PrintFancy
         add  sp, sp, 32
          bl  Os_WriteOut_Output
+
         lea  x16, options
         str  w24, [x16, Options.hash]
         str  w23, [x16, Options.threads]
@@ -1690,16 +1690,17 @@ UciBench.parse_done:
 		mov   byte[options.displayInfoMove], al
 	       call   Search_Clear
 */
-        lea  x16, options
+        lea  x6, options
         str  xzr, [sp, UciLoop.nodes]
-       strb  wzr, [x16, Options.displayInfoMove]
+       strb  wzr, [x6, Options.displayInfoMove]
+         bl  Search_Clear
 /*
 	       test   r15d, r15d
 		 jz   @f
 	       call   _SetPriority_Realtime
 	@@:
 */
-        cbz  x25, 1f
+        cbz  w25, 1f
          bl  Os_SetPriority_Realtime
     1:
 /*
@@ -1752,8 +1753,8 @@ UciBench.nextpos:
         mov  x24, x0
         add  x1, sp, UciLoop.limits
          bl  ThreadPool_StartThinking
-        lea  x16, threadPool
-        ldr  x1, [x16, ThreadPool.threadTable+8*0]
+        lea  x6, threadPool
+        ldr  x1, [x6, ThreadPool.threadTable + 8*0]
          bl  Thread_WaitForSearchFinished
          bl  Os_GetTime
         sub  x24, x0, x24
@@ -1816,11 +1817,13 @@ UciBench.nextpos:
         str  x2, [sp, 16]
         lea  x1, sz_bench_format2
         add  x2, sp, 0
+        add  x3, sp, 0
          bl  PrintFancy
         add  sp, sp, 32
          bl  Os_WriteOut_Output
-        lea  x16, BenchFensEnd
-        cmp  x26, x16
+
+        lea  x6, BenchFensEnd
+        cmp  x26, x6
         blo  UciBench.nextpos
 
 /*
@@ -1875,6 +1878,7 @@ UciBench.nextpos:
 
 		jmp   UciGetInput
 */
+        lea  x27, Output        
         ldr  x0, [sp, UciLoop.nodes]
         ldr  x1, [sp, UciLoop.time]
         mov  x2, 1000

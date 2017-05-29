@@ -88,7 +88,6 @@ ThreadPool_ReadOptions:
 */
         stp  x21, x30, [sp, -16]!
         stp  x26, x27, [sp, -16]!
-Display "ThreadPool_ReadOptions called\n"
         lea  x6, options
         ldr  w26, [x6, Options.threads]
         lea  x6, threadPool
@@ -118,7 +117,6 @@ ThreadPool_ReadOptions.Skip:
 		pop   rdi rsi rbx
 		ret
 */
-Display "ThreadPool_ReadOptions returning\n"
         ldp  x26, x27, [sp], 16
         ldp  x21, x30, [sp], 16
         ret
@@ -200,8 +198,6 @@ ThreadPool_DisplayThreadDistribution:
         mov  x5, sizeof.NumaNode
        madd  x25, x4, x5, x26
 
-Display "ThreadPool_DisplayThreadDistribution called\n"
-
 ThreadPool_DisplayThreadDistribution.NextNode:
 /*
 		mov   rax, 'info str'
@@ -225,9 +221,6 @@ ThreadPool_DisplayThreadDistribution.NextNode:
         mov  x3, 0
          bl  PrintFancy
         add  sp, sp, 32
-
-Display "ThreadPool_DisplayThreadDistribution after fancy\n"
-
         mov  w21, -1
 ThreadPool_DisplayThreadDistribution.ThreadLoop:
 /*
@@ -278,7 +271,6 @@ ThreadPool_DisplayThreadDistribution.Return:
 		pop   r15 r14 rdi rsi rbx
 		ret
 */
-Display "ThreadPool_DisplayThreadDistribution returning\n"
         ldp  x24, x25, [sp], 16
         ldp  x26, x27, [sp], 16
         ldp  x21, x30, [sp], 16

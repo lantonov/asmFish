@@ -69,7 +69,7 @@ sz_thread_format:
 sz_bench_format1:
         .ascii "*** bench hash %u0 threads %u1 depth %u2 realtime %u3 ***\n\0"
 sz_bench_format2:
-        .ascii "%u0:  nodes: %u2, %u3 knps\n\0"
+        .ascii "%u0:  nodes: %u1, %u2 knps\n\0"
 sz_perft_format:
 sz_bench_format3:
         .ascii "===========================\n"

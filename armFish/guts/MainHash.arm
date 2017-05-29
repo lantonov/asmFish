@@ -3,7 +3,7 @@ MainHash_Create:
         stp  x21, x30, [sp, -16]!
         stp  x26, x27, [sp, -16]!
         lea  x21, mainHash
-        mov  w26, 15
+        mov  w26, 16
         str  w26, [x21, MainHash.sizeMB]
         lsl  x26, x26, 20
         mov  x1, x26
@@ -43,7 +43,6 @@ MainHash_ReadOptions:
         eor  w0, w0, w27
        tbnz  w0, 0, MainHash_ReadOptions.Skip
 MainHash_ReadOptions.NoMatch:
-Display "MainHash_ReadOptions.NoMatch\n"
          bl  MainHash_Free
         str  w26, [x29, MainHash.sizeMB]
         lsl  x26, x26, 20

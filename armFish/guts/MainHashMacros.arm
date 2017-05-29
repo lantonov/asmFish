@@ -41,8 +41,13 @@ ProfileInc MainHash_Save
 		cmp   key16, word[rcx]
 		jne   ..write_everything
 */
+
+
         ldr  x1, [\entr]
         str  x1, [sp, \lcopy]
+Display 2, "hash entr: %X1\n"
+
+        mov  x1, \entr
         lsr  w1, w1, 3 - 1
         and  w1, w1, 3 << 1
         neg  x1, x1
@@ -71,7 +76,7 @@ else
 		mov   word[lcopy+MainHashEntry.move], ax
 end if
 */
-        cbz  w0, MainHash_Save.write_after_move\@
+        cbz  w0, MainHash_Save.dont_write_move\@
        strh  w0, [sp, \lcopy + MainHashEntry.move]
       
 MainHash_Save.dont_write_move\@:
@@ -106,6 +111,9 @@ MainHash_Save.write_everything\@:
 */
        strh  w0, [sp, \lcopy + MainHashEntry.move]
        strh  \key16, [x1]
+mov w4, \key16
+Display 2, "write key %i4\n"
+
 
 MainHash_Save.write_after_move\@:
 /*
@@ -127,10 +135,14 @@ MainHash_Save.write_after_move\@:
         orr  w0, w0, \bounder
        strb  w0, [sp, \lcopy + MainHashEntry.genBound]
         mov  w0, \depth
+and w4, w0, 255
+Display 2, "write depth %i4\n"
+
+
        strb  w0, [sp, \lcopy + MainHashEntry.depth]
         mov  w0, \ev
-        str  w0, [sp, \lcopy + MainHashEntry.eval]
-        str  w2, [sp, \lcopy + MainHashEntry.value]
+       strh  w0, [sp, \lcopy + MainHashEntry.eval]
+       strh  w2, [sp, \lcopy + MainHashEntry.value]
 
 MainHash_Save.done\@:
 /*
@@ -139,7 +151,8 @@ MainHash_Save.done\@:
 
 }
 */
+
         ldr  x0, [sp, \lcopy]
         str  x0, [\entr]
-Display "hash save: %X0\n"
+Display 2, "hash save: %X0\n"
 .endm

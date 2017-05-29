@@ -357,11 +357,13 @@ Thread_Think.search_loop:
 */
         ldr  w1, [sp, Thread_Think.alpha]
         ldr  w2, [sp, Thread_Think.beta]
+Display 1, "alpha = %i1, beta = %i2\n"
         mov  w8, w25
         mov  w9, 0
          bl  Search_Root
         mov  w22, w0
         str  w0, [sp, Thread_Think.bestValue]
+Display 1, "bestValue = %i0\n"
 
         mov  w4, sizeof.RootMove
         mul  w1, w24, w4
@@ -413,8 +415,10 @@ match =0, VERBOSE {
         lea  x6, time
         ldr  x4, [x6, Time.startTime]
         sub  x0, x0, x4
+.if VERBOSE == 0
         cmp  x0, 3000
         bls  Thread_Think.dont_print_pv
+.endif
 /*
 		mov   ecx, r15d
 		mov   edx, dword[.alpha]
@@ -488,9 +492,10 @@ Thread_Think.fail_high:
 		jmp   .search_loop
 */
         ldr  w4, [sp, Thread_Think.delta]
+        add  w2, w2, w4
         mov  w1, VALUE_INFINITE
         cmp  w2, w1
-       csel  w2, w2, w2, gt
+       csel  w2, w1, w2, gt
         str  w0, [sp, Thread_Think.alpha]
         str  w2, [sp, Thread_Think.beta]
         str  w10, [sp, Thread_Think.delta]
@@ -512,6 +517,7 @@ Thread_Think.fail_low:
 		jmp   .search_loop
 */
         ldr  w4, [sp, Thread_Think.delta]
+        sub  w2, w2, w4
         mov  w1, -VALUE_INFINITE
         cmp  w2, w1
        csel  w2, w1, w2, lt
@@ -1631,9 +1637,9 @@ if USE_HASHFULL
 end if
 */
 .if USE_HASHFULL
-        mov  w0, -1
-        cmp  x9, 1000
-        blo  1f
+//        mov  w0, -1
+//        cmp  x9, 1000
+//        blo  1f
          bl  MainHash_HashFull
 1:      str  w0, [sp, DisplayInfo_Uci.hashfull]
 .endif
@@ -1824,6 +1830,8 @@ if VERBOSE<2
 	       call   PrintUnsignedInteger
 end if
 */
+
+.if VERBOSE == 0
         mov  w0, ' '
        strb  w0, [x27], 1
         mov  w0, 't'
@@ -1850,7 +1858,7 @@ end if
        strb  w0, [x27], 1
         ldr  x0, [sp, DisplayInfo_Uci.nps]
          bl  PrintUInt
-        
+.endif      
 
 /*
 if USE_SYZYGY

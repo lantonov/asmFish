@@ -97,6 +97,9 @@ ProfileInc moveUnpack
         and  w11, w11, 7
         lsr  x4, x14, x8
         tbz  x4, 0, Move_IsPseudoLegal.ReturnFalse
+
+        cmp  w1, MOVE_TYPE_PROM
+        bhs  Move_IsPseudoLegal.Special
 /*
 	; make sure that we don't capture our own piece
 		mov   eax, dword[.JmpTable+4*r11]
@@ -815,7 +818,7 @@ Move_IsPseudoLegal.CastleCheck_WhiteOO:
 		ret
 */
        ldrb  w0, [x21, State.castlingRights]
-        ldr  x1, [x20, -Thread.rootPos + Thread.castling_path + 8*2]
+        ldr  x1, [x20, -Thread.rootPos + Thread.castling_path + 8*0]
         and  x1, x1, x15
         and  w0, w0, 1 << 0
         eor  w0, w0, 1 << 0

@@ -35,6 +35,15 @@ SetCheckInfo.AfterPrologue:
         clz  x15, x15
 
 SetCheckInfo.go:
+
+
+.if DEBUG
+        PushAll
+         bl  Position_IsLegal
+       cbnz  w0, Move_Do_post_posill
+        PopAll
+.endif
+
 /*
 ProfileInc SetCheckInfo
 

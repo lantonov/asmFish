@@ -34,11 +34,25 @@ ProfileInc CheckTime
                 mov   rdi, qword[time.maximumTime]
 */
         stp  x21, x30, [sp, -16]!
-        stp  x14, x15, [sp, -16]!
-        mov  x14, (MAX_RESETCNT>>0 ) & 0x0ff
-       movk  x14, (MAX_RESETCNT>>16) & 0x0ff, lsl 16
+        stp  x26, x27, [sp, -16]!
+      mov32  w26, MAX_RESETCNT
+//Display "CheckTime called\n"
+//DisplayPause
+
+        lea  x6, limits
+       ldrb  w0, [x6, Limits.ponder]
+       cbnz  w0, CheckTime.Return
+
+        lea  x6, limits
+       ldrb  w0, [x6, Limits.useTimeMgmt]
+        cbz  w0, CheckTime.DontUseTimeMgmt
+
+        lea  x6, time
+        ldr  x27, [x6, Time.maximumTime]
 
 CheckTime.Reset4Time:
+//Display "CheckTime.Reset4Time\n"
+//DisplayPause
 /*
         ; rdi is target time
                call   _GetTime
@@ -63,20 +77,20 @@ GD Int64, rdi
               cmova   esi, eax
 */
          bl  Os_GetTime
-        lea  x16, time
-        ldr  x4, [x16, Time.startTime]
+        lea  x6, time
+        ldr  x4, [x6, Time.startTime]
         add  x0, x0,1
         sub  x0, x0, x4
-       subs  x15, x15, x0
+       subs  x27, x27, x0
         blo  CheckTime.Stop
         mov  x0, MAX_RESETCNT/2000
-      umulh  x2, x0, x15
-        mul  x0, x0, x15
+      umulh  x2, x0, x27
+        mul  x0, x0, x27
        adds  x0, x0, MIN_RESETCNT
         adc  x2, x2, xzr
        cbnz  x2, CheckTime.Return
-        cmp  x14, x0
-       csel  w14, w0, w14, hi
+        cmp  x26, x0
+       csel  w26, w0, w26, hi
 
         
 CheckTime.Return:
@@ -89,9 +103,8 @@ GD NewLine
 	; set resetCnt for all threads to esi
                 mov   ecx, dword[threadPool.threadCnt]
 */
-        lea  x16, threadPool
-        ldr  w1, [x16, ThreadPool.threadCnt]
-        add  x16, x16, ThreadPool.threadTable
+        lea  x6, threadPool
+        ldr  w1, [x6, ThreadPool.threadCnt]
 CheckTime.ResetNextThread:
 /*
                 sub   ecx, 1
@@ -103,10 +116,14 @@ CheckTime.ResetNextThread:
                 ret
 */
         sub  w1, w1, 1
-        ldr  x0, [x16, x1, lsl 3]
-        str  w14, [x10, Thread.resetCnt]
+        lea  x6, threadPool
+        add  x6, x6, ThreadPool.threadTable
+        ldr  x0, [x6, x1, lsl 3]
+        str  w26, [x0, Thread.resetCnt]
        cbnz  w1, CheckTime.ResetNextThread
-        ldp  x14, x15, [sp], 16
+//Display "CheckTime returning %i26"
+//DisplayPause
+        ldp  x26, x27, [sp], 16
         ldp  x21, x30, [sp], 16
         ret
 
@@ -117,12 +134,17 @@ CheckTime.Stop:
                 ret
 */
         mov  w0, -1
-        lea  x16, signals
-       strb  w0, [x16, Signals.stop]
-        ldp  x14, x15, [sp], 16
+        lea  x6, signals
+       strb  w0, [x6, Signals.stop]
+//Display "CheckTime returning stop\n"
+//DisplayPause
+        ldp  x26, x27, [sp], 16
         ldp  x21, x30, [sp], 16
         ret
+
 CheckTime.DontUseTimeMgmt:
+//Display "CheckTime.DontUseTimeMgmt\n"
+//DisplayPause
 /*
                 mov   edi, dword[limits.movetime]
                test   edi, edi
@@ -134,11 +156,11 @@ CheckTime.DontUseTimeMgmt:
                call   ThreadPool_NodesSearched_TbHits
                 add   rax, 1
 */
-        lea  x16, limits
-        ldr  w15, [x16, Limits.movetime]
-       cbnz  w15, CheckTime.Reset4Time
-        ldr  x15, [x16, Limits.nodes]
-        cbz  x15, CheckTime.Return
+        lea  x6, limits
+        ldr  w27, [x6, Limits.movetime]
+       cbnz  w27, CheckTime.Reset4Time
+        ldr  x27, [x6, Limits.nodes]
+        cbz  x27, CheckTime.Return
          bl  ThreadPool_NodesSearched_TbHits
         add  x0, x0, 1
 
@@ -163,15 +185,13 @@ GD Int64, rdi
               cmova   esi, edx
                 jmp   .Return
 */
-       subs  x15, x15, x0
+       subs  x27, x27, x0
         blo  CheckTime.Stop
         mov  x0, 0xaaaaaaaaaaaaaaaa
        movk  x0, 0x2aaa, lsl 48
-      umulh  x2, x0, x15
+      umulh  x2, x0, x27
         add  x2, x2, MIN_RESETCNT
-        cmp  x14, x2
-       csel  w14, w2, w14, hi
+        cmp  x26, x2
+       csel  w26, w2, w26, hi
           b  CheckTime.Return
-
-        
 

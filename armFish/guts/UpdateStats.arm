@@ -82,6 +82,8 @@ end if
 		mov   dword[rbx+State.killers+4*1], eax
 		mov   dword[rbx+State.killers+4*0], move
 */
+Display 2, "UpdateStats called\n"
+
         ldr  w0, [x21, State.killers + 4*0]
         cmp  w0, \move
         beq  UpdateStats.DontUpdateKillers\@
@@ -124,7 +126,7 @@ UpdateStats.DontUpdateOpp\@:
         add  x8, x4, x8, lsl 14
         add  x8, x8, x0, lsl 2
 
-Display "HU%i0|"
+Display 2, "HU%i0|"
 
         ldr  w0, [x8]
         mov  w1, 324
@@ -162,7 +164,7 @@ else
         neg  \bonus32, \bonus32
         mov  w16, 0
 mov w4, \quietsCnt
-Display "qcnt%i4|"
+Display 2, "qcnt%i4|"
         cbz  \quietsCnt, UpdateStats.Return\@
 
 UpdateStats.NextQuiet\@:
@@ -201,7 +203,7 @@ UpdateStats.NextQuiet\@:
        ldrb  w0, [x6, x0]
         add  w9, w1, w0, lsl 6
 
-Display "HU%i2|"
+Display 2, "HU%i2|"
 
         ldr  w0, [x8]
         mov  w1, 324
@@ -223,6 +225,7 @@ end if
  .endif
 UpdateStats.BonusTooBig\@:
 UpdateStats.Return\@:
+Display 2, "UpdateStats.Return\n"
 /*
 }
 */

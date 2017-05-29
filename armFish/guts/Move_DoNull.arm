@@ -1,3 +1,20 @@
+.if DEBUG
+Move_DoNull_posill:
+//		lea   rdi, [Output]
+//	     szcall   PrintString, 'position not legal after making'
+//		jmp   Move_Do_GoError
+        lea  x27, debug.output
+        Print "position did not pass Position_IsLegal in Do_NullMove"
+        PrintNewLine
+        lea  x1, debug.position
+         bl  PrintString
+        str  wzr, [x27]
+DisplayPause
+        lea  x27, debug.output
+         bl  Os_ErrorBox
+        brk  0
+.endif
+
 
 Move_DoNull:
 /*
@@ -20,6 +37,29 @@ match =1, DEBUG {
 		pop   rdi rdx rcx
 }
 */
+
+.if DEBUG
+        PushAll
+        adr  x4, 1f
+        lea  x6, debug.address
+        str  x4, [x6]
+
+        lea  x27, debug.position
+        str  x21, [x20, Pos.state]
+         bl  Position_Print
+        PrintNewLine
+       strb  wzr, [x27]
+
+         bl  Position_IsLegal
+       cbnz  w0, Move_DoNull_posill
+          b  2f
+1: .ascii "Move_DoNull\0"
+.balign 4
+2:
+        PopAll
+.endif
+
+
 /*
 	; null move doesn't use a move picker
 		mov   r12, qword[rbx-1*sizeof.State+State.endMoves]
@@ -32,7 +72,17 @@ match =1, DEBUG {
 		mov   r11, qword[rbx+State.psq] 	; copy psq and npMaterial
 
 	     Assert   e, qword[rbx+State.checkersBB], 0, 'assertion checkersBB = 0 failed in Move_DoNull'
+*/
 
+        ldr  x12, [x21, -1*sizeof.State + State.endMoves]
+       ldrh  w0, [x21, State.rule50]
+        ldr  w2, [x21, State.epSquare]
+        ldr  x8, [x21, State.key]
+        ldr  x9, [x21, State.pawnKey]
+        ldr  x10, [x21, State.materialKey]
+        ldr  x11, [x21, State.psq]
+
+/*
 		mov   qword[rbx+State.endMoves], r12
 		add   rbx, sizeof.State
 		xor   dword[rbp+Pos.sideToMove], 1
@@ -41,13 +91,6 @@ match =1, DEBUG {
 	       test   edx, 63
 		jnz   .epsq
 */
-        ldr  x12, [x21, -1*sizeof.State + State.endMoves]
-       ldrh  w0, [x21, State.rule50]
-        ldr  w2, [x21, State.epSquare]
-        ldr  x8, [x21, State.key]
-        ldr  x9, [x21, State.pawnKey]
-        ldr  x10, [x21, State.materialKey]
-        ldr  x11, [x21, State.psq]
 
         str  x12, [x21, State.endMoves]
         add  x21, x21, sizeof.State
@@ -57,6 +100,9 @@ match =1, DEBUG {
         lea  x6, Zobrist_side
         ldr  x4, [x6]
         eor  x8, x8, x4
+
+        tst  w2, 63
+        bne  Move_DoNull.epsq
 
 
 Move_DoNull.epsq_ret:
@@ -106,6 +152,8 @@ match =1, DEBUG {
         and  x8, x8, x4
         add  x8, x5, x8, lsl 5
        prfm  PLDL1KEEP, [x8]
+
+        str  x21, [x20, Pos.state]
 
           b  SetCheckInfo.AfterPrologue
 

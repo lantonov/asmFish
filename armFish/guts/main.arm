@@ -18,9 +18,9 @@
          bl  Endgame_Init
 
 // write engine name
-        lea  x27, szGreetingEnd
-	lea  x1, szGreeting
-         bl  Os_WriteOut
+//        lea  x27, szGreetingEnd
+//	lea  x1, szGreeting
+//         bl  Os_WriteOut
 
 // set up threads and hash
          bl  MainHash_Create

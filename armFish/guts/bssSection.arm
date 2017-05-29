@@ -1,3 +1,11 @@
+debug.output: .space 8192
+debug.position: .space 8192
+debug.address: .space 8
+debug.move: .space 4
+
+
+
+.balign 16
 Output:         .space 4096
 DisplayOutput:  .space 1024
 

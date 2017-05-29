@@ -370,7 +370,7 @@ _PrintUciMove.Promotion:
 		ret
 */
         adr  x3, _PrintUciMove.lookup
-        ldr  w3, [x3, x1]
+       ldrb  w3, [x3, x1]
         add  x0, x0, x3, lsl 32
         mov  x2, 5
         ret
@@ -422,6 +422,24 @@ ParseUciMove.localsize = (ParseUciMove.localsize+15) & -16
 		 or   rbx, rax
 		lea   rdi, [.moveList-sizeof.ExtMove]
 .CheckNext:
+*/
+        add  x27, sp, ParseUciMove.moveList
+        ldr  x21, [x20, Pos.state]
+         bl  SetCheckInfo
+         bl  Gen_Legal
+
+        str  xzr, [x27]
+        ldr  w21, [x26], 4
+       ldrb  w0, [x26]
+        ToLower w0
+        cmp  w0, ' '
+       cinc  x26, x26, hi
+       csel  w0, w0, wzr, hi
+        add  x21, x21, x0, lsl 32
+
+        add  x27, sp, ParseUciMove.moveList - sizeof.ExtMove
+ParseUciMove.CheckNext:
+/*
 		add   rdi, sizeof.ExtMove
 		mov   ecx, dword[rdi+ExtMove.move]
 		xor   eax, eax
@@ -443,20 +461,7 @@ ParseUciMove.localsize = (ParseUciMove.localsize+15) & -16
 		ret
 */
 
-        add  x27, sp, ParseUciMove.moveList
-        ldr  x21, [x20, Pos.state]
-         bl  SetCheckInfo
-         bl  Gen_Legal
-        str  xzr, [x27]
-        ldr  w21, [x26], 4
-       ldrb  w0, [x26]
-        ToLower w0
-        cmp  w0, ' '
-       cinc  x26, x26, hi
-       csel  w0, w0, wzr, hi
-        add  x21, x21, x0, lsl 32
-        add  x27, sp, ParseUciMove.moveList-sizeof.ExtMove
-ParseUciMove.CheckNext:
+
         add  x27, x27, sizeof.ExtMove
         ldr  w1, [x27, ExtMove.move]
         cbz  w1, ParseUciMove.Failed

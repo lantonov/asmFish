@@ -156,8 +156,8 @@
 // Display a formated message. Use %[x,i,u]n for displaying
 // register xn in hex, signed or unsigned.
 // ex: Display "sq: %i14  sq: %i15  line: %x0  bet: %x1\n"
-.macro Display Mes
-/*
+.macro Display vlevel, Mes
+.if VERBOSE == \vlevel
         PushAll
         lea  x1, DisplayLock
          bl  Os_MutexLock
@@ -177,16 +177,33 @@ anol\@:
         lea  x1, DisplayLock
          bl  Os_MutexUnlock
         PopAll
-*/
+.endif
 .endm
 
-.macro DisplayPause
-/*
+// just write the message to x27
+.macro Print Mes
         PushAll
-        mov  x1, 100
+        adr  x1, anom\@
+          b  anol\@
+anom\@:
+        .ascii "\Mes"
+        .byte 0
+        .balign 4
+anol\@:
+        mov  x2, sp
+        add  x3, sp, 32*8
+         bl  PrintFancy
+        str  x27, [sp, 8*27]
+        PopAll
+.endm
+
+
+
+.macro DisplayPause
+        PushAll
+        mov  x1, 400
          bl  Os_Sleep
         PopAll
-*/
 .endm
 
 .macro ToLower Reg

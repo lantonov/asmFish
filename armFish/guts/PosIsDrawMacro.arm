@@ -36,6 +36,9 @@ local ..CheckNext, ..noDraw, ..KeysDontMatch
 		cmp   edx, 100
 		jae   coldlabel
 */
+
+Display 2, "id:%i1,%i2\n"
+
         cmp  w2, 100
         bhs  \coldlabel
 \coldreturnlabel:
@@ -110,7 +113,6 @@ macro PosIsDraw_Cold WeHaveADraw, coldreturnlabel {
 }
 */
 .macro PosIsDraw_Cold WeHaveADraw, coldreturnlabel
-brk 0
         ldr  x11, [x21, State.checkersBB]
         cbz  x11, \WeHaveADraw
         stp  x0, x1, [sp, -16]!

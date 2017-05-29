@@ -255,6 +255,7 @@ Move_GivesCheck.PromKnight:
 */
         lea  x7, KnightAttacks
         ldr  x0, [x7, x9, lsl 3]
+        lsr  x0, x0, x17
         and  w0, w0, 1
         neg  w0, w0
 //Display "Move_GivesCheck returning %i0\n"
@@ -299,6 +300,5 @@ Move_GivesCheck.DiscoveredCheckRet:
 
 
 Move_GivesCheck.bad:
-Display "Move_GivesCheck.bad\n"
 brk 0
 

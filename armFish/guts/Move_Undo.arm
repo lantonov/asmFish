@@ -1,5 +1,19 @@
+Move_Undo_Check:
+        PushAll
+         bl  Position_IsLegal
+       cbnz  w0, Move_Undo_Check.bad
+        PopAll
+        ret
+Move_Undo_Check.bad:
+        lea  x27, debug.output
+        Print "bad %i0 after Move_Undo\n"
+        lea  x1, debug.position
+         bl  PrintString
+        lea  x1, debug.output
+         bl  Os_WriteOut
+        brk  0
 
-Display "BAD\n"
+
 Move_Undo:
 /*
 	; in: rbp  address of Pos
@@ -28,7 +42,16 @@ Move_Undo:
 		mov   eax, r10d
 		and   eax, 7
 */
-Display "Move_Undo(move=%m1)\n"
+Display 2, "Move_Undo(move=%m1)\n"
+
+
+.if DEBUG
+        PushAll
+        lea  x27, debug.position
+         bl  Position_Print
+        str  wzr, [x27]
+        PopAll
+.endif
 
         ldr  w16, [x20, Pos.sideToMove]
         eor  x16, x16, 1
@@ -96,6 +119,9 @@ Display "Move_Undo(move=%m1)\n"
         mov  x0, x11
         and  x11, x11, 7
        cbnz  x11, Move_Undo.Captured
+.if DEBUG
+          b  Move_Undo_Check
+.endif
         ret
 
 Move_Undo.Captured:
@@ -134,6 +160,9 @@ Move_Undo.Captured:
         add  x1, x1, 1
         add  x7, x20, Pos.pieceEnd
        strb  w1, [x7, x0]
+.if DEBUG
+          b  Move_Undo_Check
+.endif
         ret
 
 
@@ -251,6 +280,9 @@ Move_Undo.Prom:
         mov  x2, 0
         and  x11, x11, 7
        cbnz  x11, Move_Undo.PromCapture
+.if DEBUG
+          b  Move_Undo_Check
+.endif
         ret
 
 Move_Undo.PromCapture:
@@ -289,6 +321,9 @@ Move_Undo.PromCapture:
         add  x1, x1, 1
         add  x7, x20, Pos.pieceEnd
        strb  w1, [x7, x0]
+.if DEBUG
+          b  Move_Undo_Check
+.endif
         ret
 
 Move_Undo.EpCapture:
@@ -337,6 +372,9 @@ Move_Undo.EpCapture:
         add  x0, x0, 1
         add  x7, x20, Pos.pieceEnd
        strb  w0, [x7, x11]
+.if DEBUG
+          b  Move_Undo_Check
+.endif
         ret
 
 Move_Undo.Castle:
@@ -358,12 +396,13 @@ Move_Undo.Castle:
         mov  x4, 1
         lsl  x4, x4, x9
         orr  x2, x2, x4
-        ldr  x4, [x20, x0, lsl 3]
+        add  x6, x20, Pos.typeBB
+        ldr  x4, [x6, x0, lsl 3]
         eor  x4, x4, x2
-        ldr  x4, [x20, x0, lsl 3]
-        ldr  x4, [x20, x16, lsl 3]
+        str  x4, [x6, x0, lsl 3]
+        ldr  x4, [x6, x16, lsl 3]
         eor  x4, x4, x2
-        ldr  x4, [x20, x16, lsl 3]
+        str  x4, [x6, x16, lsl 3]
 /*
 		lea   r10d, [8*rsi+King]
 		lea   r11d, [8*rsi+Rook]
@@ -385,16 +424,16 @@ Move_Undo.Castle:
         add  x11, x11, x16, lsl 3
         and  x2, x8, 56
         cmp  x9, x8
-       cset  x0, hi
+      csetm  x0, lo
         add  x1, x2, x0, lsl 2
         add  x2, x2, x0, lsl 1
-        add  x1, x1, FILE_C
-        add  x2, x2, FILE_D
-        add  x7, x20, Pos.board
-       strb  wzr, [x7, x1]
-       strb  wzr, [x7, x2]
-       strb  w10, [x7, x8]
-       strb  w11, [x7, x9]
+        add  x1, x1, FILE_G
+        add  x2, x2, FILE_F
+        add  x6, x20, Pos.board
+       strb  wzr, [x6, x1]
+       strb  wzr, [x6, x2]
+       strb  w10, [x6, x8]
+       strb  w11, [x6, x9]
 /*
 	       push   rdi
 
@@ -419,11 +458,24 @@ Move_Undo.Castle:
 	      movzx   eax, byte[rbp+Pos.pieceEnd+r11]
 		sub   eax, 1
 	      movzx   r10d, byte[rbp+Pos.pieceList+rax]
+*/
+        add  x7, x20, Pos.pieceEnd
+       ldrb  w0, [x7, x11]
+        sub  w0, w0, 1
+        add  x7, x20, Pos.pieceList
+       ldrb  w10, [x7, x0]
+/*
 	       ;;xchg   byte[rbp+Pos.pieceList+rdi], byte[rbp+Pos.pieceList+rax]
 	      movzx   r9d, byte[rbp+Pos.pieceList+rdi]
 	      movzx   r11d, byte[rbp+Pos.pieceList+rax]
 		mov   byte[rbp+Pos.pieceList+rdi], r11l
 		mov   byte[rbp+Pos.pieceList+rax], r9l
+*/
+       ldrb  w9, [x7, x17]
+       ldrb  w11, [x7, x0]
+       strb  w11, [x7, x17]
+       strb  w9, [x7, x0]
+/*
 	       ;;xchg   byte[rbp+Pos.pieceIdx+rdx], byte[rbp+Pos.pieceIdx+r12]
 	      movzx   edi, byte[rbp+Pos.pieceIdx+r9]
 	      movzx   r11d, byte[rbp+Pos.pieceIdx+r10]
@@ -431,15 +483,6 @@ Move_Undo.Castle:
 		mov   byte[rbp+Pos.pieceIdx+r10], dil
 		pop   rdi
 */
-        add  x7, x20, Pos.pieceEnd
-       ldrb  w0, [x7, x11]
-        sub  w0, w0, 1
-        add  x7, x20, Pos.pieceList
-       ldrb  w10, [x7, x0]
-       ldrb  w9, [x7, x17]
-       ldrb  w11, [x7, x0]
-       strb  w11, [x7, x17]
-       strb  w9, [x7, x0]
         add  x7, x20, Pos.pieceIdx
        ldrb  w17, [x7, x9]
        ldrb  w11, [x7, x10]
@@ -450,9 +493,10 @@ Move_Undo.Castle:
 		mov   r10, qword[rbp+Pos.typeBB+8*King]
 		mov   r11, qword[rbp+Pos.typeBB+8*Rook]
 */
-        ldr  x0, [x20, x16, lsl 3]
-        ldr  x10, [x20, 8*King]
-        ldr  x11, [x20, 8*Rook]        
+        add  x6, x20, Pos.typeBB
+        ldr  x0, [x6, x16, lsl 3]
+        ldr  x10, [x20, Pos.typeBB + 8*King]
+        ldr  x11, [x20, Pos.typeBB + 8*Rook]        
 //		btr   rax, rcx
         mov  x4, 1
         lsl  x4, x4, x1
@@ -498,5 +542,8 @@ Move_Undo.Castle:
         str  x0, [x6, x16, lsl 3]
         str  x10, [x20, Pos.typeBB + 8*King]
         str  x11, [x20, Pos.typeBB + 8*Rook]
+.if DEBUG
+          b  Move_Undo_Check
+.endif
         ret
 

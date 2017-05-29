@@ -481,7 +481,7 @@ Thread_IdleLoop.check_exit:
 		 jz   .check_exit
 */
 
-Display "hello from thread %X21\n"
+//Display "hello from thread %X21\n"
 
        ldrb  w0, [x21, Thread.exit]
        cbnz  w0, Thread_IdleLoop.unlock
@@ -515,7 +515,7 @@ Thread_IdleLoop.check_out:
        ldrb  w0, [x21, Thread.exit]
         cbz  w0, Thread_IdleLoop.loop
 
-Display "goodbye from thread %X21\n"
+//Display "goodbye from thread %X21\n"
 
         ldp  x26, x27, [sp], 16
         ldp  x21, x30, [sp], 16
