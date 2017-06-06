@@ -8,12 +8,13 @@ $ qemu-aarch64 ./armFish
 */
 
 DEBUG   = 0
-VERBOSE = 0
-USE_CURRMOVE   = 1
-USE_SELDEPTH   = 1
-USE_HASHFULL   = 1
-//USE_MATEFINDER = 0
-//USE_SYZYGY     = 0
+VERBOSE = 2
+USE_CURRMOVE    = 1
+USE_SELDEPTH    = 1
+USE_HASHFULL    = 1
+USE_CMDLINEQUIT = 1
+//USE_MATEFINDER = 0 not implemented
+//USE_SYZYGY     = 0 not implemented
 
 
 .include "guts/def.arm"
@@ -43,7 +44,12 @@ USE_HASHFULL   = 1
 .text
 .globl _start
 
+
+
 _start:
+        lea  x6, spEntry
+        mov  x0, sp
+        str  x0, [x6]
 .include "guts/main.arm"
 .include "guts/Castling.arm"
 .include "guts/AttackersTo.arm"
