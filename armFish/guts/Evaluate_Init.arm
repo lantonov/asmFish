@@ -4,6 +4,13 @@ Evaluate_Init:
 	       push  rbx rsi rdi
 */
         stp  x29, x30, [sp, -16]!
+
+
+        ldr  x0, Evaluate_Init.SeeSignBitMask
+        lea  x6, SeeSignBitMask
+        str  x0, [x6]
+
+
 /*
 		lea   rsi, [.MobilityBonus_Knight]
 		lea   rdi, [MobilityBonus_Knight]
@@ -87,13 +94,6 @@ Evaluate_Init:
 		mov   ecx, 8
 	  rep movsd
 */
-        lea  x0, ThreatBySafePawn
-        adr  x1, Evaluate_Init.ThreatBySafePawn
-        mov  x2, 4*8
-         bl  MemoryCopy
-        adr  x1, Evaluate_Init.ThreatBySafePawn
-        mov  x2, 4*8
-         bl  MemoryCopy
         lea  x0, Threat_Minor
         adr  x1, Evaluate_Init.Threat_Minor
         mov  x2, 4*8
@@ -151,7 +151,7 @@ Evaluate_Init:
 	      stosq
 	      stosq
 */
-        lea  x0, DoMaterialEval_Data
+        lea  x0, KingFlank
         mov  x1, FileABB | FileBBB | FileCBB | FileDBB
         str  x1, [x0], 8
         str  x1, [x0], 8
@@ -164,23 +164,19 @@ Evaluate_Init:
         str  x1, [x0], 8
         str  x1, [x0], 8
 /*
-        ; copy Knight, Bishop, Rook, and Queen all at once
-                lea   rsi, [.Protector_Knight]
-                lea   rdi, [Protector_Knight]
-                mov   ecx, 4*8
+                lea   rsi, [.PawnsSet]
+                lea   rdi, [PawnsSet]
+                mov   ecx, 9
           rep movsd
 */
-        lea  x0, Protector_Knight
-        adr  x1, Evaluate_Init.Protector_Knight
-        mov  x2, 4*4*8
-         bl  MemoryCopy
+        adr  x16, Evaluate_Init.PawnsSet
+        lea  x17, PawnsSet
+        mov  w1, 9
+         bl  RepMovsd
 /*
 		pop   rdi rsi rbx
 		ret
 */
-        ldr  x0, Evaluate_Init.SeeSignBitMask
-        lea  x6, SeeSignBitMask
-        str  x0, [x6]
 
         ldp  x29, x30, [sp], -16
         ret
@@ -218,21 +214,21 @@ Evaluate_Init.MobilityBonus_Bishop:
  .word (98 << 16) + (97)
 
 Evaluate_Init.MobilityBonus_Rook:
- .word (-60 << 16) + (-77)
- .word (-26 << 16) + (-20)
- .word (-11 << 16) + (27)
- .word (-6 << 16) + (57)
- .word (-3 << 16) + (69)
- .word (-1 << 16) + (82)
- .word (10 << 16) + (109)
- .word (16 << 16) + (121)
- .word (24 << 16) + (131)
- .word (25 << 16) + (143)
+ .word (-58 << 16) + (-76)
+ .word (-27 << 16) + (-18)
+ .word (-15 << 16) + (28)
+ .word (-10 << 16) + (55)
+ .word (-5 << 16) + (69)
+ .word (-2 << 16) + (82)
+ .word ( 9 << 16) + (112)
+ .word (16 << 16) + (118)
+ .word (30 << 16) + (132)
+ .word (29 << 16) + (142)
  .word (32 << 16) + (155)
- .word (32 << 16) + (163)
- .word (43 << 16) + (167)
- .word (48 << 16) + (171)
- .word (56 << 16) + (173)
+ .word (38 << 16) + (165)
+ .word (46 << 16) + (166)
+ .word (48 << 16) + (169)
+ .word (58 << 16) + (171)
 
 Evaluate_Init.MobilityBonus_Queen:
  .word (-39 << 16) + (-36)
@@ -335,18 +331,6 @@ Evaluate_Init.StormDanger:
  .word  0,   60,  144, 39, 13 , 0,0,0
  .word  0, -290, -274, 57, 41 , 0,0,0
 
-
-
-Evaluate_Init.ThreatBySafePawn:
- .word (0 << 16) + (0)
- .word (0 << 16) + (0)
- .word (0 << 16) + (0)
- .word (176 << 16) + (139)
- .word (131 << 16) + (127)
- .word (217 << 16) + (218)
- .word (203 << 16) + (215)
- .word (0 << 16) + (0)
-
 Evaluate_Init.Threat_Minor:
  .word (0 << 16) + (0)
  .word (0 << 16) + (0)
@@ -392,58 +376,21 @@ Evaluate_Init.PassedRank:
 
 
 
-Evaluate_Init.Protector_Knight:
- .word (  0 << 16) + (  0)
- .word (  7 << 16) + (  9)
- .word (  7 << 16) + (  1)
- .word (  1 << 16) + (  5)
- .word (-10 << 16) + ( -4)
- .word ( -1 << 16) + ( -4)
- .word ( -7 << 16) + ( -3)
- .word (-16 << 16) + (-10)
 
-Evaluate_Init.Protector_Bishop:
- .word (  0 << 16) + ( 0)
- .word ( 11 << 16) + ( 8)
- .word ( -7 << 16) + (-1)
- .word ( -1 << 16) + (-2)
- .word ( -1 << 16) + (-7)
- .word (-11 << 16) + (-3)
- .word ( -9 << 16) + (-1)
- .word (-16 << 16) + (-1)
-
-Evaluate_Init.Protector_Rook:
- .word (  0 << 16) + ( 0)
- .word ( 10 << 16) + ( 0)
- .word ( -2 << 16) + ( 2)
- .word ( -5 << 16) + ( 4)
- .word ( -6 << 16) + ( 2)
- .word (-14 << 16) + (-3)
- .word ( -2 << 16) + (-9)
- .word (-12 << 16) + (-7)
-
-Evaluate_Init.Protector_Queen:
- .word (  0 << 16) + ( 0)
- .word (  3 << 16) + (-5)
- .word (  2 << 16) + (-5)
- .word ( -4 << 16) + ( 0)
- .word ( -9 << 16) + (-6)
- .word ( -4 << 16) + ( 7)
- .word (-13 << 16) + (-7)
- .word (-10 << 16) + (-7)
-
+Evaluate_Init.PawnsSet:
+        .word 24, -32, 107, -51, 117, -9, -126, -21, 31
 
 Evaluate_Init.QuadraticOurs:
-	.word 0, 1667,    0,    0,    0,	 0,    0,    0
-	.word 0,	40,    2,    0,    0,	 0,    0,    0
-	.word 0,	32,  255,   -3,    0,	 0,    0,    0
-	.word 0,	 0,  104,    4,    0,	 0,    0,    0
+	.word 0, 1667,    0,    0,    0,    0,    0,    0
+	.word 0,   40,    0,    0,    0,    0,    0,    0
+	.word 0,   32,  255,   -3,    0,    0,    0,    0
+	.word 0,    0,  104,    4,    0,    0,    0,    0
 	.word 0,  -26,   -2,   47,  105, -149,    0,    0
 	.word 0, -185,   24,  122,  137, -134,    0,    0
 Evaluate_Init.QuadraticTheirs:
-	.word 0,	 0,    0,    0,    0,	 0,    0,    0
-	.word 0,	36,    0,    0,    0,	 0,    0,    0
-	.word 0,	 9,   63,    0,    0,	 0,    0,    0
-	.word 0,	59,   65,   42,    0,	 0,    0,    0
-	.word 0,	46,   39,   24,  -24,	 0,    0,    0
+	.word 0,    0,    0,    0,    0,    0,    0,    0
+	.word 0,   36,    0,    0,    0,    0,    0,    0
+	.word 0,    9,   63,    0,    0,    0,    0,    0
+	.word 0,   59,   65,   42,    0,    0,    0,    0
+	.word 0,   46,   39,   24,  -24,    0,    0,    0
 	.word 0,  101,  100,  -37,  141,  268,    0,    0

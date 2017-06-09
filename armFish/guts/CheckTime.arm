@@ -79,7 +79,7 @@ GD Int64, rdi
          bl  Os_GetTime
         lea  x6, time
         ldr  x4, [x6, Time.startTime]
-        add  x0, x0,1
+        add  x0, x0, 1
         sub  x0, x0, x4
        subs  x27, x27, x0
         blo  CheckTime.Stop
@@ -121,8 +121,7 @@ CheckTime.ResetNextThread:
         ldr  x0, [x6, x1, lsl 3]
         str  w26, [x0, Thread.resetCnt]
        cbnz  w1, CheckTime.ResetNextThread
-//Display "CheckTime returning %i26"
-//DisplayPause
+Display 1, "CheckTime returning %i26\n"
         ldp  x26, x27, [sp], 16
         ldp  x21, x30, [sp], 16
         ret
@@ -133,11 +132,10 @@ CheckTime.Stop:
                 pop   rdi rsi rbx
                 ret
 */
-        mov  w0, -1
+        mov  w4, -1
         lea  x6, signals
-       strb  w0, [x6, Signals.stop]
-//Display "CheckTime returning stop\n"
-//DisplayPause
+       strb  w4, [x6, Signals.stop]
+Display 1, "CheckTime returning stop\n"
         ldp  x26, x27, [sp], 16
         ldp  x21, x30, [sp], 16
         ret

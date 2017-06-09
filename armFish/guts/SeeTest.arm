@@ -113,7 +113,7 @@ res	     .req w0
 
 SeeTestGe.HaveFromTo:
 
-Display 2, "SeeTest move=%m1 (%i1)\n"
+Display 2, "SeeTest move=%m1\n"
 
 /*
 ProfileInc SeeTest
@@ -265,7 +265,6 @@ SeeTestGe.EpCaptureRet:
 
 
 SeeTestGe.Loop:
-Display 2, "SeeTestGe.Loop\n"
 
 /*
 		xor   stm_d, 8
@@ -273,17 +272,6 @@ Display 2, "SeeTestGe.Loop\n"
 */
         eor  stm_d, stm_d, 8
         and  attackers, attackers, occupied
-
-        mov  w4, swap
-Display 2, "%i4, "
-Display 2, "%X15, "
-
-        add  x6, x21, State.blockersForKing
-        ldr  x4, [x6, stm]
-Display 2, "%X4, "
-        add  x6, x21, State.pinnersForKing
-        ldr  x4, [x6, stm]
-Display 2, "%X4\n"
 
 /*
 	; modified old
@@ -377,7 +365,6 @@ Display 2, "%X4\n"
         bne  SeeTestGe.FoundQueen
 
 SeeTestGe.FoundKing:
-Display 2, "SeeTestGe.FoundKing\n"
 /*
 		xor   stm_d, 8
 		mov   stmAttackers, qword[rbp+Pos.typeBB+stm]
@@ -410,7 +397,6 @@ end if
         ret
 
 SeeTestGe.FoundQueen:
-Display 2, "SeeTestGe.FoundQueen\n"
 /*
 		add   swap, QueenValueMg
 		cmp   swap, res
@@ -442,7 +428,6 @@ Display 2, "SeeTestGe.FoundQueen\n"
           b  SeeTestGe.Loop
 
 SeeTestGe.FoundRook:
-Display 2, "SeeTestGe.FoundRook\n"
 /*
 		add   swap, RookValueMg
 		cmp   swap, res
@@ -468,14 +453,12 @@ Display 2, "SeeTestGe.FoundRook\n"
           b  SeeTestGe.Loop
 
 SeeTestGe.FoundBishop:
-Display 2, "SeeTestGe.FoundBishop\n"
 /*
 		add   swap, BishopValueMg-PawnValueMg
 */
         add  swap, swap, BishopValueMg - PawnValueMg
 
 SeeTestGe.FoundPawn:
-Display 2, "SeeTestGe.FoundPawn\n"
 /*
 		add   swap, PawnValueMg
 		cmp   swap, res
@@ -502,7 +485,6 @@ Display 2, "SeeTestGe.FoundPawn\n"
 
 
 SeeTestGe.FoundKnight:
-Display 2, "SeeTestGe.FoundKnight\n"
 /*
 		add   swap, KnightValueMg
 		cmp   swap, res

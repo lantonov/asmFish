@@ -147,7 +147,11 @@ GD NewLine
         lea  x16, [ioBuffer]
         str  xzr, [x16, IOBuffer.cmdLineStart]
        ldrb  w0, [x26]
+.if USE_CMDLINEQUIT
         cbz  w0, UciQuit
+.else
+        cbz  w0, UciGetInput
+.endif
 UciNextCmdFromCmdLine.Next:       
        ldrb  w0, [x26]
         cbz  w0, UciNextCmdFromCmdLine.Found
@@ -188,8 +192,8 @@ UciWriteOut_NewLine:
 UciWriteOut:
          bl  Os_WriteOut_Output
 UciGetInput:
-        lea  x16, ioBuffer
-        ldr  x26, [x16, IOBuffer.cmdLineStart]
+        lea  x6, ioBuffer
+        ldr  x26, [x6, IOBuffer.cmdLineStart]
        cbnz  x26, UciNextCmdFromCmdLine
          bl  GetLine
        cbnz  w0, UciQuit
@@ -315,14 +319,27 @@ UciChoose:
          bl  CmpString
        cbnz  w0, UciBench
 
-        lea  x1, sz_show
+.if VERBOSE > 0
+    lstring  x1, "show"
          bl  CmpString
        cbnz  w0, UciShow
 
-        lea  x1, sz_moves
+    lstring  x1, "undo"
+         bl  CmpString
+       cbnz  w0, UciUndo
+
+    lstring  x1, "moves"
          bl  CmpString
        cbnz  w0, UciMoves
 
+    lstring  x1, "donull"
+         bl  CmpString
+       cbnz  w0, UciDoNull
+
+    lstring  x1, "eval"
+         bl  CmpString
+       cbnz  w0, UciEval
+.endif
 
 UciUnknown:
 /*
@@ -1493,7 +1510,7 @@ UciBench:
 
 		lea   rdi, [.parse_hash]
 */
-        mov  x22, 9
+        mov  x22, 13
         mov  x23, 1
         mov  x24, 16
         mov  x25, 0
@@ -1640,8 +1657,9 @@ UciBench.parse_done:
         add  x2, sp, 0
          bl  PrintFancy
         add  sp, sp, 32
+.if VERBOSE == 0
          bl  Os_WriteOut_Output
-
+.endif
         lea  x16, options
         str  w24, [x16, Options.hash]
         str  w23, [x16, Options.threads]
@@ -1655,7 +1673,9 @@ UciBench.parse_done:
 */
         lea  x6, options
         str  xzr, [sp, UciLoop.nodes]
+.if VERBOSE == 0
        strb  wzr, [x6, Options.displayInfoMove]
+.endif
          bl  Search_Clear
 /*
 	       test   r15d, r15d
@@ -1691,6 +1711,7 @@ UciBench.nextpos:
 */
         add  x23, x23, 1
          bl  SkipSpaces
+        mov  w1, 0
          bl  Position_ParseFen
         add  x1, sp, UciLoop.limits
          bl  Limits_Init
@@ -1741,7 +1762,12 @@ UciBench.nextpos:
         add  x3, sp, 0
          bl  PrintFancy
         add  sp, sp, 32
+.if VERBOSE == 0
          bl  Os_WriteOut_Output
+.else
+        lea  x1, Output
+         bl  Os_WriteError
+.endif
 
         lea  x6, BenchFensEnd
         cmp  x26, x6
@@ -1768,26 +1794,101 @@ UciBench.nextpos:
         add  x3, sp, 0
          bl  PrintFancy
         add  sp, sp, 32
-         bl  Os_WriteOut_Output                
+.if VERBOSE == 0
+         bl  Os_WriteOut_Output
+.else
+        lea  x1, Output
+         bl  Os_WriteError
+.endif
+        mov  w4, -1
+        lea  x6, options
+       strb  w4, [x6, Options.displayInfoMove]
           b  UciGetInput
 
+.if VERBOSE > 0
+
+UciDoNull:
+        ldr  x21, [x20, Pos.state]
+        ldr  x0, [x21, State.checkersBB]
+       cbnz  x0, UciGetInput
+
+        ldr  x0, [x20, Pos.stateTable]
+        sub  x0, x21, x0
+        mov  w1, sizeof.State
+       udiv  w0, w0, w1
+        add  w1, w0, 8
+        add  w1, w0, w1, lsr 2
+         bl  Position_SetExtraCapacity
+        ldr  x21, [x20, Pos.state]
+        mov  w4, MOVE_NULL
+        str  w4, [x21, sizeof.State + State.currentMove]
+         bl  Move_DoNull
+        str  x21, [x20, Pos.state]
+          b  UciShow
 
 UciShow:
-/*
-		lea   rdi, [Output]
-		mov   rbx, qword[rbp+Pos.state]
-	       call   Position_Print
-		jmp   UciWriteOut
-*/
         lea  x27, Output
         ldr  x21, [x20, Pos.state]
          bl  Position_Print
           b  UciWriteOut
 
+UciUndo:
+        ldr  x21, [x20, Pos.state]
+         bl  SkipSpaces
+         bl  ParseInteger
+       subs  w0, w0, 1
+       cinc  w25, w0, lo
+UciUndo.Undo:
+        ldr  x4, [x20, Pos.stateTable]
+        cmp  x21, x4
+        bls  UciShow
+        ldr  w1, [x21, State.currentMove]
+         bl  Move_Undo
+       subs  w25, w25, 1
+        bpl  UciUndo.Undo
+          b  UciShow
+
 UciMoves:
-/*
-	       call   UciParseMoves
-		jmp   UciShow
-*/
          bl  UciParseMoves
           b  UciShow
+
+UciEval:
+        ldr  x21, [x20, Pos.state]
+
+      mov32  w1, PAWN_HASH_ENTRY_COUNT*sizeof.PawnEntry
+         bl  Os_VirtualAlloc
+        str  x0, [x20, Pos.pawnTable]
+
+      mov32  w1, MATERIAL_HASH_ENTRY_COUNT*sizeof.MaterialEntry
+         bl  Os_VirtualAlloc
+        str  x0, [x20, Pos.materialTable]
+
+         bl  Evaluate
+        mov  w25, w0
+
+        ldr  x1, [x20, Pos.materialTable]
+      mov32  w2, MATERIAL_HASH_ENTRY_COUNT*sizeof.MaterialEntry
+         bl  Os_VirtualFree
+        str  xzr, [x20, Pos.materialTable]
+
+        ldr  x1, [x20, Pos.pawnTable]
+      mov32  w2, PAWN_HASH_ENTRY_COUNT*sizeof.PawnEntry
+         bl  Os_VirtualFree
+        str  xzr, [x20, Pos.pawnTable]
+
+        lea  x27, Output
+       sxtw  x0, w25
+         bl  PrintInt
+        mov  w0, ' '
+       strb  w0, [x27], 1        
+        mov  w0, '='
+       strb  w0, [x27], 1        
+        mov  w0, '='
+       strb  w0, [x27], 1        
+        mov  w0, ' '
+       strb  w0, [x27], 1        
+        mov  w1, w25
+         bl  PrintScore_Uci
+        PrintNewLine
+          b  UciWriteOut
+.endif

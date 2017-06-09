@@ -1186,7 +1186,6 @@ end if
         GenMoves  \Us, Queen, \Type
  .if \Type != CAPTURES && \Type != EVASIONS
        ldrb  w9, [x21, State.castlingRights]
-Display 2, "cr: %i9\n"
         ldr  x10, [x20, -Thread.rootPos + Thread.castling_path + 8*(2*\Us+0)]
         ldr  x11, [x20, -Thread.rootPos + Thread.castling_path + 8*(2*\Us+1)]
         and  x10, x10, x14

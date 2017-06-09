@@ -110,12 +110,14 @@ Display 2, "MovePick_GOOD_CAPTURES.WhileDone"
         str  x2, [x21, State.stage]
 
         ldr  w27, [x21, State.mpKillers + 4*0]
+Display 2, "killer0 = %m27\n"
         and  w0, w27, 63
         mov  w1, w27
         add  x6, x20, Pos.board
        ldrb  w0, [x6, x0]
         cbz  w27, MovePick_KILLERS
         ldr  w4, [x21, State.ttMove]
+Display 2, "ttMove = %m4\n"
         cmp  w27, w4
         beq  MovePick_KILLERS
         cmp  w27, MOVE_TYPE_EPCAP << 12
@@ -296,6 +298,7 @@ Display 2, "MovePick_QUIET_GEN"
         mov  x25, x27
         ScoreQuiets  x22, x27
 
+/*
 .if VERBOSE == 2
 mov x28, x24
 looper:
@@ -309,6 +312,7 @@ b looper
 loopdone:
 Display 2, "\n"
 .endif
+*/
 
         add  x10, x24, sizeof.ExtMove
         ldr  w2, [x21, State.depth]
@@ -387,6 +391,7 @@ MovePick_QUIET_GEN.SortDone:
         adr  x2, MovePick_QUIETS
         str  x2, [x21, State.stage]
 
+/*
 .if VERBOSE == 2
 mov x28, x24
 looper1:
@@ -400,6 +405,7 @@ b looper1
 loopdone1:
 Display 2, "\n"
 .endif
+*/
 
 MovePick_QUIETS:
 Display 2, "MovePick_QUIETS"
@@ -516,6 +522,7 @@ Display 2, "MovePick_ALL_EVASIONS"
         adr  x2, MovePick_REMAINING
         str  x2, [x21, State.stage]
 
+/*
 .if VERBOSE == 2
 mov x28, x24
 looper3:
@@ -529,7 +536,7 @@ b looper3
 loopdone3:
 Display 2, "\n"
 .endif
-
+*/
 
           b  MovePick_REMAINING
 
@@ -608,6 +615,7 @@ Display 2, "MovePick_QCAPTURES_NO_CHECKS_GEN"
         adr  x2, MovePick_REMAINING
         str  x2, [x21, State.stage]
 
+/*
 .if VERBOSE == 2
 mov x28, x24
 looper2:
@@ -621,6 +629,7 @@ b looper2
 loopdone2:
 Display 2, "\n"
 .endif
+*/
 
 MovePick_REMAINING:
 Display 2, "MovePick_REMAINING"

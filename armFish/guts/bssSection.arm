@@ -1,8 +1,9 @@
+.if DEBUG
 debug.output: .space 8192
 debug.position: .space 8192
 debug.address: .space 8
 debug.move: .space 4
-
+.endif
 
 
 .balign 16
@@ -94,24 +95,19 @@ DrawValue:	         .space 4*2    // it is updated when threads start to think
 
 // data for evaluation
         .balign 64
-Connected:           .space 4*2*2*2*8
-Protector_Knight:      .space 4*8
-Protector_Bishop:      .space 4*8
-Protector_Rook:        .space 4*8
-Protector_Queen:       .space 4*8
+Connected:              .space 4*2*2*2*8
 MobilityBonus_Knight:   .space 4*16
 MobilityBonus_Bishop:   .space 4*16
 MobilityBonus_Rook:     .space 4*16
 MobilityBonus_Queen:    .space 4*32
-Lever:                .space 4*8
-ShelterWeakness:      .space 4*8*8
+Lever:                  .space 4*8
+ShelterWeakness:        .space 4*8*8
 StormDanger:
 StormDanger_NoFriendlyPawn: .space 4*8*8
 StormDanger_Unblocked:	    .space 4*8*8
 StormDanger_BlockedByPawn:  .space 4*8*8
 StormDanger_BlockedByKing:  .space 4*8*8
 KingFlank:                  .space 8*8
-ThreatBySafePawn:           .space 4*16
 Threat_Minor:               .space 4*16
 Threat_Rook:                .space 4*16
 PassedRank:                 .space 4*8
@@ -119,6 +115,7 @@ PassedFile:                 .space 4*8
 DoMaterialEval_Data:
 DoMaterialEval_Data.QuadraticOurs:     .space 4*8*6
 DoMaterialEval_Data.QuadraticTheirs:   .space 4*8*6
+PawnsSet:               .space 4*16
 SeeSignBitMask:         .space 8
 
 

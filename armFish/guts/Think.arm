@@ -62,7 +62,7 @@ Thread_Think.localsize      = (ThreadPool_StartThinking.lend + 15) & -16
         str  w4, [sp, Thread_Think.bestValue]
         str  wzr, [sp, Thread_Think.completedDepth]
 
-        sub  x7, x21, 5*sizeof.State
+        sub  x2, x21, 5*sizeof.State
         add  x8, x21, 3*sizeof.State
         ldr  x9, [x20, Pos.counterMoveHistory]
         add  x9, x9, CmhDeadOffset
@@ -78,13 +78,13 @@ Thread_Think.clear_stack:
 		cmp   rdx, r8
 		 jb   .clear_stack
 */
-        add  x0, x7, State._stack_start
-        mov  x1, State._stack_end - State._stack_start
-        mov  x2, 0
-         bl  MemoryFill
-        str  x9, [x7, State.counterMoves]
-        add  x7, x7, sizeof.State
-        cmp  x7, x8
+        mov  w0, 0
+        add  x17, x2, State._stack_start
+        mov  w1, State._stack_end - State._stack_start
+         bl  RepStosb
+        str  x9, [x2, State.counterMoves]
+        add  x2, x2, sizeof.State
+        cmp  x2, x8
         blo  Thread_Think.clear_stack
 /*
 	; set move list for current state
@@ -239,6 +239,7 @@ Thread_Think.age_out:
        fmul  d0, d0, d1
        strb  wzr, [x6, Thread.failedLow]
         str  d0, [x6, Thread.bestMoveChanges]
+
 
 Thread_Think.save_prev_score:
 /*
@@ -579,7 +580,7 @@ match =0, VERBOSE {
         ldr  w4, [sp, Thread_Think.multiPV]
         cmp  w0, w4
         beq  Thread_Think.print_pv2
-.if VERBOSE == 0
+.if VERBOSE < 2
         cmp  x9, 3000
         blo  Thread_Think.multipv_loop
 .endif
@@ -652,11 +653,13 @@ Thread_Think.multipv_done:
         lea  x6, limits
        ldrb  w0, [x6, Limits.useTimeMgmt]
         cbz  w0, Thread_Think.id_loop
-        lea  x6, limits
+
+        lea  x6, signals
        ldrb  w0, [x6, Signals.stop]
        ldrb  w4, [x6, Signals.stopOnPonderhit]
         orr  w0, w0, w4
        cbnz  w0, Thread_Think.handle_easymove
+
          bl  Os_GetTime
         lea  x6, time
         ldr  x4, [x6, Time.startTime]
@@ -716,14 +719,14 @@ Thread_Think.multipv_done:
         lea  x6, time
         ldr  w0, [x6, Time.optimumTime]
         add  x0, x0, x0, lsl 2
-        mov  x4, 42
+        mov  x4, 44
        udiv  x0, x0, x4
         ldr  x8, [x20, Pos.rootMovesVec + RootMovesVec.table]
         ldr  w1, [x8, RootMove.pv + 4*0]
-        add  x7, x20, -Thread.rootPos
-        ldr  d0, [x7, Thread.bestMoveChanges]
+        add  x6, x20, -Thread.rootPos
+        ldr  d0, [x6, Thread.bestMoveChanges]
        fmov  d2, 1.0
-        add  d2, d2, d0
+       fadd  d2, d2, d0
 
 /*
 		xor   r9d, r9d
@@ -745,8 +748,7 @@ Thread_Think.multipv_done:
         lea  x6, [constd.0p03]
         ldr  d4, [x6]
       fcmpe  d0, d4
-       cset  w9, mi
-        neg  w9, w9
+      csetm  w9, mi
 1:
 /*
 	     vmulsd   xmm2, xmm2, xmm3
@@ -778,11 +780,13 @@ Thread_Think.multipv_done:
         beq  Thread_Think.set_stop
       fcmpe  d0, d1
         bpl  Thread_Think.set_stop
+
        strb  w9, [x20, -Thread.rootPos + Thread.easyMovePlayed]
         cbz  w9, Thread_Think.handle_easymove
         
 
 Thread_Think.set_stop:
+
 /*
 		mov   al, byte[limits.ponder]
 	       test   al, al
@@ -1838,7 +1842,7 @@ if VERBOSE<2
 end if
 */
 
-.if VERBOSE == 0
+.if VERBOSE < 2
         mov  w0, ' '
        strb  w0, [x27], 1
         mov  w0, 't'

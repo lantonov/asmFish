@@ -1,3 +1,4 @@
+.if DEBUG
 Move_Undo_Check:
         PushAll
          bl  Position_IsLegal
@@ -12,7 +13,7 @@ Move_Undo_Check.bad:
         lea  x1, debug.output
          bl  Os_WriteOut
         brk  0
-
+.endif
 
 Move_Undo:
 /*

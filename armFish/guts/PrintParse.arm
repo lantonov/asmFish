@@ -104,23 +104,30 @@ PrintFancy:
         stp  x29, x30, [sp, -16]!
         stp  x28, x26, [sp, -16]!
         stp  x24, x25, [sp, -16]!
+        stp  x22, x23, [sp, -16]!
         mov  x26, x1
         mov  x28, x2
         mov  x29, x3
+        mov  x23, x27
 PrintFancy.Loop:
        ldrb  w0, [x26], 1
         cmp  w0, '%'
         beq  PrintFancy.GotOne
         cbz  w0, PrintFancy.Done
        strb  w0, [x27], 1
+        cmp  w0, 10
+       csel  x23, x27, x23, eq
           b  PrintFancy.Loop
 PrintFancy.Done:
+        ldp  x22, x23, [sp], 16
         ldp  x24, x25, [sp], 16
         ldp  x28, x26, [sp], 16
         ldp  x29, x30, [sp], 16
         ret
 PrintFancy.GotOne:
-       ldrb  w24, [x26], 1   
+       ldrb  w24, [x26], 1
+        cmp  w24, 'a'
+        beq  PrintFancy.Alignment
          bl  ParseInteger
         and  x0, x0, 31
         cbz  x29, 1f
@@ -139,6 +146,9 @@ PrintFancy.GotOne:
         adr  x4, PrintHex
        csel  x3, x4, x3, eq
 
+        cmp  w24, 's' // 16|16 score
+        adr  x4, PrintFancy.PrintScore
+       csel  x3, x4, x3, eq
 
         cmp  w24, 'i'   // 32 bit signed integer
         adr  x4, PrintInt32
@@ -173,6 +183,27 @@ PrintFancy.GotOne:
         cbz  x3, PrintFancy.Loop
         blr  x3
           b  PrintFancy.Loop
+
+PrintFancy.Alignment:
+         bl  ParseInteger
+        add  x0, x0, x23
+1:
+        cmp  x27, x0
+        bhs  PrintFancy.Loop
+        mov  w4, ' '
+       strb  w4, [x27], 1
+          b  1b
+
+PrintFancy.PrintScore:
+        stp  x0, x30, [sp, -16]!
+        add  x0, x0, 0x08000
+       sbfx  x0, x0, 16, 16
+         bl  PrintInt
+        mov  w0, ','
+       strb  w0, [x27], 1
+        ldp  x0, x30, [sp], 16
+       sbfx  x0, x0, 0, 16
+          b  PrintInt
 
 CmpString:
 // if beginning of string at x26 matches null terminated string at x1
@@ -884,6 +915,17 @@ RepMovsq:
 //     x1 number of 8 byte chunks to move
        subs  x1, x1, 1
         bpl  RepMovsq.Next
+        ret
+
+
+RepStosb.Next:
+       strb  w0, [x17], 1
+RepStosb:
+// in: w0 1 byte to store
+//     x17 destination
+//     x1 number of 1 byte chunks to move
+       subs  x1, x1, 1
+        bpl  RepStosb.Next
         ret
 
 

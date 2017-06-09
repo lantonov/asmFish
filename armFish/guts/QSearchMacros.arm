@@ -424,8 +424,6 @@ QSearch.StaticValueDone\@:
         cmp  w1, w0
        csel  w1, w0, w1, lt
         str  w1, [sp, QSearch.alpha]
-Display 2, "valpha: %i1\n"
-
   .endif
         add  w0, w0, 128
         str  w0, [sp, QSearch.futilityBase]
@@ -507,7 +505,6 @@ end if
         str  x25, [x21, State.stage]
 
 QSearch.MovePickLoop\@:
-Display 2, "QSearch.MovePickLoop\n"
 
 /*
                 xor   esi, esi
@@ -683,8 +680,6 @@ QSearch.SkipFutilityPruning\@:
         cbz  w0, QSearch.MovePickLoop\@
 
 QSearch.DontContinue\@:
-Display 2, "QSearch.DontContinue\n"
-
 
 //	; speculative prefetch
 //		mov   edx, ecx
@@ -847,7 +842,6 @@ QSearch.pv_copy_end\@:
         cmp  w27, w4
         bge  QSearch.FailHigh\@
         str  w27, [sp, QSearch.alpha]
-Display 2, "ualpha: %i27\n"
         str  w1, [sp, QSearch.bestMove]
           b  QSearch.MovePickLoop\@
  .endif
@@ -871,7 +865,6 @@ QSearch.FailHigh\@:
         bhs  QSearch.FailHighValueToTT\@
 
 QSearch.FailHighValueToTTRet\@:
-Display 2, "QSearch.FailHighValueToTTRet\n"
 /*
 		mov   eax, dword[.move]
       MainHash_Save   .ltte, r8, r9w, edx, BOUND_LOWER, byte[.ttDepth], eax, word[rbx+State.staticEval]
@@ -942,7 +935,6 @@ QSearch.MovePickDone\@:
 
  .if \PvNode == 1
         ldr  w26, [sp, QSearch.oldAlpha]
-Display 2, "%i26,%i27\n"
         sub  w26, w26, w27
         asr  w26, w26, 31
  .endif
@@ -972,9 +964,7 @@ match =2, VERBOSE \{
 \}
 */
         ldr  w0, [sp, QSearch.bestMove]
-Display 2, "bestMove=%m0,"
        ldrb  w5, [sp, QSearch.ttDepth]
-Display 2, "ttDepth=%X5\n"
  .if \PvNode == 0
         mov  w3, BOUND_UPPER
        ldrh  w7, [x21, State.staticEval]
@@ -1072,7 +1062,6 @@ QSearch.AbortSearch_PlyBigger\@:
           b  QSearch.ReturnA\@
 
 QSearch.AbortSearch_PlySmaller\@:
-Display 2, "QSearch.AbortSearch_PlySmaller\n"
 /*
 		xor   eax, eax
 		jmp   .ReturnA
@@ -1082,7 +1071,6 @@ Display 2, "QSearch.AbortSearch_PlySmaller\n"
           b  QSearch.ReturnA\@
 
 QSearch.ReturnStaticValue\@:
-Display 2, "QSearch.ReturnStaticValue\n"
 /*
 		mov   r8, qword[.tte]
 		mov   r9, qword[rbx+State.key]

@@ -51,8 +51,8 @@ Position_SetState:
 
 		xor   esi, esi
 */
-        lea  x16, [Zobrist_noPawns]
-        ldr  x14, [x16]
+        lea  x6, Zobrist_noPawns
+        ldr  x14, [x6]
         mov  x13, 0
         eor  v0.16b, v0.16b, v0.16b
         st1  {v0.16b}, [sp]
@@ -1083,36 +1083,37 @@ Position_ParseFen.alloc_ret:
 	  rep stosq
 		mov   dword[rbp+Pos.chess960], r12d
 */
-        mov  x0, x20
-        mov  x1, 0
-        mov  x2, Pos._copy_size
-         bl  MemoryFill
+        mov  x0, 0
+        mov  x1, Pos._copy_size/8
+        mov  x17, x20
+         bl  RepStosq
 /*
 		xor   eax, eax
 		mov   ecx, sizeof.State/8
 		mov   rdi, rbx
 	  rep stosq
 */
-        mov  x0, x20
-        mov  x1, 0
-        mov  x2, sizeof.State
-         bl  MemoryFill
+        mov  x0, 0
+        mov  x1, sizeof.State/8
+        mov  x17, x21
+         bl  RepStosq
 /*
 		xor   eax, eax
 		mov   ecx, Thread.castling_end-Thread.castling_start
 		lea   rdi, [rbp-Thread.rootPos+Thread.castling_start]
 	  rep stosb
-
+*/
+        mov  x0, 0
+        mov  x1, Thread.castling_end - Thread.castling_start
+        add  x17, x20, -Thread.rootPos + Thread.castling_start
+         bl  RepStosb
+/*
 	       call   SkipSpaces
 
 		xor   eax,eax
 		xor   ecx,ecx
 		jmp   .ExpectPiece
 */
-        add  x0, x20, -Thread.rootPos+Thread.castling_start
-        mov  x1, 0
-        mov  x2, Thread.castling_end-Thread.castling_start
-         bl  MemoryFill
          bl  SkipSpaces
         mov  x0, 0
         mov  x1, 0
@@ -1321,6 +1322,7 @@ Position_ParseFen.NextCastlingChar:
         bne  Position_ParseFen.NextCastlingChar
 
 Position_ParseFen.EpSquare:
+
 /*
 	       call   SkipSpaces
 	       call   ParseSquare
@@ -1450,8 +1452,8 @@ Position_ParseFen.MoveNumber:
 */
          bl  SkipSpaces
          bl  ParseInteger
-       subs  x1, x0, 1
-       csel  x0, xzr, x1, mi
+       subs  x0, x0, 1
+       cinc  x0, x0, lo
         ldr  w2, [x20, Pos.sideToMove]
         add  x0, x2, x0, lsl 1
         str  w0, [x20, Pos.gamePly]
@@ -1948,7 +1950,7 @@ Position_PrintFen.cont:
 
         mov  w0, ('K'<<0) + ('Q'<<8)
        movk  w0, ('k'<<0) + ('q'<<8), lsl 16
-        ldr  w2, [x20, -Thread.rootPos+Thread.castling_rfrom]
+        ldr  w2, [x20, -Thread.rootPos + Thread.castling_rfrom]
         mov  w4, 0x07070707
         and  w2, w2, w4
         mov  w4, ('A'<<0) + ('A'<<8)
@@ -2012,7 +2014,7 @@ Position_PrintFen.cont:
 
         mov  w0, ' '
        strb  w0, [x27], 1
-        ldr  w0, [x21, Pos.gamePly]
+        ldr  w0, [x20, Pos.gamePly]
         add  w0, w0, 2
         lsr  w0, w0, 1
          bl  PrintUInt

@@ -27,7 +27,7 @@ macro apply_bonus address, bonus32, absbonus, denominator {
        sdiv  \T, \T, \denominator
         sub  \X, \X, \T
 mov w4, \X
-Display 2, "u%i4|"
+//Display 2, "u%i4|"
 .endm
 
 
@@ -455,10 +455,9 @@ local ..Loop, ..Done, ..TestLoop
 ScoreQuiets.Loop\@:
         ldr  w1, [\start, ExtMove.move]
         and  w0, w1, 64*64-1
-Display 2, "h%i0"
+//Display 2, "h%i0"
         ldr  w0, [x8, x0, lsl 2]
-Display 2, ",%i0|"
-
+//Display 2, ",%i0|"
        ubfx  w2, w1, 6, 6
         and  w1, w1, 63
         add  x6, x20, Pos.board

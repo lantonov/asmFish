@@ -1,6 +1,8 @@
         .balign 8
 LargePageMinSize:
         .dword 0
+spEntry:
+        .dword 0
 
 DisplayLock: .zero sizeof.Mutex
 
@@ -69,7 +71,7 @@ sz_thread_format:
 sz_bench_format1:
         .ascii "*** bench hash %u0 threads %u1 depth %u2 realtime %u3 ***\n\0"
 sz_bench_format2:
-        .ascii "%U0:  nodes: %U1, %U2 knps\n\0"
+        .ascii "%U0: %a8nodes: %U1 %a32%U2 knps\n\0"
 sz_perft_format:
 sz_bench_format3:
         .ascii "===========================\n"
@@ -178,8 +180,6 @@ sz_moveoverhead: 	.ascii "moveoverhead\0"
 sz_minthinktime: 	.ascii "minthinktime\0"
 sz_uci_chess960: 	.ascii "uci_chess960\0"
 
-sz_show: .ascii "show\0"
-
 BenchFens: //fens must be separated by one or more space char
 .ascii "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "
 .ascii "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 10 "
@@ -219,4 +219,5 @@ BenchFens: //fens must be separated by one or more space char
 .ascii "8/8/3P3k/8/1p6/8/1P6/1K3n2 b - - 0 1 "
 .ascii "8/R7/2q5/8/6k1/8/1P5p/K6R w - - 0 124"
 BenchFensEnd: .byte 0
+
 

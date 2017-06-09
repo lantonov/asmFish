@@ -1,3 +1,4 @@
+SEP_CHAR = ':'
 
 MAX_RESETCNT = 80000
 MIN_RESETCNT = 40
@@ -207,7 +208,7 @@ QUIETS       = 1
 QUIET_CHECKS = 2
 EVASIONS     = 3
 NON_EVASIONS = 4
-LEGAL	      = 5
+LEGAL	     = 5
 
 DELTA_N =  8
 DELTA_E =  1
