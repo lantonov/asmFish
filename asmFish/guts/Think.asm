@@ -550,6 +550,18 @@ end if
 		mov   r8d, dword[r10+Thread.completedDepth]
 		mov   r9, qword[r10+Thread.rootPos+Pos.rootMovesVec+RootMovesVec.table]
 		mov   r9d, dword[r9+0*sizeof.RootMove+RootMove.score]
+
+;###
+mov al,123
+call printal
+mov eax,r8d
+call decim
+mov rax,0
+mov eax,r9d
+call decim
+call DisplMov
+;###
+
 		mov   eax, dword[options.multiPV]
 		sub   eax, 1
 		 or   eax, dword[limits.depth]
@@ -568,8 +580,26 @@ end if
 		mov   eax, dword[r10+Thread.completedDepth]	;depthDiff
 		mov   rcx, qword[r10+Thread.rootPos+Pos.rootMovesVec+RootMovesVec.table]
 		mov   ecx, dword[rcx+0*sizeof.RootMove+RootMove.score]	;scoreDiff
+
+;###
+     call decim
+     push rax
+     mov rax,rcx
+     call decim
+     call DisplMov
+     pop rax
+;###
+
 		cmp   eax, r8d
-		jl    .next_worker3
+;		jl    .next_worker3
+
+;###
+je .label35
+mov r9d,ecx
+mov r8d,eax
+.label35:
+;###
+
 		cmp   ecx, r9d
 		jle   .next_worker3
 	
@@ -578,6 +608,19 @@ end if
 		mov   esi, edi
 		jmp   .next_worker3
 	.workers_done3:
+
+;###
+ mov eax,r8d
+ call decim
+ mov eax,r9d
+ call decim
+ mov al,125
+ call printal
+ mov al,10
+ call printal
+;###
+
+
 .best_done:
 		mov   dword[rbp-Thread.rootPos+Thread.previousScore], r9d
 		mov   rcx, qword[threadPool.threadTable+8*rsi]
@@ -1009,3 +1052,121 @@ end if
 DisplayMove_None:
 DisplayInfo_None:
 		ret
+
+
+
+;###-----prints decimal rax preceded by a comma-------------
+decim:
+   push rcx
+   push rax
+   push rbx
+   push rdi
+
+virtual at rsp
+  .output rb 32
+  .decim1 rd 1
+  .decim2 rd 1
+  .decim3 rd 1
+  .lend rb 0
+end virtual
+.localsize = ((.lend-rsp+15) and (-16))
+	 _chkstk_ms   rsp, .localsize
+		sub   rsp, .localsize
+
+   lea rdi,qword[.output]
+   add rdi,12
+   mov byte[rdi],125
+   dec rdi
+   mov rbx,10
+   .dec1:
+   mov rdx,0
+   div rbx
+   add dl,48
+   mov byte[rdi],dl
+   dec rdi
+   or rax,0
+   jne .dec1
+   mov byte[rdi],44
+   mov rcx,rdi
+   lea rdi,qword[.output]
+   add rdi,12
+   call _WriteOut
+		add   rsp, .localsize
+   pop rdi
+   pop rbx
+   pop rax
+   pop rcx
+ ret
+; ###
+
+
+
+
+
+;###-----prints al--------------
+printal:
+   push rcx
+   push rax
+   push rdi
+
+virtual at rsp
+  .output rb 32
+  .decim1 rd 1
+  .decim2 rd 1
+  .decim3 rd 1
+  .lend rb 0
+end virtual
+.localsize = ((.lend-rsp+15) and (-16))
+	 _chkstk_ms   rsp, .localsize
+		sub   rsp, .localsize
+
+   lea rdi,qword[.output]
+   mov rcx,rdi
+   stosb
+   call _WriteOut
+		add   rsp, .localsize
+   pop rdi
+   pop rax
+   pop rcx
+ ret
+; ###
+
+
+
+;###
+
+DisplMov:
+	; in: r10 address of thread
+	       push   rsi rdi r15 r8 r9 r10 rax rcx rdx
+
+virtual at rsp
+  .output rb 32
+  .dimo1 rd 1
+  .dimo2 rd 1
+  .dimo3 rq 1
+  .dimo4 rq 1
+  .dimo5 rd 1
+  .dimo6 rd 1
+  .lend rb 0
+end virtual
+.localsize = ((.lend-rsp+15) and (-16))
+	 _chkstk_ms   rsp, .localsize
+		sub   rsp, .localsize
+		mov   rsi, r10
+
+		lea   rdi,qword [.output]
+		mov   al, ','
+	      stosb
+		mov   rcx, qword[rsi+Thread.rootPos+Pos.rootMovesVec+RootMovesVec.table]
+		mov   ecx, dword[rcx+0*sizeof.RootMove+RootMove.pv+4*0]
+	      movzx   edx, byte[rsi+Thread.rootPos+Pos.chess960]
+
+	       call   PrintUciMove
+		lea   rcx,qword [.output]
+           call _WriteOut
+
+		add   rsp, .localsize
+		pop   rdx rcx rax r10 r9 r8 r15 rdi rsi
+		ret
+
+;###
