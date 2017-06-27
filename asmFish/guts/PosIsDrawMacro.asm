@@ -8,10 +8,10 @@
 ;  for (int i = 4; i <= end; i += 2) {
 ;      stp = stp->previous->previous;
 ;      // At root position ply is 1, so return a draw score if a position
-;      // repeats once earlier but after or at the root, or repeats twice
-;      // strictly before the root.
+;      // repeats once earlier but strictly after the root, or repeats twice
+;      // before or at the root.
 ;      if (   stp->key == st->key
-;          && ++cnt + (ply - i > 0) == 2)
+;          && ++cnt + (ply - 1 > i) == 2)
 ;          return true;
 ;  }
 ;  return false;
@@ -40,14 +40,14 @@ coldreturnlabel:
 		 jb   ..noDraw
 	       imul   r10, rdx, -sizeof.State	; r10 = end
 		mov   r9, -4*sizeof.State	; r9 = i
-		sub   eax, 5			; eax = ply-i-1
+		sub   eax, 6			; eax = ply-i-2
 		xor   ecx, ecx			; ecx = -cnt
 ..CheckNext:
-		cdq				; get the sign of ply-i-1
+		cdq				; get the sign of ply-i-2
 		cmp   r8, qword[rbx+r9+State.key]
 		jne   ..KeysDontMatch
-		cmp   ecx, edx			; 1+cnt + (ply-i>0) == 2 is the same as
-		 je   WeHaveADraw		; -cnt == sign(ply-i-1)
+		cmp   ecx, edx			; 1+cnt + (ply-1>i) == 2 is the same as
+		 je   WeHaveADraw		; -cnt == sign(ply-i-2)
 		sub   ecx, 1
 ..KeysDontMatch:
 		sub   r9, 2*sizeof.State
