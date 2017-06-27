@@ -77,12 +77,10 @@ struct EvalInfo
  kingAttackersCount  rd 2
  kingAttackersWeight rd 2
  kingAdjacentZoneAttacksCount rd 2
- ksq			      rd 2
- me   rq 1
- pi   rq 1
  score	   rd 1
 	   rd 1
- _mobility rd 2  ; not used anymore
+ me   rq 1
+ pi   rq 1
 ends
 
 struct EndgameMapEntry

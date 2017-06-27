@@ -758,11 +758,9 @@ end if
     if .RootNode eq 1
 		mov   byte[.singularExtensionNode], al
     else
-		mov   eax, 1
 		mov   ecx, dword[.depth]
 		cmp   ecx, 8*ONE_PLY
-	      setge   cl
-		and   al, cl
+	      setge   al
 		mov   edx, dword[.ttMove]
 	       test   edx, edx
 	      setne   cl
@@ -770,7 +768,6 @@ end if
 		mov   edx, dword[.ttValue]
 		cmp   edx, VALUE_NONE
 	      setne   cl
-
 		and   al, cl
 		mov   edx, dword[.excludedMove]
 	       test   edx, edx

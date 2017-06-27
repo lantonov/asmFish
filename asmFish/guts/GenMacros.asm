@@ -529,11 +529,6 @@ end if
 		jnz   .Inner
   .InnerDone:
 
-
-; this is the exit of the loop
-; we can either read from the piece lists
-;  or pop bits from the bitboards
-
 		add   r11, 1
 	      movzx   edx, byte[r11]
 		cmp   edx, 64

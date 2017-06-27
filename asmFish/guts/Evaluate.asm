@@ -42,7 +42,7 @@ match =Black, Us
 
 	      movzx   ecx, word[rbx+State.npMaterial+2*Us]
 
-                mov   eax, dword[.ei.ksq+4*Them]
+              movzx   eax, byte[rbp+Pos.pieceList+16*(8*Them+King)]
         if Them eq White
                 cmp   eax, SQ_A2
                setb   al
@@ -193,7 +193,7 @@ match =Queen, Pt \{
     end if
 
 	; r9 = b
-		mov   r8d, dword[.ei.ksq+4*Us]
+              movzx   r8d, byte[rbp+Pos.pieceList+16*(8*Us+King)]
 	; r8d = our ksq
 
 		mov   rax, qword[.ei.pinnedPieces+8*Us]
@@ -247,9 +247,8 @@ if (Pt in <Knight, Bishop>)
 		mov   rax, qword[rbp+Pos.typeBB+8*Pawn]
 		lea   ecx, [r14+8*(Them-Us)]
 		 bt   rax, rcx
-		sbb   eax, eax
-		and   eax, MinorBehindPawn
-	     addsub   esi, eax
+                lea   eax, [rsi+MinorBehindPawn*(Them-Us)]
+              cmovc   esi, eax
 ..NoBehindPawnBonus:
 
 	; Bonus for outpost squares
@@ -311,10 +310,10 @@ else if Pt eq Rook
 	      movzx   edx, byte[rdi+PawnEntry.semiopenFiles+1*Them]
 		 bt   eax, ecx
 		jnc   ..NoOpenFileBonus
+                lea   eax, [rsi+RookOnFile0*(Them-Us)]
+                lea   esi, [rsi+RookOnFile1*(Them-Us)]
 		 bt   edx, ecx
-		sbb   eax, eax
-		and   eax, (RookOnFile1-RookOnFile0)*(Them-Us)
-		lea   esi, [rsi+rax+(RookOnFile0*(Them-Us))]
+             cmovnc   esi, eax
 		jmp   ..NoTrappedByKing
 ..NoOpenFileBonus:
 
@@ -381,11 +380,9 @@ else if Pt eq Queen
 		 or   rdx, rcx
 		bsf   rcx, rax
 		jnz   ..QueenPinLoop
-		and   rdx, r13
-		neg   rdx
-		sbb   eax, eax
-		and   eax, WeakQueen
-	     subadd   esi, eax
+               test   rdx, r13
+                lea   eax, [rsi+WeakQueen*(Us-Them)]
+             cmovnz   esi, eax
 ..SkipQueenPin:
 
 
@@ -449,7 +446,8 @@ match =Black, Us
 	     Assert   e, PiecesUs, qword[rbp+Pos.typeBB+8*Us], 'assertion PiecesUs failed in EvalKing'
 	     Assert   e, PiecesThem, qword[rbp+Pos.typeBB+8*Them], 'assertion PiecesThem failed in EvalKing'
 
-		mov   ecx, dword[.ei.ksq+4*Us]
+              movzx   ecx, byte[rbp+Pos.pieceList+16*(8*Us+King)]
+
 		mov   r11d, ecx
 	; r11d = our king square
 	      movzx   eax, byte[rbx+State.castlingRights]
@@ -603,7 +601,8 @@ match =Black, Us
 
 ..DoKingSafety:
 	; rdi = address of PawnEntry
-		mov   ecx, dword[.ei.ksq+4*Us]
+              movzx   ecx, byte[rbp+Pos.pieceList+16*(8*Us+King)]
+
 	      movzx   eax, byte[rbx+State.castlingRights]
 	      movzx   edx, byte[rdi+PawnEntry.castlingRights]
 		and   eax, 3 shl (2*Us)
@@ -911,10 +910,8 @@ match =Black, Us
 		and   r9, r8
 	; r9 = safeThreats
 		xor   r8, r9
-		neg   r8
-		sbb   eax, eax
-		and   eax, ThreatByHangingPawn
-	     addsub   esi, eax
+                lea   eax, [rsi + ThreatByHangingPawn*(Them-Us)]
+             cmovnz   esi, eax
 
              popcnt   rcx, r9, rax
                imul   ecx, ThreatBySafePawn
@@ -1131,8 +1128,8 @@ ProfileInc EvalPassedPawns
 	; ecx is free because s = r8-Up
 	s equ (r8-Up)
 
-		mov   eax, dword[.ei.ksq+4*Them]
-		mov   edx, dword[.ei.ksq+4*Us]
+              movzx   eax, byte[rbp+Pos.pieceList+16*(8*Them+King)]
+              movzx   edx, byte[rbp+Pos.pieceList+16*(8*Us+King)]
 		shl   eax, 6
 		shl   edx, 6
 		xor   r10d, r10d
@@ -1439,8 +1436,6 @@ end virtual
 	      movzx   eax, byte[rbp+Pos.pieceList+16*(8*White+King)]
 	      movzx   edx, byte[rbp+Pos.pieceList+16*(8*Black+King)]
 
-		mov   dword[.ei.ksq+4*White], eax
-		mov   dword[.ei.ksq+4*Black], edx
 		mov   rax, qword[KingAttacks+8*rax]
 		mov   rdx, qword[KingAttacks+8*rdx]
 		xor   rcx, rcx
@@ -1460,7 +1455,8 @@ end virtual
 
 		mov   rsi, qword[rbx+State.materialKey]
 		and   esi, MATERIAL_HASH_ENTRY_COUNT-1
-	       imul   esi, sizeof.MaterialEntry
+	       ;imul   esi, sizeof.MaterialEntry
+                shl   esi, 4
 		add   rsi, qword[rbp+Pos.materialTable]
 		mov   rdx, qword[rsi+MaterialEntry.key]
 	      movsx   eax, word[rsi+MaterialEntry.value]
@@ -1521,8 +1517,8 @@ end virtual
 		 or   rdx, rsi
 		and   rax, r8
 		and   rdx, r9
-		mov   ecx, dword[.ei.ksq+4*White]
-		mov   esi, dword[.ei.ksq+4*Black]
+              movzx   ecx, byte[rbp+Pos.pieceList+16*(8*White+King)]
+	      movzx   esi, byte[rbp+Pos.pieceList+16*(8*Black+King)]
 		 or   rax, qword[.ei.attackedBy+8*(8*Black+Pawn)]
 		 or   rdx, qword[.ei.attackedBy+8*(8*White+Pawn)]
 		bts   rax, rcx
@@ -1616,8 +1612,8 @@ end virtual
                 sub   edi, r9d
                 neg   edi
 
-		mov   eax, dword[.ei.ksq+4*White]
-		mov   ecx, dword[.ei.ksq+4*Black]
+              movzx   eax, byte[rbp+Pos.pieceList+16*(8*White+King)]
+              movzx   ecx, byte[rbp+Pos.pieceList+16*(8*Black+King)]
 		and   eax, 0111000b
 		and   ecx, 0111000b
 		sub   eax, ecx
@@ -1626,8 +1622,8 @@ end virtual
 		sub   eax, edx
 		sub   r8d, eax
 
-		mov   eax, dword[.ei.ksq+4*White]
-		mov   ecx, dword[.ei.ksq+4*Black]
+              movzx   eax, byte[rbp+Pos.pieceList+16*(8*White+King)]
+              movzx   ecx, byte[rbp+Pos.pieceList+16*(8*Black+King)]
 		and   eax, 7
 		and   ecx, 7
 		sub   eax, ecx
@@ -1650,8 +1646,7 @@ end virtual
 
 	      movsx   r12d, si
 		lea   r13d, [r12-1]
-		sar   r13d, 31
-		and   r13d, 1
+		shr   r13d, 31
 
 	      movzx   ecx, byte[r15+MaterialEntry.scalingFunction+r13]
 	      movzx   eax, byte[r15+MaterialEntry.factor+r13]
@@ -1696,9 +1691,10 @@ end virtual
 		xor   r13d, 1
 		cmp   r9d, 2*BishopValueEg+1
 		jae   .ScaleFactorDone
-		mov   r9d, dword[.ei.ksq+4*r13]
-		shl   r13, 6+3
-	       test   r11, qword[PassedPawnMask+r13+8*r9]
+                shl   r13, 4+3
+              movzx   r9d, byte[rbp+Pos.pieceList+16*(King)+r13]
+                lea   r8, [PassedPawnMask+4*r13]
+	       test   r11, qword[r8+8*r9]
 		 jz   .ScaleFactorDone
 	     popcnt   rcx, r11, r9
 		cmp   ecx, 3
