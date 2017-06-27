@@ -34,10 +34,9 @@ ProfileInc Search_NONPV
 
 
 virtual at rsp
-  .tte			  rq 1	;0
-  .ltte 		  rq 1	;8
+  .tte			  rq 1
+  .ltte 		  rq 1
   .posKey		  rq 1
-
   .ttMove		  rd 1
   .ttValue		  rd 1
   .move 		  rd 1
@@ -69,6 +68,8 @@ virtual at rsp
   .cutNode		  rb 1	; -1 for true
   .ttHit		  rb 1
   .moveCountPruning	  rb 1  ; -1 for true
+  .ttCapture              rd 1  ; 1 for true
+                          rd 1
   .quietsSearched	  rd 64
 if .PvNode eq 1
   .pv	rd MAX_PLY+1
@@ -751,10 +752,11 @@ end if
                 shl   eax, 6
                 mov   dword[.reductionOffset], eax
 
-
-                mov   byte[.skipQuiets], 0
+                xor   eax, eax 
+                mov   byte[.skipQuiets], al
+                mov   dword[.ttCapture], eax
     if .RootNode eq 1
-		mov   byte[.singularExtensionNode], 0
+		mov   byte[.singularExtensionNode], al
     else
 		mov   eax, 1
 		mov   ecx, dword[.depth]
@@ -1078,6 +1080,15 @@ end if
 		mov   dword[rbx+State.currentMove], ecx
 		mov   qword[rbx+State.counterMoves], rax
 
+                xor   eax, eax
+                xor   edx, edx
+                cmp   byte[.captureOrPromotion], 0
+              setne   al
+                cmp   ecx, dword[.ttMove]                
+               sete   dl
+                and   eax, edx
+                 or   dword[.ttCapture], eax
+
 	; Step 14. Make the move
 	       call   Move_Do__Search
 
@@ -1132,6 +1143,10 @@ end if
 	      movzx   r14d, byte[rbp+Pos.board+r12]	; r14d = from piece   should be 0
 	      movzx   r15d, byte[rbp+Pos.board+r13]	; r15d = to piece
 
+        ; Increase reduction if ttMove is a capture
+                add   edi, dword[.ttCapture]
+
+        ; Increase reduction for cut nodes
 		cmp   byte[.cutNode], 0
 		 jz   .15testA
 		add   edi, 2*ONE_PLY
