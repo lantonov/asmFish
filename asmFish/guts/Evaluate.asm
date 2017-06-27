@@ -155,7 +155,6 @@ match =Queen, Pt \{
 	     Assert   e, rdi, qword[.ei.pi], 'assertion rdi=qword[.ei.pi] failed in EvalPieces'
 
 
-if PEDANTIC
 		xor   eax, eax
 		mov   qword[.ei.attackedBy+8*(8*Us+Pt)], rax
 
@@ -168,21 +167,6 @@ if PEDANTIC
 ..NextPiece:
 		add   r15, 1
 
-else
-	     Assert   e, r15, 0, 'assertion r15=0 failed in EvalPieces'
-	; use the fact that r15 is zero
-		mov   qword[.ei.attackedBy+8*(8*Us+Pt)], r15
-
-		mov   r15, qword[rbp+Pos.typeBB+8*Us]
-		mov   r11, r15
-	; r11 = our pieces
-
-		and   r15, r12
-		 jz   ..AllDone
-..NextPiece:
-		bsf   r14, r15
-	       blsr   r15, r15, rcx
-end if
         ; r14 = square s
 
 
@@ -351,9 +335,7 @@ else if Pt eq Rook
 		mov   eax, r14d
 		and   eax, 7
 		sub   ecx, eax
-if PEDANTIC
 		sub   ecx, 1
-end if
 		sar   ecx, 31
 		sub   edx, ecx
 		xor   eax, eax
@@ -410,14 +392,9 @@ else if Pt eq Queen
 end if
 
 
-if PEDANTIC
 	      movzx   r14d, byte[r15]
 		cmp   r14d, 64
 		 jb   ..NextPiece
-else
-	       test   r15 ,r15
-		jnz   ..NextPiece
-end if
 
 ..AllDone:
 
@@ -486,14 +463,8 @@ match =Black, Us
 ..KingSafetyDoneRet:
 
 		mov   edi, dword[.ei.kingAttackersCount+4*Them]
-if PEDANTIC
               movzx   ecx, byte[rbp+Pos.pieceEnd+(8*Them+Queen)]
 		and   ecx, 15
-else
-                mov   rcx, qword[rbp+Pos.typeBB+8*Them]
-                and   rcx, qword[rbp+Pos.typeBB+8*Queen]
-             popcnt   rcx, rcx, r8
-end if
                 add   ecx, edi
 
 		mov   r8, qword[.ei.attackedBy2+8*Us]
@@ -1465,17 +1436,8 @@ end virtual
 		 or   r12, qword[rbp+Pos.typeBB+8*Bishop]
 		mov   esi, dword[rbp+Pos.sideToMove]
 
-	if PEDANTIC
 	      movzx   eax, byte[rbp+Pos.pieceList+16*(8*White+King)]
 	      movzx   edx, byte[rbp+Pos.pieceList+16*(8*Black+King)]
-	else
-		mov   rax, qword[rbp+Pos.typeBB+8*King]
-		and   rax, qword[rbp+Pos.typeBB+8*White]
-		bsf   rax, rax
-		mov   rdx, qword[rbp+Pos.typeBB+8*King]
-		and   rdx, qword[rbp+Pos.typeBB+8*Black]
-		bsf   rdx, rdx
-	end if
 
 		mov   dword[.ei.ksq+4*White], eax
 		mov   dword[.ei.ksq+4*Black], edx
@@ -1686,17 +1648,11 @@ end virtual
 	; r14 = ei.pi
 	; Evaluate scale factor for the winning side
 
-if PEDANTIC
 	      movsx   r12d, si
 		lea   r13d, [r12-1]
 		sar   r13d, 31
 		and   r13d, 1
-else
-		xor   r13d, r13d
-		 bt   esi, 15
-		adc   r13d, r13d
-	      movsx   r12d, si
-end if
+
 	      movzx   ecx, byte[r15+MaterialEntry.scalingFunction+r13]
 	      movzx   eax, byte[r15+MaterialEntry.factor+r13]
 	      movzx   edx, byte[r15+MaterialEntry.gamePhase]
@@ -1757,7 +1713,6 @@ end if
 	; r12d = eg_value(score)
 	; adjust score for side to move
 
-if PEDANTIC
   ;// Interpolate between a middlegame and a (scaled by 'sf') endgame score
   ;Value v =  mg_value(score) * int(ei.me->game_phase())
   ;         + eg_value(score) * int(PHASE_MIDGAME - ei.me->game_phase()) * sf / SCALE_FACTOR_NORMAL;
@@ -1781,29 +1736,6 @@ if PEDANTIC
 		sar   edx, 7
 		xor   edx, r11d
 		lea   eax, [rcx+rdx+Eval_Tempo]
-else
-	; the evaluation should be exactly symmetric
-	;  hence the signed division by PHASE_MIDGAME*SCALE_FACTOR_NORMAL
-	;  requires some care
-	; example: x/16 = sar(x+7-sar(x,31),4)
-	;  rounds to the nearest integer  with ties going towards zero
-		mov   ecx, dword[rbp+Pos.sideToMove]
-		mov   edi, ecx
-		neg   ecx
-	       imul   esi, edx
-		shl   esi, 6
-		neg   r12d
-		sub   edx, PHASE_MIDGAME
-	       imul   edx, r12d
-	       imul   eax, edx
-		add   eax, esi
-		cdq
-		add   eax, (1 shl 12) - 1
-		sub   eax, edx
-		sar   eax, 13
-		xor   eax, ecx
-		lea   eax, [rax+rdi+Eval_Tempo]
-end if
 
 		add   rsp, sizeof.EvalInfo
 		pop   r15 r14 r13 r12 rdi rsi rbx

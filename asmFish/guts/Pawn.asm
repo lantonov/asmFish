@@ -70,20 +70,10 @@ match =Black, Us
 		 jz   ..AllDone
 
 
-if PEDANTIC
-
 		lea   r15, [rbp+Pos.pieceList+16*(8*Us+Pawn)]
 	      movzx   ecx, byte[rbp+Pos.pieceList+16*(8*Us+Pawn)]
 ..NextPiece:
 		add   r15, 1
-
-else
-
-..NextPiece:
-		bsf   rcx, r15
-	       blsr   r15, r15, rax
-
-end if
 
 		mov   edx, ecx
 		and   edx, 7
@@ -254,15 +244,9 @@ end if
                 jnz   ..PopLoop
 ..Done:
 
-if PEDANTIC
 	      movzx   ecx, byte[r15]
 		cmp   ecx, 64
 		 jb   ..NextPiece
-
-else
-	       test   r15, r15
-		jnz   ..NextPiece
-end if
 
 ..AllDone:
 

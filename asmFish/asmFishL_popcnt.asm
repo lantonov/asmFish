@@ -15,7 +15,6 @@ VERBOSE 	 equ 0	;  LOTS of print           find subtle bugs:  0=off, 1=general d
 PROFILE 	 equ 0	;  counts in the code      view these with profile command after running bench
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; optional features 0 or 1
-PEDANTIC	 equ 1	;  follow official stockfish exactly so that bench signature matches
 USE_MATEFINDER	 equ 0	; less pruning
 USE_CURRMOVE	 equ 1	; printing feature, spamlike
 USE_HASHFULL	 equ 1	; printing feature

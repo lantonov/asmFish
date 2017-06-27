@@ -258,11 +258,10 @@ ProfileInc Move_Do
 		mov   byte[rbp+Pos.board+r9], r10l
 		xor   qword[rbp+Pos.typeBB+8*rax], rdx
 		xor   qword[rbp+Pos.typeBB+8*rsi], rdx
-if PEDANTIC
+
 	      movzx   eax, byte[rbp+Pos.pieceIdx+r8]
 		mov   byte[rbp+Pos.pieceList+rax], r9l
 		mov   byte[rbp+Pos.pieceIdx+r9], al
-end if
 
 	      movsx   rax, byte[IsPawnMasks+r10]
 		and   r11d, eax
@@ -364,13 +363,8 @@ match =1, DEBUG {
 		mov   qword[rbp+Pos.typeBB+r12], rdi
 		mov   qword[rbp+Pos.typeBB+8*rax], rdx
 
-if PEDANTIC
 	      movzx   edi, byte[rbp+Pos.pieceEnd+r11]
 		and   edi, 15
-else
-		and   rdi, rdx
-	     popcnt   rdi, rdi, rdx
-end if
 
 	      movsx   rax, byte[IsPawnMasks+r11]
 		shl   r11d, 6+3
@@ -380,17 +374,13 @@ end if
 		and   rdx, rax
 	      vmovq   xmm7, rdx
 	      vpxor   xmm4, xmm4, xmm7
-if PEDANTIC
 	      vmovq   xmm7, qword[Zobrist_Pieces+r11+8*(rdi-1)]
-else
-	      vmovq   xmm7, qword[Zobrist_Pieces+r11+8*rdi]
-end if
 	      vpxor   xmm3, xmm3, xmm7
 	      vmovq   xmm1, qword[Scores_Pieces+r11+8*r9]
 	     vpsubd   xmm6, xmm6, xmm1
 		shr   r11d, 6+3
 		mov   word[rbx+sizeof.State+State.rule50], 0
-if PEDANTIC
+
 	      movzx   edi, byte[rbp+Pos.pieceEnd+r11]
 		sub   edi, 1
 	      movzx   edx, byte[rbp+Pos.pieceList+rdi]
@@ -399,7 +389,7 @@ if PEDANTIC
 		mov   byte[rbp+Pos.pieceIdx+rdx], al
 		mov   byte[rbp+Pos.pieceList+rax], dl
 		mov   byte[rbp+Pos.pieceList+rdi], 64
-end if
+
 		jmp   .CaptureRet
 
 
@@ -512,7 +502,6 @@ match =1, DEBUG {
 		lea   r14d, [rcx-MOVE_TYPE_PROM+8*rsi+Knight]
 
 
-if PEDANTIC
 	      movzx   edi, byte[rbp+Pos.pieceEnd+r10]
 		sub   edi, 1
 	      movzx   edx, byte[rbp+Pos.pieceList+rdi]
@@ -527,7 +516,6 @@ if PEDANTIC
 		mov   byte[rbp+Pos.pieceList+rdx], r9l
 		add   edx, 1
 		mov   byte[rbp+Pos.pieceEnd+r14], dl
-end if
 
 	; remove pawn r10 on square r9
 		mov   rdx, qword[rbp+Pos.typeBB+8*Pawn]
@@ -593,7 +581,7 @@ end if
 		lea   eax, [8*rsi+Pawn]
 		mov   word[rbx+sizeof.State+State.rule50], 0
 		mov   byte[rbx+sizeof.State+State.capturedPiece], al
-if PEDANTIC
+
 	      movzx   edi, byte[rbp+Pos.pieceEnd+8*rsi+Pawn]
 		sub   edi, 1
 	      movzx   edx, byte[rbp+Pos.pieceList+rdi]
@@ -602,7 +590,7 @@ if PEDANTIC
 		mov   byte[rbp+Pos.pieceIdx+rdx], al
 		mov   byte[rbp+Pos.pieceList+rax], dl
 		mov   byte[rbp+Pos.pieceList+rdi], 64
-end if
+
 		xor   esi, 1
 		jmp   .SpecialRet
 
@@ -641,7 +629,6 @@ match =1, DEBUG {
 		mov   byte[rbp+Pos.board+r14], r10l
 		mov   byte[rbp+Pos.board+rdx], r11l
 
-if PEDANTIC
 	  ;    movzx   eax, byte[rbp+Pos.pieceIdx+r8]
 	  ;    movzx   edi, byte[rbp+Pos.pieceIdx+r9]
 	  ;      mov   byte[rbp+Pos.pieceList+rax], r14l
@@ -671,8 +658,6 @@ if PEDANTIC
 	      movzx   r13d, byte[rbp+Pos.pieceIdx+r12]
 		mov   byte[rbp+Pos.pieceIdx+rdx], r13l
 		mov   byte[rbp+Pos.pieceIdx+r12], dil
-
-end if
 
 		shl   r10d, 6+3
 		shl   r11d, 6+3

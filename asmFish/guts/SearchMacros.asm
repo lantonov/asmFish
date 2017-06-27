@@ -667,7 +667,6 @@ end if
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-if PEDANTIC
 	; The data at tte could have been changed by
 	;   Step 6. Razoring
 	;   Step 9. ProbCut
@@ -679,7 +678,6 @@ if PEDANTIC
 		mov   rax, qword[.tte]
 		mov   rax, qword[rax]
 		mov   qword[.ltte], rax
-end if
 
 
 .CMH  equ (rbx-1*sizeof.State+State.counterMoves)

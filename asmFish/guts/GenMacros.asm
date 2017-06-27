@@ -455,26 +455,11 @@ macro generate_moves  Us, Pt, Checks
 local  .Outer,.OuterDone,.Inner,.InnerDone
 
 
-; this is the head of the loop
-; we can either read from the piece lists
-;  or pop bits from the bitboards
-
-if PEDANTIC
 		lea   r11, [rbp+Pos.pieceList+16*(8*Us+Pt)]
 	      movzx   edx, byte[r11]
 		cmp   edx, 64
 		jae   .OuterDone
 .Outer:
-
-else
-		mov   r11, qword[rbp+Pos.typeBB+8*Pt]
-		and   r11, qword[rbp+Pos.typeBB+8*Us]
-		 jz   .OuterDone
-.Outer:
-		bsf   rdx, r11
-end if
-
-
 
 
 if Checks eq QUIET_CHECKS
@@ -549,20 +534,11 @@ end if
 ; we can either read from the piece lists
 ;  or pop bits from the bitboards
 
-if PEDANTIC
 		add   r11, 1
 	      movzx   edx, byte[r11]
 		cmp   edx, 64
 		 jb   .Outer
  .OuterDone:
-
-else
-	       blsr   r11, r11, rax
-		jnz   .Outer
- .OuterDone:
-
-end if
-
 
 }
 
