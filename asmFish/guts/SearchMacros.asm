@@ -1133,6 +1133,10 @@ end if
 
 .15NotCaptureOrPromotion:
 
+        ; r12d = from
+	; r13d = to
+	; r14d = from piece
+	; r15d = to piece
 
         ; Increase reduction if ttMove is a capture
                 add   edi, dword[.ttCapture]

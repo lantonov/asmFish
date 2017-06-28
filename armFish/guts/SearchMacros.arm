@@ -2043,6 +2043,11 @@ Display 2, "Search Step 15\n"
 //.15NotCaptureOrPromotion:
 Search.15NotCaptureOrPromotion\@:
 
+// r12d = from
+// r13d = to
+// r14d = from piece
+// r15d = to piece
+
 // Increase reduction if ttMove is a capture
         ldr  w4, [sp, Search.ttCapture]
         add  w27, w27, w4
