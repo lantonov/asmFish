@@ -41,8 +41,8 @@ Display 2, "id:%i1,%i2\n"
 
         cmp  w2, 100
         bhs  \coldlabel
-\coldreturnlabel:
 
+\coldreturnlabel:
         cmp  w2, w1
        csel  w2, w1, w2, hi
         cmp  w2, 4
@@ -52,6 +52,7 @@ Display 2, "id:%i1,%i2\n"
         lsl  x9, x4, 2
         sub  w0, w0, 6
         mov  w1, 0
+
 PosIsDraw.CheckNext\@:
         add  x6, x21, State.key
         ldr  x4, [x6, x9]

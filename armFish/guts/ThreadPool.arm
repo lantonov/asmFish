@@ -334,30 +334,11 @@ ThreadPool_StartThinking.localsize = (ThreadPool_StartThinking.lend + 15) & -16
         mov  x2, x26
          bl  Limits_Copy
 
-/*
-	; copy to mainThread
-
-if PEDANTIC
-	; position is passed to threads by first converting to a fen
-	;   and then parsing this fen string
-	; the net effect is a fixed order on piece lists
-	       call   Position_SetPieceLists
-end if
-
-		lea   rcx, [r14+Thread.rootPos]
-	       call   Position_CopyToSearch
-		xor   eax, eax
-		mov   dword[r14+Thread.rootDepth], eax
-		mov   qword[r14+Thread.nodes], rax
-		mov   qword[r14+Thread.tbHits], rax
-		mov   byte[r14+Thread.maxPly], al
-                mov   dword[r14+Thread.resetCnt], eax
-                mov   dword[r14+Thread.callsCnt], MIN_RESETCNT  ; check time asap
-*/
          bl  Position_SetPieceLists
         add  x1, x24, Thread.rootPos
          bl  Position_CopyToSearch
-        str  wzr, [x24, Thread.rootDepth]
+        add  x6, x24, Thread.rootDepth
+       stlr  wzr, [x6]
         str  xzr, [x24, Thread.nodes]
         str  xzr, [x24, Thread.tbHits]
        strb  wzr, [x24, Thread.maxPly]
@@ -450,30 +431,10 @@ end if
         mov  w0, 0
         mov  x20, x25
         mov  x26, x24
-        str  x0, [x26, Thread.nodes]
+        str  xzr, [x26, Thread.nodes]
+
         mov  w27, 0
 ThreadPool_StartThinking.next_thread:
-/*
-		add   edi,1
-		cmp   edi, dword[threadPool.threadCnt]
-		jae   .thread_copy_done
-		mov   rbx, qword[threadPool.threadTable+8*rdi]
-
-		lea   rcx, [rbx+Thread.rootPos]
-	       call   Position_CopyToSearch
-		xor   eax, eax
-		mov   dword[rbx+Thread.rootDepth], eax
-		mov   qword[rbx+Thread.nodes], rax
-		mov   qword[rbx+Thread.tbHits], rax
-		mov   byte[rbx+Thread.maxPly], al
-                mov   dword[r14+Thread.resetCnt], eax
-                mov   dword[r14+Thread.callsCnt], MAX_RESETCNT  ; main thread already has min
-
-
-	; copy the filtered moves of main thread to worker thread
-		mov   rax, qword[rbx+Thread.rootPos.rootMovesVec.table]
-		mov   rdx, qword[rsi+Thread.rootPos.rootMovesVec.table]
-*/
         add  w27, w27, 1
         lea  x6, threadPool
         ldr  w4, [x6, ThreadPool.threadCnt]
@@ -484,12 +445,12 @@ ThreadPool_StartThinking.next_thread:
 
         add  x1, x21, Thread.rootPos
          bl  Position_CopyToSearch
-        mov  w0, 0
-        str  w0, [x21, Thread.rootDepth]
-        str  x0, [x21, Thread.nodes]
-        str  x0, [x21, Thread.tbHits]
-       strb  w0, [x21, Thread.maxPly]
-        str  w0, [x24, Thread.resetCnt]
+        add  x6, x21, Thread.rootDepth
+       stlr  wzr, [x6]
+        str  xzr, [x21, Thread.nodes]
+        str  xzr, [x21, Thread.tbHits]
+       strb  wzr, [x21, Thread.maxPly]
+        str  wzr, [x24, Thread.resetCnt]
         mov  w4, (MAX_RESETCNT>>0 ) & 0x0ff
        movk  w4, (MAX_RESETCNT>>16) & 0x0ff, lsl 16
         str  w4, [x24, Thread.callsCnt]

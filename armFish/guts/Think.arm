@@ -118,18 +118,6 @@ Thread_Think.clear_stack:
          bl  EasyMoveMng_Clear
 
 Thread_Think.skip_easymove:
-/*
-	; set multiPV
-		lea   rcx, [rbp+Pos.rootMovesVec]
-	       call   RootMovesVec_Size
-		mov   ecx, dword[options.multiPV]
-		cmp   eax, ecx
-	      cmova   eax, ecx
-		mov   dword[.multiPV], eax
-
-	; id loop
-		mov   r15d, dword[rbp-Thread.rootPos+Thread.rootDepth]	 ; this should be set to 0 by ThreadPool_StartThinking
-*/
 
         add  x1, x20, Pos.rootMovesVec
          bl  RootMovesVec_Size
@@ -139,25 +127,10 @@ Thread_Think.skip_easymove:
        csel  w0, w0, w1, ge
         str  w0, [sp, Thread_Think.multiPV]
 
-        ldr  w25, [x20, -Thread.rootPos + Thread.rootDepth]
+        add  x6, x20, -Thread.rootPos + Thread.rootDepth
+       ldar  w25, [x6]
 
 Thread_Think.id_loop:
-//Display "Thread_Think.id_loop rootDepth = %i25\n"
-/*
-		xor   eax, eax
-		mov   ecx, dword[limits.depth]
-		cmp   eax, dword[rbp-Thread.rootPos+Thread.idx]
-	     cmovne   ecx, eax
-		sub   ecx, 1
-		cmp   al, byte[signals.stop]
-		jne   .id_loop_done
-		cmp   r15d, ecx
-		 ja   .id_loop_done
-		add   r15d, 1
-		mov   dword[rbp-Thread.rootPos+Thread.rootDepth], r15d
-		cmp   r15d, MAX_PLY
-		jge   .id_loop_done
-*/
         lea  x6, limits
         ldr  w1, [x6, Limits.depth]
         ldr  w4, [x20, -Thread.rootPos + Thread.idx]
@@ -170,7 +143,8 @@ Thread_Think.id_loop:
         cmp  w25, w1
         bhi  Thread_Think.id_loop_done
         add  w25, w25, 1
-        str  w25, [x20, -Thread.rootPos + Thread.rootDepth]
+        add  x6, x20, -Thread.rootPos + Thread.rootDepth
+       stlr  w25, [x6]
         cmp  w25, MAX_PLY
         bge  Thread_Think.id_loop_done
 
