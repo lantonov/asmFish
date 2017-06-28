@@ -1128,12 +1128,9 @@ EvalKing.KnightDone\@:
 //	       test   edi, edi
 //		 js   ..AllDone
        tbnz  w27, 31, EvalKing.AllDone\@
-//	       imul   edi, edi
+        sub  w26, w26, w27, lsr 4
         mul  w27, w27, w27
-//		shr   edi, 12
         lsr  w27, w27, 12
-//		shl   edi, 16
-//		sub   esi, edi
         sub  w26, w26, w27, lsl 16
 //
 //		jmp   ..AllDone

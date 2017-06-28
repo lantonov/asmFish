@@ -18,9 +18,11 @@
          bl  Endgame_Init
 
 // write engine name
-//        lea  x27, szGreetingEnd
-//	lea  x1, szGreeting
-//         bl  Os_WriteOut
+.if VERBOSE == 0
+        lea  x27, szGreetingEnd
+	lea  x1, szGreeting
+         bl  Os_WriteOut
+.endif
 
 // set up threads and hash
          bl  MainHash_Create
@@ -33,6 +35,7 @@
 
 // enter the main loop
          bl  UciLoop
+
 // clean up threads and hash
          bl  ThreadPool_Destroy
          bl  MainHash_Destroy
