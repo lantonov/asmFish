@@ -434,12 +434,11 @@ if DEBUG
 	       call   Position_VerifyState
 	       test   eax, eax
 		jz   .Failed
- if PEDANTIC
+
 	; make sure piece lists are ok
 	       call   Position_VerifyPieceLists
 	       test   eax, eax
 		 jz   .Failed
- end if
 end if
 
 		xor   eax, eax

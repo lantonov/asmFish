@@ -212,6 +212,12 @@ match =0, CPU_HAS_BMI2 {
 ; From: http://talkchess.com/forum/viewtopic.php?p=670709#670709
 
 Init_Attacks:
+if DEBUG
+                lea   rdi, [SlidingAttacksBB]
+                mov   ecx, 89524
+                mov   rax, -1
+          rep stosq
+end if
 		xor   ebx, ebx
 .NextSquare:
 		xor   edx, edx
@@ -277,6 +283,12 @@ Init_Attacks:
 	       imul   rcx, qword[RookAttacksIMUL+8*rbx]
 		shr   rcx, 64-12
 		mov   r9d, dword[RookAttacksMOFF+4*rbx]
+if DEBUG
+                cmp   qword[r9+8*rcx], -1
+                 je   @f
+             Assert   e, rax, qword[r9+8*rcx], 'bad rook magic'
+        @@:
+end if
 		mov   qword[r9+8*rcx], rax
 		sub   rdx, qword[RookAttacksPEXT+8*rbx]
 		and   rdx, qword[RookAttacksPEXT+8*rbx]
@@ -291,6 +303,12 @@ Init_Attacks:
 	       imul   rcx, qword[BishopAttacksIMUL+8*rbx]
 		shr   rcx, 64-9
 		mov   r9d, dword[BishopAttacksMOFF+4*rbx]
+if DEBUG
+                cmp   qword[r9+8*rcx], -1
+                 je   @f
+             Assert   e, rax, qword[r9+8*rcx], 'bad bishop magic'
+        @@:
+end if
 		mov   qword[r9+8*rcx], rax
 		sub   rdx, qword[BishopAttacksPEXT+8*rbx]
 		and   rdx, qword[BishopAttacksPEXT+8*rbx]
