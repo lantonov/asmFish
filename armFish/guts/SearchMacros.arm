@@ -114,7 +114,9 @@ Search.doFullDepthSearch        = 1*sizeof.rb + Search.captureOrPromotion
 Search.cutNode                  = 1*sizeof.rb + Search.doFullDepthSearch
 Search.ttHit                    = 1*sizeof.rb + Search.cutNode
 Search.moveCountPruning         = 1*sizeof.rb + Search.ttHit
-Search.quietsSearched           = 1*sizeof.rb + Search.moveCountPruning
+Search.ttCapture                = 1*sizeof.rb + Search.moveCountPruning
+Search.__1                      = 1*sizeof.rd + Search.ttCapture
+Search.quietsSearched           = 1*sizeof.rd + Search.__1
  .if \PvNode == 1
 Search.pv   = 64*sizeof.rd          + Search.quietsSearched
 Search.lend = (MAX_PLY+1)*sizeof.rd + Search.pv
@@ -1333,25 +1335,18 @@ Display 2, "im: %i0\n"
 //                mov   dword[.reductionOffset], eax
         str  w0, [sp, Search.reductionOffset]
 //
-//
-//                mov   byte[.skipQuiets], 0
+
        strb  wzr, [sp, Search.skipQuiets]
+        str  wzr, [sp, Search.ttCapture]
 //    if .RootNode eq 1
  .if \RootNode == 1
 //		mov   byte[.singularExtensionNode], 0
        strb  wzr, [sp, Search.singularExtensionNode]
 //    else
  .else
-//		mov   eax, 1
-        mov  w0, 1
-//		mov   ecx, dword[.depth]
         ldr  w1, [sp, Search.depth]
-//		cmp   ecx, 8*ONE_PLY
         cmp  w1, 8*ONE_PLY
-//	      setge   cl
-       cset  w1, ge
-//		and   al, cl
-        and  w0, w0, w1
+       cset  w0, ge
 //		mov   edx, dword[.ttMove]
         ldr  w2, [sp, Search.ttMove]
 //	       test   edx, edx
@@ -1986,6 +1981,19 @@ Search.13done\@:
         str  w1, [x21, State.currentMove]
 //		mov   qword[rbx+State.counterMoves], rax
         str  x0, [x21, State.counterMoves]
+
+
+       ldrb  w4, [sp, Search.captureOrPromotion]
+        tst  w4, w4
+       cset  w0, ne
+        ldr  w4, [sp, Search.ttMove]
+        cmp  w1, w4
+       cset  w2, eq
+        and  w0, w0, w2
+        ldr  w4, [sp, Search.ttCapture]
+        orr  w4, w4, w0
+        str  w4, [sp, Search.ttCapture]
+
 //
 //	; Step 14. Make the move
 //	       call   Move_Do__Search
@@ -2077,14 +2085,15 @@ Search.15NotCaptureOrPromotion\@:
 //	      movzx   r15d, byte[rbp+Pos.board+r13]	; r15d = to piece
         add  x6, x20, Pos.board
        ldrb  w25, [x6, x23]
-//
-//		cmp   byte[.cutNode], 0
-//		 jz   .15testA
+
+// Increase reduction if ttMove is a capture
+        ldr  w4, [sp, Search.ttCapture]
+        add  w27, w27, w4
+
+// Increase reduction for cut nodes
        ldrb  w4, [sp, Search.cutNode]
         cbz  w4, Search.15testA\@
-//		add   edi, 2*ONE_PLY
         add  w27, w27, 2*ONE_PLY
-//		jmp   .15skipA
           b  Search.15skipA\@
 //.15testA:
 Search.15testA\@:
