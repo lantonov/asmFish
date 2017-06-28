@@ -175,6 +175,8 @@ Display 2, "QSearch<0,0>(alpha=%i1, beta=%i2, depth=%i8) called\n"
         str  x8, [x21, 1*sizeof.State + State.pv]
         str  w2, [x9]
  .endif
+        mov  w4, 2
+        str  w4, [sp, QSearch.moveCount]
         str  w2, [sp, QSearch.bestMove]
         str  w2, [x21, State.currentMove]
        strb  w0, [x21, State.ply]
@@ -496,10 +498,6 @@ QSearch.MovePickNoTTMove\@:
 /*
 		mov   dword[rbx+State.ttMove], edi
 		mov   qword[rbx+State.stage], r15
-if DEBUG
-		mov   qword[.stage], r15
-end if
-
 */
         str  w27, [x21, State.ttMove]
         str  x25, [x21, State.stage]
@@ -532,10 +530,16 @@ QSearch.MovePickLoop\@:
 */
         mov  w26, 0
         GetNextMove
+        mov  w1, w0
         str  w0, [sp, QSearch.move]
 Display 2, "QSearch.move = %m0\n"
         cbz  w0, QSearch.MovePickDone\@
-        mov  w1, w0
+
+        ldr  w4, [sp, QSearch.moveCount]
+        sub  w4, w4, 1
+        str  w4, [sp, QSearch.moveCount]
+
+// check for check and get address of search function
          bl  Move_GivesCheck
        strb  w0, [x21, State.givesCheck]
         mov  w23, w0
@@ -667,12 +671,14 @@ QSearch.SkipFutilityPruning\@:
         mov  w0, VALUE_MATED_IN_MAX_PLY
         sub  w0, w0, w27
         lsl  w24, w24, 9
+        ldr  w2, [sp, QSearch.moveCount]
         lsl  w25, w25, 9
        cbnz  w25, QSearch.DontContinue\@
+        ldr  w4, [sp, QSearch.depth]
+        orr  w2, w2, w4
         cmp  w26, MOVE_TYPE_PROM
         bhs  QSearch.DontContinue\@
-        ldr  w4, [sp, QSearch.depth]
-        and  w4, w4, w0
+        and  w4, w0, w2
         tbz  w4, 31, QSearch.DontContinue\@
  .endif
         SeeSignTest  QSearch.DontContinue\@
@@ -722,17 +728,14 @@ QSearch.DontContinue\@:
 //	prefetchnta   [rax]
        prfm  PLDL1KEEP, [x0]
 
-/*
-	; check for legality
-		mov   ecx, dword[.move]
-	       call   Move_IsLegal
-	       test   rax, rax
-		 jz   .MovePickLoop
-*/
+// check for legality
         ldr  w1, [sp, QSearch.move]
          bl  Move_IsLegal
-
-        cbz  x0, QSearch.MovePickLoop\@
+        ldr  w4, [sp, QSearch.moveCount]
+        add  w2, w0, 1
+        add  w4, w4, w2
+        str  w4, [sp, QSearch.moveCount]
+        cbz  w0, QSearch.MovePickLoop\@
         
 
 /*
