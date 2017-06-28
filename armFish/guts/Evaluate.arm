@@ -107,7 +107,7 @@ LazyThreshold = 1500
         mov  w2, 0
 //		cmp   ecx, QueenValueMg
 //		 jb   ..NotUsed 	; 10.49%
-        cmp  w1, QueenValueMg
+        cmp  w1,  RookValueMg + KnightValueMg
         blo  EvalInit.NotUsed\@
 //		mov   r8, r9
         mov  x8, x9
@@ -885,6 +885,9 @@ Display 2,"ks: %s26\n"
 //
 //		mov   edi, dword[.ei.kingAttackersCount+4*Them]
         ldr  w27, [sp, EvalInfo.kingAttackersCount + 4*Them]
+       ldrb  w1, [x20, Pos.pieceEnd + (8*Them + Queen)]
+        and  w1, w1, 15
+        add  w1, w1, w27
 //
 //		mov   r8, qword[.ei.attackedBy2+8*Us]
         ldr  x8, [sp, EvalInfo.attackedBy2 + 8*\Us]
@@ -904,9 +907,9 @@ Display 2,"ks: %s26\n"
 //		and   r9, AttackedByThem
         and  x9, x9, AttackedByThem
 //	; r9=b
-//	       test   edi, edi
-//		 jz   ..AllDone
-        cbz  w27, EvalKing.AllDone\@
+
+        cmp  w1, 2
+        blo  EvalKing.AllDone\@
 //
 //	       imul   edi, dword[.ei.kingAttackersWeight+4*Them]
         ldr  w4, [sp, EvalInfo.kingAttackersWeight + 4*Them]
@@ -944,32 +947,15 @@ Display 2,"ks: %s26\n"
         sub  w0, w27, 848
 //	      cmovz   edi, eax
        csel  w27, w0, w27, eq
-//	; the following does edi += - 28*mg_value(score)/25 - 5
-//		lea   ecx, [rsi+0x08000]
-        add  w1, w26, 0x08000
-//		sar   ecx, 16
+//	; the following does w27 += - 9*mg_value(score)/8 + 40
+       adds  w1, w26, 0x08000
         asr  w1, w1, 16
-//		lea   edx, [4*rcx]
-        lsl  w2, w1, 2
-//                shl   ecx, 5
-        lsl  w1, w1, 5
-//                mov   eax, 0x51EB851F
-      mov32  w0, 0x51EB851F
-//                sub   ecx, edx
-        sub  w1, w1, w2
-//               imul   ecx
-      smull  x0, w0, w1
-        asr  x2, x0, 32
-//                sar   ecx, 31
-        asr  w1, w1, 31
-//                sar   edx, 3
-        asr  w2, w2, 3
-//		lea   edi, [rdi+rcx-5]
-        sub  w27, w27, 5
-        add  w27, w27, w1
-//		sub   edi, edx
-        sub  w27, w27, w2
-//	; edi = kingDanger
+        add  w0, w1, w1, lsl 3
+        add  w27, w27, 40
+        add  w2, w0, 7
+       csel  w0, w2, w0, mi
+        sub  w27, w27, w0, asr 3
+//	; w27 = kingDanger
 Display 2,"kingDanger: %i27\n"
 //
 //		and   r8, qword[.ei.attackedBy2+8*Them]
