@@ -1061,6 +1061,8 @@ end if
 		shl   rax, 5
 		add   rax, qword[mainHash.table]
 	prefetchnta   [rax]
+		shr   r14d, 6+3
+		shr   r15d, 6+3
 
 	; Check for legality just before making the move
     if .RootNode eq 0
@@ -1131,14 +1133,6 @@ end if
 
 .15NotCaptureOrPromotion:
 
-
-		mov   r12d, dword[.move]
-		shr   r12d, 6
-		and   r12d, 63				; r12d = from
-		mov   r13d, dword[.move]
-		and   r13d, 63				; r13d = to
-	      movzx   r14d, byte[rbp+Pos.board+r12]	; r14d = from piece   should be 0
-	      movzx   r15d, byte[rbp+Pos.board+r13]	; r15d = to piece
 
         ; Increase reduction if ttMove is a capture
                 add   edi, dword[.ttCapture]

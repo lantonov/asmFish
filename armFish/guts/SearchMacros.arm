@@ -1693,23 +1693,13 @@ Search.12done\@:
 Display 2, "Search Step 13\n"
 
 //	; Step 13. Pruning at shallow depth
-//
-//		mov   r12d, dword[.move]
-        ldr  w22, [sp, Search.move]
-//		shr   r12d, 6
-//		and   r12d, 63				; r12d = from
-       ubfx  w22, w22, 6, 6
-//		mov   r13d, dword[.move]
         ldr  w23, [sp, Search.move]
-//		and   r13d, 63				; r13d = to
+       ubfx  w22, w23, 6, 6
         and  w23, w23, 63
-//	      movzx   r14d, byte[rbp+Pos.board+r12]	; r14d = from piece
         add  x6, x20, Pos.board
        ldrb  w24, [x6, x22]
-//	      movzx   r15d, byte[rbp+Pos.board+r13]	; r15d = to piece
-        add  x6, x20, Pos.board
        ldrb  w25, [x6, x23]
-//
+
 //
 //		mov   eax, dword[.extension]
         ldr  w0, [sp, Search.extension]
@@ -1916,40 +1906,25 @@ Search.13done\@:
  .endif
 //
 //	; Speculative prefetch as early as possible
-//		shl   r14d, 6+3
-        lsl  w24, w24, 9
-//		shl   r15d, 6+3
-        lsl  w25, w25, 9
-//		mov   rax, qword[rbx+State.key]
         ldr  x0, [x21, State.key]
-//		xor   rax, qword[Zobrist_side]
         lea  x6, Zobrist_side
         ldr  x4, [x6]
         eor  x0, x0, x4
-//		xor   rax, qword[Zobrist_Pieces+r14+8*r12]
         lea  x6, Zobrist_Pieces
-        add  x6, x6, x24
+        add  x6, x6, x24, lsl 9
         ldr  x4, [x6, x22, lsl 3]
         eor  x0, x0, x4
-//		xor   rax, qword[Zobrist_Pieces+r14+8*r13]
-        lea  x6, Zobrist_Pieces
-        add  x6, x6, x24
         ldr  x4, [x6, x23, lsl 3]
         eor  x0, x0, x4
-//		xor   rax, qword[Zobrist_Pieces+r15+8*r13]
         lea  x6, Zobrist_Pieces
-        add  x6, x6, x25
+        add  x6, x6, x25, lsl 9
         ldr  x4, [x6, x23, lsl 3]
         eor  x0, x0, x4
-//		and   rax, qword[mainHash.mask]
-        lea  x6, mainHash + MainHash.mask
-        ldr  x4, [x6]
+        lea  x6, mainHash
+        ldr  x4, [x6, MainHash.mask]
         and  x0, x0, x4
-//		shl   rax, 5
         lsl  x0, x0, 5
-//		add   rax, qword[mainHash.table]
-        lea  x6, mainHash + MainHash.table
-        ldr  x4, [x6]
+        ldr  x4, [x6, MainHash.table]
         add  x0, x0, x4
 //	prefetchnta   [rax]
        prfm  PLDL1KEEP, [x0]
@@ -2067,24 +2042,6 @@ Display 2, "Search Step 15\n"
 //
 //.15NotCaptureOrPromotion:
 Search.15NotCaptureOrPromotion\@:
-//
-//
-//		mov   r12d, dword[.move]
-        ldr  w22, [sp, Search.move]
-//		shr   r12d, 6
-        lsr  w22, w22, 6
-//		and   r12d, 63				; r12d = from
-        and  w22, w22, 63
-//		mov   r13d, dword[.move]
-        ldr  w23, [sp, Search.move]
-//		and   r13d, 63				; r13d = to
-        and  w23, w23, 63
-//	      movzx   r14d, byte[rbp+Pos.board+r12]	; r14d = from piece   should be 0
-        add  x6, x20, Pos.board
-       ldrb  w24, [x6, x22]
-//	      movzx   r15d, byte[rbp+Pos.board+r13]	; r15d = to piece
-        add  x6, x20, Pos.board
-       ldrb  w25, [x6, x23]
 
 // Increase reduction if ttMove is a capture
         ldr  w4, [sp, Search.ttCapture]
@@ -2162,30 +2119,8 @@ Search.15skipA\@:
 //		add   eax, dword[r11+4*rdx]
         ldr  w4, [x11, x2, lsl 2]
         add  w0, w0, w4
-//
-//; if a>0 and b<0
-//;   d=d-1
-//; else if a<0 and b>0
-//;   d=d+1
-//; end if
-//
-//;cmp eax, 0
-//;je .if15done
-//;jl .if15else
-//;cmp ecx, 0
-//;jge .if15done
-//;sub edi, 1
-//;jmp .if15done
-//;.if15else:
-//;cmp ecx, 0
-//;jle .if15done
-//;add edi, 1
-//;.if15done:
-//
-//; is the same as
-//;
-//; d += (b&-a)>>31 - (a&-b)>>31
-//
+
+
 //		mov   edx, eax
 //		neg   edx
         neg  w2, w0
@@ -2210,12 +2145,10 @@ Search.15skipA\@:
 //	       idiv   ecx
         mov  w1, 20000
        sdiv  w0, w0, w1
-//		xor   ecx, ecx
-        mov  w1, 0
 //		sub   edi, eax
        subs  w27, w27, w0
 //	      cmovs   edi, ecx
-       csel  w27, w1, w27, mi
+       csel  w27, wzr, w27, mi
 //
 //.15ReadyToSearch:
 Search.15ReadyToSearch\@:
