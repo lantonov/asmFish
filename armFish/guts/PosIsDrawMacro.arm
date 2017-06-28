@@ -42,16 +42,7 @@ Display 2, "id:%i1,%i2\n"
         cmp  w2, 100
         bhs  \coldlabel
 \coldreturnlabel:
-/*
-		cmp   edx, ecx
-	      cmova   edx, ecx
-		cmp   edx, 4
-		 jb   ..noDraw
-	       imul   r10, rdx, -sizeof.State	; r10 = end
-		mov   r9, -4*sizeof.State	; r9 = i
-		sub   eax, 5			; eax = ply-i-1
-		xor   ecx, ecx			; ecx = -cnt
-*/
+
         cmp  w2, w1
        csel  w2, w1, w2, hi
         cmp  w2, 4
@@ -59,33 +50,17 @@ Display 2, "id:%i1,%i2\n"
         mov  x4, -sizeof.State
         mul  x10, x2, x4
         lsl  x9, x4, 2
-        sub  w0, w0, 5
+        sub  w0, w0, 6
         mov  w1, 0
 PosIsDraw.CheckNext\@:
-/*
-		cdq				; get the sign of ply-i-1
-		cmp   r8, qword[rbx+r9+State.key]
-		jne   ..KeysDontMatch
-		cmp   ecx, edx			; 1+cnt + (ply-i>0) == 2 is the same as
-		 je   WeHaveADraw		; -cnt == sign(ply-i-1)
-		sub   ecx, 1
-*/
-        asr  w2, w0, 31
         add  x6, x21, State.key
         ldr  x4, [x6, x9]
         cmp  x8, x4
         bne  PosIsDraw.KeysDontMatch\@
-        cmp  w1, w2
+        cmp  w1, w0, asr 31
         beq  \WeHaveADraw
         sub  w1, w1, 1
-
 PosIsDraw.KeysDontMatch\@:
-/*
-		sub   r9, 2*sizeof.State
-		sub   eax, 2
-		cmp   r9, r10
-		jae   ..CheckNext
-*/
         sub  x9, x9, 2*sizeof.State
         sub  w0, w0, 2
         cmp  x9, x10
