@@ -137,8 +137,9 @@ Position_SetState.Empty:
 		ret
 */
         ldr  w1, [x20, Pos.sideToMove]
-        ldr  x2, [x20, 8*King]
-        ldr  x4, [x20, x1, lsl 3]
+        ldr  x2, [x20, Pos.typeBB + 8*King]
+        add  x6, x20, Pos.typeBB
+        ldr  x4, [x6, x1, lsl 3]
         and  x2, x2, x4
        rbit  x2, x2
         clz  x2, x2
@@ -283,23 +284,19 @@ mov x28, 20
         cmp  x4, x15
         bne  Position_VerifyState.Failed
 mov x28, 21
-//Display "vs1"
         ldr  x4, [x21, State.pawnKey]
         cmp  x4, x14
         bne  Position_VerifyState.Failed
 mov x28, 22
-//Display "vs2"
         ldr  x4, [x21, State.materialKey]
         cmp  x4, x13
         bne  Position_VerifyState.Failed
 mov x28, 23
-//Display "vs3"
        fmov  x0, d0
         ldr  x4, [x21, State.psq]
         cmp  x4, x0
         bne  Position_VerifyState.Failed
 mov x28, 24
-//Display "vs4"
 /*
 		mov   ecx, dword[rbp+Pos.sideToMove]
 		mov   rdx, qword[rbp+Pos.typeBB+8*King]
@@ -325,7 +322,6 @@ mov x28, 24
         ldr  x4, [x21, State.checkersBB]
         cmp  x0, x4
         bne  Position_VerifyState.Failed
-//Display "vs5"
 
         mov  w0, -1
         add  sp, sp, 64
@@ -526,8 +522,9 @@ Position_VerifyPieceLists.NextType:
 	; esi is the index of the piece in the piece list
 	       imul   esi, ebx, 16
 */
-        ldr  x8, [x20, x16]
-        ldr  x4, [x20, x17, lsl 3]
+        add  x6, x20, Pos.typeBB
+        ldr  x8, [x6, x16]
+        ldr  x4, [x6, x17, lsl 3]
         and  x8, x8, x4
         lsl  x16, x3, 4
 Position_VerifyPieceLists.NextPiece:
@@ -696,14 +693,14 @@ Position_IsLegal.VerifyKings:
 		cmp   eax, 1
 		jne   .Failed
 */
-        ldr  x0, [x20, 8*White]
-        ldr  x4, [x20, 8*King]
+        ldr  x0, [x20, Pos.typeBB + 8*White]
+        ldr  x4, [x20, Pos.typeBB + 8*King]
         and  x0, x0, x4
         Popcnt  x0, x0, x8
         cmp  x0, 1
         bne  Position_IsLegal.Failed
-        ldr  x0, [x20, 8*Black]
-        ldr  x4, [x20, 8*King]
+        ldr  x0, [x20, Pos.typeBB + 8*Black]
+        ldr  x4, [x20, Pos.typeBB + 8*King]
         and  x0, x0, x4
         Popcnt  x0, x0, x8
         cmp  x0, 1
@@ -719,7 +716,7 @@ mov x28,3
 */
         mov  x0, 0x0FFFF
         ror  x0, x0, 8
-        ldr  x4, [x20, 8*Pawn]
+        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
         tst  x0, x4
         bne  Position_IsLegal.Failed
 
@@ -742,36 +739,36 @@ irps p, Pawn Knight Bishop Rook Queen {
 		cmp   rcx, r9
 		jne   .Failed
 */
-        ldr  x9, [x20, 8*White]
-        ldr  x1, [x20, 8*King]
+        ldr  x9, [x20, Pos.typeBB + 8*White]
+        ldr  x1, [x20, Pos.typeBB + 8*King]
         and  x1, x1, x9
         Popcnt  x2, x9, x8
 
-        ldr  x0, [x20, 8*Pawn]
+        ldr  x0, [x20, Pos.typeBB + 8*Pawn]
         and  x0, x0, x9
         orr  x1, x1, x0
         Popcnt  x0, x0,x8
         sub  x2, x2, x0
 
-        ldr  x0, [x20, 8*Knight]
+        ldr  x0, [x20, Pos.typeBB + 8*Knight]
         and  x0, x0, x9
         orr  x1, x1, x0
         Popcnt  x0, x0,x8
         sub  x2, x2, x0
 
-        ldr  x0, [x20, 8*Bishop]
+        ldr  x0, [x20, Pos.typeBB + 8*Bishop]
         and  x0, x0, x9
         orr  x1, x1, x0
         Popcnt  x0, x0,x8
         sub  x2, x2, x0
 
-        ldr  x0, [x20, 8*Rook]
+        ldr  x0, [x20, Pos.typeBB + 8*Rook]
         and  x0, x0, x9
         orr  x1, x1, x0
         Popcnt  x0, x0,x8
         sub  x2, x2, x0
 
-        ldr  x0, [x20, 8*Queen]
+        ldr  x0, [x20, Pos.typeBB + 8*Queen]
         and  x0, x0, x9
         orr  x1, x1, x0
         Popcnt  x0, x0,x8
@@ -801,36 +798,36 @@ irps p, Pawn Knight Bishop Rook Queen {
 
 		xor   edx, edx
 */
-        ldr  x9, [x20, 8*Black]
-        ldr  x1, [x20, 8*King]
+        ldr  x9, [x20, Pos.typeBB + 8*Black]
+        ldr  x1, [x20, Pos.typeBB + 8*King]
         and  x1, x1, x9
         Popcnt  x2, x9, x8
 
-        ldr  x0, [x20, 8*Pawn]
+        ldr  x0, [x20, Pos.typeBB + 8*Pawn]
         and  x0, x0, x9
         orr  x1, x1, x0
         Popcnt  x0, x0,x8
         sub  x2, x2, x0
 
-        ldr  x0, [x20, 8*Knight]
+        ldr  x0, [x20, Pos.typeBB + 8*Knight]
         and  x0, x0, x9
         orr  x1, x1, x0
         Popcnt  x0, x0,x8
         sub  x2, x2, x0
 
-        ldr  x0, [x20, 8*Bishop]
+        ldr  x0, [x20, Pos.typeBB + 8*Bishop]
         and  x0, x0, x9
         orr  x1, x1, x0
         Popcnt  x0, x0,x8
         sub  x2, x2, x0
 
-        ldr  x0, [x20, 8*Rook]
+        ldr  x0, [x20, Pos.typeBB + 8*Rook]
         and  x0, x0, x9
         orr  x1, x1, x0
         Popcnt  x0, x0,x8
         sub  x2, x2, x0
 
-        ldr  x0, [x20, 8*Queen]
+        ldr  x0, [x20, Pos.typeBB + 8*Queen]
         and  x0, x0, x9
         orr  x1, x1, x0
         Popcnt  x0, x0,x8
@@ -873,8 +870,9 @@ Position_IsLegal.VerifyBoard:
         cbz  x0, Position_IsLegal.Failed
         cmp  x0, 1
         cbz  x0, Position_IsLegal.Failed
-        ldr  x8, [x20, x0, lsl 3]
-        ldr  x4, [x20, x1]
+        add  x6, x20, Pos.typeBB
+        ldr  x8, [x6, x0, lsl 3]
+        ldr  x4, [x6, x1]
         and  x8, x8, x4
         lsr  x8, x8, x2
         tbz  x8, 0, Position_IsLegal.Failed
@@ -892,10 +890,10 @@ Position_IsLegal.empty:
 		 bt   r8, rdx
 		 jc   .Failed
 */
-        ldp  x8, x9, [x20, 8*0]
-        ldp  x10, x11, [x20, 8*2]
-        ldp  x12, x13, [x20, 8*4]
-        ldp  x14, x15, [x20, 8*6]
+        ldp  x8, x9, [x20, Pos.typeBB + 8*0]
+        ldp  x10, x11, [x20, Pos.typeBB + 8*2]
+        ldp  x12, x13, [x20, Pos.typeBB + 8*4]
+        ldp  x14, x15, [x20, Pos.typeBB + 8*6]
         orr  x8, x8, x9
         orr  x10, x10, x11
         orr  x12, x12, x13
@@ -946,14 +944,15 @@ mov x28,7
 */
         ldr  w0, [x20, Pos.sideToMove]
         eor  x0, x0, 1
-        ldr  x2, [x20, x0, lsl 3]
+        add  x6, x20, Pos.typeBB
+        ldr  x2, [x6, x0, lsl 3]
         lsl  x0, x0, 4
         add  x0, x0, x1
         sub  x0, x0, 8
-        ldr  x4, [x20, 8*Black]
+        ldr  x4, [x20, Pos.typeBB + 8*Black]
         lsr  x4, x4, x0
        tbnz  x4, 0, Position_IsLegal.Failed
-        ldr  x4, [x20, 8*White]
+        ldr  x4, [x20, Pos.typeBB + 8*White]
         lsr  x4, x4, x0
        tbnz  x4, 0, Position_IsLegal.Failed
 /*
@@ -966,7 +965,7 @@ mov x28,7
 		jnc   .Failed
 */
         ldr  w0, [x20, Pos.sideToMove]
-        ldr  x4, [x20, 8*Pawn]
+        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
         add  x0, x1, x0, lsl 4
         sub  x0, x0, 8
         lsr  x4, x2, x0
@@ -982,7 +981,10 @@ mov x28,7
 		 jz   .Failed
 */
         ldr  w0, [x20, Pos.sideToMove]
-        ldr  x2, [x20, x0, lsl 3]
+        add  x6, x20, Pos.typeBB
+        ldr  x2, [x6, x0, lsl 3]
+        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
+        and  x2, x2, x4
         eor  x0, x0, 1
         lea  x16, WhitePawnAttacks
         add  x16, x16, x0, lsl 6+3
@@ -1011,8 +1013,9 @@ mov x28,8
 */
         ldr  w1, [x20, Pos.sideToMove]
         eor  x1, x1, 1
-        ldr  x2, [x20, 8*King]
-        ldr  x4, [x20, x1, lsl 3]
+        ldr  x2, [x20, Pos.typeBB + 8*King]
+        add  x6, x20, Pos.typeBB
+        ldr  x4, [x6, x1, lsl 3]
         and  x2, x2, x4
        rbit  x4, x2
         clz  x2, x4
@@ -1252,12 +1255,13 @@ Position_ParseFen.FoundPiece:
         lsl  x7, x7, x3
         and  x4, x2, 7
         lsr  x5, x2, 3
-        ldr  x0, [x20, x4, lsl 3]
+        add  x6, x20, Pos.typeBB
+        ldr  x0, [x6, x4, lsl 3]
         orr  x0, x0, x7
-        str  x0, [x20, x4, lsl 3]
-        ldr  x0, [x20, x5, lsl 3]
+        str  x0, [x6, x4, lsl 3]
+        ldr  x0, [x6, x5, lsl 3]
         orr  x0, x0, x7
-        str  x0, [x20, x5, lsl 3]
+        str  x0, [x6, x5, lsl 3]
         add  x16, x20, Pos.board
        strb  w2, [x16, x3]
 
@@ -1348,7 +1352,8 @@ Position_ParseFen.EpSquare:
 		jnc   .EpSquareBad
 */
         ldr  w2, [x20, Pos.sideToMove]
-        ldr  x9, [x20, x2, lsl 3]
+        add  x6, x20, Pos.typeBB
+        ldr  x9, [x6, x2, lsl 3]
         eor  x2, x2, 1
         add  x1, x2, x2, lsl 1
         add  x1, x1, RANK_3
@@ -1368,7 +1373,8 @@ Position_ParseFen.EpSquare:
 		 bt   r8, rcx
 		 jc   .EpSquareBad
 */
-        ldr  x8, [x20, x2, lsl 3]
+        add  x6, x20, Pos.typeBB
+        ldr  x8, [x6, x2, lsl 3]
         mov  x10, x8
         orr  x8, x8, x9
         lsr  x8, x8, x0
@@ -1387,7 +1393,7 @@ Position_ParseFen.EpSquare:
 		 jz   .EpSquareBad    
 */
         lsl  x1, x2, 9
-        ldr  x4, [x20, 8*Pawn]
+        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
         and  x9, x9, x4
         lea  x7, PawnAttacks
         add  x7, x7, x1
@@ -1405,7 +1411,7 @@ Position_ParseFen.EpSquare:
 
 		jmp   .FiftyMoves
 */
-        ldr  x4, [x20, 8*Pawn]
+        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
         and  x10, x10, x4
         eor  x2, x2, 1
         lsl  x1, x2, 3
@@ -1525,8 +1531,9 @@ SetCastlingRights:
 		cmp   ecx, 7
 		 ja   .failed
 */
-        ldr  x7, [x20, 8*King]
-        ldr  x4, [x20, x2, lsl 3]
+        ldr  x7, [x20, Pos.typeBB + 8*King]
+        add  x6, x20, Pos.typeBB
+        ldr  x4, [x6, x2, lsl 3]
         and  x7, x7, x4
        rbit  x4, x7
         cbz  x7, SetCastlingRights.failed

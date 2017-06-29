@@ -1,48 +1,8 @@
-.if DEBUG
-Move_Undo_Check:
-        PushAll
-         bl  Position_IsLegal
-       cbnz  w0, Move_Undo_Check.bad
-        PopAll
-        ret
-Move_Undo_Check.bad:
-        lea  x27, debug.output
-        Print "bad %i0 after Move_Undo\n"
-        lea  x1, debug.position
-         bl  PrintString
-        lea  x1, debug.output
-         bl  Os_WriteOut
-        brk  0
-.endif
-
 Move_Undo:
-/*
-	; in: rbp  address of Pos
-	;     rbx  address of State
-	;     ecx  move
+// x20  address of Pos
+// x21  address of State
+// x1   move
 
-	       push   rsi
-
-		mov   esi, dword[rbp+Pos.sideToMove]
-		xor   esi, 1
-
-		mov   r8d, ecx
-		shr   r8d, 6
-		and   r8d, 63	; r8d = from
-		mov   r9d, ecx
-		and   r9d, 63	; r9d = to
-		shr   ecx, 12
-
-	      movzx   r11d, byte[rbx+State.capturedPiece]      ; r11 = TO PIECE
-	      movzx   r10d, byte[rbp+Pos.board+r9]	       ; r10 = FROM PIECE
-
-		xor   edx, edx
-		bts   rdx, r8
-		bts   rdx, r9
-
-		mov   eax, r10d
-		and   eax, 7
-*/
 Display 2, "Move_Undo(move=%m1)\n"
 
 
@@ -54,113 +14,68 @@ Display 2, "Move_Undo(move=%m1)\n"
         PopAll
 .endif
 
-        ldr  w16, [x20, Pos.sideToMove]
-        eor  x16, x16, 1
-       ubfx  x8, x1, 6, 6
         and  x9, x1, 63
+       ubfx  x8, x1, 6, 6
         lsr  x1, x1, 12
 
-        add  x7, x20, Pos.board
-       ldrb  w11, [x21, State.capturedPiece]
-       ldrb  w10, [x7, x9]
+        ldr  w15, [x20, Pos.sideToMove]
+        eor  w16, w15, 1
 
-        mov  x4, 1
-        lsl  x2, x4, x8
-        lsl  x4, x4, x9
-        orr  x2, x2, x4
+       ldrb  w11, [x21, State.capturedPiece]
+       ldrb  w10, [x20, x9]     // Pos.board = 0
+
+        mov  x17, 1
+        lsl  x2, x17, x8
+        lsl  x17, x17, x9
+        orr  x2, x2, x17
 
         and  x0, x10, 7
-/*
-		sub   rbx, sizeof.State
-		mov   qword[rbp+Pos.state], rbx
-		mov   dword[rbp+Pos.sideToMove], esi
-		mov   byte[rbp+Pos.board+r8], r10l
-		mov   byte[rbp+Pos.board+r9], r11l
-		xor   qword[rbp+Pos.typeBB+8*rax], rdx
-		xor   qword[rbp+Pos.typeBB+8*rsi], rdx
 
-		cmp   ecx, MOVE_TYPE_PROM
-		jae   .Special
-*/
         sub  x21, x21, sizeof.State
 
         str  x21, [x20, Pos.state]
         str  w16, [x20, Pos.sideToMove]
-        add  x7, x20, Pos.board
-       strb  w10, [x7, x8]
-       strb  w11, [x7, x9]
-        add  x6, x20, Pos.typeBB
-        ldr  x4, [x6, x0, lsl 3]
+       strb  w10, [x20, x8]     // Pos.board = 0
+       strb  w11, [x20, x9]     // Pos.board = 0
+        add  x12, x20, Pos.typeBB
+        ldr  x3, [x12, x0, lsl 3]
+        ldr  x4, [x12, x16, lsl 3]
+        eor  x3, x3, x2
         eor  x4, x4, x2
-        str  x4, [x6, x0, lsl 3]
-        ldr  x4, [x6, x16, lsl 3]
-        eor  x4, x4, x2
-        str  x4, [x6, x16, lsl 3]
+        str  x3, [x12, x0, lsl 3]
+        str  x4, [x12, x16, lsl 3]
 
         cmp  x1, MOVE_TYPE_PROM
         bhs  Move_Undo.Special
-/*
-	      movzx   eax, byte[rbp+Pos.pieceIdx+r9]
-		mov   byte[rbp+Pos.pieceList+rax], r8l
-		mov   byte[rbp+Pos.pieceIdx+r8], al
-		mov   eax, r11d 		; save a copy of captured piece
 
-		and   r11d, 7
-		jnz   .Captured
-
-		pop   rsi
-		ret
-*/
         add  x7, x20, Pos.pieceIdx
+        add  x6, x20, Pos.pieceList
        ldrb  w0, [x7, x9]
-        add  x7, x20, Pos.pieceList
-       strb  w8, [x7, x0]
-        add  x7, x20, Pos.pieceIdx
+       strb  w8, [x6, x0]
        strb  w0, [x7, x8]
-        mov  x0, x11
-        and  x11, x11, 7
-       cbnz  x11, Move_Undo.Captured
+        and  x0, x11, 7
+       cbnz  x0, Move_Undo.Captured
 .if DEBUG
           b  Move_Undo_Check
 .endif
         ret
 
 Move_Undo.Captured:
-/*
-		xor   esi, 1
-		btr   rdx, r8
-		 or   qword[rbp+Pos.typeBB+8*r11], rdx
-		 or   qword[rbp+Pos.typeBB+8*rsi], rdx
 
-	      movzx   ecx, byte[rbp+Pos.pieceEnd+rax]
-		mov   byte[rbp+Pos.pieceIdx+r9], cl
-		mov   byte[rbp+Pos.pieceList+rcx], r9l
-		add   ecx, 1
-		mov   byte[rbp+Pos.pieceEnd+rax], cl
+        add  x5, x20, Pos.pieceEnd
+       ldrb  w1, [x5, x11]
 
-		pop   rsi
-		ret
-*/
-        eor  x16, x16, 1
-        mov  x4, 1
-        lsl  x4, x4, x8
-        bic  x2, x2, x4
-        ldr  x4, [x20, x11, lsl 3]
-        orr  x4, x4, x2
-        str  x4, [x20, x11, lsl 3]
-        ldr  x4, [x20, x16, lsl 3]
-        orr  x4, x4, x2
-        str  x4, [x20, x16, lsl 3]
+        ldr  x3, [x12, x0, lsl 3]
+        ldr  x4, [x12, x15, lsl 3]
+        orr  x3, x3, x17
+        orr  x4, x4, x17
+        str  x3, [x12, x0, lsl 3]
+        str  x4, [x12, x15, lsl 3]
 
-        add  x7, x20, Pos.pieceEnd
-       ldrb  w1, [x7, x0]
-        add  x7, x20, Pos.pieceIdx
        strb  w1, [x7, x9]
-        add  x7, x20, Pos.pieceList
-       strb  w9, [x7, x1]
+       strb  w9, [x6, x1]
         add  x1, x1, 1
-        add  x7, x20, Pos.pieceEnd
-       strb  w1, [x7, x0]
+       strb  w1, [x5, x11]
 .if DEBUG
           b  Move_Undo_Check
 .endif
@@ -306,12 +221,13 @@ Move_Undo.PromCapture:
         mov  x4, 1
         lsl  x4, x4, x9
         orr  x2, x2, x4
-        ldr  x4, [x20, x11, lsl 3]
+        add  x3, x20, Pos.typeBB
+        ldr  x4, [x3, x11, lsl 3]
         orr  x4, x4, x2
-        str  x4, [x20, x11, lsl 3]
-        ldr  x4, [x20, x16, lsl 3]
+        str  x4, [x3, x11, lsl 3]
+        ldr  x4, [x3, x16, lsl 3]
         orr  x4, x4, x2
-        str  x4, [x20, x16, lsl 3]
+        str  x4, [x3, x16, lsl 3]
 
         add  x7, x20, Pos.pieceEnd
        ldrb  w1, [x7, x0]
@@ -355,12 +271,13 @@ Move_Undo.EpCapture:
         mov  x4, 1
         lsl  x4, x4, x1
         orr  x2, x2, x4
-        ldr  x4, [x20, 8*Pawn]
+        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
         orr  x4, x4, x2
-        str  x4, [x20, 8*Pawn]
-        ldr  x4, [x20, x16, lsl 3]
+        str  x4, [x20, Pos.typeBB + 8*Pawn]
+        add  x3, x20, Pos.typeBB
+        ldr  x4, [x3, x16, lsl 3]
         orr  x4, x4, x2
-        str  x4, [x20, x16, lsl 3]
+        str  x4, [x3, x16, lsl 3]
         add  x7, x20, Pos.board
        strb  wzr, [x7, x9]
        strb  w11, [x7, x1]
@@ -547,4 +464,22 @@ Move_Undo.Castle:
           b  Move_Undo_Check
 .endif
         ret
+
+
+.if DEBUG
+Move_Undo_Check:
+        PushAll
+         bl  Position_IsLegal
+       cbnz  w0, Move_Undo_Check.bad
+        PopAll
+        ret
+Move_Undo_Check.bad:
+        lea  x27, debug.output
+        Print "bad %i0 after Move_Undo\n"
+        lea  x1, debug.position
+         bl  PrintString
+        lea  x1, debug.output
+         bl  Os_WriteOut
+        brk  0
+.endif
 

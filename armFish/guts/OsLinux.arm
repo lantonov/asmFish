@@ -572,11 +572,11 @@ Os_CheckCPU:
         mov  x0, 0
 // make sure that rook attacks are page aligned
         lea  x27, sz_error_rook_page
-        add  x0, x0, :lo12:RookAttacksSTUFF
+        add  x0, x0, :lo12:RookAttacksPEXT
        cbnz  x0, Failed
 // make sure that bishop attacks are page aligned        
         lea  x27, sz_error_bishop_page
-        add  x0, x0, :lo12:BishopAttacksSTUFF
+        add  x0, x0, :lo12:BishopAttacksPEXT
        cbnz  x0, Failed
         ldp  x27, x30, [sp], 16
         ret

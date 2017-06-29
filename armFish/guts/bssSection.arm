@@ -33,11 +33,10 @@ threadPool: .space sizeof.ThreadPool
 SlidingAttacksBB:    .space 8*89524
 
         .balign 4096
-RookAttacksSTUFF:
 RookAttacksPEXT:     .space 8*64
+RookAttacksIMUL:     .space 8*64
 RookAttacksMOFF:     .space 8*64
 RookAttacksPDEP:     .space 8*64
-RookAttacksIMUL:     .space 8*64
 
 PawnAttacks:
 WhitePawnAttacks:    .space 8*64
@@ -46,11 +45,10 @@ KnightAttacks:	     .space 8*64
 KingAttacks:	     .space 8*64
 
         .balign 4096
-BishopAttacksSTUFF:
 BishopAttacksPEXT:   .space 8*64
+BishopAttacksIMUL:   .space 8*64
 BishopAttacksMOFF:   .space 8*64
 BishopAttacksPDEP:   .space 8*64
-BishopAttacksIMUL:   .space 8*64
 
 
 // bitboards 

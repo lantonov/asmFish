@@ -20,7 +20,7 @@ local ..YesPinners, ..NoPinners, ..MoreThanOne
 		 jz   ..NoPinners
 */
 .macro SliderBlockers result, sliders, sq, pinners, pieces, pieces_color, bb, snipers, snipersSqBB, tt, bishops, rooks, temp
-        ldr  \snipers, [x20, 8*Queen]
+        ldr  \snipers, [x20, Pos.typeBB + 8*Queen]
         mov  \bb, \snipers
 
         orr  \snipers, \snipers, \rooks

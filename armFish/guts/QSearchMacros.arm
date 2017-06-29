@@ -1149,10 +1149,9 @@ QSearch.ValueFromTT\@:
         eor  w8, w8, w9
         add  w27, w27, w9
         sub  w27, w27, w8
-        str  s27, [sp, QSearch.ttValue]
-        mov  w0, w27
         ldr  w4, [sp, QSearch.beta]
-        sub  w0, w0, w4
+        str  w27, [sp, QSearch.ttValue]
+        sub  w0, w27, w4
         asr  w0, w0, 31
           b  QSearch.ValueFromTTRet\@
 

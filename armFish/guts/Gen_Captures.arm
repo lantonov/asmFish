@@ -1,48 +1,29 @@
 Gen_Captures:
-//	; in rbp address of position
-//	;    rbx address of state
-//	; io rdi address to write moves
-//
-//	       push   rsi r12 r13 r14 r15
-//		mov   r14, qword[rbp+Pos.typeBB+8*White]
-//		 or   r14, qword[rbp+Pos.typeBB+8*Black]
-//		cmp   byte[rbp+Pos.sideToMove],0
-//		jne   Gen_Captures_Black
+// in x20 address of position
+//    x21 address of state
+// io x27 address to write moves
+
+        ldr  w0, [x20, Pos.sideToMove]
         stp  x29, x30, [sp, -16]!
 
-        ldr  x14, [x20, Pos.typeBB+8*White]
-        ldr  x4, [x20, Pos.typeBB+8*Black]
+        ldr  x14, [x20, Pos.typeBB + 8*White]
+        ldr  x4, [x20, Pos.typeBB + 8*Black]
         orr  x14, x14, x4
-       ldrb  w4, [x20, Pos.sideToMove]
-       cbnz  w4, Gen_Captures_Black
+       cbnz  w0, Gen_Captures_Black
 
-//Gen_Captures_White:
 Gen_Captures_White:
-//		mov   r15, qword[rbp+Pos.typeBB+8*Black]
         ldr  x15, [x20, Pos.typeBB + 8*Black]
-//       generate_all   White, CAPTURES
         GenAll  Gen_Captures_White, White, CAPTURES
-
-//		pop   r15 r14 r13 r12 rsi
-//		ret
         ldp  x29, x30, [sp], 16
         ret
-//       generate_jmp  White, CAPTURES
         GenPawnJmp  Gen_Captures_White, White, CAPTURES
         GenCastlingJmp  Gen_Captures_White, White, CAPTURES
 
-//
-//Gen_Captures_Black:
 Gen_Captures_Black:
-//		mov   r15, qword[rbp+Pos.typeBB+8*White]
         ldr  x15, [x20, Pos.typeBB + 8*White]
-//       generate_all   Black, CAPTURES
         GenAll  Gen_Captures_Black, Black, CAPTURES
-//		pop   r15 r14 r13 r12 rsi
-//		ret
         ldp  x29, x30, [sp], 16
         ret
-//       generate_jmp   Black, CAPTURES
         GenPawnJmp  Gen_Captures_Black, Black, CAPTURES
         GenCastlingJmp  Gen_Captures_Black, Black, CAPTURES
 

@@ -30,8 +30,9 @@ Gen_Legal:
         mov  x26, x27
         ldr  x25, [x21, State.pinned]
         ldr  w23, [x20, Pos.sideToMove]
-        ldr  x22, [x20, 8*King]
-        ldr  x4, [x20, x23, lsl 3]
+        ldr  x22, [x20, Pos.typeBB + 8*King]
+        add  x3, x20, Pos.typeBB
+        ldr  x4, [x3, x23, lsl 3]
         and  x22, x22, x4
        rbit  x24, x22
         clz  x24, x24        
@@ -51,6 +52,7 @@ Gen_Legal:
 	       test   r15, r15
 		jne   .FilterYesPinned
 */
+Display 2, "pointer: %X27\n"
        cbnz  x0, Gen_Legal.InCheck
 Gen_Legal.NotInCheck:
          bl  Gen_NonEvasions
@@ -58,6 +60,9 @@ Gen_Legal.NotInCheck:
 Gen_Legal.InCheck:
          bl  Gen_Evasions
 Gen_Legal.GenDone:
+
+Display 2, "pointer: %X27\n"
+
         lsl  x24, x24, 6
         ldr  w2, [x26]
         mov  w1, w2
@@ -129,9 +134,10 @@ Gen_Legal.KingMove:
 		 or   r9, r10
 		xor   r13d, 1
 */
-        ldr  x9, [x20, x23, lsl 3]
+        add  x3, x20, Pos.typeBB
+        ldr  x9, [x3, x23, lsl 3]
         eor  x4, x23, 1
-        ldr  x10, [x20, x4, lsl 3]
+        ldr  x10, [x3, x4, lsl 3]
         orr  x9, x9, x10
 /*
 	; pawn
@@ -139,7 +145,7 @@ Gen_Legal.KingMove:
 	       test   rcx, r10
 		jnz   .FilterIllegalChoose
 */
-        ldr  x4, [x20, 8*Pawn]
+        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
         and  x1, x1, x4
         tst  x1, x10
         bne  Gen_Legal.FilterIllegalChoose
@@ -152,7 +158,7 @@ Gen_Legal.KingMove:
 */
         lea  x7, KingAttacks
         ldr  x2, [x7, x0, lsl 3]
-        ldr  x4, [x20, 8*King]
+        ldr  x4, [x20, Pos.typeBB + 8*King]
         and  x2, x2, x4
         tst  x2, x10
         bne  Gen_Legal.FilterIllegalChoose
@@ -165,7 +171,7 @@ Gen_Legal.KingMove:
 */
         lea  x7, KnightAttacks
         ldr  x2, [x7, x0, lsl 3]
-        ldr  x4, [x20, 8*Knight]
+        ldr  x4, [x20, Pos.typeBB + 8*Knight]
         and  x2, x2, x4
         tst  x2, x10
         bne  Gen_Legal.FilterIllegalChoose
@@ -179,8 +185,8 @@ Gen_Legal.KingMove:
 		jnz   .FilterIllegalChoose
 */
         BishopAttacks  x2, x0, x9, x8, x4
-        ldr  x8, [x20, 8*Bishop]
-        ldr  x4, [x20, 8*Queen]
+        ldr  x8, [x20, Pos.typeBB + 8*Bishop]
+        ldr  x4, [x20, Pos.typeBB + 8*Queen]
         orr  x8, x8, x4
         and  x8, x8, x10
         tst  x2, x8
@@ -195,8 +201,8 @@ Gen_Legal.KingMove:
 		jnz   .FilterIllegalChoose
 */
         RookAttacks  x2, x0, x9, x8, x4
-        ldr  x8, [x20, 8*Rook]
-        ldr  x4, [x20, 8*Queen]
+        ldr  x8, [x20, Pos.typeBB + 8*Rook]
+        ldr  x4, [x20, Pos.typeBB + 8*Queen]
         orr  x8, x8, x4
         and  x8, x8, x10
         tst  x2, x8
@@ -326,15 +332,16 @@ Gen_Legal.EpCapture:
 		shr   r9d, 6
 */
         eor  x4, x23, 1
-        ldr  x10, [x20, x4, lsl 3]
+        add  x3, x20, Pos.typeBB
+        ldr  x10, [x3, x4, lsl 3]
         lsr  x9, x24, 6
 /*
 	; all pieces
 		mov   rdx, qword[rbp+Pos.typeBB+8*White]
 		 or   rdx, qword[rbp+Pos.typeBB+8*Black]
 */
-        ldr  x2, [x20, 8*White]
-        ldr  x4, [x20, 8*Black]
+        ldr  x2, [x20, Pos.typeBB + 8*White]
+        ldr  x4, [x20, Pos.typeBB + 8*Black]
         orr  x2, x2, x4
 /*
 	; remove source square
@@ -376,8 +383,8 @@ Gen_Legal.EpCapture:
 		jnz   .FilterIllegalChoose
 */
         RookAttacks  x0, x9, x2, x8, x4
-        ldr  x1, [x20, 8*Rook]
-        ldr  x4, [x20, 8*Queen]
+        ldr  x1, [x20, Pos.typeBB + 8*Rook]
+        ldr  x4, [x20, Pos.typeBB + 8*Queen]
         orr  x1, x1, x4
         and  x1, x1, x10
         tst  x0, x1
@@ -393,8 +400,8 @@ Gen_Legal.EpCapture:
 		jmp   .FilterLegalChoose
 */
         BishopAttacks  x0, x9, x2, x8, x4
-        ldr  x1, [x20, 8*Bishop]
-        ldr  x4, [x20, 8*Queen]
+        ldr  x1, [x20, Pos.typeBB + 8*Bishop]
+        ldr  x4, [x20, Pos.typeBB + 8*Queen]
         orr  x1, x1, x4
         and  x1, x1, x10
         tst  x0, x1

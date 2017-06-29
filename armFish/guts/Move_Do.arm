@@ -1,52 +1,3 @@
-.if DEBUG
-
-Move_Do_posill:
-        lea  x27, debug.output
-        Print "position did not pass Position_IsLegal in DoMove"
-         bl  Move_Do_GoError
-Move_Do_pillegal:
-        lea  x27, debug.output
-        Print "move did not pass IsMovePseudoLegal in DoMove"
-         bl  Move_Do_GoError
-Move_Do_illegal:
-        lea  x27, debug.output
-        Print "move did not pass IsMoveLegal in DoMove"
-         bl  Move_Do_GoError
-Move_Do_DoIllegal:
-        lea  x27, debug.output
-        Print "move not in legal list in DoMove"
-         bl  Move_Do_GoError
-Move_Do_badcas:
-        lea  x27, debug.output
-        Print "bad castling in DoMove"
-         bl  Move_Do_GoError
-Move_Do_capself:
-        lea  x27, debug.output
-        Print "capture self in DoMove"
-         bl  Move_Do_GoError
-Move_Do_capking:
-        lea  x27, debug.output
-        Print "capture king in DoMove"
-         bl  Move_Do_GoError
-Move_Do_post_posill:
-        lea  x27, debug.output
-        Print "position not legal (%X0) after making"
-         bl  Move_Do_GoError
-
-Move_Do_GoError:
-        PrintNewLine
-        lea  x6, debug.address
-        ldr  x1, [x6]
-         bl  PrintString
-        PrintNewLine
-        lea  x1, debug.position
-         bl  PrintString
-        str  wzr, [x27]
-        lea  x27, debug.output
-         bl  Os_ErrorBox
-        brk  0
-.endif
-
 Move_Do__UciParseMoves:
 .if DEBUG
         adr  x4, 1f
@@ -289,16 +240,23 @@ Display 2, "Move_Do(move=%m1)\n"
         PopAll
 .endif
 
+
         ldr  w16, [x20, Pos.sideToMove]
         lea  x7, Zobrist_side
         ldr  d15, [x7]
        ubfx  x8, x1, 6, 6
         and  x9, x1, 63
         lsr  x1, x1, 12
+// x8 = from
+// x9 = to
+// x1 = move type
 
         add  x6, x20, Pos.board
        ldrb  w10, [x6, x8]
        ldrb  w11, [x6, x9]
+// x10 = from piece
+// x11 = to piece
+
         ldr  d5, [x21, State.key]
         ldr  d4, [x21, State.pawnKey]
         ldr  d3, [x21, State.materialKey]
@@ -347,31 +305,31 @@ Move_Do.CaptureRet:
 
 // move piece
         eor  x11, x8, x9
-        mov  x2, 1
-        lsl  x4, x2, x8
-        lsl  x2, x2, x9
-       fmov  d8, x4
-       fmov  d9, x2
-        orr  x2, x2, x4
+        mov  x4, 1
+        lsl  x2, x4, x8
+        lsl  x4, x4, x9
+       fmov  d8, x2
+       fmov  d9, x4
+        orr  x4, x4, x2
         and  x0, x10, 7
         add  x7, x20, Pos.board
+        add  x3, x20, Pos.typeBB
        strb  wzr, [x7, x8]
        strb  w10, [x7, x9]
-        ldr  x4, [x20, x0, lsl 3]
-        eor  x4, x4, x2
-        str  x4, [x20, x0, lsl 3]
-        ldr  x4, [x20, x16, lsl 3]
-        eor  x4, x4, x2
-        str  x4, [x20, x16, lsl 3]
+        ldr  x2, [x3, x0, lsl 3]
+        ldr  x5, [x3, x16, lsl 3]
         add  x7, x20, Pos.pieceIdx
+        add  x6, x20, Pos.pieceList
+        eor  x2, x2, x4
+        eor  x5, x5, x4
+        str  x2, [x3, x0, lsl 3]
+        str  x5, [x3, x16, lsl 3]
        ldrb  w0, [x7, x8]
-        add  x7, x20, Pos.pieceList
-       strb  w9, [x7, x0]
-        add  x7, x20, Pos.pieceIdx
+       strb  w9, [x6, x0]
        strb  w0, [x7, x9]
 
-        lea  x7, IsPawnMasks
-      ldrsb  x0, [x7, x10]
+        lea  x4, IsPawnMasks
+      ldrsb  x0, [x4, x10]
         and  x11, x11, x0
         add  x6, x26, x10, lsl 9
         add  x7, x27, x10, lsl 9
@@ -427,6 +385,7 @@ Move_Do.SpecialRet:
         ldr  x13, [x6, x16, lsl 3]
         eor  x16, x16, 1
         ldr  x12, [x6, x16, lsl 3]
+
         and  x14, x12, x4
         and  x15, x13, x4
         orr  x17, x12, x13
@@ -446,16 +405,16 @@ Move_Do.CheckersDone:
 
 
 Move_Do.Capture:
-
         and  x12, x11, 8
-        ldr  x17, [x20, x12]
-        ldr  x2, [x20, x0, lsl 3]
+        add  x3, x20, Pos.typeBB
+        ldr  x17, [x3, x12]
+        ldr  x2, [x3, x0, lsl 3]
         mov  x4, 1
         lsl  x4, x4, x9
         bic  x17, x17, x4
         bic  x2, x2, x4
-        str  x17, [x20, x12]
-        str  x2, [x20, x0, lsl 3]
+        str  x17, [x3, x12]
+        str  x2, [x3, x0, lsl 3]
 
         add  x7, x20, Pos.pieceEnd
        ldrb  w17, [x7, x11]
@@ -626,7 +585,8 @@ Move_Do.Promotion:
         lsl  x4, x4, x9
         bic  x2, x2, x4
         str  x2, [x20, Pos.typeBB + 8*Pawn]
-        ldr  x4, [x20, x16, lsl 3]
+        add  x3, x20, Pos.typeBB
+        ldr  x4, [x3, x16, lsl 3]
         and  x2, x2, x4
         Popcnt  x0, x2, x8
         add  x6, x26, x10, lsl 9
@@ -671,20 +631,19 @@ Move_Do.EpCapture:
         add  x14, x9, x14, lsl 3
         eor  x10, x10, 8
         eor  x16, x16, 1
-        ldr  x2, [x20, 8*Pawn]
-        ldr  x17, [x20, x16, lsl 3]
+        add  x3, x20, Pos.typeBB
+        ldr  x2, [x20, Pos.typeBB + 8*Pawn]
+        ldr  x17, [x3, x16, lsl 3]
         mov  x4, 1
         lsl  x4, x4, x14
         bic  x2, x2, x4
         bic  x17, x17, x4
-        str  x2, [x20, 8*Pawn]
-        str  x17, [x20, x16, lsl 3]
+        str  x2, [x20, Pos.typeBB + 8*Pawn]
+        str  x17, [x3, x16, lsl 3]
         add  x7, x20, Pos.board
        strb  wzr, [x7, x14]
         and  x17, x17, x2
         Popcnt  x17, x17, x2
-        lea  x6, Zobrist_Pieces
-        lea  x7, Scores_Pieces
         add  x6, x26, x10, lsl 9
         add  x7, x27, x10, lsl 9
         ldr  d7, [x6, x14, lsl 3]
@@ -793,7 +752,8 @@ Move_Do.Castling:
         add  v6.2s, v6.2s, v1.2s
         add  v6.2s, v6.2s, v2.2s
 
-        ldr  x0, [x20, x16, lsl 3]
+        add  x3, x20, Pos.typeBB
+        ldr  x0, [x3, x16, lsl 3]
         ldr  x13, [x20, Pos.typeBB + 8*King]
         ldr  x11, [x20, Pos.typeBB + 8*Rook]
 
@@ -815,8 +775,58 @@ Move_Do.Castling:
         lsl  x4, x6, x2
         orr  x11, x11, x4
 
-        str  x0, [x20, x16, lsl 3]
-        str  x13, [x20, 8*King]
-        str  x11, [x20, 8*Rook]
+        add  x3, x20, Pos.typeBB
+        str  x0, [x3, x16, lsl 3]
+        str  x13, [x20, Pos.typeBB + 8*King]
+        str  x11, [x20, Pos.typeBB + 8*Rook]
           b  Move_Do.SpecialRet
+
+.if DEBUG
+
+Move_Do_posill:
+        lea  x27, debug.output
+        Print "position did not pass Position_IsLegal in DoMove"
+         bl  Move_Do_GoError
+Move_Do_pillegal:
+        lea  x27, debug.output
+        Print "move did not pass IsMovePseudoLegal in DoMove"
+         bl  Move_Do_GoError
+Move_Do_illegal:
+        lea  x27, debug.output
+        Print "move did not pass IsMoveLegal in DoMove"
+         bl  Move_Do_GoError
+Move_Do_DoIllegal:
+        lea  x27, debug.output
+        Print "move not in legal list in DoMove"
+         bl  Move_Do_GoError
+Move_Do_badcas:
+        lea  x27, debug.output
+        Print "bad castling in DoMove"
+         bl  Move_Do_GoError
+Move_Do_capself:
+        lea  x27, debug.output
+        Print "capture self in DoMove"
+         bl  Move_Do_GoError
+Move_Do_capking:
+        lea  x27, debug.output
+        Print "capture king in DoMove"
+         bl  Move_Do_GoError
+Move_Do_post_posill:
+        lea  x27, debug.output
+        Print "position not legal (%X0) after making"
+         bl  Move_Do_GoError
+
+Move_Do_GoError:
+        PrintNewLine
+        lea  x6, debug.address
+        ldr  x1, [x6]
+         bl  PrintString
+        PrintNewLine
+        lea  x1, debug.position
+         bl  PrintString
+        str  wzr, [x27]
+        lea  x27, debug.output
+         bl  Os_ErrorBox
+        brk  0
+.endif
 

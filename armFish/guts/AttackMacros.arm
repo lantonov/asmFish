@@ -1,24 +1,45 @@
 .macro RookAttacks X, Sq, Occ, T, S
-       adrp  \S, RookAttacksSTUFF
+       adrp  \S, RookAttacksPEXT
         add  \S, \S, \Sq, lsl 3
-        ldr  \T, [\S, RookAttacksPEXT - RookAttacksSTUFF]
+        ldr  \T, [\S, RookAttacksPEXT - RookAttacksPEXT]
         and  \T, \T, \Occ
-        ldr  \X, [\S, RookAttacksMOFF - RookAttacksSTUFF]
-        ldr  \S, [\S, RookAttacksIMUL - RookAttacksSTUFF]
+        ldr  \X, [\S, RookAttacksMOFF - RookAttacksPEXT]
+        ldr  \S, [\S, RookAttacksIMUL - RookAttacksPEXT]
         mul  \T, \T, \S
         lsr  \T, \T, 64-12
         ldr  \X, [\X, \T, lsl 3]
 .endm
 
 .macro BishopAttacks X, Sq, Occ, T, S
-       adrp  \S, BishopAttacksSTUFF
+       adrp  \S, BishopAttacksPEXT
         add  \S, \S, \Sq, lsl 3
-        ldr  \T, [\S, BishopAttacksPEXT - BishopAttacksSTUFF]
+        ldr  \T, [\S, BishopAttacksPEXT - BishopAttacksPEXT]
         and  \T, \T, \Occ
-        ldr  \X, [\S, BishopAttacksMOFF - BishopAttacksSTUFF]
-        ldr  \S, [\S, BishopAttacksIMUL - BishopAttacksSTUFF]
+        ldr  \X, [\S, BishopAttacksMOFF - BishopAttacksPEXT]
+        ldr  \S, [\S, BishopAttacksIMUL - BishopAttacksPEXT]
         mul  \T, \T, \S
         lsr  \T, \T, 64-9
         ldr  \X, [\X, \T, lsl 3]
 .endm
+
+.macro RookAttacksV X, Sq, Occ, T, S, PEXT, IMUL, MOFF
+        ldr  \T, [\PEXT, \Sq, lsl 3]
+        ldr  \S, [\IMUL, \Sq, lsl 3]
+        ldr  \X, [\MOFF, \Sq, lsl 3]
+        and  \T, \T, \Occ
+        mul  \T, \T, \S
+        lsr  \T, \T, 64-12
+        ldr  \X, [\X, \T, lsl 3]
+.endm
+
+.macro BishopAttacksV X, Sq, Occ, T, S, PEXT, IMUL, MOFF
+        ldr  \T, [\PEXT, \Sq, lsl 3]
+        ldr  \S, [\IMUL, \Sq, lsl 3]
+        ldr  \X, [\MOFF, \Sq, lsl 3]
+        and  \T, \T, \Occ
+        mul  \T, \T, \S
+        lsr  \T, \T, 64-9
+        ldr  \X, [\X, \T, lsl 3]
+.endm
+
 

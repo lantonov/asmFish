@@ -359,9 +359,9 @@ RootMove.pv = 1*sizeof.rd + 1*sizeof.rd + RootMove.pvSize
 sizeof.RootMove = MAX_PLY*sizeof.rd + RootMove.pv
 
 Pos.___ = 0
-Pos.typeBB = 0 + Pos.___
-Pos.board = 8*sizeof.rq + Pos.typeBB
-Pos.pieceIdx = 64*sizeof.rb + Pos.board
+Pos.board = 0 + Pos.___
+Pos.typeBB = 64*sizeof.rb + Pos.board
+Pos.pieceIdx = 8*sizeof.rq + Pos.typeBB
 Pos.pieceEnd = 64*sizeof.rb + Pos.pieceIdx
 Pos.pieceList = 16*sizeof.rb + Pos.pieceEnd
 Pos.sideToMove = 16*16*sizeof.rb + Pos.pieceList
@@ -379,10 +379,6 @@ Pos.pawnTable = 1*sizeof.rq + Pos.materialTable
 Pos.rootMovesVec = 1*sizeof.rq + Pos.pawnTable
 Pos.moveList = 1*sizeof.RootMovesVec + Pos.rootMovesVec
 sizeof.Pos = 1*sizeof.rq + Pos.moveList
-
-.if Pos.typeBB
- .error "Pos.typeBB is not zero"
-.endif
 
 State.___ = 0
 State.key               = 0           + State.___
