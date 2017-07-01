@@ -254,6 +254,11 @@ struct Options
  syzygy50MoveRule rb 1	    ; bool 0 or -1
  syzygyProbeDepth rd 1
  syzygyProbeLimit rd 1
+match =1, USE_VARIETY {
+ varietyMod   rd 1
+ varietyBound rd 1
+ varietySeed  rq 1
+}
  hashPath	rq 1
  hashPathSizeB	rq 1
  hashPathBuffer rq 14

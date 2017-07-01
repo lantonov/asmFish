@@ -486,6 +486,28 @@ end virtual
 .MovePickDone:
 		mov   r9, qword[rbx+State.key]
 		mov   edi, dword[.bestValue]
+
+if USE_VARIETY
+		mov   rax, qword[options.varietySeed]
+		mov   rdx, rax
+		shr   rdx, 12
+		xor   rax, rdx
+		mov   rdx, rax
+		shl   rdx, 25
+		xor   rax, rdx
+		mov   rdx, rax
+		shr   rdx, 27
+		xor   rax, rdx
+		mov   edx, 2685821657736338717 and 0x0FFFFFFFF
+		mov   qword[options.varietySeed], rax
+	        mul   edx
+                cdq
+               idiv   dword[options.varietyMod]         ; varietyMod = 1 + variety
+                add   edx, edi
+                cmp   edi, dword[options.varietyBound]  ; varietyBound = - variety * PawnValueEg / 100
+             cmovge   edi, edx
+end if
+
 		lea   ecx, [rdi+VALUE_MATE_IN_MAX_PLY]
 
 	if InCheck eq 1

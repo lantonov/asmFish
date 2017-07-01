@@ -528,7 +528,6 @@ end virtual
 	       call   PrintBitboardCompact
        PrintNewLine
 
-if PEDANTIC
 	     szcall   PrintString, 'pieceIdx:  '
 		xor   esi, esi
 	.1:    test   esi, 7
@@ -603,7 +602,6 @@ if PEDANTIC
 		 jb   .3
        PrintNewLine
 
-end if
 
 
 	     szcall   PrintString, 'checkers:  '

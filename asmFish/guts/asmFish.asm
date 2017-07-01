@@ -157,6 +157,11 @@ if USE_WEAKNESS
 	NewLineData
 end if
 
+if USE_VARIETY
+	db 'option name Variety type spin default 0 min 0 max 40'
+	NewLineData
+end if
+
 if USE_BOOK
 	db 'option name OwnBook type check default false'
 	NewLineData
@@ -261,6 +266,10 @@ end if
 if USE_WEAKNESS
 sz_uci_limitstrength	db 'uci_limitstrength',0
 sz_uci_elo		db 'uci_elo',0
+end if
+
+if USE_VARIETY
+sz_variety              db 'variety',0
 end if
 
 if USE_BOOK
