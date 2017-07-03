@@ -128,6 +128,8 @@ PrintFancy.GotOne:
        ldrb  w24, [x26], 1
         cmp  w24, 'a'
         beq  PrintFancy.Alignment
+        cmp  w24, 'p'
+        beq  PrintFancy.Position
          bl  ParseInteger
         and  x0, x0, 31
         cbz  x29, 1f
@@ -182,6 +184,11 @@ PrintFancy.GotOne:
 
         cbz  x3, PrintFancy.Loop
         blr  x3
+          b  PrintFancy.Loop
+
+PrintFancy.Position:
+        str  x21, [x20, Pos.state]
+         bl  Position_PrintFen
           b  PrintFancy.Loop
 
 PrintFancy.Alignment:

@@ -909,6 +909,7 @@ EndgameScale_KBPsK.OnHFile:
 EndgameScale_KBPsK.OnAFile:
 //		and   r9, qword[rbp+Pos.typeBB+8*Bishop]
         ldr  x4, [x20, Pos.typeBB + 8*Bishop]
+        and  x9, x9, x4
 //	; r9 = strong bishop bitboard
 //		neg   rcx
         neg  x1, x1
@@ -2023,6 +2024,8 @@ EndgameScale_KRPKB.Rank5:
         add  w2, psq, ppush
 //		lea   edx, [rdx+2*ppush_]
         add  w2, w2, ppush, lsl 1
+//              shl   edx, 6
+        lsl  w2, w2, 6
 //	      movzx   edx, [SquareDistance+rdx+ksq_]
         lea  x6, SquareDistance
         add  x6, x6, x2
@@ -2034,7 +2037,7 @@ EndgameScale_KRPKB.Rank5:
         cmp  w2, 2
         bhi  EndgameScale_KRPKB.Return
 //		mov   eax, 48
-        mov  w0, 48
+        mov  w0, 24
 //	       test   edx, edx
 //		jnz   .Return
        cbnz  w2, EndgameScale_KRPKB.Return
@@ -2045,8 +2048,9 @@ EndgameScale_KRPKB.Rank5:
         eor  w1, w1, 1
 //		mov   rdx, qword[rbp+Pos.typeBB+8*King]
         ldr  x2, [x20, Pos.typeBB + 8*King]
-//		and   rdx, qword[rbp+8*rcx]
-        ldr  x4, [x20, x1, lsl 3]
+//		and   rdx, qword[rbp+Pos.typeBB+8*rcx]
+        add  x6, x20, Pos.typeBB
+        ldr  x4, [x6, x1, lsl 3]
         and  x2, x2, x4
 //		bsf   rdx, rdx
        rbit  x2, x2
@@ -2056,7 +2060,7 @@ EndgameScale_KRPKB.Rank5:
         cmp  ksq, w2
         bne  EndgameScale_KRPKB.Return
 //		mov   eax, 24
-        mov  w0, 24
+        mov  w0, 48
 //SD String, "EndgameScale_KRPKB 3 returning "
 //SD Int32, rax
 //SD NewLine
@@ -2259,13 +2263,13 @@ ksq_  .req x9
        rbit  x9, x9
         clz  x9, x9
 //		mov   eax, ksq
-//		and   eax, 3
-        and  w0, ksq, 3
+//		and   eax, 7
+        and  w0, ksq, 7
 //		bsf   rdx, r8
        rbit  x2, x8
         clz  x2, x2
-//		and   edx, 3
-        and  w2, w2, 3
+//		and   edx, 7
+        and  w2, w2, 7
 //		sub   eax, edx
         sub  w0, w0, w2
 //		add   eax, 1
@@ -2810,7 +2814,7 @@ EndgameScale_KBPPKB.c12:
 //	       test   rax, rdx
 //		jnz   .ReturnDraw
         tst  x0, x2
-        beq  EndgameScale_KBPPKB.ReturnDraw
+        bne  EndgameScale_KBPPKB.ReturnDraw
 //		mov   eax, SCALE_FACTOR_NONE
         mov  w0, SCALE_FACTOR_NONE
 //SD String, "EndgameScale_KBPPKB 4 returning "
@@ -2904,7 +2908,7 @@ weakKingSq_	.req x10
         and  w0, weakKingSq, 7
 //		mov   edx, pawnSq
 //		and   edx, 7
-        and  w0, pawnSq, 7
+        and  w2, pawnSq, 7
 //		cmp   eax, edx
 //		jne   .ReturnNone
         cmp  w0, w2

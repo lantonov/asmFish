@@ -3134,7 +3134,6 @@ Display 2, "score = %s26\n"
        ldrb  w1, [x4, MaterialEntry.scalingFunction]
        ldrb  w0, [x4, MaterialEntry.factor]
        ldrb  w2, [x25, MaterialEntry.gamePhase]
-Display 2,"sf: %i0\n"
 
 //		add   esi, 0x08000
         add  w26, w26, 0x08000
@@ -3145,6 +3144,7 @@ Display 2,"sf: %i0\n"
        cbnz  w1, Evaluate_Cold2.HaveScaleFunction
 //.HaveScaleFunctionReturn:
 Evaluate.HaveScaleFunctionReturn:
+
 //		lea   ecx, [rax-48]
         sub  w1, w0, 48
 //		mov   r10, qword[rbp+Pos.typeBB+8*Bishop]
@@ -3254,7 +3254,10 @@ Evaluate.ScaleFactorDone:
 //	; esi = mg_score(score)
 //	; r12d = eg_value(score)
 //	; adjust score for side to move
-Display 2,"sf: %i0\n"
+
+
+Display 3,"%p mg: %i26 eg: %i22 sf: %i0\n"
+
 //
 //  ;// Interpolate between a middlegame and a (scaled by 'sf') endgame score
 //  ;Value v =  mg_value(score) * int(ei.me->game_phase())
