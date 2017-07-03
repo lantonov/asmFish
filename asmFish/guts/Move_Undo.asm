@@ -7,31 +7,13 @@ Move_Undo:
 
 	       push   rsi
 
+SD String,"Move_Undo(move="
+SD Move, rcx
+SD NewLine
+
 if DEBUG
 		mov   dword[rbp+Pos.debugDWORD1], ecx
 end if
-
-match=2, VERBOSE {
-		sub   dword[rbp+Pos.gamePly], 1
-	       push   rax rcx rsi rdi
-		mov   esi, ecx
-		lea   rdi, [VerboseOutput]
-		mov   eax, 'udm'
-	      stosd
-                sub   rdi, 1
-	     movsxd   rax, dword[rbp+Pos.gamePly]
-	       call   PrintSignedInteger
-		mov   al, ':'
-	      stosb
-		mov   ecx, esi
-		xor   edx, edx
-	       call   PrintUciMove
-		mov   al, '|'
-	      stosb
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   rdi rsi rcx rax
-}
 
 		mov   esi, dword[rbp+Pos.sideToMove]
 		xor   esi, 1

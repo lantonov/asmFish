@@ -587,10 +587,7 @@ UciParseMoves:
 		mov   ecx, edi
 		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__UciParseMoves
-	; when VERBOSE<>2, domove/undomove don't update gamePly
-if VERBOSE <> 2
 		inc   dword[rbp+Pos.gamePly]
-end if
 		mov   qword[rbp+Pos.state], rbx
 	       call   SetCheckInfo
 		jmp   .get_move
@@ -1248,6 +1245,7 @@ end if
 .nextpos:
 		add   r13d, 1
 	       call   SkipSpaces
+                xor   ecx, ecx
 	       call   Position_ParseFEN
 		lea   rcx, [UciLoop.limits]
 	       call   Limits_Init

@@ -136,6 +136,10 @@ Move_Do:
 
         ; stack is unaligned at this point
 
+SD String,"Move_Do(move="
+SD Move, rcx
+SD NewLine
+
 match =1, DEBUG {
 	       push   rax rcx rdx
 		sub   rsp, MAX_MOVES*sizeof.ExtMove
@@ -168,27 +172,6 @@ PrintNewLine
 		jne   @b
 		add   rsp, MAX_MOVES*sizeof.ExtMove
 		pop   rdx rcx rax
-}
-
-match=2, VERBOSE {
-	       push   rax rcx rdx rsi rdi
-		mov   esi, ecx
-		lea   rdi, [VerboseOutput]
-		mov   ax, 'dm'
-	      stosw
-	     movsxd   rax, dword[rbp+Pos.gamePly]
-	       call   PrintSignedInteger
-		mov   al, ':'
-	      stosb
-		mov   ecx, esi
-		xor   edx, edx
-	       call   PrintUciMove
-		mov   al, '|'
-	      stosb
-		lea   rcx, [VerboseOutput]
-	       call   _WriteOut
-		pop   rdi rsi rdx rcx rax
-		add   dword[rbp+Pos.gamePly], 1	  ; gamePly is only used by search to init the timeman
 }
 
 		mov   esi, dword[rbp+Pos.sideToMove]

@@ -979,22 +979,23 @@ ppush  equ r11d
 		 je   .ReturnNone
 		lea   edx, [psq_+ppush_]
 		lea   edx, [rdx+2*ppush_]
+                shl   edx, 6
 	      movzx   edx, [SquareDistance+rdx+ksq_]
 		mov   eax, 48
 		cmp   edx, 2
 		 ja   .Return
-		mov   eax, 48
+		mov   eax, 24
 	       test   edx, edx
 		jnz   .Return
 		sub   ksq, ppush
 		sub   ksq, ppush
 		xor   ecx, 1
 		mov   rdx, qword[rbp+Pos.typeBB+8*King]
-		and   rdx, qword[rbp+8*rcx]
+		and   rdx, qword[rbp+Pos.typeBB+8*rcx]
 		bsf   rdx, rdx
 		cmp   ksq, edx
 		jne   .Return
-		mov   eax, 24
+		mov   eax, 48
 		ret
 restore ksq_
 restore bsq_
@@ -1093,9 +1094,9 @@ ksq_  equ r9
 		and   r9, qword[rbp+Pos.typeBB+8*King]
 		bsf   r9, r9
 		mov   eax, ksq
-		and   eax, 3
+		and   eax, 7
 		bsf   rdx, r8
-		and   edx, 3
+		and   edx, 7
 		sub   eax, edx
 		add   eax, 1
 		cmp   eax, 3
