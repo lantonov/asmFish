@@ -42,7 +42,7 @@ Os_MutexLock.L2:
 Os_MutexUnlock:
         stp  x29, x30, [sp, -16]!
         mov  x29, x1
-        ldr  w0, [x29]
+       ldar  w0, [x29]
         cmp  w0, 1      // expected = 1
         bne  Os_MutexUnlock.L1
         mov  w1, 0      // desired = 0
@@ -50,18 +50,19 @@ Os_MutexUnlock.L0:
       ldaxr  w2, [x29]  // w2 = obj
         cmp  w2, w0     // cmp obj, expected
         bne  Os_MutexUnlock.L1
-       stxr  w4, w1, [x29]      // obj = desired
+      stlxr  w4, w1, [x29]      // obj = desired
        cbnz  w4, Os_MutexUnlock.L0
           b  Os_MutexUnlock.L3
 Os_MutexUnlock.L1:
-       strb  wzr, [x29]
+      stlrb  wzr, [x29]
         mov  x1, 200
 Os_MutexUnlock.L2:
-       ldrb  w0, [x29]
+      ldarb  w0, [x29]
        tbnz  w0, 0, Os_MutexUnlock.L3
         sub  x1, x1, 1
        cbnz  x1, Os_MutexUnlock.L2
-       strb  wzr, [x29, 1]
+        add  x6, x29, 1
+      stlrb  wzr, [x6]
         mov  x0, x29
         mov  x1, FUTEX_WAKE_PRIVATE
         mov  x2, 0x01
@@ -111,8 +112,8 @@ Os_EventWait:
         mov  x28, x1    // x28 = cv
         mov  x29, x2    // x29 = mutex
         add  x5, x28, 8
-        ldr  w24, [x28]
-        ldr  x4, [x5]
+       ldar  w24, [x28]
+       ldar  x4, [x5]
         cmp  x29, x4
         bne  Os_EventWait.L4
 Os_EventWait.L1:
@@ -148,10 +149,10 @@ Os_EventWait.L2:
 Os_EventWait.L4:
       ldaxr  x2, [x5]
        cbnz  x2, Os_EventWait.L4_nexp
-       stxr  w4, x29, [x5]
+      stlxr  w4, x29, [x5]
        cbnz  w4, Os_EventWait.L4
 Os_EventWait.L4_nexp:
-        ldr  x2, [x5]
+       ldar  x2, [x5]
         cmp  x2, x29    // we should have mutex x29 saved at x5
         beq  Os_EventWait.L1
           b  Failed_EventWait
