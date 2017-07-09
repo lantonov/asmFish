@@ -2077,6 +2077,18 @@ match =Black, Us \{
 		cmp   r14d, Queen
 		jbe   .Piece1Loop
 
+        ; Special handling of Queen vs. Minors
+                mov   edx, [r8+4*Queen]
+                sub   edx, 1
+                mov   ecx, [r9+4*Knight]
+                 or   edx, [r9+4*Queen]
+                jnz   .NoQueenImbalance
+                add   ecx, [r9+4*Bishop]
+		lea   edx, [2*r15-1]
+               imul   edx, dword[QueenMinorsImbalance+4*rcx]
+                sub   eax, edx
+.NoQueenImbalance:
+
 	       xchg   r8, r9
 		add   r15d, 1
 		cmp   r15d, 2

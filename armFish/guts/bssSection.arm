@@ -89,6 +89,7 @@ RazorMargin:             .space 4*4
 _CaptureOrPromotion_or:  .space 1*4
 _CaptureOrPromotion_and: .space 1*4
 DrawValue:	         .space 4*2    // it is updated when threads start to think
+SeeSignBitMask:          .space 8
 
 
 // data for evaluation
@@ -114,7 +115,7 @@ DoMaterialEval_Data:
 DoMaterialEval_Data.QuadraticOurs:     .space 4*8*6
 DoMaterialEval_Data.QuadraticTheirs:   .space 4*8*6
 PawnsSet:               .space 4*16
-SeeSignBitMask:         .space 8
+QueenMinorsImbalance:   .space 4*16
 
 
 // data for endgames

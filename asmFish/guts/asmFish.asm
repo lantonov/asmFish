@@ -509,7 +509,7 @@ DoMaterialEval_Data:
 .QuadraticOurs:            rd 8*6
 .QuadraticTheirs:          rd 8*6
 PawnsSet                   rd 16
-
+QueenMinorsImbalance       rd 16
 
 
 ;;;;;;;;;;;;;; data for endgames ;;;;;;;;;;;;;;

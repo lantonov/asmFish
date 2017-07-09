@@ -3895,6 +3895,8 @@ DoMaterialEval.P4:
         mov  w25, 0
 //.ColorLoop:
 DoMaterialEval.ColorLoop:
+        mov  w3, -1
+        add  w3, w3, w25, lsl 1 // w3 = 2*w25 - 1
 
 //		xor   r10d, r10d	; partial index into quadatic
         mov  w10, 0
@@ -3942,11 +3944,9 @@ DoMaterialEval.Piece2Loop:
         bls  DoMaterialEval.Piece2Loop
 //
 //		lea   edx, [2*r15-1]
-        mov  w2, -1
-        add  w2, w2, w25, lsl 1
 //	       imul   edx, dword[r8+4*r14]
         ldr  w4, [x8, x24, lsl 2]
-        mul  w2, w2, w4
+        mul  w2, w3, w4
 //	       imul   r11d, edx
         mul  w11, w11, w2
 //		sub   eax, r11d
@@ -3962,36 +3962,37 @@ DoMaterialEval.SkipPiece:
 //		jbe   .Piece1Loop
         cmp  w24, Queen
         bls  DoMaterialEval.Piece1Loop
-//
-//	       xchg   r8, r9
+
+// Special handling of Queen vs. Minors
+        ldr  w2, [x8, 4*Queen]
+        ldr  w4, [x9, 4*Queen]
+        lea  x6, QueenMinorsImbalance
+        ldr  w1, [x9, 4*Knight]
+        cmp  w2, 1
+       ccmp  w4, wzr, 0, eq
+        bne  DoMaterialEval.NoQueenImbalance
+        ldr  w4, [x9, 4*Bishop]
+        add  w1, w1, w4
+        ldr  w2, [x6, x1, lsl 2]
+       msub  w0, w3, w2, w0
+DoMaterialEval.NoQueenImbalance:
+
         mov  x4, x8
         mov  x8, x9
         mov  x9, x4
-//		add   r15d, 1
+
         add  w25, w25, 1
-//		cmp   r15d, 2
-//		 jb   .ColorLoop
         cmp  w25, 2
         blo  DoMaterialEval.ColorLoop
-//
-//	; divide by 16, round towards zero
-//		cdq
+
+// divide by 16, round towards zero
         asr  w2, w0, 31
-//		and   edx, 15
         and  w2, w2, 15
-//		add   eax, edx
         add  w0, w0, w2
-//		sar   eax, 4
         asr  w0, w0, 4
-//
-//		mov   word[rsi+MaterialEntry.value], ax
+
        strh  w0, [x26, MaterialEntry.value]
-//	      movzx   ecx, byte[rsi+MaterialEntry.evaluationFunction]
        ldrb  w1, [x26, MaterialEntry.evaluationFunction]
-//
-//		add   rsp, 8*16
-//		pop   r15 r14 r13 r12
-//		jmp   Evaluate.DoMaterialEvalReturn
 
         add  sp, sp, 8*16
         ldp  x24, x25, [sp], 16

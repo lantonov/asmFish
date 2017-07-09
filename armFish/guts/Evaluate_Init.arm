@@ -163,20 +163,17 @@ Evaluate_Init:
         str  x1, [x0], 8
         str  x1, [x0], 8
         str  x1, [x0], 8
-/*
-                lea   rsi, [.PawnsSet]
-                lea   rdi, [PawnsSet]
-                mov   ecx, 9
-          rep movsd
-*/
+
         adr  x16, Evaluate_Init.PawnsSet
         lea  x17, PawnsSet
         mov  w1, 9
          bl  RepMovsd
-/*
-		pop   rdi rsi rbx
-		ret
-*/
+
+        adr  x16, Evaluate_Init.QueenMinorsImbalance
+        lea  x17, QueenMinorsImbalance
+        mov  w1, 9
+         bl  RepMovsd
+
 
         ldp  x29, x30, [sp], -16
         ret
@@ -379,6 +376,9 @@ Evaluate_Init.PassedRank:
 
 Evaluate_Init.PawnsSet:
         .word 24, -32, 107, -51, 117, -9, -126, -21, 31
+
+Evaluate_Init.QueenMinorsImbalance:
+        .word 31, -8, -15, -25, -5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 Evaluate_Init.QuadraticOurs:
 	.word 0, 1667,    0,    0,    0,    0,    0,    0

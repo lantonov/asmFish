@@ -367,8 +367,6 @@ ThreadPool_StartThinking.push_moves_done:
         add  x20, x24, Thread.rootPos
         ldr  x21, [x20, Pos.state]
 
-Display 0,"hello\n"
-
 // position is passed to threads by first converting to a fen
 //   and then parsing this fen string
 // the net effect is a fixed order on piece lists
@@ -422,8 +420,6 @@ ThreadPool_StartThinking.thread_copy_done:
 
         mov  x1, x24
          bl  Thread_StartSearching
-
-Display 0,"hello 2\n"
 
         add  sp, sp, ThreadPool_StartThinking.localsize
         ldp  x24, x25, [sp], 16

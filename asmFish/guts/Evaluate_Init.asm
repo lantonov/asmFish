@@ -83,6 +83,11 @@ Evaluate_Init:
                 mov   ecx, 9
           rep movsd
 
+                lea   rsi, [.QueenMinorsImbalance]
+                lea   rdi, [QueenMinorsImbalance]
+                mov   ecx, 16
+          rep movsd
+
 		pop   rdi rsi rbx
 		ret
 
@@ -282,6 +287,9 @@ align 4
 
 .PawnsSet:
         dd 24, -32, 107, -51, 117, -9, -126, -21, 31
+
+.QueenMinorsImbalance:
+        dd 31, -8, -15, -25, -5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 .QuadraticOurs:
 	dd 0, 1667,    0,    0,    0,	 0,    0,    0
