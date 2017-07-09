@@ -313,47 +313,22 @@ ThreadPool_StartThinking.localsize = (ThreadPool_StartThinking.lend + 15) & -16
         mov  x25, x20
         lea  x6, threadPool
         ldr  x24, [x6, ThreadPool.threadTable + 8*0]
-/*
-		mov   rcx, r14
-	       call   Thread_WaitForSearchFinished
+// x26 = address of limits
+// x25 = gui position
+// x24 = main thread
 
-		xor   eax, eax
-		mov   byte[signals.stop], al
-		mov   byte[signals.stopOnPonderhit], al
-		lea   rcx, [limits]
-		mov   rdx, rsi
-	       call   Limits_Copy
-*/
         mov  x1, x24
          bl  Thread_WaitForSearchFinished
-        mov  w0, 0
+
         lea  x6, signals
-       strb  w0, [x6, Signals.stop]
-       strb  w0, [x6, Signals.stopOnPonderhit]
+       strb  wzr, [x6, Signals.stop]
+       strb  wzr, [x6, Signals.stopOnPonderhit]
         lea  x1, limits
         mov  x2, x26
          bl  Limits_Copy
 
-         bl  Position_SetPieceLists
-        add  x1, x24, Thread.rootPos
-         bl  Position_CopyToSearch
-        add  x6, x24, Thread.rootDepth
-       stlr  wzr, [x6]
-        str  xzr, [x24, Thread.nodes]
-        str  xzr, [x24, Thread.tbHits]
-       strb  wzr, [x24, Thread.maxPly]
-        str  wzr, [x24, Thread.resetCnt]
-        mov  w4, MIN_RESETCNT
-        str  w4, [x24, Thread.callsCnt]
-/*
-		lea   rsi, [limits.moveVec]
-		lea   rdi, [.moveList]
-		mov   ecx, dword[limits.moveVecSize]
-	       test   ecx, ecx
-		jnz   .use_searchmoves
-		mov   rbx, qword[rbp+Pos.state]
-	       call   Gen_Legal
-*/
+// first, get root moves from gui position
+
         lea  x26, limits+Limits.moveVec
         add  x27, sp, ThreadPool_StartThinking.moveList
         lea  x6, limits+Limits.moveVecSize
@@ -362,24 +337,10 @@ ThreadPool_StartThinking.localsize = (ThreadPool_StartThinking.lend + 15) & -16
         ldr  x21, [x20, Pos.state]
          bl  Gen_Legal
 ThreadPool_StartThinking.have_moves:
-/*
-		lea   rsi, [.moveList]
-		lea   rcx, [r14+Thread.rootPos+Pos.rootMovesVec]
-	       call   RootMovesVec_Clear
-*/
         add  x26, sp, ThreadPool_StartThinking.moveList
         add  x1, x24, Thread.rootPos + Pos.rootMovesVec
          bl  RootMovesVec_Clear
 ThreadPool_StartThinking.push_moves:
-/*
-		cmp   rsi, rdi
-		jae   .push_moves_done
-		lea   rcx, [r14+Thread.rootPos+Pos.rootMovesVec]
-		mov   edx, dword[rsi+ExtMove.move]
-		add   rsi, sizeof.ExtMove
-	       call   RootMovesVec_PushBackMove
-		jmp   .push_moves
-*/
         cmp  x26, x27
         bhs  ThreadPool_StartThinking.push_moves_done
         add  x1, x24, Thread.rootPos + Pos.rootMovesVec
@@ -387,52 +348,36 @@ ThreadPool_StartThinking.push_moves:
         add  x26, x26, sizeof.ExtMove
          bl  RootMovesVec_PushBackMove
           b  ThreadPool_StartThinking.push_moves
-
 ThreadPool_StartThinking.push_moves_done:
-/*
-	; the main thread should get the position for tb move filtering
-		lea   rbp, [r14+Thread.rootPos]
-		mov   rbx, qword[rbp+Pos.state]
 
-if USE_SYZYGY
-	; Skip TB probing when no TB found
-		mov   dl, byte[options.syzygy50MoveRule]
-		mov   byte[Tablebase_RootInTB], 0
-		mov   byte[Tablebase_UseRule50], dl
-		mov   eax, dword[options.syzygyProbeLimit]
-		mov   ecx, dword[options.syzygyProbeDepth]
-		xor   edx, edx
-		cmp   eax, dword[Tablebase_MaxCardinality]
-	      cmovg   eax, dword[Tablebase_MaxCardinality]
-	      cmovg   ecx, edx
-		mov   dword[Tablebase_Cardinality], eax
-		mov   dword[Tablebase_ProbeDepth], ecx
-	; filter moves
-		mov   rcx, qword[rbp+Pos.typeBB+8*White]
-		 or   rcx, qword[rbp+Pos.typeBB+8*Black]
-	     popcnt   rcx, rcx, rdx
-		mov   rdx, qword[rbp+Pos.rootMovesVec.ender]
-		cmp   rdx, qword[rbp+Pos.rootMovesVec.table]
-		jbe   .check_tb_ret
-		sub   eax, ecx
-		sar   eax, 31
-		 or   al, byte[rbx+State.castlingRights]
-		 jz   .check_tb
-.check_tb_ret:
-end if
+// next, copy to mainThread
 
-	; copy original position to workers
-		xor   eax, eax
-		mov   rbp, r15
-		mov   rsi, r14
-		mov   qword[rsi+Thread.nodes], rax  ;filtering moves may have incremented mainThread.nodes
-		xor   edi, edi
-*/
-        mov  w0, 0
-        mov  x20, x25
-        mov  x26, x24
-        str  xzr, [x26, Thread.nodes]
+        str  wzr, [x24, Thread.rootDepth]
+        str  xzr, [x24, Thread.nodes]
+        str  xzr, [x24, Thread.tbHits]
+       strb  wzr, [x24, Thread.maxPly]
+        str  wzr, [x24, Thread.resetCnt]
+        mov  w4, MIN_RESETCNT   // check time asap
+        str  w4, [x24, Thread.callsCnt]
+        add  x1, x24, Thread.rootPos
+         bl  Position_CopyToSearch
 
+// switch x20 and x21 to position of mean thread
+
+        add  x20, x24, Thread.rootPos
+        ldr  x21, [x20, Pos.state]
+
+Display 0,"hello\n"
+
+// position is passed to threads by first converting to a fen
+//   and then parsing this fen string
+// the net effect is a fixed order on piece lists
+
+         bl  Position_SetPieceLists
+
+// copy position in main thread to workers
+
+        str  xzr, [x24, Thread.nodes]   //filtering moves may have incremented mainThread.nodes
         mov  w27, 0
 ThreadPool_StartThinking.next_thread:
         add  w27, w27, 1
@@ -440,37 +385,26 @@ ThreadPool_StartThinking.next_thread:
         ldr  w4, [x6, ThreadPool.threadCnt]
         cmp  w27, w4
         bhs  ThreadPool_StartThinking.thread_copy_done
+
+// get addres of worker thread
         lea  x6, threadPool + ThreadPool.threadTable
-        ldr  x21, [x6, x27, lsl 3]
+        ldr  x26, [x6, x27, lsl 3]
 
-        add  x1, x21, Thread.rootPos
+        add  x1, x26, Thread.rootPos
          bl  Position_CopyToSearch
-        add  x6, x21, Thread.rootDepth
-       stlr  wzr, [x6]
-        str  xzr, [x21, Thread.nodes]
-        str  xzr, [x21, Thread.tbHits]
-       strb  wzr, [x21, Thread.maxPly]
-        str  wzr, [x24, Thread.resetCnt]
-        mov  w4, (MAX_RESETCNT>>0 ) & 0x0ff
-       movk  w4, (MAX_RESETCNT>>16) & 0x0ff, lsl 16
-        str  w4, [x24, Thread.callsCnt]
+        str  wzr, [x26, Thread.rootDepth]
+        str  xzr, [x26, Thread.nodes]
+        str  xzr, [x26, Thread.tbHits]
+       strb  wzr, [x26, Thread.maxPly]
+        str  wzr, [x26, Thread.resetCnt]
+      mov32  w4, MAX_RESETCNT
+        str  w4, [x26, Thread.callsCnt]
 
-        ldr  x0, [x21, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.table]
-        ldr  x2, [x26, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.table]
+        ldr  x0, [x26, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.table]
+        ldr  x2, [x24, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.table]
         
 ThreadPool_StartThinking.copy_moves_loop:
-/*
-		cmp   rdx, qword[rsi+Thread.rootPos.rootMovesVec.ender]
-		jae   .copy_moves_done
-	    vmovups   xmm0, dqword[rdx+0]    ; this should be sufficient to copy
-	    vmovups   xmm1, dqword[rdx+16]   ; up to and including first move of pv
-	    vmovups   dqword[rax+0], xmm0    ;
-	    vmovups   dqword[rax+16], xmm1   ;
-		add   rax, sizeof.RootMove
-		add   rdx, sizeof.RootMove
-		jmp   .copy_moves_loop
-*/
-        ldr  x4, [x26, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.ender]
+        ldr  x4, [x24, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.ender]
         cmp  x2, x4
         bhs  ThreadPool_StartThinking.copy_moves_done
         ldp  x4, x5, [x2]
@@ -482,25 +416,14 @@ ThreadPool_StartThinking.copy_moves_loop:
           b  ThreadPool_StartThinking.copy_moves_loop
 
 ThreadPool_StartThinking.copy_moves_done:
-/*
-		mov   qword[rbx+Thread.rootPos.rootMovesVec.ender], rax
-
-		jmp   .next_thread
-*/
-        str  x0, [x21, Thread.rootPos+Pos.rootMovesVec+RootMovesVec.ender]
+        str  x0, [x26, Thread.rootPos+Pos.rootMovesVec+RootMovesVec.ender]
           b  ThreadPool_StartThinking.next_thread
 ThreadPool_StartThinking.thread_copy_done:
-/*
-		mov   rcx, r14
-	       call   Thread_StartSearching
-
-		add   rsp, .localsize
-		pop   r15 r14 r13 rdi rsi rbx rbp
-		ret
-*/
 
         mov  x1, x24
          bl  Thread_StartSearching
+
+Display 0,"hello 2\n"
 
         add  sp, sp, ThreadPool_StartThinking.localsize
         ldp  x24, x25, [sp], 16
@@ -560,3 +483,5 @@ ThreadPool_StartThinking.use_searchmoves:
         sub  w1, w1, 1
        cbnz  w1, ThreadPool_StartThinking.use_searchmoves
           b  ThreadPool_StartThinking.have_moves
+
+
