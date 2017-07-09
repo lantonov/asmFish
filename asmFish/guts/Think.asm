@@ -932,8 +932,10 @@ end if
 		mov   ecx, r12d
 	       call   PrintScore_Uci
 
-	       test   r13d, r13d
+if USE_SYZYGY
+	       test   r13d, r13d        ; undefined without syzygy
 		jnz   .no_bound
+end if
 		cmp   r15d, dword[rbp-Thread.rootPos+Thread.PVIdx]
 		jne   .no_bound
 		mov   rax, ' lowerbo'

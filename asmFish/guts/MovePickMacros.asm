@@ -273,9 +273,6 @@ local ..WhileLoop, ..Done
 	       imul   eax, eax, 200
 		sub   edx, eax
 		mov   dword[start-sizeof.ExtMove+ExtMove.value], edx
-;SD_String 'sc:'
-;SD_Int rdx
-;SD_String '|'
 		cmp   start, ender
 		 jb   ..WhileLoop
 ..Done:
@@ -305,8 +302,6 @@ local ..Loop, ..Done, ..TestLoop
 		jae   ..Done
 ..Loop:
 		mov   ecx, dword[start+ExtMove.move]
-;SD_String 'sq:'
-;SD_Move rcx
 		mov   eax, ecx
 		mov   edx, ecx
 		and   eax, 64*64-1
@@ -322,8 +317,6 @@ local ..Loop, ..Done, ..TestLoop
 		add   eax, dword[fmh+4*rdx]
 		add   eax, dword[fmh2+4*rdx]
 		mov   dword[start-1*sizeof.ExtMove+ExtMove.value], eax
-;SD_Int rax
-;SD_String '|'
 		cmp   start, ender
 		 jb   ..Loop
 ..Done:

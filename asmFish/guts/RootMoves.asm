@@ -25,61 +25,6 @@ RootMovesVec_Destroy:
 		pop   rbx
 		ret
 
-match =1, VERBOSE {
-RootMovesVec_Print:
-	; in: rbp  position   the rootmovesvec member will be printed
-	; io: rdi
-	       push   rbx rsi r13 r14 r15
-		mov   rbx, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
-.loop:		cmp   rbx, qword[rbp+Pos.rootMovesVec+RootMovesVec.ender]
-		jae   .done
-
-		mov   eax, dword[rbx+RootMove.score]
-		cmp   eax, -VALUE_INFINITE
-		jle  .skip
-
-		mov   rax, 'prevScor'
-	      stosq
-		mov   eax, 'e: '
-	      stosd
-		sub   rdi, 1
-		mov   ecx, dword[rbx+RootMove.prevScore]
-	       call   PrintScore_Uci
-		mov   rax, ' score: '
-	      stosq
-		mov   ecx, dword[rbx+RootMove.score]
-	       call   PrintScore_Uci
-		mov   eax, ' pv:'
-	      stosd
-
-		mov   r15d, dword[rbx+RootMove.pvSize]
-		lea   r14, [rbx+RootMove.pv]
-		lea   r15, [r14+4*r15]
-		mov   rsi, r14
-.pvloop:
-		cmp   rsi, r15
-		jae   .pvdone
-		mov   al, ' '
-	      stosb
-		mov   ecx, dword[rsi]
-		mov   edx, dword[rbp+Pos.chess960]
-	       call   PrintUciMoveLong
-		add   rsi, 4
-		jmp   .pvloop
-.pvdone:
-		mov   al, 10
-	      stosb
-
-.skip:
-		add   rbx, sizeof.RootMove
-		jmp   .loop
-.done:
-		pop   r15 r14 r13 rsi rbx
-		ret
-}
-
-
-
 
 RootMovesVec_Clear:
 	; in: rcx address of RootMovesVec struct

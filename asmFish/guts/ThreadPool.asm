@@ -176,22 +176,7 @@ end virtual
 		mov   rdx, rsi
 	       call   Limits_Copy
 
-	; copy to mainThread
-
-	; position is passed to threads by first converting to a fen
-	;   and then parsing this fen string
-	; the net effect is a fixed order on piece lists
-	       call   Position_SetPieceLists
-
-		lea   rcx, [r14+Thread.rootPos]
-	       call   Position_CopyToSearch
-		xor   eax, eax
-		mov   dword[r14+Thread.rootDepth], eax
-		mov   qword[r14+Thread.nodes], rax
-		mov   qword[r14+Thread.tbHits], rax
-		mov   byte[r14+Thread.maxPly], al
-                mov   dword[r14+Thread.resetCnt], eax
-                mov   dword[r14+Thread.callsCnt], MIN_RESETCNT  ; check time asap
+        ; first, get root moves from gui position
 
 		lea   rsi, [limits.moveVec]
 		lea   rdi, [.moveList]
@@ -214,9 +199,29 @@ end virtual
 		jmp   .push_moves
     .push_moves_done:
 
-	; the main thread should get the position for tb move filtering
+	; next, copy to mainThread
+
+		xor   eax, eax
+		mov   dword[r14+Thread.rootDepth], eax
+		mov   qword[r14+Thread.nodes], rax
+		mov   qword[r14+Thread.tbHits], rax
+		mov   byte[r14+Thread.maxPly], al
+                mov   dword[r14+Thread.resetCnt], eax
+                mov   dword[r14+Thread.callsCnt], MIN_RESETCNT  ; check time asap
+		lea   rcx, [r14+Thread.rootPos]
+	       call   Position_CopyToSearch
+
+        ; switch rbp and rbx to position of main thread
+
 		lea   rbp, [r14+Thread.rootPos]
 		mov   rbx, qword[rbp+Pos.state]
+
+        ; since gui thread does not have a rootmoves vector
+        ;   do filtering of tb moves in the main thread
+        ; this behavior will not necessarily match official stockfish if
+        ;   tbs are being used
+        ;   and multiple go commands are issued after a position command
+        ; however, tb probing code is not functionally identical anyways
 
 if USE_SYZYGY
 	; Skip TB probing when no TB found
@@ -245,7 +250,14 @@ if USE_SYZYGY
 .check_tb_ret:
 end if
 
-	; copy original position to workers
+	; position is passed to threads by first converting to a fen
+	;   and then parsing this fen string
+	; the net effect is a fixed order on piece lists
+
+	       call   Position_SetPieceLists
+
+
+	; copy position in main thread to workers
 		xor   eax, eax
 		mov   rbp, r15
 		mov   rsi, r14
