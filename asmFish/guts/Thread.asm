@@ -63,6 +63,12 @@ Thread_Create:
                 mov   dword[rbx+Thread.callsCnt], eax   ;  ThreadPool_StartThinking
 		mov   dword[rbx+Thread.idx], esi
 		mov   qword[rbx+Thread.numaNode], rdi
+if USE_VARIETY
+               call   _GetTime
+                xor   rax, rdx
+                 or   rax, 1
+                mov   qword[rbx+Thread.randSeed], rax
+end if
 
     ; per thread memory allocations
 	; create sync objects

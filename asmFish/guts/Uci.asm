@@ -23,7 +23,6 @@ Options_Init:
 if USE_VARIETY
                 mov   dword[rdx+Options.varietyMod], 1
                 mov   dword[rdx+Options.varietyBound], 0
-                mov   qword[rdx+Options.varietySeed], 1
 end if
 		ret
 
@@ -1077,10 +1076,6 @@ if USE_VARIETY
                 mov   ecx, 100
                idiv   ecx
                 mov   dword[options.varietyBound], eax
-               call   _GetTime
-                xor   rax, rdx
-                 or   rax, 1
-                mov   qword[options.varietySeed], rax
 		jmp   UciGetInput
 end if
 

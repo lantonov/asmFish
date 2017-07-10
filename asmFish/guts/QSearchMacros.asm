@@ -488,7 +488,7 @@ end virtual
 		mov   edi, dword[.bestValue]
 
 if USE_VARIETY
-		mov   rax, qword[options.varietySeed]
+		mov   rax, qword[rbp-Thread.rootPos+Thread.randSeed]
 		mov   rdx, rax
 		shr   rdx, 12
 		xor   rax, rdx
@@ -499,7 +499,7 @@ if USE_VARIETY
 		shr   rdx, 27
 		xor   rax, rdx
 		mov   edx, 2685821657736338717 and 0x0FFFFFFFF
-		mov   qword[options.varietySeed], rax
+		mov   qword[rbp-Thread.rootPos+Thread.randSeed], rax
 	        mul   edx
                 cdq
                idiv   dword[options.varietyMod]         ; varietyMod = 1 + variety

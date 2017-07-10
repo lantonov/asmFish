@@ -257,7 +257,7 @@ struct Options
 match =1, USE_VARIETY {
  varietyMod   rd 1
  varietyBound rd 1
- varietySeed  rq 1
+              rq 1
 }
  hashPath	rq 1
  hashPathSizeB	rq 1
@@ -368,6 +368,10 @@ struct Thread
 		  rb 1
  nodes		rq 1
  tbHits 	rq 1
+match =1, USE_VARIETY {
+ randSeed     rq 1
+              rq 1
+}
  idx		rd 1
  rootDepth	rd 1
 
