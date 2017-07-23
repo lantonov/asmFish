@@ -96,24 +96,13 @@ RootMovesVec_Size:
         ret
 
 RootMovesVec_PushBackMove:
-/*
-	; in: rcx address of RootMovesVec struct
-	;     edx move
-		mov   rax, qword[rcx+RootMovesVec.ender]
-		mov   dword[rax+RootMove.score], -VALUE_INFINITE
-		mov   dword[rax+RootMove.prevScore], -VALUE_INFINITE
-		mov   dword[rax+RootMove.pvSize], 1
-		mov   dword[rax+RootMove.pv], edx
-		add   rax, sizeof.RootMove
-		mov   qword[rcx+RootMovesVec.ender], rax
-		ret
-*/
         ldr  x0, [x1, RootMovesVec.ender]
         mov  w4, -VALUE_INFINITE
         str  w4, [x0, RootMove.score]
         str  w4, [x0, RootMove.prevScore]
         mov  x4, 1
         str  w4, [x0, RootMove.pvSize]
+        str  wzr, [x0, RootMove.selDepth]
         str  w2, [x0, RootMove.pv]
         add  x0, x0, sizeof.RootMove
         str  x0, [x1, RootMovesVec.ender]

@@ -353,10 +353,11 @@ sizeof.RootMovesVec = 1*sizeof.rq + RootMovesVec.ender
 
 RootMove.___ = 0
 RootMove.prevScore = 0 + RootMove.___
-RootMove.score = 1*sizeof.rd + RootMove.prevScore
-RootMove.pvSize = 1*sizeof.rd + RootMove.score
-RootMove.pv = 1*sizeof.rd + 1*sizeof.rd + RootMove.pvSize
-sizeof.RootMove = MAX_PLY*sizeof.rd + RootMove.pv
+RootMove.score     = 1*sizeof.rd + RootMove.prevScore
+RootMove.pvSize    = 1*sizeof.rd + RootMove.score
+RootMove.selDepth  = 1*sizeof.rd + RootMove.pvSize
+RootMove.pv        = 1*sizeof.rd + RootMove.selDepth
+sizeof.RootMove    = MAX_PLY*sizeof.rd + RootMove.pv
 
 Pos.___ = 0
 Pos.board = 0 + Pos.___
@@ -508,8 +509,8 @@ Thread.searching = 1*sizeof.rd + 1*sizeof.rd + Thread.resetCnt
 Thread.exit = 1*sizeof.rb + Thread.searching
 Thread.failedLow = 1*sizeof.rb + Thread.exit
 Thread.easyMovePlayed = 1*sizeof.rb + Thread.failedLow
-Thread.maxPly = 1*sizeof.rb + 1*sizeof.rb + 1*sizeof.rb + Thread.easyMovePlayed
-Thread.nodes = 1*sizeof.rb + 1*sizeof.rb + Thread.maxPly
+Thread.selDepth = 1*sizeof.rb + 1*sizeof.rb + 1*sizeof.rb + Thread.easyMovePlayed
+Thread.nodes = 1*sizeof.rb + 1*sizeof.rb + Thread.selDepth
 Thread.tbHits = 1*sizeof.rq + Thread.nodes
 Thread.idx = 1*sizeof.rq + Thread.tbHits
 Thread.rootDepth = 1*sizeof.rd + Thread.idx

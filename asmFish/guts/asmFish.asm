@@ -16,11 +16,6 @@ if (not CPU_HAS_BMI1) and CPU_HAS_BMI2
 	  err
 end if
 
-if (not USE_SELDEPTH) and USE_MATEFINDER
-        display 'ERROR: USE_MATEFINDER requires USE_SELDEPTH'
-        err
-end if
-
 
 
 

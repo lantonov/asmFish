@@ -18,7 +18,6 @@ PROFILE 	 equ 0	;  counts in the code      view these with profile command after
 USE_MATEFINDER	 equ 0	; less pruning
 USE_CURRMOVE	 equ 1	; printing feature, spamlike
 USE_HASHFULL	 equ 1	; printing feature
-USE_SELDEPTH	 equ 1	; printing feature
 USE_SPAMFILTER	 equ 0	; arena gui can't read at a rate > 1 line / 15ms
 USE_SYZYGY	 equ 1	; include tablebase probing code
 USE_BOOK	 equ 0	; include some book functions

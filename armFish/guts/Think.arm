@@ -270,27 +270,12 @@ Thread_Think.multipv_loop:
         cmp  w24, w4
         bhs  Thread_Think.multipv_done
        cbnz  w0, Thread_Think.multipv_done
-/*
-	; Reset aspiration window starting size
-	       imul   r8d, r14d, sizeof.RootMove
-		mov   edx, 18
-		add   r8, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
-		cmp   r15d, 5
-		 jl   .reset_window_done
-		mov   eax, dword[r8+RootMove.prevScore]
-		mov   ecx, -VALUE_INFINITE
-		sub   eax, edx
-		cmp   eax, ecx
-	      cmovl   eax, ecx
-		mov   dword[.alpha], eax
-		mov   eax, dword[r8+RootMove.prevScore]
-		mov   ecx, VALUE_INFINITE
-		add   eax, edx
-		cmp   eax, ecx
-	      cmovg   eax, ecx
-		mov   dword[.beta], eax
-		mov   dword[.delta], edx
-*/
+
+// Reset UCI info selDepth for each depth and each PV line
+        add  x6, x20, -Thread.rootPos
+       strb  wzr, [x6, Thread.selDepth]
+
+// Reset aspiration window starting size
         mov  w4, sizeof.RootMove
         mul  w8, w24, w4
         mov  w2, 18
@@ -1696,7 +1681,7 @@ DisplayInfo_Uci.multipv_loop:
         ldr  w4, [x7, Thread.PVIdx]
         mov  w5, -VALUE_INFINITE
         cmp  w1, w5
-       ccmp  w25, w4, 0, ne
+       ccmp  w25, w4, 2, ne
        cset  w0, ls
 
 
@@ -1735,17 +1720,6 @@ Display 2,"score: %i22\n"
         mov  w0, w1
          bl  PrintUInt
 
-/*
-if USE_SELDEPTH
-		mov   rax, ' seldept'
-	      stosq
-		mov   eax, 'h '
-	      stosw
-	      movzx   eax, byte[rbp-Thread.rootPos+Thread.maxPly]
-	       call   PrintUnsignedInteger
-end if
-*/
-.if USE_SELDEPTH
         mov  w0, ' '
        strb  w0, [x27], 1
         mov  w0, 's'
@@ -1766,11 +1740,9 @@ end if
        strb  w0, [x27], 1
         mov  w0, ' '
        strb  w0, [x27], 1
-        add  x6, x20, -Thread.rootPos
-       ldrb  w0, [x6, Thread.maxPly]
+       ldrb  w0, [x26, RootMove.selDepth]
          bl  PrintUInt
         
-.endif
 /*
 		mov   al, ' '
 	      stosb

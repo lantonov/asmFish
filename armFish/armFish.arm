@@ -10,7 +10,6 @@ $ qemu-aarch64 ./armFish
 DEBUG   = 0
 VERBOSE = 0
 USE_CURRMOVE    = 1
-USE_SELDEPTH    = 1
 USE_HASHFULL    = 1
 USE_CMDLINEQUIT = 1
 //USE_MATEFINDER = 0 not implemented

@@ -102,14 +102,12 @@ match =1, DEBUG \{
 		add   r12d, 1
 		mov   byte[rbx+State.ply], r12l
 
-if USE_SELDEPTH
     if .PvNode eq 1
-	      movzx   eax, byte[rbp-Thread.rootPos+Thread.maxPly]
+	      movzx   eax, byte[rbp-Thread.rootPos+Thread.selDepth]
 		cmp   eax, r12d
 	      cmovb   eax, r12d
-		mov   byte[rbp-Thread.rootPos+Thread.maxPly], al
+		mov   byte[rbp-Thread.rootPos+Thread.selDepth], al
     end if
-end if
 
 	; callsCnt counts down as in master
 	; resetCnt, if nonzero, contains the count to which callsCnt should be reset
@@ -1411,7 +1409,9 @@ end if
 	     vmovsd   qword[rbp-Thread.rootPos+Thread.bestMoveChanges], xmm0
 .FoundRootMove1:
 		mov   r10d, edi
+              movzx   eax, byte[rbp-Thread.rootPos+Thread.selDepth]
 		mov   rcx, qword[rbx+1*sizeof.State+State.pv]
+		mov   dword[rdx+RootMove.selDepth], eax
 		jmp   .CopyRootPvw
     .CopyRootPv:
 		add   rcx, 4

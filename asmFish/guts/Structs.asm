@@ -106,11 +106,11 @@ struct RootMovesVec
  ender	rq 1
 ends
 
-struct RootMove   ; holds root moves
+struct RootMove
  prevScore rd 1 ; this order is used in PrintUciInfo
  score	   rd 1 ;
  pvSize    rd 1
-	   rd 1
+ selDepth  rd 1
  pv	   rd MAX_PLY
 ends
 
@@ -364,7 +364,7 @@ struct Thread
  easyMovePlayed   rb 1
 		  rb 1
 		  rb 1
- maxPly 	  rb 1
+ selDepth         rb 1
 		  rb 1
  nodes		rq 1
  tbHits 	rq 1

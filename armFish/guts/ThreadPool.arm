@@ -355,7 +355,7 @@ ThreadPool_StartThinking.push_moves_done:
         str  wzr, [x24, Thread.rootDepth]
         str  xzr, [x24, Thread.nodes]
         str  xzr, [x24, Thread.tbHits]
-       strb  wzr, [x24, Thread.maxPly]
+       strb  wzr, [x24, Thread.selDepth]
         str  wzr, [x24, Thread.resetCnt]
         mov  w4, MIN_RESETCNT   // check time asap
         str  w4, [x24, Thread.callsCnt]
@@ -393,7 +393,7 @@ ThreadPool_StartThinking.next_thread:
         str  wzr, [x26, Thread.rootDepth]
         str  xzr, [x26, Thread.nodes]
         str  xzr, [x26, Thread.tbHits]
-       strb  wzr, [x26, Thread.maxPly]
+       strb  wzr, [x26, Thread.selDepth]
         str  wzr, [x26, Thread.resetCnt]
       mov32  w4, MAX_RESETCNT
         str  w4, [x26, Thread.callsCnt]

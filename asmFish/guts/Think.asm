@@ -147,6 +147,9 @@ end if
 	       test   al, al
 		jnz   .multipv_done
 
+        ; Reset UCI info selDepth for each depth and each PV line
+                mov   byte[rbp-Thread.rootPos+Thread.selDepth], al
+
 	; Reset aspiration window starting size
 	       imul   r8d, r14d, sizeof.RootMove
 		mov   edx, 18
@@ -884,14 +887,12 @@ end if
 		mov   eax, ecx
 	       call   PrintUnsignedInteger
 
-if USE_SELDEPTH
 		mov   rax, ' seldept'
 	      stosq
 		mov   eax, 'h '
 	      stosw
-	      movzx   eax, byte[rbp-Thread.rootPos+Thread.maxPly]
+	        mov   eax, dword[rsi+RootMove.selDepth]
 	       call   PrintUnsignedInteger
-end if
 
 		mov   al, ' '
 	      stosb

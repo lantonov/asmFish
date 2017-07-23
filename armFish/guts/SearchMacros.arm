@@ -174,25 +174,14 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called\n"
 //		mov   byte[rbx+State.ply], r12l
        strb  w22, [x21, State.ply]
 //
-//if USE_SELDEPTH
- .if USE_SELDEPTH
 //    if .PvNode eq 1
-  .if \PvNode == 1
-//	      movzx   eax, byte[rbp-Thread.rootPos+Thread.maxPly]
+ .if \PvNode == 1
         add  x6, x20, -Thread.rootPos
-       ldrb  w0, [x6,  + Thread.maxPly]
-//		cmp   eax, r12d
+       ldrb  w0, [x6, Thread.selDepth]
         cmp  w0, w22
-//	      cmovb   eax, r12d
        csel  w0, w22, w0, lo
-//		mov   byte[rbp-Thread.rootPos+Thread.maxPly], al
-        add  x6, x20, -Thread.rootPos
-       strb  w0, [x6, Thread.maxPly]
-//    end if
-  .endif
-//end if
- .endif
-        
+       strb  w0, [x6, Thread.selDepth]
+ .endif        
 
 
 //	; callsCnt counts down as in master
@@ -2520,15 +2509,13 @@ Search.FindRootMove\@:
 
 //.FoundRootMove1:
 Search.FoundRootMove1\@:
-
-//		mov   r10d, edi
         mov  w10, w27
-//		mov   rcx, qword[rbx+1*sizeof.State+State.pv]
+        add  x6, x20, -Thread.rootPos
+        ldr  w0, [x6, Thread.selDepth]
         ldr  x1, [x21, 1*sizeof.State + State.pv]
-
-//		jmp   .CopyRootPvw
+        str  w0, [x2, RootMove.selDepth]
           b  Search.CopyRootPvw\@
-//    .CopyRootPv:
+
 Search.CopyRootPv\@:
 //		add   rcx, 4
         add  x1, x1, 4

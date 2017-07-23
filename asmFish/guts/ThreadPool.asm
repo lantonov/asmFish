@@ -205,7 +205,7 @@ end virtual
 		mov   dword[r14+Thread.rootDepth], eax
 		mov   qword[r14+Thread.nodes], rax
 		mov   qword[r14+Thread.tbHits], rax
-		mov   byte[r14+Thread.maxPly], al
+		mov   byte[r14+Thread.selDepth], al
                 mov   dword[r14+Thread.resetCnt], eax
                 mov   dword[r14+Thread.callsCnt], MIN_RESETCNT  ; check time asap
 		lea   rcx, [r14+Thread.rootPos]
@@ -276,7 +276,7 @@ end if
 		mov   dword[rsi+Thread.rootDepth], eax
 		mov   qword[rsi+Thread.nodes], rax
 		mov   qword[rsi+Thread.tbHits], rax
-		mov   byte[rsi+Thread.maxPly], al
+		mov   byte[rsi+Thread.selDepth], al
                 mov   dword[rsi+Thread.resetCnt], eax
                 mov   dword[rsi+Thread.callsCnt], MAX_RESETCNT  ; main thread already has min
 

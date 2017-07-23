@@ -64,6 +64,7 @@ RootMovesVec_PushBackMove:
 		mov   dword[rax+RootMove.score], -VALUE_INFINITE
 		mov   dword[rax+RootMove.prevScore], -VALUE_INFINITE
 		mov   dword[rax+RootMove.pvSize], 1
+		mov   dword[rax+RootMove.selDepth], 0
 		mov   dword[rax+RootMove.pv], edx
 match =1, DEBUG {
 		mov   edx, sizeof.RootMove*MAX_MOVES
