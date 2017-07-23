@@ -241,7 +241,7 @@ Search.dontchecktime\@:
 //	  PosIsDraw   .AbortSearch_PlySmaller, .CheckDraw_Cold, .CheckDraw_ColdRet
         PosIsDraw  Search.AbortSearch_PlySmaller\@, Search.CheckDraw_Cold\@, Search.CheckDraw_ColdRet\@
 
-Display 2, "Search Step 3\n"
+
 //	; Step 3. mate distance pruning
 //		mov   ecx, dword[.alpha]
         ldr  w1, [sp, Search.alpha]
@@ -521,6 +521,7 @@ Search.StaticValueDone\@:
        cbnz  w0, Search.moves_loop\@
 //
 //
+
 //	; Step 6. Razoring (skipped when in check)
 //    if .PvNode eq 0
  .if \PvNode == 0
@@ -587,7 +588,6 @@ Search.6skip\@:
 //
 //
 //	; Step 7. Futility pruning: child node (skipped when in check)
-Display 2, "Search Step 7\n"
 //    if ((.RootNode eq 0) & (USE_MATEFINDER eq 0)) | ((.PvNode eq 0) & (USE_MATEFINDER eq 1))
  .if \RootNode == 0
 //		mov   edx, dword[.depth]
@@ -636,7 +636,6 @@ Search.7skip\@:
 //
 //
 //
-Display 2, "Search Step 8\n"
 //	; Step 8. Null move search with verification search (is omitted in PV nodes)
 //    if .PvNode eq 0
  .if \PvNode == 0
@@ -878,7 +877,6 @@ Search.8skip\@:
 //
 //
 //
-Display 2, "Search Step 9\n"
 
 //	; Step 9. ProbCut (skipped when in check)
 //    if .PvNode eq 0
@@ -1087,7 +1085,8 @@ Search.9skip\@:
 //
 //
 //
-Display 2, "Search Step 10\n"
+
+
 //	; Step 10. Internal iterative deepening (skipped when in check)
 //
 //		mov   r8d, dword[.depth]
@@ -3217,14 +3216,10 @@ Search.CheckDraw_Cold\@:
 //	      align   8
 //.PrintCurrentMove:
 Search.PrintCurrentMove\@:
-//		cmp   byte[options.displayInfoMove], 0
         lea  x6, options
        ldrb  w4, [x6, Options.displayInfoMove]
-//		 je   .PrintCurrentMoveRet
         cbz  w4, Search.PrintCurrentMoveRet\@
-//		sub   rsp, 128
         sub  sp, sp, 128
-//		mov   rdi, rsp
         mov  x27, sp
 //		mov   rax, 'info dep'
 //	      stosq
@@ -3336,7 +3331,7 @@ Search.PrintCurrentMove\@:
         PrintNewLine
         mov  x1, sp
 //	       call   _WriteOut
-   //      bl  Os_WriteOut
+         bl  Os_WriteOut
 //		add   rsp, 128
         add  sp, sp, 128
 //		jmp   .PrintCurrentMoveRet

@@ -2598,8 +2598,8 @@ blockSq2_ .req x24
        rbit  x10, x10
         clz  x10, x10
 //		bsf   r12, r11
-       rbit  x12, x11
-        clz  x12, x12
+       rbit  x22, x11
+        clz  x22, x22
 //		bsr   r11, r11
        rbit  x11, x11
         eor  x11, x11, 63
