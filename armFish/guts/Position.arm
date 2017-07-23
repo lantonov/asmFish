@@ -2305,15 +2305,8 @@ Position_CopyToSearch.alloc:
 
 
 Position_SetExtraCapacity:
-/*	; in: rbp postion
-	; reserve space for at least ecx states past the current
-
-               imul   ecx, sizeof.State
-                add   rcx, qword[rbp+Pos.state]
-                cmp   rcx, qword[rbp+Pos.stateEnd]
-		jae   .realloc
-		ret
-*/
+// in: x20 postion
+// reserve space for at least ecx states past the current
         mov  x4, sizeof.State
         mul  x1, x1, x4
         ldr  x4, [x20, Pos.state]
@@ -2322,42 +2315,7 @@ Position_SetExtraCapacity:
         cmp  x1, x4
         bhs  Position_SetExtraCapacity.realloc
         ret
-
 Position_SetExtraCapacity.realloc:
-/*	       push   rbx rsi rdi
-		sub   rcx, qword[rbp+Pos.stateTable]
-                mov   eax, ecx
-                xor   edx, edx
-                mov   ecx, sizeof.State
-                div   ecx
-                lea   ecx, [rax+8]
-                shr   ecx, 2
-                add   ecx, eax
-               imul   ecx, sizeof.State
-		mov   ebx, ecx
-	       call   _VirtualAlloc
-		mov   r8, rax
-		lea   r10, [rax+rbx]
-		mov   rsi, qword[rbp+Pos.stateTable]
-		mov   rdi, r8
-		mov   r9, qword[rbp+Pos.state]
-		sub   r9, rsi
-		add   r9, r8
-		mov   rcx, qword[rbp+Pos.stateEnd]
-		sub   rcx, rsi
-		shr   ecx, 3
-	  rep movsq
-		mov   rcx, qword[rbp+Pos.stateTable]
-		mov   rdx, qword[rbp+Pos.stateEnd]
-		sub   rdx, rcx
-		mov   rbx, r9
-		mov   qword[rbp+Pos.state], r9
-		mov   qword[rbp+Pos.stateTable], r8
-		mov   qword[rbp+Pos.stateEnd], r10
-	       call   _VirtualFree
-		pop   rdi rsi rbx
-		ret
-*/
         stp  x21, x30, [sp, -16]!
         ldr  x4, [x20, Pos.stateTable]
         sub  x0, x1, x4
@@ -2382,26 +2340,13 @@ Position_SetExtraCapacity.realloc:
         sub  x2, x2, x1
         str  x9, [x20, Pos.state]
         str  x8, [x20, Pos.stateTable]
-        ldr  x10, [x20, Pos.stateEnd]
+        str  x10, [x20, Pos.stateEnd]
          bl  Os_VirtualFree
         ldp  x21, x30, [sp], 16
         ret
 
 
 PrintBitboardCompact:
-/*	       push   rsi
-		mov   rsi, rcx
-	@@:    test   rsi, rsi
-		 jz   @f
-		bsf   rcx, rsi
-	       blsr   rsi, rsi, rax
-	       call   PrintSquare
-		mov   al, ' '
-	      stosb
-		jmp   @b
-	@@:	pop   rsi
-		ret
-*/
         stp  x26, x30, [sp, -16]!
         mov  x26, x1
         mov  x0, x26
