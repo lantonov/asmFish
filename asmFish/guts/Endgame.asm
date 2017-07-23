@@ -989,7 +989,6 @@ ppush  equ r11d
 		jnz   .Return
 		sub   ksq, ppush
 		sub   ksq, ppush
-		xor   ecx, 1
 		mov   rdx, qword[rbp+Pos.typeBB+8*King]
 		and   rdx, qword[rbp+Pos.typeBB+8*rcx]
 		bsf   rdx, rdx

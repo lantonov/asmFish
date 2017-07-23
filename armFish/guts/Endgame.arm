@@ -2044,8 +2044,6 @@ EndgameScale_KRPKB.Rank5:
 //		sub   ksq, ppush
 //		sub   ksq, ppush
         sub  ksq, ksq, ppush, lsl 1
-//		xor   ecx, 1
-        eor  w1, w1, 1
 //		mov   rdx, qword[rbp+Pos.typeBB+8*King]
         ldr  x2, [x20, Pos.typeBB + 8*King]
 //		and   rdx, qword[rbp+Pos.typeBB+8*rcx]

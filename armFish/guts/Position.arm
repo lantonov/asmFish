@@ -2306,7 +2306,7 @@ Position_CopyToSearch.alloc:
 
 Position_SetExtraCapacity:
 // in: x20 postion
-// reserve space for at least ecx states past the current
+// reserve space for at least x1 states past the current
         mov  x4, sizeof.State
         mul  x1, x1, x4
         ldr  x4, [x20, Pos.state]
