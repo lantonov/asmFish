@@ -440,22 +440,11 @@ Thread_Think.dont_print_pv:
         blt  Thread_Think.search_done
 
 Thread_Think.fail_high:
-/*
-		add   edx, dword[.delta]
-		mov   ecx, VALUE_INFINITE
-		cmp   edx, ecx
-	      cmovg   edx, ecx
-		mov   dword[.alpha], eax
-		mov   dword[.beta], edx
-		mov   dword[.delta], r10d
-		jmp   .search_loop
-*/
         ldr  w4, [sp, Thread_Think.delta]
         add  w2, w2, w4
         mov  w1, VALUE_INFINITE
         cmp  w2, w1
        csel  w2, w1, w2, gt
-        str  w0, [sp, Thread_Think.alpha]
         str  w2, [sp, Thread_Think.beta]
         str  w10, [sp, Thread_Think.delta]
           b  Thread_Think.search_loop

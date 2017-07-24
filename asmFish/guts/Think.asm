@@ -240,7 +240,6 @@ match =0, VERBOSE {
 		mov   ecx, VALUE_INFINITE
 		cmp   edx, ecx
 	      cmovg   edx, ecx
-		mov   dword[.alpha], eax
 		mov   dword[.beta], edx
 		mov   dword[.delta], r10d
 		jmp   .search_loop
