@@ -1452,8 +1452,9 @@ Search.MovePickLoop\@:
 //if USE_CURRMOVE
  .if USE_CURRMOVE
 //if VERBOSE < 2
+  .if VERBOSE < 2
 //	if .RootNode eq 1
-  .if \RootNode == 1
+   .if \RootNode == 1
 //		mov   eax, dword[rbp-Thread.rootPos+Thread.idx]
         add  x6, x20, -Thread.rootPos
         ldr  w0, [x6, Thread.idx]
@@ -1474,10 +1475,11 @@ Search.MovePickLoop\@:
 //.PrintCurrentMoveRet:
 Search.PrintCurrentMoveRet\@:
 //	end if
+   .endif
+//end if
   .endif
 //end if
  .endif
-//end if
 //
 //		mov   ecx, dword[.move]
         ldr  w1, [sp, Search.move]
@@ -3176,8 +3178,9 @@ Search.CheckDraw_Cold\@:
 //if USE_CURRMOVE
  .if USE_CURRMOVE
 //if VERBOSE < 2
+  .if VERBOSE < 2
 //    if .RootNode eq 1
-  .if \RootNode == 1
+   .if \RootNode == 1
 //	      align   8
 //.PrintCurrentMove:
 Search.PrintCurrentMove\@:
@@ -3302,8 +3305,9 @@ Search.PrintCurrentMove\@:
 //		jmp   .PrintCurrentMoveRet
           b  Search.PrintCurrentMoveRet\@
 //    end if
-  .endif
+   .endif
 //end if
+  .endif
 //end if
  .endif
 //

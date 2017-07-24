@@ -2596,7 +2596,7 @@ blockSq2_ .req x24
        rbit  x22, x11
         clz  x22, x22
 //		bsr   r11, r11
-       rbit  x11, x11
+        clz  x11, x11
         eor  x11, x11, 63
 //		lea   ebx, [rcx-1]
         sub  w21, w1, 1
