@@ -1090,6 +1090,7 @@ Position_ParseFen.alloc_ret:
         mov  x1, Pos._copy_size/8
         mov  x17, x20
          bl  RepStosq
+        str  w22, [x20, Pos.chess960]
 /*
 		xor   eax, eax
 		mov   ecx, sizeof.State/8
