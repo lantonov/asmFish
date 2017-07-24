@@ -837,9 +837,11 @@ if USE_SPAMFILTER
 end if
 
 if USE_HASHFULL
+    if VERBOSE < 2
 		 or   eax, -1
 		cmp   r9, 1000
 		 jb   @f
+    end if
 	       call   MainHash_HashFull
 	@@:	mov   dword[.hashfull], eax
 end if

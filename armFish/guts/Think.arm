@@ -322,7 +322,6 @@ Thread_Think.search_loop:
          bl  Search_Root
         mov  w22, w0
         str  w0, [sp, Thread_Think.bestValue]
-Display 2, "bestValue = %i0\n"
 
         mov  w4, sizeof.RootMove
         mul  w1, w24, w4
@@ -366,11 +365,9 @@ match =0, VERBOSE {
         cmp  w0, 1
         bne  Thread_Think.dont_print_pv
         ldr  w4, [sp, Thread_Think.alpha]
-Display 2,"alpha: %i4\n"
         cmp  w22, w4
         ble  1f
         ldr  w4, [sp, Thread_Think.beta]
-Display 2,"beta: %i4\n"
         cmp  w22, w4        
         blt  Thread_Think.dont_print_pv
 1:       bl  Os_GetTime
@@ -1604,9 +1601,11 @@ if USE_HASHFULL
 end if
 */
 .if USE_HASHFULL
-//        mov  w0, -1
-//        cmp  x9, 1000
-//        blo  1f
+ .if VERBOSE < 2
+        mov  w0, -1
+        cmp  x9, 1000
+        blo  1f
+ .endif
          bl  MainHash_HashFull
 1:      str  w0, [sp, DisplayInfo_Uci.hashfull]
 .endif
@@ -1692,8 +1691,6 @@ DisplayInfo_Uci.multipv_loop:
         add  w1, w1, w0
         add  x27, sp, DisplayInfo_Uci.output
         ldr  w22, [x26, x0, lsl 2]
-
-Display 2,"score: %i22\n"
 
         mov  w0, 'i'
        strb  w0, [x27], 1

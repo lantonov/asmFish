@@ -403,7 +403,6 @@ EvalPieces.NoKingRing\@:
 //
 //		mov   rax, qword[.ei.mobilityArea+8*Us]
         ldr  x0, [sp, EvalInfo.mobilityArea + 8*\Us]
-Display 2,"ma: %X0\n"
 //		and   rax, r9
         and  x0, x0, x9
 //	     popcnt   r10, rax, rcx
@@ -411,7 +410,6 @@ Display 2,"ma: %X0\n"
 //	     addsub   esi, dword[MobilityBonus+4*r10]
         lea  x6, MobilityBonus
         ldr  w4, [x6, x10, lsl 2]
-Display 2,"mb: %i10 %s4\n"
         AddSub  \Us, w26, w26, w4
 //
 //                lea   eax, [8*r8]
@@ -424,7 +422,6 @@ Display 2,"mb: %i10 %s4\n"
         mul  w0, w0, w4
 //	     addsub   esi, eax
         AddSub  \Us, w26, w26, w0
-Display 2, "here %s26\n"
 
 //
 //
@@ -464,7 +461,6 @@ Display 2, "here %s26\n"
        csel  w26, w4, w26, ne
 //..NoBehindPawnBonus:
 EvalPieces.NoBehindPawnBonus\@:
-Display 2, "NoBehindPawnBonus %s26\n"
 //
 //	; Bonus for outpost squares
 //		mov   rax, OutpostRanks
@@ -499,7 +495,6 @@ Display 2, "NoBehindPawnBonus %s26\n"
           b  EvalPieces.OutpostDone\@
 //..OutpostElse:
 EvalPieces.OutpostElse\@:
-Display 2, "OutpostElse %s26\n"
 //	       andn   rdx, rdx, rcx
         bic  x2, x1, x2
 //		and   rdx, r9
@@ -856,7 +851,6 @@ EvalPieces.AllDone\@:
 //	     Assert   e, PiecesUs, qword[rbp+Pos.typeBB+8*Us], 'assertion PiecesUs failed in EvalKing'
 //	     Assert   e, PiecesThem, qword[rbp+Pos.typeBB+8*Them], 'assertion PiecesThem failed in EvalKing'
 //
-Display 2,"EvalKing called\n"
 //		mov   ecx, dword[.ei.ksq+4*Us]
         ldr  w1, [sp, EvalInfo.ksq + 4*\Us]
 //		mov   r11d, ecx
@@ -881,7 +875,6 @@ Display 2,"EvalKing called\n"
         bne  EvalKing.DoKingSafety\@
 //..KingSafetyDoneRet:
 EvalKing.KingSafetyDoneRet\@:
-Display 2,"ks: %s26\n"
 //
 //		mov   edi, dword[.ei.kingAttackersCount+4*Them]
         ldr  w27, [sp, EvalInfo.kingAttackersCount + 4*Them]
@@ -956,7 +949,6 @@ Display 2,"ks: %s26\n"
        csel  w0, w2, w0, mi
         sub  w27, w27, w0, asr 3
 //	; w27 = kingDanger
-Display 2,"kingDanger: %i27\n"
 //
 //		and   r8, qword[.ei.attackedBy2+8*Them]
         ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Them]
@@ -1307,7 +1299,6 @@ EvalKing.AllDone\@:
         mul  w0, w0, w4
 //		sub   esi, eax		; king tropism
         sub  w26, w26, w0
-Display 2, "king score: %s26\n"
 
 //
 //	if Us eq White
@@ -1570,7 +1561,6 @@ Display 2, "king score: %s26\n"
 //
 //		pop   r13 r12 r11 rdi rsi
 //		ret
-Display 2,"shelter storm returning %i0\n"
         ldp  x23, x30, [sp], 16
         ldp  x11, x22, [sp], 16
         ldp  x26, x27, [sp], 16
@@ -1958,7 +1948,6 @@ EvalThreats.WeakDone\@:
 //	     addsub   esi, eax
         Addsub  \Us, w26, w26, w0
 //
-Display 2, "EvalThreats returning %s26\n"
 //}
 	.unreq AttackedByUs
 	.unreq AttackedByThem
@@ -2076,7 +2065,6 @@ EvalPassedPawns.NextPawn\@:
         ldr  w4, [sp, EvalInfo.score]
         AddSub  Them, w4, w4, w0
         str  w4, [sp, EvalInfo.score]
-Display 2, "pp score 1: %s0\n"
 //
 //		lea   edi, [rcx-2]
         sub  w27, w1, 2
@@ -2326,7 +2314,6 @@ EvalPassedPawns.DontScaleDown\@:
         ldr  w4, [sp, EvalInfo.score]
         AddSub  \Us, w4, w4, w26
         str  w4, [sp, EvalInfo.score]
-Display 2, "pp score 2: %s26\n"
 //
 //
 //	       test   r9, r9
@@ -2505,7 +2492,6 @@ EvalPassedPawns.AllDone\@:
 //	     addsub   esi, eax
         Addsub  \Us, w26, w26, w0
 //
-Display 2, "EvalSpace returning %s26\n"
 //}
 	.unreq AttackedByUs
 	.unreq AttackedByThem
@@ -2590,7 +2576,6 @@ Evaluate_Cold.ReturnLazyEval:
 //		pop   r15 r14 r13 r12 rdi rsi rbx
 //		ret
 
-Display 2,"Lazy Evaluate returning %i0\n"
 
         add  sp, sp, sizeof.EvalInfo
         ldp  x24, x25, [sp], 16
@@ -2757,13 +2742,6 @@ Evaluate:
 //.DoMaterialEvalReturn:
 Evaluate.DoMaterialEvalReturn:
 
-.if VERBOSE == 2
-ldr  x4, [x26]
-ldr  x5, [x26, 8]
-Display 2, "me: %X5 %X4\n"
-.endif
-
-
 //	       imul   eax, 0x00010001
         add  w0, w0, w0, lsl 16
 //		add   dword[.ei.score], eax
@@ -2786,29 +2764,6 @@ Display 2, "me: %X5 %X4\n"
 //.DoPawnEvalReturn:
 
 Evaluate.DoPawnEvalReturn:
-
-.if VERBOSE == 2
-ldr  x4, [x27,8*9]
-Display 2, "pe: %X4 "
-ldr  x4, [x27,8*8]
-Display 2, "%X4 "
-ldr  x4, [x27,8*7]
-Display 2, "%X4 "
-ldr  x4, [x27,8*6]
-Display 2, "%X4 "
-ldr  x4, [x27,8*5]
-Display 2, "%X4 "
-ldr  x4, [x27,8*4]
-Display 2, "%X4 "
-ldr  x4, [x27,8*3]
-Display 2, "%X4 "
-ldr  x4, [x27,8*2]
-Display 2, "%X4 "
-ldr  x4, [x27,8*1]
-Display 2, "%X4 "
-ldr  x4, [x27,8*0]
-Display 2, "%X4\n"
-.endif
 
 //		add   eax, dword[.ei.score]
         ldr  w4, [sp, EvalInfo.score]
@@ -2911,7 +2866,6 @@ Display 2, "%X4\n"
 //	; EvalPieces adds to esi
 //		mov   esi, dword[.ei.score]
         ldr  w26, [sp, EvalInfo.score]
-Display 2,"start: %s26\n"
 //		xor   r15, r15		; prepare for dirty trick
         mov  x25, 0
 //		mov   r12, qword[rbp+Pos.typeBB+8*Knight]
@@ -2919,33 +2873,25 @@ Display 2,"start: %s26\n"
 //	 EvalPieces   Black, Knight
         ldr  x22, [x20, Pos.typeBB + 8*Knight]
         EvalPieces  White, Knight
-Display 2,"wn: %s26\n"
         EvalPieces  Black, Knight
-Display 2,"bn: %s26\n"
 //		mov   r12, qword[rbp+Pos.typeBB+8*Bishop]
 //	 EvalPieces   White, Bishop
 //	 EvalPieces   Black, Bishop
         ldr  x22, [x20, Pos.typeBB + 8*Bishop]
         EvalPieces  White, Bishop
-Display 2,"wb: %s26\n"
         EvalPieces  Black, Bishop
-Display 2,"bb: %s26\n"
 //		mov   r12, qword[rbp+Pos.typeBB+8*Rook]
 //	 EvalPieces   White, Rook
 //	 EvalPieces   Black, Rook
         ldr  x22, [x20, Pos.typeBB + 8*Rook]
         EvalPieces  White, Rook
-Display 2,"wr: %s26\n"
         EvalPieces  Black, Rook
-Display 2,"br: %s26\n"
 //		mov   r12, qword[rbp+Pos.typeBB+8*Queen]
 //	 EvalPieces   White, Queen
 //	 EvalPieces   Black, Queen
         ldr  x22, [x20, Pos.typeBB + 8*Queen]
         EvalPieces  White, Queen
-Display 2,"wq: %s26\n"
         EvalPieces  Black, Queen
-Display 2,"bq: %s26\n"
 //
 //
 //		mov   r14, qword[rbp+Pos.typeBB+8*White]
@@ -3113,7 +3059,6 @@ Evaluate.SkipSpace:
         eor  w0, w0, w9
 //		add   esi, eax
         add  w26, w26, w0
-Display 2, "score = %s26\n"
 //
 //	; esi = score
 //	; r14 = ei.pi
@@ -3256,8 +3201,6 @@ Evaluate.ScaleFactorDone:
 //	; adjust score for side to move
 
 
-Display 3,"%p mg: %i26 eg: %i22 sf: %i0\n"
-
 //
 //  ;// Interpolate between a middlegame and a (scaled by 'sf') endgame score
 //  ;Value v =  mg_value(score) * int(ei.me->game_phase())
@@ -3306,7 +3249,6 @@ Display 3,"%p mg: %i26 eg: %i22 sf: %i0\n"
 //		add   rsp, sizeof.EvalInfo
 //		pop   r15 r14 r13 r12 rdi rsi rbx
 //		ret
-Display 2,"Evaluate returning %i0\n"
         add  sp, sp, sizeof.EvalInfo
         ldp  x24, x25, [sp], 16
         ldp  x22, x23, [sp], 16
@@ -3405,8 +3347,6 @@ DoMaterialEval:
 //	       push   r12 r13 r14 r15
         stp  x22, x23, [sp, -16]!
         stp  x24, x25, [sp, -16]!
-
-Display 2,"DoMaterialEval called\n"
 
 //
 //		mov   r12, qword[rbx+State.materialKey]

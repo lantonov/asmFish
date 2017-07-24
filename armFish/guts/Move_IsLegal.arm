@@ -1,6 +1,5 @@
 
 Move_IsLegal:
-Display 2,"Move_IsLegal called\n"
 // in: x20  address of Pos
 //     x21  address of State - pinned member must be filled in
 //     x1   move - assumed to pass IsMovePseudoLegal test
@@ -151,7 +150,6 @@ Move_IsLegal.EpCapture:
         tst  x0, x1
         bne  Move_IsLegal.Illegal
 
-Display 2,"Move_IsLegal.EpCapture returning true\n"
         mov  w0, -1
         ret
 

@@ -70,6 +70,10 @@ match =1, DEBUG {
 .Drawish:
 		xor   eax, esi
 		sub   eax, esi
+
+SD String, "EndgameEval_KXK 1 returning "
+SD Int32, rax
+SD NewLine
 		pop   rsi rdi r14 r15
 		ret
 
@@ -86,6 +90,10 @@ match =1, DEBUG {
 	       blsr   r15, r15, rcx
 		jnz   .NextSquare
 		xor   eax, eax
+
+SD String, "EndgameEval_KXK 2 returning "
+SD Int32, rax
+SD NewLine
 		pop   rsi rdi r14 r15
 		ret
 
@@ -124,6 +132,10 @@ EndgameEval_KBNK:
 		sub   ecx, 1
 		xor   eax, ecx
 		sub   eax, ecx
+
+SD String, "EndgameEval_KBNK 1 returning "
+SD Int32, rax
+SD NewLine
 		ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -195,6 +207,10 @@ match =1, DEBUG {
 		 bt   r11, rdx
 		sbb   edx, edx
 		and   eax, edx
+
+SD String, "EndgameEval_KPK 1 returning "
+SD Int32, rax
+SD NewLine
 		ret
 
 
@@ -301,6 +317,10 @@ psq equ r11d
 		sub   esi, 1
 		xor   eax, esi
 		sub   eax, esi
+
+SD String, "EndgameEval_KRKP 1 returning "
+SD Int32, rax
+SD NewLine
 		pop   rsi
 		ret
 
@@ -328,6 +348,10 @@ EndgameEval_KRKB:
 		sub   ecx, 1
 		xor   eax, ecx
 		sub   eax, ecx
+
+SD String, "EndgameEval_KRKB 1 returning "
+SD Int32, rax
+SD NewLine
 		ret
 
 
@@ -352,6 +376,10 @@ EndgameEval_KRKN:
 		sub   ecx, 1
 		xor   eax, ecx
 		sub   eax, ecx
+
+SD String, "EndgameEval_KRKN 1 returning "
+SD Int32, rax
+SD NewLine
 		ret
 
 
@@ -394,6 +422,10 @@ EndgameEval_KQKP:
 		sub   ecx, 1
 		xor   eax, ecx
 		sub   eax, ecx
+
+SD String, "EndgameEval_KQKP 1 returning "
+SD Int32, rax
+SD NewLine
 		ret
 
 
@@ -422,6 +454,10 @@ EndgameEval_KQKR:
 		sub   ecx, 1
 		xor   eax, ecx
 		sub   eax, ecx
+
+SD String, "EndgameEval_KQKR 1 returning "
+SD Int32, rax
+SD NewLine
 		ret
 
 
@@ -430,6 +466,10 @@ EndgameEval_KQKR:
 EndgameEval_KNNK:
 	; Some cases of trivial draws
 		xor   eax, eax
+
+SD String, "EndgameEval_KNNK 1 returning "
+SD Int32, rax
+SD NewLine
 		ret
 
 
@@ -466,6 +506,10 @@ EndgameScale_KBPsK:
 	; else return none
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
+
+SD String, "EndgameScale_KBPsK 1 returning "
+SD Int32, rax
+SD NewLine
 		ret
 
 	      align   8
@@ -491,6 +535,10 @@ EndgameScale_KBPsK:
 		jae   .ReturnNone
 	; distance(queeningSq, kingSq) <= 1
 		xor   eax, eax
+
+SD String, "EndgameScale_KBPsK 2 returning "
+SD Int32, rax
+SD NewLine
 		ret
 
 	      align   8
@@ -561,6 +609,10 @@ EndgameScale_KBPsK:
 		cmp   edx, SQ_A7
 		 jb   .ReturnNone
 		xor   eax, eax
+
+SD String, "EndgameScale_KBPsK 3 returning "
+SD Int32, rax
+SD NewLine
 		ret
 
 
@@ -600,9 +652,17 @@ EndgameScale_KQKRPs:
 		cmp   r10d, RANK_3
 		jne   .ReturnNone
 		xor   eax, eax
+
+SD String, "EndgameScale_KQKRPs 1 returning "
+SD Int32, rax
+SD NewLine
 		ret
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
+
+SD String, "EndgameScale_KQKRPs 2 returning "
+SD Int32, rax
+SD NewLine
 		ret
 
 
@@ -790,6 +850,10 @@ qs equ r15d
 		add   eax, eax
 		sub   eax, SCALE_FACTOR_MAX
 		neg   eax
+
+SD String, "EndgameScale_KRPKR 1 returning "
+SD Int32, rax
+SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 .7:
@@ -845,6 +909,10 @@ qs equ r15d
 	       imul   edx, -2
 		add   eax, SCALE_FACTOR_MAX
 		add   eax, edx
+
+SD String, "EndgameScale_KRPKR 2 returning "
+SD Int32, rax
+SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 .8:
@@ -859,6 +927,10 @@ qs equ r15d
 		cmp   eax, edx
 		jne   @f
 		mov   eax, 10
+
+SD String, "EndgameScale_KRPKR 3 returning "
+SD Int32, rax
+SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 	@@:
@@ -877,14 +949,26 @@ qs equ r15d
 		add   eax, eax
 		sub   eax, 24
 		neg   eax
+
+SD String, "EndgameScale_KRPKR 4 returning "
+SD Int32, rax
+SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 .9:
 		mov   eax, SCALE_FACTOR_NONE
+
+SD String, "EndgameScale_KRPKR 5 returning "
+SD Int32, rax
+SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 .ReturnDraw:
 		xor   eax, eax
+
+SD String, "EndgameScale_KRPKR 6 returning "
+SD Int32, rax
+SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 
@@ -948,6 +1032,10 @@ ppush  equ r11d
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
 .Return:
+
+SD String, "EndgameScale_KRPKB 1 returning "
+SD Int32, rax
+SD NewLine
 		ret
 .Rank6:
 	       imul   eax, ksq, 64
@@ -968,6 +1056,10 @@ ppush  equ r11d
 		cmp   eax, 3
 		 jb   .ReturnNone
 		mov   eax, 8
+
+SD String, "EndgameScale_KRPKB 2 returning "
+SD Int32, rax
+SD NewLine
 		ret
 .Rank5:
 		mov   eax, bsq
@@ -995,6 +1087,10 @@ ppush  equ r11d
 		cmp   ksq, edx
 		jne   .Return
 		mov   eax, 48
+
+SD String, "EndgameScale_KRPKB 3 returning "
+SD Int32, rax
+SD NewLine
 		ret
 restore ksq_
 restore bsq_
@@ -1067,9 +1163,17 @@ KRPPKRPScaleFactors equ (0+256*(9+256*(10+256*(14+256*(21+256*(44))))))
 		lea   ecx, [8*r11]
 		shr   rax, cl
 	      movzx   eax, al
+
+SD String, "EndgameScale_KRPPKRP 1 returning "
+SD Int32, rax
+SD NewLine
 		ret
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
+
+SD String, "EndgameScale_KRPPKRP 2 returning "
+SD Int32, rax
+SD NewLine
 		ret
 restore wpsq1_
 restore wpsq2_
@@ -1115,6 +1219,10 @@ ksq_  equ r9
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
 .Return:
+
+SD String, "EndgameScale_KPsK 1 returning "
+SD Int32, rax
+SD NewLine
 		ret
 restore pawns
 restore ksq
@@ -1175,6 +1283,9 @@ weakKingSq_	equ r11
 		 je   .c2
 .ReturnDraw:
 		xor   eax, eax
+SD String, "EndgameScale_KBPKB 1 returning "
+SD Int32, rax
+SD NewLine
 		pop   rbx
 		ret
 .c2:
@@ -1205,6 +1316,10 @@ weakKingSq_	equ r11
 		jnz   .ReturnDraw
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
+
+SD String, "EndgameScale_KBPKB 2 returning "
+SD Int32, rax
+SD NewLine
 		pop   rbx
 		ret
 
@@ -1265,6 +1380,10 @@ blockSq2_ equ r14
 		jne   @f
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
+
+SD String, "EndgameScale_KBPPKB 1 returning "
+SD Int32, rax
+SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 	@@:
@@ -1309,6 +1428,10 @@ blockSq2_ equ r14
 		 jb   .ReturnNone
 .ReturnDraw:
 		xor   eax, eax
+
+SD String, "EndgameScale_KBPPKB 2 returning "
+SD Int32, rax
+SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 .c1:
@@ -1335,6 +1458,10 @@ blockSq2_ equ r14
 		jnz   .ReturnDraw
 .ReturnNone2:
 		mov   eax, SCALE_FACTOR_NONE
+
+SD String, "EndgameScale_KBPPKB 3 returning "
+SD Int32, rax
+SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 .c12:
@@ -1350,6 +1477,10 @@ blockSq2_ equ r14
 	       test   rax, rdx
 		jnz   .ReturnDraw
 		mov   eax, SCALE_FACTOR_NONE
+
+SD String, "EndgameScale_KBPPKB 4 returning "
+SD Int32, rax
+SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 restore wbsq
@@ -1418,10 +1549,18 @@ weakKingSq_	equ r10
 		 je   .ReturnNone
 	@@:
 		xor   eax, eax
+
+SD String, "EndgameScale_KBPKN 1 returning "
+SD Int32, rax
+SD NewLine
 		pop   rbx
 		ret
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
+
+SD String, "EndgameScale_KBPKN 2 returning "
+SD Int32, rax
+SD NewLine
 		pop   rbx
 		ret
 restore pawnSq
@@ -1458,6 +1597,10 @@ EndgameScale_KNPK:
 		 ja   .Return
 		xor   eax, eax
 .Return:
+
+SD String, "EndgameScale_KNPK 1 returning "
+SD Int32, rax
+SD NewLine
 		ret
 
 
@@ -1489,11 +1632,19 @@ weakKingSq_ equ r10
 	       test   rax, qword[ForwardBB+rsi+8*pawnSq_]
 		jnz   @f
 		mov   eax, SCALE_FACTOR_NONE
+
+SD String, "EndgameScale_KNPKB 1 returning "
+SD Int32, rax
+SD NewLine
 		pop   rsi
 		ret
 @@:
 	       imul   eax, weakKingSq, 64
 	      movzx   eax, byte[SquareDistance+rax+pawnSq_]
+
+SD String, "EndgameScale_KNPKB 2 returning "
+SD Int32, rax
+SD NewLine
 		pop   rsi
 		ret
 restore pawnSq
@@ -1542,6 +1693,10 @@ EndgameScale_KPKP:
 		 jb   .try_KPK
 		cmp   eax, 2
 		 jb   .try_KPK
+
+SD String, "EndgameScale_KPKP 1 returning "
+SD Int32, rax
+SD NewLine
 		mov   eax, SCALE_FACTOR_NONE
 		ret
 .try_KPK:
@@ -1563,4 +1718,8 @@ EndgameScale_KPKP:
 		 bt   r11, rdx
 		sbb   eax, eax
 		and   eax, SCALE_FACTOR_NONE
+
+SD String, "EndgameScale_KPKP 2 returning "
+SD Int32, rax
+SD NewLine
 		ret

@@ -113,8 +113,6 @@ res	     .req w0
 
 SeeTestGe.HaveFromTo:
 
-Display 2, "SeeTest move=%m1\n"
-
 /*
 ProfileInc SeeTest
 
@@ -384,7 +382,6 @@ SeeTestGe.FoundKing:
         
 
 SeeTestGe.Return:
-Display 2, "SeeTestGe.Return %i0\n"
 /*
 		pop   rdi rsi r15 r14 r13 r12
 if DEBUG
@@ -503,7 +500,6 @@ SeeTestGe.FoundKnight:
           b  SeeTestGe.Loop
 
 SeeTestGe.Special:
-Display 2, "SeeTestGe.Special\n"
 /*
 	; if we get here, .swap = -value
 	;            and  .res = 0
@@ -532,7 +528,6 @@ Display 2, "SeeTestGe.Special\n"
         
 
 SeeTestGe.ReturnSpecial:
-Display 2, "SeeTestGe.ReturnSpecial %i0\n"
 /*
 
 		pop   rdi rsi r15 r14 r13 r12
@@ -546,7 +541,6 @@ end if
         ret
 
 SeeTestGe.Castle:
-Display 2, "SeeTestGe.Castle\n"
 /*
 	; return 0 <= swap
 		cmp   swap, 0x80000000

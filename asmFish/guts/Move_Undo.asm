@@ -9,6 +9,7 @@ Move_Undo:
 
 SD String,"Move_Undo(move="
 SD Move, rcx
+SD String, ")"
 SD NewLine
 
 if DEBUG

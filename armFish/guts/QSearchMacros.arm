@@ -262,8 +262,6 @@ Display 2, "QSearch<0,0>(alpha=%i1, beta=%i2, depth=%i8) called\n"
         sub  w22, w22, 1
          bl  MainHash_Probe
 
-Display 2, "Qltte = %X1\n"
-
         str  x0, [sp, QSearch.tte]
         str  x1, [sp, QSearch.ltte]
        strb  w2, [sp, QSearch.ttHit]
@@ -532,7 +530,6 @@ QSearch.MovePickLoop\@:
         GetNextMove
         mov  w1, w0
         str  w0, [sp, QSearch.move]
-Display 2, "QSearch.move = %m0\n"
         cbz  w0, QSearch.MovePickDone\@
 
         ldr  w4, [sp, QSearch.moveCount]
@@ -1097,7 +1094,6 @@ QSearch.ReturnStaticValue\@:
 
 
 QSearch.ReturnStaticValue_ValueToTTRet\@:
-Display 2, "QSearch.ReturnStaticValue_ValueToTTRet\n"
 /*
       MainHash_Save   .ltte, r8, r9w, edx, BOUND_LOWER, DEPTH_NONE, 0, word[rbx+State.staticEval]
 		mov   eax, dword[.bestValue]

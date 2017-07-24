@@ -45,7 +45,6 @@ ProfileInc MainHash_Save
 
         ldr  x1, [\entr]
         str  x1, [sp, \lcopy]
-Display 2, "hash entr: %X1\n"
 
         mov  x1, \entr
         lsr  w1, w1, 3 - 1
@@ -111,8 +110,6 @@ MainHash_Save.write_everything\@:
 */
        strh  w0, [sp, \lcopy + MainHashEntry.move]
        strh  \key16, [x1]
-mov w4, \key16
-Display 2, "write key %i4\n"
 
 
 MainHash_Save.write_after_move\@:
@@ -135,8 +132,6 @@ MainHash_Save.write_after_move\@:
         orr  w0, w0, \bounder
        strb  w0, [sp, \lcopy + MainHashEntry.genBound]
         mov  w0, \depth
-and w4, w0, 255
-Display 2, "write depth %i4\n"
 
 
        strb  w0, [sp, \lcopy + MainHashEntry.depth]
@@ -154,5 +149,4 @@ MainHash_Save.done\@:
 
         ldr  x0, [sp, \lcopy]
         str  x0, [\entr]
-Display 2, "hash save: %X0\n"
 .endm

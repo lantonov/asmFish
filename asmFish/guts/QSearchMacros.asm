@@ -92,6 +92,28 @@ end virtual
 	 _chkstk_ms   rsp, .localsize
 		sub   rsp, .localsize
 
+if .PvNode eq 1
+  if InCheck eq 1
+SD String, "QSearch<1,1>"
+  else
+SD String, "QSearch<1,0>"
+  end if
+else
+  if InCheck eq 1
+SD String, "QSearch<0,1>"
+  else
+SD String, "QSearch<0,0>"
+  end if
+end if
+SD String, "(alpha="
+SD Int32, rcx
+SD String, ", beta="
+SD Int32, rdx
+SD String, ", depth="
+SD Int32, r8
+SD String, ") called"
+SD NewLine
+
 
 		mov   dword[.alpha], ecx
 		mov   dword[.beta], edx
@@ -554,6 +576,11 @@ match =2, VERBOSE \{
 .ReturnE:
 .ReturnF:
 .Return:
+
+SD String, "QSearch returning "
+SD Int32, rax
+SD NewLine
+
 		add   rsp, .localsize
 		pop   r15 r14 r13 r12 rdi rsi rbx
 		ret

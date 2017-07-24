@@ -91,6 +91,20 @@ match =1, DEBUG \{
 		lea   eax, [r9+1]
 	     Assert   b, al, 2, 'assertion .cutNode == 0 or -1 failed in Search'
 \}
+
+SD String, "Search(alpha="
+SD Int32, rcx
+SD String, ", beta="
+SD Int32, rdx
+SD String, ", depth="
+SD Int32, r8
+SD String, ", cutNode="
+SD Int32, r9
+SD String, ") called"
+SD NewLine
+
+
+
 	; Step 1. initialize node
 		xor   eax, eax
 		mov   dword[.moveCount], eax
@@ -457,8 +471,8 @@ end if
 		mov   ecx, dword[.beta]
 		neg   ecx
 		lea   edx, [rcx+1]
-		mov   r9l, byte[.cutNode]
-		xor   r9l, -1	     ; not used in qsearch case
+              movzx   r9d, byte[.cutNode]
+		not   r9d               ; not used in qsearch case
 	       call   r12
 		neg   eax
 		mov   byte[rbx+State.skipEarlyPruning], 0
@@ -600,8 +614,8 @@ end if
 		lea   edx, [rcx+1]
 		mov   r8d, dword[.depth]
 		sub   r8d, 4*ONE_PLY
-		mov   r9l, byte[.cutNode]
-		xor   r9l, -1
+              movzx   r9d, byte[.cutNode]
+		not   r9d
 	       call   Search_NonPv
 		neg   eax
 		mov   esi, eax
@@ -632,7 +646,7 @@ end if
 	if .PvNode eq 1
 		mov   ecx, dword[.alpha]
 		mov   edx, dword[.beta]
-		mov   r9l, byte[.cutNode]
+              movzx   r9d, byte[.cutNode]
 		mov   byte[rbx+State.skipEarlyPruning], -1
 	       call   Search_Pv
 	else
@@ -642,7 +656,7 @@ end if
 		 jl   .10skip
 		mov   ecx, dword[.alpha]
 		mov   edx, dword[.beta]
-		mov   r9l, byte[.cutNode]
+              movzx   r9d, byte[.cutNode]
 		mov   byte[rbx+State.skipEarlyPruning], -1
 	       call   Search_NonPv
 	end if
@@ -884,7 +898,7 @@ end if
 	       call   Move_IsLegal
 		mov   edx, dword[.ttValue]
 		mov   r8d, dword[.depth]
-		mov   r9l, byte[.cutNode]
+              movzx   r9d, byte[.cutNode]
 	       test   eax, eax
 		 jz   .12else
 		mov   eax, -VALUE_MATE
@@ -1261,8 +1275,8 @@ end if
 		mov   edx, dword[.alpha]
 		neg   edx
 		lea   ecx, [rdx-1]
-		mov   r9l, byte[.cutNode]
-		xor   r9l, -1
+              movzx   r9d, byte[.cutNode]
+		not   r9d
 	       call   rax
 		neg   eax
 		mov   dword[.value], eax
@@ -1326,8 +1340,8 @@ end if
 		mov   edx, dword[.alpha]
 		neg   edx
 		lea   ecx, [rdx-1]
-		mov   r9l, byte[.cutNode]
-		xor   r9l, -1
+              movzx   r9d, byte[.cutNode]
+		not   r9d
 	       call   rax
 		neg   eax
 		mov   edi, eax
@@ -1598,6 +1612,11 @@ end if
 .ReturnBestValue:
 		mov   eax, edi
 .Return:
+
+SD String, "Search returning "
+SD Int32, rax
+SD NewLine
+
 		add   rsp, .localsize
 		pop   r15 r14 r13 r12 rdi rsi rbx
 		ret

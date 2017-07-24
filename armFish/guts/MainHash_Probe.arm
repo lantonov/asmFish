@@ -20,8 +20,6 @@ ProfileInc MainHash_Probe
 	      movzx   r11d, byte[mainHash.date]
 */
 
-Display 2, "mhprobe key = %X1\n"
-
         lea  x6, mainHash
         ldr  x4, [x6, MainHash.mask]
         ldr  x0, [x6, MainHash.table]
@@ -53,7 +51,6 @@ Display 2, "mhprobe key = %X1\n"
 		 je   .FoundRefresh
 */
         ldr  x2, [x0, 8*3]
-Display 2, "keys %X2\n"
       ldrsh  w8, [x0]
        ands  w4, w2, 0x0FFFF
        ubfx  x5, x2, 16, 16

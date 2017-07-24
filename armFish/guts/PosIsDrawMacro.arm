@@ -36,9 +36,6 @@ local ..CheckNext, ..noDraw, ..KeysDontMatch
 		cmp   edx, 100
 		jae   coldlabel
 */
-
-Display 2, "id:%i1,%i2\n"
-
         cmp  w2, 100
         bhs  \coldlabel
 

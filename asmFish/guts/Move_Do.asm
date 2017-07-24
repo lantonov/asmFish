@@ -138,6 +138,7 @@ Move_Do:
 
 SD String,"Move_Do(move="
 SD Move, rcx
+SD String, ")"
 SD NewLine
 
 match =1, DEBUG {

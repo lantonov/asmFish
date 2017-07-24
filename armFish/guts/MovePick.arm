@@ -1,6 +1,6 @@
 
 MovePick_MAIN_SEARCH:
-Display 2, "MovePick_MAIN_SEARCH"
+//Display 2, "MovePick_MAIN_SEARCH"
 /*
 		mov   r15, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   eax, dword[rbx+State.ttMove]
@@ -15,7 +15,7 @@ Display 2, "MovePick_MAIN_SEARCH"
          br  x29
 
 MovePick_CAPTURES_GEN:
-Display 2, "MovePick_CAPTURES_GEN"
+//Display 2, "MovePick_CAPTURES_GEN"
 /*
 		mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   r14, rdi
@@ -38,7 +38,7 @@ Display 2, "MovePick_CAPTURES_GEN"
         str  x2, [x21, State.stage]
 
 MovePick_GOOD_CAPTURES:
-Display 2, "MovePick_GOOD_CAPTURES"
+//Display 2, "MovePick_GOOD_CAPTURES"
 /*
 		cmp   r14, r15
 		 je   .WhileDone
@@ -63,7 +63,7 @@ Display 2, "MovePick_GOOD_CAPTURES"
         cbz  w0, MovePick_GOOD_CAPTURES.Negative
 
 MovePick_GOOD_CAPTURES.Positive:
-Display 2, "MovePick_GOOD_CAPTURES.Positive"
+//Display 2, "MovePick_GOOD_CAPTURES.Positive"
 /*
 		mov   eax, edi
 		ret
@@ -72,7 +72,7 @@ Display 2, "MovePick_GOOD_CAPTURES.Positive"
          br  x29
 
 MovePick_GOOD_CAPTURES.Negative:
-Display 2, "MovePick_GOOD_CAPTURES.Negative"
+//Display 2, "MovePick_GOOD_CAPTURES.Negative"
 /*
 		mov   dword[rdx+ExtMove.move], edi
 		add   rdx, sizeof.ExtMove
@@ -86,7 +86,7 @@ Display 2, "MovePick_GOOD_CAPTURES.Negative"
           b  MovePick_GOOD_CAPTURES
 
 MovePick_GOOD_CAPTURES.WhileDone:
-Display 2, "MovePick_GOOD_CAPTURES.WhileDone"
+//Display 2, "MovePick_GOOD_CAPTURES.WhileDone"
 /*
 		lea   rdx, [MovePick_KILLERS]
 		mov   qword[rbx+State.stage], rdx
@@ -110,14 +110,12 @@ Display 2, "MovePick_GOOD_CAPTURES.WhileDone"
         str  x2, [x21, State.stage]
 
         ldr  w27, [x21, State.mpKillers + 4*0]
-Display 2, "killer0 = %m27\n"
         and  w0, w27, 63
         mov  w1, w27
         add  x6, x20, Pos.board
        ldrb  w0, [x6, x0]
         cbz  w27, MovePick_KILLERS
         ldr  w4, [x21, State.ttMove]
-Display 2, "ttMove = %m4\n"
         cmp  w27, w4
         beq  MovePick_KILLERS
         cmp  w27, MOVE_TYPE_EPCAP << 12
@@ -125,7 +123,7 @@ Display 2, "ttMove = %m4\n"
        cbnz  w0, MovePick_KILLERS
 
 MovePick_GOOD_CAPTURES.check:
-Display 2, "MovePick_GOOD_CAPTURES.check"
+//Display 2, "MovePick_GOOD_CAPTURES.check"
 /*
 	       call   Move_IsPseudoLegal
 	       test   rax, rax
@@ -139,7 +137,7 @@ Display 2, "MovePick_GOOD_CAPTURES.check"
          br  x29
 
 MovePick_GOOD_CAPTURES.special:
-Display 2, "MovePick_GOOD_CAPTURES.special"
+//Display 2, "MovePick_GOOD_CAPTURES.special"
 /*
 		cmp   edi, MOVE_TYPE_CASTLE shl 12
 		jae   .check
@@ -148,7 +146,7 @@ Display 2, "MovePick_GOOD_CAPTURES.special"
         bhs  MovePick_GOOD_CAPTURES.check
 
 MovePick_KILLERS:
-Display 2, "MovePick_KILLERS"
+//Display 2, "MovePick_KILLERS"
 /*
 		lea   rdx, [MovePick_KILLERS2]
 		mov   qword[rbx+State.stage], rdx
@@ -182,7 +180,7 @@ Display 2, "MovePick_KILLERS"
        cbnz  w0, MovePick_KILLERS2
 
 MovePick_KILLERS.check:
-Display 2, "MovePick_KILLERS.check"
+//Display 2, "MovePick_KILLERS.check"
 /*
 	       call   Move_IsPseudoLegal
 	       test   rax, rax
@@ -196,7 +194,7 @@ Display 2, "MovePick_KILLERS.check"
          br  x29
 
 MovePick_KILLERS.special:
-Display 2, "MovePick_KILLERS.special"
+//Display 2, "MovePick_KILLERS.special"
 /*
 		cmp   edi, MOVE_TYPE_CASTLE shl 12
 		jae   .check
@@ -205,7 +203,7 @@ Display 2, "MovePick_KILLERS.special"
         bhs  MovePick_KILLERS.check
 
 MovePick_KILLERS2:
-Display 2, "MovePick_KILLERS2"
+//Display 2, "MovePick_KILLERS2"
 /*
 		lea   rdx, [MovePick_QUIET_GEN]
 		mov   qword[rbx+State.stage], rdx
@@ -231,7 +229,6 @@ Display 2, "MovePick_KILLERS2"
         adr  x2, MovePick_QUIET_GEN
         str  x2, [x21, State.stage]
         ldr  w27, [x21, State.countermove]
-Display 2, "move:%m27|"
         and  w0, w27, 63
         mov  w1, w27
         add  x6, x20, Pos.board
@@ -251,7 +248,7 @@ Display 2, "move:%m27|"
        cbnz  w0, MovePick_QUIET_GEN
 
 MovePick_KILLERS2.check:
-Display 2, "MovePick_KILLERS2.check"
+//Display 2, "MovePick_KILLERS2.check"
 /*
 	       call   Move_IsPseudoLegal
 	       test   rax, rax
@@ -265,7 +262,7 @@ Display 2, "MovePick_KILLERS2.check"
          br  x29
 
 MovePick_KILLERS2.special:
-Display 2, "MovePick_KILLERS2.special"
+//Display 2, "MovePick_KILLERS2.special"
 /*
 		cmp   edi, MOVE_TYPE_CASTLE shl 12
 		jae   .check
@@ -275,7 +272,7 @@ Display 2, "MovePick_KILLERS2.special"
 
 
 MovePick_QUIET_GEN:
-Display 2, "MovePick_QUIET_GEN"
+//Display 2, "MovePick_QUIET_GEN"
 /*
 		mov   rdi, qword[rbx+State.endBadCaptures]
 		mov   r14, rdi
@@ -297,22 +294,6 @@ Display 2, "MovePick_QUIET_GEN"
          bl  Gen_Quiets
         mov  x25, x27
         ScoreQuiets  x22, x27
-
-/*
-.if VERBOSE == 2
-mov x28, x24
-looper:
-cmp  x28, x25
-bhs  loopdone
-ldr w0, [x28]
-ldr w1, [x28, 4]
-Display 2, "%m0,%i1|"
-add x28, x28, 8
-b looper
-loopdone:
-Display 2, "\n"
-.endif
-*/
 
         add  x10, x24, sizeof.ExtMove
         ldr  w2, [x21, State.depth]
@@ -391,24 +372,8 @@ MovePick_QUIET_GEN.SortDone:
         adr  x2, MovePick_QUIETS
         str  x2, [x21, State.stage]
 
-/*
-.if VERBOSE == 2
-mov x28, x24
-looper1:
-cmp  x28, x25
-bhs  loopdone1
-ldr w0, [x28]
-ldr w1, [x28, 4]
-Display 2, "%m0,%i1|"
-add x28, x28, 8
-b looper1
-loopdone1:
-Display 2, "\n"
-.endif
-*/
-
 MovePick_QUIETS:
-Display 2, "MovePick_QUIETS"
+//Display 2, "MovePick_QUIETS"
 /*
 		mov   eax, dword[r14]
 		cmp   r14, r15
@@ -449,7 +414,7 @@ Display 2, "MovePick_QUIETS"
          br  x29
 
 MovePick_QUIETS.WhileDone:
-Display 2, "MovePick_QUIETS.WhileDone"
+//Display 2, "MovePick_QUIETS.WhileDone"
 /*
 		lea   rdx, [MovePick_BAD_CAPTURES]
 		mov   qword[rbx+State.stage], rdx
@@ -460,7 +425,7 @@ Display 2, "MovePick_QUIETS.WhileDone"
         ldr  x24, [x21, -1*sizeof.State + State.endMoves]
 
 MovePick_BAD_CAPTURES:
-Display 2, "MovePick_BAD_CAPTURES"
+//Display 2, "MovePick_BAD_CAPTURES"
 /*
 		mov   eax, dword[r14]
 		cmp   r14, qword[rbx+State.endBadCaptures]
@@ -476,7 +441,7 @@ Display 2, "MovePick_BAD_CAPTURES"
          br  x29
 
 MovePick_BAD_CAPTURES.IfDone:
-Display 2, "MovePick_BAD_CAPTURES.IfDone"
+//Display 2, "MovePick_BAD_CAPTURES.IfDone"
 /*
 		xor   eax, eax
 		ret
@@ -485,7 +450,7 @@ Display 2, "MovePick_BAD_CAPTURES.IfDone"
          br  x29
 
 MovePick_EVASIONS:
-Display 2, "MovePick_EVASIONS"
+//Display 2, "MovePick_EVASIONS"
 /*
 		mov   r15, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   eax, dword[rbx+State.ttMove]
@@ -500,8 +465,7 @@ Display 2, "MovePick_EVASIONS"
          br  x29
 
 MovePick_ALL_EVASIONS:
-Display 2, "MovePick_ALL_EVASIONS"
-
+//Display 2, "MovePick_ALL_EVASIONS"
 /*
 		mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   r14, rdi
@@ -521,28 +485,11 @@ Display 2, "MovePick_ALL_EVASIONS"
         ScoreEvasions x22, x25
         adr  x2, MovePick_REMAINING
         str  x2, [x21, State.stage]
-
-/*
-.if VERBOSE == 2
-mov x28, x24
-looper3:
-cmp  x28, x25
-bhs  loopdone3
-ldr w0, [x28]
-ldr w1, [x28, 4]
-Display 2, "%m0,%i1|"
-add x28, x28, 8
-b looper3
-loopdone3:
-Display 2, "\n"
-.endif
-*/
-
           b  MovePick_REMAINING
 
 
 MovePick_QSEARCH_WITH_CHECKS:
-Display 2, "MovePick_QSEARCH_WITH_CHECKS"
+//Display 2, "MovePick_QSEARCH_WITH_CHECKS"
 /*
 		mov   r15, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   eax, dword[rbx+State.ttMove]
@@ -557,7 +504,7 @@ Display 2, "MovePick_QSEARCH_WITH_CHECKS"
          br  x29
 
 MovePick_QCAPTURES_CHECKS_GEN:
-Display 2, "MovePick_QCAPTURES_CHECKS_GEN"
+//Display 2, "MovePick_QCAPTURES_CHECKS_GEN"
 /*
 		mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   r14, rdi
@@ -580,7 +527,7 @@ Display 2, "MovePick_QCAPTURES_CHECKS_GEN"
           b  MovePick_QCAPTURES_CHECKS
 
 MovePick_QSEARCH_WITHOUT_CHECKS:
-Display 2, "MovePick_QSEARCH_WITHOUT_CHECKS"
+//Display 2, "MovePick_QSEARCH_WITHOUT_CHECKS"
 /*
 		mov   r15, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   eax, dword[rbx+State.ttMove]
@@ -595,7 +542,7 @@ Display 2, "MovePick_QSEARCH_WITHOUT_CHECKS"
          br  x29
 
 MovePick_QCAPTURES_NO_CHECKS_GEN:
-Display 2, "MovePick_QCAPTURES_NO_CHECKS_GEN"
+//Display 2, "MovePick_QCAPTURES_NO_CHECKS_GEN"
 /*
 		mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   r14, rdi
@@ -615,24 +562,8 @@ Display 2, "MovePick_QCAPTURES_NO_CHECKS_GEN"
         adr  x2, MovePick_REMAINING
         str  x2, [x21, State.stage]
 
-/*
-.if VERBOSE == 2
-mov x28, x24
-looper2:
-cmp  x28, x25
-bhs  loopdone2
-ldr w0, [x28]
-ldr w1, [x28, 4]
-Display 2, "%m0,%i1|"
-add x28, x28, 8
-b looper2
-loopdone2:
-Display 2, "\n"
-.endif
-*/
-
 MovePick_REMAINING:
-Display 2, "MovePick_REMAINING"
+//Display 2, "MovePick_REMAINING"
 /*
 		cmp   r14, r15
 		jae   .WhileDone
@@ -652,7 +583,7 @@ Display 2, "MovePick_REMAINING"
          br  x29
 
 MovePick_REMAINING.WhileDone:
-Display 2, "MovePick_REMAINING.WhileDone"
+//Display 2, "MovePick_REMAINING.WhileDone"
 /*
 		xor   eax, eax
 		ret
@@ -662,7 +593,7 @@ Display 2, "MovePick_REMAINING.WhileDone"
 
 
 MovePick_QCAPTURES_CHECKS:
-Display 2, "MovePick_QCAPTURES_CHECKS"
+//Display 2, "MovePick_QCAPTURES_CHECKS"
 /*
 		cmp   r14, r15
 		jae   .WhileDone
@@ -682,7 +613,6 @@ Display 2, "MovePick_QCAPTURES_CHECKS"
          br  x29
 
 MovePick_QCAPTURES_CHECKS.WhileDone:
-Display 2, "MovePick_QCAPTURES_CHECKS.WhileDone"
 /*
 		mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   r14, rdi
@@ -699,7 +629,7 @@ Display 2, "MovePick_QCAPTURES_CHECKS.WhileDone"
         str  x2, [x21, State.stage]
 
 MovePick_CHECKS:
-Display 2, "MovePick_CHECKS"
+//Display 2, "MovePick_CHECKS"
 /*
 		mov   eax, dword[r14]
 		cmp   r14, r15
@@ -719,7 +649,6 @@ Display 2, "MovePick_CHECKS"
          br  x29
 
 MovePick_CHECKS.IfDone:
-Display 2, "MovePick_CHECKS.IfDone"
 /*
 		xor   eax, eax
 		ret
@@ -729,7 +658,7 @@ Display 2, "MovePick_CHECKS.IfDone"
 
 
 MovePick_RECAPTURES_GEN:
-Display 2, "MovePick_RECAPTURES_GEN"
+//Display 2, "MovePick_RECAPTURES_GEN"
 /*
 		mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   r14, rdi
@@ -751,7 +680,7 @@ Display 2, "MovePick_RECAPTURES_GEN"
 
 
 MovePick_RECAPTURES:
-Display 2, "MovePick_RECAPTURES"
+//Display 2, "MovePick_RECAPTURES"
 /*
 		cmp   r14, r15
 		 je   .WhileDone
@@ -773,7 +702,6 @@ Display 2, "MovePick_RECAPTURES"
          br  x29
 
 MovePick_RECAPTURES.WhileDone:
-Display 2, "MovePick_RECAPTURES.WhileDone"
 /*
 		xor   eax, eax
 		ret
@@ -784,7 +712,7 @@ Display 2, "MovePick_RECAPTURES.WhileDone"
 
 
 MovePick_PROBCUT:
-Display 2, "MovePick_PROBCUT"
+//Display 2, "MovePick_PROBCUT"
 /*
 		mov   r15, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   eax, dword[rbx+State.ttMove]
@@ -799,7 +727,7 @@ Display 2, "MovePick_PROBCUT"
          br  x29
 
 MovePick_PROBCUT_GEN:
-Display 2, "MovePick_PROBCUT_GEN"
+//Display 2, "MovePick_PROBCUT_GEN"
 /*
 		mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   r14, rdi
@@ -820,7 +748,7 @@ Display 2, "MovePick_PROBCUT_GEN"
         str  x2, [x21, State.stage]
 
 MovePick_PROBCUT_2:
-Display 2, "MovePick_PROBCUT_2"
+//Display 2, "MovePick_PROBCUT_2"
 /*
 		cmp   r14, r15
 		 je   .WhileDone
@@ -838,7 +766,7 @@ Display 2, "MovePick_PROBCUT_2"
 */
         cmp  x24, x25
         beq  MovePick_PROBCUT_2.WhileDone
-        PickBest x24, x23, x25
+        PickBest  x24, x23, x25
         mov  w0, w1
         mov  w27, w1
         ldr  w4, [x21, State.ttMove]
@@ -851,7 +779,6 @@ Display 2, "MovePick_PROBCUT_2"
          br  x29
 
 MovePick_PROBCUT_2.WhileDone:
-Display 2, "MovePick_PROBCUT_2.WhileDone"
 /*
 		xor   eax, eax
 		ret

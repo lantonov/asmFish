@@ -1351,7 +1351,6 @@ EndgameScale_KRPKR.1:
         bne  EndgameScale_KRPKR.ReturnDraw
 //.2:
 EndgameScale_KRPKR.2:
-Display 2,"2"
 //		cmp   r, RANK_6
 //		jne   .3
         cmp  r, RANK_6
@@ -1402,7 +1401,6 @@ Display 2,"2"
         ble  EndgameScale_KRPKR.ReturnDraw
 //.3:
 EndgameScale_KRPKR.3:
-Display 2,"3"
 //		cmp   r, RANK_6
 //		 jb   .4
         cmp  r, RANK_6
@@ -1432,7 +1430,6 @@ Display 2,"3"
         bhs  EndgameScale_KRPKR.ReturnDraw
 //.4:
 EndgameScale_KRPKR.4:
-Display 2,"4"
 //		cmp   wpsq, SQ_A7
 //		jne   .5
         cmp  wpsq, SQ_A7
@@ -1481,7 +1478,6 @@ Display 2,"4"
         bls  EndgameScale_KRPKR.ReturnDraw
 //.5:
 EndgameScale_KRPKR.5:
-Display 2,"5"
 //		cmp   r, RANK_5
 //		 ja   .6
         cmp  r, RANK_5
@@ -1518,7 +1514,6 @@ Display 2,"5"
         bge  EndgameScale_KRPKR.ReturnDraw
 //.6:
 EndgameScale_KRPKR.6:
-Display 2,"6"
 //		cmp   r, RANK_7
 //		jne   .7
         cmp  r, RANK_7
@@ -2502,7 +2497,7 @@ EndgameScale_KBPKB.ReturnNone:
 //SD String, "EndgameScale_KBPKB 2 returning "
 //SD Int32, rax
 //SD NewLine
-Display 2,"EndgameScale_KBPKB 1 returning %i0\n"
+Display 2,"EndgameScale_KBPKB 2 returning %i0\n"
 //		pop   rbx
 //		ret
         ldp  x21, x29, [sp], 16

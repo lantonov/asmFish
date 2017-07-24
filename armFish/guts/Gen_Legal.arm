@@ -52,7 +52,6 @@ Gen_Legal:
 	       test   r15, r15
 		jne   .FilterYesPinned
 */
-Display 2, "pointer: %X27\n"
        cbnz  x0, Gen_Legal.InCheck
 Gen_Legal.NotInCheck:
          bl  Gen_NonEvasions
@@ -60,8 +59,6 @@ Gen_Legal.NotInCheck:
 Gen_Legal.InCheck:
          bl  Gen_Evasions
 Gen_Legal.GenDone:
-
-Display 2, "pointer: %X27\n"
 
         lsl  x24, x24, 6
         ldr  w2, [x26]
