@@ -1,43 +1,26 @@
 
 CheckTime:
-/*
-        ; we must:
-        ;   set signals stop if the search is to be aborted (soon)
-        ;   and determine a good resetCnt to send to all threads
-        ;     lower values of resetCnt lead to to better resolution but increased polling
-        ;     conversely for higher values of resetCnt
+// we must:
+//   set signals stop if the search is to be aborted (soon)
+//   and determine a good resetCnt to send to all threads
+//     lower values of resetCnt lead to to better resolution but increased polling
+//     conversely for higher values of resetCnt
 
-ProfileInc CheckTime
-
-               push   rbx rsi rdi
- AssertStackAligned   'CheckTime'
-
-	; if MAX_RESETCNT is exactly calls to search per second
-	; then this value of resetCnt should put us back here in 1 second
-	; this is obviously too much when using time mgmt
-	; so .Reset4Time reduces this
-
-                mov   esi, MAX_RESETCNT		; fall through count
-
-        ; Of course, setting MAX_RESETCNT = number of calls to search per second
-        ; is impossible to measure and also dangerous. So really we have
-        ;   MAX_RESETCNT ~= (number of calls to search per second) * X
-        ; where X is a number between 0 and 1.
-        ; We then expect to be back here in X seconds.
-
-                xor   eax, eax
-                cmp   al, byte[limits.ponder]
-                jne   .Return
-
-                cmp   al, byte[limits.useTimeMgmt]
-                 je   .DontUseTimeMgmt
-                mov   rdi, qword[time.maximumTime]
-*/
         stp  x21, x30, [sp, -16]!
         stp  x26, x27, [sp, -16]!
-      mov32  w26, MAX_RESETCNT
-//Display "CheckTime called\n"
-//DisplayPause
+
+// if MAX_RESETCNT is exactly calls to search per second
+// then this value of resetCnt should put us back here in 1 second
+// this is obviously too much when using time mgmt
+// so .Reset4Time reduces this
+
+      mov32  w26, MAX_RESETCNT  // fall through count
+
+// Of course, setting MAX_RESETCNT = number of calls to search per second
+// is impossible to measure and also dangerous. So really we have
+//   MAX_RESETCNT ~= (number of calls to search per second) * X
+// where X is a number between 0 and 1.
+// We then expect to be back here in X seconds.
 
         lea  x6, limits
        ldrb  w0, [x6, Limits.ponder]
@@ -51,143 +34,76 @@ ProfileInc CheckTime
         ldr  x27, [x6, Time.maximumTime]
 
 CheckTime.Reset4Time:
-//Display "CheckTime.Reset4Time\n"
-//DisplayPause
-/*
-        ; rdi is target time
-               call   _GetTime
-                sub   rax, qword[time.startTime]
-                add   rax, 1
-        ; rax is elapsed time
-                sub   rdi, rax
-                 jb   .Stop
-
-        ; If rdi ms are remaining, attemp to put us back here in X*rdi/2 ms.
-        ; The values of rdi at this point are in geometric progression.
-        ; On tested machine, this ends a 'go movetime 10000' in 10000 ms
-        ; with approx 130 calls to CheckTime.
-GD String, 'ms remaining: '
-GD Int64, rdi
-                mov   eax, MAX_RESETCNT/2000
-                mul   rdi
-                add   rax, MIN_RESETCNT ; resetCnt should be at least 50
-                adc   rdx, 0            ; if mul overflows, there is lots of
-                jnz   .Return           ; time and use fall through count
-                cmp   rsi, rax
-              cmova   esi, eax
-*/
+// x27 is target time
          bl  Os_GetTime
         lea  x6, time
         ldr  x4, [x6, Time.startTime]
         add  x0, x0, 1
         sub  x0, x0, x4
+// x0 is elapsed time
        subs  x27, x27, x0
         blo  CheckTime.Stop
+
+// If rdi ms are remaining, attemp to put us back here in X*rdi/2 ms.
+// The values of rdi at this point are in geometric progression.
+// On tested machine, this ends a 'go movetime 10000' in 10000 ms
+// with approx 130 calls to CheckTime.
         mov  x0, MAX_RESETCNT/2000
       umulh  x2, x0, x27
         mul  x0, x0, x27
-       adds  x0, x0, MIN_RESETCNT
-        adc  x2, x2, xzr
-       cbnz  x2, CheckTime.Return
+       adds  x0, x0, MIN_RESETCNT       // resetCnt should be at least 50
+        adc  x2, x2, xzr                // if mul overflows, there is lots of
+       cbnz  x2, CheckTime.Return       // time and use fall through count
         cmp  x26, x0
        csel  w26, w0, w26, hi
 
         
 CheckTime.Return:
-/*
-
-GD String, ' resetCnt: '
-GD Int64, rsi
-GD NewLine
-
-	; set resetCnt for all threads to esi
-                mov   ecx, dword[threadPool.threadCnt]
-*/
+// set resetCnt for all threads to esi
         lea  x6, threadPool
         ldr  w1, [x6, ThreadPool.threadCnt]
 CheckTime.ResetNextThread:
-/*
-                sub   ecx, 1
-                mov   rax, qword[threadPool.threadTable+8*rcx]
-                mov   dword[rax+Thread.resetCnt], esi
-                jnz   .ResetNextThread
-
-                pop   rdi rsi rbx
-                ret
-*/
         sub  w1, w1, 1
         lea  x6, threadPool
         add  x6, x6, ThreadPool.threadTable
         ldr  x0, [x6, x1, lsl 3]
         str  w26, [x0, Thread.resetCnt]
        cbnz  w1, CheckTime.ResetNextThread
-Display 1, "CheckTime returning %i26\n"
         ldp  x26, x27, [sp], 16
         ldp  x21, x30, [sp], 16
         ret
 
 CheckTime.Stop:
-/*
-                mov   byte[signals.stop], -1
-                pop   rdi rsi rbx
-                ret
-*/
         mov  w4, -1
         lea  x6, signals
        strb  w4, [x6, Signals.stop]
-Display 1, "CheckTime returning stop\n"
         ldp  x26, x27, [sp], 16
         ldp  x21, x30, [sp], 16
         ret
 
 CheckTime.DontUseTimeMgmt:
-//Display "CheckTime.DontUseTimeMgmt\n"
-//DisplayPause
-/*
-                mov   edi, dword[limits.movetime]
-               test   edi, edi
-                jnz   .Reset4Time
-                mov   rdi, qword[limits.nodes]
-               test   rdi, rdi
-                 jz   .Return           ; use fall through count
-
-               call   ThreadPool_NodesSearched_TbHits
-                add   rax, 1
-*/
         lea  x6, limits
         ldr  w27, [x6, Limits.movetime]
        cbnz  w27, CheckTime.Reset4Time
         ldr  x27, [x6, Limits.nodes]
-        cbz  x27, CheckTime.Return
+        cbz  x27, CheckTime.Return              // use fall through count
          bl  ThreadPool_NodesSearched_TbHits
         add  x0, x0, 1
 
 CheckTime.Reset4Nodes:
-/*
-        ; rdi is target nodes
-        ; rax is elapsed nodes
-                sub   rdi, rax
-                 jb   .Stop
-
-        ; if rdi nodes are remaining, attemp to put us back here rdi/3 nodes later
-        ; the division is by 6 because half of the nodes are from qsearch
-        ; the values of rdi at this point are in geometric progression
-        ; this ends 'go nodes 1000000' with 1000053 nodes
-        ; with 22 calls to CheckTime
-GD String, 'nodes remaining: '
-GD Int64, rdi
-                mov   rax, (1 shl 63)/3
-                mul   rdi               ; rdx = rdi/6
-                add   rdx, MIN_RESETCNT
-                cmp   rsi, rdx
-              cmova   esi, edx
-                jmp   .Return
-*/
+// rdi is target nodes
+// rax is elapsed nodes
        subs  x27, x27, x0
         blo  CheckTime.Stop
+
+// if rdi nodes are remaining, attemp to put us back here rdi/3 nodes later
+// the division is by 6 because half of the nodes are from qsearch
+// the values of rdi at this point are in geometric progression
+// this ends 'go nodes 1000000' with 1000053 nodes
+// with 22 calls to CheckTime
         mov  x0, 0xaaaaaaaaaaaaaaaa
        movk  x0, 0x2aaa, lsl 48
-      umulh  x2, x0, x27
+      umulh  x2, x0, x27                // x2 = x27/6
         add  x2, x2, MIN_RESETCNT
         cmp  x26, x2
        csel  w26, w2, w26, hi
