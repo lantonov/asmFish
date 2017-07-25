@@ -1,7 +1,8 @@
 /*
-assemble and link with
+assemble, link, and strip with
 $ aarch64-linux-gnu-as -c armFish.arm -o armFish.o
 $ aarch64-linux-gnu-ld -static -o armFish armFish.o
+$ aarch64-linux-gnu-strip armFish
 
 run with
 $ qemu-aarch64 ./armFish
