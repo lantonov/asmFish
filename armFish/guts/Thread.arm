@@ -9,11 +9,11 @@ ThreadIdxToNode:
         add  x0, x0, ThreadPool.nodeTable
        udiv  w3, w1, w8
        msub  w2, w3, w8, w1
-       madd  x1, x9, x4, x0
         cmp  w8, 1
         beq  ThreadIdxToNode.Return
         cmp  w1, w8
         bhs  ThreadIdxToNode.MoreThreadsThanCores
+       madd  x1, x9, x4, x0
 ThreadIdxToNode.NextNode:
         ldr  w3, [x0, NumaNode.coreCnt]
        subs  w2, w2, w3
