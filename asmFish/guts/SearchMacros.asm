@@ -1112,7 +1112,7 @@ end if
 		cmp   ecx, 1
 		jbe   .15skip
     if USE_MATEFINDER
-                cmp   dl, [rbp-Thread.rootPos+Thread.maxPly]
+                cmp   dl, byte[rbp-Thread.rootPos+Thread.selDepth]
                 jae   .15skip
                 cmp   [rbx-1*sizeof.State+State.ply], 3
                  ja   @f
