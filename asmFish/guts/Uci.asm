@@ -1269,8 +1269,8 @@ end if
 	       call   PrintUnsignedInteger
 		mov   al, ':'
 	      stosb
-		lea   ecx, [rdi-Output]
-		neg   ecx
+                lea   rcx, [Output]
+                sub   rcx, rdi
 		add   ecx, 8
 		 js   @f
 		mov   al, ' '
@@ -1281,8 +1281,8 @@ end if
 	      stosq
 		mov   rax, r15
 	       call   PrintUnsignedInteger
-		lea   ecx, [rdi-Output]
-		neg   ecx
+                lea   rcx, [Output]
+                sub   rcx, rdi
 		add   ecx, 32
 		 js   @f
 		mov   al, ' '

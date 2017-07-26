@@ -29,8 +29,10 @@ MATERIAL_HASH_ENTRY_COUNT equ 8192	; should be a power of 2
 match ='W', VERSION_OS {
 SEP_CHAR equ ';'
 }
-
 match ='L', VERSION_OS {
+SEP_CHAR equ ':'
+}
+match ='X', VERSION_OS {
 SEP_CHAR equ ':'
 }
 

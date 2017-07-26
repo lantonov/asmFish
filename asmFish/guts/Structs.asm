@@ -339,8 +339,26 @@ match ='L', VERSION_OS {
    rd 1  ; extra
    rq 1
   ends
+}
+match ='X', VERSION_OS {
 
+  struct ThreadHandle
+   stackAddress rq 1
+   mutex	rd 1
+		rd 1
+  ends
 
+  struct Mutex
+   rd 1
+   rd 1  ; extra
+   rq 1  ; extra
+  ends
+
+  struct ConditionalVariable
+   rd 1
+   rd 1  ; extra
+   rq 1
+  ends
 }
 
 
@@ -441,7 +459,18 @@ struct NumaNode
 ends
 
 }
+match ='X', VERSION_OS {
 
+struct NumaNode
+ nodeNumber	rd 1
+ coreCnt	rd 1
+ cmhTable	rq 1
+ parent 	rq 1
+		rq 1
+ cpuMask	rq MAX_LINUXCPUS/64
+ends
+
+}
 
 
 ; structure for managing all search threads
