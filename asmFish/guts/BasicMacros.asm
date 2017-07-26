@@ -17,13 +17,21 @@ macro align value,addr
 if addr eq
   align value
 else
-;  if addr>$
-;    base = addr-size
-;    size = ((base+value-1)/value*value-base)
-;    db size dup 90h
-;  else
-;    db ((addr+value-1)/value*value-addr) dup 90h
-;  end if
+  if addr>$
+ match ='W', VERSION_OS \{
+    base = addr-size
+ \}
+ match ='L', VERSION_OS \{
+    base = addr-size
+ \}
+ match ='X', VERSION_OS \{
+    base = addr-size-$$
+ \}
+    size = ((base+value-1)/value*value-base)
+    db size dup 90h
+  else
+    db ((addr+value-1)/value*value-addr) dup 90h
+  end if
 end if
 }
 
