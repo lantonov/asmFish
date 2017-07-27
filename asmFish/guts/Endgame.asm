@@ -4,20 +4,13 @@
 
 	      align   16
 EndgameEval_KXK:
+Display 2, "KXK%n"
 	; Mate with KX vs K. This function is used to evaluate positions with
 	; king and plenty of material vs a lone king. It simply gives the
 	; attacking side a bonus for driving the defending king towards the edge
 	; of the board, and for keeping the distance between the two kings small.
 	       push   r15 r14 rdi rsi
 		mov   esi, ecx
-
-match =1, DEBUG {
-	       push   rdx rcx
-		xor   ecx, 1
-	     popcnt   rax, qword[rbp+Pos.typeBB+8*rcx], rdx
-	     Assert   e, eax, 1, 'weak pieces in EndgameEval_KXK'
-		pop   rcx rdx
-}
 
 	; r15 = strong pieces
 		mov   rdi, qword[rbp+Pos.typeBB+8*King]
@@ -70,10 +63,6 @@ match =1, DEBUG {
 .Drawish:
 		xor   eax, esi
 		sub   eax, esi
-
-SD String, "EndgameEval_KXK 1 returning "
-SD Int32, rax
-SD NewLine
 		pop   rsi rdi r14 r15
 		ret
 
@@ -90,10 +79,6 @@ SD NewLine
 	       blsr   r15, r15, rcx
 		jnz   .NextSquare
 		xor   eax, eax
-
-SD String, "EndgameEval_KXK 2 returning "
-SD Int32, rax
-SD NewLine
 		pop   rsi rdi r14 r15
 		ret
 
@@ -101,6 +86,7 @@ SD NewLine
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameEval_KBNK:
+Display 2, "KBNK%n"
 	; Mate with KBN vs K. This is similar to KX vs K, but we have to drive the
 	; defending king towards a corner square of the right color.
 
@@ -132,34 +118,13 @@ EndgameEval_KBNK:
 		sub   ecx, 1
 		xor   eax, ecx
 		sub   eax, ecx
-
-SD String, "EndgameEval_KBNK 1 returning "
-SD Int32, rax
-SD NewLine
 		ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameEval_KPK:
+Display 2, "KPK%n"
 	; KP vs K. This endgame is evaluated with the help of a bitbase.
-
-match =1, DEBUG {
-	       push   rdx rcx
-	     Assert   e, qword[rbp+Pos.typeBB+8*Knight], 0, 'knight(s) in EndgameEval_KPK'
-	     Assert   e, qword[rbp+Pos.typeBB+8*Bishop], 0, 'bishop(s) in EndgameEval_KPK'
-	     Assert   e, qword[rbp+Pos.typeBB+8*Rook], 0,   'rook(s) in EndgameEval_KPK'
-	     Assert   e, qword[rbp+Pos.typeBB+8*Queen], 0,  'queen(s) in EndgameEval_KPK'
-		xor   ecx, 1
-		mov   rax, qword[rbp+Pos.typeBB+8*Pawn]
-		and   rax, qword[rbp+Pos.typeBB+8*rcx]
-	     Assert   e, rax, 0, 'weak pawn(s) in EndgameEval_KPK'
-		xor   ecx, 1
-		mov   rax, qword[rbp+Pos.typeBB+8*Pawn]
-		and   rax, qword[rbp+Pos.typeBB+8*rcx]
-	     popcnt   rax, rax, rdx
-	     Assert   e, eax, 1, 'the number of strong pawns != 1 in EndgameEval_KPK'
-		pop   rcx rdx
-}
 
 		mov   rdx, qword[rbp+Pos.typeBB+8*rcx]
 		mov   r9, qword[rbp+Pos.typeBB+8*King]
@@ -207,16 +172,13 @@ match =1, DEBUG {
 		 bt   r11, rdx
 		sbb   edx, edx
 		and   eax, edx
-
-SD String, "EndgameEval_KPK 1 returning "
-SD Int32, rax
-SD NewLine
 		ret
 
 
 
 	      align   16
 EndgameEval_KRKP:
+Display 2, "KRKP%n"
 	; KR vs KP. This is a somewhat tricky endgame to evaluate precisely without
 	; a bitbase. The function below returns drawish scores when the pawn is
 	; far advanced with support of the king, while the attacking king is far
@@ -317,10 +279,6 @@ psq equ r11d
 		sub   esi, 1
 		xor   eax, esi
 		sub   eax, esi
-
-SD String, "EndgameEval_KRKP 1 returning "
-SD Int32, rax
-SD NewLine
 		pop   rsi
 		ret
 
@@ -337,8 +295,10 @@ restore psq
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameEval_KRKB:
+Display 2, "KRKB%n"
 	; KR vs KB. This is very simple, and always returns drawish scores.  The
 	; score is slightly bigger when the defending king is close to the edge.
+
 		mov   rax, qword[rbp+Pos.typeBB+8*King]
 		xor   ecx, 1
 		and   rax, qword[rbp+Pos.typeBB+8*rcx]
@@ -348,16 +308,13 @@ EndgameEval_KRKB:
 		sub   ecx, 1
 		xor   eax, ecx
 		sub   eax, ecx
-
-SD String, "EndgameEval_KRKB 1 returning "
-SD Int32, rax
-SD NewLine
 		ret
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameEval_KRKN:
+Display 2, "KRKN%n"
 	; KR vs KN. The attacking side has slightly better winning chances than
 	; in KR vs KB, particularly if the king and the knight are far apart.
 
@@ -376,20 +333,18 @@ EndgameEval_KRKN:
 		sub   ecx, 1
 		xor   eax, ecx
 		sub   eax, ecx
-
-SD String, "EndgameEval_KRKN 1 returning "
-SD Int32, rax
-SD NewLine
 		ret
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameEval_KQKP:
+Display 2, "KQKP%n"
 	; KQ vs KP. In general, this is a win for the stronger side, but there are a
 	; few important exceptions. A pawn on 7th rank and on the A,C,F or H files
 	; with a king positioned next to it can be a draw, so in that case, we only
 	; use the distance between the kings.
+
 		mov   r8, qword[rbp+Pos.typeBB+8*Pawn]
 		mov   rdx, qword[rbp+Pos.typeBB+8*King]
 		mov   r10, qword[rbp+Pos.typeBB+8*rcx]
@@ -422,20 +377,18 @@ EndgameEval_KQKP:
 		sub   ecx, 1
 		xor   eax, ecx
 		sub   eax, ecx
-
-SD String, "EndgameEval_KQKP 1 returning "
-SD Int32, rax
-SD NewLine
 		ret
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameEval_KQKR:
+Display 2, "KQKR%n"
 	; KQ vs KR.  This is almost identical to KX vs K:  We give the attacking
 	; king a bonus for having the kings close together, and for forcing the
 	; defending king towards the edge. If we also take care to avoid null move for
 	; the defending side in the search, this is usually sufficient to win KQ vs KR.
+
 		mov   rdx, qword[rbp+Pos.typeBB+8*King]
 		mov   r10, qword[rbp+Pos.typeBB+8*rcx]
 		xor   ecx, 1
@@ -454,22 +407,15 @@ EndgameEval_KQKR:
 		sub   ecx, 1
 		xor   eax, ecx
 		sub   eax, ecx
-
-SD String, "EndgameEval_KQKR 1 returning "
-SD Int32, rax
-SD NewLine
 		ret
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameEval_KNNK:
+Display 2, "KNNK%n"
 	; Some cases of trivial draws
 		xor   eax, eax
-
-SD String, "EndgameEval_KNNK 1 returning "
-SD Int32, rax
-SD NewLine
 		ret
 
 
@@ -480,6 +426,7 @@ SD NewLine
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameScale_KBPsK:
+Display 2, "KBPsK%n"
 	; r8 = pawns
 	; r9 = strong pieces
 		mov   r8, qword[rbp+Pos.typeBB+8*Pawn]
@@ -506,10 +453,6 @@ EndgameScale_KBPsK:
 	; else return none
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
-
-SD String, "EndgameScale_KBPsK 1 returning "
-SD Int32, rax
-SD NewLine
 		ret
 
 	      align   8
@@ -535,10 +478,6 @@ SD NewLine
 		jae   .ReturnNone
 	; distance(queeningSq, kingSq) <= 1
 		xor   eax, eax
-
-SD String, "EndgameScale_KBPsK 2 returning "
-SD Int32, rax
-SD NewLine
 		ret
 
 	      align   8
@@ -609,10 +548,6 @@ SD NewLine
 		cmp   edx, SQ_A7
 		 jb   .ReturnNone
 		xor   eax, eax
-
-SD String, "EndgameScale_KBPsK 3 returning "
-SD Int32, rax
-SD NewLine
 		ret
 
 
@@ -620,6 +555,7 @@ SD NewLine
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameScale_KQKRPs:
+Display 2, "KQKRPs%n"
 		mov   r9, qword[rbp+Pos.typeBB+8*King]
 		mov   r8, qword[rbp+Pos.typeBB+8*rcx]
 		and   r8, r9
@@ -652,17 +588,9 @@ EndgameScale_KQKRPs:
 		cmp   r10d, RANK_3
 		jne   .ReturnNone
 		xor   eax, eax
-
-SD String, "EndgameScale_KQKRPs 1 returning "
-SD Int32, rax
-SD NewLine
 		ret
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
-
-SD String, "EndgameScale_KQKRPs 2 returning "
-SD Int32, rax
-SD NewLine
 		ret
 
 
@@ -670,6 +598,8 @@ SD NewLine
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameScale_KRPKR:
+Display 2, "KRPKR%n"
+
 	       push   r15 r14 r13 r12 rbx
 		mov   r10, qword[rbp+Pos.typeBB+8*rcx]
 		xor   ecx, 1
@@ -850,10 +780,6 @@ qs equ r15d
 		add   eax, eax
 		sub   eax, SCALE_FACTOR_MAX
 		neg   eax
-
-SD String, "EndgameScale_KRPKR 1 returning "
-SD Int32, rax
-SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 .7:
@@ -909,10 +835,6 @@ SD NewLine
 	       imul   edx, -2
 		add   eax, SCALE_FACTOR_MAX
 		add   eax, edx
-
-SD String, "EndgameScale_KRPKR 2 returning "
-SD Int32, rax
-SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 .8:
@@ -927,10 +849,6 @@ SD NewLine
 		cmp   eax, edx
 		jne   @f
 		mov   eax, 10
-
-SD String, "EndgameScale_KRPKR 3 returning "
-SD Int32, rax
-SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 	@@:
@@ -949,26 +867,14 @@ SD NewLine
 		add   eax, eax
 		sub   eax, 24
 		neg   eax
-
-SD String, "EndgameScale_KRPKR 4 returning "
-SD Int32, rax
-SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 .9:
 		mov   eax, SCALE_FACTOR_NONE
-
-SD String, "EndgameScale_KRPKR 5 returning "
-SD Int32, rax
-SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 .ReturnDraw:
 		xor   eax, eax
-
-SD String, "EndgameScale_KRPKR 6 returning "
-SD Int32, rax
-SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 
@@ -996,6 +902,8 @@ restore qs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameScale_KRPKB:
+Display 2, "KRPKB%n"
+
 ksq_ equ r8
 bsq_ equ r9
 psq_ equ r10
@@ -1032,10 +940,6 @@ ppush  equ r11d
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
 .Return:
-
-SD String, "EndgameScale_KRPKB 1 returning "
-SD Int32, rax
-SD NewLine
 		ret
 .Rank6:
 	       imul   eax, ksq, 64
@@ -1056,10 +960,6 @@ SD NewLine
 		cmp   eax, 3
 		 jb   .ReturnNone
 		mov   eax, 8
-
-SD String, "EndgameScale_KRPKB 2 returning "
-SD Int32, rax
-SD NewLine
 		ret
 .Rank5:
 		mov   eax, bsq
@@ -1087,10 +987,6 @@ SD NewLine
 		cmp   ksq, edx
 		jne   .Return
 		mov   eax, 48
-
-SD String, "EndgameScale_KRPKB 3 returning "
-SD Int32, rax
-SD NewLine
 		ret
 restore ksq_
 restore bsq_
@@ -1105,6 +1001,7 @@ restore ppush
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameScale_KRPPKRP:
+Display 2, "KRPPKRP%n"
 
 wpsq1_ equ r8
 wpsq2_ equ r9
@@ -1113,6 +1010,7 @@ wpsq1 equ r8d
 wpsq2 equ r9d
 bksq  equ r10d
 KRPPKRPScaleFactors equ (0+256*(9+256*(10+256*(14+256*(21+256*(44))))))
+
 	       imul   eax, ecx, 64*8
 		mov   r8, qword[rbp+Pos.typeBB+8*Pawn]
 		mov   rdx, r8
@@ -1163,17 +1061,9 @@ KRPPKRPScaleFactors equ (0+256*(9+256*(10+256*(14+256*(21+256*(44))))))
 		lea   ecx, [8*r11]
 		shr   rax, cl
 	      movzx   eax, al
-
-SD String, "EndgameScale_KRPPKRP 1 returning "
-SD Int32, rax
-SD NewLine
 		ret
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
-
-SD String, "EndgameScale_KRPPKRP 2 returning "
-SD Int32, rax
-SD NewLine
 		ret
 restore wpsq1_
 restore wpsq2_
@@ -1187,9 +1077,12 @@ restore KRPPKRPScaleFactors
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameScale_KPsK:
+Display 2, "KPsK%n"
+
 pawns equ r8
 ksq  equ r9d
 ksq_  equ r9
+
 		mov   r8, qword[rbp+Pos.typeBB+8*rcx]
 		xor   ecx, 1
 		mov   r9, qword[rbp+Pos.typeBB+8*rcx]
@@ -1219,10 +1112,6 @@ ksq_  equ r9
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
 .Return:
-
-SD String, "EndgameScale_KPsK 1 returning "
-SD Int32, rax
-SD NewLine
 		ret
 restore pawns
 restore ksq
@@ -1232,6 +1121,8 @@ restore ksq_
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameScale_KBPKB:
+Display 2, "KBPKB%n"
+
 pawnSq	       equ r8d
 strongBishopSq equ r9d
 weakBishopSq   equ r10d
@@ -1240,6 +1131,7 @@ pawnSq_ 	equ r8
 strongBishopSq_ equ r9
 weakBishopSq_	equ r10
 weakKingSq_	equ r11
+
 	       push   rbx
 		mov   r8, qword[rbp+Pos.typeBB+8*rcx]
 		xor   ecx, 1
@@ -1283,9 +1175,6 @@ weakKingSq_	equ r11
 		 je   .c2
 .ReturnDraw:
 		xor   eax, eax
-SD String, "EndgameScale_KBPKB 1 returning "
-SD Int32, rax
-SD NewLine
 		pop   rbx
 		ret
 .c2:
@@ -1316,10 +1205,6 @@ SD NewLine
 		jnz   .ReturnDraw
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
-
-SD String, "EndgameScale_KBPKB 2 returning "
-SD Int32, rax
-SD NewLine
 		pop   rbx
 		ret
 
@@ -1337,6 +1222,8 @@ restore weakKingSq_
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameScale_KBPPKB:
+Display 2, "KBPPKB%n"
+
 wbsq equ r8d
 bbsq equ r9d
 ksq  equ r10d
@@ -1351,6 +1238,7 @@ psq1_ equ r11
 psq2_ equ r12
 blockSq1_ equ r13
 blockSq2_ equ r14
+
 	       push   r15 r14 r13 r12 rbx
 		mov   r8, qword[rbp+Pos.typeBB+8*rcx]
 		mov   r11, qword[rbp+Pos.typeBB+8*rcx]
@@ -1380,10 +1268,6 @@ blockSq2_ equ r14
 		jne   @f
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
-
-SD String, "EndgameScale_KBPPKB 1 returning "
-SD Int32, rax
-SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 	@@:
@@ -1428,10 +1312,6 @@ SD NewLine
 		 jb   .ReturnNone
 .ReturnDraw:
 		xor   eax, eax
-
-SD String, "EndgameScale_KBPPKB 2 returning "
-SD Int32, rax
-SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 .c1:
@@ -1458,10 +1338,6 @@ SD NewLine
 		jnz   .ReturnDraw
 .ReturnNone2:
 		mov   eax, SCALE_FACTOR_NONE
-
-SD String, "EndgameScale_KBPPKB 3 returning "
-SD Int32, rax
-SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 .c12:
@@ -1477,10 +1353,6 @@ SD NewLine
 	       test   rax, rdx
 		jnz   .ReturnDraw
 		mov   eax, SCALE_FACTOR_NONE
-
-SD String, "EndgameScale_KBPPKB 4 returning "
-SD Int32, rax
-SD NewLine
 		pop   rbx r12 r13 r14 r15
 		ret
 restore wbsq
@@ -1503,12 +1375,15 @@ restore blockSq2_
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameScale_KBPKN:
+Display 2, "KBPKN%n"
+
 pawnSq	       equ r8d
 strongBishopSq equ r9d
 weakKingSq     equ r10d
 pawnSq_ 	equ r8
 strongBishopSq_ equ r9
 weakKingSq_	equ r10
+
 	       push   rbx
 		mov   r8, qword[rbp+Pos.typeBB+8*rcx]
 		mov   r9, qword[rbp+Pos.typeBB+8*Bishop]
@@ -1549,18 +1424,10 @@ weakKingSq_	equ r10
 		 je   .ReturnNone
 	@@:
 		xor   eax, eax
-
-SD String, "EndgameScale_KBPKN 1 returning "
-SD Int32, rax
-SD NewLine
 		pop   rbx
 		ret
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
-
-SD String, "EndgameScale_KBPKN 2 returning "
-SD Int32, rax
-SD NewLine
 		pop   rbx
 		ret
 restore pawnSq
@@ -1574,6 +1441,8 @@ restore weakKingSq_
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameScale_KNPK:
+Display 2, "KNPK%n"
+
 		mov   r8, qword[rbp+Pos.typeBB+8*Pawn]
 		and   r8, qword[rbp+Pos.typeBB+8*rcx]
 		bsf   r8, r8
@@ -1597,22 +1466,21 @@ EndgameScale_KNPK:
 		 ja   .Return
 		xor   eax, eax
 .Return:
-
-SD String, "EndgameScale_KNPK 1 returning "
-SD Int32, rax
-SD NewLine
 		ret
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameScale_KNPKB:
+Display 2, "KNPKB%n"
+
 pawnSq	   equ r8d
 bishopSq   equ r9d
 weakKingSq equ r10d
 pawnSq_     equ r8
 bishopSq_   equ r9
 weakKingSq_ equ r10
+
 	       push   rsi
 		mov   esi, ecx
 		shl   esi, 6+3
@@ -1632,19 +1500,11 @@ weakKingSq_ equ r10
 	       test   rax, qword[ForwardBB+rsi+8*pawnSq_]
 		jnz   @f
 		mov   eax, SCALE_FACTOR_NONE
-
-SD String, "EndgameScale_KNPKB 1 returning "
-SD Int32, rax
-SD NewLine
 		pop   rsi
 		ret
 @@:
 	       imul   eax, weakKingSq, 64
 	      movzx   eax, byte[SquareDistance+rax+pawnSq_]
-
-SD String, "EndgameScale_KNPKB 2 returning "
-SD Int32, rax
-SD NewLine
 		pop   rsi
 		ret
 restore pawnSq
@@ -1658,6 +1518,8 @@ restore weakKingSq_
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	      align   16
 EndgameScale_KPKP:
+Display 2, "KPKP%n"
+
 		mov   rdx, qword[rbp+Pos.typeBB+8*rcx]
 		mov   r9, qword[rbp+Pos.typeBB+8*King]
 		mov   r8, qword[rbp+Pos.typeBB+8*Pawn]
@@ -1693,10 +1555,6 @@ EndgameScale_KPKP:
 		 jb   .try_KPK
 		cmp   eax, 2
 		 jb   .try_KPK
-
-SD String, "EndgameScale_KPKP 1 returning "
-SD Int32, rax
-SD NewLine
 		mov   eax, SCALE_FACTOR_NONE
 		ret
 .try_KPK:
@@ -1718,8 +1576,4 @@ SD NewLine
 		 bt   r11, rdx
 		sbb   eax, eax
 		and   eax, SCALE_FACTOR_NONE
-
-SD String, "EndgameScale_KPKP 2 returning "
-SD Int32, rax
-SD NewLine
 		ret

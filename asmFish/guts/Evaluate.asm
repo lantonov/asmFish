@@ -1382,7 +1382,7 @@ ProfileInc EvaluateLazy
 		sar   eax, 1	     ;
 		xor   eax, ecx
 		sub   eax, ecx
-
+Display 2, "Lazy Eval returning %i0%n"
 		add   rsp, sizeof.EvalInfo
 		pop   r15 r14 r13 r12 rdi rsi rbx
 		ret
@@ -1732,7 +1732,7 @@ end virtual
 		sar   edx, 7
 		xor   edx, r11d
 		lea   eax, [rcx+rdx+Eval_Tempo]
-
+Display 2, "Evaluate returning %i0%n"
 		add   rsp, sizeof.EvalInfo
 		pop   r15 r14 r13 r12 rdi rsi rbx
 		ret
@@ -1752,6 +1752,7 @@ end virtual
 		mov   eax, dword[EndgameScale_FxnTable+4*rax]
 		and   ecx, 1
 	       call   rax
+Display 2, "Scale returned %i0%n"
 		cmp   eax, SCALE_FACTOR_NONE
 	      movzx   edx, byte[r15+MaterialEntry.gamePhase]
 	      movzx   ecx, byte[r15+MaterialEntry.factor+r13]
@@ -1777,6 +1778,7 @@ HaveSpecializedEval:
 		mov   eax, dword[EndgameEval_FxnTable+4*rax]
 		and   ecx, 1
 	       call   rax
+Display 2, "Special Eval returned %i0%n"
 		add   rsp, sizeof.EvalInfo
 		pop   r15 r14 r13 r12 rdi rsi rbx
 		ret

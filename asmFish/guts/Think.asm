@@ -950,13 +950,6 @@ end if
 		mov   rax, qword[.nodes]
 	       call   PrintUnsignedInteger
 
-if USE_SYZYGY
-		mov   rax, ' tbhits '
-	      stosq
-		mov   rax, qword[.tbHits]
-	       call   PrintUnsignedInteger
-end if
-
 if USE_HASHFULL
 		mov   ecx, dword[.hashfull]
 	       test   ecx, ecx
@@ -968,6 +961,13 @@ if USE_HASHFULL
 		mov   eax, ecx
 	       call   PrintUnsignedInteger
 	@@:
+end if
+
+if USE_SYZYGY
+		mov   rax, ' tbhits '
+	      stosq
+		mov   rax, qword[.tbHits]
+	       call   PrintUnsignedInteger
 end if
 
 		mov   eax, ' pv'

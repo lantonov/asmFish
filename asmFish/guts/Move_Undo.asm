@@ -7,10 +7,7 @@ Move_Undo:
 
 	       push   rsi
 
-SD String,"Move_Undo(move="
-SD Move, rcx
-SD String, ")"
-SD NewLine
+Display 2, "Move_Undo(move=%m1)%n"
 
 if DEBUG
 		mov   dword[rbp+Pos.debugDWORD1], ecx

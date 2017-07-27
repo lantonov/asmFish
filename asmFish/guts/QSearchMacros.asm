@@ -94,26 +94,17 @@ end virtual
 
 if .PvNode eq 1
   if InCheck eq 1
-SD String, "QSearch<1,1>"
+Display 2, "QSearch<1,1>(alpha=%i1, beta=%i2, depth=%i8) called%n"
   else
-SD String, "QSearch<1,0>"
+Display 2, "QSearch<1,0>(alpha=%i1, beta=%i2, depth=%i8) called%n"
   end if
 else
   if InCheck eq 1
-SD String, "QSearch<0,1>"
+Display 2, "QSearch<0,1>(alpha=%i1, beta=%i2, depth=%i8) called%n"
   else
-SD String, "QSearch<0,0>"
+Display 2, "QSearch<0,0>(alpha=%i1, beta=%i2, depth=%i8) called%n"
   end if
 end if
-SD String, "(alpha="
-SD Int32, rcx
-SD String, ", beta="
-SD Int32, rdx
-SD String, ", depth="
-SD Int32, r8
-SD String, ") called"
-SD NewLine
-
 
 		mov   dword[.alpha], ecx
 		mov   dword[.beta], edx
@@ -199,7 +190,7 @@ SD NewLine
 		and   eax, r12d
 	       test   al, byte[.ltte+MainHashEntry.genBound]
 		mov   eax, edi
-		jnz   .ReturnB;.ReturnTTValue
+		jnz   .Return
 	end if
 
 .DontReturnTTValue:
@@ -492,7 +483,7 @@ SD NewLine
 		mov   eax, dword[.move]
       MainHash_Save   .ltte, r8, r9w, edx, BOUND_LOWER, byte[.ttDepth], eax, word[rbx+State.staticEval]
 		mov   eax, edi
-		jmp   .ReturnD
+		jmp   .Return
 
 .FailHighValueToTT:
 	      movzx   edx, byte[rbx+State.ply]
@@ -536,7 +527,7 @@ end if
 	      movzx   eax, byte[rbx+State.ply]
 		sub   eax, VALUE_MATE
 		cmp   edi, -VALUE_INFINITE
-		 je   .ReturnE
+		 je   .Return
 	end if
 
 	if .PvNode eq 1
@@ -563,23 +554,10 @@ end if
 	end if
 		mov   eax, edi
 
-match =2, VERBOSE \{
-		jmp   .ReturnF
-\}
-
-
 	      align   8
-.ReturnA:
-.ReturnB:
-.ReturnC:
-.ReturnD:
-.ReturnE:
-.ReturnF:
 .Return:
 
-SD String, "QSearch returning "
-SD Int32, rax
-SD NewLine
+Display 2, "QSearch returning %i0%n"
 
 		add   rsp, .localsize
 		pop   r15 r14 r13 r12 rdi rsi rbx
@@ -621,14 +599,14 @@ SD NewLine
 .AbortSearch_PlyBigger:
 		xor   eax, eax
 		cmp   rax, qword[rbx+State.checkersBB]
-		jne   .ReturnA
+		jne   .Return
 	       call   Evaluate
-		jmp   .ReturnA
+		jmp   .Return
 
 	      align   8
 .AbortSearch_PlySmaller:
 		xor   eax, eax
-		jmp   .ReturnA
+		jmp   .Return
 
 
 	      align   8
@@ -638,14 +616,14 @@ SD NewLine
 		shr   r9, 48
 		mov   edx, eax
 	       test   r13d, r13d
-		jnz   .ReturnC
+		jnz   .Return
 		add   eax, VALUE_MATE_IN_MAX_PLY
 		cmp   eax, 2*VALUE_MATE_IN_MAX_PLY
 		jae   .ReturnStaticValue_ValueToTT
  .ReturnStaticValue_ValueToTTRet:
       MainHash_Save   .ltte, r8, r9w, edx, BOUND_LOWER, DEPTH_NONE, 0, word[rbx+State.staticEval]
 		mov   eax, dword[.bestValue]
-		jmp   .ReturnC
+		jmp   .Return
 
  .ReturnStaticValue_ValueToTT:
 	      movzx   ecx, byte[rbx+State.ply]

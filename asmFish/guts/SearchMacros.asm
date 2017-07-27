@@ -92,18 +92,7 @@ match =1, DEBUG \{
 	     Assert   b, al, 2, 'assertion .cutNode == 0 or -1 failed in Search'
 \}
 
-SD String, "Search(alpha="
-SD Int32, rcx
-SD String, ", beta="
-SD Int32, rdx
-SD String, ", depth="
-SD Int32, r8
-SD String, ", cutNode="
-SD Int32, r9
-SD String, ") called"
-SD NewLine
-
-
+Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
 
 	; Step 1. initialize node
 		xor   eax, eax
@@ -1613,10 +1602,7 @@ end if
 		mov   eax, edi
 .Return:
 
-SD String, "Search returning "
-SD Int32, rax
-SD NewLine
-
+Display 2, "Search returning %i0%n"
 		add   rsp, .localsize
 		pop   r15 r14 r13 r12 rdi rsi rbx
 		ret

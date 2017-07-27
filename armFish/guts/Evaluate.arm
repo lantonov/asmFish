@@ -2571,12 +2571,10 @@ Evaluate_Cold.ReturnLazyEval:
         eor  w0, w0, w1
 //		sub   eax, ecx
         sub  w0, w0, w1
-//
+Display 2, "Lazy Eval returning %i0%n"
 //		add   rsp, sizeof.EvalInfo
 //		pop   r15 r14 r13 r12 rdi rsi rbx
 //		ret
-
-
         add  sp, sp, sizeof.EvalInfo
         ldp  x24, x25, [sp], 16
         ldp  x22, x23, [sp], 16
@@ -3245,7 +3243,7 @@ Evaluate.ScaleFactorDone:
 //		lea   eax, [rcx+rdx+Eval_Tempo]
         add  w0, w1, Eval_Tempo
         add  w0, w0, w2
-//
+Display 2, "Evaluate returning %i0%n"
 //		add   rsp, sizeof.EvalInfo
 //		pop   r15 r14 r13 r12 rdi rsi rbx
 //		ret
@@ -3278,6 +3276,7 @@ Evaluate_Cold2.HaveScaleFunction:
         and  w1, w1, 1
 //	       call   rax
         blr  x0
+Display 2, "Scale returned %i0%n"
 //		cmp   eax, SCALE_FACTOR_NONE
         cmp  w0, SCALE_FACTOR_NONE
 //	      movzx   edx, byte[r15+MaterialEntry.gamePhase]
@@ -3322,6 +3321,7 @@ HaveSpecializedEval:
         and  w1, w1, 1
 //	       call   rax
         blr  x0
+Display 2, "Special Eval returned %i0%n"
 //		add   rsp, sizeof.EvalInfo
 //		pop   r15 r14 r13 r12 rdi rsi rbx
 //		ret

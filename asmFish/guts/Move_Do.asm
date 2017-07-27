@@ -136,10 +136,7 @@ Move_Do:
 
         ; stack is unaligned at this point
 
-SD String,"Move_Do(move="
-SD Move, rcx
-SD String, ")"
-SD NewLine
+Display 2, "Move_Do(move=%m1)%n"
 
 match =1, DEBUG {
 	       push   rax rcx rdx
