@@ -1834,33 +1834,20 @@ if VERBOSE < 2
 .PrintCurrentMove:
 		cmp   byte[options.displayInfoMove], 0
 		 je   .PrintCurrentMoveRet
-		sub   rsp, 128
-		mov   rdi, rsp
-		mov   rax, 'info dep'
-	      stosq
-		mov   eax, 'th '
-	      stosd
-		sub   rdi, 1
-		mov   eax, dword[.depth+128]
-	       call   PrintUnsignedInteger
-		mov   rax, ' currmov'
-	      stosq
-		mov   eax, 'e '
-	      stosw
-		mov   ecx, dword[.move+128]
-		mov   edx, dword[rbp+Pos.chess960]
-	       call   PrintUciMove
-		mov   rax, ' currmov'
-	      stosq
-		mov   rax, 'enumber '
-	      stosq
-		mov   eax, dword[.moveCount+128]
-		add   eax, dword[rbp-Thread.rootPos+Thread.PVIdx]
-	       call   PrintUnsignedInteger
-		mov   rcx, rsp
-       PrintNewLine
-	       call   _WriteOut
-		add   rsp, 128
+
+                lea   rdi, [Output]
+		mov   eax, dword[.depth]
+		mov   ecx, dword[.move]
+		mov   edx, dword[.moveCount]
+		add   edx, dword[rbp-Thread.rootPos+Thread.PVIdx]
+               push   rdx rdx rcx rax
+                lea   rcx, [sz_format_currmove]
+                mov   rdx, rsp
+                xor   r8, r8
+               call   PrintFancy
+                pop   rax rax rax rax
+               call  _WriteOut_Output
+
 		jmp   .PrintCurrentMoveRet
     end if
 end if

@@ -48,6 +48,108 @@ PrintScore_Uci:
 
 ;;;;;;;;;;;;;;;;;;;;;;; strings ;;;;;;;;;;;;;;;;;;;;;;;;
 
+PrintFancy:
+        ; in: rcx address of format
+        ;     rdx address of qword array
+        ;     r8  address of dqword array
+               push   rsi r12 r13 r14 r15
+                mov   rsi, rcx
+                mov   r15, rdx
+                mov   r14, r8
+                mov   r13, rdi
+                xor   eax, eax
+.Loop:
+              lodsb
+                cmp   al, '%'
+                 je   .GotOne
+                cmp   al, 0
+                 je   .Done
+              stosb
+                jmp   .Loop
+.Done:
+                pop   r15 r14 r13 r12 rsi
+.Return:
+                ret
+.GotOne:
+
+              lodsb
+                mov   r12d, eax
+                cmp   al, 'a'
+                 je   .Alignment
+                cmp   al, 'p'
+                 je   .Position
+                cmp   al, 'n'
+                 je   .NewLine
+               call   ParseInteger
+                and   eax, 15
+               test   r14, r14
+                 jz   @f
+                lea   ecx, [2*rax]
+             movups   xmm0, [r14+8*rcx]
+        @@:     mov   rax, [r15+8*rax]
+                mov   rcx, rax
+                xor   edx, edx
+                lea   r8, [.Return]  
+
+                cmp  r12l, 's'
+                lea  r9, [.PrintScore]
+              cmove  r8, r9
+
+                cmp  r12l, 'x'
+                lea  r9, [PrintHex32]
+              cmove  r8, r9
+                cmp  r12l, 'X'
+                lea  r9, [PrintHex]
+              cmove  r8, r9
+
+                cmp  r12l, 'i'
+                lea  r9, [PrintInt32]
+              cmove  r8, r9
+                cmp  r12l, 'I'
+                lea  r9, [PrintInt]
+              cmove  r8, r9
+
+                cmp  r12l, 'u'
+                lea  r9, [PrintUInt32]
+              cmove  r8, r9
+                cmp  r12l, 'U'
+                lea  r9, [PrintUInt]
+              cmove  r8, r9
+                
+                cmp  r12l, 'm'
+                lea  r9, [PrintUciMove]
+              cmove  r8, r9
+
+               call  r8
+                jmp  .Loop
+.NewLine:
+       PrintNewLine
+                mov  r13, rdi
+                jmp  .Loop
+.Position:
+                mov   qword[rbp+Pos.state], rbx
+               call  Position_PrintFen
+                jmp  .Loop
+.Alignment:
+               call  ParseInteger
+                lea  rcx, [r13+rax]
+                mov  al, ' '
+        @@:     cmp  rdi, rcx
+                jae  .Loop
+              stosb
+                jmp  @b
+.PrintScore:
+               push   rax
+		add   eax, 0x08000
+		sar   eax, 16
+	       call   PrintInt32
+		mov   al, ','
+	      stosb
+                pop   rax
+	      movsx   rax, ax
+	       call   PrintInt32
+                jmp   .Loop
+        
 
 PrintString:
 	      movzx   eax, byte[rcx]
@@ -68,7 +170,7 @@ CmpString:
 		lea   rcx, [rcx+1]
 	       test   al, al
 		 jz   .Found
-		cmp   al, byte [rsi]
+		cmp   al, byte[rsi]
 		lea   rsi,[rsi+1]
 		 je   .Next
 .NoMatch:	pop   rsi
@@ -156,7 +258,7 @@ PrintUciMove:
 
 _PrintUciMove:
 	; in:  ecx  move
-	;      edx  is chess960
+	;      rbp  position (for is chess960)
 	; out: rax  move string
 	;      edx  byte length of move string  4 or 5 for promotions
 		mov   r8d, ecx
@@ -179,7 +281,7 @@ _PrintUciMove:
 		lea   r10d, [r10+4*rax+FILE_G]
 		shr   ecx, 12
 		lea   eax, [ecx-MOVE_TYPE_CASTLE]
-		 or   eax, edx
+		 or   eax, dword[rbp+Pos.chess960]
 	      cmovz   r9d, r10d
 
 		mov   edx, r9d
@@ -629,6 +731,12 @@ ParseInteger:
 		pop   rdx rcx
 		ret
 
+PrintUInt32:
+                mov   eax, eax
+                jmp   PrintUInt
+PrintInt32:
+             movsxd   rax, eax
+PrintInt:
 PrintSignedInteger:
 	; in: rax signed integer
 	; io: rdi string
@@ -638,6 +746,7 @@ PrintSignedInteger:
 		sub   rdi, rcx
 		xor   rax, rcx
 		sub   rax, rcx
+PrintUInt:
 PrintUnsignedInteger:
 	; in: rax unsigned integer
 	; io: rdi string
@@ -655,7 +764,11 @@ PrintUnsignedInteger:
 		 jb   .l2
 		ret
 
-
+PrintHex32:
+                shl   rcx, 32
+               call   PrintHex
+                sub   rdi, 8
+                ret
 PrintHex:
 	      bswap   rcx
 	      vmovq   xmm0, rcx

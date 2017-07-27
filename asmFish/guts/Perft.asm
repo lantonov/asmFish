@@ -4,6 +4,7 @@ Perft_Root:
 virtual at rsp
  .time	   dq ?
  .movelist rb sizeof.ExtMove*MAX_MOVES
+ .extra    rq 1
  .lend	   rb 0
 end virtual
 .localsize = ((.lend-rsp+15) and (-16))
@@ -30,8 +31,10 @@ end virtual
 	       test   ecx, ecx
 		 jz   .MoveLoopDone
 		mov   ecx, dword[rsi]
+                
 	       call   Move_GivesCheck
 		mov   ecx, dword[rsi]
+	        mov   qword[.extra+8*0], rcx
 		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__PerftGen_Root
 		mov   eax, 1
@@ -40,19 +43,16 @@ end virtual
 		jbe   @f
 	       call   Perft_Branch
 	@@:	add   r14, rax
-	       push   rax
+	        mov   qword[.extra+8*1], rax
 		mov   ecx, dword[rsi]
 	       call   Move_Undo
 
+        ; write out stats for this move
 		lea   rdi, [Output]
-		mov   ecx, dword[rsi]
-		mov   edx, dword[rbp+Pos.chess960]
-	       call   PrintUciMove
-		mov   eax, ' :  '
-	      stosd
-		pop   rax
-	       call   PrintUnsignedInteger
-       PrintNewLine
+                lea   rcx, [sz_format_perft1]
+                lea   rdx, [.extra]
+                xor   r8, r8
+               call   PrintFancy
 	       call   _WriteOut_Output
 
 		add   rsi, sizeof.ExtMove
@@ -61,51 +61,23 @@ end virtual
 .MoveLoopDone:
 	       call   _GetTime
 		sub   rax, qword[.time]
-		mov   qword[.time], rax
+		mov   rcx, rax
 
+        ; write out stats for overall perft
 		lea   rdi, [Output]
-		mov   al, '='
-		mov   ecx, 27
-	  rep stosb
-       PrintNewLine
-
-		mov   rax, 'Total ti'
-	      stosq
-		mov   rax, 'me (ms) '
-	      stosq
-		mov   ax, ': '
-	      stosw
-		mov   rax, qword[.time]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-		mov   rax, 'Nodes se'
-	      stosq
-		mov   rax, 'arched  '
-	      stosq
-		mov   ax, ': '
-	      stosw
 		mov   rax, r14
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-		mov   rax, 'Nodes/se'
-	      stosq
-		mov   rax, 'cond    '
-	      stosq
-		mov   ax, ': '
-	      stosw
-
-		mov   rax, r14
-		mov   ecx, 1000
-		mul   rcx
-		mov   rcx, qword[.time]
+		mov   edx, 1000
+                mov   qword[.extra+8*1], r14
+		mul   rdx
+                mov   qword[.extra+8*0], rcx
 		cmp   rcx, 1
 		adc   rcx, 0
 		div   rcx
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
+                mov   qword[.extra+8*2], rax
+                lea   rcx, [sz_format_perft2]
+                lea   rdx, [.extra]
+                xor   r8, r8
+               call   PrintFancy
 	       call   _WriteOut_Output
 .Done:
 		add   rsp, .localsize

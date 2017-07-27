@@ -48,6 +48,7 @@ virtual at rsp
   .limits Limits
   .time  rq 1
   .nodes rq 1
+  .extra rq 4
   .localend rb 0
 end virtual
 .localsize = ((.localend-rsp+15) and (-16))
@@ -137,7 +138,6 @@ UciWriteOut_NewLine:
 UciWriteOut:
 	       call   _WriteOut_Output
 UciGetInput:
-GD ResponseTime
 
 		mov   rsi, qword[ioBuffer.cmdLineStart]
 	       test   rsi, rsi
@@ -147,7 +147,6 @@ GD ResponseTime
 	       test   eax, eax
 		jnz   UciQuit
 
-GD GetTime
 UciChoose:
 	; rsi is the address of the string to process
 
@@ -1110,7 +1109,6 @@ UciPerft:
 
 
 UciBench:
-
 		mov   r12d, 13	 ; depth
 		mov   r13d, 1	 ; threads
 		mov   r14d, 16	 ; hash
@@ -1184,36 +1182,16 @@ UciBench:
 		jmp   .parse_loop
 
 .parse_done:
+        ; write out stats for this bench
 		lea   rdi, [Output]
-		mov   eax, '*** '
-	      stosd
-		mov   rax, 'bench ha'
-	      stosq
-		mov   eax, 'sh '
-	      stosd
-		sub   rdi, 1
-		mov   eax, r14d
-	       call   PrintUnsignedInteger
-		mov   rax, ' threads'
-	      stosq
-		mov   al, ' '
-	      stosb
-		mov   eax, r13d
-	       call   PrintUnsignedInteger
-		mov   rax, ' depth '
-	      stosq
-		sub   rdi, 1
-		mov   eax, r12d
-	       call   PrintUnsignedInteger
-		mov   rax, ' realtim'
-	      stosq
-		mov   eax, 'e '
-	      stosw
-		mov   eax, r15d
-	       call   PrintUnsignedInteger
-		mov   eax, ' ***'
-	      stosd
-       PrintNewLine
+                mov   qword[UciLoop.extra+8*0], r14
+                mov   qword[UciLoop.extra+8*1], r13
+                mov   qword[UciLoop.extra+8*2], r12
+                mov   qword[UciLoop.extra+8*3], r15
+                lea   rcx, [sz_format_bench1]
+                lea   rdx, [UciLoop.extra]
+                xor   r8, r8
+               call   PrintFancy
 if VERBOSE = 0
 	       call   _WriteOut_Output
 end if
@@ -1263,44 +1241,23 @@ end if
 		add   qword[UciLoop.nodes], rax
 		mov   r15, rax
 
-
+        ; write out stats for this position
 		lea   rdi, [Output]
-		mov   rax, r13
-	       call   PrintUnsignedInteger
-		mov   al, ':'
-	      stosb
-                lea   rcx, [Output]
-                sub   rcx, rdi
-		add   ecx, 8
-		 js   @f
-		mov   al, ' '
-	  rep stosb
-		@@:
-
-		mov   rax, 'nodes:  '
-	      stosq
-		mov   rax, r15
-	       call   PrintUnsignedInteger
-                lea   rcx, [Output]
-                sub   rcx, rdi
-		add   ecx, 32
-		 js   @f
-		mov   al, ' '
-	  rep stosb
-		@@:
-
-		mov   rcx, r14
+        	mov   rcx, r14
 		cmp   r14, 1
 		adc   rcx, 0
 		mov   rax, r15
 		xor   edx, edx
 		div   rcx
-	       call   PrintUnsignedInteger
-		mov   al, ' '
-	      stosb
-		mov   eax, 'knps'
-	      stosd
-       PrintNewLine
+                mov   qword[UciLoop.extra+8*0], r13
+                mov   qword[UciLoop.extra+8*1], r15
+                mov   qword[UciLoop.extra+8*2], rax
+                lea   rcx, [sz_format_bench2]
+                lea   rdx, [UciLoop.extra]
+                xor   r8, r8
+               call   PrintFancy
+
+
 if VERBOSE = 0
 	       call   _WriteOut_Output
 else
@@ -1313,49 +1270,23 @@ end if
 
 	       call   _SetPriority_Normal
 
-
+        ; write out stats for overall bench
 		lea   rdi, [Output]
-		mov   al, '='
-		mov   ecx, 27
-	  rep stosb
-       PrintNewLine
-
-		mov   rax, 'Total ti'
-	      stosq
-		mov   rax, 'me (ms) '
-	      stosq
-		mov   ax, ': '
-	      stosw
-		mov   rax, qword[UciLoop.time]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-		mov   rax, 'Nodes se'
-	      stosq
-		mov   rax, 'arched  '
-	      stosq
-		mov   ax, ': '
-	      stosw
 		mov   rax, qword[UciLoop.nodes]
-	       call   PrintUnsignedInteger
-       PrintNewLine
-
-		mov   rax, 'Nodes/se'
-	      stosq
-		mov   rax, 'cond    '
-	      stosq
-		mov   ax, ': '
-	      stosw
-
-		mov   rax, qword[UciLoop.nodes]
-		mov   ecx, 1000
-		mul   rcx
 		mov   rcx, qword[UciLoop.time]
+		mov   edx, 1000
+                mov   qword[UciLoop.extra+8*0], rcx
+                mov   qword[UciLoop.extra+8*1], rax
+		mul   rdx
 		cmp   rcx, 1
 		adc   rcx, 0
 		div   rcx
-	       call   PrintUnsignedInteger
-       PrintNewLine
+                mov   qword[UciLoop.extra+8*2], rax
+                lea   rcx, [sz_format_bench3]
+                lea   rdx, [UciLoop.extra]
+                xor   r8, r8
+               call   PrintFancy
+
 if VERBOSE = 0
 	       call   _WriteOut_Output
 else
@@ -1363,8 +1294,6 @@ else
 	       call   _WriteError
 end if
 		mov   byte[options.displayInfoMove], -1
-
-
 		jmp   UciGetInput
 
 

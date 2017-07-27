@@ -4,8 +4,6 @@
 	       call   _InitializeTimer
 	       call   _CheckCPU
 
-GD GetTime
-
         ; init the engine
 	       call   Options_Init
 	       call   MoveGen_Init
@@ -16,10 +14,6 @@ GD GetTime
 	       call   Evaluate_Init
 	       call   Pawn_Init
 	       call   Endgame_Init
-
-GD String, 'init done'
-GD NewLine
-
 
 	; write engine name
 match =0, VERBOSE {
@@ -49,9 +43,6 @@ end if
 	; which contains the commands we should process first
 	       call   _ParseCommandLine
 
-GD ResponseTime
-GD GetTime
-
 	; enter the main loop
 	       call   UciLoop
 
@@ -75,11 +66,6 @@ end if
 		mov   rdx, qword[ioBuffer.inputBufferSizeB]
 	       call   _VirtualFree
 
-match =1, DEBUG {
-GD String, 'DebugBalance: '
-GD Hex, qword[DebugBalance]
-GD NewLine
-}
 	     Assert   e, qword[DebugBalance], 0, 'assertion DebugBalance=0 failed'
 
 	       call   _ExitProcess
