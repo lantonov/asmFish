@@ -383,7 +383,6 @@ end virtual
 		xor   eax, eax
 	       test   ecx, ecx
 		 jz   .Failed
-		mov   edx, dword[rbp+Pos.chess960]
 	       call   _PrintUciMove	   ; string result is in rax
 		cmp   rax, rbx
 		jne   .CheckNext

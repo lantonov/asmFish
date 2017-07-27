@@ -145,14 +145,15 @@ sz_format_bench2:
         db '%U0: %a8nodes: %U1 %a32%U2 knps%n', 0
 sz_format_perft2:
 sz_format_bench3:
-        db "===========================%n"
-        db "Total time (ms) : %U0%n"
-        db "Nodes searched  : %U1%n"
-        db "Nodes/second    : %U2%n", 0
-sz_hash_cleared:
-        db "info string hash cleared", 0
+        db '===========================%n'
+        db 'Total time (ms) : %U0%n'
+        db 'Nodes searched  : %U1%n'
+        db 'Nodes/second    : %U2%n', 0
 
+sz_path_set      db 'info string path set to ', 0
+sz_hash_cleared  db 'info string hash cleared', 0
 
+sz_error_priority  db 'error: unknown priority ',0
 sz_error_depth     db 'error: bad depth ',0
 sz_error_fen       db 'error: illegal fen',0
 sz_error_moves     db 'error: illegal move ',0

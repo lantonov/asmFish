@@ -65,15 +65,16 @@ sz_NewLineEnd:
 szUciResponseEnd:
 
 
-
-sz_thread_format:
+sz_format_currmove:
+        .ascii "info depth %u0 currmove %m1 currmovenumber %u2%n\0"
+sz_format_thread:
         .ascii "info string node %i0 has threads\0"
-sz_bench_format1:
+sz_format_bench1:
         .ascii "*** bench hash %u0 threads %u1 depth %u2 realtime %u3 ***\n\0"
-sz_bench_format2:
+sz_format_bench2:
         .ascii "%U0: %a8nodes: %U1 %a32%U2 knps\n\0"
-sz_perft_format:
-sz_bench_format3:
+sz_format_perft2:
+sz_format_bench3:
         .ascii "===========================\n"
         .ascii "Total time (ms) : %U0\n"
         .ascii "Nodes searched  : %U1\n"

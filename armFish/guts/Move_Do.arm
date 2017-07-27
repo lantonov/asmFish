@@ -192,7 +192,6 @@ Display 2, "Move_Do(move=%m1)\n"
         str  w0, [x27], 1
         mov  w0, ' '
         str  w0, [x27], 1
-        ldr  w2, [x20, Pos.chess960]
          bl  PrintUciMove
 
        ldrb  w4, [x21, State.givesCheck]

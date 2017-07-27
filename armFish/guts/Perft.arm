@@ -102,7 +102,6 @@ Perft_Root.MoveLoop:
 */
         lea  x27, Output
         ldr  w1, [x26]
-        ldr  w2, [x20, Pos.chess960]
          bl  PrintUciMove
         mov  w0, ' '
        strb  w0, [x27], 1
@@ -186,7 +185,7 @@ Perft_Root.MoveLoopDone:
      fcvtzs  x2, d0
         stp  x1, x24, [sp, -32]!
         str  x2, [sp, 16]
-        lea  x1, sz_bench_format3
+        lea  x1, sz_format_perft2
         add  x2, sp, 0
         mov  x3, 0
          bl  PrintFancy

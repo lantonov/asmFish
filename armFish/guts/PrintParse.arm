@@ -368,6 +368,7 @@ _PrintUciMove:
         add  w10, w10, w0, lsl 2
         add  w10, w10, FILE_C
         lsr  w1, w1, 12
+        ldr  w2, [x20, Pos.chess960]
         cmp  w1, MOVE_TYPE_CASTLE
        ccmp  w2, 0, 0, eq
        csel  w9, w10, w9, eq
@@ -503,7 +504,6 @@ ParseUciMove.CheckNext:
         add  x27, x27, sizeof.ExtMove
         ldr  w1, [x27, ExtMove.move]
         cbz  w1, ParseUciMove.Failed
-        ldr  w2, [x20, Pos.chess960]
          bl  _PrintUciMove
         cmp  x0, x21
         bne  ParseUciMove.CheckNext

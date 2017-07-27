@@ -1267,13 +1267,9 @@ end virtual
 		sub   rsp, .localsize
 		mov   rsi, rcx
 */
-DisplayMove_Uci.output    = 0
-DisplayMove_Uci.lend      = 32*sizeof.rb + DisplayMove_Uci.output
-DisplayMove_Uci.localsize = (DisplayMove_Uci.lend + 15) & -16
         stp  x30, x26, [sp, -16]!
-        stp  x27, x25, [sp, -16]!
-        sub  sp, sp, DisplayMove_Uci.localsize
-        mov  x26, x1
+        stp  x27, x20, [sp, -16]!
+        add  x20, x1, Thread.rootPos
 /*
 		mov   al, byte[options.displayInfoMove]
 	       test   al, al
@@ -1294,7 +1290,7 @@ DisplayMove_Uci.localsize = (DisplayMove_Uci.lend + 15) & -16
 	      movzx   edx, byte[rsi+Thread.rootPos+Pos.chess960]
 	       call   PrintUciMove
 */
-        add  x27, sp, DisplayMove_Uci.output
+        lea  x27, Output
         mov  w0, 'b'
        strb  w0, [x27], 1
         mov  w0, 'e'
@@ -1313,9 +1309,8 @@ DisplayMove_Uci.localsize = (DisplayMove_Uci.lend + 15) & -16
        strb  w0, [x27], 1
         mov  w0, ' '
        strb  w0, [x27], 1
-        ldr  x1, [x26, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.table]
+        ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
         ldr  w1, [x1, 0*sizeof.RootMove + RootMove.pv + 4*0]
-       ldrb  w2, [x26, Thread.rootPos + Pos.chess960]
          bl  PrintUciMove
 /*
 		mov   rcx, qword[rsi+Thread.rootPos+Pos.rootMovesVec+RootMovesVec.table]
@@ -1323,7 +1318,7 @@ DisplayMove_Uci.localsize = (DisplayMove_Uci.lend + 15) & -16
 		cmp   eax, 2
 		 jb   .get_ponder_from_tt
 */
-        ldr  x1, [x26, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.table]
+        ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
         ldr  w0, [x1, 0*sizeof.RootMove+RootMove.pvSize]
         cmp  w0, 2
         blo  DisplayMove_Uci.get_ponder_from_tt
@@ -1353,7 +1348,6 @@ DisplayMove_Uci.have_ponder_from_tt:
         mov  w0, ' '
        strb  w0, [x27], 1
         ldr  w1, [x1, 0*sizeof.RootMove + RootMove.pv + 4*1]
-       ldrb  w2, [x26, Thread.rootPos + Pos.chess960]
          bl  PrintUciMove
         
 DisplayMove_Uci.skip_ponder:
@@ -1363,9 +1357,8 @@ DisplayMove_Uci.skip_ponder:
 	      stosb
 	       call   _WriteOut
 */
-        add  x1, sp, DisplayMove_Uci.output
         PrintNewLine
-         bl  Os_WriteOut
+         bl  Os_WriteOut_Output
 
 DisplayMove_Uci.return:
 /*
@@ -1373,8 +1366,7 @@ DisplayMove_Uci.return:
 		pop   r15 rdi rsi
 		ret
 */
-        add  sp, sp, DisplayMove_Uci.localsize
-        ldp  x27, x25, [sp], 16
+        ldp  x27, x20, [sp], 16
         ldp  x30, x26, [sp], 16
         ret
 
@@ -1387,9 +1379,9 @@ DisplayMove_Uci.get_ponder_from_tt:
 		jnz   .have_ponder_from_tt
 		jmp   .skip_ponder
 */
-        add  x1, x26, Thread.rootPos
+        mov  x1, x20
          bl  ExtractPonderFromTT
-        ldr  x1, [x26, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.table]
+        ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
        cbnz  w0, DisplayMove_Uci.have_ponder_from_tt
           b  DisplayMove_Uci.skip_ponder
 
@@ -1998,7 +1990,6 @@ DisplayInfo_Uci.next_move:
         bhs  DisplayInfo_Uci.moves_done
         str  w0, [x27], 1
         ldr  w1, [x22]
-       ldrb  w2, [x20, Pos.chess960]
          bl  PrintUciMove
         add  x22, x22, 4
           b  DisplayInfo_Uci.next_move

@@ -1653,7 +1653,7 @@ UciBench.parse_done:
         stp  x22, x25, [sp, -16]!
         stp  x24, x23, [sp, -16]!
         lea  x27, Output
-        lea  x1, sz_bench_format1
+        lea  x1, sz_format_bench1
         add  x2, sp, 0
          bl  PrintFancy
         add  sp, sp, 32
@@ -1757,7 +1757,7 @@ UciBench.nextpos:
        udiv  x2, x25, x1
         stp  x23, x0, [sp, -32]!
         str  x2, [sp, 16]
-        lea  x1, sz_bench_format2
+        lea  x1, sz_format_bench2
         add  x2, sp, 0
         add  x3, sp, 0
          bl  PrintFancy
@@ -1789,7 +1789,7 @@ UciBench.nextpos:
      fcvtzs  x2, d2
         stp  x0, x1, [sp, -32]!
         str  x2, [sp, 16]
-        lea  x1, sz_bench_format3
+        lea  x1, sz_format_bench3
         add  x2, sp, 0
         add  x3, sp, 0
          bl  PrintFancy

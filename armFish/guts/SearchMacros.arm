@@ -3173,143 +3173,34 @@ Search.CheckDraw_Cold\@:
 //    end if
 //end if
  .endif
-//
-//
-//if USE_CURRMOVE
- .if USE_CURRMOVE
-//if VERBOSE < 2
-  .if VERBOSE < 2
-//    if .RootNode eq 1
-   .if \RootNode == 1
-//	      align   8
-//.PrintCurrentMove:
-Search.PrintCurrentMove\@:
-        lea  x6, options
-       ldrb  w4, [x6, Options.displayInfoMove]
-        cbz  w4, Search.PrintCurrentMoveRet\@
-        sub  sp, sp, 128
-        mov  x27, sp
-//		mov   rax, 'info dep'
-//	      stosq
-        mov  w0, 'i'
-       strb  w0, [x27], 1        
-        mov  w0, 'n'
-       strb  w0, [x27], 1        
-        mov  w0, 'f'
-       strb  w0, [x27], 1        
-        mov  w0, 'o'
-       strb  w0, [x27], 1        
-        mov  w0, ' '
-       strb  w0, [x27], 1        
-        mov  w0, 'd'
-       strb  w0, [x27], 1        
-        mov  w0, 'e'
-       strb  w0, [x27], 1        
-        mov  w0, 'p'
-       strb  w0, [x27], 1        
-//		mov   eax, 'th '
-//	      stosd
-//		sub   rdi, 1
-        mov  w0, 't'
-       strb  w0, [x27], 1        
-        mov  w0, 'h'
-       strb  w0, [x27], 1        
-        mov  w0, ' '
-       strb  w0, [x27], 1        
-//		mov   eax, dword[.depth+128]
-        ldr  w0, [sp, 128 + Search.depth]
-//	       call   PrintUnsignedInteger
-         bl  PrintUInt
-//		mov   rax, ' currmov'
-//	      stosq
-        mov  w0, ' '
-       strb  w0, [x27], 1        
-        mov  w0, 'c'
-       strb  w0, [x27], 1        
-        mov  w0, 'u'
-       strb  w0, [x27], 1        
-        mov  w0, 'r'
-       strb  w0, [x27], 1        
-        mov  w0, 'r'
-       strb  w0, [x27], 1        
-        mov  w0, 'm'
-       strb  w0, [x27], 1        
-        mov  w0, 'o'
-       strb  w0, [x27], 1        
-        mov  w0, 'v'
-       strb  w0, [x27], 1        
-//		mov   eax, 'e '
-//	      stosw
-        mov  w0, 'e'
-       strb  w0, [x27], 1        
-        mov  w0, ' '
-       strb  w0, [x27], 1        
-//		mov   ecx, dword[.move+128]
-        ldr  w1, [sp, 128 + Search.move]
-//		mov   edx, dword[rbp+Pos.chess960]
-        ldr  w2, [sp, 128 + Search.move]
-//	       call   PrintUciMove
-         bl  PrintUciMove
-//		mov   rax, ' currmov'
-//	      stosq
-        mov  w0, ' '
-       strb  w0, [x27], 1        
-        mov  w0, 'c'
-       strb  w0, [x27], 1        
-        mov  w0, 'u'
-       strb  w0, [x27], 1        
-        mov  w0, 'r'
-       strb  w0, [x27], 1        
-        mov  w0, 'r'
-       strb  w0, [x27], 1        
-        mov  w0, 'm'
-       strb  w0, [x27], 1        
-        mov  w0, 'o'
-       strb  w0, [x27], 1        
-        mov  w0, 'v'
-       strb  w0, [x27], 1        
-//		mov   rax, 'enumber '
-//	      stosq
-        mov  w0, 'e'
-       strb  w0, [x27], 1        
-        mov  w0, 'n'
-       strb  w0, [x27], 1        
-        mov  w0, 'u'
-       strb  w0, [x27], 1        
-        mov  w0, 'm'
-       strb  w0, [x27], 1        
-        mov  w0, 'b'
-       strb  w0, [x27], 1        
-        mov  w0, 'e'
-       strb  w0, [x27], 1        
-        mov  w0, 'r'
-       strb  w0, [x27], 1        
-        mov  w0, ' '
-       strb  w0, [x27], 1        
-//		mov   eax, dword[.moveCount+128]
-        ldr  w0, [sp, 128 + Search.moveCount]
-//		add   eax, dword[rbp-Thread.rootPos+Thread.PVIdx]
-        add  x6, x20, -Thread.rootPos
-        ldr  w4, [x6, Thread.PVIdx]
-        add  w0, w0, w4
-//	       call   PrintUnsignedInteger
-         bl  PrintUInt
-//		mov   rcx, rsp
-//       PrintNewLine
-        PrintNewLine
-        mov  x1, sp
-//	       call   _WriteOut
-         bl  Os_WriteOut
-//		add   rsp, 128
-        add  sp, sp, 128
-//		jmp   .PrintCurrentMoveRet
-          b  Search.PrintCurrentMoveRet\@
-//    end if
-   .endif
-//end if
+
+
+  .if USE_CURRMOVE
+    .if VERBOSE < 2
+      .if \RootNode == 1
+  Search.PrintCurrentMove\@:
+                lea  x6, options
+               ldrb  w4, [x6, Options.displayInfoMove]
+                cbz  w4, Search.PrintCurrentMoveRet\@
+
+                lea  x27, [Output]
+                ldr  w0, [sp, Search.depth]
+                ldr  w1, [sp, Search.move]
+                ldr  w2, [sp, Search.moveCount]
+                add  x4, x20, -Thread.rootPos
+                ldr  w4, [x4, Thread.PVIdx]
+                add  w2, w2, w4
+                stp  x2, x2, [sp, -16]!
+                stp  x0, x1, [sp, -16]!
+                lea  x1, sz_format_currmove
+                mov  x2, sp
+                mov  x3, 0
+                 bl  PrintFancy
+                add  sp, sp, 8*4
+                 bl  Os_WriteOut_Output
+
+                  b  Search.PrintCurrentMoveRet\@
+      .endif
+    .endif
   .endif
-//end if
- .endif
-//
-//}
 .endm

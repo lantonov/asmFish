@@ -867,12 +867,8 @@ end if
 		jnz   .PriorityIdle
 
 		lea   rdi, [Output]
-		mov   rax, 'error: u'
-	      stosq
-		mov   rax, 'nknown p'
-	      stosq
-		mov   rax, 'riority '
-	      stosq
+                lea   rcx, [sz_error_priority]
+               call   PrintString
 		mov   ecx, 64
 	       call   ParseToken
 		jmp   UciWriteOut_NewLine
@@ -893,12 +889,8 @@ end if
 .ClearHash:
 	       call   Search_Clear
 		lea   rdi, [Output]
-		mov   rax, 'info str'
-	      stosq
-		mov   rax, 'ing hash'
-	      stosq
-		mov   rax, ' cleared'
-	      stosq
+                lea   rcx, [sz_hash_cleared]
+               call   PrintString
 		jmp   UciWriteOut_NewLine
 
 if USE_SYZYGY
@@ -961,12 +953,8 @@ end if
 	  rep movsb
 
 		lea   rdi, [Output]
-		mov   rax, 'info str'
-	      stosq
-		mov   rax, 'ing path'
-	      stosq
-		mov   rax, ' set to '
-	      stosq
+                lea   rcx, [sz_path_set]
+	       call   PrintString
 		mov   rcx, qword[options.hashPath]
 	       call   PrintString
 		jmp   UciWriteOut_NewLine

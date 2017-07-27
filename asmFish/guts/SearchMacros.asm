@@ -1828,7 +1828,7 @@ end if
 
 
 if USE_CURRMOVE
-if VERBOSE < 2
+  if VERBOSE < 2
     if .RootNode eq 1
 	      align   8
 .PrintCurrentMove:
@@ -1850,7 +1850,7 @@ if VERBOSE < 2
 
 		jmp   .PrintCurrentMoveRet
     end if
-end if
+  end if
 end if
 
 }

@@ -682,32 +682,24 @@ end if
 
 DisplayMove_Uci:
 	; in: rcx address of best thread
-	       push   rsi rdi r15
-virtual at rsp
-  .output rb 32
-  .lend rb 0
-end virtual
-.localsize = ((.lend-rsp+15) and (-16))
-	 _chkstk_ms   rsp, .localsize
-		sub   rsp, .localsize
-		mov   rsi, rcx
+	       push   rbp rsi rdi
+                lea   rbp, [rcx+Thread.rootPos]
 
 		mov   al, byte[options.displayInfoMove]
 	       test   al, al
 		 jz   .return
 
 	; print best move and ponder move
-		lea   rdi, [.output]
+		lea   rdi, [Output]
 		mov   rax, 'bestmove'
 	      stosq
 		mov   al, ' '
 	      stosb
-		mov   rcx, qword[rsi+Thread.rootPos+Pos.rootMovesVec+RootMovesVec.table]
+		mov   rcx, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
 		mov   ecx, dword[rcx+0*sizeof.RootMove+RootMove.pv+4*0]
-	      movzx   edx, byte[rsi+Thread.rootPos+Pos.chess960]
 	       call   PrintUciMove
 
-		mov   rcx, qword[rsi+Thread.rootPos+Pos.rootMovesVec+RootMovesVec.table]
+		mov   rcx, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
 		mov   eax, dword[rcx+0*sizeof.RootMove+RootMove.pvSize]
 		cmp   eax, 2
 		 jb   .get_ponder_from_tt
@@ -715,22 +707,18 @@ end virtual
 		mov   rax, ' ponder '
 	      stosq
 		mov   ecx, dword[rcx+0*sizeof.RootMove+RootMove.pv+4*1]
-	      movzx   edx, byte[rsi+Thread.rootPos+Pos.chess960]
 	       call   PrintUciMove
 .skip_ponder:
-		lea   rcx, [.output]
-		mov   eax, 10
-	      stosb
-	       call   _WriteOut
+       PrintNewLine
+	       call   _WriteOut_Output
 .return:
-		add   rsp, .localsize
-		pop   r15 rdi rsi
+		pop   rdi rsi rbp
 		ret
 
 .get_ponder_from_tt:
-		lea   rcx, [rsi+Thread.rootPos]
+		mov   rcx, rbp
 	       call   ExtractPonderFromTT
-		mov   rcx, qword[rsi+Thread.rootPos+Pos.rootMovesVec+RootMovesVec.table]
+		mov   rcx, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
 	       test   eax, eax
 		jnz   .have_ponder_from_tt
 		jmp   .skip_ponder
@@ -992,7 +980,6 @@ end if
 		jae   .moves_done
 	      stosb
 		mov   ecx, dword[r12]
-	      movzx   edx, byte[rbp+Pos.chess960]
 	       call   PrintUciMove
 		add   r12, 4
 		jmp   .next_move

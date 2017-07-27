@@ -214,7 +214,7 @@ ThreadPool_DisplayThreadDistribution.NextNode:
 	      stosd
 		 or   ebx, -1
 */
-        lea  x1, sz_thread_format
+        lea  x1, sz_format_thread
         ldr  w0, [x26, NumaNode.nodeNumber]
         str  x0, [sp, -32]!
         add  x2, sp, 0
