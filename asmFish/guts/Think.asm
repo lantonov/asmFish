@@ -171,7 +171,8 @@ end if
 		mov   dword[.delta], edx
     .reset_window_done:
 
-	; Start with a small aspiration window and, in the case of a fail high/low, re-search with a bigger window until we're not failing high/low anymore.
+	; Start with a small aspiration window and, in the case of a fail high/low,
+        ; re-search with a bigger window until we're not failing high/low anymore.
 .search_loop:
 		mov   ecx, dword[.alpha]
 		mov   edx, dword[.beta]
@@ -180,6 +181,8 @@ end if
 	       call   Search_Root ; rootPos is in rbp, ss is in rbx
 		mov   r12d, eax
 		mov   dword[.bestValue], eax
+                mov   qword[rbp+Pos.state], rbx
+
 	       imul   ecx, r14d, sizeof.RootMove
 		add   rcx, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
 		mov   rdx, qword[rbp+Pos.rootMovesVec+RootMovesVec.ender]

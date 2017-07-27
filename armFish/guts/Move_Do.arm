@@ -372,7 +372,6 @@ Move_Do.SpecialRet:
         add  x21, x21, sizeof.State
         and  x10, x10, 7
         str  w16, [x20, Pos.sideToMove]
-        str  x21, [x20, Pos.state]
         
         str  d5, [x21, State.key]
         str  d4, [x21, State.pawnKey]

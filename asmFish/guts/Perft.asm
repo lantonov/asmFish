@@ -80,6 +80,7 @@ end virtual
                call   PrintFancy
 	       call   _WriteOut_Output
 .Done:
+		mov   qword[rbp+Pos.state], rbx
 		add   rsp, .localsize
 		pop   r15 r14 rdi rsi rbx
 		ret

@@ -37,7 +37,6 @@ end if
 		and   eax, 7
 
 		sub   rbx, sizeof.State
-		mov   qword[rbp+Pos.state], rbx
 		mov   dword[rbp+Pos.sideToMove], esi
 		mov   byte[rbp+Pos.board+r8], r10l
 		mov   byte[rbp+Pos.board+r9], r11l

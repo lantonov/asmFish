@@ -33,7 +33,6 @@ Display 2, "Move_Undo(move=%m1)\n"
 
         sub  x21, x21, sizeof.State
 
-        str  x21, [x20, Pos.state]
         str  w16, [x20, Pos.sideToMove]
        strb  w10, [x20, x8]     // Pos.board = 0
        strb  w11, [x20, x9]     // Pos.board = 0

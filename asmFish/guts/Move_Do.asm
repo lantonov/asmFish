@@ -148,7 +148,7 @@ match =1, DEBUG {
 		lea   rdi, [DebugOutput]
 		mov   qword[rbp+Pos.state], rbx
 	       call   Position_PrintSmall
-PrintNewLine
+       PrintNewLine
 		mov   qword[rbp+Pos.state], rbx
 	       call   Position_IsLegal
 	       test   eax, eax
@@ -290,7 +290,6 @@ ProfileInc Move_Do
 		and   r10d, 7
 
 		mov   dword[rbp+Pos.sideToMove], esi
-		mov   qword[rbp+Pos.state], rbx
 
 	      vmovq   qword[rbx+State.key], xmm5
 	      vmovq   qword[rbx+State.pawnKey], xmm4
