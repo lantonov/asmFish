@@ -46,6 +46,22 @@ macro vaddsd a,b,c {
  \}
 }
 
+macro vaddpd a,b,c {
+ match =1, CPU_HAS_AVX1 \{
+	     vaddpd  a,b,c
+ \}
+ match =0, CPU_HAS_AVX1 \{
+    if a eq b
+	      addpd  a, c
+    else if a eq c
+	      addpd  a, b
+    else
+	     movaps  a, b
+	      addpd  a, c
+    end if
+ \}
+}
+
 macro vsubsd a,b,c {
  match =1, CPU_HAS_AVX1 \{
 	     vsubsd  a,b,c
@@ -54,10 +70,30 @@ macro vsubsd a,b,c {
     if a eq b
 	      subsd  a, c
     else if a eq c
-	      subsd  a, b
+	   display 'arguments of vsubsd are strange for no avx1'
+	   display 13,10
+	   err
     else
 	     movaps  a, b
 	      subsd  a, c
+    end if
+ \}
+}
+
+macro vsubpd a,b,c {
+ match =1, CPU_HAS_AVX1 \{
+	     vsubpd  a,b,c
+ \}
+ match =0, CPU_HAS_AVX1 \{
+    if a eq b
+	      subpd  a, c
+    else if a eq c
+	   display 'arguments of vsubpd are strange for no avx1'
+	   display 13,10
+	   err
+    else
+	     movaps  a, b
+	      subpd  a, c
     end if
  \}
 }
