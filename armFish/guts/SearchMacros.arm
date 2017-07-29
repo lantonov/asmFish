@@ -1652,7 +1652,7 @@ Search.CheckDraw_Cold\@:
   .if USE_CURRMOVE
     .if VERBOSE < 2
       .if \RootNode == 1
-  Search.PrintCurrentMove\@:
+Search.PrintCurrentMove\@:
                 lea  x6, options
                ldrb  w4, [x6, Options.displayInfoMove]
                 cbz  w4, Search.PrintCurrentMoveRet\@

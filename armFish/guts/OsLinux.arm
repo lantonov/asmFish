@@ -11,7 +11,7 @@ Os_MutexLock:
                 stp  x29, x30, [sp, -16]!
                 mov  x29, x1
                 mov  x1, 100
-  Os_MutexLock.L1:
+Os_MutexLock.L1:
                 mov  w2, 0x01
              ldaxrb  w3, [x29]
              stlxrb  w4, w2, [x29]
@@ -19,17 +19,17 @@ Os_MutexLock:
                 cbz  w3, Os_MutexLock.L4
                 sub  x1, x1, 1
                cbnz  x1, Os_MutexLock.L1
-  Os_MutexLock.L3:
+Os_MutexLock.L3:
                 mov  w0, 0x0101
-  Os_MutexLock.L3_xchg:
+Os_MutexLock.L3_xchg:
               ldaxr  w3, [x29]
               stlxr  w4, w0, [x29]
                cbnz  w4, Os_MutexLock.L3_xchg
                tbnz  w3, 0, Os_MutexLock.L2
-  Os_MutexLock.L4:
+Os_MutexLock.L4:
                 ldp  x29, x30, [sp], 16
                 ret
-  Os_MutexLock.L2:
+Os_MutexLock.L2:
                 mov  x0, x29
                 mov  x1, FUTEX_WAIT_PRIVATE
                 mov  x2, 0x0101
@@ -49,17 +49,17 @@ Os_MutexUnlock:
                 cmp  w0, 1      // expected = 1
                 bne  Os_MutexUnlock.L1
                 mov  w1, 0      // desired = 0
-  Os_MutexUnlock.L0:
+Os_MutexUnlock.L0:
               ldaxr  w2, [x29]  // w2 = obj
                 cmp  w2, w0     // cmp obj, expected
                 bne  Os_MutexUnlock.L1
               stlxr  w4, w1, [x29]      // obj = desired
                cbnz  w4, Os_MutexUnlock.L0
                   b  Os_MutexUnlock.L3
-  Os_MutexUnlock.L1:
+Os_MutexUnlock.L1:
               stlrb  wzr, [x29]
                 mov  x1, 200
-  Os_MutexUnlock.L2:
+Os_MutexUnlock.L2:
               ldarb  w0, [x29]
                tbnz  w0, 0, Os_MutexUnlock.L3
                 sub  x1, x1, 1
@@ -76,7 +76,7 @@ Os_MutexUnlock:
                 svc  0
                 tst  w0, w0
                 bmi  Failed_sys_futex_MutexUnlock
-  Os_MutexUnlock.L3:
+Os_MutexUnlock.L3:
                 ldp  x29, x30, [sp], 16
                 ret
 
@@ -92,7 +92,7 @@ Os_EventSignal:
         // in: x1 address of conditional variable
                 stp  x29, x30, [sp, -16]!
                 mov  x29, x1
-  Os_EventSignal.incr:
+Os_EventSignal.incr:
               ldaxr  w0, [x29]
                 add  w0, w0, 1
               stlxr  w4, w0, [x29]
@@ -123,7 +123,7 @@ Os_EventWait:
                ldar  x4, [x5]
                 cmp  x29, x4
                 bne  Os_EventWait.L4
-  Os_EventWait.L1:
+Os_EventWait.L1:
                 mov  x1, x29
                  bl  Os_MutexUnlock
                 mov  x0, x28
@@ -134,7 +134,7 @@ Os_EventWait:
                 mov  x5, 0
                 mov  x8, sys_futex
                 svc  0
-  Os_EventWait.L3:
+Os_EventWait.L3:
                 mov  w0, 0x0101
               ldaxr  w3, [x29]
               stlxr  w4, w0, [x29]
@@ -143,7 +143,7 @@ Os_EventWait:
                 ldp  x28, x29, [sp], 16
                 ldp  x24, x30, [sp], 16
                 ret
-  Os_EventWait.L2:
+Os_EventWait.L2:
                 mov  x0, x29
                 mov  x1, FUTEX_WAIT_PRIVATE
                 mov  x2, 0x0101
@@ -153,12 +153,12 @@ Os_EventWait:
                 mov  x8, sys_futex
                 svc  0
                   b  Os_EventWait.L3
-  Os_EventWait.L4:
+Os_EventWait.L4:
               ldaxr  x2, [x5]
                cbnz  x2, Os_EventWait.L4_nexp
               stlxr  w4, x29, [x5]
                cbnz  w4, Os_EventWait.L4
-  Os_EventWait.L4_nexp:
+Os_EventWait.L4_nexp:
                ldar  x2, [x5]
                 cmp  x2, x29    // we should have mutex x29 saved at x5
                 beq  Os_EventWait.L1
@@ -201,7 +201,7 @@ Os_ThreadCreate:
                 ldp  x28, x29, [sp], 16
                 ldp  x21, x30, [sp], 16
                 ret
-  Os_ThreadCreate.WeAreChild:
+Os_ThreadCreate.WeAreChild:
                 mov  x0, 0
                 mov  x1, MAX_LINUXCPUS/8
                 add  x2, x22, NumaNode.cpuMask
@@ -214,7 +214,7 @@ Os_ThreadCreate:
                 mov  x8, sys_sched_setaffinity
                 svc  0
                cbnz  w0, Failed_sys_sched_setaffinity
-  Os_ThreadCreate.DontSetAffinity:
+Os_ThreadCreate.DontSetAffinity:
                 mov  x1, x25
                 blr  x24
                 add  x0, x23, ThreadHandle.mutex
@@ -366,7 +366,7 @@ Display 1, "munmap(size = %X1, addr = %X0)"
 Display 1, ": %X0\n"
                 cmp  w0, 0
                 bne  Failed_sys_unmap_VirtualFree
-  Os_VirtualFree.Null:
+Os_VirtualFree.Null:
                 ldp  x29, x30, [sp], 16
                 ret
 
@@ -419,7 +419,7 @@ Os_ParseCommandLine:
                 str  xzr, [x29, IOBuffer.cmdLineStart]
                 mov  w21, 0
                 mov  w27, 0
-  Os_ParseCommandLine.NextArg1:
+Os_ParseCommandLine.NextArg1:
                 add  w21, w21, 1
                 ldr  w4, [x20]
                 cmp  w21, w4
@@ -429,7 +429,7 @@ Os_ParseCommandLine:
                  bl  StringLength
                 add  w27, w27, w0
                   b  Os_ParseCommandLine.NextArg1
-  Os_ParseCommandLine.ArgDone1:
+Os_ParseCommandLine.ArgDone1:
                 add  w1, w27, 4096
                 add  w1, w1, 1
                 and  w1, w1, -4096
@@ -440,7 +440,7 @@ Os_ParseCommandLine:
                 ldr  x27, [x29, IOBuffer.inputBuffer]
                 str  x27, [x29, IOBuffer.cmdLineStart]
                 mov  w21, 0
-  Os_ParseCommandLine.NextArg2:
+Os_ParseCommandLine.NextArg2:
                 add  w21, w21, 1
                 ldr  w4, [x20]
                 cmp  w21, w4
@@ -448,20 +448,20 @@ Os_ParseCommandLine:
                 add  x1, x21, 1
                 ldr  x26, [x20, x1, lsl 3]
                 mov  w2, 10
-  Os_ParseCommandLine.CopyString:
+Os_ParseCommandLine.CopyString:
                ldrb  w0, [x26], 1
                 cbz  w0, Os_ParseCommandLine.CopyDone
                 cmp  w0, SEP_CHAR
                csel  w0, w2, w0, eq
                strb  w0, [x27], 1
                   b  Os_ParseCommandLine.CopyString
-  Os_ParseCommandLine.CopyDone:
+Os_ParseCommandLine.CopyDone:
                 mov  w0, ' '
                strb  w0, [x27], 1
                   b  Os_ParseCommandLine.NextArg2
-  Os_ParseCommandLine.ArgDone2:
+Os_ParseCommandLine.ArgDone2:
                strb  wzr, [x27]
-  Os_ParseCommandLine.Done:
+Os_ParseCommandLine.Done:
                 ldp  x29, x30, [sp], 16
                 ldp  x26, x27, [sp], 16
                 ldp  x24, x25, [sp], 16
