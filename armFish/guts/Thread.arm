@@ -1,341 +1,338 @@
 
 ThreadIdxToNode:
-// in:  x1  index of thread
-// out: x0  address of numa noda
-        lea  x0, threadPool
-        mov  w4, sizeof.NumaNode
-        ldr  w8, [x0, ThreadPool.coreCnt]
-        ldr  w9, [x0, ThreadPool.nodeCnt]
-        add  x0, x0, ThreadPool.nodeTable
-       udiv  w3, w1, w8
-       msub  w2, w3, w8, w1
-        cmp  w8, 1
-        beq  ThreadIdxToNode.Return
-        cmp  w1, w8
-        bhs  ThreadIdxToNode.MoreThreadsThanCores
-       madd  x1, x9, x4, x0
+        // in:  x1  index of thread
+        // out: x0  address of numa noda
+                lea  x0, threadPool
+                mov  w4, sizeof.NumaNode
+                ldr  w8, [x0, ThreadPool.coreCnt]
+                ldr  w9, [x0, ThreadPool.nodeCnt]
+                add  x0, x0, ThreadPool.nodeTable
+               udiv  w3, w1, w8
+               msub  w2, w3, w8, w1
+                cmp  w8, 1
+                beq  ThreadIdxToNode.Return
+                cmp  w1, w8
+                bhs  ThreadIdxToNode.MoreThreadsThanCores
+               madd  x1, x9, x4, x0
 ThreadIdxToNode.NextNode:
-        ldr  w3, [x0, NumaNode.coreCnt]
-       subs  w2, w2, w3
-        bmi  ThreadIdxToNode.Return
-        add  x0, x0, x4
-        cmp  x0, x1
-        blo  ThreadIdxToNode.NextNode
-        sub  x0, x0, x4
+                ldr  w3, [x0, NumaNode.coreCnt]
+               subs  w2, w2, w3
+                bmi  ThreadIdxToNode.Return
+                add  x0, x0, x4
+                cmp  x0, x1
+                blo  ThreadIdxToNode.NextNode
+                sub  x0, x0, x4
 ThreadIdxToNode.Return:
-        ret
+                ret
 ThreadIdxToNode.MoreThreadsThanCores:
-       udiv  w3, w2, w9
-       msub  w2, w3, w9, w2 
-       madd  x0, x2, x4, x0
-        ret
+               udiv  w3, w2, w9
+               msub  w2, w3, w9, w2 
+               madd  x0, x2, x4, x0
+                ret
 
 
 Thread_Create:
-// in: x1 index of thread
-        stp  x21, x30, [sp, -16]!
-        stp  x26, x27, [sp, -16]!
-        stp  x24, x25, [sp, -16]!
-        mov  w26, w1
+        // in: x1 index of thread
+                stp  x21, x30, [sp, -16]!
+                stp  x26, x27, [sp, -16]!
+                stp  x24, x25, [sp, -16]!
+                mov  w26, w1
 
-// get the right node to put this thread
-         bl  ThreadIdxToNode
-        mov  x27, x0
-        ldr  w25, [x27, NumaNode.nodeNumber]
+        // get the right node to put this thread
+                 bl  ThreadIdxToNode
+                mov  x27, x0
+                ldr  w25, [x27, NumaNode.nodeNumber]
 
-// allocate self
-        mov  x1, sizeof.Thread
-        mov  w2, w25
-         bl  Os_VirtualAllocNuma
-        lea  x6, threadPool + ThreadPool.threadTable
-        str  x0, [x6, x26, lsl 3]
-        mov  x21, x0
+        // allocate self
+                mov  x1, sizeof.Thread
+                mov  w2, w25
+                 bl  Os_VirtualAllocNuma
+                lea  x6, threadPool + ThreadPool.threadTable
+                str  x0, [x6, x26, lsl 3]
+                mov  x21, x0
 
-// fill in address of numanode struct
-        str  x27, [x21, Thread.numaNode]
+        // fill in address of numanode struct
+                str  x27, [x21, Thread.numaNode]
 
-// init some thread data
-       strb  wzr, [x21, Thread.exit]
-        str  wzr, [x21, Thread.resetCnt]
-        str  wzr, [x21, Thread.callsCnt]
-        str  w26, [x21, Thread.idx]
-        str  x27, [x21, Thread.numaNode]
+        // init some thread data
+               strb  wzr, [x21, Thread.exit]
+                str  wzr, [x21, Thread.resetCnt]
+                str  wzr, [x21, Thread.callsCnt]
+                str  w26, [x21, Thread.idx]
+                str  x27, [x21, Thread.numaNode]
 
-// per thread memory allocations
- // create sync objects
-        add  x1, x21, Thread.mutex
-         bl  Os_MutexCreate
-        add  x1, x21, Thread.sleep1
-         bl  Os_EventCreate
-        add  x1, x21, Thread.sleep2
-         bl  Os_EventCreate
+        // per thread memory allocations
+         // create sync objects
+                add  x1, x21, Thread.mutex
+                 bl  Os_MutexCreate
+                add  x1, x21, Thread.sleep1
+                 bl  Os_EventCreate
+                add  x1, x21, Thread.sleep2
+                 bl  Os_EventCreate
 
- // the states will be allocated when copying position to thread
-        str  xzr, [x21, Thread.rootPos + Pos.state]
-        str  xzr, [x21, Thread.rootPos + Pos.stateTable]
-        str  xzr, [x21, Thread.rootPos + Pos.stateEnd]
+         // the states will be allocated when copying position to thread
+                str  xzr, [x21, Thread.rootPos + Pos.state]
+                str  xzr, [x21, Thread.rootPos + Pos.stateTable]
+                str  xzr, [x21, Thread.rootPos + Pos.stateEnd]
 
- // create the vector of root moves
-        add  x1, x21, Thread.rootPos + Pos.rootMovesVec
-        mov  w2, w25
-         bl  RootMovesVec_Create
+         // create the vector of root moves
+                add  x1, x21, Thread.rootPos + Pos.rootMovesVec
+                mov  w2, w25
+                 bl  RootMovesVec_Create
 
- // allocate stats
-        mov  x1, sizeof.HistoryStats + sizeof.MoveStats
-        mov  w2, w25
-         bl  Os_VirtualAllocNuma
-        str  x0, [x21, Thread.rootPos + Pos.history]
-        add  x0, x0, sizeof.HistoryStats
-        str  x0, [x21, Thread.rootPos + Pos.counterMoves]
+         // allocate stats
+                mov  x1, sizeof.HistoryStats + sizeof.MoveStats
+                mov  w2, w25
+                 bl  Os_VirtualAllocNuma
+                str  x0, [x21, Thread.rootPos + Pos.history]
+                add  x0, x0, sizeof.HistoryStats
+                str  x0, [x21, Thread.rootPos + Pos.counterMoves]
 
- // allocate pawn hash
-        mov  x1, PAWN_HASH_ENTRY_COUNT*sizeof.PawnEntry
-        mov  w2, w25
-         bl  Os_VirtualAllocNuma
-        str  x0, [x21, Thread.rootPos+Pos.pawnTable]
+         // allocate pawn hash
+                mov  x1, PAWN_HASH_ENTRY_COUNT*sizeof.PawnEntry
+                mov  w2, w25
+                 bl  Os_VirtualAllocNuma
+                str  x0, [x21, Thread.rootPos+Pos.pawnTable]
 
- // allocate material hash
-        mov  x1, MATERIAL_HASH_ENTRY_COUNT*sizeof.MaterialEntry
-        mov  w2, w25
-         bl  Os_VirtualAllocNuma
-        str  x0, [x21, Thread.rootPos+Pos.materialTable]
+         // allocate material hash
+                mov  x1, MATERIAL_HASH_ENTRY_COUNT*sizeof.MaterialEntry
+                mov  w2, w25
+                 bl  Os_VirtualAllocNuma
+                str  x0, [x21, Thread.rootPos+Pos.materialTable]
 
- // allocate move list
-        mov  x1, AVG_MOVES*MAX_PLY*sizeof.ExtMove
-        mov  w2, w25
-         bl  Os_VirtualAllocNuma
-        str  x0, [x21, Thread.rootPos+Pos.moveList]
+         // allocate move list
+                mov  x1, AVG_MOVES*MAX_PLY*sizeof.ExtMove
+                mov  w2, w25
+                 bl  Os_VirtualAllocNuma
+                str  x0, [x21, Thread.rootPos+Pos.moveList]
 
-// per node memory allocations
- // use cmh table from node(group) or allocate new one
-        ldr  x24, [x27, NumaNode.parent]
-        ldr  x0, [x24, NumaNode.cmhTable]
-        mov  x1, sizeof.CounterMoveHistoryStats
-        mov  w2, w25
-       cbnz  x0, 1f
-         bl  Os_VirtualAllocNuma
-        str  x0, [x24, NumaNode.cmhTable]
-1:      str  x0, [x21, Thread.rootPos+Pos.counterMoveHistory]
+        // per node memory allocations
+         // use cmh table from node(group) or allocate new one
+                ldr  x24, [x27, NumaNode.parent]
+                ldr  x0, [x24, NumaNode.cmhTable]
+                mov  x1, sizeof.CounterMoveHistoryStats
+                mov  w2, w25
+               cbnz  x0, 1f
+                 bl  Os_VirtualAllocNuma
+                str  x0, [x24, NumaNode.cmhTable]
+        1:      str  x0, [x21, Thread.rootPos+Pos.counterMoveHistory]
 
-// start the thread and wait for it to enter the idle loop
-        add  x1, x21, Thread.mutex
-         bl  Os_MutexLock
-        mov  w4, -1
-       strb  w4, [x21, Thread.searching]
-        adr  x1, Thread_IdleLoop
-        mov  x2, x21
-        mov  x8, x27
-        add  x9, x21, Thread.threadHandle
-         bl  Os_ThreadCreate
-          b  Thread_Create.check
+        // start the thread and wait for it to enter the idle loop
+                add  x1, x21, Thread.mutex
+                 bl  Os_MutexLock
+                mov  w4, -1
+               strb  w4, [x21, Thread.searching]
+                adr  x1, Thread_IdleLoop
+                mov  x2, x21
+                mov  x8, x27
+                add  x9, x21, Thread.threadHandle
+                 bl  Os_ThreadCreate
+                  b  Thread_Create.check
 Thread_Create.wait:
-        add  x1, x21, Thread.sleep2
-        add  x2, x21, Thread.mutex
-         bl  Os_EventWait
+                add  x1, x21, Thread.sleep2
+                add  x2, x21, Thread.mutex
+                 bl  Os_EventWait
 Thread_Create.check:
-       ldrb  w0, [x21, Thread.searching]
-       cbnz  w0, Thread_Create.wait
-        add  x1, x21, Thread.mutex
-         bl  Os_MutexUnlock
+               ldrb  w0, [x21, Thread.searching]
+               cbnz  w0, Thread_Create.wait
+                add  x1, x21, Thread.mutex
+                 bl  Os_MutexUnlock
 
-        ldp  x24, x25, [sp], 16
-        ldp  x26, x27, [sp], 16
-        ldp  x21, x30, [sp], 16
-        ret
+                ldp  x24, x25, [sp], 16
+                ldp  x26, x27, [sp], 16
+                ldp  x21, x30, [sp], 16
+                ret
 
 
 
 
 Thread_Delete:
-// in: x1 index of thread
-        stp  x21, x30, [sp, -16]!
-        stp  x26, x27, [sp, -16]!
-        mov  w26, w1
-        lea  x6, threadPool+ThreadPool.threadTable
-        ldr  x21, [x6, x1, lsl 3]
+        // in: x1 index of thread
+                stp  x21, x30, [sp, -16]!
+                stp  x26, x27, [sp, -16]!
+                mov  w26, w1
+                lea  x6, threadPool+ThreadPool.threadTable
+                ldr  x21, [x6, x1, lsl 3]
 
-// terminate the thread
-        add  x1, x21, Thread.mutex
-         bl  Os_MutexLock
-        mov  w0, -1
-       strb  w0, [x21, Thread.exit]
-        add  x1, x21, Thread.sleep1
-         bl  Os_EventSignal
-        add  x1, x21, Thread.mutex
-         bl  Os_MutexUnlock
-        add  x1, x21, Thread.threadHandle
-         bl  Os_ThreadJoin
+        // terminate the thread
+                add  x1, x21, Thread.mutex
+                 bl  Os_MutexLock
+                mov  w0, -1
+               strb  w0, [x21, Thread.exit]
+                add  x1, x21, Thread.sleep1
+                 bl  Os_EventSignal
+                add  x1, x21, Thread.mutex
+                 bl  Os_MutexUnlock
+                add  x1, x21, Thread.threadHandle
+                 bl  Os_ThreadJoin
 
-// free move list
-        ldr  x1, [x21, Thread.rootPos+Pos.moveList]
-        mov  x2, AVG_MOVES*MAX_PLY*sizeof.ExtMove
-         bl  Os_VirtualFree
-        str  xzr, [x21, Thread.rootPos+Pos.moveList]
+        // free move list
+                ldr  x1, [x21, Thread.rootPos+Pos.moveList]
+                mov  x2, AVG_MOVES*MAX_PLY*sizeof.ExtMove
+                 bl  Os_VirtualFree
+                str  xzr, [x21, Thread.rootPos+Pos.moveList]
 
-// free material hash
-        ldr  x1, [x21, Thread.rootPos+Pos.materialTable]
-        mov  x2, MATERIAL_HASH_ENTRY_COUNT*sizeof.MaterialEntry
-         bl  Os_VirtualFree
-        str  xzr, [x21, Thread.rootPos+Pos.materialTable]
+        // free material hash
+                ldr  x1, [x21, Thread.rootPos+Pos.materialTable]
+                mov  x2, MATERIAL_HASH_ENTRY_COUNT*sizeof.MaterialEntry
+                 bl  Os_VirtualFree
+                str  xzr, [x21, Thread.rootPos+Pos.materialTable]
 
-// free pawn hash
-        ldr  x1, [x21, Thread.rootPos+Pos.pawnTable]
-        mov  x2, PAWN_HASH_ENTRY_COUNT*sizeof.PawnEntry
-         bl  Os_VirtualFree
-        str  xzr, [x21, Thread.rootPos+Pos.pawnTable]
+        // free pawn hash
+                ldr  x1, [x21, Thread.rootPos+Pos.pawnTable]
+                mov  x2, PAWN_HASH_ENTRY_COUNT*sizeof.PawnEntry
+                 bl  Os_VirtualFree
+                str  xzr, [x21, Thread.rootPos+Pos.pawnTable]
 
-// free stats
-        ldr  x1, [x21, Thread.rootPos+Pos.history]
-        mov  x2, sizeof.HistoryStats + sizeof.MoveStats
-         bl  Os_VirtualFree
-        str  xzr, [x21, Thread.rootPos+Pos.history]
-        str  xzr, [x21, Thread.rootPos+Pos.counterMoves]
+        // free stats
+                ldr  x1, [x21, Thread.rootPos+Pos.history]
+                mov  x2, sizeof.HistoryStats + sizeof.MoveStats
+                 bl  Os_VirtualFree
+                str  xzr, [x21, Thread.rootPos+Pos.history]
+                str  xzr, [x21, Thread.rootPos+Pos.counterMoves]
 
-// destroy the vector of root moves
-        add  x1, x21, Thread.rootPos+Pos.rootMovesVec
-         bl  RootMovesVec_Destroy
+        // destroy the vector of root moves
+                add  x1, x21, Thread.rootPos+Pos.rootMovesVec
+                 bl  RootMovesVec_Destroy
 
-// destroy the state table
-        ldr  x1, [x21, Thread.rootPos+Pos.stateTable]
-        ldr  x2, [x21, Thread.rootPos+Pos.stateEnd]
-        sub  x2, x2, x1
-         bl  Os_VirtualFree
-        str  xzr, [x21, Thread.rootPos+Pos.state]
-        str  xzr, [x21, Thread.rootPos+Pos.stateTable]
-        str  xzr, [x21, Thread.rootPos+Pos.stateEnd]
+        // destroy the state table
+                ldr  x1, [x21, Thread.rootPos+Pos.stateTable]
+                ldr  x2, [x21, Thread.rootPos+Pos.stateEnd]
+                sub  x2, x2, x1
+                 bl  Os_VirtualFree
+                str  xzr, [x21, Thread.rootPos+Pos.state]
+                str  xzr, [x21, Thread.rootPos+Pos.stateTable]
+                str  xzr, [x21, Thread.rootPos+Pos.stateEnd]
 
-// destroy sync objects
-        add  x1, x21, Thread.sleep2
-         bl  Os_EventDestroy
-        add  x1, x21, Thread.sleep1
-         bl  Os_EventDestroy
-        add  x1, x21, Thread.mutex
-         bl  Os_MutexDestroy
+        // destroy sync objects
+                add  x1, x21, Thread.sleep2
+                 bl  Os_EventDestroy
+                add  x1, x21, Thread.sleep1
+                 bl  Os_EventDestroy
+                add  x1, x21, Thread.mutex
+                 bl  Os_MutexDestroy
 
-// free self
-        lea  x6, threadPool + ThreadPool.threadTable
-        ldr  x1, [x6, x26, lsl 3]
-        mov  x2, sizeof.Thread
-         bl  Os_VirtualFree
-        lea  x6, threadPool + ThreadPool.threadTable
-        str  xzr, [x6, x26, lsl 3]
+        // free self
+                lea  x6, threadPool + ThreadPool.threadTable
+                ldr  x1, [x6, x26, lsl 3]
+                mov  x2, sizeof.Thread
+                 bl  Os_VirtualFree
+                lea  x6, threadPool + ThreadPool.threadTable
+                str  xzr, [x6, x26, lsl 3]
 
-        ldp  x26, x27, [sp], 16
-        ldp  x21, x30, [sp], 16
-        ret
-
-
-
+                ldp  x26, x27, [sp], 16
+                ldp  x21, x30, [sp], 16
+                ret
 
 
 
 Thread_IdleLoop:
-// in: x1 address of Thread struct
-        stp  x21, x30, [sp, -16]!
-        stp  x26, x27, [sp, -16]!
-        mov  x21, x1
-        adr  x27, Thread_Think
-        adr  x2, MainThread_Think
-        ldr  w0, [x21, Thread.idx]
-        cmp  w0, 0
-       csel  x27, x2, x27, eq
-          b  Thread_IdleLoop.lock
+        // in: x1 address of Thread struct
+                stp  x21, x30, [sp, -16]!
+                stp  x26, x27, [sp, -16]!
+                mov  x21, x1
+                adr  x27, Thread_Think
+                adr  x2, MainThread_Think
+                ldr  w0, [x21, Thread.idx]
+                cmp  w0, 0
+               csel  x27, x2, x27, eq
+                  b  Thread_IdleLoop.lock
 Thread_IdleLoop.loop:
-        mov  x1, x21
-        blr  x27
+                mov  x1, x21
+                blr  x27
 Thread_IdleLoop.lock:
-        add  x1, x21, Thread.mutex
-         bl  Os_MutexLock
-       strb  wzr, [x21, Thread.searching]
+                add  x1, x21, Thread.mutex
+                 bl  Os_MutexLock
+               strb  wzr, [x21, Thread.searching]
 Thread_IdleLoop.check_exit:
-       ldrb  w0, [x21, Thread.exit]
-       cbnz  w0, Thread_IdleLoop.unlock
-        add  x1, x21, Thread.sleep2
-         bl  Os_EventSignal
-        add  x1, x21, Thread.sleep1
-        add  x2, x21, Thread.mutex
-         bl  Os_EventWait
-       ldrb  w0, [x21, Thread.searching]
-        cbz  w0, Thread_IdleLoop.check_exit
+               ldrb  w0, [x21, Thread.exit]
+               cbnz  w0, Thread_IdleLoop.unlock
+                add  x1, x21, Thread.sleep2
+                 bl  Os_EventSignal
+                add  x1, x21, Thread.sleep1
+                add  x2, x21, Thread.mutex
+                 bl  Os_EventWait
+               ldrb  w0, [x21, Thread.searching]
+                cbz  w0, Thread_IdleLoop.check_exit
 Thread_IdleLoop.unlock:
-        add  x1, x21, Thread.mutex
-         bl  Os_MutexUnlock
+                add  x1, x21, Thread.mutex
+                 bl  Os_MutexUnlock
 Thread_IdleLoop.check_out:
-       ldrb  w0, [x21, Thread.exit]
-        cbz  w0, Thread_IdleLoop.loop
-        ldp  x26, x27, [sp], 16
-        ldp  x21, x30, [sp], 16
-        ret
+               ldrb  w0, [x21, Thread.exit]
+                cbz  w0, Thread_IdleLoop.loop
+                ldp  x26, x27, [sp], 16
+                ldp  x21, x30, [sp], 16
+                ret
 
 
 
 
 Thread_StartSearching:
-// in:  x1 address of Thread struct
-        stp  x21, x30, [sp, -16]!
-        mov  x21, x1
-        add  x1, x21, Thread.mutex
-         bl  Os_MutexLock
-        mov  w0, -1
-       strb  w0, [x21, Thread.searching]
+        // in:  x1 address of Thread struct
+                stp  x21, x30, [sp, -16]!
+                mov  x21, x1
+                add  x1, x21, Thread.mutex
+                 bl  Os_MutexLock
+                mov  w0, -1
+               strb  w0, [x21, Thread.searching]
 Thread_StartSearching.signal:
-        add  x1, x21, Thread.sleep1
-         bl  Os_EventSignal
-        add  x1, x21, Thread.mutex
-         bl  Os_MutexUnlock
-        ldp  x21, x30, [sp], 16
-        ret
+                add  x1, x21, Thread.sleep1
+                 bl  Os_EventSignal
+                add  x1, x21, Thread.mutex
+                 bl  Os_MutexUnlock
+                ldp  x21, x30, [sp], 16
+                ret
 
 Thread_StartSearching_TRUE:
-// in: x1 address of Thread struct
-        stp  x21, x30, [sp, -16]!
-        mov  x21, x1
-        add  x1, x21, Thread.mutex
-         bl  Os_MutexLock
-          b  Thread_StartSearching.signal
+        // in: x1 address of Thread struct
+                stp  x21, x30, [sp, -16]!
+                mov  x21, x1
+                add  x1, x21, Thread.mutex
+                 bl  Os_MutexLock
+                  b  Thread_StartSearching.signal
         
 
 Thread_WaitForSearchFinished:
-// in: x1 address of Thread struct
-        stp  x21, x30, [sp, -16]!
-        stp  x26, x27, [sp, -16]!
-        mov  x21, x1
-        add  x1, x21, Thread.mutex
-         bl  Os_MutexLock
-          b  Thread_WaitForSearchFinished.check
+        // in: x1 address of Thread struct
+                stp  x21, x30, [sp, -16]!
+                stp  x26, x27, [sp, -16]!
+                mov  x21, x1
+                add  x1, x21, Thread.mutex
+                 bl  Os_MutexLock
+                  b  Thread_WaitForSearchFinished.check
 Thread_WaitForSearchFinished.wait:
-        add  x1, x21, Thread.sleep2
-        add  x2, x21, Thread.mutex
-         bl  Os_EventWait
+                add  x1, x21, Thread.sleep2
+                add  x2, x21, Thread.mutex
+                 bl  Os_EventWait
 Thread_WaitForSearchFinished.check:
-       ldrb  w0, [x21, Thread.searching]
-       cbnz  w0, Thread_WaitForSearchFinished.wait
-        add  x1, x21, Thread.mutex
-         bl  Os_MutexUnlock
-        ldp  x26, x27, [sp], 16
-        ldp  x21, x30, [sp], 16
-        ret
+               ldrb  w0, [x21, Thread.searching]
+               cbnz  w0, Thread_WaitForSearchFinished.wait
+                add  x1, x21, Thread.mutex
+                 bl  Os_MutexUnlock
+                ldp  x26, x27, [sp], 16
+                ldp  x21, x30, [sp], 16
+                ret
 
 
 Thread_Wait:
-// in: x1 address of Thread struct
-//     x2 address of bool (nonzero byte for true)
-        stp  x21, x30, [sp, -16]!
-        stp  x26, x27, [sp, -16]!
-        mov  x21, x1
-        mov  x27, x2
-        add  x1, x21, Thread.mutex
-         bl  Os_MutexLock
-          b  Thread_Wait.check
+        // in: x1 address of Thread struct
+        //     x2 address of bool (nonzero byte for true)
+                stp  x21, x30, [sp, -16]!
+                stp  x26, x27, [sp, -16]!
+                mov  x21, x1
+                mov  x27, x2
+                add  x1, x21, Thread.mutex
+                 bl  Os_MutexLock
+                  b  Thread_Wait.check
 Thread_Wait.wait:
-        add  x1, x21, Thread.sleep1
-        add  x2, x21, Thread.mutex
-         bl  Os_EventWait
+                add  x1, x21, Thread.sleep1
+                add  x2, x21, Thread.mutex
+                 bl  Os_EventWait
 Thread_Wait.check:
-       ldrb  w0, [x27]
-        cbz  w0, Thread_Wait.wait
-        add  x1, x21, Thread.mutex
-         bl  Os_MutexUnlock
-        ldp  x26, x27, [sp], 16
-        ldp  x21, x30, [sp], 16
-        ret
+               ldrb  w0, [x27]
+                cbz  w0, Thread_Wait.wait
+                add  x1, x21, Thread.mutex
+                 bl  Os_MutexUnlock
+                ldp  x26, x27, [sp], 16
+                ldp  x21, x30, [sp], 16
+                ret
