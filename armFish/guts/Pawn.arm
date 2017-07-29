@@ -146,7 +146,7 @@ EvalPawns.Lever_False\@:
                 lea  x6, RankBB
                 ldr  x0, [x6, x0, lsl 3]
                 and  x2, x2, x0
-                ShiftBB  Up, x2, x2
+            ShiftBB  Up, x2, x2
                 orr  x2, x2, x0
               mov32  w4, Backward0
               mov32  w5, Backward1
@@ -190,7 +190,7 @@ EvalPawns.Continue\@:
                 ldr  x2, [x6, x2, lsl 3]
                 and  x2, x2, x9
         // x9 = popcnt(phalanx)
-                Popcnt  x9, x2, x0
+             Popcnt  x9, x2, x0
                 tst  x2, x2
                cinc  w4, w11, ne
                 add  w11, w11, w4
@@ -209,7 +209,7 @@ EvalPawns.Continue\@:
                 add  w26, w26, w2
         // x8 = supported
         // x11 = popcnt(supported)
-                Popcnt  x11, x8, x0
+             Popcnt  x11, x8, x0
 
                 lea  x6, PawnAttacks + 8*(64*\Us)
                 ldr  x0, [x6, x1, lsl 3]
