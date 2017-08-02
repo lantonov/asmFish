@@ -84,13 +84,13 @@ SEP_CHAR equ ':'
  King	 fix 7
 
 ; piece values
- PawnValueMg   equ 188
+ PawnValueMg   equ 171
  KnightValueMg equ 764
  BishopValueMg equ 826
  RookValueMg   equ 1282
  QueenValueMg  equ 2526
 
- PawnValueEg   equ 248
+ PawnValueEg   equ 240
  KnightValueEg equ 848
  BishopValueEg equ 891
  RookValueEg   equ 1373

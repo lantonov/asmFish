@@ -1350,9 +1350,11 @@ virtual at rsp
 end virtual
 	      align   16
 .DoPawnEval:
+                mov   qword[rbp+Pos.state], rbx
 	  EvalPawns   White
 		mov   dword[rdi+PawnEntry.score], esi
 	  EvalPawns   Black
+                mov   rbx, qword[rbp+Pos.state]
 	      movzx   ecx, byte[rdi+PawnEntry.semiopenFiles+0]
 	      movzx   eax, byte[rdi+PawnEntry.semiopenFiles+1]
 		mov   r8, qword[rbx+State.pawnKey]

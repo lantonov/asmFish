@@ -104,7 +104,7 @@ DrawValue	        rd 2    ; it is updated when threads start to think
 ;;;;;;;;;;;;;;;;;;;; data for evaluation ;;;;;;;;;;;;;;;;;;;;
 
 align 64
-Connected rd 2*2*2*8
+Connected rd 2*2*3*8
 MobilityBonus_Knight rd 16
 MobilityBonus_Bishop rd 16
 MobilityBonus_Rook   rd 16

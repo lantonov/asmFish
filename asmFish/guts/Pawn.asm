@@ -1,14 +1,15 @@
 
 macro EvalPawns Us {
 	; in  rbp address of Pos struct
-	;     rbx address of State struct
 	;     rdi address of pawn table entry
 	; out esi score
 local Them, Up, Right, Left
-local Isolated0, Isolated1, Backward0, Backward1, Unsupported, Doubled
+local Isolated0, Isolated1, Backward0, Backward1, Doubled
 local ..NextPiece, ..AllDone, ..Done, ..WritePawnSpan
-local ..Neighbours_True, ..Lever_False, ..TestUnsupported
-local ..Lever_True, ..Neighbours_False, ..Continue, ..NoPassed, ..PopLoop
+local ..Neighbours_True, ..Neighbours_True__Lever_False
+local ..Neighbours_True__Lever_False__RelRank_small, ..Neighbours_False
+local ..Neighbours_True__Lever_True, ..Neighbours_True__Lever_False__RelRank_big
+local ..Continue, ..NoPassed, ..PopLoop
 
 match =White, Us
 \{
@@ -25,13 +26,11 @@ match =Black, Us
 	Right equ DELTA_SW
 	Left  equ DELTA_SE
 \}
-	Isolated0 equ ((45 shl 16) + (40))
-	Isolated1 equ ((30 shl 16) + (27))
-	Backward0 equ ((56 shl 16) + (33))
-	Backward1 equ ((41 shl 16) + (19))
-	Unsupported equ ((17 shl 16) + (8))
-	Doubled equ ((18 shl 16) + (38))
-
+        Isolated0   equ ((27 shl 16) + (30))
+	Isolated1   equ ((13 shl 16) + (18))
+	Backward0   equ ((40 shl 16) + (26))
+	Backward1   equ ((24 shl 16) + (12))
+	Doubled     equ ((18 shl 16) + (38))
 
 		xor   eax, eax
 		mov   qword[rdi+PawnEntry.passedPawns+8*Us], rax
@@ -79,6 +78,7 @@ match =Black, Us
 		and   edx, 7
 		mov   r12d, ecx
 		shr   r12d, 3
+                mov   rbx, qword[RankBB+8*r12]
 	if Us eq Black
 		xor   r12d, 7
 	end if
@@ -108,6 +108,8 @@ match =Black, Us
 	; r9 = neighbours
 		and   r8, r9
 	; r8 = supported
+                and   rbx, r9
+        ; rbx = phalanx
 		lea   eax, [rcx-Up]
 		 bt   r13, rax
                 mov   rax, r8           ; dirty trick relies on fact
@@ -115,85 +117,91 @@ match =Black, Us
                 lea   eax, [rsi-Doubled]
               cmovs   esi, eax
 	; doubled is taken care of
-		mov   rax, qword[PawnAttacks+8*(64*Us+rcx)]
+
+                mov   rax, qword[PawnAttacks+8*(64*Us+rcx)]
                test   r9, r9
 		 jz   ..Neighbours_False
+
 ..Neighbours_True:
 		and   rax, r14
-	; rax = lever
 	     cmovnz   eax, dword[Lever+4*r12]
 		lea   esi, [rsi+rax]
-		jnz   ..TestUnsupported
-..Lever_False:
-		mov   rax, r9
-		 or   rax, r10
+		jnz   ..Neighbours_True__Lever_True
+
+..Neighbours_True__Lever_False:
+                mov   rax, r9
+                 or   rax, r10
 	if Us eq White
-		cmp   ecx, SQ_A5
-		jae   ..TestUnsupported
+                cmp   ecx, SQ_A5
+                jae   ..Neighbours_True__Lever_False__RelRank_big
+                bsf   rax, rax
 	else if Us eq Black
-		cmp   ecx, SQ_A5
-		 jb   ..TestUnsupported
+                cmp   ecx, SQ_A5
+                 jb   ..Neighbours_True__Lever_False__RelRank_big
+                bsr   rax, rax
 	end if
-	if Us eq White
-		bsf   rax, rax
-	else if Us eq Black
-		bsr   rax, rax
-	end if
-		shr   eax, 3
-		mov   rax, qword[RankBB+8*rax]
-		and   rdx, rax
-	   shift_bb   Up, rdx
-		 or   rdx, rax
-		mov   eax, r11d
-		and   eax, Backward0-Backward1
-		lea   eax, [rsi+rax-Backward0]
-	       test   rdx, r10
-	     cmovnz   esi, eax
-		jnz   ..Continue
-..TestUnsupported:
-		cmp   r8, 1
-		sbb   eax, eax
-		and   eax, Unsupported
-		sub   esi, eax
-		jmp   ..Continue
+
+..Neighbours_True__Lever_False__RelRank_small:
+                shr   eax, 3
+                mov   rax, qword[RankBB+8*rax]
+                and   rdx, rax
+           shift_bb   Up, rdx
+                 or   rdx, rax
+                mov   eax, r11d
+                and   eax, Backward0-Backward1
+                sub   eax, Backward0
+                and   rdx, r10
+             cmovnz   edx, eax
+        ; edx = backwards ? Backward[opposed] : 0
+                jmp   ..Continue
 
 ..Neighbours_False:
 		and   rax, r14
 	     cmovnz   eax, dword[Lever+4*r12]
-		lea   esi, [rsi+rax]
+		add   esi, eax
+                mov   edx, r11d
+                and   edx, Isolated0-Isolated1
+                sub   edx, Isolated0
+        ; edx = Isolated[opposed]
+		jmp   ..Continue
 
-		mov   eax, r11d
-		and   eax, Isolated0-Isolated1
-		lea   esi, [rsi+rax-Isolated0]
+..Neighbours_True__Lever_True:
+..Neighbours_True__Lever_False__RelRank_big:
+                xor   edx, edx
+        ; edx = 0
 
 ..Continue:
-	; at this point we have taken care of
-	;       backwards, neighbours, supported, lever
+	     popcnt   rax, r8, r9
+        if CPU_HAS_POPCNT       ; out of registers
+	     popcnt   r9, rbx
+        else
+               push   r10
+	     popcnt   r9, rbx, r10
+                pop   r10
+        end if
 
 		neg   r11d
-		mov   edx, ecx
-		shr   edx, 3
-		mov   rdx, qword[RankBB+8*rdx]
-		and   rdx, r9
-	     popcnt   r9, rdx, rax
-	; r9 = popcnt(phalanx)
-		neg   rdx
+        ; r11 = [opposed]
+		neg   rbx
 		adc   r11d, r11d
-	       blsr   rax, r8
-		neg   rax
-		adc   r11d, r11d
+        ; r11 = [opposed][!!phalanx]
+                lea   r11d, [3*r11]
+                add   r11d, eax
+        ; r11 = [opposed][!!phalanx][popcount(supported)]
 		lea   r11d, [8*r11+r12]
-		 or   rdx, r8
+        ; r11 = [opposed][!!phalanx][popcount(supported)][relative_rank(Us, s)]
+		 or   rbx, r8
 	     cmovnz   edx, dword[Connected+4*r11]
-		add   esi, edx
-	; connected is taken care of
-	     popcnt   r11, r8, rax
-        ; r8 = supported
-	; r11 = popcnt(supported)
+                add   esi, edx
 
-		mov   rax, qword[PawnAttacks+8*(64*Us+rcx)]
-		and   rax, r14
-	; rax = lever
+        ; r8 = supported
+        ; r9 = popcnt(phalanx)
+	; rax = popcnt(supported)
+        ; r10 = stoppers
+
+		mov   r11, qword[PawnAttacks+8*(64*Us+rcx)]
+		and   r11, r14
+	; r11 = lever
 		mov   rdx, qword[PawnAttacks+8*(64*Us+rcx+Up)]
 		and   rdx, r14
 	; rdx = leverPush
@@ -202,19 +210,20 @@ match =Black, Us
 
 	       test   r13, qword[ForwardBB+8*(64*Us+rcx)]
 		jnz   ..NoPassed
-		xor   r10, rax
+		xor   r10, r11
 		xor   r10, rdx
 		jnz   ..NoPassed
-	     popcnt   rax, rax, r10
+	     popcnt   r11, r11, r10
 	     popcnt   rdx, rdx, r10
-		sub   r11, rax
+		sub   rax, r11
 		sub   r9, rdx
-		 or   r11, r9
+		 or   rax, r9
 		 js   ..NoPassed
 		mov   eax, 1
 		shl   rax, cl
 		 or   qword[rdi+PawnEntry.passedPawns+8*Us], rax
                 jmp   ..Done
+
 ..NoPassed:
                 lea   eax, [rcx+Up]
                 btc   r12, rax

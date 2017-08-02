@@ -94,7 +94,7 @@ SeeSignBitMask:          .space 8
 
 // data for evaluation
         .balign 64
-Connected:              .space 4*2*2*2*8
+Connected:              .space 4*2*2*3*8
 MobilityBonus_Knight:   .space 4*16
 MobilityBonus_Bishop:   .space 4*16
 MobilityBonus_Rook:     .space 4*16

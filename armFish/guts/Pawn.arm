@@ -1,8 +1,7 @@
 .macro EvalPawns Us
-	// in  rbp address of Pos struct
-	//     rbx address of State struct
-	//     rdi address of pawn table entry
-	// out esi score
+	// in  x20 address of Pos struct
+	//     x27 address of pawn table entry
+	// out w26 score
   .if \Us == White
         Them  = Black
         Up    = DELTA_N
@@ -14,12 +13,12 @@
         Right = DELTA_SW
         Left  = DELTA_SE
   .endif
-	Isolated0   = ((45 << 16) + (40))
-	Isolated1   = ((30 << 16) + (27))
-	Backward0   = ((56 << 16) + (33))
-	Backward1   = ((41 << 16) + (19))
-	Unsupported = ((17 << 16) + (8))
-	Doubled     = ((18 << 16) + (38))
+
+        Isolated0   = ((27 << 16) + (30))
+        Isolated1   = ((13 << 16) + (18))
+        Backward0   = ((40 << 16) + (26))
+        Backward1   = ((24 << 16) + (12))
+        Doubled     = ((18 << 16) + (38))
         
                 mov  w0, 0
                 str  x0, [x27, PawnEntry.passedPawns + 8*\Us]
@@ -67,6 +66,8 @@ EvalPawns.NextPiece\@:
 
                 and  w2, w1, 7
                 lsr  w22, w1, 3
+                lea  x3, RankBB
+                ldr  x3, [x3, x22, lsl 3]
  .if \Us == Black
                 eor  w22, w22, 7
  .endif
@@ -83,26 +84,27 @@ EvalPawns.NextPiece\@:
                 orr  x4, x4, x0
                 str  x4, [x27, PawnEntry.pawnAttacksSpan + 8*\Us]
 
-        // w11 = opposed
                 lea  x6, ForwardBB + 8*(64*\Us)
                 ldr  x11, [x6, x1, lsl 3]
                 tst  x11, x24
               csetm  w11, ne
-        // x2 = adjacent_files_bb(f)
+        // w11 = opposed
                 lea  x6, AdjacentFilesBB
                 ldr  x2, [x6, x2, lsl 3]
-        // x10 = stoppers
+        // x2 = adjacent_files_bb(f)
                 lea  x6, PassedPawnMask + 8*(64*\Us)
                 ldr  x10, [x6, x1, lsl 3]
                 and  x10, x10, x24
+        // x10 = stoppers
                 lsr  w8, w1, 3
                 lea  x6, RankBB - Up
                 ldr  x8, [x6, x8, lsl 3]
-        // x9 = neighbours
                 and  x9, x23, x2
-        // x8 = supported
+        // x9 = neighbours
                 and  x8, x8, x9
-        // doubled is taken care of
+        // x8 = supported
+                and  x3, x3, x9
+        // x3 = phalanx
                 sub  w0, w1, Up
                 mov  x4, 1
                 lsl  x4, x4, x0
@@ -111,37 +113,35 @@ EvalPawns.NextPiece\@:
               mov32  w4, Doubled
                 sub  w4, w26, w4
                csel  w26, w4, w26, eq
+        // doubled is taken care of
+
                 lea  x6, PawnAttacks + 8*(64*\Us)
                 ldr  x0, [x6, x1, lsl 3]
                 cbz  x9, EvalPawns.Neighbours_False\@
 
 EvalPawns.Neighbours_True\@:
-
-        // x0 = lever
-               ands  x0, x0, x24
+                tst  x0, x24
                 lea  x6, Lever
                 ldr  w4, [x6, x22, lsl 2]
-               csel  w0, w4, w0, ne
+               csel  w0, w4, wzr, ne
                 add  w26, w26, w0
-                bne  EvalPawns.TestUnsupported\@
+                bne  EvalPawns.Neighbours_True__Lever_True\@
 
-EvalPawns.Lever_False\@:
-
+EvalPawns.Neighbours_True__Lever_False\@:
                 orr  x0, x9, x10
   .if \Us == White
                 cmp  w1, SQ_A5
-                bhs  EvalPawns.TestUnsupported\@
-  .else
-                cmp  w1, SQ_A5
-                blo  EvalPawns.TestUnsupported\@
-  .endif
-  .if \Us == White
+                bhs  EvalPawns.Neighbours_True__Lever_False__RelRank_big\@
                rbit  x0, x0
                 clz  x0, x0
   .else
+                cmp  w1, SQ_A5
+                blo  EvalPawns.Neighbours_True__Lever_False__RelRank_big\@
                 clz  x0, x0
                 eor  x0, x0, 63
   .endif
+
+EvalPawns.Neighbours_True__Lever_False__RelRank_small\@:
                 lsr  w0, w0, 3
                 lea  x6, RankBB
                 ldr  x0, [x6, x0, lsl 3]
@@ -153,68 +153,60 @@ EvalPawns.Lever_False\@:
                 sub  w0, w4, w5
                 and  w0, w0, w11
                 sub  w0, w0, w4
-                add  w0, w0, w26
                 tst  x2, x10
-               csel  w26, w0, w26, ne
-                bne  EvalPawns.Continue\@
-
-EvalPawns.TestUnsupported\@:
-                tst  x8, x8
-              mov32  w4, Unsupported
-                sub  w4, w26, w4
-               csel  w26, w4, w26, eq
+               csel  w2, w0, wzr, ne
+        // w2 = backwards ? Backward[opposed] : 0
                   b  EvalPawns.Continue\@
 
 EvalPawns.Neighbours_False\@:
-
-               ands  x0, x0, x24
+                tst  x0, x24
                 lea  x6, Lever
                 ldr  w4, [x6, x22, lsl 2]
-               csel  w0, w4, w0, ne
+               csel  w0, w4, wzr, ne
                 add  w26, w26, w0
 
               mov32  w4, Isolated0
               mov32  w5, Isolated1
-                sub  w0, w4, w5
-                and  w0, w0, w11
-                sub  w26, w26, w4
-                add  w26, w26, w0
+                sub  w2, w4, w5
+                and  w2, w2, w11
+                sub  w2, w2, w4
+        // w2 = Isolated[opposed]
+                  b  EvalPawns.Continue\@
+
+EvalPawns.Neighbours_True__Lever_True\@:
+EvalPawns.Neighbours_True__Lever_False__RelRank_big\@:
+                mov  w2, 0
 
 EvalPawns.Continue\@:
-        // at this point we have taken care of
-        //       backwards, neighbours, supported, lever
 
-                neg  w11, w11
-                lsr  w2, w1, 3
-                lea  x6, RankBB
-                ldr  x2, [x6, x2, lsl 3]
-                and  x2, x2, x9
-        // x9 = popcnt(phalanx)
-             Popcnt  x9, x2, x0
-                tst  x2, x2
-               cinc  w4, w11, ne
-                add  w11, w11, w4
-                sub  x0, x8, 1
-               ands  x0, x0, x8
-               cinc  w4, w11, ne
-                add  w11, w11, w4
+             Popcnt  x0, x8, x9
+             Popcnt  x9, x3, x4
+
+                sub  w11, wzr, w11, lsl 1
+                tst  x3, x3
+               cinc  w11, w11, ne 
+        // w11 = [opposed][!!phalanx]
+                add  w11, w11, w11, lsl 1
+                add  w11, w11, w0
+        // w11 = [opposed][!!phalanx][popcount(supported)]
                 add  w11, w22, w11, lsl 3
-                orr  x2, x2, x8
-                tst  x2, x2
+        // w11 = [opposed][!!phalanx][popcount(supported)][relative_rank(Us, s)]
+                orr  x3, x3, x8
+                tst  x3, x3
                 lea  x6, Connected
                 ldr  w4, [x6, x11, lsl 2]
                csel  w2, w4, w2, ne
-
-        // connected is taken care of
                 add  w26, w26, w2
-        // x8 = supported
-        // x11 = popcnt(supported)
-             Popcnt  x11, x8, x0
+
+        // r8 = supported
+        // r9 = popcnt(phalanx)
+	// rax = popcnt(supported)
+        // r10 = stoppers
 
                 lea  x6, PawnAttacks + 8*(64*\Us)
-                ldr  x0, [x6, x1, lsl 3]
-        // x0 = lever
-                and  x0, x0, x24
+                ldr  x11, [x6, x1, lsl 3]
+                and  x11, x11, x24
+        // x11 = lever
                 lea  x6, PawnAttacks + 8*(64*\Us + Up)
                 ldr  x2, [x6, x1, lsl 3]
                 and  x2, x2, x24
@@ -226,12 +218,12 @@ EvalPawns.Continue\@:
                 ldr  x4, [x6, x1, lsl 3]
                 tst  x23, x4
                 bne  EvalPawns.NoPassed\@
-                eor  x10, x10, x0
+                eor  x10, x10, x11
                 eor  x10, x10, x2
                cbnz  x10, EvalPawns.NoPassed\@
-             Popcnt  x0, x0, x10
+             Popcnt  x11, x11, x10
              Popcnt  x2, x2, x10
-                cmp  w11, w0
+                cmp  w0, w11
                ccmp  w9, w2, 0, cs
                 bcc  EvalPawns.NoPassed\@
                 mov  x0, 1
@@ -242,7 +234,6 @@ EvalPawns.Continue\@:
                   b  EvalPawns.Done\@        
 
 EvalPawns.NoPassed\@:
-
                 add  w0, w1, Up
                 mov  x4, 1
                 lsl  x4, x4, x0
@@ -259,9 +250,7 @@ EvalPawns.NoPassed\@:
                cbnz  x22, EvalPawns.Done\@
                bics  x8, x8, x24
                 beq  EvalPawns.Done\@
-
 EvalPawns.PopLoop\@:
-
                rbit  x9, x8
                 clz  x9, x9
                 lea  x6, PawnAttacks + 8*(64*\Us)

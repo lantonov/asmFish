@@ -151,13 +151,13 @@ NON_EVASIONS = 4
 LEGAL        = 5
 
 // piece values
-PawnValueMg   = 188
+PawnValueMg   = 171
 KnightValueMg = 764
 BishopValueMg = 826
 RookValueMg   = 1282
 QueenValueMg  = 2526
 
-PawnValueEg   = 248
+PawnValueEg   = 240
 KnightValueEg = 848
 BishopValueEg = 891
 RookValueEg   = 1373

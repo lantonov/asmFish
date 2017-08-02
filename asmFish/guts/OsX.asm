@@ -249,7 +249,7 @@ _GetTime:
                 cmp   esi, dword[rbx+_GTOD_GENERATION]
                 jne   .TryAgain
                 mul   rcx
-                shr   rax, rdx, 32
+               shrd   rax, rdx, 32
                 add   rax, r8
                 mov   rcx, 18446744073709;551616   2^64/10^6
                 mul   rcx
@@ -316,7 +316,7 @@ _VirtualAlloc:
                 xor   edi, edi
                 mov   rsi, rcx
                 mov   edx, PROT_READ or PROT_WRITE
-                mov   r10d, MAP_PRIVATE or MAP_ANONYMOUS
+                mov   r10d, MAP_PRIVATE or MAP_ANON
                  or   r8, -1
                 xor   r9, r9
                 mov   eax, sys_mmap
@@ -365,7 +365,7 @@ _VirtualAlloc_LargePages:
                 xor   edi, edi
                 mov   rsi, rcx
                 mov   edx, PROT_READ or PROT_WRITE
-                mov   ecx, MAP_PRIVATE or MAP_ANONYMOUS
+                mov   ecx, MAP_PRIVATE or MAP_ANON
                 mov   r8, VM_FLAGS_SUPERPAGE_SIZE_2MB
                 xor   r9, r9
                 mov   eax, sys_mmap
