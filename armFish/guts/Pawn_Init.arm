@@ -50,10 +50,10 @@ Pawn_Init.phalanxIsZero:
 
 Pawn_Init.Seed:
         .word  0
-        .word  8
-        .word  19
         .word  13
-        .word  71
-        .word  94
-        .word  169
-        .word  324
+        .word  24
+        .word  18
+        .word  76
+        .word  100
+        .word  175
+        .word  330
