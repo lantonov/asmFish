@@ -46,10 +46,11 @@ _EventWait:
 ;;;;;;;;
 
 _FileWrite:
+; UNTESTED
     	; in: rcx handle from CreateFile (win), fd (linux)
     	;     rdx buffer
     	;     r8d size (32bits)
-	    ; out: eax !=0 success
+	; out: eax !=0 success
     	       push   rsi rdi rbx
                 mov   rdi, rcx	; fd
                 mov   rsi, rdx	; buffer
@@ -63,10 +64,11 @@ _FileWrite:
                 
 
 _FileRead:
-	    ; in: rcx handle from CreateFile (win), fd (linux)
-    	;     rdx buffer
-    	;     r8d size (32bits)
-    	; out: eax !=0 success
+; UNTESTED
+        ; in: rcx handle from CreateFile (win), fd (linux)
+        ;     rdx buffer
+        ;     r8d size (32bits)
+        ; out: eax !=0 success
                push   rsi rdi rbx
                 mov   rdi, rcx	; fd
                 mov   rsi, rdx	; buffer
@@ -80,6 +82,7 @@ _FileRead:
 
 
 _FileSize:
+; UNTESTED
         ; in: rcx handle from CreateFile (win), fd (linux)
         ; out:  rax size
                push   rbx rsi rdi
@@ -97,6 +100,7 @@ _FileSize:
 
 
 _FileOpenWrite:
+; UNTESTED
         ; in: rcx path string
         ; out: rax handle from CreateFile (win), fd (linux)
         ;      rax=-1 on error
@@ -206,7 +210,6 @@ _ExitProcess:
                 mov   edi, ecx
                 mov   eax, sys_exit
             syscall
-               int3
 
 _ExitThread:
         ; rcx is exit code
@@ -219,11 +222,9 @@ _ExitThread:
 ; timing ;
 ;;;;;;;;;;
 
-
-
-
               align   16
 _GetTime:
+        ; out rax + rdx/2^64 = time in ms
                push   rbx rsi rdi
                 sub   rsp, 8*2
                 mov   rbx, _COMM_PAGE_TIME_DATA_START
@@ -256,9 +257,6 @@ _GetTime:
                imul   r9, 1000
                 add   rdx, r9
                xchg   rax, rdx
-
-Display 0, "comm page get time %0.%2%n"
-
                 add   rsp, 8*2
                 pop   rdi rsi rbx
                 ret
@@ -266,12 +264,11 @@ Display 0, "comm page get time %0.%2%n"
 .Failed:
                 mov   rdi, rsp
                 xor   esi, esi
-                xor   edx, edx                  ; those **** changed the fxn
+                xor   edx, edx                  ; those ***** changed the fxn
                 mov   eax, sys_gettimeofday
             syscall
-Display 0, "sys_gettimeofday rax %0  rdx %2%n"
                test   rax, rax
-                 jz   @f                        ; those **** might return the result in rax:rdx
+                 jz   @f                        ; those ***** might return the result in rax:rdx
                 mov   qword[rsp+8*0], rax
                 mov   dword[rsp+8*1], edx
         @@:     mov   eax, dword[rsp+8*1]	; tv_usec
@@ -280,25 +277,38 @@ Display 0, "sys_gettimeofday rax %0  rdx %2%n"
                imul   rcx, qword[rsp+8*0], 1000
                 add   rdx, rcx
                xchg   rax, rdx
-
-Display 0, "     sys  get time %0.%2%n"
-
-
                 add   rsp, 8*2
                 pop   rdi rsi rbx
+_InitializeTimer:
                 ret
 
-_GetTime_SYS:
+_GetTime_SYS:        ; call this to ensure a system call
                push   rbx rsi rdi
                 sub   rsp, 8*2
                 jmp   _GetTime.Failed
 
-_InitializeTimer:
-                ret
 
 _Sleep:
         ; ecx  ms
-               int3
+	       push   rbx rsi rdi
+		sub   rsp, 8*2
+		mov   eax, ecx
+		xor   edx, edx
+		mov   ecx, 1000
+		div   ecx
+	       imul   edx, 1000
+		mov   qword[rsp+8*0], rax
+		mov   qword[rsp+8*1], rdx
+                xor   edi, edi
+                xor   esi, esi
+                xor   edx, edx
+                xor   r10d, r10d
+		mov   r8, rsp
+                mov   eax, sys_select   ; maybe should use poll
+            syscall                     ;  but poll is broken on several os x versions
+		add   rsp, 8*2
+		pop   rdi rsi rbx
+		ret
 
 
 ;;;;;;;;;;
@@ -321,6 +331,7 @@ _VirtualAlloc:
                 xor   r9, r9
                 mov   eax, sys_mmap
             syscall
+; no idea what apple returns on error
 ;               test   rax, rax
 ;                 js   Failed_sys_mmap
                 pop   rbx rdi rsi
@@ -337,6 +348,7 @@ _VirtualFree:
                 mov   rsi, rdx
                 mov   eax, sys_munmap
             syscall
+; no idea what apple returns on error
 ;               test   eax, eax
 ;                jnz   Failed_sys_munmap_VirtualFree
 .null:
@@ -371,7 +383,7 @@ _VirtualAlloc_LargePages:
                 mov   eax, sys_mmap
             syscall
                  js   .failed
-
+                mov   rdx, r14
                 mov   qword[LargePageMinSize], 2 shl 20
 .done:
                 pop   r15 r14 rdi rsi rbx
@@ -468,8 +480,9 @@ _WriteOut:
 .go:
                 mov   eax, sys_write
             syscall
-               test   rax, rax
-                 js   Failed_sys_write
+; no idea what apple returns on error
+;               test   rax, rax
+;                 js   Failed_sys_write
                 pop   rbx rdi rsi
                 ret
 
@@ -487,6 +500,7 @@ _WriteError:
 
 
 _ReadStdIn:
+; UNTESTED
         ; in: rcx address to write
         ;     edx max size
         ; out: rax > 0 number of bytes written

@@ -342,9 +342,11 @@ sys_write         =   4 + (2 shl 24)
 sys_open          =   5 + (2 shl 24)
 sys_close         =   6 + (2 shl 24)
 sys_munmap        =  73 + (2 shl 24)
+sys_select        =  93 + (2 shl 24)
 sys_gettimeofday  = 116 + (2 shl 24)
 sys_fstat         = 189 + (2 shl 24)
 sys_mmap          = 197 + (2 shl 24)
+sys_poll          = 230 + (2 shl 24)
 
 VM_FLAGS_SUPERPAGE_SIZE_2MB = 1 shl 16
 

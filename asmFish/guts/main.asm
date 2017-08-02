@@ -14,12 +14,8 @@ call _GetTime_SYS
 Display 0, "check time: %X0.%X2%n"
 push rax rdx
 
-mov ecx, 1000000000
-mov eax, ecx
-@@:
-mul rcx
-sub ecx, 1
-jnz @b
+mov ecx, 256
+call _Sleep
 
 call _GetTime
 Display 0, "      time: %X0.%X2%n"
