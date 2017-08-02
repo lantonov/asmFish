@@ -35,7 +35,7 @@ include 'linux64.asm'
 }
 match ='X', VERSION_OS {
 format ELF64
-include 'linux64.asm'
+include 'mac64.asm'
 }
 
 
@@ -193,7 +193,7 @@ match ='L', VERSION_OS {
 include 'OsLinux.asm'
 }
 match ='X', VERSION_OS {
-include 'OsLinux.asm'
+include 'OsX.asm'
 }
 
 if USE_BOOK
@@ -207,8 +207,8 @@ match = 'L', VERSION_OS {
 Start:
 }
 match = 'X', VERSION_OS {
-public _start
-_start:
+public start
+start:
 }
 
 match ='L', VERSION_OS {
