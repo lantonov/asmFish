@@ -27,6 +27,9 @@ else
  match ='X', VERSION_OS \{
     base = addr-size-$$
  \}
+ match ='C', VERSION_OS \{
+    base = addr-size-$$
+ \}
     size = ((base+value-1)/value*value-base)
     db size dup 90h
   else

@@ -193,7 +193,7 @@ irps color, White Black {     ; not used;  edx has the color
 ;  for now, we just call _VirtualAlloc on size+16 and store the size in the first qword
 ;     of the returned page(s).
 
-malloc: 	add   rcx, 16
+my_malloc: 	add   rcx, 16
 	       push   rcx
 	       call   _VirtualAlloc
 		pop   rcx
@@ -201,7 +201,7 @@ malloc: 	add   rcx, 16
 		add   rax, 16
 		ret
 
-free:		sub   rcx, 16
+my_free:		sub   rcx, 16
 		 js   @f
 		mov   rdx, qword[rcx]
 		jmp   _VirtualFree
@@ -209,28 +209,28 @@ free:		sub   rcx, 16
 
 
 
-exit:		jmp   _ExitProcess
-printf: 	;  don't care about printf's arguments
-puts:
+my_exit:		jmp   _ExitProcess
+my_printf: 	;  don't care about printf's arguments
+my_puts:
 	       push   rdi
 		lea   rdi, [Output]
 	       call   PrintString
 	       call   _WriteOut_Output
 		pop   rdi
 		ret
-strcat:
+my_strcat:
 		mov   al, byte[rcx]
 		inc   rcx
 	       test   al, al
-		jne   strcat
+		jne   my_strcat
 		dec   rcx
-strcpy:
+my_strcpy:
 		mov   al, byte[rdx]
 		inc   rdx
 		mov   byte[rcx], al
 		inc   rcx
 	       test   al, al
-		jne   strcpy
+		jne   my_strcpy
 		ret
 
 
@@ -874,7 +874,7 @@ _ZL11setup_pairsPhyPyPS_S_i:
 	jns	?_088					
 	mov	ecx, 72 				
 	mov	qword [rsp+20H], r8			
-	call	malloc					
+	call	my_malloc
 	cmp	dword [rsp+10C8H], 0			
 	mov	dword [rax+34H], 0			
 	mov	r8, qword [rsp+20H]			
@@ -930,7 +930,7 @@ _ZL11setup_pairsPhyPyPS_S_i:
 
 	and	esi, 01H				
 	add	rcx, r10				
-	call	malloc					
+	call	my_malloc
 	mov	r10, qword [rsp+30H]			
 	lea	rcx, [rbx+0AH]				
 	mov	qword [rax+18H], rcx			
@@ -1060,16 +1060,16 @@ _ZL7open_tbPKcS0_:
 	mov	rax, qword [ _ZL5paths] 	
 	mov	rcx, rbx				
 	mov	rdx, qword [rax+rsi*8]			
-	call	strcpy					
+	call	my_strcpy
 	lea	rdx, [ ?_338]			
 	mov	rcx, rbx				
-	call	strcat					
+	call	my_strcat
 	mov	rdx, rdi				
 	mov	rcx, rbx				
-	call	strcat					
+	call	my_strcat
 	mov	rdx, rbp				
 	mov	rcx, rbx				
-	call	strcat
+	call	my_strcat
 	mov	rcx, rbx
 	call	_FileOpenRead
 	cmp	rax, -1 				
@@ -1314,9 +1314,9 @@ _ZL11add_to_hashP7TBEntryy:
 	cmp	r9, 5					
 	jnz	?_121					
 	lea	rcx, [ ?_341]			
-	call	puts					
+	call	my_puts
 	mov	ecx, 1					
-	call	exit					
+	call	my_exit
 ?_122:	lea	rax, [r11+r11*4]			
 	add	rax, r8 				
 	shl	rax, 4					
@@ -1423,9 +1423,9 @@ _ZL7init_tbPc.constprop.4:
 	cmp	ebx, 256				
 	jnz	?_137					
 	lea	rcx, [ ?_344]			
-?_136:	call	puts					
+?_136:	call	my_puts
 	mov	ecx, 1					
-	call	exit					
+	call	my_exit
 ?_137:	lea	edx, [rbx+1H]				
 	imul	rbx, rbx, 384				
 	mov	dword [ _ZL10TBnum_pawn], edx	
@@ -1585,19 +1585,19 @@ _ZL14free_dtz_entryP7TBEntry:
 	cmp	byte [rbx+1BH], 0			
 	jnz	?_157					
 	mov	rcx, qword [rbx+20H]			
-	call	free					
+	call	my_free
 	jmp	?_158					
 
 ?_157:	mov	rcx, qword [rbx+rsi+20H]		
 	add	rsi, 48 				
-	call	free					
+	call	my_free
 	cmp	rsi, 192				
 	jnz	?_157					
 ?_158:	mov	rcx, rbx				
 	add	rsp, 40 				
 	pop	rbx					
 	pop	rsi					
-	jmp	free					
+	jmp	my_free
 
 _ZL17calc_factors_pawnPiiiiPhi:
 	push	r15					
@@ -1715,24 +1715,24 @@ _ZL14free_wdl_entryP7TBEntry:
 	cmp	byte [rbx+1BH], 0			
 	jnz	?_173					
 	mov	rcx, qword [rbx+20H]			
-	call	free					
+	call	my_free
 	mov	rcx, qword [rbx+28H]			
 	test	rcx, rcx				
 	jz	?_174					
 	add	rsp, 40 				
 	pop	rbx					
 	pop	rsi					
-	jmp	free					
+	jmp	my_free
 
 ?_172:	add	rsi, 88 				
 	cmp	rsi, 352				
 	jz	?_174					
 ?_173:	mov	rcx, qword [rbx+rsi+20H]		
-	call	free					
+	call	my_free
 	mov	rcx, qword [rbx+rsi+28H]		
 	test	rcx, rcx				
 	jz	?_172					
-	call	free					
+	call	my_free
 	jmp	?_172					
 
 ?_174:	
@@ -1766,9 +1766,9 @@ Tablebase_Init:
         lea     rcx, [_ZL8TB_mutex]
         call    _MutexDestroy
         mov     rcx, qword[_ZL11path_string]
-        call    free
+        call    my_free
         mov     rcx, qword[_ZL5paths]
-        call    free
+        call    my_free
 ?_NothingToFree:
 
         lea     rdi, [ _ZL8TB_piece]
@@ -2214,11 +2214,11 @@ Tablebase_HandlePathStrings:
 	mov	rcx, rbx
 	call	StringLength
 	lea	ecx, [rax+1]
-	call	malloc
+	call	my_malloc
 	mov	qword[_ZL11path_string], rax
 	mov	rdx, rbx
 	mov	rcx, rax
-	call	strcpy
+	call	my_strcpy
 	mov	rbp, rsp
 	mov	rsi, qword[_ZL11path_string]
 	xor	ebx, ebx	; ebx num_paths
@@ -2240,7 +2240,7 @@ Tablebase_HandlePathStrings:
 	mov	byte[rsi-1], 0
 	mov	dword[_ZL9num_paths], ebx
 	imul	ecx, ebx, 16
-	call	malloc                  ; 16 byte aligned
+	call	my_malloc                  ; 16 byte aligned
 	mov	qword[_ZL5paths], rax
 	mov	edx, ebx
 .PopPath:
@@ -2375,7 +2375,7 @@ _ZN13TablebaseCore15probe_wdl_tableER8PositionPi:
 	jnz	?_236					
 	lea	rcx, [ ?_347]			
 	mov	rdx, r12				
-	call	printf					
+	call	my_printf
 	jmp	?_239					
 
 ?_236:	cmp	byte [rax], 113 			
@@ -2387,7 +2387,7 @@ _ZN13TablebaseCore15probe_wdl_tableER8PositionPi:
 	cmp	byte [rax+3H], 93			
 	jz	?_240					
 ?_237:	lea	rcx, [ ?_348]			
-	call	puts
+	call	my_puts
 
 	mov	rcx, qword [rbx]
 	mov	rdx, qword [rbx+10H]
@@ -3160,7 +3160,7 @@ _ZN13TablebaseCore15probe_dtz_tableER8PositioniPi:
 	sbb	rcx, rcx				
 	and	cl, 50H 				
 	add	rcx, 272				
-	call	malloc					
+	call	my_malloc
 	lea	rdx, [ ?_349]			
 	mov	rcx, r14				
 	lea	r8, [rax+10H]				
@@ -3196,7 +3196,7 @@ _ZN13TablebaseCore15probe_dtz_tableER8PositioniPi:
 	cmp	byte [rax+3H], -91			
 	jz	?_313					
 ?_312:	lea	rcx, [ ?_348]			
-	call	puts					
+	call	my_puts
 	jmp	?_330					
 
 ?_313:	mov	dl, byte [rax+4H]			
@@ -3407,7 +3407,7 @@ _ZN13TablebaseCore15probe_dtz_tableER8PositioniPi:
 	jmp	?_331					
 
 ?_330:	mov	rcx, r12				
-	call	free					
+	call	my_free
 	jmp	?_286
 
 ?_331:	mov	qword [ ?_334], r12			

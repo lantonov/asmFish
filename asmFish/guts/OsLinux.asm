@@ -447,7 +447,7 @@ _GetTime:
 		add   rsp, 8*2
 		pop   rdi rsi rbx
 		ret
-.syscall:
+.SYS:
 	       push   rbx
 		mov   eax, sys_clock_gettime
 	    syscall
@@ -463,7 +463,7 @@ _InitializeTimer:
 	       push   rbx
 		lea   rcx, [sz___vdso_clock_gettime]
 	       call   vdso_FindSymbol
-		lea   rcx, [_GetTime.syscall]
+		lea   rcx, [_GetTime.SYS]
 	       test   rax, rax
 	      cmovz   rax, rcx
 		mov   qword[__imp_clock_gettime], rax
@@ -504,14 +504,7 @@ _VirtualAllocNuma:
 		 je   _VirtualAlloc.go
 	       push   rbp rbx rsi rdi r15
 		sub   rsp, 16
-if DEBUG > 0
-add qword[DebugBalance], rcx
-end if
-GD String, 'size: '
-GD Hex, rcx
-GD String, '  alloc'
-GD Int32, rdx
-GD String, ': '
+
 		mov   ebx, edx
 		mov   rbp, rcx
 		xor   edi, edi
@@ -524,8 +517,6 @@ GD String, ': '
 		mov   r15, rax
 	       test   rax, rax
 		 js   Failed_sys_mmap
-GD Hex, rax
-GD NewLine
 
 		mov   rdi, r15		; addr
 		mov   rsi, rbp		; len
@@ -552,12 +543,6 @@ _VirtualAlloc:
 		mov   r10d, MAP_PRIVATE or MAP_ANONYMOUS
 .go:
 	       push   rsi rdi rbx
-if DEBUG > 0
-add qword[DebugBalance], rcx
-end if
-GD String, 'size: '
-GD Hex, rcx
-GD String, '  alloc : '
 		xor   edi, edi
 		mov   rsi, rcx
 		mov   edx, PROT_READ or PROT_WRITE
@@ -567,8 +552,6 @@ GD String, '  alloc : '
 	    syscall
 	       test   rax, rax
 		 js   Failed_sys_mmap
-GD Hex, rax
-GD NewLine
 		pop   rbx rdi rsi
 		ret
 
@@ -579,14 +562,6 @@ _VirtualFree:
 	       push   rsi rdi rbx
 	       test   rcx, rcx
 		 jz   .null
-if DEBUG > 0
-sub qword[DebugBalance], rdx
-end if
-GD String, 'size: '
-GD Hex, rdx
-GD String, '  free  : '
-GD Hex, rcx
-GD NewLine
 		mov   rdi, rcx
 		mov   rsi, rdx
 		mov   eax, sys_munmap
@@ -616,12 +591,6 @@ _VirtualAlloc_LargePages:
 
 	       push   rbx rsi rdi r14 r15
 		mov   r14, rcx
-if DEBUG > 0
-add qword[DebugBalance], rcx
-end if
-GD String, 'large size: '
-GD Hex, rcx
-GD String, '  alloc: '
 		xor   edi, edi
 		mov   rsi, rcx
 		mov   edx, PROT_READ or PROT_WRITE
@@ -633,8 +602,6 @@ GD String, '  alloc: '
 		mov   r15, rax
 	       test   rax, rax
 		 js   Failed_sys_mmap
-GD Hex, rax
-GD NewLine
 
 		mov   rdi, r15
 		mov   rsi, r14
@@ -727,7 +694,6 @@ _WriteOut:
 	; in: rcx  address of string start
 	;     rdi  address of string end
 	       push   rsi rdi rbx
- AssertStackAligned   '_WriteOut'
 
 		mov   rsi, rcx
 		mov   rdx, rdi

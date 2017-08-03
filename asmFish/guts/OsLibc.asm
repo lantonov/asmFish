@@ -9,7 +9,7 @@ _MutexCreate:
                push   rbx rsi rdi
                 mov   rdi, rcx
                 xor   esi, esi
-               call   _pthread_mutex_init
+               call   pthread_mutex_init
                test   eax, eax
                 jnz   Failed_pthread_mutex_init_MutexCreate
                 pop   rdi rsi rbx
@@ -18,7 +18,7 @@ _MutexDestroy:
         ; rcx: address of Mutex
                push   rbx rsi rdi
                 mov   rdi, rcx
-               call   _pthread_mutex_destroy
+               call   pthread_mutex_destroy
                test   eax, eax
                 jnz   Failed_pthread_mutex_destroy_MutexDestroy
                 pop   rdi rsi rbx
@@ -27,7 +27,7 @@ _MutexLock:
         ; rcx: address of Mutex
                push   rbx rsi rdi
                 mov   rdi, rcx
-               call   _pthread_mutex_lock
+               call   pthread_mutex_lock
                test   eax, eax
                 jnz   Failed_pthread_mutex_lock_MutexLock
                 pop   rdi rsi rbx
@@ -36,7 +36,7 @@ _MutexUnlock:
         ; rcx: address of Mutex
                push   rbx rsi rdi
                 mov   rdi, rcx
-               call   _pthread_mutex_unlock
+               call   pthread_mutex_unlock
                test   eax, eax
                 jnz   Failed_pthread_mutex_unlock_MutexUnlock
                 pop   rdi rsi rbx
@@ -52,7 +52,7 @@ _EventCreate:
                push   rbx rsi rdi
                 mov   rdi, rcx
                 xor   esi, esi
-               call   _pthread_cond_init
+               call   pthread_cond_init
                test   eax, eax
                 jnz   Failed_pthread_cond_init_EventCreate
                 pop   rdi rsi rbx
@@ -61,7 +61,7 @@ _EventDestroy:
     	; rcx: address of ConditionalVariable
                push   rbx rsi rdi
                 mov   rdi, rcx
-               call   _pthread_cond_destroy
+               call   pthread_cond_destroy
                test   eax, eax
                 jnz   Failed_pthread_cond_destroy_EventDestroy
                 pop   rdi rsi rbx
@@ -70,7 +70,7 @@ _EventSignal:
     	; rcx: address of ConditionalVariable
                push   rbx rsi rdi
                 mov   rdi, rcx
-               call   _pthread_cond_signal
+               call   pthread_cond_signal
                test   eax, eax
                 jnz   Failed_pthread_cond_signal_EventSignal
                 pop   rdi rsi rbx
@@ -81,7 +81,7 @@ _EventWait:
                push   rbx rsi rdi
                 mov   rdi, rcx
                 mov   rsi, rdx
-               call   _pthread_cond_wait
+               call   pthread_cond_wait
                test   eax, eax
                 jnz   Failed_pthread_cond_wait_EventWait
                 pop   rdi rsi rbx
@@ -102,7 +102,7 @@ _FileWrite:
 		mov   rdi, rcx	; fd
 		mov   rsi, rdx	; buffer
 		mov   edx, r8d	; count
-               call   _write
+               call   write
 		sar   rax, 63
 		add   eax, 1
 		pop   rbx rdi rsi
@@ -117,7 +117,7 @@ _FileRead:
 		mov   rdi, rcx	; fd
 		mov   rsi, rdx	; buffer
 		mov   edx, r8d	; count
-               call   _read
+               call   read
 		sar   rax, 63
 		add   eax, 1
 		pop   rbx rdi rsi
@@ -130,8 +130,8 @@ _FileSize:
 	       push   rbx rsi rdi
 		sub   rsp, (sizeof.stat + 15) and -16
 		mov   rdi, rcx
-		mov   rsi, rsp
-               call   _fstat
+		mov   rsi, rsp 
+               call   fstat
 	       test   eax, eax
 		jnz   Failed_fstat_FileSize
 		mov   rax, qword[rsp+stat.st_size]
@@ -147,7 +147,7 @@ _FileOpenWrite:
 	       push   rbx rsi rdi
 		mov   rdi, rcx
 		mov   esi, O_WRONLY or O_CREAT
-               call   _open
+               call   open
 	       test   eax, eax
 		jns   @f
 		 or   rax, -1
@@ -156,13 +156,13 @@ _FileOpenWrite:
 
 
 _FileOpenRead:
-	; in: rcx path string
+	; in: rcx path string  
 	; out: rax handle from CreateFile (win), fd (linux)
 	;      rax=-1 on error
 	       push   rbx rsi rdi
 		mov   rdi, rcx
 		mov   esi, O_RDONLY
-               call   _open
+               call   open
 	       test   eax, eax
 		jns   @f
 		 or   rax, -1
@@ -171,23 +171,23 @@ _FileOpenRead:
 
 _FileClose:
 	; in: rcx handle from CreateFile (win), fd (linux) 
-	       push   rbx rsi rdi
-		mov   rdi, rcx
-               call   _close
-		pop   rdi rsi rbx
+	       push   rbx rsi rdi 
+		mov   rdi, rcx 
+               call   close 
+		pop   rdi rsi rbx 
 		ret
 
 _FileMap:
-	; in: rcx handle (win), fd (linux)
-	; out: rax base address
-	;      rdx handle from CreateFileMapping (win), size (linux)
-	; get file size
+	; in: rcx handle (win), fd (linux) 
+	; out: rax base address 
+	;      rdx handle from CreateFileMapping (win), size (linux) 
+	; get file size 
 	       push   rbp rbx rsi rdi r15
 		sub   rsp, (sizeof.stat + 15) and -16
 		mov   rbp, rcx
 		mov   rdi, rcx
-		mov   rsi, rsp
-               call   _fstat
+		mov   rsi, rsp 
+               call   fstat
 	       test   eax, eax
 		jnz   Failed_fstat_FileMap
 		mov   rbx, qword[rsp+stat.st_size]
@@ -198,7 +198,7 @@ _FileMap:
 		mov   r10, MAP_PRIVATE	; mapping flags
 		mov   r8, rbp		; fd
 		xor   r9d, r9d		; offset
-               call   _mmap
+               call   mmap
 	       test   rax, rax
 		 js   Failed_mmap_FileMap
 	; return size in rdx, base address in rax
@@ -208,14 +208,14 @@ _FileMap:
 		ret
 
 _FileUnmap:
-	; in: rcx base address
-	;     rdx handle from CreateFileMapping (win), size (linux)
+	; in: rcx base address 
+	;     rdx handle from CreateFileMapping (win), size (linux) 
 	       push   rbx rsi rdi
 	       test   rcx, rcx
 		 jz   @f
-		mov   rdi, rcx	      ; addr
-		mov   rsi, rdx	      ; length
-               call   _munmap
+		mov   rdi, rcx	      ; addr 
+		mov   rsi, rdx	      ; length 
+               call   munmap
 	       test   eax, eax
 		jnz   Failed_munmap_FileUnmap
 	@@:	pop   rdi rsi rbx
@@ -236,31 +236,32 @@ _ThreadCreate:
                 mov   rdi, r9
                 xor   esi, esi
                xchg   rcx, rdx
-               call   _pthread_create
+               call   pthread_create                
                 pop   rdi rsi rbx
                 ret
+                
 
 _ThreadJoin:
         ; rcx:  address of ThreadHandle struct
                push   rbx rsi rdi
                 mov   rdi, qword[rcx]
                 xor   esi, esi
-               call   _pthread_join
+               call   pthread_join
                 pop   rdi rsi rbx
                 ret
 
 _ExitProcess:
         ; rcx is exit code
                 mov   edi, ecx
-                jmp   _exit
+                jmp   exit
 
 _ExitThread:
         ; rcx is exit code
         ; must not call _ExitThread on linux
         ;  thread should just return
                 mov   edi, ecx
-                jmp   _pthread_exit
-
+                jmp   pthread_exit
+                
 
 
 ;;;;;;;;;;
@@ -268,69 +269,23 @@ _ExitThread:
 ;;;;;;;;;;
 
               align   16
-_GetTime:                                       ; those ***** didn't implement clock_gettime
-        ; out rax + rdx/2^64 = time in ms
-               push   rbx rsi rdi
-                sub   rsp, 8*2
-                mov   rbx, _COMM_PAGE_TIME_DATA_START
-.TryAgain:
-                mov   esi, dword[rbx+_GTOD_GENERATION]
-               test   esi, esi
-                 jz   .Failed
-                mov   edi, dword[rbx+_NT_GENERATION]
-               test   edi, edi
-                 jz   .TryAgain
-             lfence
-              rdtsc
-             lfence
-                shl   rdx, 32
-                add   rax, rdx
-                sub   rax, qword[rbx+_NT_TSC_BASE]
-                mov   ecx, dword[rbx+_NT_SCALE]
-                mov   r8, qword[rbx+_NT_NS_BASE]
-                cmp   edi, dword[rbx+_NT_GENERATION]
-                jne   .TryAgain
-                sub   r8, qword[rbx+_GTOD_NS_BASE]
-                mov   r9, qword[rbx+_GTOD_SEC_BASE]
-                cmp   esi, dword[rbx+_GTOD_GENERATION]
-                jne   .TryAgain
-                mul   rcx
-               shrd   rax, rdx, 32
-                add   rax, r8
-                mov   rcx, 18446744073709;551616   2^64/10^6
-                mul   rcx
-               imul   r9, 1000
-                add   rdx, r9
-               xchg   rax, rdx
-                add   rsp, 8*2
-                pop   rdi rsi rbx
-                ret
-
-.Failed:
-                mov   rdi, rsp
-                xor   esi, esi
-                xor   edx, edx                  ; those ***** changed sys_gettimeofday
-                mov   eax, sys_gettimeofday
-            syscall
-               test   rax, rax
-                 jz   @f                        ; those ***** might return the result in rax:rdx
-                mov   qword[rsp+8*0], rax
-                mov   dword[rsp+8*1], edx
-        @@:     mov   eax, dword[rsp+8*1]	; tv_usec
-                mov   rcx, 18446744073709551;616   2^64/10^3
-                mul   rcx
-               imul   rcx, qword[rsp+8*0], 1000
-                add   rdx, rcx
-               xchg   rax, rdx
-                add   rsp, 8*2
-                pop   rdi rsi rbx
+_GetTime:
+	       push   rbx rsi rdi
+		sub   rsp, 8*2
+		mov   edi, CLOCK_MONOTONIC
+		mov   rsi, rsp
+	       call   clock_gettime
+		mov   eax, dword[rsp+8*1]	; tv_nsec
+		mov   rcx, 18446744073709;551616   2^64/10^6
+		mul   rcx
+	       imul   rcx, qword[rsp+8*0], 1000
+		add   rdx, rcx
+	       xchg   rax, rdx
+		add   rsp, 8*2
+		pop   rdi rsi rbx
+		ret
 _InitializeTimer:
                 ret
-
-_GetTime_SYS:        ; call this to ensure a system call
-               push   rbx rsi rdi
-                sub   rsp, 8*2
-                jmp   _GetTime.Failed
 
 
 _Sleep:
@@ -346,7 +301,7 @@ _Sleep:
                 mov   qword[rsp+8*1], rdx
                 mov   rdi, rsp
                 xor   esi, esi
-               call   _nanosleep
+               call   nanosleep
                 add   rsp, 8*2
                 pop   rdi rsi rbx
                 ret
@@ -369,10 +324,10 @@ _VirtualAlloc:
 		xor   edi, edi
 		mov   rsi, rcx
 		mov   edx, PROT_READ or PROT_WRITE
-		mov   ecx, MAP_PRIVATE or MAP_ANON
+		mov   ecx, MAP_PRIVATE or MAP_ANONYMOUS
 		 or   r8, -1
 		xor   r9, r9
-               call   _mmap
+               call   mmap
                test   rax, rax
                  js   Failed_mmap
 		pop   rbx rdi rsi
@@ -388,7 +343,7 @@ _VirtualFree:
                  jz   .null
                 mov   rdi, rcx
                 mov   rsi, rdx
-               call   _munmap
+               call   munmap
                test   eax, eax
                 jnz   Failed_mmap
 .null:
@@ -497,7 +452,7 @@ _WriteOut:
                 sub   rdx, rcx
                 mov   edi, stdout
 .go:
-               call   _write
+               call   write
                 pop   rbx rdi rsi
                 ret
 
@@ -525,7 +480,7 @@ _ReadStdIn:
                push   rbx rsi rdi
                 mov   edi, stdin
                 mov   rsi, rcx
-               call   _read
+               call   read
                 pop   rdi rsi rbx
                 ret
 
@@ -745,10 +700,10 @@ _ErrorBox:
                 mov   rsi, rdi 
                 mov   edi, stderr 
                 mov   rdx, rax 
-               call   _write
+               call   write
                 lea   rsi, [sz_NewLine]
                 mov   edi, stderr 
                 mov   rdx, 1
-               call   _write
+               call   write
                 pop   rbx rsi rdi 
                 ret

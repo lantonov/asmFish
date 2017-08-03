@@ -138,17 +138,17 @@ end if
 		mov   r8, rdi
 		lea   r9, [rbx+Thread.threadHandle]
 	       call   _ThreadCreate
-		jmp   .check
-    .wait:
+		jmp   .Check
+    .Wait:
 		lea   rcx, [rbx+Thread.sleep2]
 		lea   rdx, [rbx+Thread.mutex]
 	       call   _EventWait
-    .check:	mov   al, byte[rbx+Thread.searching]
+    .Check:     mov   al, byte[rbx+Thread.searching]
 	       test   al, al
-		jnz   .wait
+		jnz   .Wait
 		lea   rcx, [rbx+Thread.mutex]
 	       call   _MutexUnlock
-.done:
+
 		pop   r15 r14 rdi rsi rbx
 		ret
 
@@ -235,30 +235,38 @@ Thread_Delete:
 Thread_IdleLoop:
 	; in: rcx address of Thread struct
 	       push   rbx rsi rdi
-if DEBUG > 0
-mov qword[rcx+Thread.stackBase], rsp
-mov qword[rcx+Thread.stackRecord], 0
-end if
 
+match ='W', VERSION_OS {
 		mov   rbx, rcx
+}
+match ='L', VERSION_OS {
+		mov   rbx, rcx
+}
+match ='C', VERSION_OS {
+		mov   rbx, rdi
+}
+match ='X', VERSION_OS {
+		mov   rbx, rdi
+}
+
 		lea   rdi, [Thread_Think]
 		lea   rdx, [MainThread_Think]
 		mov   eax, dword[rbx+Thread.idx]
 	       test   eax, eax
 	      cmovz   rdi, rdx
 
-		jmp   .lock
-.loop:
+		jmp   .Lock
+.Loop:
 		mov   rcx, rbx
 	       call   rdi
-.lock:
+.Lock:
 		lea   rcx, [rbx+Thread.mutex]
 	       call   _MutexLock
 		mov   byte[rbx+Thread.searching], 0
-    .check_exit:
+    .CheckExit:
 		mov   al, byte[rbx+Thread.exit]
 	       test   al, al
-		jnz   .unlock
+		jnz   .Unlock
 		lea   rcx, [rbx+Thread.sleep2]
 	       call   _EventSignal
 		lea   rcx, [rbx+Thread.sleep1]
@@ -266,17 +274,24 @@ end if
 	       call   _EventWait
 		mov   al, byte[rbx+Thread.searching]
 	       test   al, al
-		 jz   .check_exit
-    .unlock:
+		 jz   .CheckExit
+    .Unlock:
 		lea   rcx, [rbx+Thread.mutex]
 	       call   _MutexUnlock
-.check_out:
+.CheckOut:
 		mov   al, byte[rbx+Thread.exit]
 	       test   al, al
-		 jz   .loop
-.exit:
+		 jz   .Loop
 
 match ='W', VERSION_OS {
+		xor   ecx, ecx
+	       call   _ExitThread
+}
+match ='X', VERSION_OS {
+		xor   ecx, ecx
+	       call   _ExitThread
+}
+match ='C', VERSION_OS {
 		xor   ecx, ecx
 	       call   _ExitThread
 }
@@ -292,7 +307,7 @@ Thread_StartSearching:
 		lea   rcx, [rbx+Thread.mutex]
 	       call   _MutexLock
 		mov   byte[rbx+Thread.searching], -1
-.signal:	lea   rcx, [rbx+Thread.sleep1]
+.Signal:        lea   rcx, [rbx+Thread.sleep1]
 	       call   _EventSignal
 		lea   rcx, [rbx+Thread.mutex]
 	       call   _MutexUnlock
@@ -305,7 +320,7 @@ Thread_StartSearching_TRUE:
 		mov   rbx, rcx
 		lea   rcx, [rbx+Thread.mutex]
 	       call   _MutexLock
-		jmp   Thread_StartSearching.signal
+		jmp   Thread_StartSearching.Signal
 
 
 Thread_WaitForSearchFinished:
@@ -315,13 +330,13 @@ Thread_WaitForSearchFinished:
 		cmp   al, byte[rbx]
 		lea   rcx, [rbx+Thread.mutex]
 	       call   _MutexLock
-		jmp   .check
-.wait:		lea   rcx, [rbx+Thread.sleep2]
+		jmp   .Check
+.Wait:          lea   rcx, [rbx+Thread.sleep2]
 		lea   rdx, [rbx+Thread.mutex]
 	       call   _EventWait
-.check: 	mov   al, byte[rbx+Thread.searching]
+.Check:         mov   al, byte[rbx+Thread.searching]
 	       test   al, al
-		jnz   .wait
+		jnz   .Wait
 		lea   rcx, [rbx+Thread.mutex]
 	       call   _MutexUnlock
 		pop   rbx rdi rsi
@@ -337,13 +352,13 @@ Thread_Wait:
 		mov   rdi, rdx
 		lea   rcx, [rbx+Thread.mutex]
 	       call   _MutexLock
-		jmp   .check
-.wait:		lea   rcx, [rbx+Thread.sleep1]
+		jmp   .Check
+.Wait:          lea   rcx, [rbx+Thread.sleep1]
 		lea   rdx, [rbx+Thread.mutex]
 	       call   _EventWait
-.check: 	mov   al, byte[rdi]
+.Check:         mov   al, byte[rdi]
 	       test   al, al
-		 jz   .wait
+		 jz   .Wait
 		lea   rcx, [rbx+Thread.mutex]
 	       call   _MutexUnlock
 		pop   rbx rdi rsi

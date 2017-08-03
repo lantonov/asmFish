@@ -19,6 +19,7 @@ end if
 
 
 
+include 'fasmMacros.asm'
 include 'Def.asm'
 
 
@@ -37,7 +38,10 @@ match ='X', VERSION_OS {
 format ELF64
 include 'mac64.asm'
 }
-
+match ='C', VERSION_OS {
+format ELF64
+include 'libc64.asm'
+}
 
 
 include 'BasicMacros.asm'
@@ -54,6 +58,9 @@ segment readable writeable
 match ='X', VERSION_OS {
 section '.data' writeable align 64
 }
+match ='C', VERSION_OS {
+section '.data' writeable align 64
+}
 
 include 'dataSection.asm'
 
@@ -68,6 +75,9 @@ segment readable writeable
 match ='X', VERSION_OS {
 section '.bss' writeable align 4096
 }
+match ='C', VERSION_OS {
+section '.bss' writeable align 4096
+}
 
 include 'bssSection.asm'
 
@@ -80,6 +90,9 @@ match ='L', VERSION_OS {
 segment readable executable
 }
 match ='X', VERSION_OS {
+section '.code' executable align 64
+}
+match ='C', VERSION_OS {
 section '.code' executable align 64
 }
 
@@ -195,6 +208,9 @@ include 'OsLinux.asm'
 match ='X', VERSION_OS {
 include 'OsX.asm'
 }
+match ='C', VERSION_OS {
+include 'OsLibc.asm'
+}
 
 if USE_BOOK
  include 'Book.asm'
@@ -207,15 +223,26 @@ match = 'L', VERSION_OS {
 Start:
 }
 match = 'X', VERSION_OS {
-public start
-start:
+public _main
+_main:
 }
+match = 'C', VERSION_OS {
+public main
+main:
+}
+
+
 
 match ='L', VERSION_OS {
 		mov   qword[rspEntry], rsp
 }
 match ='X', VERSION_OS {
-		mov   qword[rspEntry], rsp
+                mov   qword[argc], rdi
+                mov   qword[argv], rsi
+}
+match ='C', VERSION_OS {
+                mov   qword[argc], rdi
+                mov   qword[argv], rsi
 }
 include 'main.asm'
 
@@ -251,6 +278,9 @@ match ='L', VERSION_OS {
 segment readable writeable
 }
 match ='X', VERSION_OS {
+section '.profile' writeable
+}
+match ='C', VERSION_OS {
 section '.profile' writeable
 }
 

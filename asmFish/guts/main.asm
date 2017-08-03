@@ -4,48 +4,6 @@
 	       call   _InitializeTimer
 	       call   _CheckCPU
 
-match ='X', VERSION_OS {
-Display 0, "Hello!%n"
-
-call _GetTime
-Display 0, "      time: %X0.%X2%n"
-push rax rdx
-call _GetTime_SYS
-Display 0, "check time: %X0.%X2%n"
-push rax rdx
-
-mov ecx, 256
-call _Sleep
-
-call _GetTime
-Display 0, "      time: %X0.%X2%n"
-push rax rdx
-call _GetTime_SYS
-Display 0, "check time: %X0.%X2%n"
-push rax rdx
-
-mov rdx, qword[rsp+16*1+8*0]
-mov rax, qword[rsp+16*1+8*1]
-sub rdx, qword[rsp+16*3+8*0]
-sbb rax, qword[rsp+16*3+8*1]
-Display 0, "      diff: %X0.%X2%n"
-mov rdx, qword[rsp+16*0+8*0]
-mov rax, qword[rsp+16*0+8*1]
-sub rdx, qword[rsp+16*2+8*0]
-sbb rax, qword[rsp+16*2+8*1]
-Display 0, "check diff: %X0.%X2%n"
-
-mov ecx, 1000000
-call _VirtualAlloc
-Display 0, "memory: %X0%n"
-mov rcx, rax
-mov edx, 1000000
-call _VirtualFree
-Display 0, "freed!%n"
-mov ecx, 1
-call _ExitProcess
-}
-
         ; init the engine
 	       call   Options_Init
 	       call   MoveGen_Init

@@ -203,17 +203,17 @@ EvalPieces.NoKingRing\@:
 
                 ldr  x0, [sp, EvalInfo.mobilityArea + 8*\Us]
                 and  x0, x0, x9
-                Popcnt  x10, x0, x1
+             Popcnt  x10, x0, x1
                 lea  x6, MobilityBonus
                 ldr  w4, [x6, x10, lsl 2]
-                AddSub  \Us, w26, w26, w4
+             AddSub  \Us, w26, w26, w4
 
                 lea  x6, SquareDistance
                 add  x4, x24, x8, lsl 6
                ldrb  w0, [x6, x4]
               mov32  w4, KingProtector_Pt
                 mul  w0, w0, w4
-                AddSub  \Us, w26, w26, w0
+             AddSub  \Us, w26, w26, w0
 
   .if \Pt == Knight || \Pt == Bishop
 
@@ -278,7 +278,7 @@ EvalPieces.OutpostDone\@:
                ldrb  w0, [x1, PawnEntry.pawnsOnSquares + 2*\Us]
               mov32  w4, BishopPawns
                 mul  w0, w0, w4
-                AddSub  Them, w26, w26, w0
+             AddSub  Them, w26, w26, w0
     .endif
 
  .elseif \Pt == Rook
@@ -296,10 +296,10 @@ EvalPieces.OutpostDone\@:
                 lea  x6, RookAttacksPDEP
                 ldr  x4, [x6, x24, lsl 3]
                 and  x0, x0, x4
-                Popcnt  x0, x0, x1
+             Popcnt  x0, x0, x1
               mov32  w4, RookOnPawn
                 mul  w0, w0, w4
-                AddSub  \Us, w26, w26, w0
+             AddSub  \Us, w26, w26, w0
 EvalPieces.NoEnemyPawnBonus\@:
 
                 and  w1, w24, 7
@@ -353,7 +353,7 @@ EvalPieces.NoOpenFileBonus\@:
               mov32  w4, TrappedRook
                 sub  w10, w10, w4
                 mul  w10, w10, w0
-                AddSub  \Us, w26, w26, w10
+             AddSub  \Us, w26, w26, w10
 EvalPieces.NoTrappedByKing\@:
 
  .elseif \Pt == Queen
@@ -980,7 +980,7 @@ EvalThreats.ThreatMinorLoop\@:
                ldrb  w1, [x6, x0]
                 lea  x6, Threat_Minor
                 ldr  w4, [x6, x1, lsl 2]
-                Addsub  \Us, w26, w26, w4
+             Addsub  \Us, w26, w26, w4
                 lsr  w0, w0, 3
   .if \Us == White
                 eor  w0, w0, Them*7
@@ -992,7 +992,7 @@ EvalThreats.ThreatMinorLoop\@:
                 and  w0, w0, w4
               mov32  w4, ThreatByRank
                 mul  w0, w0, w4
-                Addsub  \Us, w26, w26, w0
+             Addsub  \Us, w26, w26, w0
                 sub  x1, x8, 1
                ands  x8, x8, x1
                 bne  EvalThreats.ThreatMinorLoop\@
@@ -1657,7 +1657,7 @@ Evaluate.SkipSpace:
                ands  x8, x8, x1
                csel  w8, w0, w8, ne
 
-                Popcnt  x0, x11, x1
+             Popcnt  x0, x11, x1
                ldrb  w2, [x27, PawnEntry.asymmetry]
                 add  w2, w2, w0
                 sub  w2, w2, 17

@@ -316,11 +316,14 @@ align 8
 }
 
 match ='X', VERSION_OS {
- sz_procselfauxv		db '/proc/self/auxv',0
- sz___vdso_clock_gettime	db '__vdso_clock_gettime',0
 align 8
- rspEntry dq ?
- __imp_clock_gettime dq ?
+ argc dq ?
+ argv dq ?
+}
+match ='C', VERSION_OS {
+align 8
+ argc dq ?
+ argv dq ?
 }
 
 align 8

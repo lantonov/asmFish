@@ -343,21 +343,30 @@ match ='L', VERSION_OS {
 match ='X', VERSION_OS {
 
   struct ThreadHandle
-   stackAddress rq 1
-   mutex	rd 1
-		rd 1
+   rb 16
   ends
 
   struct Mutex
-   rd 1
-   rd 1  ; extra
-   rq 1  ; extra
+   rb 64
   ends
 
   struct ConditionalVariable
-   rd 1
-   rd 1  ; extra
-   rq 1
+   rb 64
+  ends
+}
+
+match ='C', VERSION_OS {
+
+  struct ThreadHandle
+   rb sizeof.pthread_t
+  ends
+
+  struct Mutex
+   rb sizeof.pthread_mutex_t
+  ends
+
+  struct ConditionalVariable
+   rb sizeof.pthread_cond_t
   ends
 }
 
@@ -393,10 +402,6 @@ match =1, USE_VARIETY {
  idx		rd 1
  rootDepth	rd 1
 
-match =1, DEBUG {
- stackRecord rq 1
- stackBase   rq 1
-}
  castling_start rb 0
  castling_rfrom      rb 4
  castling_rto	     rb 4
@@ -448,7 +453,6 @@ ends
 }
 match ='L', VERSION_OS {
 ; on linux, cpu data is held in a large bit mask
-
 struct NumaNode
  nodeNumber	rd 1
  coreCnt	rd 1
@@ -460,14 +464,27 @@ ends
 
 }
 match ='X', VERSION_OS {
-
+; mac os x is numa-unaware
 struct NumaNode
  nodeNumber	rd 1
  coreCnt	rd 1
  cmhTable	rq 1
  parent 	rq 1
 		rq 1
- cpuMask	rq MAX_LINUXCPUS/64
+ cpuMask	rq 0
+ends
+
+}
+
+match ='C', VERSION_OS {
+; c library is numa-unaware
+struct NumaNode
+ nodeNumber	rd 1
+ coreCnt	rd 1
+ cmhTable	rq 1
+ parent 	rq 1
+		rq 1
+ cpuMask	rq 0
 ends
 
 }

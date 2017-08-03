@@ -35,7 +35,9 @@ SEP_CHAR equ ':'
 match ='X', VERSION_OS {
 SEP_CHAR equ ':'
 }
-
+match ='C', VERSION_OS {
+SEP_CHAR equ ':'
+}
 
 
 
