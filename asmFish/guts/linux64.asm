@@ -1,3 +1,29 @@
+struct timespec
+  tv_sec  rq 1
+  tv_nsec rq 1
+ends
+
+; for stat stucture, see /usr/include/x86_64-linux-gnu/bits/stat.h
+; it takes some work to unwind everything
+struct stat             ; offset of
+  st_dev        rq 1    ; 0
+  st_ino        rq 1    ; 8
+  st_nlink      rq 1    ; 16
+  st_mode       rd 1    ; 24
+  st_uid        rd 1    ; 28
+  st_gid        rd 1    ; 32
+                rd 1    ; 36
+  st_rdev       rq 1    ; 40
+  st_size       rq 1    ; 48
+  st_blksize    rq 1    ; 56
+  st_blocks     rq 1    ; 64
+  st_atimespec  timespec; 72
+  st_mtimespec  timespec; 88
+  st_ctimespec  timespec; 104
+                rq 3    ; 120
+ends                    ; 144 = sizeof.stat
+
+
 sys_read		     = $0000
 sys_write		     = $0001 
 sys_open		     = $0002 

@@ -216,15 +216,15 @@ _FileSize:
 	; in: rcx handle from CreateFile (win), fd (linux)
 	; out:  rax size
 	       push   rbx rsi rdi
-		sub   rsp, 20*8
+                sub   rsp, (sizeof.stat + 15) and -16
 		mov   rdi, rcx
 		mov   rsi, rsp 
 		mov   eax, sys_fstat 
 	    syscall
 	       test   eax, eax
 		jnz   Failed_sys_fstat
-		mov   rax, qword[rsp+0x30] ; file size
-		add   rsp, 20*8
+		mov   rax, qword[rsp+stat.st_size] ; file size
+                add   rsp, (sizeof.stat + 15) and -16
 		pop   rdi rsi rbx
 		ret
 
@@ -275,7 +275,7 @@ _FileMap:
 	;      rdx handle from CreateFileMapping (win), size (linux) 
 	; get file size 
 	       push   rbp rbx rsi rdi r15
-		sub   rsp, 20*8
+                sub   rsp, (sizeof.stat + 15) and -16
 		mov   rbp, rcx
 		mov   rdi, rcx
 		mov   rsi, rsp 
@@ -283,7 +283,7 @@ _FileMap:
 	    syscall
 	       test   eax, eax
 		jnz   Failed_sys_fstat
-		mov   rbx, qword[rsp+0x30] ; file size
+		mov   rbx, qword[rsp+stat.st_size] ; file size
 	; map file
 		xor   edi, edi		; addr
 		mov   rsi, rbx		; length
@@ -297,7 +297,7 @@ _FileMap:
 		 js   Failed_sys_mmap
 	; return size in rdx, base address in rax
 		mov   rdx, rbx
-		add   rsp, 20*8
+                add   rsp, (sizeof.stat + 15) and -16
 		pop   r15 rdi rsi rbx rbp
 		ret
 
@@ -434,7 +434,7 @@ _ExitThread:
 _GetTime:
 	; out: rax + rdx/2^64 = time in ms
 	       push   rbx rsi rdi
-		sub   rsp, 8*2
+		sub   rsp, (sizeof.timespec + 15) and -16
 		mov   edi, CLOCK_MONOTONIC
 		mov   rsi, rsp
 	       call   qword[__imp_clock_gettime]
@@ -444,7 +444,7 @@ _GetTime:
 	       imul   rcx, qword[rsp+8*0], 1000
 		add   rdx, rcx
 	       xchg   rax, rdx
-		add   rsp, 8*2
+		add   rsp, (sizeof.timespec + 15) and -16
 		pop   rdi rsi rbx
 		ret
 .SYS:

@@ -343,15 +343,15 @@ match ='L', VERSION_OS {
 match ='X', VERSION_OS {
 
   struct ThreadHandle
-   rb 16
+   rb sizeof.pthread_t
   ends
 
   struct Mutex
-   rb 64
+   rb sizeof.pthread_mutex_t
   ends
 
   struct ConditionalVariable
-   rb 64
+   rb sizeof.pthread_cond_t
   ends
 }
 
