@@ -130,6 +130,9 @@ PrintFancy.GotOne:
         beq  PrintFancy.Alignment
         cmp  w24, 'p'
         beq  PrintFancy.Position
+        cmp  w24, 'n'
+        beq  PrintFancy.NewLine
+
          bl  ParseInteger
         and  x0, x0, 31
         cbz  x29, 1f
@@ -184,6 +187,11 @@ PrintFancy.GotOne:
 
         cbz  x3, PrintFancy.Loop
         blr  x3
+          b  PrintFancy.Loop
+
+PrintFancy.NewLine:
+        PrintNewLine
+        mov  x23, x27
           b  PrintFancy.Loop
 
 PrintFancy.Position:
