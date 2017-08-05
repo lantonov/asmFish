@@ -212,7 +212,7 @@ MainHash_LoadFile:
 
 	; rsi rounded size in bytes
 		shl   rsi, 20
-	; edi is number of bytes written
+	; r12 is number of bytes written
 		xor   r12, r12
 	; ebx is chuck size to read
 	; read in chink sizes ranging from 1MB to 256MB
@@ -226,7 +226,7 @@ end repeat
 .ReadLoop:
 		mov   rcx, r15
 		mov   rdx, qword[mainHash.table]
-		add   rdx, rdi
+		add   rdx, r12
 		mov   r8d, ebx
 	       call   _FileRead
 	       test   eax, eax
@@ -314,7 +314,7 @@ end repeat
 .WriteLoop:
 		mov   rcx, r15
 		mov   rdx, qword[mainHash.table]
-		add   rdx, rdi
+		add   rdx, r12
 		mov   r8d, ebx
 	       call   _FileWrite
 	       test   eax, eax
