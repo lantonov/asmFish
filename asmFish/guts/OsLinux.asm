@@ -11,19 +11,11 @@ LOCK_CONTEND	= 0x0101
 
 _MutexCreate:
 	; rcx: address of Mutex
-	       push   rbx rsi rdi
-		mov   rdi, rcx
-		xor   eax, eax
-		mov   dword[rdi], eax
-		pop   rdi rsi rbx
-		ret
 
 _MutexDestroy:
 	; rcx: address of Mutex
-	       push   rbx rsi rdi
-		mov   rdi, rcx
-		xor   eax, eax
-		pop   rdi rsi rbx
+                xor   eax, eax
+		mov   qword[rcx], rax
 		ret
 
 _MutexLock:
@@ -84,7 +76,7 @@ _MutexUnlock:
 		mov   eax, sys_futex
 	    syscall
 	       test   eax, eax
-		 js   Failed_sys_futex_MutexUnlock
+		 js   Failed_sys_futex
 
 .3:		xor   eax, eax
 		pop   rdi rsi rbx
@@ -116,7 +108,7 @@ _EventSignal:
 		mov   edx, 1
 	    syscall
 	       test   eax, eax
-		 js   Failed_sys_futex_EventSignal
+		 js   Failed_sys_futex
 		xor   eax, eax
 		pop   rdi rsi rbx
 		ret
@@ -313,7 +305,7 @@ _FileUnmap:
 		mov   eax, sys_munmap 
 	    syscall
 	       test   eax, eax
-		jnz   Failed_sys_munmap_FileUnmap
+		jnz   Failed_sys_munmap
 	@@:	pop   rdi rsi rbx
 		ret
 
@@ -380,8 +372,8 @@ _ThreadCreate:
 		mov   dword[rdi], edx
 		mov   eax, sys_futex
 	    syscall
-	       test   eax, eax			      ; existed before
-		 js   Failed_sys_futex_ThreadCreate   ;
+	       test   eax, eax
+		 js   Failed_sys_futex
 	; exit
 		xor   edi, edi
 		mov   eax, sys_exit
@@ -568,7 +560,7 @@ _VirtualFree:
 		mov   eax, sys_munmap
 	    syscall
 	       test   eax, eax
-		jnz   Failed_sys_munmap_VirtualFree
+		jnz   Failed_sys_munmap
 .null:
                 pop   rbx rdi rsi
 		ret
@@ -733,9 +725,6 @@ _ReadStdIn:
 		mov   rsi, rcx
 		mov   eax, sys_read 
 	    syscall
-GD String, 'read: '
-GD Int64, rax
-GD NewLine
 		pop   rdi rsi rbx
 		ret
 
@@ -819,22 +808,13 @@ end virtual
 	       test   eax, eax
 		 jz   .TryNextNode
 
-
 	; look at /sys/devices/system/node/nodeN/cpumap
 		lea   rdi, [.fstring]
-		mov   rax, '/sys/dev'
-	      stosq
-		mov   rax, 'ices/sys'
-	      stosq
-		mov   rax, 'tem/node'
-	      stosq
-		mov   rax, '/node'
-	      stosq
-		sub   rdi, 3
-		mov   eax, r12d
-	       call   PrintUnsignedInteger
-		mov   rax, '/cpumap'
-	      stosq
+                lea   rcx, [sz_linux_cpumap]
+                lea   rdx, [.buffer]
+                mov   qword[rdx+8*0], r12
+                xor   r8, r8
+               call   PrintFancy
 		xor   eax, eax
 	      stosd
 
@@ -918,10 +898,10 @@ end virtual
 		mov   qword[rsi+NumaNode.parent], rdi
 		jmp   .OuterNext
 .InnerNext:	add   r14d, 1
-		cmp   r14d, dword[threadPool.nodeCnt]
+		cmp   r14d, ebx
 		 jb   .Inner
 .OuterNext:	add   r15d, 1
-		cmp   r15d, dword[threadPool.nodeCnt]
+		cmp   r15d, ebx
 		 jb   .Outer
 
 
@@ -941,24 +921,12 @@ end virtual
 
 	; look at /sys/devices/system/cpu/cpu0/topology/thread_siblings
 		lea   rdi, [.fstring]
-		mov   rax, '/sys/dev'
-	      stosq
-		mov   rax, 'ices/sys'
-	      stosq
-		mov   rax, 'tem/cpu/'
-	      stosq
-		mov   rax, 'cpu'
-	      stosd
-		sub   rdi, 1
-		mov   eax, r12d
-	       call   PrintUnsignedInteger
-		mov   rax, '/topolog'
-	      stosq
-		mov   rax, 'y/thread'
-	      stosq
-		mov   rax, '_sibling'
-	      stosq
-		mov   eax, 's'
+                lea   rcx, [sz_linux_siblings]
+                lea   rdx, [.buffer]
+                mov   qword[rdx+8*0], r12
+                xor   r8, r8
+               call   PrintFancy
+		xor   eax, eax
 	      stosd
 
 		lea   rcx, [.fstring]
@@ -1052,36 +1020,32 @@ end virtual
 		jmp   .Return
 
 
-
+sz_linux_cpumap    db '/sys/devices/system/node/node%U0/cpumap',0
+sz_linux_siblings  db '/sys/devices/system/cpu/cpu%U0/topology/thread_siblings',0
+sz_linux_nodeinfo  db 'info string node %i0 parent %i1 cores %u2 mask 0x',0
 
 
 _DisplayThreadPoolInfo:
 	       push   rbx rsi rdi r14 r15
+                sub   rsp, 8*4
 		lea   rsi, [threadPool.nodeTable]
 	       imul   ebx, dword[threadPool.nodeCnt], sizeof.NumaNode
 		add   rbx, rsi
 .PrintNextNode:
 		lea   rdi, [Output]
-		mov   rax, 'info str'
-	      stosq
-		mov   rax, 'ing node'
-	      stosq
-		mov   al, ' '
-	      stosb
-	     movsxd   rax, dword[rsi+NumaNode.nodeNumber]
-	       call   PrintSignedInteger
-		mov   rax, ' parent '
-	      stosq
+
+                lea   rcx, [sz_linux_nodeinfo]
+                mov   rdx, rsp
+                xor   r8, r8
+	        mov   eax, dword[rsi+NumaNode.nodeNumber]
+                mov   dword[rsp+8*0], eax
 		mov   rax, qword[rsi+NumaNode.parent]
-	     movsxd   rax, dword[rax+NumaNode.nodeNumber]
-	       call   PrintSignedInteger
-		mov   rax, ' cores '
-	      stosq
-		sub   rdi, 1
+	        mov   eax, dword[rax+NumaNode.nodeNumber]
+                mov   dword[rsp+8*1], eax
 		mov   eax, dword[rsi+NumaNode.coreCnt]
-	       call   PrintUnsignedInteger
-		mov   rax, ' mask 0x'
-	      stosq
+                mov   dword[rsp+8*2], eax
+               call   PrintFancy
+
 		mov   r15d, (MAX_LINUXCPUS/64)-1
 	@@:	mov   rcx, qword[rsi+NumaNode.cpuMask+8*r15]
 	       test   rcx, rcx
@@ -1103,6 +1067,7 @@ _DisplayThreadPoolInfo:
 		cmp   rsi, rbx
 		 jb   .PrintNextNode
 .Return:
+                add  rsp, 8*4
 		pop  r15 r14 rdi rsi rbx
 		ret
 
@@ -1192,6 +1157,8 @@ Failed:
 		mov   rcx, rdi
 		lea   rdi, [Output]
 	       call   PrintString
+                mov   rax, ' failed '
+              stosq
 		mov   rax, ' rax: 0x'
 	      stosq
 		pop   rcx
@@ -1211,92 +1178,46 @@ Failed_HashmaxTooLow:
 Failed_sys_write:
 		lea   rdi, [@f]
 		jmp   Failed
-		@@: db 'sys_write failed',0
+		@@: db 'sys_write',0
 Failed_sys_mmap:
 		lea   rdi, [@f]
 		jmp   Failed
-		@@: db 'sys_mmap failed',0
+		@@: db 'sys_mmap',0
 Failed_sys_fstat:
 		lea   rdi, [@f]
 		jmp   Failed
-		@@: db 'sys_fstat failed',0
-
-
-
-Failed_sys_munmap_VirtualFree:
-		lea   rdi, [@f]
-		jmp   Failed
-		@@: db 'sys_munmap in _VirtualFree failed',0
-;Failed_sys_munmap_ThreadJoin:
-;               lea   rdi, [@f]
-;               jmp   Failed
-;               @@: db 'sys_munmap in _ThreadJoin failed',0
-Failed_sys_munmap_FileUnmap:
-		lea   rdi, [@f]
-		jmp   Failed
-		@@: db 'sys_munmap in _FileUnmap failed',0
+		@@: db 'sys_fstat',0
 
 
 Failed_sys_munmap:
 		lea   rdi, [@f]
 		jmp   Failed
-		@@: db 'sys_munmap failed',0
+		@@: db 'sys_munmap',0
+
 Failed_stub_clone:
 		lea   rdi, [@f]
 		jmp   Failed
-		@@: db 'stub_clone failed',0
+		@@: db 'stub_clone',0
 
 Failed_sys_futex:
 		lea   rdi, [@f]
 		jmp   Failed
-		@@: db 'sys_futex failed',0
-Failed_sys_futex_MutexUnlock:
-		lea   rdi, [@f]
-		jmp   Failed
-		@@: db 'sys_futex in _MutexUnlock failed',0
-Failed_sys_futex_EventSignal:
-		lea   rdi, [@f]
-		jmp   Failed
-		@@: db 'sys_futex in _EventSignal failed',0
-;Failed_sys_futex_EventWait:
-;                lea   rdi, [@f]
-;                jmp   Failed
-;                @@: db 'sys_futex in _EventWait failed',0
-Failed_sys_futex_ThreadCreate:
-		lea   rdi, [@f]
-		jmp   Failed
-		@@: db 'sys_futex in _ThreadCreate failed',0
-;Failed_sys_futex_ThreadJoin:
-;                lea   rdi, [@f]
-;                jmp   Failed
-;                @@: db 'sys_futex in _ThreadJoin failed',0
-;Failed_sys_futex_MutexLock:
-;                lea   rdi, [@f]
-;                jmp   Failed
-;                @@: db 'sys_futex in _MutexLock failed',0
-
-
+		@@: db 'sys_futex',0
 
 
 Failed_sys_sched_setaffinity:
 		lea   rdi, [@f]
 		jmp   Failed
-		@@: db 'sys_sched_setaffinity failed',0
+		@@: db 'sys_sched_setaffinity',0
 Failed_sys_mbind:
 		lea   rdi, [@f]
 		jmp   Failed
-		@@: db 'sys_mbind failed',0
+		@@: db 'sys_mbind',0
+
 Failed_EventWait:
 		lea   rdi, [@f]
 		jmp   Failed
-		@@: db '_EventWait failed',0
-Failed_MatchingCore:
-		lea   rdi, [@f]
-		jmp   Failed
-		@@: db 'matching core to node failed',0
-
-
-
+		@@: db '_EventWait',0
 
 
 _ErrorBox:
@@ -1328,6 +1249,9 @@ _ErrorBox:
 	; Author: Jeff Marrison <jeff@2ton.com.au>
 	;
 	; for the meat of this function
+
+sz___vdso_clock_gettime	db '__vdso_clock_gettime',0
+sz_procselfauxv		db '/proc/self/auxv',0
 
 vdso_FindSymbol:
 	; vdso.inc: we parse /proc/self/auxv (and die if we can't)

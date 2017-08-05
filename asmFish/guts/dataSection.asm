@@ -117,7 +117,6 @@ if USE_BOOK
         NewLineData
 end if
 
-
 	db 'uciok'
 sz_NewLine:
 	NewLineData
@@ -132,6 +131,7 @@ szCPUError         db 'Error: processor does not support',0
    .BMI2           db ' BMI2',0
 szStartFEN         db 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',0
 PieceToChar        db '.?PNBRQK??pnbrqk'
+
 
 sz_format_currmove:
         db 'info depth %u0 currmove %m1 currmovenumber %u2%n', 0
@@ -150,8 +150,13 @@ sz_format_bench3:
         db 'Nodes searched  : %U1%n'
         db 'Nodes/second    : %U2%n', 0
 
-sz_path_set      db 'info string path set to ', 0
-sz_hash_cleared  db 'info string hash cleared', 0
+sz_info_node_threads db 'info string node %i0 has threads',0
+sz_tt_update         db 'info string finished %U0 MB of %U1 MB%n',0
+sz_path_set          db 'info string path set to ', 0
+sz_hash_cleared      db 'info string hash cleared', 0
+sz_error_badttfile   db 'error: could not read ttfile ',0
+sz_error_badttsize   db 'error: ttfile has funny size 0x%X0%n',0
+sz_error_middlett    db 'error: could not process whole file',0
 
 sz_error_priority  db 'error: unknown priority ',0
 sz_error_depth     db 'error: bad depth ',0
@@ -163,7 +168,6 @@ sz_error_think	   db 'error: setoption called while thinking',0
 sz_error_value	   db 'error: setoption has no value',0
 sz_error_name	   db 'error: setoption has no name',0
 sz_error_option    db 'error: unknown option ',0
-sz_error_hashread  db 'error: could not read hash file ',0
 sz_error_hashsave  db 'error: could not save hash file ',0
 sz_error_affinity1 db 'error: parsing affinity failed after "',0
 sz_error_affinity2 db '"; proceeding as "all"',0
@@ -308,8 +312,6 @@ align 8
 }
 
 match ='L', VERSION_OS {
- sz_procselfauxv		db '/proc/self/auxv',0
- sz___vdso_clock_gettime	db '__vdso_clock_gettime',0
 align 8
  rspEntry dq ?
  __imp_clock_gettime dq ?

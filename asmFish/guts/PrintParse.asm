@@ -31,8 +31,7 @@ PrintScore_Uci:
 .divideNPrint:
 		cdq
 	       idiv   ecx
-	     movsxd   rax, eax
-	        jmp   PrintSignedInteger
+	        jmp   PrintInt32
 .pMate:
 .nMate:
 		mov   rax, 'mate '
@@ -71,7 +70,6 @@ PrintFancy:
 .Return:
                 ret
 .GotOne:
-
               lodsb
                 mov   r12d, eax
                 cmp   al, 'a'
@@ -81,11 +79,10 @@ PrintFancy:
                 cmp   al, 'n'
                  je   .NewLine
                call   ParseInteger
-                and   eax, 15
                test   r14, r14
                  jz   @f
                 lea   ecx, [2*rax]
-             movups   xmm0, [r14+8*rcx]
+            vmovups   xmm0, [r14+8*rcx]
         @@:     mov   rax, [r15+8*rax]
                 mov   rcx, rax
                 xor   edx, edx
@@ -522,12 +519,13 @@ GetLine:
 	; reads one line and then returns 
 	; a line is a string of characters where the last
 	;  and only the last character is below 0x20 (the space char)
-	       push   rbx r12 r13 r14 r15
+	       push   rbp rbx rdi r12 r13 r14 r15
+                lea   rbp, [ioBuffer]
 		xor   ebx, ebx				; ebx = length of return string
-		mov   r12d, dword[ioBuffer.tmp_i]
-		mov   r13d, dword[ioBuffer.tmp_j]
-		mov   r14, qword[ioBuffer.inputBufferSizeB]
-		mov   r15, qword[ioBuffer.inputBuffer]
+		mov   r12d, dword[rbp+IOBuffer.tmp_i]
+		mov   r13d, dword[rbp+IOBuffer.tmp_j]
+		mov   r14, qword[rbp+IOBuffer.inputBufferSizeB]
+		mov   r15, qword[rbp+IOBuffer.inputBuffer]
 .ReadLoop:
 		cmp   rbx, r14
 		jae   .ReAlloc
@@ -535,7 +533,7 @@ GetLine:
 		cmp   r12d, r13d
 		jae   .GetMoreData
 .GetMoreDataRet:
-		mov   al, byte[ioBuffer.tmpBuffer+r12]
+		mov   al, byte[rbp+IOBuffer.tmpBuffer+r12]
 		add   r12d, 1
 		mov   byte[r15+rbx], al
 		add   ebx, 1
@@ -543,17 +541,17 @@ GetLine:
 		jae   .ReadLoop
 		xor   eax, eax
 .Return:
-		mov   dword[ioBuffer.tmp_i], r12d
-		mov   dword[ioBuffer.tmp_j], r13d
-		mov   qword[ioBuffer.inputBufferSizeB], r14
-		mov   qword[ioBuffer.inputBuffer], r15
+		mov   dword[rbp+IOBuffer.tmp_i], r12d
+		mov   dword[rbp+IOBuffer.tmp_j], r13d
+		mov   qword[rbp+IOBuffer.inputBufferSizeB], r14
+		mov   qword[rbp+IOBuffer.inputBuffer], r15
 		mov   rsi, r15
 		mov   ecx, ebx
-		pop   r15 r14 r13 r12 rbx
+		pop   r15 r14 r13 r12 rdi rbx rbp
 		ret
 .GetMoreData:
 		xor   r12d, r12d
-		lea   rcx, [ioBuffer.tmpBuffer]
+		lea   rcx, [rbp+IOBuffer.tmpBuffer]
 		mov   edx, sizeof.IOBuffer.tmpBuffer
 	       call   _ReadStdIn
 		mov   r13d, eax

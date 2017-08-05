@@ -106,18 +106,13 @@ ThreadPool_DisplayThreadDistribution:
 	       imul   r15d, dword[threadPool.nodeCnt], sizeof.NumaNode
 		add   r15, rsi
 .NextNode:
-		mov   rax, 'info str'
-	      stosq
-		mov   rax, 'ing node'
-	      stosq
-		mov   al, ' '
-	      stosb
-	     movsxd   rax, dword[rsi+NumaNode.nodeNumber]
-	       call   PrintSignedInteger
-		mov   rax, ' has thr'
-	      stosq
-		mov   rax, 'eads'
-	      stosd
+                lea   rcx, [sz_info_node_threads]
+                mov   rdx, rsp
+                xor   r8, r8
+	        mov   eax, dword[rsi+NumaNode.nodeNumber]
+               push   rax rax
+               call   PrintFancy
+                pop   rax rax
 
 		 or   ebx, -1
 	.ThreadLoop:

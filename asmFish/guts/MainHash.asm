@@ -1,27 +1,27 @@
 
 MainHash_Create:
 	; allocate some hash on startup
-	       push   rbx rsi rdi
-		lea   rsi, [mainHash]
+	       push   rbp rbx rsi
+		lea   rbp, [mainHash]
 		mov   esi, 16
-		mov   dword[mainHash.sizeMB], esi
+		mov   dword[rbp+MainHash.sizeMB], esi
 		shl   rsi, 20
 		mov   rcx, rsi
 	       call   _VirtualAlloc
 		xor   edx, edx
 		shr   rsi, 5	; cluster size is 32 bytes
 		sub   rsi, 1
-		mov   qword[mainHash.table], rax
-		mov   qword[mainHash.mask], rsi
-		mov   qword[mainHash.lpSize], rdx
-		mov   byte[mainHash.date], dl
-		pop   rdi rsi rbx
+		mov   qword[rbp+MainHash.table], rax
+		mov   qword[rbp+MainHash.mask], rsi
+		mov   qword[rbp+MainHash.lpSize], rdx
+		mov   byte[rbp+MainHash.date], dl
+		pop   rsi rbx rbp
 		ret
 
 
 MainHash_ReadOptions:
-	       push   rbx rsi rdi
-		lea   rsi, [mainHash]
+	       push   rbp rbx rsi rdi rax
+		lea   rbp, [mainHash]
 
 		mov   ecx, dword[options.hash]
 		mov   edx, MAX_HASH_LOG2MB
@@ -33,11 +33,11 @@ MainHash_ReadOptions:
 		bts   esi, eax
 	; esi is requested size in MB
 
-		mov   rdi, qword[mainHash.lpSize]
+		mov   rdi, qword[rbp+MainHash.lpSize]
 	      movzx   ebx, byte[options.largePages]
 
 	; if requested matches current, then don't do anything
-		cmp   esi, dword[mainHash.sizeMB]
+		cmp   esi, dword[rbp+MainHash.sizeMB]
 		jne   @f
 		cmp   rdi, 1
 		sbb   eax, eax
@@ -48,7 +48,7 @@ MainHash_ReadOptions:
 	; free current
 	       call   MainHash_Free
 
-		mov   dword[mainHash.sizeMB], esi
+		mov   dword[rbp+MainHash.sizeMB], esi
 		shl   rsi, 20
 	; rsi = # of bytes in HashTable
 
@@ -66,63 +66,49 @@ MainHash_ReadOptions:
 .Done:
 		shr   rsi, 5	; cluster size is 32 bytes
 		sub   rsi, 1
-		mov   qword[mainHash.table], rax
-		mov   qword[mainHash.mask], rsi
-		mov   qword[mainHash.lpSize], rdx
-		mov   byte[mainHash.date], 0
+		mov   qword[rbp+MainHash.table], rax
+		mov   qword[rbp+MainHash.mask], rsi
+		mov   qword[rbp+MainHash.lpSize], rdx
+		mov   byte[rbp+MainHash.date], 0
 	       call   MainHash_DisplayInfo
 .Skip:
-		pop   rdi rsi rbx
+		pop   rax rdi rsi rbx rbp
 		ret
 
 
 
 MainHash_DisplayInfo:
-
 if VERBOSE < 2
 	       push   rbx rsi rdi
 		lea   rdi, [Output]
-		mov   rax, 'info str'
-	      stosq
-		mov   rax, 'ing hash'
-	      stosq
-		mov   rax, ' set to '
-	      stosq
-		mov   eax, dword[mainHash.sizeMB]
-	       call   PrintUnsignedInteger
-		mov   eax, ' MB'
-	      stosd
-		sub   rdi, 1
 
-		mov   rcx, qword[mainHash.lpSize]
-	       test   rcx, rcx
-		 jz   .NoLargePages
-		mov   rax, ' page si'
-	      stosq
-		mov   eax, 'ze '
-	      stosd
-		sub   rdi, 1
+                lea   rcx, [sz_hashinfo1]
+		mov   eax, dword[mainHash.sizeMB]
+                mov   qword[rsp+8*0], rax
+                mov   rdx, rsp
+                xor   r8, r8
+               call   PrintFancy
+
+                lea   rcx, [sz_hashinfo2yes]
+                lea   rax, [sz_hashinfo2no]
+		cmp   qword[mainHash.lpSize], 0
+              cmovz   rcx, rax
+                mov   rdx, rsp
+                xor   r8, r8
 		mov   rax, qword[LargePageMinSize]
 		shr   rax, 10
-	       call   PrintUnsignedInteger
-		mov   eax, ' KB'
-	      stosd
-		jmp   .Done
-.NoLargePages:
-		mov   rax, ' no larg'
-	      stosq
-		mov   rax, 'e pages'
-	      stosq
-.Done:
-		sub   rdi, 1
-       PrintNewLine
+               push   rax rax
+               call   PrintFancy
+                pop   rax rax
 	       call   _WriteOut_Output
 
 		pop   rdi rsi rbx
 end if
-
 		ret
 
+sz_hashinfo1    db 'info string hash set to %U0 MB ',0
+sz_hashinfo2yes db 'page size %U0 KB%n',0
+sz_hashinfo2no  db 'no large pages%n',0
 
 
 if USE_HASHFULL
@@ -163,17 +149,18 @@ MainHash_Clear:
 MainHash_Destroy:
 MainHash_Free:
 	       push   rbp
-		mov   rcx, qword[mainHash.table]
-		mov   rax, qword[mainHash.lpSize]
-		mov   edx, dword[mainHash.sizeMB]
+                lea   rbp, [mainHash]
+		mov   rcx, qword[rbp+MainHash.table]
+		mov   rax, qword[rbp+MainHash.lpSize]
+		mov   edx, dword[rbp+MainHash.sizeMB]
 		shl   rdx, 20
 	       test   rax, rax
 	     cmovnz   rdx, rax
 	       call   _VirtualFree
 		xor   eax, eax
-		mov   qword[mainHash.table], rax
-		mov   qword[mainHash.lpSize], rax
-		mov   qword[mainHash.sizeMB], rax
+		mov   qword[rbp+MainHash.table], rax
+		mov   qword[rbp+MainHash.lpSize], rax
+		mov   qword[rbp+MainHash.sizeMB], rax
 		pop   rbp
 		ret
 
@@ -185,99 +172,104 @@ MainHash_Free:
 
 MainHash_LoadFile:
 	       push   rbx rsi rdi r12 r15
+                sub   rsp, 8*4
+		lea   rdi, [Output]
 
 		mov   rcx, qword[options.hashPath]
 		mov   rax, '<empty>'
 		cmp   rax, qword[rcx]
-		 je   .Failed
+		 je   MainHash_Common.FailedBadFile
 	       call   _FileOpenRead
 		mov   r15, rax
 		cmp   rax, -1
-		 je   .Failed
+		 je   MainHash_Common.FailedBadFile
 	; r15 is file handle
 
 		mov   rcx, r15
 	       call   _FileSize
-	       test   rax, (1 shl 20) - 1
-		jnz   .Failed			; not a multiple of 1MB
+	       test   eax, (1 shl 20) - 1
+		jnz   MainHash_Common.FailedBadSize    ; not a multiple of 1MB
 		shr   rax, 20
-		 jz   .Failed
+		 jz   MainHash_Common.FailedBadSize
 
-	; rsi is rounded file size in MB
 		bsr   rax, rax
 		xor   esi, esi
 		bts   esi, eax
 		mov   dword[options.hash], esi
 	       call   MainHash_ReadOptions
+	; rsi is rounded file size in MB
 
-	; rsi rounded size in bytes
 		shl   rsi, 20
-	; r12 is number of bytes written
+	; rsi rounded size in bytes
 		xor   r12, r12
-	; ebx is chuck size to read
-	; read in chink sizes ranging from 1MB to 256MB
+	; r12 is number of bytes written
 		mov   ebx, 1 shl 20
-repeat 8
+	; read in chink sizes ranging from 1MB to 256MB
+    repeat 8
 	       test   rbx, rsi
 		jnz   .ReadLoop
 		shl   ebx, 1
-end repeat
+    end repeat
+	; ebx is chuck size to read
 
 .ReadLoop:
+		lea   rdi, [Output]
+
 		mov   rcx, r15
 		mov   rdx, qword[mainHash.table]
 		add   rdx, r12
 		mov   r8d, ebx
 	       call   _FileRead
 	       test   eax, eax
-		 jz   .Failed
+		 jz   MainHash_Common.FailedMiddle
 		add   r12, rbx
 
-		lea   rdi, [Output]
-		mov   rax, 'info str'
-	      stosq
-		mov   rax, 'ing read'
-	      stosq
-		mov   al, ' '
-	      stosb
+                lea   rcx, [sz_tt_update]
 		mov   rax, r12
 		shr   rax, 20
-	       call   PrintUnsignedInteger
-		mov   rax, ' MB of '
-	      stosq
-		sub   rdi, 1
+                mov   qword[rsp+8*0], rax
 		mov   rax, rsi
 		shr   rax, 20
-	       call   PrintUnsignedInteger
-		mov   rax, ' MB'
-	      stosd
-		sub   rdi, 1
-       PrintNewLine
+                mov   qword[rsp+8*1], rax
+                mov   rdx, rsp
+                xor   r8, r8
+               call   PrintFancy
 	       call   _WriteOut_Output
-
 
 		cmp   r12, rsi
 		 jb   .ReadLoop
 
+
+MainHash_Common:
+.Close:
 		mov   rcx, r15
 	       call   _FileClose
 .Return:
+                add   rsp, 8*4
 		pop   r15 r12 rdi rsi rbx
 		ret
 
-.Failed:
-		lea   rdi, [Output]
-		lea   rcx, [sz_error_hashread]
+.FailedBadFile:
+		lea   rcx, [sz_error_badttfile]
 	       call   PrintString
+                mov   rcx, qword[options.hashPath]
+               call   PrintString
        PrintNewLine
 	       call   _WriteOut_Output
-		mov   rcx, r15
-		cmp   rcx, -1
-		 je   .Return
-	       call   _FileClose
 		jmp   .Return
-
-
+.FailedBadSize:
+		lea   rcx, [sz_error_badttsize]
+                mov   rdx, rsp
+                xor   r8, r8
+                mov   qword[rsp+8*0], rax
+	       call   PrintFancy
+	       call   _WriteOut_Output
+		jmp   .Close
+.FailedMiddle:
+                lea   rcx, [sz_error_middlett]
+               call   PrintString
+	       call   _WriteOut_Output
+		jmp   .Close
 
 
 
@@ -285,80 +277,58 @@ end repeat
 
 MainHash_SaveFile:
 	       push   rbx rsi rdi r12 r15
+                sub   rsp, 8*4
+		lea   rdi, [Output]
 
 		mov   rcx, qword[options.hashPath]
 		mov   rax, '<empty>'
 		cmp   rax, qword[rcx]
-		 je   .Failed
+		 je   MainHash_Common.FailedBadFile
 	       call   _FileOpenWrite
 		mov   r15, rax
 		cmp   rax, -1
-		 je   .Failed
+		 je   MainHash_Common.FailedBadFile
 	; r15 is file handle
 
 		mov   esi, dword[mainHash.sizeMB]
-
-	; rsi rounded size in bytes
 		shl   rsi, 20
-	; r12 is number of bytes written
+	; rsi rounded size in bytes
 		xor   r12, r12
-	; ebx is chuck size to read
-	; read in chink sizes ranging from 1MB to 256MB
+	; r12 is number of bytes written
 		mov   ebx, 1 shl 20
-repeat 8
+	; read in chink sizes ranging from 1MB to 256MB
+    repeat 8
 	       test   rbx, rsi
 		jnz   .WriteLoop
 		shl   ebx, 1
-end repeat
+    end repeat
+	; ebx is chuck size to read
 
 .WriteLoop:
+		lea   rdi, [Output]
+
 		mov   rcx, r15
 		mov   rdx, qword[mainHash.table]
 		add   rdx, r12
 		mov   r8d, ebx
 	       call   _FileWrite
 	       test   eax, eax
-		 jz   .Failed
+		 jz   MainHash_Common.FailedMiddle
 		add   r12, rbx
-		lea   rdi, [Output]
-		mov   rax, 'info str'
-	      stosq
-		mov   rax, 'ing save'
-	      stosq
-		mov   eax, 'd '
-	      stosw
+
+                lea   rcx, [sz_tt_update]
 		mov   rax, r12
 		shr   rax, 20
-	       call   PrintUnsignedInteger
-		mov   rax, ' MB of '
-	      stosq
-		sub   rdi, 1
+                mov   qword[rsp+8*0], rax
 		mov   rax, rsi
 		shr   rax, 20
-	       call   PrintUnsignedInteger
-		mov   rax, ' MB'
-	      stosd
-		sub   rdi, 1
-       PrintNewLine
+                mov   qword[rsp+8*1], rax
+                mov   rdx, rsp
+                xor   r8, r8
+               call   PrintFancy
 	       call   _WriteOut_Output
+
 		cmp   r12, rsi
 		 jb   .WriteLoop
 
-		mov   rcx, r15
-	       call   _FileClose
-.Return:
-		pop   r15 r12 rdi rsi rbx
-		ret
-
-
-.Failed:
-		lea   rdi, [Output]
-		lea   rcx, [sz_error_hashread]
-	       call   PrintString
-       PrintNewLine
-	       call   _WriteOut_Output
-		mov   rcx, r15
-		cmp   rcx, -1
-		 je   .Return
-	       call   _FileClose
-		jmp   .Return
+		jmp   MainHash_Common
