@@ -60,16 +60,18 @@ end virtual
 	       call   Math_Rand_i
 		mov   qword[Zobrist_noPawns], rax
 
-		mov   rax, 00FF0000H
-		mov   qword[IsPawnMasks+0], rax
-		mov   qword[IsPawnMasks+8], rax
+                lea   rdi, [IsPawnMasks]
+		mov   eax, 00FF0000H
+              stosq
+              stosq
+                lea   rdi, [IsNotPawnMasks]
 		not   rax
-		mov   qword[IsNotPawnMasks+0], rax
-		mov   qword[IsNotPawnMasks+8], rax
-		mov   rax, 00FFH
-		mov   qword[IsNotPieceMasks+0], rax
-		mov   qword[IsNotPieceMasks+8], rax
-
+              stosq
+              stosq
+                lea   rdi, [IsNotPieceMasks]
+		mov   eax, 00FFH
+              stosq
+              stosq
 
 		lea   rdi, [PieceValue_MG]
 		lea   rsi, [.PieceValue_MG]

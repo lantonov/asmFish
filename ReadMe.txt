@@ -30,7 +30,7 @@ For example, you may set USE_BOOK equ 1 in asmFish/asmFishW_popcnt.asm.
       $ ./fasm asmFishX_popcnt.asm asmFishX_popcnt.o
       $ ./objconv -fmac asmFishX_popcnt.o asmFishX_popcnt_mac.o
       objconv will give an important warning message about 32 bit addresses.
-      Work is being done to see if these can be avoided.
+      This cannot be avoided. 32 bit addresses are integral to the x86 version.
     On your apple box:
       $ gcc asmFishX_popcnt_mac.o -image_base 400000 -pagezero_size 1000 -lm -o asmFishX_popcnt
     You now have the asmFishX_popcnt executable.

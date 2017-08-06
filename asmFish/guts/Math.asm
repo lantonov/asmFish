@@ -104,7 +104,7 @@ Math_Log_d_d:
 		pop   rbx
 		ret
 
-
+if USE_WEAKNESS
 Math_Lerp:
 	; in: rcx address of table start
 	;     rdx address of table end
@@ -153,7 +153,7 @@ restore b
 restore current
 restore ender
 
-
+end if
 
 
 Math_Power_d_dd:
