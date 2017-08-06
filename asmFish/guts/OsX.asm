@@ -146,7 +146,8 @@ _FileOpenWrite:
 	;      rax=-1 on error
 	       push   rbx rsi rdi
 		mov   rdi, rcx
-		mov   esi, O_WRONLY or O_CREAT
+		mov   esi, O_WRONLY or O_CREAT or O_TRUNC
+                mov   edx, 0664o        ; set mode to 664 octal
                call   _open
 	       test   eax, eax
 		jns   @f
@@ -256,8 +257,6 @@ _ExitProcess:
 
 _ExitThread:
         ; rcx is exit code
-        ; must not call _ExitThread on linux
-        ;  thread should just return
                 mov   edi, ecx
                 jmp   _pthread_exit
 

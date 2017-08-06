@@ -110,16 +110,18 @@ sys_poll          = 230 + (2 shl 24)
 
 VM_FLAGS_SUPERPAGE_SIZE_2MB = 1 shl 16
 
-O_RDONLY= 00000000o 
-O_WRONLY= 00000001o 
-O_RDWR= 00000002o 
-O_CREAT= 00000100o 
+;https://opensource.apple.com/source/xnu/xnu-124.8/bsd/sys/fcntl.h
+O_RDONLY = 0x0000
+O_WRONLY = 0x0001
+O_RDWR   = 0x0002
+O_CREAT  = 0x0200
+O_TRUNC  = 0x0400
 
+;https://opensource.apple.com/source/xnu/xnu-344/bsd/sys/mman.h
 PROT_NONE       = 0x00
 PROT_READ       = 0x01
 PROT_WRITE      = 0x02
 PROT_EXEC       = 0x04
-
 MAP_SHARED      = 0x0001 
 MAP_PRIVATE     = 0x0002
 MAP_FILE        = 0x0000 
