@@ -731,6 +731,7 @@ UciGo.parse_true:
 		jmp   .ReadLoop
 */
         mov  w0, -1
+       strb  w0, [x27]
           b  UciGo.ReadLoop
 
 UciGo.parse_searchmoves:
