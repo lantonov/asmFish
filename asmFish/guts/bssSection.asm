@@ -1,10 +1,10 @@
 ; todo: see if the order/alignment of these variables affects performance
+align 16
+ Output 	  rb 4096  ; output buffer has static allocation
 
 align 16
  ioBuffer	IOBuffer
 
-align 16
- Output 	  rb 1024  ; output buffer has static allocation
 
 if USE_WEAKNESS
 align 16

@@ -855,7 +855,8 @@ UciPosition.moves:
          bl  SkipSpaces
         lea  x1, sz_moves
          bl  CmpString
-        cbz  w0, UciGetInput
+        lea  x27, Output
+        cbz  w0, UciPosition.CheckJunk
          bl  UciParseMoves
         cbz  x0, UciGetInput
 
@@ -872,7 +873,6 @@ UciPosition.badmove:
 		jmp   UciWriteOut
 */
         mov  x26, x0
-        lea  x27, Output
         lea  x1, sz_error_moves
          bl  PrintString
         mov  x1, 6
@@ -904,6 +904,15 @@ UciPosition.BadCmd:
         add  x20, sp, UciLoop.th1+Thread.rootPos
           b  UciUnknown
 
+UciPosition.CheckJunk:
+       ldrb  w0, [x26]
+        cmp  w0, ' '
+        blo  UciGetInput
+        lea  x1, sz_error_token
+         bl  PrintString
+        mov  x1, 6
+         bl  ParseToken
+          b  UciWriteOut_NewLine
 
 UciParseMoves:
 /*

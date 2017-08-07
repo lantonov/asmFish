@@ -535,14 +535,14 @@ UciPosition:
 	       call   SkipSpaces
                 lea   rcx, [sz_moves]
 	       call   CmpString
+		lea   rdi, [Output]
 	       test   eax, eax
-		 jz   UciGetInput
+		 jz   .CheckJunk
 	       call   UciParseMoves
 	       test   rax, rax
 		 jz   UciGetInput
 .badmove:
 		mov   rsi, rax
-		lea   rdi, [Output]
                 lea   rcx, [sz_error_moves]
 	       call   PrintString
 		mov   ecx, 6
@@ -560,6 +560,16 @@ UciPosition:
 .BadCmd:
 		lea   rbp, [UciLoop.th1.rootPos]
 		jmp   UciUnknown
+.CheckJunk:
+                mov   al, byte[rsi]
+                cmp   al, ' '
+                 jb   UciGetInput
+                lea   rcx, [sz_error_token]
+	       call   PrintString
+		mov   ecx, 6
+	       call   ParseToken
+                jmp   UciWriteOut_NewLine
+
 UciParseMoves:
 	; in: rbp position
 	;     rsi string
