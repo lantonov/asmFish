@@ -1768,8 +1768,8 @@ if USE_SYZYGY
 		cmp   eax, dword[Tablebase_Cardinality]
 		jge   .CheckTablebaseReturn
 .DoTbProbe:
-		lea   rcx, [.success]
-	       call   Tablebase_ProbeWDL
+		lea   r15, [.success]
+	       call   Tablebase_Probe_WDL
 		mov   edx, dword[.success]
 	       test   edx, edx
 		 jz   .CheckTablebaseReturn

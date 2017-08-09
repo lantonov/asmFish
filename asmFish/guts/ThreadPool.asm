@@ -305,6 +305,8 @@ end if
 
 if USE_SYZYGY
 .check_tb:
+                mov   rax, qword[rbp+Pos.moveList]
+                mov   qword[rbx-1*sizeof.State+State.endMoves], rax
 	       call   Tablebase_RootProbe
 		mov   byte[Tablebase_RootInTB], al
 		xor   edx, edx

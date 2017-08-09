@@ -1,121 +1,77 @@
 
 
-
-
-Tablebase_ProbeAB:
+Tablebase_Probe_AB:
 	; in: rbp address of position
 	;     rbx address of state
 	;     ecx  alpha
 	;     edx  beta
-	;     r8  address of success
+	;     r15  address of success
 	; out: eax v
 
-	       push   rsi rdi r13 r14 r15
-virtual at rsp
-  .stack rb 64*sizeof.ExtMove
-  .localend rb 0
-end virtual
-.localsize = ((.localend-rsp+15) and (-16))
-	 _chkstk_ms   rsp, .localsize
-		sub   rsp, .localsize
-		mov   rax, qword[rbx+State.checkersBB]
-		mov   r14d, ecx
-		mov   r15d, edx
-		mov   r13, r8
+               push   rsi rdi r12 r13 r14
+                mov   rax, qword[rbx+State.checkersBB]
+                mov   r12d, ecx
+                mov   r13d, edx
+        ; r12d = alpha, r13d = beta
 
-		lea   rdi, [.stack]
-	       test   rax, rax
-		jnz   .InCheck
-.NotInCheck:   call   Gen_Captures
-		lea   rsi, [.stack-8]
-		mov   r8, rdi
-.NextMove:	add   rsi, 8
-		mov   ecx, dword[rsi+ExtMove.move]
-		lea   eax, [rcx-(1 shl 12)]
-		mov   edx, ecx
-		shr   ecx, 12
-		and   edx, 63
-	      movzx   edx, byte[rbp+Pos.board+rdx]
-		cmp   rsi, r8
-		jae   .GenDone
-		cmp   ecx, MOVE_TYPE_PROM+3
-		jne   .NextMove
-	       test   edx, edx
-		 jz   .NextMove
-	      stosq
-		sub   eax, 1 shl 12
-	      stosq
-		sub   eax, 1 shl 12
-	      stosq
-		jmp   .NextMove
-.InCheck:      call   Gen_Evasions
-.GenDone:      call   SetCheckInfo
+        ; Generate (at least) all legal captures including (under)promotions.
+        ; It is OK to generate more, as long as they are filtered out below.
+                mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
+                mov   rsi, rdi
+               call   Gen_Legal
+                mov   qword[rbx+State.endMoves], rdi
 
-		lea   rsi, [.stack-8]
+        ; loop through moves
+                sub   rsi, sizeof.ExtMove
 .MoveLoop:
-		add   rsi, 8
+		add   rsi, sizeof.ExtMove
 		mov   ecx, dword[rsi+ExtMove.move]
-		mov   eax, ecx
+                mov   eax, ecx
 		and   eax, 63
+                mov   edx, ecx
+                shr   edx, 14
 	      movzx   eax, byte[rbp+Pos.board+rax]
 		cmp   rsi, rdi
 		jae   .MovesDone
-		cmp   ecx, MOVE_TYPE_EPCAP shl 12
-		jae   .MoveLoop
-	       test   eax, eax
-		 jz   .MoveLoop
-	       call   Move_IsLegal
-		mov   ecx, dword[rsi+ExtMove.move]
-	       test   eax, eax
+		 or   al, byte[_CaptureOrPromotion_or+rdx]
+		and   al, byte[_CaptureOrPromotion_and+rdx]
 		 jz   .MoveLoop
 	       call   Move_GivesCheck
 		mov   ecx, dword[rsi+ExtMove.move]
 		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__Tablebase_ProbeAB
-		mov   ecx, r15d
-		mov   edx, r14d
+		mov   ecx, r13d
+		mov   edx, r12d
 		neg   ecx
 		neg   edx
-		mov   r8, r13
-	       call   Tablebase_ProbeAB
+	       call   Tablebase_Probe_AB
 		neg   eax
 	       push   rax
 		mov   ecx, dword[rsi+ExtMove.move]
 	       call   Move_Undo
 		pop   rax
 		xor   edx, edx
-		cmp   edx, dword[r13]
+		cmp   edx, dword[r15]
 	      cmove   eax, edx
 		 je   .Return	     ; failed
-		lea   edx, [rdx+2]
-		cmp   eax, r14d
+		cmp   eax, r12d
 		jle   .MoveLoop
-		cmp   eax, r15d
+		cmp   eax, r13d
 		jge   .Return
-		mov   r14d, eax
+		mov   r12d, eax
 		jmp   .MoveLoop
 .MovesDone:
+
 		mov   rcx, rbp
-		mov   rdx, r13
+		mov   rdx, r15
 		sub   rsp, 8*4
 	       call   _ZN13TablebaseCore15probe_wdl_tableER8PositionPi
 		add   rsp, 8*4
 
-		xor   edx, edx
-		cmp   edx, dword[r13]
-	      cmove   eax, edx
-		 je   .Return	     ; failed
-		lea   edx, [rdx+1]
-		cmp   r14d, eax
-		 jl   .Return
-		mov   eax, r14d
-		neg   r14d
-		sar   r14d, 31
-		sub   edx, r14d
+		cmp   eax, r12d
+             cmovle   eax, r12d
 .Return:
-		mov   dword[r13], edx
-		add   rsp, .localsize
-		pop   r15 r14 r13 rdi rsi
+		pop   r14 r13 r12 rdi rsi
 		ret
 
 
@@ -123,211 +79,216 @@ end virtual
 
 
 
-Tablebase_ProbeWDL:
+Tablebase_Probe_WDL:
 	; in: rbp address of position
 	;     rbx address of state
-	;     rcx  address of success
+	;     r15  address of success
 	; out: eax v
 
-	       push   r15
-		mov   dword[rcx], 1		
-		mov   r15, rcx
-		mov   r8, rcx
-		mov   ecx, -2
-		mov   edx, 2
-	       call   Tablebase_ProbeAB
-		mov   edx, dword[r15]
-		cmp   byte[rbx+State.epSquare], 64
-		 jb   .HaveEP
-.Return1:
-		pop   r15
-		ret
+               push   rsi rdi r12 r13 r14
+                mov   dword[r15], 1
 
-.HaveEP:
-	       test   edx, edx
-	      cmovz   eax, edx
-		 jz   .Return1
-	       push   r14 r13 rsi rdi
-virtual at rsp
-  .stack rb 192*sizeof.ExtMove
-  .localend rb 0
-end virtual
-.localsize = ((.localend-rsp+15) and (-16))
-	 _chkstk_ms   rsp, .localsize
-		sub   rsp, .localsize
-		mov   rcx, qword[rbx+State.checkersBB]
-		mov   r13d, eax
-		mov   r14d, -3
-	; r13d = v, r14d = v1
-		lea   rdi, [.stack]
-	       test   rcx, rcx
-		jnz   .InCheck
-.NotInCheck:   call   Gen_Captures
-		jmp   .GenDone
-.InCheck:      call   Gen_Evasions
-.GenDone:      call   SetCheckInfo
+        ; Generate (at least) all legal captures including (under)promotions.
+                mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
+                mov   rsi, rdi
+               call   Gen_Legal
+                mov   qword[rbx+State.endMoves], rdi
 
-		lea   rsi, [.stack-8]
+                mov   r12d, -3
+                mov   r13d, r12d
+        ; r12d = best_cap, r13d = best_ep
+
+        ; We do capture resolution, letting best_cap keep track of the best
+        ; capture without ep rights and letting best_ep keep track of still
+        ; better ep captures if they exist.
+                sub   rsi, sizeof.ExtMove
 .MoveLoop:
-		add   rsi, 8
+		add   rsi, sizeof.ExtMove
 		mov   ecx, dword[rsi+ExtMove.move]
+                mov   eax, ecx
+		and   eax, 63
+	      movzx   eax, byte[rbp+Pos.board+rax]
+                mov   edx, ecx
+                shr   edx, 14
 		cmp   rsi, rdi
 		jae   .MovesDone
-		shr   ecx, 12
-		cmp   ecx, MOVE_TYPE_EPCAP
-		jne   .MoveLoop
-		mov   ecx, dword[rsi+ExtMove.move]
-	       call   Move_IsLegal
-	       test   eax, eax
+		 or   al, byte[_CaptureOrPromotion_or+rdx]
+		and   al, byte[_CaptureOrPromotion_and+rdx]
 		 jz   .MoveLoop
-		mov   ecx, dword[rsi+ExtMove.move]
 	       call   Move_GivesCheck
 		mov   ecx, dword[rsi+ExtMove.move]
 		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__Tablebase_ProbeWDL
+		mov   edx, r12d
 		mov   ecx, -2
-		mov   edx, 2
-		mov   r8, r15
-	       call   Tablebase_ProbeAB
+		neg   edx
+	       call   Tablebase_Probe_AB
 		neg   eax
 	       push   rax
 		mov   ecx, dword[rsi+ExtMove.move]
 	       call   Move_Undo
 		pop   rax
-	; eax = v0
-		mov   edx, dword[r15]
-		cmp   eax, r14d
-	      cmovg   r14d, eax
-	       test   edx, edx
-	      cmovz   eax, edx
-		 jz   .Return2
-		jmp   .MoveLoop
+		xor   edx, edx
+		mov   ecx, dword[rsi+ExtMove.move]
+		cmp   edx, dword[r15]
+	      cmove   eax, edx
+		 je   .Return	     ; failed
+                add   edx, 2
+                cmp   eax, r12d
+                jle   .MoveLoop
+                cmp   eax, edx
+                 je   .ReturnStoreSuccess
+                shr   ecx, 12
+                cmp   ecx, MOVE_TYPE_EPCAP
+             cmovne   r12d, eax
+                jne   .MoveLoop
+                cmp   eax, r13d
+              cmovg   r13d, eax
+                jmp   .MoveLoop
 .MovesDone:
-		cmp   r14d, -3
-		jle   .Return2_r13d
-		cmp   r14d, r13d
-	     cmovge   r13d, r14d
-		jge   .Return2_r13d
-	       test   r13d, r13d
-		jnz   .Return2_r13d
-	; Check whether there is at least one legal non-ep move.
-		lea   rdi, [.stack]
-	       call   Gen_Legal
-		lea   rsi, [.stack]
+
+		mov   rcx, rbp
+		mov   rdx, r15
+		sub   rsp, 8*4
+	       call   _ZN13TablebaseCore15probe_wdl_tableER8PositionPi
+		add   rsp, 8*4
+                mov   edx, dword[r15]
+
+                mov   r14d, eax
+                xor   eax, eax
+                cmp   eax, dword[r15]
+                 je   .Return
+        ; r14d = v
+
+        ; Now max(v, best_cap) is the WDL value of the position without ep rights.
+        ; If the position without ep rights is not stalemate or no ep captures
+        ; exist, then the value of the position is max(v, best_cap, best_ep).
+        ; If the position without ep rights is stalemate and best_ep > -3,
+        ; then the value of the position is best_ep (and we will have v == 0).
+                mov   eax, r13d
+                mov   edx, 2
+                cmp   r13d, r12d
+                jle   @f
+                cmp   r13d, r14d
+                 jg   .ReturnStoreSuccess
+                mov   r12d, r13d
+        @@:
+
+        ; Now max(v, best_cap) is the WDL value of the position unless
+        ; the position without ep rights is stalemate and best_ep > -3.
+                mov   eax, r12d
+                lea   ecx, [rax-1]
+                sar   ecx, 31
+                add   edx, ecx
+                cmp   r12d, r14d
+                jge   .ReturnStoreSuccess
+
+        ; Now handle the stalemate case.
+                mov   eax, r14d
+                cmp   r13d, -3
+                jle   .Return
+               test   eax, eax
+                jnz   .Return
+        ; check for stalemate in the position with ep captures
+                mov   rsi, qword[rbx-1*sizeof.State+State.endMoves]
 		jmp   .CheckLoop
 .CheckNext:	mov   ecx, dword[rsi+ExtMove.move]
 		shr   ecx, 12
 		cmp   ecx, MOVE_TYPE_EPCAP
-		jne   .Return2_r13d
-		add   rsi, 8
+		jne   .Return
+		add   rsi, sizeof.ExtMove
 .CheckLoop:	cmp   rsi, rdi
 		 jb   .CheckNext
-	; If not, then we are forced to play the losing ep capture.
-		mov   r13d, r14d
-.Return2_r13d:
-		mov   eax, r13d
-.Return2:
-		add   rsp, .localsize
-		pop   rdi rsi r13 r14
-		pop   r15
+                mov   edx, 2
+                mov   eax, r13d
+
+.ReturnStoreSuccess:
+                mov   dword[r15], edx
+.Return:
+		pop   r14 r13 r12 rdi rsi
 		ret
 
 
 
-Tablebase_ProbeDTZNoEP:
+Tablebase_Probe_DTZ:
 	; in: rbp address of position
 	;     rbx address of state
-	;     rcx  address of success
-	; out: eax best
+	;     r15  address of success
+	; out: eax v
 
-virtual at rsp
-  .stack rb 192*sizeof.ExtMove
-  .localend rb 0
-end virtual
-.localsize = ((.localend-rsp+15) and (-16))
+               push   rsi rdi r12 r13 r14
 
-	       push   rbx rsi rdi r12 r13 r14 r15
-	 _chkstk_ms   rsp, .localsize
-		sub   rsp, .localsize
+               call   Tablebase_Probe_WDL
+                mov   r14d, eax
+                mov   edx, dword[r15]
+                xor   eax, eax
+               test   edx, edx
+                 jz   .Return
+               test   r14d, r14d
+                 je   .Return
+                lea   eax, [r14+2]
+              movsx   eax, byte[WDLtoDTZ+rax]
 
-		mov   r15, rcx
-	; r15 = address of success
-		mov   r8, rcx
-		mov   ecx, -2
-		mov   edx, 2
-	       call   Tablebase_ProbeAB
-		mov   r14d, eax
-	; r14d = wdl
-		mov   edx, dword[r15]
-	       test   edx, edx
-		 jz   .SuccessIs0
-	       test   eax, eax
-		 jz   .WdlIs0
-		cmp   edx, 2
-		 je   .SuccessIs2
+                mov   r13d, eax
+                cmp   edx, 2
+                 je   .Return
 
-	       call   SetCheckInfo
+                mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
+                mov   rsi, rdi
+               call   Gen_Legal
+                mov   qword[rbx+State.endMoves], rdi
 
-		cmp   r14d, 0
-		jle   .WdlIsNonpositive
-.WdlIsPositive:
-	; Generate at least all legal non-capturing pawn moves
-	; including non-capturing promotions.
-		mov   rcx, qword[rbx+State.checkersBB]
-		lea   rdi, [.stack]
-	       test   rcx, rcx
-		jnz   .InCheck
-.NotInCheck:   call   Gen_NonEvasions
-		jmp   .GenDone
-.InCheck:      call   Gen_Evasions
-.GenDone:
-		lea   rsi, [.stack-8]
-.MoveLoop:
-		add   rsi, 8
+        ; If winning, check for a winning pawn move.
+                sub   rsi, sizeof.ExtMove
+                cmp   r14d, 0
+                jle   .MovesDone1
+.MoveLoop1:
+		add   rsi, sizeof.ExtMove
 		mov   ecx, dword[rsi+ExtMove.move]
-		mov   eax, ecx
-		mov   edx, ecx
-		shr   eax, 6
+                mov   eax, ecx
 		and   eax, 63
-		and   edx, 63
 	      movzx   eax, byte[rbp+Pos.board+rax]
-	      movzx   edx, byte[rbp+Pos.board+rdx]
+                mov   edx, ecx
+                shr   edx, 14
 		cmp   rsi, rdi
-		jae   .MovesDone
-		and   eax, 7
-		shr   ecx, 12
-		cmp   ecx, MOVE_TYPE_EPCAP
-		 je   .MoveLoop
-		cmp   eax, Pawn
-		jne   .MoveLoop
-		cmp   ecx, MOVE_TYPE_CASTLE
-		 je   @f
-	       test   edx, edx
-		jnz   .MoveLoop
-	@@:	mov   ecx, dword[rsi+ExtMove.move]
-	       call   Move_IsLegal
-	       test   eax, eax
-		 jz   .MoveLoop
-		mov   ecx, dword[rsi+ExtMove.move]
+		jae   .MovesDone1
+		 or   al, byte[_CaptureOrPromotion_or+rdx]
+		and   al, byte[_CaptureOrPromotion_and+rdx]
+		jnz   .MoveLoop1
+                mov   eax, ecx
+                shr   eax, 6
+                and   eax, 63
+              movzx   eax, byte[rbp+Pos.board+rax]
+                and   eax, 7
+                cmp   eax, Pawn
+                jne   .MoveLoop1
 	       call   Move_GivesCheck
 		mov   ecx, dword[rsi+ExtMove.move]
 		mov   byte[rbx+State.givesCheck], al
-	       call   Move_Do__Tablebase_ProbeDTZNoEP
-		mov   rcx, r15
-	       call   Tablebase_ProbeWDL
+	       call   Move_Do__Tablebase_ProbeDTZ
+	       call   Tablebase_Probe_WDL
 		neg   eax
 	       push   rax
 		mov   ecx, dword[rsi+ExtMove.move]
 	       call   Move_Undo
 		pop   rax
-		mov   edx, dword[r15]
-	       test   edx, edx
-		 jz   .SuccessIs0
-		cmp   eax, r14d
-		 je   .VIsWdl
-		jmp   .MoveLoop
-.MovesDone:
-.WdlIsNonpositive:
+
+		xor   edx, edx
+		cmp   edx, dword[r15]
+	      cmove   eax, edx
+		 je   .Return	     ; failed
+
+
+                cmp   eax, r14d
+                mov   eax, r13d
+                 je   .Return
+                jmp   .MoveLoop1
+.MovesDone1:
+
+        ; If we are here, we know that the best move is not an ep capture.
+        ; In other words, the value of wdl corresponds to the WDL value of
+        ; the position without ep rights. It is therefore safe to probe the
+        ; DTZ table with the current value of wdl.
 
 		sub   rsp, 8*4
 		mov   rcx, rbp
@@ -335,330 +296,80 @@ end virtual
 		mov   r8, r15
 	       call   _ZN13TablebaseCore15probe_dtz_tableER8PositioniPi
 		add   rsp, 8*4
+                mov   edx, dword[r15]
 
-		mov   edx, dword[r15]
-		add   eax, 1
-	       test   edx, edx
-		 js   Tablebase_ProbeDTZNoEP_SuccessIsNeg
-		mov   ecx, r14d
-		and   ecx, 1
-	       imul   ecx, 100
-		add   eax, ecx
-		mov   ecx, r14d
-		sar   ecx, 31
-		xor   eax, ecx
-		sub   eax, ecx
-.Return:
-		add   rsp, .localsize
-		pop   r15 r14 r13 r12 rdi rsi rbx
-		ret
-
-.VIsWdl:
-.SuccessIs2:
-		mov   eax, 1
-		cmp   r14d, 2
-		 je   .Return
-		mov   eax, 101
-		jmp   .Return
-.WdlIs0:
-.SuccessIs0:
-		xor   eax, eax
-		jmp   .Return
+                mov   r12d, 0x7FFFFFFF
+                lea   ecx, [r13+rax]
+                sub   eax, r13d
+                neg   eax
+                cmp   r14d, 0
+             cmovle   r12d, r13d
+              cmovg   eax, ecx
 
 
-Tablebase_ProbeDTZNoEP_SuccessIsNeg:
-		cmp   r14d, 0
-		jle   Tablebase_ProbeDTZNoEP_SuccessIsNeg_WdlIsNonpositive
+               test   edx, edx
+                jns   .Return
+        ; r12d = best
 
-Tablebase_ProbeDTZNoEP_SuccessIsNeg_WdlIsPositive:
-		mov   r13d, 0x0FFFF
-	; r13d = best
-		lea   rsi, [Tablebase_ProbeDTZNoEP.stack-8]
-.MoveLoop:
-		add   rsi, 8
+        ; *success < 0 means we need to probe DTZ for the other side to move.
+
+        ; We can skip pawn moves and captures.
+        ; If wdl > 0, we already caught them. If wdl < 0, the initial value
+        ; of best already takes account of them.
+                mov   rsi, qword[rbx-1*sizeof.State+State.endMoves]
+                sub   rsi, sizeof.ExtMove
+.MoveLoop2:
+		add   rsi, sizeof.ExtMove
 		mov   ecx, dword[rsi+ExtMove.move]
-		mov   eax, ecx
-		mov   edx, ecx
-		shr   eax, 6
+                mov   eax, ecx
 		and   eax, 63
-		and   edx, 63
 	      movzx   eax, byte[rbp+Pos.board+rax]
-	      movzx   edx, byte[rbp+Pos.board+rdx]
+                mov   edx, ecx
+                shr   edx, 14
 		cmp   rsi, rdi
-		jae   .MovesDone
-		and   eax, 7
-		;cmp   ecx, MOVE_TYPE_EPCAP shl 12
-		;jae   .MoveLoop
-		cmp   eax, Pawn
-		 je   .MoveLoop
-		cmp   ecx, MOVE_TYPE_EPCAP shl 12
-		jae   @f
-	       test   edx, edx
-		jnz   .MoveLoop
-	@@:	mov   ecx, dword[rsi+ExtMove.move]
-	       call   Move_IsLegal
-	       test   eax, eax
-		 jz   .MoveLoop
-		mov   ecx, dword[rsi+ExtMove.move]
-	       call   Move_GivesCheck
-		mov   ecx, dword[rsi+ExtMove.move]
-		mov   byte[rbx+State.givesCheck], al
-	       call   Move_Do__Tablebase_ProbeDTZNoEP_SuccessIsNeg_WdlIsPositive
-		mov   rcx, r15
-	       call   Tablebase_ProbeDTZ
-		neg   eax
-	       push   rax
-		mov   ecx, dword[rsi+ExtMove.move]
-	       call   Move_Undo
-		pop   rax
-		mov   edx, dword[r15]
-	       test   edx, edx
-		 jz   .SuccessIs0
-		cmp   eax, 0
-		jle   .MoveLoop
-		add   eax, 1
-		cmp   eax, r13d
-	      cmovl   r13d, eax
-		jmp   .MoveLoop
-.MovesDone:
-		mov   eax, r13d
-.Return:
-		add   rsp, Tablebase_ProbeDTZNoEP.localsize
-		pop   r15 r14 r13 r12 rdi rsi rbx
-		ret
-.SuccessIs0:
-		xor   eax, eax
-		jmp   .Return
-
-
-Tablebase_ProbeDTZNoEP_SuccessIsNeg_WdlIsNonpositive:
-		 or   r13d, -1
-		mov   rcx, qword[rbx+State.checkersBB]
-		lea   rdi, [Tablebase_ProbeDTZNoEP.stack]
-	       test   rcx, rcx
-		jnz   .InCheck
-.NotInCheck:   call   Gen_NonEvasions
-		jmp   .GenDone
-.InCheck:      call   Gen_Evasions
-.GenDone:
-
-		lea   rsi, [Tablebase_ProbeDTZNoEP.stack-8]
-.MoveLoop:
-		add   rsi, 8
-		mov   ecx, dword[rsi+ExtMove.move]
-		cmp   rsi, rdi
-		jae   .MovesDone
-	       call   Move_IsLegal
-	       test   eax, eax
-		 jz   .MoveLoop
-		mov   ecx, dword[rsi+ExtMove.move]
-	       call   Move_GivesCheck
-		mov   ecx, dword[rsi+ExtMove.move]
-		mov   byte[rbx+State.givesCheck], al
-	       call   Move_Do__Tablebase_ProbeDTZNoEP_SuccessIsNeg_WdlIsNonpositive
-	      movzx   eax, word[rbx+State.rule50]
-	       test   eax, eax
-		jnz   .Rule50IsNot0
-		mov   eax, -1
-		cmp   r14d, -2
-		 je   .ProbeDone
-		mov   ecx, 1
-		mov   edx, 2
-		mov   r8, r15
-	       call   Tablebase_ProbeAB
-		sub   eax, 2
-		neg   eax
-		sbb   eax, eax
-		and   eax, -101
-		jmp   .ProbeDone
-.Rule50IsNot0:
-		mov   rcx, r15
-	       call   Tablebase_ProbeDTZ
-		not   eax
-.ProbeDone:
-	       push   rax
-		mov   ecx, dword[rsi+ExtMove.move]
-	       call   Move_Undo
-		pop   rax
-		mov   edx, dword[r15]
-	       test   edx, edx
-		 jz   .SuccessIs0
-		cmp   eax, r13d
-	      cmovl   r13d, eax
-		jmp   .MoveLoop
-.MovesDone:
-		mov   eax, r13d
-.Return:
-		add   rsp, Tablebase_ProbeDTZNoEP.localsize
-		pop   r15 r14 r13 r12 rdi rsi rbx
-		ret
-.SuccessIs0:
-		xor   eax, eax
-		jmp   .Return
-
-
-Tablebase_ProbeDTZ:
-	; in: rbp address of position
-	;     rbx address of state
-	;     rcx  address of success
-	; out: eax v
-
-	       push   r15
-		mov   dword[rcx], 1
-		mov   r15, rcx
-	       call   Tablebase_ProbeDTZNoEP
-		mov   edx, dword[r15]
-		cmp   byte[rbx+State.epSquare], 64
-		 jb   .HaveEP
-.Return:
-		pop   r15
-		ret
-
-.HaveEP:
-	       test   edx, edx
-	      cmovz   eax, edx
-		 jz   .Return
-
-
-Tablebase_ProbeDTZ_HaveEP:
-
-	       push   rsi rdi r13 r14
-virtual at rsp
-  .stack rb 192*sizeof.ExtMove
-  .localend rb 0
-end virtual
-.localsize = ((.localend-rsp+15) and (-16))
-	 _chkstk_ms   rsp, .localsize
-		sub   rsp, .localsize
-		mov   r13d, eax
-		mov   r14d, -3
-	; r13d = v, r14d = v1
-		mov   rcx, qword[rbx+State.checkersBB]
-		lea   rdi, [.stack]
-	       test   rcx, rcx
-		jnz   .InCheck
-.NotInCheck:   call   Gen_Captures
-		jmp   .GenDone
-.InCheck:      call   Gen_Evasions
-.GenDone:      call   SetCheckInfo
-		lea   rsi, [.stack-8]
-.MoveLoop:
-		add   rsi, 8
-		mov   ecx, dword[rsi+ExtMove.move]
-		cmp   rsi, rdi
-		jae   .MovesDone
-		shr   ecx, 12
-		cmp   ecx, MOVE_TYPE_EPCAP
-		jne   .MoveLoop
-		mov   ecx, dword[rsi+ExtMove.move]
-	       call   Move_IsLegal
-	       test   eax, eax
-		 jz   .MoveLoop
-		mov   ecx, dword[rsi+ExtMove.move]
+		jae   .MovesDone2
+		 or   al, byte[_CaptureOrPromotion_or+rdx]
+		and   al, byte[_CaptureOrPromotion_and+rdx]
+		jnz   .MoveLoop2
+                mov   eax, ecx
+                shr   eax, 6
+                and   eax, 63
+              movzx   eax, byte[rbp+Pos.board+rax]
+                and   eax, 7
+                cmp   eax, Pawn
+                 je   .MoveLoop2
 	       call   Move_GivesCheck
 		mov   ecx, dword[rsi+ExtMove.move]
 		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__Tablebase_ProbeDTZ
-		mov   ecx, -2
-		mov   edx, 2
-		mov   r8, r15
-	       call   Tablebase_ProbeAB
+	       call   Tablebase_Probe_DTZ
 		neg   eax
 	       push   rax
 		mov   ecx, dword[rsi+ExtMove.move]
 	       call   Move_Undo
 		pop   rax
-		mov   edx, dword[r15]
-	       test   edx, edx
-		 jz   .SuccessIs0
-		cmp   eax, r14d
-	      cmovg   r14d, eax
-		jmp   .MoveLoop
-.MovesDone:
-		mov   eax, r13d
-		cmp   r14d, -3
-		jle   .Return
-		add   r14d, 2
-	     Assert   b, r14d, 5, 'assertion -2<=v1<=2 failed in Tablebase_ProbeDTZ_HaveEP'
-	      movsx   r14d, byte[WDLtoDTZ+r14]
-		cmp   eax, -100
-		 jl   .VLessm100
-		cmp   eax, 0
-		 jl   .VLess0
-		cmp   eax, 100
-		 jg   .VGreater100
-		cmp   eax, 0
-		 jg   .VGreater0
-	       test   r14d, r14d
-		jns   .V1GreaterEqual0
-
-		lea   rsi, [.stack-8]
-.CaptureLoop:
-		add   rsi, 8
-		mov   ecx, dword[rsp+ExtMove.move]
-		cmp   rsi, rdi
-		jae   .CheckQuiets
-		shr   eax, 12
-		cmp   ecx, MOVE_TYPE_EPCAP
-		 je   .CaptureLoop
-		mov   ecx, dword[rsp+ExtMove.move]
-	       call   Move_IsLegal
-	       test   eax, eax
-		jnz   .Return_v
-		jmp   .CaptureLoop
-
-.CheckQuiets:
-	; we get here when there isn't a legal non-ep capture
-		mov   rcx, qword[rbx+State.checkersBB]
-	       test   rcx, rcx
-		jnz   .Return_v
-		lea   rdi, [.stack]
-	       call   Gen_Quiets
-		lea   rsi, [.stack-8]
-.QuietLoop:
-		add   rsi, 8
-		mov   ecx, dword[rsp+ExtMove.move]
-		mov   eax, r14d   ;return r14d = v1 if no legal moves here
-		cmp   rsi, rdi
-		jae   .Return
-	       call   Move_IsLegal
-	       test   eax, eax
-		jnz   .Return_v
-		jmp   .QuietLoop
-
-.VGreater0:
-		cmp   r14d, 1
-	      cmove   eax, r14d
-		jmp   .Return
-.VGreater100:
-		cmp   r14d, 0
-	      cmovg   eax, r14d
-		jmp   .Return
-.VLess0:
-	       test   r14d, r14d
-	     cmovns   eax, r14d
-		cmp   r14d, -100
-	      cmovl   eax, r14d
-		jmp   .Return
-.VLessm100:
-	       test   r14d, r14d
-	     cmovns   eax, r14d
-		jmp   .Return
-.V1GreaterEqual0:
-		mov   eax, r14d
+		xor   edx, edx
+		cmp   edx, dword[r15]
+	      cmove   eax, edx
+		 je   .Return	     ; failed
+                cmp   r14d, 0
+                 jg   .WdlIsPos
+                sub   eax, 1
+                cmp   eax, r12d
+              cmovl   r12d, eax
+                jmp   .MoveLoop2
+     .WdlIsPos:
+                add   eax, 1
+                cmp   eax, 1
+                jle   .MoveLoop2
+                cmp   eax, r12d
+              cmovl   r12d, eax
+                jmp   .MoveLoop2
+.MovesDone2:
+                mov   eax, r12d
 .Return:
-		add   rsp, .localsize
-		pop   r14 r13 rdi rsi
-		pop   r15
+		pop   r14 r13 r12 rdi rsi
 		ret
-
-.SuccessIs0:
-		xor   eax, eax
-		jmp   .Return
-
-.Return_v:
-		mov   eax, r13d
-		jmp   .Return
 
 
 
@@ -679,19 +390,16 @@ end virtual
 .localsize = ((.localend-rsp+15) and (-16))
 	 _chkstk_ms   rsp, .localsize
 		sub   rsp, .localsize
-GD String, 'Tablebase_RootProbe called'
-GD NewLine
 
-		lea   rcx, [.success]
-	       call   Tablebase_ProbeDTZ
+
+		lea   r15, [.success]
+	       call   Tablebase_Probe_DTZ
 		mov   edx, dword[.success]
-		mov   r15d, eax
-	; r15d = dtz
+		mov   r13d, eax
+	; r13d = dtz
 	       test   edx, edx
 	      cmovz   eax, edx
 		 jz   .Return
-
-	       call   SetCheckInfo
 
 		mov   r12, qword[rbp+Pos.rootMovesVec.table]
 .RootMoveLoop:
@@ -710,7 +418,7 @@ GD NewLine
 		mov   rcx, qword[rbx+State.checkersBB]
 	       test   rcx, rcx
 		 jz   @f
-		cmp   r15d, 0
+		cmp   r13d, 0
 		jle   @f
 		lea   rdi, [.mlist]
 	       call   Gen_Legal
@@ -718,17 +426,13 @@ GD NewLine
 		cmp   rax, rdi
 		jne   @f
 		mov   esi, 1
+                jmp   .UndoMove
 	@@:
 
-	       test   esi, esi
-		jnz   .UndoMove
-
-
-		lea   rcx, [.success]
 		cmp   word[rbx+State.rule50], 0
 		 je   .Rule50Is0
     .Rule50IsNot0:
-	       call   Tablebase_ProbeDTZ
+	       call   Tablebase_Probe_DTZ
 		mov   esi, eax
 		neg   esi
 		lea   eax, [rsi+1]
@@ -739,62 +443,57 @@ GD NewLine
 	      cmovs   esi, eax
 		jmp   .UndoMove
     .Rule50Is0:
-	       call   Tablebase_ProbeWDL
+	       call   Tablebase_Probe_WDL
 		neg   eax
 		add   eax, 2
-	     Assert   b, eax, 5, 'assertion -2 <= v <= 2 failed in Tablebase_RootProbe'
 	      movsx   esi, byte[WDLtoDTZ+rax]
+
 .UndoMove:
 
 		mov   ecx, dword[r12+RootMove.pv+4*0]
 	       call   Move_Undo
-		mov   edx, dword[.success]
+		mov   edx, dword[r15]
 	       test   edx, edx
 	      cmovz   eax, edx
 		 jz   .Return
 		mov   dword[r12+RootMove.score], esi
-GD String, 'unfiltered move '
-GD Move, qword[r12+RootMove.pv+4*0]
-GD String, ' score '
-GD Int32, rsi
-GD NewLine
 		add   r12, sizeof.RootMove
 		jmp   .RootMoveLoop
 .RootMovesDone:
+
 
 	      movzx   r14d, word[rbx+State.rule50]
 	; r14d = cnt50
 		xor   edi, edi
 	; esi = wdl
 		mov   eax, r14d
-		cmp   r15d, 0
+		cmp   r13d, 0
 		 jg   .DtzPos
 		 je   @f
 		mov   edi, -1
 		mov   ecx, -2
-		sub   eax, r15d
+		sub   eax, r13d
 		cmp   eax, 100
 	     cmovle   edi, ecx
 		jmp   @f
 .DtzPos:
 		mov   edi, 1
 		mov   ecx, 2
-		add   eax, r15d
+		add   eax, r13d
 		cmp   eax, 100
 	     cmovle   edi, ecx
 @@:
 	; edi = wdl
 		lea   eax, [rdi+2]
-	     Assert   b, eax, 5, 'assertion -2 <= wdl <= -2 failed in Tablebase_RootProbe'
 		mov   eax, dword[wdl_to_Value5+4*rax]
 	; eax = score
 .TestA:
 		cmp   edi, 1
 		jne   .TestB
-		cmp   r15d, 100
+		cmp   r13d, 100
 		 jg   .TestB
 		mov   eax, 200
-		sub   eax, r15d
+		sub   eax, r13d
 		sub   eax, r14d
 		mov   ecx, PawnValueEg
 	       imul   eax, ecx
@@ -805,10 +504,10 @@ GD NewLine
 .TestB:
 		cmp   edi, -1
 		jne   .TestDone
-		cmp   r15d, -100
+		cmp   r13d, -100
 		 jl   .TestDone
 		mov   eax, 200
-		add   eax, r15d
+		add   eax, r13d
 		sub   eax, r14d
 		mov   ecx, PawnValueEg
 	       imul   eax, ecx
@@ -819,7 +518,7 @@ GD NewLine
 .TestDone:
 		mov   dword[Tablebase_Score], eax
 		mov   rdi, qword[rbp+Pos.rootMovesVec.table]
-		cmp   r15d, 0
+		cmp   r13d, 0
 		 jg   .Winning
 		 jl   .Losing
 
@@ -834,11 +533,6 @@ GD NewLine
 		mov   eax, dword[rsi+RootMove.score]
 	       test   eax, eax
 		jnz   .Drawing1
-GD String, 'filtered drawing move '
-GD Move, qword[rsi+RootMove.pv+4*0]
-GD String, ' score '
-GD Int32, qword[rsi+RootMove.score]
-GD NewLine
 		mov   ecx, sizeof.RootMove
 	  rep movsb
 		jmp   .Drawing1a
@@ -851,11 +545,6 @@ GD NewLine
 .ReturnTrue:
 		 or   eax, -1
 .Return:
-
-GD String, 'Tablebase_RootProbe returning '
-GD Int32, rax
-GD NewLine
-
                 add   rsp, .localsize
                 pop   r15 r14 r13 r12 rdi rsi rbx
                 ret
@@ -877,8 +566,8 @@ GD NewLine
 		mov   r12d, eax
 		jmp   .Winning1
 .Winning1Done:
-		mov   r13d, r12d
-	; r13d = max
+		mov   r11d, r12d
+	; r11d = max
 
 		lea   eax, [r12+r14]
 		cmp   eax, 99
@@ -908,8 +597,8 @@ GD NewLine
 		sub   r8, 1*sizeof.State
 		jmp   .WinningLoop
 .WinningDoMax:
-		mov   r13d, 99
-		sub   r13d, r14d
+		mov   r11d, 99
+		sub   r11d, r14d
 .WinningDontMax:
 		lea   rsi, [rdi-sizeof.RootMove]
 .Winning2:
@@ -920,13 +609,9 @@ GD NewLine
 		mov   eax, dword[rsi+RootMove.score]
 		cmp   eax, 0
 		jle   .Winning2
-		cmp   eax, r13d
+		cmp   eax, r11d
 		 jg   .Winning2
-GD String, 'filtered winning move '
-GD Move, qword[rsi+RootMove.pv+4*0]
-GD String, ' score '
-GD Int32, qword[rsi+RootMove.score]
-GD NewLine
+
 		mov   ecx, sizeof.RootMove
 	  rep movsb
 		jmp   .Winning2a
@@ -963,11 +648,7 @@ GD NewLine
 		mov   eax, dword[rsi+RootMove.score]
 		cmp   eax, edx
 		jne   .Losing2
-GD String, 'filtered losing move '
-GD Move, qword[rsi+RootMove.pv+4*0]
-GD String, ' score '
-GD Int32, qword[rsi+RootMove.score]
-GD NewLine
+
 		mov   ecx, sizeof.RootMove
 	  rep movsb
 		jmp   .Losing2a
@@ -984,7 +665,7 @@ Tablebase_RootProbeWDL:
 	; out: eax bool
 	;          score is in Tablebase_Score
 
-	       push   rsi rdi r15
+	       push   rsi rdi r12 r13 r15
 virtual at rsp
   .success rd 1
 	   rd 1
@@ -993,22 +674,19 @@ end virtual
 .localsize = ((.localend-rsp+15) and (-16))
 	 _chkstk_ms   rsp, .localsize
 		sub   rsp, .localsize
+		lea   r15, [.success]
 
-		lea   rcx, [.success]
-	       call   Tablebase_ProbeWDL
+	       call   Tablebase_Probe_WDL
 		mov   edx, dword[.success]
 	       test   edx, edx
 	      cmovz   eax, edx
 		 jz   .Return
 		add   eax, 2
-	     Assert   b, rax, 5, 'assertion -2 <= wdl <= 2 failed in Tablebase_RootProbeWDL'
 		mov   eax, dword[wdl_to_Value5+4*rax]
 		mov   dword[Tablebase_Score], eax
 
-	       call   SetCheckInfo
-
-		mov   r15d, -2
-	; r15d = best
+		mov   r12d, -2
+	; r12d = best
 
 		mov   rsi, qword[rbp+Pos.rootMovesVec.table]
 .RootMoveLoop:
@@ -1019,8 +697,7 @@ end virtual
 		mov   ecx, dword[rsi+RootMove.pv+4*0]
 		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__Tablebase_RootProbeWDL
-		lea   rcx, [.success]
-	       call   Tablebase_ProbeWDL
+	       call   Tablebase_Probe_WDL
 		neg   eax
 		mov   edi, eax
 		mov   ecx, dword[rsi+RootMove.pv+4*0]
@@ -1029,8 +706,8 @@ end virtual
 	       test   eax, eax
 		 jz   .Return
 		mov   dword[rsi+RootMove.score], edi
-		cmp   edi, r15d
-	      cmovg   r15d, edi
+		cmp   edi, r12d
+	      cmovg   r12d, edi
 		add   rsi, sizeof.RootMove
 		jmp   .RootMoveLoop
 .RootMovesDone:
@@ -1043,7 +720,7 @@ end virtual
 		cmp   rsi, qword[rbp+Pos.rootMovesVec.ender]
 		jae   .CopyDone
 		mov   eax, dword[rsi+RootMove.score]
-		cmp   eax, r15d
+		cmp   eax, r12d
 		jne   .Copy
 		mov   ecx, sizeof.RootMove
 	  rep movsb
@@ -1053,5 +730,5 @@ end virtual
 		 or   eax, -1
 .Return:
 		add   rsp, .localsize
-		pop   r15 rdi rsi
+		pop   r15 r13 r12 rdi rsi
 		ret
