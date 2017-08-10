@@ -497,7 +497,9 @@ _VirtualAllocNuma:
 		 je   _VirtualAlloc.go
 	       push   rbp rbx rsi rdi r15
 		sub   rsp, 16
-
+if DEBUG
+add qword[DebugBalance], rcx
+end if
 		mov   ebx, edx
 		mov   rbp, rcx
 		xor   edi, edi
@@ -536,6 +538,9 @@ _VirtualAlloc:
 		mov   r10d, MAP_PRIVATE or MAP_ANONYMOUS
 .go:
 	       push   rsi rdi rbx
+if DEBUG
+add qword[DebugBalance], rcx
+end if
 		xor   edi, edi
 		mov   rsi, rcx
 		mov   edx, PROT_READ or PROT_WRITE
@@ -555,6 +560,9 @@ _VirtualFree:
 	       push   rsi rdi rbx
 	       test   rcx, rcx
 		 jz   .null
+if DEBUG
+sub qword[DebugBalance], rdx
+end if
 		mov   rdi, rcx
 		mov   rsi, rdx
 		mov   eax, sys_munmap
@@ -595,7 +603,9 @@ _VirtualAlloc_LargePages:
 		mov   r15, rax
 	       test   rax, rax
 		 js   Failed_sys_mmap
-
+if DEBUG
+add qword[DebugBalance], r14
+end if
 		mov   rdi, r15
 		mov   rsi, r14
 		mov   edx, MADV_HUGEPAGE
@@ -603,6 +613,7 @@ _VirtualAlloc_LargePages:
 	    syscall
 
 		mov   rax, r15
+                mov   rdx, r14
 		mov   qword[LargePageMinSize], 1
 
 		pop   r15 r14 rdi rsi rbx

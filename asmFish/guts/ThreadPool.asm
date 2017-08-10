@@ -172,7 +172,6 @@ end virtual
 	       call   Limits_Copy
 
         ; first, get root moves from gui position
-
 		lea   rsi, [limits.moveVec]
 		lea   rdi, [.moveList]
 		mov   ecx, dword[limits.moveVecSize]
@@ -195,7 +194,6 @@ end virtual
     .push_moves_done:
 
 	; next, copy to mainThread
-
 		xor   eax, eax
 		mov   dword[r14+Thread.rootDepth], eax
 		mov   qword[r14+Thread.nodes], rax
@@ -207,7 +205,6 @@ end virtual
 	       call   Position_CopyToSearch
 
         ; switch rbp and rbx to position of main thread
-
 		lea   rbp, [r14+Thread.rootPos]
 		mov   rbx, qword[rbp+Pos.state]
 
@@ -248,12 +245,9 @@ end if
 	; position is passed to threads by first converting to a fen
 	;   and then parsing this fen string
 	; the net effect is a fixed order on piece lists
-
 	       call   Position_SetPieceLists
 
-
 	; copy position in main thread to workers
-
 		xor   eax, eax
                 mov   qword[r14+Thread.nodes], rax  ;filtering moves may have incremented mainThread.nodes
 		xor   edi, edi

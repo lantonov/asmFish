@@ -39,43 +39,24 @@
 ;extern _Z17calc_key_from_pcsPii                         ; near
 
 
-
-
-
 _Z16pos_material_keyR8Position:
 	; in: rcx address of position
 	; out: rax material key
-
-	       push   rbx rsi rdi r12 r13 r14 r15
-		sub   rsp, 64
-		mov   rbp, rcx
-
-		xor   r14, r14
-		xor   r13, r13
-
-	      vpxor   xmm0, xmm0, xmm0	; npMaterial
-	    vmovdqu   dqword[rsp], xmm0
-
+                xor   eax, eax
+               push   rdi rsi rax rax
 		xor   esi, esi
 .NextSquare:
-	      movzx   eax, byte [rbp+Pos.board+rsi]
-		mov   edx, eax
-		and   edx, 7	; edx = piece type
-		 jz   .Empty
-
-	       imul   ecx, eax, 64*8
-	      movzx   edx, byte [rsp+rax]
-		xor   r13, qword[Zobrist_Pieces+rcx+8*rdx]
+	      movzx   edi, byte[rcx+Pos.board+rsi]
+                mov   r8d, edi
+                shl   r8d, 9
+	      movzx   edx, byte[rsp+rdi]
+		xor   rax, qword[Zobrist_Pieces+r8+8*rdx]
 		add   edx, 1
-		mov   byte[rsp+rax], dl
-.Empty:
+		mov   byte[rsp+rdi], dl
 		add   esi, 1
 		cmp   esi, 64
 		 jb   .NextSquare
-
-		mov   rax, r13
-		add   rsp, 64
-		pop   r15 r14 r13 r12 rdi rsi rbx
+		pop   rcx rcx rsi rdi
 		ret
 
 
@@ -109,25 +90,34 @@ _Z17calc_key_from_pcsPii:
 	; in: rcx address of pcs[16]
 	;     edx mirror
 	; out: rax material key
+               push   rdi rsi
 		xor   eax, eax
 		neg   edx
 		sbb   edx, edx
 		and   edx, 8
-irps color, White Black {
- irps pt, Pawn Knight Bishop Rook Queen King \{
-  \local ..Next, ..Done
-		lea   r8, [Zobrist_Pieces+8*(64*(8*color+pt))]
-		mov   r9d, dword[rcx+4*(rdx+pt-1)]
+                xor   esi, esi
+.colorLoop:
+                mov   edi, Pawn
+.typeLoop:
+                lea   r8, [8*rsi+rdi]
+                shl   r8, 9
+                lea   r9d, [rdx+rdi-1]
+		mov   r9d, dword[rcx+4*r9]
 		sub   r9d, 1
-		 js   ..Done
-	..Next:
-		xor   rax, qword[r8+8*r9]
+		 js   .Done
+	.Next:
+		xor   rax, qword[Zobrist_Pieces+r8+8*r9]
 		sub   r9d, 1
-		jns   ..Next
-	..Done:
- \}
+		jns   .Next
+	.Done:
+                add   edi, 1
+                cmp   edi, King
+                jbe   .typeLoop
 		xor   edx, 8
-}
+                add   esi, 1
+                cmp   esi, 2
+                 jb   .colorLoop
+                pop   rsi rdi
 		ret
 
 
@@ -135,27 +125,35 @@ _Z8calc_keyR8Positioni:
 	; in: rcx address of position
 	;     edx mirror
 	; out: rax material key
+               push   rsi rdi
 		xor   eax, eax
 		neg   edx
 		sbb   edx, edx
 		and   edx, 8
-irps color, White Black {
- irps pt, Pawn Knight Bishop Rook Queen King \{
-  \local ..Next, ..Done
-		lea   r8, [Zobrist_Pieces+8*(64*(8*color+pt))]
-		mov   r9, qword[rcx+Pos.typeBB+8*pt]
+                xor   esi, esi
+.colorLoop:
+                mov   edi, Pawn
+.typeLoop:
+		mov   r9, qword[rcx+Pos.typeBB+8*rdi]
 		and   r9, qword[rcx+Pos.typeBB+rdx]
-	     popcnt   r9, r9, r10
+	     popcnt   r9, r9, r8
+                lea   r8, [8*rsi+rdi]
+                shl   r8, 9
 		sub   r9d, 1
-		 js   ..Done
-	..Next:
-		xor   rax, qword[r8+8*r9]
+		 js   .Done
+        .Next:
+		xor   rax, qword[Zobrist_Pieces+r8+8*r9]
 		sub   r9d, 1
-		jns   ..Next
-	..Done:
- \}
+		jns   .Next
+        .Done:
+                add   edi, 1
+                cmp   edi, King
+                jbe   .typeLoop
 		xor   edx, 8
-}
+                add   esi, 1
+                cmp   esi, 2
+                 jb   .colorLoop
+                pop   rdi rsi
 		ret
 
 
@@ -170,21 +168,26 @@ _Z7prt_strR8PositionPci:
 		neg   edx
 		sbb   edx, edx
 		and   edx, 8
-irps color, White Black {     ; not used;  edx has the color
- irps pt, King Queen Rook Bishop Knight Pawn \{
-  local ..Next, ..Done
-		mov   r9, qword[rbp+Pos.typeBB+8*pt]
+                mov   r10d, 1
+.colorLoop:
+                mov   r11d, King
+.typeLoop:
+		mov   r9, qword[rbp+Pos.typeBB+8*r11]
 		and   r9, qword[rbp+Pos.typeBB+rdx]
-	     popcnt   rcx, r9, r10
-		mov   al, byte[_ZL4pchr+King-pt]
+	     popcnt   rcx, r9, rax
+                mov   eax, King
+                sub   eax, r11d
+		mov   al, byte[_ZL4pchr+rax]
 	  rep stosb
- \}
+                sub   r11d, 1
+                cmp   r11d, Pawn
+                jae   .typeLoop
 		mov   al, 'v'
 	      stosb
 		xor   edx, 8
-}
+                sub   r10d, 1
+                jns   .colorLoop
 		mov   byte[rdi-1], 0
-
 		pop   rbp rdi
 		ret
 
@@ -1813,6 +1816,8 @@ Tablebase_Init:
         mov     dword[_ZL9num_paths], eax
         mov     dword[_ZL10TBnum_pawn], eax
         mov     dword[_ZL11TBnum_piece], eax
+	mov	dword[Tablebase_MaxCardinality], eax
+
         jmp     ?_CheckPath
 
 ?_DoInit:
@@ -1946,10 +1951,10 @@ Tablebase_Init:
 	call	_MutexCreate
 
 	lea	rdx, [ _ZL7TB_hash]
-	mov	dword [ _ZL10TBnum_pawn], 0		
+	;mov	dword [ _ZL10TBnum_pawn], 0		; already
 	lea	rcx, [ _ZL7TB_pawn]
-	mov	dword [ _ZL11TBnum_piece], 0	
-	mov	dword [Tablebase_MaxCardinality], 0
+	;mov	dword [ _ZL11TBnum_piece], 0	        ; cleared
+	;mov	dword [Tablebase_MaxCardinality], 0     ; these
 ?_205:	xor	eax, eax				
 ?_206:	mov	qword [rdx+rax], 0			
 	mov	qword [rdx+rax+8H], 0			
