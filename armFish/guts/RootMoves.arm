@@ -88,8 +88,8 @@ RootMovesVec_Size:
 	     Assert   b, eax, MAX_MOVES, 'too many moves in RootMovesVec_Size'
 		ret
 */
-        ldr  x0, [x1, RootMovesVec.table]
-        ldr  x1, [x1, RootMovesVec.ender]
+        ldr  x0, [x1, RootMovesVec.ender]
+        ldr  x1, [x1, RootMovesVec.table]
         sub  x0, x0, x1
         mov  x1, sizeof.RootMove
        udiv  x0, x0, x1

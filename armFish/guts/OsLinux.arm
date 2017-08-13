@@ -1,4 +1,3 @@
-
 Os_MutexCreate:
 Os_MutexDestroy:
         // in: x1 address of mutex
@@ -163,6 +162,87 @@ Os_EventWait.L4_nexp:
                 cmp  x2, x29    // we should have mutex x29 saved at x5
                 beq  Os_EventWait.L1
                   b  Failed_EventWait
+
+
+
+
+Os_FileOpenRead:
+	// in: x1 path string
+	// out: x0 handle from CreateFile (win), fd (linux)
+	//      x0=-1 on error
+                stp  x29, x30, [sp, -16]!
+                mov  x0, AT_FDCWD
+                mov  x2, O_RDONLY
+                mov  x3, 0      // ignored
+                mov  x8, sys_openat
+                svc  0
+                tst  w0, w0
+                bpl  1f
+                mov  x0, -1
+        1:      ldp  x29, x30, [sp], 16
+                ret
+
+Os_FileClose:
+        // in: x1 handle from CreateFile (win), fd (linux)
+                stp  x29, x30, [sp, -16]!
+                mov  x0, x1
+                mov  x8, sys_close
+                svc  0
+                ldp  x29, x30, [sp], 16
+                ret
+
+Os_FileMap:
+        // in: x1 handle (win), fd (linux)
+        // out: x0 base address
+        //      x2 handle from CreateFileMapping (win), size (linux)
+                stp  x20, x21, [sp, -16]!
+                stp  x26, x27, [sp, -16]!
+                stp  x25, x30, [sp, -16]!
+        // get file size
+                sub  sp, sp, (sizeof.stat + 15) & -16
+                mov  x20, x1
+                mov  x0, x1
+                add  x1 ,sp, 0
+                mov  x8, sys_fstat
+                svc  0
+               cbnz  w0, Failed_sys_fstat
+                ldr  x21, [sp, stat.st_size]
+        // map file
+                mov  x0, 0
+                mov  x1, x21
+                mov  x2, PROT_READ
+                mov  x3, MAP_PRIVATE
+                mov  x4, x20
+                mov  x5, 0
+                mov  x8, sys_mmap
+                svc  0
+                tst  x0, x0
+                bmi  Failed_sys_mmap
+        // return size in rdx, base address in rax
+                mov  x2, x21
+                add  sp, sp, (sizeof.stat + 15) & -16
+                ldp  x25, x30, [sp], 16
+                ldp  x26, x27, [sp], 16
+                ldp  x20, x21, [sp], 16
+                ret
+
+
+
+Os_FileUnmap:
+	// in: x1 base address
+	//     x2 handle from CreateFileMapping (win), size (linux)
+                stp  x29, x30, [sp, -16]!
+                cbz  x1, 1f
+                mov  x0, x1
+                mov  x1, x2
+                mov  x8, sys_munmap
+                svc  0
+                cmp  w0, 0
+                bne  Failed_sys_unmap_VirtualFree
+        1:      ldp  x29, x30, [sp], 16
+                ret
+
+
 
 
 Os_ThreadCreate:
@@ -469,6 +549,20 @@ Os_ParseCommandLine.Done:
                 ldp  x20, x21, [sp], 16
                 ret
 
+
+Failed_sys_mmap:
+	        adr  x27, 1f
+                  b  Failed
+1:
+        .ascii "sys_mmap failed\0"
+        .balign 4
+
+Failed_sys_fstat:
+	        adr  x27, 1f
+                  b  Failed
+1:
+        .ascii "sys_fstat failed\0"
+        .balign 4
 
 Failed_sys_futex_EventSignal:
 	        lea  x27, sz_error_sys_futex_EventSignal

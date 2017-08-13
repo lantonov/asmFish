@@ -218,6 +218,52 @@ ThreadPool_StartThinking.push_moves_done:
                 add  x20, x24, Thread.rootPos
                 ldr  x21, [x20, Pos.state]
 
+
+.if USE_SYZYGY
+
+        // Skip TB probing when no TB found
+                lea  x6, options
+               ldrb  w2, [x6, Options.syzygy50MoveRule]
+                lea  x6, Tablebase_RootInTB
+               strb  wzr, [x6]
+                lea  x6, Tablebase_UseRule50
+               strb  w2, [x6]
+                lea  x6, options
+                ldr  w0, [x6, Options.syzygyProbeLimit]
+                lea  x6, options
+                ldr  w1, [x6, Options.syzygyProbeDepth]
+                mov  w2, 0
+                lea  x6, Tablebase_MaxCardinality
+                ldr  w4, [x6]
+                cmp  w0, w4
+               csel  w0, w4, w0, gt
+               csel  w1, w2 ,w1, gt
+                lea  x6, Tablebase_Cardinality
+                str  w0, [x6]
+                lea  x6, Tablebase_ProbeDepth
+                str  w1, [x6]
+
+        // filter moves
+                ldr  x1, [x20, Pos.typeBB + 8*White]
+                ldr  x4, [x20, Pos.typeBB + 8*Black]
+                orr  x1, x1, x4
+             Popcnt  x1, x1, x2
+                ldr  x2, [x20, Pos.rootMovesVec + RootMovesVec.ender]
+                ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
+                cmp  x2, x4
+                bls  ThreadPool_StartThinking.check_tb_ret
+                sub  w0, w0, w1
+                asr  w0, w0, 31
+               ldrb  w4, [x21, State.castlingRights]
+                orr  w0, w0, w4
+                cbz  w0, ThreadPool_StartThinking.check_tb
+ThreadPool_StartThinking.check_tb_ret:
+
+                str  x21, [x20, Pos.state]      // Thread_Think uses Pos.state
+.endif
+
+
+
         // position is passed to threads by first converting to a fen
         //   and then parsing this fen string
         // the net effect is a fixed order on piece lists
@@ -278,8 +324,54 @@ ThreadPool_StartThinking.thread_copy_done:
                 ldp  x20, x30, [sp], 16
                 ret
 
-ThreadPool_StartThinking.use_searchmoves:
 
+.if USE_SYZYGY
+ThreadPool_StartThinking.check_tb:
+                ldr  x0, [x20, Pos.moveList]
+                str  x0, [x21, -1*sizeof.State + State.endMoves]
+                 bl  Tablebase_RootProbe
+                lea  x6, Tablebase_RootInTB
+               strb  w0, [x6]
+                mov  w2, 0
+               cbnz   w0, ThreadPool_StartThinking.root_in
+                 bl  Tablebase_RootProbeWDL
+                lea  x6, Tablebase_RootInTB
+               strb  w0, [x6]
+                mov  w2, 0
+                cbz  w0, ThreadPool_StartThinking.check_tb_ret
+                lea  x6, Tablebase_Score
+                ldr  w4, [x6]
+                cmp  w2, w4
+                lea  x6, Tablebase_Cardinality
+                ldr  w4, [x6]
+               csel  w2, w4, w2, lt
+
+ThreadPool_StartThinking.root_in:
+                lea  x6, Tablebase_Cardinality
+                str  w2, [x6]
+                add  x1, x20, Pos.rootMovesVec
+                 bl  RootMovesVec_Size
+                str  x0, [x20, -Thread.rootPos + Thread.tbHits]
+                lea  x6, Tablebase_UseRule50
+               ldrb  w2, [x6]
+                lea  x6, Tablebase_Score
+                ldr  w0, [x6]
+               cbnz  w2, ThreadPool_StartThinking.check_tb_ret
+              mov32  w1, VALUE_MATE - MAX_PLY - 1
+                cmp  w0, w2
+               csel  w0, w1, w0, gt
+                neg  w1, w1
+                cmp  w0, w2
+               csel  w0, w1, w0, lt
+                lea  x6, Tablebase_Score
+                str  w0, [x6]
+                  b  ThreadPool_StartThinking.check_tb_ret
+.endif
+
+
+
+
+ThreadPool_StartThinking.use_searchmoves:
                ldrh  w0, [x26], 2
                 str  x0, [x27], 8
                 sub  w1, w1, 1

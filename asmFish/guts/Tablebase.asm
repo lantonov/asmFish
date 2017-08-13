@@ -535,7 +535,7 @@ end virtual
 
 if VERBOSE = 2
 mov ecx, [rsi+RootMove.pv+4*0]
-Display 2,"Filtered drawing move %m1%n"
+Display 2,"DTZ filtered drawing move %m1%n"
 end if
 
 		mov   ecx, sizeof.RootMove

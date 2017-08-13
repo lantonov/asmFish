@@ -218,6 +218,7 @@ my_puts:
 	       push   rdi
 		lea   rdi, [Output]
 	       call   PrintString
+       PrintNewLine
 	       call   _WriteOut_Output
 		pop   rdi
 		ret

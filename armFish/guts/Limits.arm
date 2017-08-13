@@ -1,42 +1,42 @@
 Limits_Init:
-// in:  x1 address of of LimitsType struct
-        stp  x21, x30, [sp, -16]!
-        stp  x26, x27, [sp, -16]!
-        mov  x21, x1
-         bl  Os_GetTime
-        mov  x26, x0
-        mov  x0, x21
-        mov  x1, 0
-        mov  x2, sizeof.Limits
-         bl  MemoryFill
-        str  x26, [x21, Limits.startTime]
-        mov  w4, -1
-       strb  w4, [x21, Limits.useTimeMgmt]
-        ldp  x26, x27, [sp], 16
-        ldp  x21, x30, [sp], 16
-        ret
+        // in: x1 address of of LimitsType struct
+                stp  x21, x30, [sp, -16]!
+                stp  x26, x27, [sp, -16]!
+                mov  x21, x1
+                 bl  Os_GetTime
+                mov  x26, x0
+                mov  x0, x21
+                mov  x1, 0
+                mov  x2, sizeof.Limits
+                 bl  MemoryFill
+                str  x26, [x21, Limits.startTime]
+                mov  w4, -1
+               strb  w4, [x21, Limits.useTimeMgmt]
+                ldp  x26, x27, [sp], 16
+                ldp  x21, x30, [sp], 16
+                ret
 
 Limits_Set:
-// in: x1 address of of LimitsType struct
-//     set useTimeMgmt member
-       ldrb  w0, [x1, Limits.infinite]
-        ldr  w4, [x1, Limits.mate]
-        orr  w0, w0, w4
-        ldr  w4, [x1, Limits.movetime]
-        orr  w0, w0, w4
-        ldr  w4, [x1, Limits.depth]
-        orr  w0, w0, w4
-        ldr  x4, [x1, Limits.nodes]
-        orr  x0, x0, x4
-        tst  x0, x0
-       cset  w0, eq
-       strb  w0, [x1, Limits.useTimeMgmt]
-        ret
+        // in: x1 address of of LimitsType struct
+        //     set useTimeMgmt member
+               ldrb  w0, [x1, Limits.infinite]
+                ldr  w4, [x1, Limits.mate]
+                orr  w0, w0, w4
+                ldr  w4, [x1, Limits.movetime]
+                orr  w0, w0, w4
+                ldr  w4, [x1, Limits.depth]
+                orr  w0, w0, w4
+                ldr  x4, [x1, Limits.nodes]
+                orr  x0, x0, x4
+                tst  x0, x0
+               cset  w0, eq
+               strb  w0, [x1, Limits.useTimeMgmt]
+                ret
 
 Limits_Copy:
-// in: x1 address of destination
-//     x2 address of source
-        mov  x0, x1
-        mov  x1, x2
-        mov  w2, sizeof.Limits
-          b  MemoryCopy
+        // in: x1 address of destination
+        //     x2 address of source
+                mov  x0, x1
+                mov  x1, x2
+                mov  w2, sizeof.Limits
+                  b  MemoryCopy

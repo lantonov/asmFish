@@ -1,0 +1,56 @@
+        .balign 64
+
+Tablebases__MaxCardinality:
+Tablebase_MaxCardinality:
+        .zero 4
+Tablebase_Cardinality:
+        .zero 4
+Tablebase_ProbeDepth:
+        .zero 4
+Tablebase_Score:
+        .zero 4
+Tablebase_RootInTB:
+        .zero 1         // boole 0 or -1
+Tablebase_UseRule50:
+        .zero 1         // boole 0 or -1
+        .zero 2
+        .zero 44
+
+        .balign 16
+
+pfactor:
+        .zero 128
+pawnidx:
+        .zero 512
+binomial:
+        .zero 1280
+
+DTZ_table:
+        .zero 1536
+TB_hash:
+        .zero 81920
+TB_pawn:
+        .zero 98304
+TB_piece:
+        .zero 30480
+
+TBnum_pawn:
+        .zero 4
+TBnum_piece:
+        .zero 4
+paths:
+        .zero 8
+path_string:
+        .zero 8
+num_paths:
+        .zero 4
+initialized:
+        .zero 1
+        .zero 3
+tb_total_cnt:
+        .zero 4
+
+        .balign 16
+TB_mutex:
+        .zero 64
+

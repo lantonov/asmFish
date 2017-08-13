@@ -58,6 +58,19 @@ szGreetingEnd:
 	.ascii "option name SlowMover type spin default 89 min 10 max 1000"
 	.ascii "\n"
 
+
+.if USE_SYZYGY
+        .ascii "option name SyzygyProbeDepth type spin default 1 min 1 max 100"
+        .ascii "\n"
+        .ascii "option name SyzygyProbeLimit type spin default 6 min 0 max 6"
+        .ascii "\n"
+        .ascii "option name Syzygy50MoveRule type check default true"
+        .ascii "\n"
+        .ascii "option name SyzygyPath type string default <empty>"
+        .ascii "\n"
+.endif
+
+
 	.ascii "uciok"
 sz_NewLine:
 	.ascii "\n"
@@ -123,6 +136,7 @@ sz_error_name:	    .ascii "error: setoption has no name\0"
 sz_error_option:    .ascii "error: unknown option \0"
 sz_error_affinity1: .ascii "error: parsing affinity failed after \0"
 sz_error_affinity2: .ascii "; proceeding as all\0"
+sz_empty:           .ascii "<empty>\0"
 
 sz_go:                  .ascii "go\0"
 sz_no:                  .ascii "no\0"
@@ -180,6 +194,13 @@ sz_nodeaffinity: 	.ascii "nodeaffinity\0"
 sz_moveoverhead: 	.ascii "moveoverhead\0"
 sz_minthinktime: 	.ascii "minthinktime\0"
 sz_uci_chess960: 	.ascii "uci_chess960\0"
+
+.if USE_SYZYGY
+sz_syzygypath:          .ascii "syzygypath\0"
+sz_syzygyprobedepth:    .ascii "syzygyprobedepth\0"
+sz_syzygy50moverule:    .ascii "syzygy50moverule\0"
+sz_syzygyprobelimit:    .ascii "syzygyprobelimit\0"
+.endif
 
 BenchFens: //fens must be separated by one or more space char
 .ascii "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "

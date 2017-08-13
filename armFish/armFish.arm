@@ -13,8 +13,8 @@ VERBOSE = 0
 USE_CURRMOVE    = 1
 USE_HASHFULL    = 1
 USE_CMDLINEQUIT = 1
+USE_SYZYGY      = 1
 //USE_MATEFINDER = 0 not implemented
-//USE_SYZYGY     = 0 not implemented
 
 
 .include "guts/def.arm"
@@ -35,17 +35,26 @@ USE_CMDLINEQUIT = 1
 
 .section .data
 .include "guts/dataSection.arm"
+.if USE_SYZYGY
+  .include "guts/TablebaseData.arm"
+.endif
 
 
 .section .bss
 .include "guts/bssSection.arm"
+.if USE_SYZYGY
+  .include "guts/TablebaseBss.arm"
+.endif
 
 
 .text
+
+.if USE_SYZYGY
+  .include "guts/TablebaseCore.arm"
+  .include "guts/Tablebase.arm"
+.endif
+
 .globl _start
-
-
-
 _start:
         lea  x6, spEntry
         mov  x0, sp

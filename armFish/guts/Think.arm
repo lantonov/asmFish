@@ -65,7 +65,7 @@ Thread_Think.skip_easymove:
                 lea  x6, options
                 ldr  w1, [x6, Options.multiPV]
                 cmp  w0, w1
-               csel  w0, w0, w1, ge
+               csel  w0, w1, w0, hi
                 str  w0, [sp, Thread_Think.multiPV]
 
                 add  x6, x20, -Thread.rootPos + Thread.rootDepth
@@ -815,6 +815,7 @@ DisplayInfo_Uci.localsize = (DisplayInfo_Uci.lend + 15) & -16
                  bl  ThreadPool_NodesSearched_TbHits
                 str  x0, [sp, DisplayInfo_Uci.nodes]
                 str  x2, [sp, DisplayInfo_Uci.tbHits]
+
                 mov  x4, 1000
                 ldr  x1, [sp, DisplayInfo_Uci.elapsed]
                 tst  x1, x1
@@ -896,7 +897,7 @@ DisplayInfo_Uci.multipv_loop:
                strb  w0, [x27], 1
                ldrb  w0, [x26, RootMove.selDepth]
                  bl  PrintUInt
-        
+
                 mov  w0, ' '
                strb  w0, [x27], 1
                 mov  w0, 'm'
@@ -947,6 +948,22 @@ DisplayInfo_Uci.multipv_loop:
                  bl  PrintUInt
 .endif      
 
+
+.if USE_SYZYGY
+                lea  x6, Tablebase_RootInTB
+              ldrsb  w23, [x6]
+                asr  w2, w22, 31
+                eor  w0, w22, w2
+                sub  w0, w0, w2
+              mov32  w4, VALUE_MATE - MAX_PLY
+                sub  w0, w0, w4
+                asr  w0, w0, 31
+               ands  w23, w23, w0
+                lea  x6, Tablebase_Score
+                ldr  w4, [x6]
+               csel  w22, w4, w22, ne
+.endif
+
                 mov  w0, ' '
                strb  w0, [x27], 1
                 mov  w0, 's'
@@ -963,6 +980,10 @@ DisplayInfo_Uci.multipv_loop:
                strb  w0, [x27], 1
                 mov  w1, w22
                  bl  PrintScore_Uci
+
+.if USE_SYZYGY
+               cbnz  w23, DisplayInfo_Uci.no_bound
+.endif
 
                 add  x7, x20, -Thread.rootPos
                 ldr  w4, [x7, Thread.PVIdx]
@@ -989,6 +1010,7 @@ DisplayInfo_Uci.yes_bound:
                 mov  w0, 'd'
                strb  w0, [x27], 1
 DisplayInfo_Uci.no_bound:
+
                 mov  w0, ' '
                strb  w0, [x27], 1
                 mov  w0, 'n'
@@ -1033,6 +1055,29 @@ DisplayInfo_Uci.no_bound:
                  bl  PrintUInt
         1:
 .endif
+
+
+.if USE_SYZYGY
+                mov  w0, ' '
+               strb  w0, [x27], 1
+                mov  w0, 't'
+               strb  w0, [x27], 1
+                mov  w0, 'b'
+               strb  w0, [x27], 1
+                mov  w0, 'h'
+               strb  w0, [x27], 1
+                mov  w0, 'i'
+               strb  w0, [x27], 1
+                mov  w0, 't'
+               strb  w0, [x27], 1
+                mov  w0, 's'
+               strb  w0, [x27], 1
+                mov  w0, ' '
+               strb  w0, [x27], 1
+                ldr  x0, [sp, DisplayInfo_Uci.tbHits]
+                 bl  PrintUInt
+.endif
+
                 mov  w0, ' '
                strb  w0, [x27], 1
                 mov  w0, 'p'

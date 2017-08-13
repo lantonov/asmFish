@@ -141,6 +141,23 @@ Search.dontchecktime\@:
                strb  w0, [x21, 1*sizeof.State + State.skipEarlyPruning]
                 str  x0, [x21, 2*sizeof.State + State.killers]
 
+  .if USE_SYZYGY
+    .if \RootNode == 0
+                ldr  x0, [x20, Pos.typeBB+8*White]
+                ldr  x4, [x20, Pos.typeBB+8*Black]
+                orr  x0, x0, x4
+             Popcnt  x0, x0, x2
+                lea  x25, Tablebase_Cardinality
+                ldr  w25, [x25]
+                sub  w25, w25, w0
+               ldrh  w0, [x21, State.rule50]
+               ldrb  w1, [x21, State.castlingRights]
+                orr  w0, w0, w1
+                neg  w0, w0
+                orr  w25, w25, w0
+    .endif
+  .endif
+
         // Step 4. transposition table look up
                 ldr  w1, [x21, State.excludedMove]
                 str  w1, [sp, Search.excludedMove]
@@ -199,6 +216,13 @@ Search.ValueFromTTRet\@:
 Search.DontReturnTTValue\@:
                 str  w27, [sp, Search.ttValue]
 
+
+  .if USE_SYZYGY
+    .if \RootNode == 0
+                tbz  w25, 31, Search.CheckTablebase\@
+Search.CheckTablebaseReturn\@:
+    .endif
+  .endif
 
         // step 5. evaluate the position statically
                 mov  w0, VALUE_NONE
@@ -1646,8 +1670,78 @@ Search.20ValueToTT\@:
   .if \RootNode == 0
 Search.CheckDraw_Cold\@:
       PosIsDraw_Cold  Search.AbortSearch_PlySmaller\@, Search.CheckDraw_ColdRet\@
-  .endif
 
+
+
+    .if USE_SYZYGY
+Search.CheckTablebase\@:
+
+                ldr  w1, [sp, Search.depth]
+                ldr  x0, [x20, Pos.typeBB + 8*White]
+                ldr  x4, [x20, Pos.typeBB + 8*Black]
+                orr  x0, x0, x4
+             Popcnt  x0, x0, x2
+                lea  x6, [Tablebase_ProbeDepth]
+                ldr  w4, [x6]
+                cmp  w1, w4
+                bge  Search.DoTbProbe\@
+                lea  x6, [Tablebase_Cardinality]
+                ldr  w4, [x6]
+                cmp  w0, w4
+                bge  Search.CheckTablebaseReturn\@
+Search.DoTbProbe\@:
+
+Display 2,"DoTbProbe %p%n"
+                add  x25, sp, Search.success
+                 bl  Tablebase_Probe_WDL
+                ldr  w2, [sp, Search.success]
+                cbz   w2, Search.CheckTablebaseReturn\@
+Display 2,"Tablebase_Probe_WDL returned %i0%n"
+
+                lea  x6, Tablebase_UseRule50
+              ldrsb  w1, [x6]
+                add  w2, w0, w0
+                and  w2, w2, w1
+                mov  w27, w2
+
+              mov32  w8, -VALUE_MATE + MAX_PLY
+               ldrb  w9, [x21, State.ply]
+                add  w9, w9, w8
+                cmp  w0, w1
+               csel  w2, w8, w2, lt
+               csel  w27, w9, w27, lt
+                neg  w1, w1
+              mov32  w8, VALUE_MATE - MAX_PLY
+                neg  w9, w9
+                cmp  w0, w1
+               csel  w2, w8, w2, gt
+               csel  w27, w9, w27, gt
+        // edi = value
+        // edx = value_to_tt(value, ss->ply)
+
+                ldr  x4, [x20, -Thread.rootPos + Thread.tbHits]
+                add  x4, x4, 1
+                str  x4, [x20, -Thread.rootPos + Thread.tbHits]
+
+                ldr  x9, [sp, Search.posKey]
+              mov32  w1, VALUE_MATE_IN_MAX_PLY
+                add  w1, w1, w27
+                ldr  x8, [sp, Search.tte]
+                lsr  x9, x9, 48
+                mov  w0, MAX_PLY - 1
+                ldr  w26, [sp, Search.depth]
+                add  w26, w26, 6
+                cmp  w26, w0
+               csel  w26, w0, w26, gt
+                mov  w0, 0
+                mov  w3, BOUND_EXACT
+                mov  w5, VALUE_NONE
+                MainHash_Save  Search.ltte, x8, w9, w2, w3, w26, w0, w5
+
+                mov  w0, w27
+                  b  Search.Return\@
+    .endif
+  .endif
 
   .if USE_CURRMOVE
     .if VERBOSE < 2

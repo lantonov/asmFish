@@ -5,7 +5,17 @@ sys_clone = 220
 sys_sched_setaffinity = 112
 sys_exit = 93
 sys_exit_group = 94
+sys_fstat = 80
+sys_close = 57
+sys_openat = 56
 
+
+stat.st_size = 48
+sizeof.stat = 144
+
+AT_FDCWD = -100
+
+O_RDONLY        = 0x0000
 
 PROT_READ		= 0x01 
 PROT_WRITE		= 0x02 

@@ -20,6 +20,14 @@ Options_Init:
 	str  w0, [x1, Options.slowMover]
         mov  w0, 0
        strb  w0, [x1, Options.chess960]
+.if USE_SYZYGY
+        mov  w0, 1
+        str  w0, [x1, Options.syzygyProbeDepth]
+        mov  w0, -1
+       strb  w0, [x1, Options.syzygy50MoveRule]
+        mov  w0, 6
+        str  w0, [x1, Options.syzygyProbeLimit]
+.endif
         mov  w0, 0
        strb  w0, [x1, Options.largePages]
         ret
@@ -1160,6 +1168,31 @@ UciSetOption.Read:
        PrintNewLine
 		jmp   UciWriteOut
 */
+
+.if USE_SYZYGY
+		lea  x1, sz_syzygypath
+	         bl  CmpStringCaseless
+		adr  x21, UciSetOption.SyzygyPath
+               cbnz  w0, UciSetOption.CheckValue
+
+		lea  x1, sz_syzygyprobedepth
+	         bl  CmpStringCaseless
+		adr  x21, UciSetOption.SyzygyProbeDepth
+               cbnz  w0, UciSetOption.CheckValue
+
+		lea  x1, sz_syzygy50moverule
+	         bl  CmpStringCaseless
+		adr  x21, UciSetOption.Syzygy50MoveRule
+               cbnz  w0, UciSetOption.CheckValue
+
+		lea  x1, sz_syzygyprobelimit
+	         bl  CmpStringCaseless
+		adr  x21, UciSetOption.SyzygyProbeLimit
+               cbnz  w0, UciSetOption.CheckValue
+.endif
+
+
+
         lea  x27, Output
         lea  x1, sz_error_option
          bl  PrintString
@@ -1367,6 +1400,27 @@ UciSetOption.ClearHash:
          bl  PrintString
           b  UciWriteOut_NewLine
 
+
+.if USE_SYZYGY
+UciSetOption.SyzygyPath:
+                lea  x1, sz_empty
+                 bl  CmpString
+                mov  x1, 0
+               cbnz  w0, UciSetOption.SyzygyPathDone
+                mov  x1, x26
+        1:     ldrb  w4, [x26, 1]!
+                cmp  w4, ' '
+                bhs  1b
+               strb  wzr, [x26]
+UciSetOption.SyzygyPathDone:
+                mov  x0, x1
+                 bl  Tablebase_Init
+                 bl  Tablebase_DisplayInfo
+                  b  UciGetInput
+.endif
+
+
+
 UciSetOption.MultiPv:
 /*
 	       call   ParseInteger
@@ -1464,6 +1518,30 @@ UciSetOption.SlowMover:
           b  UciGetInput
 
 
+
+.if USE_SYZYGY
+UciSetOption.SyzygyProbeDepth:
+	         bl   ParseInteger
+                mov  w4, 1
+                mov  w5, 100
+      ClampUnsigned  w0, w4, w5
+                lea  x6, options
+                str  w0, [x6, Options.syzygyProbeDepth]
+                  b  UciGetInput
+UciSetOption.Syzygy50MoveRule:
+	         bl  ParseBoole
+                lea  x6, options
+               strb  w0, [x6, Options.syzygy50MoveRule]
+                  b   UciGetInput
+UciSetOption.SyzygyProbeLimit:
+	         bl  ParseInteger
+                mov  w4, 0
+                mov  w5, 6
+      ClampUnsigned  w0, w4, w5
+                lea  x6, options
+                str  w0, [x6, Options.slowMover]
+                  b  UciGetInput
+.endif
 
 
 

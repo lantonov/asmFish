@@ -1,10 +1,11 @@
 
-        lea  x1, DisplayLock
-         bl  Os_MutexCreate
 
          bl  Os_SetStdHandles
          bl  Os_InitializeTimer
          bl  Os_CheckCPU
+
+        lea  x1, DisplayLock
+         bl  Os_MutexCreate
 
 // initialize the engine
          bl  Options_Init
@@ -27,7 +28,10 @@
 // set up threads and hash
          bl  MainHash_Create
          bl  ThreadPool_Create
-
+.if USE_SYZYGY
+        mov  x0, 0
+         bl  Tablebase_Init
+.endif
 // command line could contain commands
 // this function also initializes InputBuffer
 // which contains the commands we should process first
@@ -36,6 +40,10 @@
 // enter the main loop
          bl  UciLoop
 
+.if USE_SYZYGY
+        mov  x0, 0
+         bl  Tablebase_Init
+.endif
 // clean up threads and hash
          bl  ThreadPool_Destroy
          bl  MainHash_Destroy
