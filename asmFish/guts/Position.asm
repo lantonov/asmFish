@@ -1187,7 +1187,7 @@ SetCastlingRights:
 
 
 
-
+if VERBOSE > 0
 Position_PrintFen:
 	; in: rbp address of Pos
 	; io: rdi string
@@ -1284,7 +1284,7 @@ Position_PrintFen:
 
 		pop   rbx
 		ret
-
+end if
 
 
 
@@ -1405,7 +1405,7 @@ Position_CopyToSearch:
 		mov   r10, qword[rbp+Pos.state]
 		lea   r11, [r9+100*sizeof.State]
 		mov   qword[r13+Pos.state], r11
-.loop:
+.looper:
 		mov   rsi, r10
 		mov   rdi, r11
 		mov   ecx, sizeof.State/8
@@ -1423,7 +1423,7 @@ Position_CopyToSearch:
 		cmp   r11, r9
 		 jb   .done
 		cmp   r10, r8
-		jae   .loop
+		jae   .looper
 .done:
 		pop   r13 rdi rsi
 		ret

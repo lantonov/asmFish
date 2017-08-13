@@ -74,8 +74,10 @@ PrintFancy:
                 mov   r12d, eax
                 cmp   al, 'a'
                  je   .Alignment
+if VERBOSE > 0
                 cmp   al, 'p'
                  je   .Position
+end if
                 cmp   al, 'n'
                  je   .NewLine
                call   ParseInteger
@@ -88,9 +90,11 @@ PrintFancy:
                 xor   edx, edx
                 lea   r8, [.Return]  
 
+if VERBOSE > 0
                 cmp  r12l, 's'
                 lea  r9, [.PrintScore]
               cmove  r8, r9
+end if
 
                 cmp  r12l, 'x'
                 lea  r9, [PrintHex32]
@@ -123,10 +127,6 @@ PrintFancy:
        PrintNewLine
                 mov  r13, rdi
                 jmp  .Loop
-.Position:
-                mov   qword[rbp+Pos.state], rbx
-               call  Position_PrintFen
-                jmp  .Loop
 .Alignment:
                call  ParseInteger
                 lea  rcx, [r13+rax]
@@ -135,6 +135,12 @@ PrintFancy:
                 jae  .Loop
               stosb
                 jmp  @b
+
+if VERBOSE > 0
+.Position:
+                mov   qword[rbp+Pos.state], rbx
+               call   Position_PrintFen
+                jmp  .Loop
 .PrintScore:
                push   rax
 		add   eax, 0x08000
@@ -146,7 +152,7 @@ PrintFancy:
 	      movsx   rax, ax
 	       call   PrintInt32
                 jmp   .Loop
-        
+end if
 
 PrintString:
 	      movzx   eax, byte[rcx]
