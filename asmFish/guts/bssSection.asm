@@ -141,8 +141,3 @@ PushToEdges                rb 64
 PushToCorners              rb 64
 PushClose                  rb 8
 PushAway                   rb 8
-
-
-align 4096
-
-include 'TablebaseBss.asm'

@@ -1,6 +1,4 @@
-align 64
-;_ZN13TablebaseCore14MaxCardinalityE:
-;	rd    16
+        align   4096
 Tablebase_MaxCardinality   rd 1
 Tablebase_Cardinality      rd 1
 Tablebase_ProbeDepth       rd 1

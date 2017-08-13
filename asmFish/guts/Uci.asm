@@ -726,12 +726,6 @@ if USE_SYZYGY
 		lea   rbx, [.SyzygyProbeLimit]
 	       test   eax, eax
 		jnz   .CheckValue
-
-		lea   rcx, [sz_syzygyprobelimit]
-	       call   CmpStringCaseless
-		lea   rbx, [.SyzygyProbeLimit]
-	       test   eax, eax
-		jnz   .CheckValue
 end if
 
 		lea   rcx, [sz_ttfile]

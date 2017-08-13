@@ -240,6 +240,7 @@ if USE_SYZYGY
 		 or   al, byte[rbx+State.castlingRights]
 		 jz   .check_tb
 .check_tb_ret:
+		mov   qword[rbp+Pos.state], rbx ; Thread_Think uses Pos.state
 end if
 
 	; position is passed to threads by first converting to a fen

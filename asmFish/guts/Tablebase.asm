@@ -391,7 +391,6 @@ end virtual
 	 _chkstk_ms   rsp, .localsize
 		sub   rsp, .localsize
 
-
 		lea   r15, [.success]
 	       call   Tablebase_Probe_DTZ
 		mov   edx, dword[.success]
@@ -533,6 +532,12 @@ end virtual
 		mov   eax, dword[rsi+RootMove.score]
 	       test   eax, eax
 		jnz   .Drawing1
+
+if VERBOSE = 2
+mov ecx, [rsi+RootMove.pv+4*0]
+Display 2,"Filtered drawing move %m1%n"
+end if
+
 		mov   ecx, sizeof.RootMove
 	  rep movsb
 		jmp   .Drawing1a
@@ -545,6 +550,7 @@ end virtual
 .ReturnTrue:
 		 or   eax, -1
 .Return:
+
                 add   rsp, .localsize
                 pop   r15 r14 r13 r12 rdi rsi rbx
                 ret
@@ -612,6 +618,11 @@ end virtual
 		cmp   eax, r11d
 		 jg   .Winning2
 
+if VERBOSE = 2
+mov ecx, [rsi+RootMove.pv+4*0]
+Display 2, "DTZ filtered winning move %m1%n"
+end if
+
 		mov   ecx, sizeof.RootMove
 	  rep movsb
 		jmp   .Winning2a
@@ -648,6 +659,11 @@ end virtual
 		mov   eax, dword[rsi+RootMove.score]
 		cmp   eax, edx
 		jne   .Losing2
+
+if VERBOSE = 2
+mov ecx, [rsi+RootMove.pv+4*0]
+Display 2, "DTZ filtered losing move %m1%n"
+end if
 
 		mov   ecx, sizeof.RootMove
 	  rep movsb
@@ -722,6 +738,12 @@ end virtual
 		mov   eax, dword[rsi+RootMove.score]
 		cmp   eax, r12d
 		jne   .Copy
+
+if VERBOSE = 2
+mov ecx, [rsi+RootMove.pv+4*0]
+Display 2, "WDL filtered move %m1%n"
+end if
+
 		mov   ecx, sizeof.RootMove
 	  rep movsb
 		jmp   .Copya

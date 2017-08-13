@@ -63,7 +63,9 @@ section '.data' writeable align 64
 }
 
 include 'dataSection.asm'
-
+if USE_SYZYGY
+  include 'TablebaseData.asm'
+end if
 
 
 match ='W', VERSION_OS {
@@ -80,7 +82,9 @@ section '.bss' writeable align 4096
 }
 
 include 'bssSection.asm'
-
+if USE_SYZYGY
+  include 'TablebaseBss.asm'
+end if
 
 
 match ='W', VERSION_OS {

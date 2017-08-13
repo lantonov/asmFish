@@ -330,7 +330,3 @@ align 8
 
 align 8
  LargePageMinSize dq ?
-
-
-include 'TablebaseData.asm'
-

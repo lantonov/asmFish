@@ -1748,7 +1748,7 @@ end if
 		add   edx, edi
 		jmp   .20ValueToTTRet
 
-    if .RootNode eq 0
+if .RootNode eq 0
 	      align   8
 .CheckDraw_Cold:
      PosIsDraw_Cold   .AbortSearch_PlySmaller, .CheckDraw_ColdRet
@@ -1756,23 +1756,26 @@ end if
 
 
 
-if USE_SYZYGY
+    if USE_SYZYGY
 	      align 8
 .CheckTablebase:
 		mov   ecx, dword[.depth]
 		mov   rax, qword[rbp+Pos.typeBB+8*White]
 		 or   rax, qword[rbp+Pos.typeBB+8*Black]
 	     popcnt   rax, rax, rdx
+
 		cmp   ecx, dword[Tablebase_ProbeDepth]
 		jge   .DoTbProbe
 		cmp   eax, dword[Tablebase_Cardinality]
 		jge   .CheckTablebaseReturn
 .DoTbProbe:
+Display 2,"DoTbProbe %p%n"
 		lea   r15, [.success]
 	       call   Tablebase_Probe_WDL
 		mov   edx, dword[.success]
 	       test   edx, edx
 		 jz   .CheckTablebaseReturn
+Display 2,"Tablebase_Probe_WDL returned %i0%n"
 
 	      movsx   ecx, byte[Tablebase_UseRule50]
 		lea   edx, [2*rax]

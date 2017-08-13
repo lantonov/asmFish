@@ -204,7 +204,7 @@ my_malloc: 	add   rcx, 16
 		add   rax, 16
 		ret
 
-my_free:		sub   rcx, 16
+my_free:	sub   rcx, 16
 		 js   @f
 		mov   rdx, qword[rcx]
 		jmp   _VirtualFree
@@ -212,7 +212,7 @@ my_free:		sub   rcx, 16
 
 
 
-my_exit:		jmp   _ExitProcess
+my_exit:	jmp   _ExitProcess
 my_printf: 	;  don't care about printf's arguments
 my_puts:
 	       push   rdi
@@ -1761,7 +1761,7 @@ Tablebase_Init:
         mov     rbx, rcx                                
         cmp     byte [ _ZL11initialized], 0             
         jz      ?_DoInit
-
+?_InitDone:
         ; table core is initialized as this point
         mov     rax, qword[_ZL11path_string]
         test    rax, rax
