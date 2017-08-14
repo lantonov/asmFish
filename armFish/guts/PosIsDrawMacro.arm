@@ -98,7 +98,7 @@ macro PosIsDraw_Cold WeHaveADraw, coldreturnlabel {
         ldp  x9, x17, [sp], 16
         ldp  x2, x8, [sp], 16
         ldp  x0, x1, [sp], 16
-        beq  \WeHaveADraw
+        bne  \WeHaveADraw
           b  \coldreturnlabel
 .endm
 
