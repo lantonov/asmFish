@@ -3408,7 +3408,7 @@ probe_wdl_table:
         b       .L506
 .L512:
         mov     w0, 1
-        strb    w0, [x19, 24]
+        stlrb   w0, [x19, 24]
 .L511:
         add     x1, x26, :lo12:TB_mutex
         bl      Os_MutexUnlock
@@ -3579,7 +3579,7 @@ probe_wdl_table:
 .L508:
         ldr     x19, [x20, 8]
         add     x23, x29, 136
-        ldrb    w0, [x19, 24]
+        ldarb   w0, [x19, 24]
         cbnz    w0, .L527
         adrp    x26, TB_mutex
         add     x27, x26, :lo12:TB_mutex
