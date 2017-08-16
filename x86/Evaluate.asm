@@ -420,7 +420,7 @@ local NoKingSide, NoQueenSide, NoPawns
 	AttackedByThem  = r12
 	PiecesUs        = r15
 	PiecesThem      = r14
-	Camp            = (Rank4BB or Rank5BB or Rank6BB or Rank7BB or Rank8BB) - (1 shl 64) ; sign extend
+	Camp            = Rank4BB or Rank5BB or Rank6BB or Rank7BB or Rank8BB
   end if
 
 	QueenCheck      = 780

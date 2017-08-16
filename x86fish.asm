@@ -24,8 +24,8 @@ USE_MATEFINDER  = 0
 
 
 ; instruction and format macros
-include 'x86/include/format/format.asm'
-include 'x86/include/avx.inc'
+include 'format/format.inc'
+include 'avx.inc'
 
 format ELF64 executable 3
 entry Start
@@ -102,7 +102,6 @@ QSearch_Pv_NoCheck:     QSearch   1, 0
 	     calign   64
 Search_NonPv:   search   0, 0
 
-
 include 'x86/SeeTest.asm'
 if DEBUG
   include 'x86/See.asm'
@@ -111,15 +110,10 @@ include 'x86/Move_DoNull.asm'
 include 'x86/CheckTime.asm'
 include 'x86/Castling.asm'
 
-
 	    calign   16
 Search_Pv:      search   0, 1
 	    calign   16
 Search_Root:    search   1, 1
-
-
-
-
 
 include 'x86/Gen_NonEvasions.asm'
 include 'x86/Gen_Legal.asm'

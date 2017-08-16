@@ -83,8 +83,6 @@ macro BuildTimeData
     febdays = 28
   end if
   iterate dayscount, 31,febdays,31,30,31,30,31,31,30,31,30,31
-display '0'+dayscount
-display ' '
     if day > dayscount
       day = day - dayscount
       month = month + 1
@@ -102,59 +100,6 @@ display ' '
         db '0' + (day mod 10)
 end macro
 
-
-;
-;macro months [dayscount]
-;{
-;  forward
-;   if DAY > dayscount
-;    DAY = DAY-dayscount
-;    MONTH = MONTH+1
-;  forward
-;   end if
-;}
-;
-;TIME = %T
-;DAY = TIME/(24*3600)
-;DAY = DAY - (DAY+365)/(3*365+366)
-;YEAR = 1970+DAY/365
-;DAY = DAY mod 365 + 1
-;MONTH = 1
-;
-;if YEAR mod 4 = 0
-;  FEBDAYS=29
-;else
-;  FEBDAYS=28
-;end if
-;
-;months 31,FEBDAYS,31,30,31,30,31,31,30,31,30,31
-
-;macro num_to_db num, digits {
-;common
-;   local ..lbl, ..ptr, ..dig, ..num
-;
-;..lbl:
-;   rb digits
-;
-;   ..ptr = ..lbl + digits - 1
-;   ..num = num
-;   repeat digits
-;     ..dig = (..num mod 10) + $30
-;     ..num = ..num / 10
-;     store byte ..dig at ..ptr
-;     ..ptr = ..ptr - 1
-;   end repeat
-;}
-;
-;
-;macro create_build_time day, month, year {
-;common
-;  num_to_db year, 4
-;  db '-'
-;  num_to_db month, 2
-;  db '-'
-;  num_to_db day, 2
-;}
 
 
 
