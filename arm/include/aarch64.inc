@@ -207,9 +207,18 @@ end macro
 ; the instruction set ;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
+macro adr des*, src*
+    aarch64.parse_operand @des, des
+    if @des.type = 'r64' & +src relativeto $
+        dd 0x10000000 + ((+src-$) shr 2) shl 5 + @des.number    ; needs some more work
+    else
+        err 'invalid operand'
+    end if
+end macro
+
 macro mov des*, src*
-	aarch64.parse_operand @des, des
-	aarch64.parse_operand @src, src
+    aarch64.parse_operand @des, des
+    aarch64.parse_operand @src, src
     if @des.type = 'r32' & @src.type = 'r32'
         err 'not implemented'
     else if @des.type = 'r64' & @src.type = 'r64'
@@ -234,7 +243,7 @@ macro mov des*, src*
 end macro
 
 macro ret? src:x30
-	aarch64.parse_operand @src, src
+    aarch64.parse_operand @src, src
     if @src.type = 'r64'
         dd 0xD65F0000 + 32*@src.number
     else
@@ -243,7 +252,7 @@ macro ret? src:x30
 end macro
 
 macro svc? src
-	aarch64.parse_operand @src, src
+    aarch64.parse_operand @src, src
     if @src.type = 'imm'
         if 0 <= @src.number & @src.number < 0x10000
             dd 0xD4000001 + 32*@src.number
