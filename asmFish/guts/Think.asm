@@ -207,7 +207,7 @@ end if
 		sub   rax, qword[time.startTime]
 match =0, VERBOSE {
 		cmp   rax, 3000
-		jbe   .dont_print_pv
+		jle   .dont_print_pv
 }
 		mov   ecx, r15d
 		mov   edx, dword[.alpha]
@@ -279,7 +279,7 @@ match =0, VERBOSE {
 		 je   .print_pv2
 match =0, VERBOSE {
 		cmp   r9, 3000
-		 jb   .multipv_loop
+		jle   .multipv_loop
 }
 .print_pv2:
 		mov   ecx, r15d

@@ -14,10 +14,6 @@ Options_Init:
 	str  w0, [x1, Options.multiPV]
         mov  w0, 30
 	str  w0, [x1, Options.moveOverhead]
-        mov  w0, 20
-	str  w0, [x1, Options.minThinkTime]
-        mov  w0, 89
-	str  w0, [x1, Options.slowMover]
         mov  w0, 0
        strb  w0, [x1, Options.chess960]
 .if USE_SYZYGY
@@ -1127,28 +1123,6 @@ UciSetOption.Read:
         adr  x21, UciSetOption.MoveOverhead
        cbnz  w0, UciSetOption.CheckValue
 /*
-		lea   rcx, [sz_minthinktime]
-	       call   CmpStringCaseless
-		lea   rbx, [.MinThinkTime]
-	       test   eax, eax
-		jnz   .CheckValue
-*/
-        lea  x1, sz_minthinktime
-         bl  CmpStringCaseless
-        adr  x21, UciSetOption.MinThinkTime
-       cbnz  w0, UciSetOption.CheckValue
-/*
-		lea   rcx, [sz_slowmover]
-	       call   CmpStringCaseless
-		lea   rbx, [.SlowMover]
-	       test   eax, eax
-		jnz   .CheckValue
-*/
-        lea  x1, sz_slowmover
-         bl  CmpStringCaseless
-        adr  x21, UciSetOption.SlowMover
-       cbnz  w0, UciSetOption.CheckValue
-/*
 		lea   rcx, [sz_uci_chess960]
 	       call   CmpStringCaseless
 		lea   rbx, [.Chess960]
@@ -1487,36 +1461,6 @@ UciSetOption.MoveOverhead:
         lea  x16, options
         str  w0, [x16, Options.moveOverhead]
           b  UciGetInput
-UciSetOption.MinThinkTime:
-/*
-	       call   ParseInteger
-      ClampUnsigned   eax, 0, 5000
-		mov   dword[options.minThinkTime], eax
-		jmp   UciGetInput
-*/
-         bl  ParseInteger
-        mov  w4, 0
-        mov  w5, 5000
-        ClampUnsigned w0, w4, w5
-        lea  x16, options
-        str  w0, [x16, Options.minThinkTime]
-          b  UciGetInput
-
-UciSetOption.SlowMover:
-/*
-	       call   ParseInteger
-      ClampUnsigned   eax, 0, 1000
-		mov   dword[options.slowMover], eax
-		jmp   UciGetInput
-*/
-         bl  ParseInteger
-        mov  w4, 0
-        mov  w5, 1000
-        ClampSigned w0, w4, w5
-        lea  x16, options
-        str  w0, [x16, Options.slowMover]
-          b  UciGetInput
-
 
 
 .if USE_SYZYGY
@@ -1539,7 +1483,7 @@ UciSetOption.SyzygyProbeLimit:
                 mov  w5, 6
       ClampUnsigned  w0, w4, w5
                 lea  x6, options
-                str  w0, [x6, Options.slowMover]
+                str  w0, [x6, Options.syzygyProbeLimit]
                   b  UciGetInput
 .endif
 

@@ -834,7 +834,7 @@ if VERBOSE < 2
 	       call   _GetTime				; we are only polling the timer
 		sub   rax, qword[time.startTime]	;  in the main thread at the root
 		cmp   eax, CURRMOVE_MIN_TIME
-		jae   .PrintCurrentMove
+		jge   .PrintCurrentMove
 .PrintCurrentMoveRet:
 	end if
 end if

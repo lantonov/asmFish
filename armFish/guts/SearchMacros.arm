@@ -750,7 +750,7 @@ Search.MovePickLoop\@:
                 sub  x0, x0, x4
                 mov  w4, CURRMOVE_MIN_TIME
                 cmp  w0, w4
-                bhs  Search.PrintCurrentMove\@
+                bge  Search.PrintCurrentMove\@
 Search.PrintCurrentMoveRet\@:
       .endif
     .endif

@@ -244,8 +244,8 @@ struct Options
 	    rb 2
  multiPV    rd 1
  chess960	rd 1
- minThinkTime	rd 1
- slowMover	rd 1
+                rd 1
+                rd 1
  moveOverhead	rd 1
  contempt	  rd 1
  ponder 	  rb 1

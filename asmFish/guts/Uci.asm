@@ -8,8 +8,6 @@ Options_Init:
 		mov   byte[rdx+Options.ponder], 0
 		mov   dword[rdx+Options.multiPV], 1
 		mov   dword[rdx+Options.moveOverhead], 30
-		mov   dword[rdx+Options.minThinkTime], 20
-		mov   dword[rdx+Options.slowMover], 89
 		mov   byte[rdx+Options.chess960], 0
 		mov   dword[rdx+Options.syzygyProbeDepth], 1
 		mov   byte[rdx+Options.syzygy50MoveRule], -1
@@ -684,18 +682,6 @@ UciSetOption:
 	       test   eax, eax
 		jnz   .CheckValue
 
-		lea   rcx, [sz_minthinktime]
-	       call   CmpStringCaseless
-		lea   rbx, [.MinThinkTime]
-	       test   eax, eax
-		jnz   .CheckValue
-
-		lea   rcx, [sz_slowmover]
-	       call   CmpStringCaseless
-		lea   rbx, [.SlowMover]
-	       test   eax, eax
-		jnz   .CheckValue
-
 		lea   rcx, [sz_uci_chess960]
 	       call   CmpStringCaseless
 		lea   rbx, [.Chess960]
@@ -994,16 +980,6 @@ end if
 	       call   ParseInteger
       ClampUnsigned   eax, 0, 5000
 		mov   dword[options.moveOverhead], eax
-		jmp   UciGetInput
-.MinThinkTime:
-	       call   ParseInteger
-      ClampUnsigned   eax, 0, 5000
-		mov   dword[options.minThinkTime], eax
-		jmp   UciGetInput
-.SlowMover:
-	       call   ParseInteger
-      ClampUnsigned   eax, 0, 1000
-		mov   dword[options.slowMover], eax
 		jmp   UciGetInput
 
 if USE_SYZYGY

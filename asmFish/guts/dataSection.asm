@@ -214,7 +214,6 @@ sz_priority		db 'priority',0
 sz_position		db 'position',0
 sz_movestogo		db 'movestogo',0
 sz_setoption		db 'setoption',0
-sz_slowmover		db 'slowmover',0
 sz_ponderhit		db 'ponderhit',0
 sz_ucinewgame		db 'ucinewgame',0
 sz_clear_hash		db 'clear hash',0
@@ -222,7 +221,6 @@ sz_largepages		db 'largepages',0
 sz_searchmoves		db 'searchmoves',0
 sz_nodeaffinity 	db 'nodeaffinity',0
 sz_moveoverhead 	db 'moveoverhead',0
-sz_minthinktime 	db 'minthinktime',0
 sz_uci_chess960 	db 'uci_chess960',0
 
 if USE_SYZYGY

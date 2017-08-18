@@ -42,7 +42,7 @@ CheckTime.Reset4Time:
                 sub  x0, x0, x4
         // x0 is elapsed time
                subs  x27, x27, x0
-                blo  CheckTime.Stop
+                bmi  CheckTime.Stop
 
         // If rdi ms are remaining, attemp to put us back here in X*rdi/2 ms.
         // The values of rdi at this point are in geometric progression.
