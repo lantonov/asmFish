@@ -65,7 +65,7 @@ Gen_Evasions:
 		jnz   Gen_Evasions_Black
 Gen_Evasions_White:
        generate_all   White, EVASIONS
-.Ret:			pop   r15 r14 r13 r12 rsi
+.Ret:		pop   r15 r14 r13 r12 rsi
 		ret
        generate_jmp   White, EVASIONS
 

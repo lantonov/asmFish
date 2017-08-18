@@ -21,7 +21,7 @@ Gen_NonEvasions_White:
 		ret
        generate_jmp   White, NON_EVASIONS
 
-;                      align   16
+;             align   16
 Gen_NonEvasions_Black:
        generate_all   Black, NON_EVASIONS
 		pop   r15 r14 r13 r12 rsi
