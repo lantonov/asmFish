@@ -24,8 +24,6 @@ extrn munmap
 
 ; threads
 extrn exit
-extrn pthread_create
-extrn pthread_join
 extrn pthread_exit
 extrn pthread_mutex_init
 extrn pthread_mutex_lock
@@ -35,6 +33,8 @@ extrn pthread_cond_init
 extrn pthread_cond_signal
 extrn pthread_cond_wait
 extrn pthread_cond_destroy
+extrn pthread_create
+extrn pthread_join
 sizeof.pthread_t = 16
 sizeof.pthread_mutex_t = 48
 sizeof.pthread_cond_t = 48

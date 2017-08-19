@@ -196,7 +196,7 @@ _FileMap:
 		xor   edi, edi		; addr
 		mov   rsi, rbx		; length
 		mov   edx, PROT_READ	; protection flags
-		mov   r10, MAP_PRIVATE	; mapping flags
+		mov   ecx, MAP_PRIVATE	; mapping flags
 		mov   r8, rbp		; fd
 		xor   r9d, r9d		; offset
                call   mmap

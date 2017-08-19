@@ -9,34 +9,10 @@ stdin  = 0
 stdout = 1
 stderr = 2
 
-struct timespec
-  tv_sec  rq 1
-  tv_nsec rq 1
-ends
 
-; for stat stucture, see line 309 of
-; https://opensource.apple.com/source/xnu/xnu-3248.60.10/bsd/sys/stat.h
-struct stat
-  st_dev        rd 1
-  st_mode       rw 1
-  st_nlink      rw 1
-  st_ino        rq 1
-  st_uid        rd 1
-  st_gid        rd 1
-  st_rdev       rd 1
-                rd 1            ; padding for alignment of next member
-  st_atimespec      timespec
-  st_mtimespec      timespec
-  st_ctimespec      timespec
-  st_birthtimespec  timespec
-  st_size       rq 1            ; stat.st_size = 96
-  st_blocks     rq 1
-  st_blksize    rd 1
-  st_flags      rd 1
-  st_gen        rd 1
-  st_lspare     rd 1
-  st_qspare     rq 2
-ends                            ; sizeof.stat  = 144
+stat.st_size = 72       ; why?
+sizeof.stat = 160       ; guess
+
 
 ; timing
 extrn _clock_gettime
