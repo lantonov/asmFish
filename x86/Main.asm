@@ -1,5 +1,9 @@
 Start:
+if VERSION_OS = 'L'
 		mov   qword[rspEntry], rsp
+else if VERSION_OS = 'W'
+
+end if
 
 		and   rsp, -16
 

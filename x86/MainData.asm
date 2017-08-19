@@ -14,21 +14,20 @@
 
 
 
-calign 16
+             calign    16
 constd:
 ._0p03	 dq 0.03
 ._0p505	 dq 0.505
 ._1p0	 dq 1.0
 ._628p0	 dq 628.0
 
-
-;match =0, CPU_HAS_POPCNT {
-; Mask55    dq 0x5555555555555555
-; Mask33    dq 0x3333333333333333
-; Mask0F    dq 0x0F0F0F0F0F0F0F0F
-; Mask01    dq 0x0101010101010101
-; Mask11    dq 0x1111111111111111
-;}
+if CPU_HAS_POPCNT = 0
+ Mask55    dq 0x5555555555555555
+ Mask33    dq 0x3333333333333333
+ Mask0F    dq 0x0F0F0F0F0F0F0F0F
+ Mask01    dq 0x0101010101010101
+ Mask11    dq 0x1111111111111111
+end if
 
 
 szUciResponse:
@@ -77,10 +76,6 @@ szGreetingEnd:
 	db 'option name Contempt type spin default 0 min -100 max 100'
 	NewLineData
 	db 'option name MoveOverhead type spin default 30 min 0 max 5000'
-	NewLineData
-	db 'option name MinThinkTime type spin default 20 min 0 max 5000'
-	NewLineData
-	db 'option name SlowMover type spin default 89 min 10 max 1000'
 	NewLineData
 
 if USE_SYZYGY
@@ -214,7 +209,7 @@ sz_priority		db 'priority',0
 sz_position		db 'position',0
 sz_movestogo		db 'movestogo',0
 sz_setoption		db 'setoption',0
-sz_slowmover		db 'slowmover',0
+;sz_slowmover		db 'slowmover',0
 sz_ponderhit		db 'ponderhit',0
 sz_ucinewgame		db 'ucinewgame',0
 sz_clear_hash		db 'clear hash',0
@@ -222,7 +217,7 @@ sz_largepages		db 'largepages',0
 sz_searchmoves		db 'searchmoves',0
 sz_nodeaffinity 	db 'nodeaffinity',0
 sz_moveoverhead 	db 'moveoverhead',0
-sz_minthinktime 	db 'minthinktime',0
+;sz_minthinktime 	db 'minthinktime',0
 sz_uci_chess960 	db 'uci_chess960',0
 
 if USE_SYZYGY
@@ -291,30 +286,31 @@ BenchFens: ;fens must be separated by one or more space char
 .bench_fen36 db "8/R7/2q5/8/6k1/8/1P5p/K6R w - - 0 124"
 BenchFensEnd: db 0
 
-;match ='W', VERSION_OS {
-; sz_kernel32			      db 'kernel32',0
-; sz_Advapi32dll 		      db 'Advapi32.dll',0
-; sz_VirtualAllocExNuma		      db 'VirtualAllocExNuma',0
-; sz_SetThreadGroupAffinity	      db 'SetThreadGroupAffinity',0
-; sz_GetLogicalProcessorInformationEx  db 'GetLogicalProcessorInformationEx',0
-;align 8
-; Frequency   dq ?
-; Period      dq ?
-; hProcess    dq ?
-; hStdOut     dq ?
-; hStdIn      dq ?
-; hStdError   dq ?
-; hAdvapi32   dq ?
-; __imp_MessageBoxA                    dq ?
-; __imp_VirtualAllocExNuma             dq ?
-; __imp_SetThreadGroupAffinity         dq ?
-; __imp_GetLogicalProcessorInformationEx dq ?
-;}
-;
-;match ='L', VERSION_OS {
-calign 8
+if VERSION_OS = 'W'
+   sz_kernel32			      db 'kernel32',0
+   sz_Advapi32dll 		      db 'Advapi32.dll',0
+   sz_VirtualAllocExNuma		      db 'VirtualAllocExNuma',0
+   sz_SetThreadGroupAffinity	      db 'SetThreadGroupAffinity',0
+   sz_GetLogicalProcessorInformationEx  db 'GetLogicalProcessorInformationEx',0
+  align 8
+   Frequency   dq ?
+   Period      dq ?
+   hProcess    dq ?
+   hStdOut     dq ?
+   hStdIn      dq ?
+   hStdError   dq ?
+   hAdvapi32   dq ?
+   __imp_MessageBoxA                    dq ?
+   __imp_VirtualAllocExNuma             dq ?
+   __imp_SetThreadGroupAffinity         dq ?
+   __imp_GetLogicalProcessorInformationEx dq ?
+
+else if VERSION_OS = 'L'
+
  rspEntry dq ?
  __imp_clock_gettime dq ?
+
+end if
 ;}
 ;
 ;match ='X', VERSION_OS {
@@ -328,5 +324,5 @@ calign 8
 ; argv dq ?
 ;}
 
-calign 8
+align 8
  LargePageMinSize dq ?

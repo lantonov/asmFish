@@ -40,7 +40,7 @@ CheckTime:
                 add   rax, 1
         ; rax is elapsed time
                 sub   rdi, rax
-                 jb   .Stop
+                 js   .Stop
 
         ; If rdi ms are remaining, attemp to put us back here in X*rdi/2 ms.
         ; The values of rdi at this point are in geometric progression.

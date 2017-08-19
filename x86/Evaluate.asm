@@ -398,12 +398,12 @@ macro EvalKing Us
 	;     rsp address of evaluation info
 	; add/sub score to dword[.ei.score]
 
-local Them, Up, Camp
-local PiecesUs, PiecesThem
-local QueenCheck, RookCheck, BishopCheck, KnightCheck
-local AllDone, DoKingSafety, KingSafetyDoneRet
-local RookDone, BishopDone, KnightDone
-local NoKingSide, NoQueenSide, NoPawns
+  local Them, Up, Camp
+  local PiecesUs, PiecesThem
+  local QueenCheck, RookCheck, BishopCheck, KnightCheck
+  local AllDone, DoKingSafety, KingSafetyDoneRet
+  local RookDone, BishopDone, KnightDone
+  local NoKingSide, NoQueenSide, NoPawns
 
   if Us = White
 	Them            = Black
@@ -1752,13 +1752,13 @@ Display 2, "Scale returned %i0%n"
 	      cmove   eax, ecx
 		jmp   Evaluate.HaveScaleFunctionReturn
 
-	      align   16
+	     calign   16
 .EvalPassedPawns0:
     EvalPassedPawns   White
 		mov   r9, qword[rdi+PawnEntry.passedPawns+8*Black]
 	       test   r9, r9
 		 jz   Evaluate.EvalPassedPawnsRet
-	      align   8
+	     calign   8
 .EvalPassedPawns1:
     EvalPassedPawns   Black
 		jmp   Evaluate.EvalPassedPawnsRet

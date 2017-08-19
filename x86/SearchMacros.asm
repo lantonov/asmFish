@@ -1,5 +1,4 @@
 
-;macro search NT {
 macro search RootNode, PvNode
 	; in:
 	;  rbp: address of Pos struct in thread struct
@@ -13,28 +12,6 @@ macro search RootNode, PvNode
   if RootNode = 1 & PvNode = 0
     err 'bad params to search'
   end if
-
-;match =_ROOT_NODE, NT
-;\{
-;ProfileInc Search_ROOT
-; .PvNode   equ 1
-; .RootNode equ 1
-;\}
-;
-;match =_PV_NODE, NT
-;\{
-;ProfileInc Search_PV
-; .PvNode   equ 1
-; .RootNode equ 0
-;\}
-;
-;match =_NONPV_NODE, NT
-;\{
-;ProfileInc Search_NONPV
-; .PvNode   equ 0
-; .RootNode equ 0
-;\}
-
 
   virtual at rsp
   .tte			  rq 1
@@ -841,7 +818,7 @@ if VERBOSE < 2
 	       call   Os_GetTime				; we are only polling the timer
 		sub   rax, qword[time.startTime]	;  in the main thread at the root
 		cmp   eax, CURRMOVE_MIN_TIME
-		jae   .PrintCurrentMove
+		jge   .PrintCurrentMove
 .PrintCurrentMoveRet:
 	end if
 end if

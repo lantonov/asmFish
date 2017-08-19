@@ -244,8 +244,8 @@ struct Options
 	    rb 2
  multiPV    rd 1
  chess960	rd 1
- minThinkTime	rd 1
- slowMover	rd 1
+                rd 1
+                rd 1
  moveOverhead	rd 1
  contempt	  rd 1
  ponder 	  rb 1
@@ -304,6 +304,7 @@ ends
 ; thread structures
 ;;;;;;;;;;;;;;;;;;;;
 
+if VERSION_OS = 'L'
 
   struct ThreadHandle
    stackAddress rq 1
@@ -323,6 +324,21 @@ ends
    rq 1
   ends
 
+else if VERSION_OS = 'W'
+
+  struct ThreadHandle
+   handle   rq 1
+  ends
+
+  struct Mutex
+   rq 5
+  ends
+
+  struct ConditionalVariable
+   handle rq 1
+  ends
+
+end if
 
 
 
@@ -376,16 +392,48 @@ end if
 
 
 
-; on linux, cpu data is held in a large bit mask
-struct NumaNode
- nodeNumber	rd 1
- coreCnt	rd 1
- cmhTable	rq 1
- parent 	rq 1
-		rq 1
- cpuMask	rq MAX_LINUXCPUS/64
-ends
 
+if VERSION_OS = 'L'
+; on linux, cpu data is held in a large bit mask
+
+  struct NumaNode
+   nodeNumber	rd 1
+   coreCnt	rd 1
+   cmhTable	rq 1
+   parent 	rq 1
+  		rq 1
+   cpuMask	rq MAX_LINUXCPUS/64
+  ends
+
+else if VERSION_OS = 'W'
+; windows uses the concept of processor groups
+;  each node is in one group and has a cpu mask associated with it
+; the WinNumaNode struct is used by GetLogicalProcessorInformationEx
+; the GROUP_AFFINITY struct is used by SetThreadGroupAffinity
+
+  struct GROUP_AFFINITY
+    Mask	dq ?
+    Group       dw ?
+                dw ?,?,?
+  ends
+  
+  struct WinNumaNode
+   Relationship	rd 1
+   Size		rd 1
+   NodeNumber	rd 1
+  		rd 5
+   GroupMask	GROUP_AFFINITY
+  ends
+  
+  struct NumaNode
+   nodeNumber	rd 1
+   coreCnt	rd 1
+   cmhTable	rq 1
+   parent 	rq 1
+  		rq 1
+   groupMask	GROUP_AFFINITY
+  ends
+end if
 
 
 ; structure for managing all search threads

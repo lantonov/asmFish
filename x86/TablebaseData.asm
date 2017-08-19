@@ -1,4 +1,4 @@
-align 64
+             calign   64
 
 L_338:							; byte
 	db 2FH, 00H					; 0000 _ /.

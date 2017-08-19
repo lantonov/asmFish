@@ -20,21 +20,28 @@ macro _vaddsd a,b,c
 end macro
 
 
-macro _vaddpd a,b,c
-; match =1, CPU_HAS_AVX1 \{
-;	     vaddpd  a,b,c
-; \}
-; match =0, CPU_HAS_AVX1 \{
+macro _vaddsd a,b,c
+  if CPU_HAS_AVX1
+             vaddsd   a, b, c
+  else
     if a eq b
-	      addpd  a, c
-    else if a eq c
-	      addpd  a, b
+	      addsd   a, c
     else
-	     movaps  a, b
-	      addpd  a, c
+        match size[addr], c
+	     movaps   a, b
+	      addsd   a, c
+        else
+            if a eq c
+	      addsd   a, b
+            else
+	     movaps   a, b
+	      addsd   a, c
+            end if
+        end match
     end if
-; \}
+  end if
 end macro
+
 
 macro _vsubsd a,b,c
 ; match =1, CPU_HAS_AVX1 \{
@@ -73,19 +80,25 @@ macro _vsubpd a,b,c
 end macro
 
 macro _vmulsd a,b,c
-; match =1, CPU_HAS_AVX1 \{
-;	     vmulsd   a, b, c
-; \}
-; match =0, CPU_HAS_AVX1 \{
+  if CPU_HAS_AVX1
+             vmulsd   a, b, c
+  else
     if a eq b
 	      mulsd   a, c
-    else if a eq c
-	      mulsd   a, b
     else
+        match size[addr], c
 	     movaps   a, b
 	      mulsd   a, c
+        else
+            if a eq c
+	      mulsd   a, b
+            else
+	     movaps   a, b
+	      mulsd   a, c
+            end if
+        end match
     end if
-; \}
+  end if
 end macro
 
 

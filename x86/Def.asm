@@ -13,6 +13,11 @@ SPAMFILTER_DELAY = 100
 ; if USE_CURRMOVE, don't print current move info before this number of ms
 CURRMOVE_MIN_TIME = 3000
 
+if VERSION_OS = 'W'
+  SEP_CHAR = ';'
+else
+  SEP_CHAR = ':'
+end if
 
 ; some bounds
 MAX_MOVES = 224	; maximum number of pseudo legal moves for any position

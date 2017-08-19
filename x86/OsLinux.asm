@@ -1110,7 +1110,7 @@ Os_CheckCPU:
 if CPU_HAS_POPCNT 
 		lea   r15, [szCPUError.POPCNT]
 		mov   eax, 1
-		xor   ecx, ecx;
+		xor   ecx, ecx
 	      cpuid
 		and   ecx, (1 shl 23)
 		cmp   ecx, (1 shl 23)

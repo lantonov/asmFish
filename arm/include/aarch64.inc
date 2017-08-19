@@ -207,6 +207,9 @@ end macro
 ; the instruction set ;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
+
+;;;;;;;;; instructions involving relocations ;;;;;;;;;;;;;;;
+
 macro adr des*, src*
     aarch64.parse_operand @des, des
     if @des.type = 'r64' & +src relativeto $
@@ -215,6 +218,10 @@ macro adr des*, src*
         err 'invalid operand'
     end if
 end macro
+
+
+
+;;;;;;;;; instructions not involving relocations ;;;;;;;;;;;;;;;
 
 macro mov des*, src*
     aarch64.parse_operand @des, des

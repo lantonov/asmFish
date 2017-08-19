@@ -193,13 +193,12 @@ Init_Attacks:
 		cmp   ebx, 64
 		 jb   .NextSquare
 
-
-    if DEBUG
+  if DEBUG
 		lea   rax, [SlidingAttacksBB+8*102400]
-;	     Assert   e, r14, rax, 'error in calculating slinding attacks'
+	     Assert   e, r14, rax, 'error in calculating slinding attacks'
 		lea   rax, [SlidingAttacksBB+8*107648]
-;	     Assert   e, r15, rax, 'error in calculating slinding attacks'
-    end if
+	     Assert   e, r15, rax, 'error in calculating slinding attacks'
+  end if
 
 		ret
 
@@ -209,12 +208,12 @@ else
 ; From: http://talkchess.com/forum/viewtopic.php?p=670709#670709
 
 Init_Attacks:
-if DEBUG
+  if DEBUG
                 lea   rdi, [SlidingAttacksBB]
                 mov   ecx, 89524
                 mov   rax, -1
           rep stosq
-end if
+  end if
 		xor   ebx, ebx
 .NextSquare:
 		xor   edx, edx
@@ -280,12 +279,12 @@ end if
 	       imul   rcx, qword[RookAttacksIMUL+8*rbx]
 		shr   rcx, 64-12
 		mov   r9d, dword[RookAttacksMOFF+4*rbx]
-if DEBUG
+  if DEBUG
                 cmp   qword[r9+8*rcx], -1
                  je   @f
-;             Assert   e, rax, qword[r9+8*rcx], 'bad rook magic'
+             Assert   e, rax, qword[r9+8*rcx], 'bad rook magic'
         @@:
-end if
+  end if
 		mov   qword[r9+8*rcx], rax
 		sub   rdx, qword[RookAttacksPEXT+8*rbx]
 		and   rdx, qword[RookAttacksPEXT+8*rbx]
@@ -300,12 +299,12 @@ end if
 	       imul   rcx, qword[BishopAttacksIMUL+8*rbx]
 		shr   rcx, 64-9
 		mov   r9d, dword[BishopAttacksMOFF+4*rbx]
-if DEBUG
+  if DEBUG
                 cmp   qword[r9+8*rcx], -1
                  je   @f
-;             Assert   e, rax, qword[r9+8*rcx], 'bad bishop magic'
+             Assert   e, rax, qword[r9+8*rcx], 'bad bishop magic'
         @@:
-end if
+  end if
 		mov   qword[r9+8*rcx], rax
 		sub   rdx, qword[BishopAttacksPEXT+8*rbx]
 		and   rdx, qword[BishopAttacksPEXT+8*rbx]

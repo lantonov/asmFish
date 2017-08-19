@@ -23,11 +23,6 @@ struct stat             ; offset of
                 rq 3    ; 120
 ends                    ; 144 = sizeof.stat
 
-SEP_CHAR = ':'
-
-
-
-
 
 sys_read		     = $0000
 sys_write		     = $0001 

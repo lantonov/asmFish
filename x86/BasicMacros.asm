@@ -11,40 +11,20 @@ rsid equ esi
 rdid equ edi
 
 
-;macro align value,addr
-;{
-;  local base,size
-;if addr eq
-;  align value
-;else
-;  if addr>$
-; match ='W', VERSION_OS \{
-;    base = addr-size
-; \}
-; match ='L', VERSION_OS \{
-;    base = addr-size
-; \}
-; match ='X', VERSION_OS \{
-;    base = addr-size-$$
-; \}
-; match ='C', VERSION_OS \{
-;    base = addr-size-$$
-; \}
-;    size = ((base+value-1)/value*value-base)
-;    db size dup 90h
-;  else
-;    db ((addr+value-1)/value*value-addr) dup 90h
-;  end if
-;end if
-;}
-
 
 macro PrintNewLine
+  if VERSION_OS = 'W'
+                mov   al, 13
+              stosb
+  end if
                 mov   al, 10
               stosb
 end macro
 
 macro NewLineData
+  if VERSION_OS = 'W'
+        db 13
+  end if
         db 10
 end macro
 
@@ -107,7 +87,7 @@ end macro
 ;  the string m is put in the code
 ;  and the function fxn is called on it
 macro szcall fxn, m
-    local message, over
+  local message, over
 		lea   rcx, [message]
 		jmp   over
    message:   db m
@@ -118,7 +98,7 @@ end macro
 
 ; should work for registers or immediates
 macro ClampUnsigned x, min, max
-    local Lower, Done
+  local Lower, Done
 		cmp   x, min
 		 jb   Lower
 		cmp   x, max
@@ -133,7 +113,7 @@ end macro
 
 ; should work for registers or immediates
 macro ClampSigned x, min, max
-    local Lower, Done
+  local Lower, Done
 		cmp   x, min
 		 jl   Lower
 		cmp   x, max
@@ -190,88 +170,47 @@ end macro
 
 ; a = PopCnt(b)
 macro _popcnt a, x, t
-; match =1, CPU_HAS_POPCNT \{
-
-	;if a eq x
+  if CPU_HAS_POPCNT <> 0
 	     popcnt   a, x
-	;else
-	;        xor   a, a
-	;     popcnt   a, x
-	;end if
-
-; \}
-; match =0, CPU_HAS_POPCNT \{
-;
-;	if a eq t
-;	  display 'arguments of popcnt are strange'
-;	  display 13,10
-;	  err
-;	end if
-;
-;	if a eq x   ; only have two registers to work with
-;		mov   t, a
-;		shr   t, 1
-;		and   t, qword[Mask55]
-;		sub   a, t
-;		mov   t, a
-;		shr   t, 2
-;		and   a, qword[Mask33]
-;		and   t, qword[Mask33]
-;		add   a, t
-;		mov   t, a
-;		shr   t, 4
-;		add   a, t
-;		and   a, qword[Mask0F]
-;	       imul   a, qword[Mask01]
-;		shr   a, 56
-;
-;	else   ; can't write to x
-;		mov   a, x
-;		mov   t, x
-;		shr   a, 1
-;		and   a, qword[Mask55]
-;		sub   t, a
-;		mov   a, t
-;		shr   t, 2
-;		and   a, qword[Mask33]
-;		and   t, qword[Mask33]
-;		add   a, t
-;		mov   t, a
-;		shr   a, 4
-;		add   a, t
-;		and   a, qword[Mask0F]
-;	       imul   a, qword[Mask01]
-;		shr   a, 56
-;	end if
-; \}
-end macro
-
-; a = PopCnt(b) assuming PopCnt(b)<16
-macro _popcnt15 a, x, t
-    if CPU_HAS_POPCNT
-	     popcnt   a, x
+  else
+    if a eq t
+        err 'arguments of _popcnt15 are strange'
+    end if
+    match size[addr], x         ; x is memory
+                mov   a, x
+                mov   t, x
+                shr   a, 1
+                and   a, qword[Mask55]
+                sub   t, a
+                mov   a, t
+                shr   t, 2
+                and   a, qword[Mask33]
+                and   t, qword[Mask33]
+                add   a, t
+                mov   t, a
+                shr   a, 4
+                add   a, t
+                and   a, qword[Mask0F]
+               imul   a, qword[Mask01]
+                shr   a, 56
     else
-
-	if a eq t
-	  display 'arguments of popcnt15 are strange'
-	  display 13,10
-	  err
-	end if
-
-	if a eq x   ; only have two registers to work with
-		mov   t, x
-		shr   t, 1
-		and   t, qword[Mask55]
-		sub   x, t
-		mov   t, x
-		shr   t, 2
-		and   x, qword[Mask33]
-		and   t, qword[Mask33]
-		add   x, t
-	       imul   x, qword[Mask01]
-		shr   x, 56
-
-	else   ; can't write to x
+      if a eq x   ; only have two registers to work with
+                mov   t, a
+                shr   t, 1
+                and   t, qword[Mask55]
+                sub   a, t
+                mov   t, a
+                shr   t, 2
+                and   a, qword[Mask33]
+                and   t, qword[Mask33]
+                add   a, t
+                mov   t, a
+                shr   t, 4
+                add   a, t
+                and   a, qword[Mask0F]
+               imul   a, qword[Mask01]
+                shr   a, 56
+      else   ; can't write to x
 		mov   a, x
 		mov   t, x
 		shr   a, 1
@@ -282,75 +221,114 @@ macro _popcnt15 a, x, t
 		and   a, qword[Mask33]
 		and   t, qword[Mask33]
 		add   a, t
-	       imul   a, qword[Mask11]
+		mov   t, a
+		shr   a, 4
+		add   a, t
+		and   a, qword[Mask0F]
+	       imul   a, qword[Mask01]
 		shr   a, 56
-	end if
-    end if
+      end if
+    end match
+  end if
 end macro
+
+; a = PopCnt(x) assuming PopCnt(b)<16
+; a and t are expected to be registers
+;macro _popcnt15 a, x, t
+;
+;display 'touching pop15'
+;
+;  if CPU_HAS_POPCNT <> 0
+;	     popcnt   a, x
+;  else
+;    if a eq t
+;        err 'arguments of _popcnt15 are strange'
+;    end if
+;    match size[addr], x         ; x is memory
+;		mov   a, x
+;		mov   t, x
+;		shr   a, 1
+;		and   a, qword[Mask55]
+;		sub   t, a
+;		mov   a, t
+;		shr   t, 2
+;		and   a, qword[Mask33]
+;		and   t, qword[Mask33]
+;		add   a, t
+;	       imul   a, qword[Mask11]
+;		shr   a, 56
+;    else
+;      if a eq x   ; only have two registers to work with
+;		mov   t, x
+;		shr   t, 1
+;		and   t, qword[Mask55]
+;		sub   x, t
+;		mov   t, x
+;		shr   t, 2
+;		and   x, qword[Mask33]
+;		and   t, qword[Mask33]
+;		add   x, t
+;	       imul   x, qword[Mask01]
+;		shr   x, 56
+;      else   ; can't write to x
+;		mov   a, x
+;		mov   t, x
+;		shr   a, 1
+;		and   a, qword[Mask55]
+;		sub   t, a
+;		mov   a, t
+;		shr   t, 2
+;		and   a, qword[Mask33]
+;		and   t, qword[Mask33]
+;		add   a, t
+;	       imul   a, qword[Mask11]
+;		shr   a, 56
+;      end if
+;    end match
+;  end if
+;end macro
 
 
 ; a = ClearLowestBit(b)
 ; carry flag is not handled consistently
+; none of a, b, t can be memory
 macro _blsr a, b, t
-    if CPU_HAS_BMI1
+  if CPU_HAS_BMI1
 	       blsr  a, b
-    else
-	if a eq b
+  else
+    if a eq b
 		lea  t, [a-1]
 		and  a, t
-	else
+    else
 		lea  a, [b-1]
 		and  a, b
-	end if
     end if
+  end if
 end macro
 
 ; a = IsolateLowestBit(b)
 ; carry flag is not handled consistently
+; none of a, b, t can be memory
 macro _blsi a, b, t
-    if CPU_HAS_BMI1
+  if CPU_HAS_BMI1
 	       blsi   a, b
-    else
-	if a eq b
+  else
+    if a eq b
 		mov   t, a
 		neg   a
 		and   a, t
-	else
+    else
 		mov   a, b
 		neg   a
 		and   a, b
-	end if
     end if
+  end if
 end macro
 
 
 ; a = And(Not(b),c)
 ; sign and zero flags are handled consistently
 macro _andn a, b, c
-;  local A, B, C
-;  A equ a
-;  B equ b
-;  C equ c
-;  if CPU_HAS_BMI1
-;	       andn  A, B, C
-;  else
-;      if B relativeto C & B = C
-;        err 'arguments of andn are strange'
-;      else if A relativeto C & A = C
-;		not  b
-;		and  a, b
-;		not  b
-;      else if A relativeto B & A = B
-;		not  a
-;		and  a, c
-;      else
-;		mov  a, b
-;		not  a
-;		and  a, c
-;      end if
-;  end if
-
-
   if CPU_HAS_BMI1
 	       andn  a, b, c
   else
@@ -384,13 +362,12 @@ end macro
 
 
 
-; y = BitDeposit(x,m)  slow: only used in init
-macro _pdep y,x,m,b,t,tm
-local start, skip, done
-; match =1, CPU_HAS_BMI2 \{
-;	       pdep  y, x, m
-; \}
-; match =0, CPU_HAS_BMI2 \{
+; y = BitDeposit(x,m)
+macro _pdep y, x, m, b, t, tm
+  local start, skip, done
+  if CPU_HASH_BMI2 <> 0
+	       pdep  y, x, m
+  else
 		mov  tm, m
 		xor  y, y
 		lea  b, [y+1]
@@ -407,18 +384,16 @@ local start, skip, done
 		and  tm, t
 		jnz  start
        done:
-; \}
+  end if
 end macro
 
 
-
-; y = BitExtract(x,m)  slow: only used in init
-macro _pext y,x,m,b,t,tm
-local start, skip, done
-; match =1, CPU_HAS_BMI2 \{
-;	       pext  y, x, m
-; \}
-; match =0, CPU_HAS_BMI2 \{
+; y = BitExtract(x,m)
+macro _pext y, x, m, b, t, tm
+  local start, skip, done
+  if CPU_HASH_BMI2 <> 0
+	       pext  y, x, m
+  else
 		mov  tm, m
 		xor  y, y
 		lea  b, [y+1]
@@ -435,6 +410,6 @@ local start, skip, done
 		and  tm, t
 		jnz  start
        done:
-; \}
+  end if
 end macro
 
