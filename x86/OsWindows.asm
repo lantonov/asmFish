@@ -344,7 +344,7 @@ Os_ExitThread:
 ; timing ;
 ;;;;;;;;;;
 
-	      align   16
+	     calign   16
 Os_GetTime:
 	; out: rax + rdx/2^64 = time in ms
 		sub   rsp, 8*9

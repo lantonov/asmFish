@@ -133,7 +133,7 @@ PushToCorners              rb 64
 PushClose                  rb 8
 PushAway                   rb 8
 
-if USE_SYZYGY <> 0
+if USE_SYZYGY
               align   4096
 Tablebase_MaxCardinality   rd 1
 Tablebase_Cardinality      rd 1

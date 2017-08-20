@@ -237,18 +237,13 @@ Thread_IdleLoop:
 	; in: rcx address of Thread struct
 	       push   rbx rsi rdi
 
-;match ='W', VERSION_OS {
-;		mov   rbx, rcx
-;}
-;match ='L', VERSION_OS {
+if VERSION_OS = 'L'
 		mov   rbx, rcx
-;}
-;match ='C', VERSION_OS {
-;		mov   rbx, rdi
-;}
-;match ='X', VERSION_OS {
-;		mov   rbx, rdi
-;}
+else if VERSION_OS = 'W'
+		mov   rbx, rcx
+else if VERSION_OS = 'X'
+		mov   rbx, rdi
+end if
 
 		lea   rdi, [Thread_Think]
 		lea   rdx, [MainThread_Think]
@@ -283,19 +278,13 @@ Thread_IdleLoop:
 		mov   al, byte[rbx+Thread.exit]
 	       test   al, al
 		 jz   .Loop
-
-;match ='W', VERSION_OS {
-;		xor   ecx, ecx
-;	       call   Os_ExitThread
-;}
-;match ='X', VERSION_OS {
-;		xor   ecx, ecx
-;	       call   Os_ExitThread
-;}
-;match ='C', VERSION_OS {
-;		xor   ecx, ecx
-;	       call   Os_ExitThread
-;}
+if VERSION_OS = 'W'
+		xor   ecx, ecx
+	       call   Os_ExitThread
+else if VERSION_OS = 'X'
+		xor   edi, edi
+	       call   Os_ExitThread
+end if
 		pop   rdi rsi rbx
 		ret
 

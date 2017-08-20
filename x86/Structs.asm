@@ -338,6 +338,20 @@ else if VERSION_OS = 'W'
    handle rq 1
   ends
 
+else if VERSION_OS = 'X'
+
+  struct ThreadHandle
+   rb sizeof.pthread_t
+  ends
+
+  struct Mutex
+   rb sizeof.pthread_mutex_t
+  ends
+
+  struct ConditionalVariable
+   rb sizeof.pthread_cond_t
+  ends
+
 end if
 
 
@@ -433,6 +447,19 @@ else if VERSION_OS = 'W'
   		rq 1
    groupMask	GROUP_AFFINITY
   ends
+
+else if VERSION_OS = 'X'
+; mac os x is numa-unaware
+
+  struct NumaNode
+   nodeNumber	rd 1
+   coreCnt	rd 1
+   cmhTable	rq 1
+   parent 	rq 1
+  		rq 1
+   cpuMask	rq 0
+  ends
+
 end if
 
 

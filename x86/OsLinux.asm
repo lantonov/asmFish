@@ -875,25 +875,25 @@ end virtual
 		 jz   @f
 		bts   [rbx+NumaNode.cpuMask], rdx
 	  @@:	
-add   edx, 1
+                add   edx, 1
 
 	       test   ecx, 2
 		 jz   @f
 		bts   [rbx+NumaNode.cpuMask], rdx
 	  @@:	
-add   edx, 1
+                add   edx, 1
 
 	       test   ecx, 4
 		 jz   @f
 		bts   [rbx+NumaNode.cpuMask], rdx
 	  @@:	
-add   edx, 1
+                add   edx, 1
 
 	       test   ecx, 8
 		 jz   @f
 		bts   [rbx+NumaNode.cpuMask], rdx
 	  @@:	
-add   edx, 1
+                add   edx, 1
 
 
 		jmp   .ReadNextB

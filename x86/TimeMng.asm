@@ -79,7 +79,7 @@ remaining:
 .Return:
                 ret
 
-              align   8
+             calign   8
 .LC0:   dq 55.0
 .LC1:   dq 1.0, 6.0
 .LC3:   dq 0.017, 0.07
