@@ -4,7 +4,6 @@ define aarch64
 
 element aarch64.r32
 element aarch64.r64
-element sp
 
 repeat 31, i:0
         element w#i? : aarch64.r32 + i
@@ -12,10 +11,36 @@ repeat 31, i:0
 end repeat
 element wzr : aarch64.r32 + 31
 element xzr : aarch64.r64 + 31
+element wsp : aarch64.r32 + 32
+element sp  : aarch64.r64 + 32
 
-define @des
-define @src
-define @aux
+define @op0
+define @op1
+define @op2
+define @ext
+define @shf
+define @imm
+
+
+@type_empty    = 00000000000001b
+@type_wsp      = 00000000000010b
+@type_wn       = 00000000000100b
+@type_wzr      = 00000000001000b
+@type_xsp      = 00000000010000b
+@type_xn       = 00000000100000b
+@type_xzr      = 00000001000000b
+@type_immc     = 00000100000000b
+;@type_shift  = 00010000000000b
+;@type_extd   = 00100000000000b
+
+@type_xn_or_xsp  = @type_xn or @type_xsp
+@type_xn_or_xzr  = @type_xn or @type_xzr
+@type_wn_or_wsp  = @type_wn or @type_wsp
+@type_wn_or_wzr  = @type_wn or @type_wzr
+@type_wn_or_wzr_xn_xzr = @type_wn_or_wzr or @type_xn_or_xzr
+
+;@type_empty_or_shift  = @type_shift or @type_empty
+@type_immr_or_immc = @type_immr or @type_immc
 
 macro use64
 end macro
@@ -24,8 +49,6 @@ end macro
 ;;;;;;;;;;;;;;;;;;;;;;;
 ; immediate encodings ;
 ;;;;;;;;;;;;;;;;;;;;;;;
-
-define @imm
 
 ; determine if x can be encoded as a wide immediate
 macro aarch64.parse_uimm64 x
@@ -175,30 +198,139 @@ macro aarch64.parse_bimm32 x
 end macro
 
 
+; err if x can be encoded as a arithmetic immediate
+macro aarch64.parse_aimm x
+    @imm.number = +x
+    assert @imm.number relativeto 0
+    if @imm.number >= 0
+        @imm.inv = 0
+        if @imm.number < 0x1000
+            @imm.shift = 0
+            @imm.imm12 = @imm.number
+        else if (@imm.number and 0x0FFF) = 0 & (@imm.number shr 12) < 0x1000
+            @imm.shift = 1
+            @imm.imm12 = @imm.number shr 12
+        end if        
+    else if
+        @imm.inv = 1
+        @imm.number = -@imm.number
+        if @imm.number < 0x1000
+            @imm.shift = 0
+            @imm.imm12 = @imm.number
+        else if (@imm.number and 0x0FFF) = 0 & (@imm.number shr 12) < 0x1000
+            @imm.shift = 1
+            @imm.imm12 = @imm.number shr 12
+        end if
+    else
+        err 'immediate out of range'
+    end if
+end macro
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; parsing registers and immediates ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-macro aarch64.parse_operand ns, oper
-    ns.type = 'udef'
-    ns.op = +oper
+macro aarch64.parse_operand ns, x
+    ns.type = 0
+    ns.op = +x
     ns.number = 0
     if elementsof ns.op = 1 & ns.op eq ns.op element 1
         if ns.op metadata 1 relativeto aarch64.r64
-            ns.type = 'r64'
-            ns.number = ns.op metadata 1 - aarch64.r64
+            ns.data = ns.op metadata 1 - aarch64.r64
+            if ns.data < 31
+                ns.type = @type_xn
+            else if ns.data = 31
+                ns.type = @type_xzr
+            else
+                ns.data = 31
+                ns.type = @type_xsp
+            end if
         else if ns.op metadata 1 relativeto aarch64.r32
-            ns.type = 'r32'
-            ns.number = ns.op metadata 1 - aarch64.r32
-        else if ns.op relativeto sp & ns.op = sp
-            ns.type = 'sp'        
-            ns.number = 31
+            ns.data = ns.op metadata 1 - aarch64.r32
+            if ns.data < 31
+                ns.type = @type_wn
+            else if ns.data = 31
+                ns.type = @type_wzr
+            else
+                ns.data = 31
+                ns.type = @type_wsp
+            end if
         end if
     else if ns.op relativeto 0
-        ns.type = 'imm'
-        ns.number = ns.op
+        ns.type = @type_immc
+        ns.data = ns.op
     else
-        err 'invalid operand in parse'
+        ns.type = @type_immr
+        ns.data = ns.op
+    end if
+end macro
+
+macro aarch64.parse_ext x
+    @ext.empty = 0
+    @ext.success = 1
+    @ext.kind = 3
+    @ext.shift = 0
+    match , x
+        @ext.empty = 1
+    else match =lsl a, x
+        @ext.shift = +a
+    else match =uxtb a, x
+        @ext.kind = 0
+        @ext.shift = +a
+    else match =uxth a, x
+        @ext.kind = 1
+        @ext.shift = +a
+    else match =uxtw a, x
+        @ext.kind = 2
+        @ext.shift = +a
+    else match =uxtx a, x
+        @ext.kind = 3
+        @ext.shift = +a
+    else match =sxtb a, x
+        @ext.kind = 4
+        @ext.shift = +a
+    else match =sxth a, x
+        @ext.kind = 5
+        @ext.shift = +a
+    else match =sxtw a, x
+        @ext.kind = 6
+        @ext.shift = +a
+    else match =sxtx a, x
+        @ext.kind = 7
+        @ext.shift = +a
+    else match =lsl a, x
+        @ext.kind = 0
+        @ext.shift = +a
+    else
+        @ext.success = 0
+    end match
+    if @ext.success & (~(@ext.shift relativeto 0) | @ext.shift < 0 | 4 < @ext.shift)
+        @ext.success = 0
+    end if
+end macro
+
+macro aarch64.parse_shf x
+    @shf.empty = 0
+    @shf.success = 1
+    @shf.kind = 0
+    @shf.shift = 0
+    match , x
+        @shf.empty = 1
+    else match =lsl a, x
+        @shf.kind = 0
+        @shf.shift = +a
+    else match =lsr a, x
+        @shf.kind = 1
+        @shf.shift = +a
+    else match =asr a, x
+        @shf.kind = 2
+        @shf.shift = +a
+    else
+        @shf.success = 0
+    end match
+    if @shf.success & (~(@shf.shift relativeto 0) | @shf.shift < 0 | 64 <= @shf.shift)
+        @shf.success = 0
     end if
 end macro
 
@@ -208,38 +340,41 @@ end macro
 ;;;;;;;;;;;;;;;;;;;;;;;
 
 
-;;;;;;;;; instructions involving relocations ;;;;;;;;;;;;;;;
-
-macro adr des*, src*
-    aarch64.parse_operand @des, des
-    if @des.type = 'r64' & +src relativeto $
-        dd 0x10000000 + ((+src-$) shr 2) shl 5 + @des.number    ; needs some more work
+macro adr a*, b*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_xn_or_xzr) & (@op1.type and @type_immr_or_immc)
+        if @op1.data relativeto $
+            if -1 shl 20 <= @op1.data-$ & @op1.data-$ < 1 shl 20
+                dd 0x10000000 + ((@op1.data-$) and 0x3) shl 29 + ((((@op1.data-$) shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
+            else
+                err 'target is out of range'
+            end if
+        else
+            err 'invalid target'
+        end if
     else
         err 'invalid operand'
     end if
 end macro
 
-
-
-;;;;;;;;; instructions not involving relocations ;;;;;;;;;;;;;;;
-
-macro mov des*, src*
-    aarch64.parse_operand @des, des
-    aarch64.parse_operand @src, src
-    if @des.type = 'r32' & @src.type = 'r32'
+macro mov a*, b*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if @op0.type = 'r32' & @op1.type = 'r32'
         err 'not implemented'
-    else if @des.type = 'r64' & @src.type = 'r64'
+    else if @op0.type = 'r64' & @op1.type = 'r64'
         err 'not implemented'
-    else if @des.type = 'r32' & @src.type = 'imm'
+    else if @op0.type = 'r32' & @op1.type = 'imm'
         err 'not implemented'
-    else if (@des.type = 'r64' | @des.type = 'sp') & @src.type = 'imm'
-        aarch64.parse_uimm64 @src.number
+    else if (@op0.type and @type_xn_or_xsp) & (@op1.type and @type_immc)
+        aarch64.parse_uimm64 @op1.data
         if @imm.success
-            dd 0x92800000 + (@imm.inv xor 1) shl 30 + @imm.shift shl 21 + @imm.imm16 shl 5 + @des.number
+            dd 0x92800000 + ((@imm.inv xor 1) shl 30) + (@imm.shift shl 21) + (@imm.imm16 shl 5) + (@op0.data shl 0)
         else
             aarch64.parse_bimm64 @src.number
             if @imm.success
-                dd 0xB2000000 + @imm.n shl 22 + @imm.r shl 16 + @imm.s shl 10 + 31 shl 5 + @des.number
+                dd 0xB2000000 + (@imm.n shl 22) + (@imm.r shl 16) + (@imm.s shl 10) + (31 shl 5) + (@op0.data shl 0)
             else
                 err 'immediate cannot be encoded'
             end if
@@ -249,20 +384,57 @@ macro mov des*, src*
     end if
 end macro
 
-macro ret? src:x30
-    aarch64.parse_operand @src, src
-    if @src.type = 'r64'
-        dd 0xD65F0000 + 32*@src.number
+
+
+
+macro add a*, b*, c*, d
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    aarch64.parse_operand @op2, c
+    aarch64.parse_ext           d
+    aarch64.parse_shf           d
+;ADD Wd|WSP, Wn|WSP, #aimm
+    if (@op0.type and @type_wn_or_wsp) & (@op1.type and @type_wn_or_wsp) & (@op2.type and @type_immc) & (@ext.empty)
+        aarch64.parse_aimm @op2.data
+        dd 0x11000000 + (@imm.inv shl 30) + (@imm.shift shl 22) + (@imm.imm12 shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+;ADD Xd|SP, Xn|SP, #aimm
+    else if (@op0.type and @type_xn_or_xsp) & (@op1.type and @type_xn_or_xsp) & (@op2.type and @type_immc) & (@ext.empty)
+        aarch64.parse_aimm @op2.data
+        dd 0x91000000 + (@imm.inv shl 30) + (@imm.shift shl 22) + (@imm.imm12 shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+;ADD Wd, Wn, Wm{, ashift #imm}
+    else if (@op0.type and @type_wn_or_wzr) & (@op1.type and @type_wn_or_wzr) & (@op2.type and @type_wn_or_wzr) & (@shf.success)
+        dd 0x0b000000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+;ADD Xd, Xn, Xm{, ashift #imm}
+    else if (@op0.type and @type_xn_or_xzr) & (@op1.type and @type_xn_or_xzr) & (@op2.type and @type_xn_or_xzr) & (@shf.success)
+        dd 0x8b000000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+;ADD Wd|WSP, Wn|WSP, Wm, extend {#imm}
+    else if (@op0.type and @type_wn_or_wsp) & (@op1.type and @type_wn_or_wsp) & (@op2.type and @type_wn_or_wzr) & (@ext.success)
+        dd 0x0b200000 + (@op2.data shl 16) + (@ext.kind shl 13) + (@ext.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+;ADD Xd|SP, Xn|SP, Wm, extend {#imm}
+;ADD Xd|SP, Xn|SP, Xm{, UXTX|LSL #imm}
+    else if (@op0.type and @type_xn_or_xsp) & (@op1.type and @type_xn_or_xsp) & (@op2.type and @type_wn_or_wzr) & (@ext.empty)
+        dd 0x8b200000 + (@op2.data shl 16) + (        2 shl 13) + (         0 shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_xn_or_xsp) & (@op1.type and @type_xn_or_xsp) & (@op2.type and @type_wn_or_wzr_xn_xzr) & (@ext.success)
+        dd 0x8b200000 + (@op2.data shl 16) + (@ext.kind shl 13) + (@ext.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid argument'
+    end if
+end macro
+
+macro ret? a:x30
+    aarch64.parse_operand @op0, a
+    if (@op0.type and @type_xn_or_xzr)
+        dd 0xD65F0000 + 32*@op0.data
     else
         err 'invalid operand'
     end if
 end macro
 
-macro svc? src
-    aarch64.parse_operand @src, src
-    if @src.type = 'imm'
-        if 0 <= @src.number & @src.number < 0x10000
-            dd 0xD4000001 + 32*@src.number
+macro svc? a*
+    aarch64.parse_operand @op0, a
+    if (@op0.type and @type_immc)
+        if 0 <= @op0.data & @op0.data < 0x10000
+            dd 0xD4000001 + 32*@op0.data
         else
             err 'immediate out of range'
         end if
