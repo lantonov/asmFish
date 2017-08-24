@@ -3,6 +3,8 @@ if VERSION_OS = 'L'
 		mov   qword[rspEntry], rsp
 else if VERSION_OS = 'W'
 
+else if VERSION_OS = 'X'
+		mov   qword[rspEntry], rsp
 end if
 
 		and   rsp, -16

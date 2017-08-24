@@ -710,7 +710,7 @@ macro interpreter? path
 	namespace MachO.dylinker_command
 		lc_str		dd dylinker-MachO.COMMAND
 		dylinker	db path,0
-		align 4
+		align 8
 	end namespace
 end macro
 
@@ -730,7 +730,7 @@ macro uses? lib&
 			compatibility_version	dd 10000h
 			dylib			db lib,0
 		end match
-		align 4
+		align 8
 	end namespace
 	end repeat
 end macro
