@@ -1,0 +1,593 @@
+
+start:
+	adc	w0,w1,w2
+	adc	x0,x1,x2
+
+	adcs	w0,w1,w2
+	adcs	x0,x1,x2
+
+	add	sp,sp,0x123
+	add	sp,x2,0x123
+	add	w1,w2,0x123
+	add	w4,w8,0x123,lsl 12
+	add	wsp,w2,0x123
+	add	wsp,wsp,0x123
+	add	w1,w2,wzr
+	add	w1,w2,w3
+	add	w1,w2,w3,asr 1
+	add	w1,w2,w3,lsl 1
+	add	w1,w2,w3,lsr 1
+	add	w1,w2,w3,sxtb
+	add	w1,w2,w3,sxtb 1
+	add	w1,w2,w3,sxth
+	add	w1,w2,w3,sxth 1
+	add	w1,w2,w3,sxtw
+	add	w1,w2,w3,sxtw 1
+	add	w1,w2,w3,uxtb
+	add	w1,w2,w3,uxtb 1
+	add	w1,w2,w3,uxth
+	add	w1,w2,w3,uxth 1
+	add	w1,w2,w3,uxtw
+	add	w1,w2,w3,uxtw 1
+	add	w1,wsp,w2,uxtw 2
+	add	w1,wsp,w3,uxtw
+	add	w1,wsp,w3,uxtw 1
+	add	wsp,w2,w3,uxtw
+	add	wsp,wsp,w3,uxtw
+	add	wzr,w2,w3
+	add	wzr,w2,wzr
+	add	wzr,wzr,w3
+	add	wzr,wzr,wzr
+	add	x1,x2,x3
+	add	x1,x2,0x123
+	add	x1,x2,0xFFF
+	add	x1,x2,0xFFF,lsl 12
+	add	x1,sp,0x123
+	add	x1,sp,x3,uxtx
+	add	x1,sp,x3,uxtx 4
+	add	x1,x2,w3,sxtb
+	add	x1,x2,w3,sxtb 2
+	add	x1,x2,w3,sxth
+	add	x1,x2,w3,sxth 2
+	add	x1,x2,w3,sxtw
+	add	x1,x2,w3,sxtw 2
+	add	x1,x2,w3,uxtb
+	add	x1,x2,w3,uxtb 2
+	add	x1,x2,w3,uxth
+	add	x1,x2,w3,uxth 2
+	add	x1,x2,w3,uxtw
+	add	x1,x2,w3,uxtw 2
+	add	x1,x2,x3,asr 1
+	add	x1,x2,x3,asr 63
+	add	x1,x2,x3,lsl 1
+	add	x1,x2,x3,lsr 1
+	add	x1,x2,x3,sxtx
+	add	x1,x2,x3,sxtx 3
+	add	x1,x2,x3,uxtx
+	add	x1,x2,x3,uxtx 2
+
+	adds	w1,w2,w3
+	adds	w1,w2,wzr
+	adds	w1,wsp,0x123
+	adds	w1,wsp,w3,uxtw
+	adds	w1,wsp,w2,uxtw 2
+	adds	w1,wzr,w3
+	adds	w1,wzr,wzr
+	adds	w8,w16,0x123,lsl 12
+	adds	x8,x16,0x123,lsl 12
+	adds	x1,x2,x3,asr 63
+
+	and	w1,w2,0x0001FE00
+	and	w1,w2,w3
+	and	w1,w2,w3,asr 4
+	and	w1,w2,w3,lsl 4
+	and	w1,w2,w3,lsr 4
+	and	w1,w2,w3,ror 4
+	and	wzr,w2,w3,ror 4
+	and	x1,x2,0x0003FC0000000000
+	and	x1,x2,x3
+	and	x1,x2,x3,lsl 4
+	and	x1,x2,x3,ror 4
+	and	xzr,x2,x3,ror 4
+
+	ands	w1,w2,0xFFFFFFF1
+	ands	w1,w2,w3
+	ands	w1,w2,w3,lsl 4
+	ands	w1,w2,w3,ror 4
+	ands	x1,x2,0x5555555555555555
+	ands	x1,x2,x3
+	ands	x1,x2,x3,lsl 4
+	ands	x1,x2,x3,ror 4
+
+	asr	w1,w2,1
+	asr	w1,w2,31
+	asr	w1,w2,w3
+	asr	wzr,wzr,wzr
+	asr	wzr,wzr,31
+
+	asr	x1,x2,1
+	asr	x1,x2,63
+	asr	x1,x2,x3
+	asr	xzr,xzr,xzr
+	asr	xzr,xzr,31
+
+	asrv	w1,w2,w3
+	asrv	x1,x2,x3
+
+	label_b:
+	b	label_b
+	beq	label_b
+	beq	label_b
+	bge	label_b
+	bgt	label_b
+	bhi	label_b
+	bhs	label_b
+	ble	label_b
+	blo	label_b
+	bls	label_b
+	blt	label_b
+	bmi	label_b
+	bne	label_b
+	bpl	label_b
+	bvc	label_b
+	bvs	label_b
+	b	label_b
+
+	bfm	w0,w0,0,31
+	bfm	w0,w0,1,31
+	bfm	w0,w0,2,31
+	bfm	w0,w0,3,31
+	bfm	w0,w0,4,31
+	bfm	w0,w0,5,31
+	bfm	w1,w2,3,31
+	bfm	wzr,w2,3,31
+	bfm	x1,x2,3,45
+	bfm	x10,xzr,3,45
+
+
+	bfi	w1,w2,3,27
+	bfi	x1,x2,3,59
+
+	bfm	w1,w2,3,31
+	bfm	x1,x2,3,45
+
+	bfxil	w1,w2,3,29
+	bfxil	x1,x2,3,29
+
+	bic	w1,w2,w3
+	bic	w1,w2,w3,asr 4
+	bic	w1,w2,w3,lsl 4
+	bic	w1,w2,w3,lsr 4
+	bic	w1,w2,w3,ror 4
+	bic	x1,x2,x3
+	bic	x1,x2,x3,lsl 4
+	bic	x1,x2,x3,ror 4
+
+	bics	w1,w2,w3
+	bics	w1,w2,w3,lsl 4
+	bics	w1,w2,w3,ror 4
+	bics	x1,x2,x3
+	bics	x1,x2,x3,lsl 4
+	bics	x1,x2,x3,ror 4
+
+	label_bl:
+	bl	label_bl
+	bl	label_bl
+	bl	label_bl
+	blr	x1
+
+	br	x1
+
+	brk	0x0
+	brk	0xFFFF
+
+	label_cbnz:
+	cbnz	w1,label_cbnz
+	cbnz	x1,label_cbnz
+
+	label_cbz:
+	cbz	w1,label_cbz
+	cbz	x1,label_cbz
+
+	ccmn	w0,w0,0x0,eq
+	ccmn	w0,w0,0x0,ne
+	ccmn	w0,w0,0x0,hs
+	ccmn	w0,w0,0x0,lo
+
+	ccmn	w0,0,0x0,eq
+	ccmn	w0,1,0x0,eq
+	ccmn	w0,30,0x0,eq
+	ccmn	w0,31,0x0,eq
+
+
+	ccmn	w0,2,0x0,ls
+	ccmn	x0,31,0x0,vs
+	ccmn	x0,x0,0x0,ge
+	ccmn	w0,2,0x0,ls
+	ccmn	w1,w2,0x0,hs
+	ccmn	x1,31,0x0,vs
+	ccmn	x1,x2,0x0,ge
+
+	ccmp	w0,w0,0x0,eq
+	ccmp	w0,w0,0x0,ne
+	ccmp	w0,w0,0x0,hs
+	ccmp	w0,w0,0x0,lo
+	ccmp	w0,0,0x0,eq
+	ccmp	w0,1,0x0,eq
+	ccmp	w0,30,0x0,eq
+	ccmp	w0,31,0x0,eq
+	ccmp	w1,2,0x0,ls
+	ccmp	w1,w2,0x0,hs
+	ccmp	x1,31,0x0,vs
+	ccmp	x1,x2,0x1,ge
+
+
+	cinc	w0,w0,eq
+	cinc	w0,w0,ne
+	cinc	w0,w0,hs
+	cinc	w0,w0,lo
+
+	cinc	w1,w2,hs
+	cinc	w1,w2,hs
+
+	cinc	x1,x2,hs
+
+	cls	w0,w0
+	cls	w1,w2
+	cls	x0,x0
+	cls	x1,x2
+
+	clz	w0,w0
+	clz	w1,w2
+	clz	x0,x0
+	clz	x1,x2
+
+	cmn	sp,x3,uxtx
+	cmn	sp,x3,uxtx 1
+	cmn	w2,w3
+	cmn	w2,w3,asr 1
+	cmn	w2,w3,asr 31
+	cmn	w2,w3,lsl 1
+	cmn	w2,w3,lsr 1
+	cmn	wsp,w3,uxtw
+	cmn	wsp,w3,uxtw 1
+	cmn	w1,0x2
+	cmn	x1,0x2
+	cmn	x2,x3
+	cmn	x2,x3,asr 1
+	cmn	x2,x3,asr 63
+	cmn	x2,x3,lsl 1
+	cmn	x2,x3,lsr 1
+
+	cmp	sp,x3,uxtx
+	cmp	sp,x3,uxtx 1
+	cmp	w2,w3
+	cmp	w2,w3,asr 1
+	cmp	w2,w3,asr 31
+	cmp	w2,w3,lsl 1
+	cmp	w2,w3,lsr 1
+	cmp	wsp,w3,uxtw
+	cmp	wsp,w3,uxtw 1
+	cmp	w1,0x2
+	cmp	x1,0x2
+	cmp	x2,x3
+	cmp	x2,x3,asr 1
+	cmp	x2,x3,asr 63
+	cmp	x2,x3,lsl 1
+	cmp	x2,x3,lsr 1
+
+	cneg	w0,w0,eq
+	cneg	w0,w0,ne
+	cneg	w0,w0,hs
+	cneg	w0,w0,lo
+
+	cneg	w1,w2,hs
+	cneg	xzr,xzr,hs
+
+	csel	w0,w0,w0,eq
+	csel	w0,w0,w0,ne
+	csel	w0,w0,w0,hs
+	csel	w0,w0,w0,lo
+	csel	w1,w2,w3,eq
+	csel	w1,w2,w3,ne
+	csel	x1,x2,x3,vs
+
+	cset	w1,ne
+	cset	x1,vs
+
+	csetm	w1,ne
+	csetm	x1,vs
+
+	csinc	w1,w2,w3,ne
+	csinc	x1,x2,x3,vs
+
+	csinv	w1,w2,w3,ne
+	csinv	x1,x2,x3,vs
+
+	csneg	w1,w2,w3,ne
+	csneg	x1,x2,x3,vs
+
+	eon	w1,w2,w3
+	eon	w1,w2,w3,asr 4
+	eon	w1,w2,w3,lsl 4
+	eon	w1,w2,w3,lsr 4
+	eon	w1,w2,w3,ror 4
+	eon	wzr,w2,w3,ror 4
+	eon	x1,x2,x3
+	eon	x1,x2,x3,lsl 4
+	eon	x1,x2,x3,ror 4
+	eon	xzr,x2,x3,ror 4
+
+	eor	sp,x2,0xAAAAAAAAAAAAAAAA
+	eor	w1,w2,0xFFFFFFF1
+	eor	w1,w2,w3
+	eor	w1,w2,w3,asr 4
+	eor	w1,w2,w3,lsl 4
+	eor	w1,w2,w3,lsr 4
+	eor	w1,w2,w3,ror 4
+	eor	wzr,w2,w3,ror 4
+	eor	x1,x2,0xFFFFFFFFFFFFFFF1
+	eor	x1,x2,x3
+	eor	x1,x2,x3,lsl 4
+	eor	x1,x2,x3,ror 4
+	eor	xzr,x2,x3,ror 4
+
+	extr	w0,w0,w0,0
+	extr	x0,x0,x0,0
+	extr	w0,w0,w0,3
+	extr	x0,x0,x0,35
+	extr	w1,w2,w3,3
+	extr	x1,x2,x3,35
+
+
+    ldr w1, [x0, 0]
+    ldr w2, [x0, 1]
+    ldr w3, [x0, 2]
+    ldr w4, [x0, 3]
+    ldr w5, [x0, 4]
+    ldr w6, [x0, 5]
+    ldr w7, [x0, 6]
+    ldr w8, [x0, 7]
+    ldr w9, [x0, 8]
+
+    ldr w0, [x0, 4*3]
+    ldr w0, [x0, 4*4]
+    ldr w0, [x0, 0xFFC]
+
+    ldr w0, [x0, -1]
+    ldr w0, [x1, -2]
+    ldr w0, [x2, -3]
+    ldr w0, [x3, -4]
+    ldr w0, [x4, -5]
+    ldr w0, [x5, -6]
+    ldr w0, [x6, -7]
+    ldr w0, [x7, -8]
+    ldr w0, [x8, -8*3]
+    ldr w0, [x9, -8*4]
+    ldr w0, [x0, -8*3]
+    ldr w0, [x0, -256]
+
+
+    ldr x0, [x0, x0]
+    ldr x0, [x0, w0, uxtw]
+    ldr x0, [x0, w0, sxtw]
+    ldr x0, [x0, x0, lsl 3]
+    ldr x0, [x0, w0, uxtw 3]
+    ldr x0, [x0, w0, sxtw 3]
+    ldr x1, [x0, x0]
+    ldr x2, [x0, w0, uxtw]
+    ldr x3, [x0, w0, sxtw]
+    ldr x0, [x1, x0, lsl 3]
+    ldr x0, [x2, w0, uxtw 3]
+    ldr x0, [x3, w0, sxtw 3]
+    ldr x0, [x0, x1]
+    ldr x0, [x0, w2, uxtw]
+    ldr x0, [x0, w3, sxtw]
+    ldr x0, [x0, x4, lsl 3]
+    ldr x0, [x0, w5, uxtw 3]
+    ldr x0, [x0, w6, sxtw 3]
+    ldr x0, start
+
+
+    ldr w0, [x0, x0]
+    ldr w0, [x0, w0, uxtw]
+    ldr w0, [x0, w0, sxtw]
+    ldr w0, [x0, x0, lsl 2]
+    ldr w0, [x0, w0, uxtw 2]
+    ldr w0, [x0, w0, sxtw 2]
+    ldr w1, [x0, x0]
+    ldr w2, [x0, w0, uxtw]
+    ldr w3, [x0, w0, sxtw]
+    ldr w0, [x1, x0, lsl 2]
+    ldr w0, [x2, w0, uxtw 2]
+    ldr w0, [x3, w0, sxtw 2]
+    ldr w0, [x0, x1]
+    ldr w0, [x0, w2, uxtw]
+    ldr w0, [x0, w3, sxtw]
+    ldr w0, [x0, x4, lsl 2]
+    ldr w0, [x0, w5, uxtw 2]
+    ldr w0, [x0, w6, sxtw 2]
+    ldr w0, start
+
+
+    ldrb w1, [x0, 0]
+    ldrb w2, [x0, 1]
+    ldrb w3, [x0, 2]
+    ldrb w4, [x0, 3]
+    ldrb w5, [x0, 4]
+    ldrb w6, [x0, 5]
+    ldrb w7, [x0, 6]
+    ldrb w8, [x0, 7]
+    ldrb w9, [x0, 8]
+
+    ldrb w0, [x0, 4*3]
+    ldrb w0, [x0, 4*4]
+    ldrb w0, [x0, 0xFFF]
+
+    ldrb w0, [x0, -1]
+    ldrb w0, [x1, -2]
+    ldrb w0, [x2, -3]
+    ldrb w0, [x3, -4]
+    ldrb w0, [x4, -5]
+    ldrb w0, [x5, -6]
+    ldrb w0, [x6, -7]
+    ldrb w0, [x7, -8]
+    ldrb w0, [x8, -8*3]
+    ldrb w0, [x9, -8*4]
+    ldrb w0, [x0, -8*3]
+    ldrb w0, [x0, -256]
+
+    ldrb w0, [x0, x0]
+    ldrb w0, [x0, w0, uxtw]
+    ldrb w0, [x0, w0, sxtw]
+    ldrb w0, [x0, x0, lsl 0]
+    ldrb w0, [x0, w0, uxtw 0]
+    ldrb w0, [x0, w0, sxtw 0]
+    ldrb w1, [x0, x0]
+    ldrb w2, [x0, w0, uxtw]
+    ldrb w3, [x0, w0, sxtw]
+    ldrb w0, [x1, x0, lsl 0]
+    ldrb w0, [x2, w0, uxtw 0]
+    ldrb w0, [x3, w0, sxtw 0]
+    ldrb w0, [x0, x1]
+    ldrb w0, [x0, w2, uxtw]
+    ldrb w0, [x0, w3, sxtw]
+    ldrb w0, [x0, x4, lsl 0]
+    ldrb w0, [x0, w5, uxtw 0]
+    ldrb w0, [x0, w6, sxtw 0]
+
+
+
+    ldrh w1, [x0, 0]
+    ldrh w2, [x0, 1]
+    ldrh w3, [x0, 2]
+    ldrh w4, [x0, 3]
+    ldrh w5, [x0, 4]
+    ldrh w6, [x0, 5]
+    ldrh w7, [x0, 6]
+    ldrh w8, [x0, 7]
+    ldrh w9, [x0, 8]
+
+    ldrh w0, [x0, 4*3]
+    ldrh w0, [x0, 4*4]
+    ldrh w0, [x0, 0xFFE]
+
+    ldrh w0, [x0, -1]
+    ldrh w0, [x1, -2]
+    ldrh w0, [x2, -3]
+    ldrh w0, [x3, -4]
+    ldrh w0, [x4, -5]
+    ldrh w0, [x5, -6]
+    ldrh w0, [x6, -7]
+    ldrh w0, [x7, -8]
+    ldrh w0, [x8, -8*3]
+    ldrh w0, [x9, -8*4]
+    ldrh w0, [x0, -8*3]
+    ldrh w0, [x0, -256]
+
+    ldrh w0, [x0, x0]
+    ldrh w0, [x0, w0, uxtw]
+    ldrh w0, [x0, w0, sxtw]
+    ldrh w0, [x0, x0, lsl 1]
+    ldrh w0, [x0, w0, uxtw 1]
+    ldrh w0, [x0, w0, sxtw 1]
+    ldrh w1, [x0, x0]
+    ldrh w2, [x0, w0, uxtw]
+    ldrh w3, [x0, w0, sxtw]
+    ldrh w0, [x1, x0, lsl 1]
+    ldrh w0, [x2, w0, uxtw 1]
+    ldrh w0, [x3, w0, sxtw 1]
+    ldrh w0, [x0, x1]
+    ldrh w0, [x0, w2, uxtw]
+    ldrh w0, [x0, w3, sxtw]
+    ldrh w0, [x0, x4, lsl 1]
+    ldrh w0, [x0, w5, uxtw 1]
+    ldrh w0, [x0, w6, sxtw 1]
+
+
+
+    ldrsh w0, [x0, -1]
+    ldrsh w0, [x1, -2]
+    ldrsh w0, [x2, -3]
+    ldrsh w0, [x3, -4]
+    ldrsh w0, [x4, -5]
+    ldrsh w0, [x5, -6]
+    ldrsh w0, [x6, -7]
+    ldrsh w0, [x7, -8]
+    ldrsh w0, [x8, -8*3]
+    ldrsh w0, [x9, -8*4]
+    ldrsh w0, [x0, -8*3]
+    ldrsh w0, [x0, -256]
+    ldrsh w1, [x0, 0]
+    ldrsh w2, [x0, 1]
+    ldrsh w3, [x0, 2]
+    ldrsh w4, [x0, 3]
+    ldrsh w5, [x0, 4]
+    ldrsh w6, [x0, 5]
+    ldrsh w7, [x0, 6]
+    ldrsh w8, [x0, 7]
+    ldrsh w9, [x0, 8]
+    ldrsh w0, [x0, x0]
+    ldrsh w0, [x0, w0, uxtw]
+    ldrsh w0, [x0, w0, sxtw]
+    ldrsh w0, [x0, x0, lsl 1]
+    ldrsh w0, [x0, w0, uxtw 1]
+    ldrsh w0, [x0, w0, sxtw 1]
+    ldrsh w1, [x0, x0]
+    ldrsh w2, [x0, w0, uxtw]
+    ldrsh w3, [x0, w0, sxtw]
+    ldrsh w0, [x1, x0, lsl 1]
+    ldrsh w0, [x2, w0, uxtw 1]
+    ldrsh w0, [x3, w0, sxtw 1]
+    ldrsh w0, [x0, x1]
+    ldrsh w0, [x0, w2, uxtw]
+    ldrsh w0, [x0, w3, sxtw]
+    ldrsh w0, [x0, x4, lsl 1]
+    ldrsh w0, [x0, w5, uxtw 1]
+    ldrsh w0, [x0, w6, sxtw 1]
+
+
+    ldrsb w0, [x0, -1]
+    ldrsb w0, [x1, -2]
+    ldrsb w0, [x2, -3]
+    ldrsb w0, [x3, -4]
+    ldrsb w0, [x4, -5]
+    ldrsb w0, [x5, -6]
+    ldrsb w0, [x6, -7]
+    ldrsb w0, [x7, -8]
+    ldrsb w0, [x8, -8*3]
+    ldrsb w0, [x9, -8*4]
+    ldrsb w0, [x0, -8*3]
+    ldrsb w0, [x0, -256]
+    ldrsb w1, [x0, 0]
+    ldrsb w2, [x0, 1]
+    ldrsb w3, [x0, 2]
+    ldrsb w4, [x0, 3]
+    ldrsb w5, [x0, 4]
+    ldrsb w6, [x0, 5]
+    ldrsb w7, [x0, 6]
+    ldrsb w8, [x0, 7]
+    ldrsb w9, [x0, 8]
+    ldrsb w0, [x0, x0]
+    ldrsb w0, [x0, w0, uxtw]
+    ldrsb w0, [x0, w0, sxtw]
+    ldrsb w0, [x0, x0, lsl 0]
+    ldrsb w0, [x0, w0, uxtw 0]
+    ldrsb w0, [x0, w0, sxtw 0]
+    ldrsb w1, [x0, x0]
+    ldrsb w2, [x0, w0, uxtw]
+    ldrsb w3, [x0, w0, sxtw]
+    ldrsb w0, [x1, x0, lsl 0]
+    ldrsb w0, [x2, w0, uxtw 0]
+    ldrsb w0, [x3, w0, sxtw 0]
+    ldrsb w0, [x0, x1]
+    ldrsb w0, [x0, w2, uxtw]
+    ldrsb w0, [x0, w3, sxtw]
+    ldrsb w0, [x0, x4, lsl 0]
+    ldrsb w0, [x0, w5, uxtw 0]
+    ldrsb w0, [x0, w6, sxtw 0]
+
+lab:
+
+
+

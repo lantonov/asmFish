@@ -1,16 +1,4 @@
 
-Kito's Lab
-
-Wednesday, October 24, 2012
-ARMv8 (AArch64) Instruction Encoding
-There is no document for ARMv8 (Aarch64) instruction encoding from official for unknown reason.
-
-the bellow data are generate by modify version of binutils/opcodes/aarch64-gen.c in binutils.
-
-x is mean don't care bit
-
-And the other letter you can guess from the operand name :D
-
 msb   lsb
 xx01 1110 xx1x xxx0 1011 10nn nnnd dddd  -  abs Sd Sn
 xx00 1110 xx1x xxx0 1011 10nn nnnd dddd  -  abs Vd Vn
@@ -676,31 +664,4 @@ x100 1110 xx1x xxx1 0010 10nn nnnd dddd  -  xtn2 Vd Vn
 x000 1110 xx1x xxx1 0010 10nn nnnd dddd  -  xtn Vd Vn
 xx00 1110 xx0m mmmm x011 10nn nnnd dddd  -  zip1 Vd Vn Vm
 xx00 1110 xx0m mmmm x111 10nn nnnd dddd  -  zip2 Vd Vn Vm
-Posted by Kito Cheng at 4:45 AM 
-Email This
-BlogThis!
-Share to Twitter
-Share to Facebook
-Share to Pinterest
-
-Labels: aarch64, armv8, instruction encoding, isa
-No comments:
-Post a Comment
- 
-Newer Post Home
-Subscribe to: Post Comments (Atom)
-Blog Archive
-
-►  2013 (1)
-▼  2012 (1)
-▼  October (1)
-ARMv8 (AArch64) Instruction Encoding
-About Me
-
-My photo
-Kito Cheng  
-
-View my complete profile
-Simple theme. Powered by Blogger.
-Diese Website verwendet Cookies von Google, um ihre Dienste bereitzustellen, Anzeigen zu personalisieren und Zugriffe zu analysieren. Informationen darüber, wie du die Website verwendest, werden an Google weitergegeben. Durch die Nutzung dieser Website erklärst du dich damit einverstanden, dass sie Cookies verwendet.WEITERE INFORMATIONENOK
 
