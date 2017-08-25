@@ -107,10 +107,10 @@ ThreadPool_DisplayThreadDistribution:
 		add   r15, rsi
 .NextNode:
                 lea   rcx, [sz_info_node_threads]
-                mov   rdx, rsp
                 xor   r8, r8
 	        mov   eax, dword[rsi+NumaNode.nodeNumber]
                push   rax rax
+                mov   rdx, rsp
                call   PrintFancy
                 pop   rax rax
 

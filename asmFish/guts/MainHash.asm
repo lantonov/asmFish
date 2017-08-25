@@ -79,7 +79,7 @@ MainHash_ReadOptions:
 
 MainHash_DisplayInfo:
 if VERBOSE < 2
-	       push   rbx rsi rdi
+	       push   rbx rdi rax
 		lea   rdi, [Output]
 
                 lea   rcx, [sz_hashinfo1]
@@ -93,16 +93,15 @@ if VERBOSE < 2
                 lea   rax, [sz_hashinfo2no]
 		cmp   qword[mainHash.lpSize], 0
               cmovz   rcx, rax
-                mov   rdx, rsp
                 xor   r8, r8
 		mov   rax, qword[LargePageMinSize]
 		shr   rax, 10
-               push   rax rax
+                mov   qword[rsp+8*0], rax
+                mov   rdx, rsp
                call   PrintFancy
-                pop   rax rax
 	       call   _WriteOut_Output
 
-		pop   rdi rsi rbx
+		pop   rax rdi rbx
 end if
 		ret
 
