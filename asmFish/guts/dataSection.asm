@@ -324,3 +324,4 @@ align 8
 
 align 8
  LargePageMinSize dq ?
+ WarnMask         dd ?

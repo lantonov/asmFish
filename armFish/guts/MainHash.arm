@@ -78,6 +78,7 @@ MainHash_DisplayInfo:
         ldr  x1, [x6, MainHash.lpSize]
         lea  x2, LargePageMinSize
         ldr  x2, [x2]
+        lsr  x2, x2, 10
         stp  x0, x2, [sp]
         adr  x3, MainHash_DisplayInfo.nolp
         adr  x4, MainHash_DisplayInfo.yeslp
