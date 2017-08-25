@@ -1,0 +1,59 @@
+Pawn_Init:
+                lea  x1, Connected
+                adr  x7, Pawn_Init.Seed
+                add  x1, x1, 4
+                mov  w2, 0
+                mov  w13, 2
+                mov  w12, 4
+Pawn_Init.opposedLoop:
+                mov  x8, x1
+                mov  w3, 0
+Pawn_Init.phalanxLoop:
+                mov  x9, x8
+                mov  w4, 0
+Pawn_Init.supportLoop:
+                add  x6, x7, 4
+                mov  x11, x9
+                mov  w5, -1
+Pawn_Init.rankLoop:
+                mov  w0, 0
+                ldr  w10, [x6]
+                cbz  w3, Pawn_Init.phalanxIsZero
+                ldr  w0, [x6, 4]
+                sub  w0, w0, w10
+               sdiv  w0, w0, w13
+Pawn_Init.phalanxIsZero:
+                add  w0, w0, w10
+                add  x6, x6, 4
+                asr  w0, w0, w2
+                add  w0, w0, w4
+                mul  w10, w5, w0
+                add  w5, w5, 1
+                cmp  w5, 5
+               sdiv  w10, w10, w12
+                add  w0, w10, w0, lsl 16
+                str  w0, [x11], 4
+                bne  Pawn_Init.rankLoop
+                add  w4, w4, 17
+                add  x9, x9, 32
+                cmp  w4, 51
+                bne  Pawn_Init.supportLoop
+                add  w3, w3, 1
+                add  x8, x8, 96
+                cmp  w3, 2
+                bne  Pawn_Init.phalanxLoop
+                add  w2, w2, 1
+                add  x1, x1, 192
+                cmp  w2, 2
+                bne  Pawn_Init.opposedLoop
+                ret
+
+Pawn_Init.Seed:
+        dd  0
+        dd  13
+        dd  24
+        dd  18
+        dd  76
+        dd  100
+        dd  175
+        dd  330

@@ -288,12 +288,12 @@ BenchFensEnd: db 0
 
 if VERSION_OS = 'W'
 
-   sz_kernel32			      db 'kernel32',0
-   sz_Advapi32dll 		      db 'Advapi32.dll',0
-   sz_VirtualAllocExNuma		      db 'VirtualAllocExNuma',0
-   sz_SetThreadGroupAffinity	      db 'SetThreadGroupAffinity',0
+   sz_kernel32                          db 'kernel32',0
+   sz_Advapi32dll                       db 'Advapi32.dll',0
+   sz_VirtualAllocExNuma                db 'VirtualAllocExNuma',0
+   sz_SetThreadGroupAffinity            db 'SetThreadGroupAffinity',0
    sz_GetLogicalProcessorInformationEx  db 'GetLogicalProcessorInformationEx',0
-  align 8
+  calign 8
    Frequency   dq ?
    Period      dq ?
    hProcess    dq ?
@@ -308,17 +308,20 @@ if VERSION_OS = 'W'
 
 else if VERSION_OS = 'L'
 
+  align 8
  rspEntry dq ?
  __imp_clock_gettime dq ?
 
 else if VERSION_OS = 'X'
 
+  align 8
  rspEntry dq ?
 
 end if
 
 align 8
  LargePageMinSize dq ?
+ WarnMask         dd ?
 
 
 

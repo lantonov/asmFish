@@ -1,0 +1,207 @@
+
+Position_Init.prng = 0
+Position_Init.localsize = 16
+
+Position_Init:
+                stp  x29, x30, [sp, -16]!
+                sub  sp, sp, Position_Init.localsize
+              mov32  x0, 1070372
+                str  x0, [sp, Position_Init.prng]
+
+            mov  x21, 0
+Position_Init.PieceLoop0:
+                lsl  x14, x21, 6+3
+                lea  x15, Zobrist_Pieces
+                add  x15, x15, x14, lsl 3
+                mov  x14, 64*Pawn
+Position_Init.PieceLoop1:
+                add  x1, sp, Position_Init.prng
+                 bl  Math_Rand_i
+                str  x0, [x15, x14, lsl 3]
+                add  x14, x14, 1
+                cmp  x14, 64*(King+1)
+                blo  Position_Init.PieceLoop1
+                add  x21, x21, 1
+                cmp  x21, 2
+                blo  Position_Init.PieceLoop0
+
+                lea  x15, Zobrist_Ep
+                mov  x14, 0
+Position_Init.l3:
+                add  x1, sp, Position_Init.prng
+                 bl  Math_Rand_i
+                str  x0, [x15, x14, lsl 3]
+                add  x14, x14, 1
+                cmp  x14, 8
+                blo  Position_Init.l3
+
+                lea  x15, Zobrist_Castling
+                mov  x14, 0
+                mov  x24, 1
+Position_Init.CastlingLoop0:
+                add  x1, sp, Position_Init.prng
+                 bl  Math_Rand_i
+                mov  x21, 0
+Position_Init.CastlingLoop1:
+                tst  x21, x24
+               csel  x1, xzr, x0, eq
+                ldr  x16, [x15, x21, lsl 3]
+                eor  x16, x16, x1
+                str  x16, [x15, x21, lsl 3]
+                add  x21, x21, 1
+                cmp  x21, 16
+                blo  Position_Init.CastlingLoop1
+                add  x14, x14, 1
+                lsl  x24, x24, 1
+                cmp  x14, 4
+                blo  Position_Init.CastlingLoop0
+
+                add  x1, sp, Position_Init.prng
+                 bl  Math_Rand_i
+                lea  x16, Zobrist_side
+                str  x0, [x16]
+
+                add  x1, sp, Position_Init.prng
+                 bl  Math_Rand_i
+                lea  x16, Zobrist_noPawns
+                str  x0, [x16]
+
+                mov  x0, 0x00ff0000
+                lea  x16, IsPawnMasks
+                str  x0, [x16, 0]
+                str  x0, [x16, 8]
+                mvn  x0, x0
+                lea  x16, IsNotPawnMasks
+                str  x0, [x16, 0]
+                str  x0, [x16, 8]    
+                mov  x0, 0x0ff
+                lea  x16, IsNotPieceMasks
+                str  x0, [x16, 0]
+                str  x0, [x16, 8]     
+
+                lea  x16, PieceValue_MG
+                lea  x17, PieceValue_EG
+
+                mov  x0, x16
+                adr  x1, Position_Init.PieceValue_MG
+                mov  x2, 4*8
+                 bl  MemoryCopy
+                add  x0, x16, 4*8
+                adr  x1, Position_Init.PieceValue_MG
+                mov  x2, 4*8
+                 bl  MemoryCopy
+                mov  x0, x17
+                adr  x1, Position_Init.PieceValue_EG
+                mov  x2, 4*8
+                 bl  MemoryCopy
+                add  x0, x17, 4*8
+                adr  x1, Position_Init.PieceValue_EG
+                mov  x2, 4*8
+                 bl  MemoryCopy
+
+                lea  x14, Position_Init.PSQR
+                mov  x25, Pawn
+Position_Init.TypeLoop:
+                lea  x22, Scores_Pieces
+                add  x22, x22, x25, lsl (3+6)
+                add  x11, x22, 8*8*64
+                mov  x24, 0
+Position_Init.RankLoop:
+                mov  x23, 0
+Position_Init.FileLoop:
+                ldr  w0, [x17, x25, lsl 2]
+                ldr  w1, [x16, x25, lsl 2]
+                add  w0, w0, w1, lsl 16
+                ldr  w4, [x14], 4
+                add  w0, w0, w4
+                cmp  x25, Pawn
+               csel  w1, wzr, w1, eq
+                add  x15, x23, x24, lsl 3
+                add  x4, x22, x15, lsl 3
+                stp  w0, w1, [x4]
+                eor  x15, x15, 7
+                add  x4, x22, x15, lsl 3
+                stp  w0, w1, [x4]
+                neg  w0, w0
+                lsl  w1, w1, 16
+                eor  x15, x15, 56
+                add  x4, x11, x15, lsl 3
+                stp  w0, w1, [x4]
+                eor  x15, x15, 7
+                add  x4, x11, x15, lsl 3
+                stp  w0, w1, [x4]
+                add  x23, x23, 1
+                cmp  x23, 4
+                blo  Position_Init.FileLoop
+                add  x24, x24, 1
+                cmp  x24, 8
+                blo  Position_Init.RankLoop
+                add  x25, x25, 1
+                cmp  x25, King
+                ble  Position_Init.TypeLoop
+
+                add  sp, sp, Position_Init.localsize
+                ldp  x29, x30, [sp], 16
+                ret
+
+
+Position_Init.PieceValue_MG:
+    dd 0, 0, PawnValueMg, KnightValueMg, BishopValueMg, RookValueMg, QueenValueMg, 0
+Position_Init.PieceValue_EG:
+    dd 0, 0, PawnValueEg, KnightValueEg, BishopValueEg, RookValueEg, QueenValueEg, 0
+
+
+Position_Init.PSQR:
+    dd 0,0,0,0
+    dd (-11 shl 16) + ( 7), (  6 shl 16) + (-4), ( 7 shl 16) + ( 8), ( 3 shl 16) + (-2)
+    dd (-18 shl 16) + (-4), ( -2 shl 16) + (-5), (19 shl 16) + ( 5), (24 shl 16) + ( 4)
+    dd (-17 shl 16) + ( 3), ( -9 shl 16) + ( 3), (20 shl 16) + (-8), (35 shl 16) + (-3)
+    dd ( -6 shl 16) + ( 8), (  5 shl 16) + ( 9), ( 3 shl 16) + ( 7), (21 shl 16) + (-6)
+    dd ( -6 shl 16) + ( 8), ( -8 shl 16) + (-5), (-6 shl 16) + ( 2), (-2 shl 16) + ( 4)
+    dd ( -4 shl 16) + ( 3), ( 20 shl 16) + (-9), (-8 shl 16) + ( 1), (-4 shl 16) + (18)
+    dd 0,0,0,0
+
+    dd (-161 shl 16) + (-105), (-96 shl 16) + (-82), (-80 shl 16) + (-46), (-73 shl 16) + (-14)
+    dd (-83 shl 16) + (-69), (-43 shl 16) + (-54), (-21 shl 16) + (-17), (-10 shl 16) + (9)
+    dd (-71 shl 16) + (-50), (-22 shl 16) + (-39), (0 shl 16) + (-7), (9 shl 16) + (28)
+    dd (-25 shl 16) + (-41), (18 shl 16) + (-25), (43 shl 16) + (6), (47 shl 16) + (38)
+    dd (-26 shl 16) + (-46), (16 shl 16) + (-25), (38 shl 16) + (3), (50 shl 16) + (40)
+    dd (-11 shl 16) + (-54), (37 shl 16) + (-38), (56 shl 16) + (-7), (65 shl 16) + (27)
+    dd (-63 shl 16) + (-65), (-19 shl 16) + (-50), (5 shl 16) + (-24), (14 shl 16) + (13)
+    dd (-195 shl 16) + (-109), (-67 shl 16) + (-89), (-42 shl 16) + (-50), (-29 shl 16) + (-13)
+
+    dd (-44 shl 16) + (-58), (-13 shl 16) + (-31), (-25 shl 16) + (-37), (-34 shl 16) + (-19)
+    dd (-20 shl 16) + (-34), (20 shl 16) + (-9),	(12 shl 16) + (-14),   (1 shl 16) + (4)
+    dd (-9 shl 16) + (-23), (27 shl 16) + (0),	(21 shl 16) + (-3),  (11 shl 16) + (16)
+    dd (-11 shl 16) + (-26), (28 shl 16) + (-3),	(21 shl 16) + (-5),  (10 shl 16) + (16)
+    dd (-11 shl 16) + (-26), (27 shl 16) + (-4),	(16 shl 16) + (-7),   (9 shl 16) + (14)
+    dd (-17 shl 16) + (-24), (16 shl 16) + (-2),	(12 shl 16) + (0),   (2 shl 16) + (13)
+    dd (-23 shl 16) + (-34), (17 shl 16) + (-10),	(6 shl 16) + (-12),  (-2 shl 16) + (6)
+    dd (-35 shl 16) + (-55), (-11 shl 16) + (-32), (-19 shl 16) + (-36), (-29 shl 16) + (-17)
+
+    dd (-25 shl 16) + (0), (-16 shl 16) + (0), (-16 shl 16) + (0), (-9 shl 16) + (0)
+    dd (-21 shl 16) + (0), (-8 shl 16) + (0), (-3 shl 16) + (0), (0 shl 16) + (0)
+    dd (-21 shl 16) + (0), (-9 shl 16) + (0), (-4 shl 16) + (0), (2 shl 16) + (0)
+    dd (-22 shl 16) + (0), (-6 shl 16) + (0), (-1 shl 16) + (0), (2 shl 16) + (0)
+    dd (-22 shl 16) + (0), (-7 shl 16) + (0), (0 shl 16) + (0), (1 shl 16) + (0)
+    dd (-21 shl 16) + (0), (-7 shl 16) + (0), (0 shl 16) + (0), (2 shl 16) + (0)
+    dd (-12 shl 16) + (0), (4 shl 16) + (0), (8 shl 16) + (0), (12 shl 16) + (0)
+    dd (-23 shl 16) + (0), (-15 shl 16) + (0), (-11 shl 16) + (0), (-5 shl 16) + (0)
+
+    dd (0 shl 16) + (-71),  (-4 shl 16) + (-56), (-3 shl 16) + (-42), (-1 shl 16) + (-29)
+    dd (-4 shl 16) + (-56), (6 shl 16) + (-30),  (9 shl 16) + (-21),  (8 shl 16) + (-5)
+    dd (-2 shl 16) + (-39), (6 shl 16) + (-17),  (9 shl 16) + (-8),   (9 shl 16) + (5)
+    dd (-1 shl 16) + (-29), (8 shl 16) + (-5),   (10 shl 16) + (9),   (7 shl 16) + (19)
+    dd (-3 shl 16) + (-27), (9 shl 16) + (-5),   (8 shl 16) + (10),   (7 shl 16) + (21)
+    dd (-2 shl 16) + (-40), (6 shl 16) + (-16),  (8 shl 16) + (-10),  (10 shl 16) + (3)
+    dd (-2 shl 16) + (-55), (7 shl 16) + (-30),  (7 shl 16) + (-21),  (6 shl 16) + (-6)
+    dd (-1 shl 16) + (-74), (-4 shl 16) + (-55), (-1 shl 16) + (-43), (0 shl 16) + (-30)
+
+    dd (267 shl 16) + (  0), (320 shl 16) + ( 48), (270 shl 16) + ( 75), (195 shl 16) + ( 84)
+    dd (264 shl 16) + ( 43), (304 shl 16) + ( 92), (238 shl 16) + (143), (180 shl 16) + (132)
+    dd (200 shl 16) + ( 83), (245 shl 16) + (138), (176 shl 16) + (167), (110 shl 16) + (165)
+    dd (177 shl 16) + (106), (185 shl 16) + (169), (148 shl 16) + (169), (110 shl 16) + (179)
+    dd (149 shl 16) + (108), (177 shl 16) + (163), (115 shl 16) + (200), ( 66 shl 16) + (203)
+    dd (118 shl 16) + ( 95), (159 shl 16) + (155), ( 84 shl 16) + (176), ( 41 shl 16) + (174)
+    dd ( 87 shl 16) + ( 50), (128 shl 16) + ( 99), ( 63 shl 16) + (122), ( 20 shl 16) + (139)
+    dd ( 63 shl 16) + (  9), ( 88 shl 16) + ( 55), ( 47 shl 16) + ( 80), (  0 shl 16) + ( 90)

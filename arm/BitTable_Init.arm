@@ -1,0 +1,242 @@
+
+BitTable_Init:
+                stp  x29, x30, [sp, -16]!
+                stp  x27, x28, [sp, -16]!
+
+                mov  x1, 64*64*2*64
+                 bl  Os_VirtualAlloc
+                mov  x29, x0
+
+Init_KPKTable:
+
+tnc   equ x26
+tn    equ x25
+wp    equ x24
+wpb   equ x14
+wk    equ x23
+wkb   equ x13
+bk    equ x22
+bkb   equ x12
+to    equ x7
+un    equ x8
+u     equ x9
+ncnt  equ x10
+ocnt  equ x11
+
+macro KPKOffset Res, Tn, Wp, Wk, Bk
+        add  Res, Wk, Wp, lsl 6
+        add  Res, Bk, Res, lsl 6
+        add  Res, Tn, Res, lsl 1
+end macro
+
+; KPKEndgameTable[WhitePawn-8][WhiteKing] is a qword
+; bit 2*BlackKing+0 is set if win for white to move
+; bit 2*BlackKing+1 is set if win for black to move
+
+
+        lea  x28, KPKEndgameTable
+        lea  x16, WhitePawnAttacks
+        lea  x17, KingAttacks
+
+        mov  x0, x28
+        mov  x1, 0
+        mov  x2, 48*64*8
+         bl  MemoryFill
+        mov  x0, x29
+        mov  x1, 0
+        mov  x2, 64*64*2*64
+         bl  MemoryFill
+
+
+        mov  ncnt, 0
+        mov  ocnt, 1
+Init_KPKTable.Start:
+
+	cmp  ncnt, ocnt
+        beq  Init_KPKTable.End
+	mov  ocnt, ncnt
+	mov  ncnt, 0
+
+	mov  tn, 0
+Init_KPKTable.TurnLoop:
+        eor  tnc, tn, 1
+	mov  wp, 0
+        mov  wpb, 1
+Init_KPKTable.WhitePawnLoop:
+	mov  wk, 0
+        mov  wkb, 1
+Init_KPKTable.WhiteKingLoop:
+	mov  bk, 0
+        mov  bkb, 1
+Init_KPKTable.BlackKingLoop:
+
+        KPKOffset x21, tn, wp, wk, bk
+       ldrb  w0, [x29, x21]
+       cbnz  w0, Init_KPKTable.Continue
+
+        add  ncnt, ncnt, 1
+        cmp  wp, 8
+        blo  Init_KPKTable.Draw
+        cmp  wp, 56
+        bhs  Init_KPKTable.Draw
+        cmp  wp, wk
+        beq  Init_KPKTable.Draw
+        cmp  wk, bk
+        beq  Init_KPKTable.Draw
+        cmp  bk, wp
+        beq  Init_KPKTable.Draw
+
+        ldr  x0, [x16, wp, lsl 3]
+        ldr  x1, [x17, wk, lsl 3]
+        tst  x0, bkb
+        beq  Init_KPKTable.CheckTurn
+        cbz  tn, Init_KPKTable.Draw
+        tst  x1, wpb
+        beq  Init_KPKTable.Draw        
+
+Init_KPKTable.CheckTurn:
+
+        mov  un, 0
+        cbz  tn, Init_KPKTable.WhiteToMove
+
+Init_KPKTable.BlackToMove:
+
+        ldr  x0, [x17, bk, lsl 3]
+        ldr  u, [x17, wk, lsl 3]
+        ldr  x4, [x16, wp, lsl 3]
+        orr  u, u, x4
+        bic  u, x0, u
+        cbz  u, Init_KPKTable.Draw
+
+Init_KPKTable.BlackMoveLoop:
+
+       rbit  to, u
+        clz  to, to
+        KPKOffset x1, tnc, wp, wk, to
+       ldrb  w4, [x29, x1]
+        cmp  x4, 1
+        beq  Init_KPKTable.Draw
+       cinc  un, un, lo
+        sub  x4, u, 1
+        and  u, u, x4
+       cbnz  u, Init_KPKTable.BlackMoveLoop
+        cbz  un, Init_KPKTable.Win
+          b  Init_KPKTable.Continue
+
+Init_KPKTable.WhiteToMove:
+
+        ldr  x0, [x17, wk, lsl 3]
+        ldr  u, [x17, bk, lsl 3]
+        orr  u, u, wpb
+       bics  u, x0, u
+        beq  Init_KPKTable.WhiteMoveLoopDone
+        
+Init_KPKTable.WhiteMoveLoop:
+
+       rbit  to, u
+        clz  to, to
+        KPKOffset x1, tnc, wp, to, bk
+       ldrb  w4, [x29, x1]
+        cmp  x4, 1
+        bhi  Init_KPKTable.Win
+       cinc  un, un, lo
+        sub  x4, u, 1
+        and  u, u, x4
+       cbnz  u, Init_KPKTable.WhiteMoveLoop
+
+Init_KPKTable.WhiteMoveLoopDone:
+
+        add  to, wp, 8
+        cmp  to, wk
+        beq  Init_KPKTable.WhiteMoveDone
+        cmp  to, bk
+        beq  Init_KPKTable.WhiteMoveDone
+        cmp  to, 56
+        bhs  Init_KPKTable.PromCheck
+        KPKOffset x1, tnc, to, wk, bk
+       ldrb  w4, [x29, x1]
+        cmp  x4, 1
+        bhi  Init_KPKTable.Win
+       cinc  un, un, lo
+        cmp  to, 24
+        bhs  Init_KPKTable.WhiteMoveDone
+        
+Init_KPKTable.DoubleCheck:
+
+        add  to, to, 8
+        cmp  to, wk
+        beq  Init_KPKTable.WhiteMoveDone
+        cmp  to, bk
+        beq  Init_KPKTable.WhiteMoveDone
+        KPKOffset x1, tnc, to, wk, bk 
+       ldrb  w4, [x29, x1]
+        cmp  x4, 1
+        bhi  Init_KPKTable.Win
+       cinc  un, un, lo
+          b  Init_KPKTable.WhiteMoveDone
+
+Init_KPKTable.PromCheck:
+
+        ldr  x0, [x17, to, lsl 3]
+        tst  x0, bkb
+        beq  Init_KPKTable.Win
+        tst  x0, wkb
+        bne  Init_KPKTable.Win
+
+Init_KPKTable.WhiteMoveDone:
+
+       cbnz  un, Init_KPKTable.Continue 
+
+Init_KPKTable.Draw:
+
+        mov  x4, 1
+       strb  w4, [x29, x21]
+          b  Init_KPKTable.Continue
+
+Init_KPKTable.Win:
+
+
+        mov  x4, 2
+       strb  w4, [x29, x21]
+        cmp  wp, 8
+        blo  Init_KPKTable.Continue
+        cmp  wp, 56
+        bhs  Init_KPKTable.Continue
+        tst  bk, 4
+        bne  Init_KPKTable.Continue
+        mov  x3, 1
+        eor  x1, tn, 1
+        add  x1, bk, x1, lsl 2
+        lsl  x3, x3, x1
+        sub  x2, wp, 8
+        add  x2, wk, x2, lsl 6
+        ldr  x0, [x28, x2, lsl 3]
+        orr  x0, x0, x3
+        str  x0, [x28, x2, lsl 3]
+
+
+       
+Init_KPKTable.Continue:
+
+        add  bk, bk, 1
+        lsl  bkb, bkb, 1
+        tbz  bk, 6, Init_KPKTable.BlackKingLoop
+        add  wk, wk, 1
+        lsl  wkb, wkb, 1
+        tbz  wk, 6, Init_KPKTable.WhiteKingLoop
+        add  wp, wp, 1
+        lsl  wpb, wpb, 1
+        tbz  wp, 6, Init_KPKTable.WhitePawnLoop
+        add  tn, tn, 1
+        tbz  tn, 1, Init_KPKTable.TurnLoop
+       cbnz  ncnt, Init_KPKTable.Start
+
+Init_KPKTable.End:
+
+        mov  x1, x29
+        mov  x2, 64*64*2*64
+         bl  Os_VirtualFree
+        ldp  x27, x28, [sp], 16
+        ldp  x29, x30, [sp], 16
+        ret
+

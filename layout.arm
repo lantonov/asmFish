@@ -1,5 +1,428 @@
+Position_PrintFen:
+SetCheckInfo:
+Gen_Legal:
 
+Math_Rand_i:
+Math_log_d_d:
+Math_pow_d_dd:
+
+AttackersTo_Side:
+
+_start:
 start:
+
+    cmp w0, 1
+    cmp w0, -1
+    cmp x0, 1
+    cmp x0, -1
+
+
+    fmov d0, 1.0
+    fmov d0, 2.0
+    fmov d0, 4.0
+    fmov d0, 8.0
+
+
+    fmadd d0, d0, d0, d0
+    fmadd d0, d0, d0, d1
+    fmadd d0, d0, d1, d0
+    fmadd d0, d1, d0, d0
+    fmadd d1, d0, d0, d0
+
+
+    fcvtzs x0, d0
+    fcvtzs x0, d1
+    fcvtzs x1, d0
+    fcvtzs w0, d0
+    fcvtzs w0, d1
+    fcvtzs w1, d0
+
+    fcvtas x0, d0
+    fcvtas x0, d1
+    fcvtas x1, d0
+    fcvtas w0, d0
+    fcvtas w0, d1
+    fcvtas w1, d0
+
+    rbit x0, x0
+    rbit x0, x1
+    rbit x1, x0
+    rbit w0, w0
+    rbit w0, w1
+    rbit w1, w0
+
+
+   sbfiz x1, x0, 1,1
+   sbfiz x0, x1, 1,2
+   sbfiz x0, x2, 1,2
+   sbfiz x0, x0, 1,2
+   sbfiz x0, x0, 1,2
+   sbfiz x0, x0, 1,3
+
+   sbfiz w1, w0, 1,1
+   sbfiz w0, w1, 1,2
+   sbfiz w0, w2, 1,2
+   sbfiz w0, w0, 1,2
+   sbfiz w0, w0, 1,2
+   sbfiz w0, w0, 1,3
+
+
+
+    asr x1, x0, 0
+    asr x0, x1, 0
+    asr x0, x2, 0
+    asr x0, x0, 0
+    asr x0, x0, 1
+    asr x0, x0, 63
+
+    asr w1, w0, 0
+    asr w0, w1, 0
+    asr w0, w2, 0
+    asr w0, w0, 0
+    asr w0, w0, 1
+    asr w0, w0, 31
+
+    asr x0, x0, x0
+    asr x0, x1, x0
+    asr x0, x0, x1
+    asr w0, w0, w0
+    asr w0, w1, w0
+    asr w0, w0, w1
+
+
+    lsl x1, x0, 0
+    lsl x0, x1, 0
+    lsl x0, x2, 0
+    lsl x0, x0, 0
+    lsl x0, x0, 1
+    lsl x0, x0, 63
+
+    lsl w1, w0, 0
+    lsl w0, w1, 0
+    lsl w0, w2, 0
+    lsl w0, w0, 0
+    lsl w0, w0, 1
+    lsl w0, w0, 31
+
+    lsl x0, x0, x0
+    lsl x0, x1, x0
+    lsl x0, x0, x1
+    lsl w0, w0, w0
+    lsl w0, w1, w0
+    lsl w0, w0, w1
+
+
+    lsr x1, x0, 0
+    lsr x0, x1, 0
+    lsr x0, x2, 0
+    lsr x0, x0, 0
+    lsr x0, x0, 1
+    lsr x0, x0, 63
+
+    lsr w1, w0, 0
+    lsr w0, w1, 0
+    lsr w0, w2, 0
+    lsr w0, w0, 0
+    lsr w0, w0, 1
+    lsr w0, w0, 31
+
+    lsr x0, x0, x0
+    lsr x0, x1, x0
+    lsr x0, x0, x1
+    lsr w0, w0, w0
+    lsr w0, w1, w0
+    lsr w0, w0, w1
+
+
+    ror x1, x0, 0
+    ror x0, x1, 0
+    ror x0, x2, 0
+    ror x0, x0, 0
+    ror x0, x0, 1
+    ror x0, x0, 63
+
+    ror w1, w0, 0
+    ror w0, w1, 0
+    ror w0, w2, 0
+    ror w0, w0, 0
+    ror w0, w0, 1
+    ror w0, w0, 31
+
+    ror x0, x0, x0
+    ror x0, x1, x0
+    ror x0, x0, x1
+    ror w0, w0, w0
+    ror w0, w1, w0
+    ror w0, w0, w1
+
+    neg x0, x0
+    neg x1, x0
+    neg x0, x1
+
+    neg w0, w0
+    neg w1, w0
+    neg w0, w1
+
+
+    mvn x0, x0
+    mvn x1, x0
+    mvn x0, x1
+
+    mvn w0, w0
+    mvn w1, w0
+    mvn w0, w1
+
+    uxtw x0, w0
+    uxtw x1, w0
+    uxtw x2, w0
+    uxtw x0, w1
+    uxtw x0, w2
+
+
+    fmul d0, d0, d0
+    fmul d0, d0, d1
+    fmul d0, d1, d0
+    fmul d1, d0, d0
+
+    fmul s0, s0, s0
+    fmul s0, s0, s1
+    fmul s0, s1, s0
+    fmul s1, s0, s0
+
+    ror w0, w0, 0
+    ror w0, w1, 0
+    ror w1, w0, 0
+    ror w0, w0, 1
+    ror w0, w0, 31
+
+    ror x0, x0, 0
+    ror x0, x1, 0
+    ror x1, x0, 0
+    ror x0, x0, 1
+    ror x0, x0, 63
+
+    madd w0, w0, w0, w0
+    madd w0, w0, w0, w1
+    madd w0, w0, w1, w0
+    madd w0, w1, w0, w0
+    madd w1, w0, w0, w0
+    madd x0, x0, x0, x0
+    madd x0, x0, x0, x1
+    madd x0, x0, x1, x0
+    madd x0, x1, x0, x0
+    madd x1, x0, x0, x0
+
+    msub w0, w0, w0, w0
+    msub w0, w0, w0, w1
+    msub w0, w0, w1, w0
+    msub w0, w1, w0, w0
+    msub w1, w0, w0, w0
+    msub x0, x0, x0, x0
+    msub x0, x0, x0, x1
+    msub x0, x0, x1, x0
+    msub x0, x1, x0, x0
+    msub x1, x0, x0, x0
+
+    umulh x0, x0, x0
+    umulh x0, x0, x1
+    umulh x0, x0, x2
+    umulh x0, x1, x0
+    umulh x0, x2, x0
+    umulh x1, x0, x0
+    umulh x2, x0, x0
+    smulh x0, x0, x0
+    smulh x0, x0, x1
+    smulh x0, x0, x2
+    smulh x0, x1, x0
+    smulh x0, x2, x0
+    smulh x1, x0, x0
+    smulh x2, x0, x0
+
+
+    udiv x0, x0, x0
+    udiv x0, x0, x1
+    udiv x0, x0, x2
+    udiv x0, x1, x0
+    udiv x0, x2, x0
+    udiv x1, x0, x0
+    udiv x2, x0, x0
+    sdiv x0, x0, x0
+    sdiv x0, x0, x1
+    sdiv x0, x0, x2
+    sdiv x0, x1, x0
+    sdiv x0, x2, x0
+    sdiv x1, x0, x0
+    sdiv x2, x0, x0
+
+
+    udiv w0, w0, w0
+    sdiv w0, w0, w0
+
+
+    mul x0, x0, x0
+    mul x0, x0, x1
+    mul x0, x0, x2
+    mul x0, x1, x0
+    mul x0, x2, x0
+    mul x1, x0, x0
+    mul x2, x0, x0
+
+    mul w0, w0, w0
+    mul w0, w0, w1
+    mul w0, w0, w2
+    mul w0, w1, w0
+    mul w0, w2, w0
+    mul w1, w0, w0
+    mul w2, w0, w0
+
+    movk x0, 1
+    movk x0, 1, lsl 0
+    movk x0, 1, lsl 16
+    movk x0, 1, lsl 32
+    movk x0, 1, lsl 48
+
+    movk w0, 1
+    movk w0, 1, lsl 0
+    movk w0, 1, lsl 16
+
+    ldp x0, x0, [x0]
+    ldar x0, [x0]
+    ldar w0, [x0]
+    ldaxr x0, [x0]
+    ldaxr w0, [x0]
+
+    tbnz w0, 0, start
+    tbnz w0, 0, start
+    tbnz w0, 1, start
+    tbnz w0, 31, start
+    tbnz w1, 0, start
+    tbnz w1, 1, start
+    tbnz w1, 31, start
+
+    tbnz x0, 0, start
+    tbnz x0, 1, start
+    tbnz x0, 63, start
+    tbnz x1, 0, start
+    tbnz x1, 1, start
+    tbnz x1, 63, start
+
+
+    tbz w0, 0, start
+    tbz w0, 1, start
+    tbz w0, 31, start
+    tbz w1, 0, start
+    tbz w1, 1, start
+    tbz w1, 31, start
+
+    tbz x0, 0, start
+    tbz x0, 1, start
+    tbz x0, 63, start
+    tbz x1, 0, start
+    tbz x1, 1, start
+    tbz x1, 63, start
+
+    stlxrb w0, w0, [x0]
+    stlxrb w1, w0, [x0]
+    stlxrb w2, w0, [x0]
+    stlxrb w0, w0, [x0]
+    stlxrb w0, w1, [x0]
+    stlxrb w0, w2, [x0]
+    stlxrb w0, w0, [x0]
+    stlxrb w0, w0, [x1]
+    stlxrb w0, w0, [x2]
+
+
+
+    mov x0, 0
+    mov x0, 1
+    mov x0, 2
+    mov x0, -2
+    mov x0, -1
+
+mov x0, x0
+
+    mov w0, 0
+    mov w0, 1
+    mov w0, 2
+    mov w0, -2
+    mov w0, -1
+
+mov x0, 0x1111111111111111
+mov w0, 0x11111111
+
+    stp x0, x0, [x0, 0]
+    stp x0, x0, [x1, 0]
+    stp x0, x0, [x2, 0]
+    stp x0, x0, [x0, 0]
+    stp x0, x1, [x0, 0]
+    stp x0, x2, [x0, 0]
+    stp x0, x0, [x0, 0]
+    stp x1, x0, [x0, 0]
+    stp x2, x0, [x0, 0]
+
+	sub	sp,sp,0x123
+	sub	sp,x2,0x123
+	sub	w1,w2,0x123
+	sub	w4,w8,0x123,lsl 12
+	sub	wsp,w2,0x123
+	sub	wsp,wsp,0x123
+	sub	w1,w2,wzr
+	sub	w1,w2,w3
+	sub	w1,w2,w3,asr 1
+	sub	w1,w2,w3,lsl 1
+	sub	w1,w2,w3,lsr 1
+	sub	w1,w2,w3,sxtb
+	sub	w1,w2,w3,sxtb 1
+	sub	w1,w2,w3,sxth
+	sub	w1,w2,w3,sxth 1
+	sub	w1,w2,w3,sxtw
+	sub	w1,w2,w3,sxtw 1
+	sub	w1,w2,w3,uxtb
+	sub	w1,w2,w3,uxtb 1
+	sub	w1,w2,w3,uxth
+	sub	w1,w2,w3,uxth 1
+	sub	w1,w2,w3,uxtw
+	sub	w1,w2,w3,uxtw 1
+	sub	w1,wsp,w2,uxtw 2
+	sub	w1,wsp,w3,uxtw
+	sub	w1,wsp,w3,uxtw 1
+	sub	wsp,w2,w3,uxtw
+	sub	wsp,wsp,w3,uxtw
+	sub	wzr,w2,w3
+	sub	wzr,w2,wzr
+	sub	wzr,wzr,w3
+	sub	wzr,wzr,wzr
+	sub	x1,x2,x3
+	sub	x1,x2,0x123
+	sub	x1,x2,0xFFF
+	sub	x1,x2,0xFFF,lsl 12
+	sub	x1,sp,0x123
+	sub	x1,sp,x3,uxtx
+	sub	x1,sp,x3,uxtx 4
+	sub	x1,x2,w3,sxtb
+	sub	x1,x2,w3,sxtb 2
+	sub	x1,x2,w3,sxth
+	sub	x1,x2,w3,sxth 2
+	sub	x1,x2,w3,sxtw
+	sub	x1,x2,w3,sxtw 2
+	sub	x1,x2,w3,uxtb
+	sub	x1,x2,w3,uxtb 2
+	sub	x1,x2,w3,uxth
+	sub	x1,x2,w3,uxth 2
+	sub	x1,x2,w3,uxtw
+	sub	x1,x2,w3,uxtw 2
+	sub	x1,x2,x3,asr 1
+	sub	x1,x2,x3,asr 63
+	sub	x1,x2,x3,lsl 1
+	sub	x1,x2,x3,lsr 1
+	sub	x1,x2,x3,sxtx
+	sub	x1,x2,x3,sxtx 3
+	sub	x1,x2,x3,uxtx
+	sub	x1,x2,x3,uxtx 2
+
+
+
+
 	adc	w0,w1,w2
 	adc	x0,x1,x2
 
@@ -546,6 +969,47 @@ start:
     ldrsh w0, [x0, w5, uxtw 1]
     ldrsh w0, [x0, w6, sxtw 1]
 
+    ldrsh x0, [x0, -1]
+    ldrsh x0, [x1, -2]
+    ldrsh x0, [x2, -3]
+    ldrsh x0, [x3, -4]
+    ldrsh x0, [x4, -5]
+    ldrsh x0, [x5, -6]
+    ldrsh x0, [x6, -7]
+    ldrsh x0, [x7, -8]
+    ldrsh x0, [x8, -8*3]
+    ldrsh x0, [x9, -8*4]
+    ldrsh x0, [x0, -8*3]
+    ldrsh x0, [x0, -256]
+    ldrsh x1, [x0, 0]
+    ldrsh x2, [x0, 1]
+    ldrsh x3, [x0, 2]
+    ldrsh x4, [x0, 3]
+    ldrsh x5, [x0, 4]
+    ldrsh x6, [x0, 5]
+    ldrsh x7, [x0, 6]
+    ldrsh x8, [x0, 7]
+    ldrsh x9, [x0, 8]
+    ldrsh x0, [x0, x0]
+    ldrsh x0, [x0, w0, uxtw]
+    ldrsh x0, [x0, w0, sxtw]
+    ldrsh x0, [x0, x0, lsl 1]
+    ldrsh x0, [x0, w0, uxtw 1]
+    ldrsh x0, [x0, w0, sxtw 1]
+    ldrsh x1, [x0, x0]
+    ldrsh x2, [x0, w0, uxtw]
+    ldrsh x3, [x0, w0, sxtw]
+    ldrsh x0, [x1, x0, lsl 1]
+    ldrsh x0, [x2, w0, uxtw 1]
+    ldrsh x0, [x3, w0, sxtw 1]
+    ldrsh x0, [x0, x1]
+    ldrsh x0, [x0, w2, uxtw]
+    ldrsh x0, [x0, w3, sxtw]
+    ldrsh x0, [x0, x4, lsl 1]
+    ldrsh x0, [x0, w5, uxtw 1]
+    ldrsh x0, [x0, w6, sxtw 1]
+
+
 
     ldrsb w0, [x0, -1]
     ldrsb w0, [x1, -2]
@@ -586,6 +1050,47 @@ start:
     ldrsb w0, [x0, x4, lsl 0]
     ldrsb w0, [x0, w5, uxtw 0]
     ldrsb w0, [x0, w6, sxtw 0]
+
+    ldrsb x0, [x0, -1]
+    ldrsb x0, [x1, -2]
+    ldrsb x0, [x2, -3]
+    ldrsb x0, [x3, -4]
+    ldrsb x0, [x4, -5]
+    ldrsb x0, [x5, -6]
+    ldrsb x0, [x6, -7]
+    ldrsb x0, [x7, -8]
+    ldrsb x0, [x8, -8*3]
+    ldrsb x0, [x9, -8*4]
+    ldrsb x0, [x0, -8*3]
+    ldrsb x0, [x0, -256]
+    ldrsb x1, [x0, 0]
+    ldrsb x2, [x0, 1]
+    ldrsb x3, [x0, 2]
+    ldrsb x4, [x0, 3]
+    ldrsb x5, [x0, 4]
+    ldrsb x6, [x0, 5]
+    ldrsb x7, [x0, 6]
+    ldrsb x8, [x0, 7]
+    ldrsb x9, [x0, 8]
+    ldrsb x0, [x0, x0]
+    ldrsb x0, [x0, w0, uxtw]
+    ldrsb x0, [x0, w0, sxtw]
+    ldrsb x0, [x0, x0, lsl 0]
+    ldrsb x0, [x0, w0, uxtw 0]
+    ldrsb x0, [x0, w0, sxtw 0]
+    ldrsb x1, [x0, x0]
+    ldrsb x2, [x0, w0, uxtw]
+    ldrsb x3, [x0, w0, sxtw]
+    ldrsb x0, [x1, x0, lsl 0]
+    ldrsb x0, [x2, w0, uxtw 0]
+    ldrsb x0, [x3, w0, sxtw 0]
+    ldrsb x0, [x0, x1]
+    ldrsb x0, [x0, w2, uxtw]
+    ldrsb x0, [x0, w3, sxtw]
+    ldrsb x0, [x0, x4, lsl 0]
+    ldrsb x0, [x0, w5, uxtw 0]
+    ldrsb x0, [x0, w6, sxtw 0]
+
 
 lab:
 

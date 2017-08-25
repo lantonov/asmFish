@@ -1,4 +1,6 @@
 
+WARNIDX_MBIND = 1
+WARNIDX_MADVISE = 2
 
 ;;;;;;;;;
 ; mutex ;
@@ -521,12 +523,43 @@ end if
 		mov   eax, sys_mbind
 	    syscall
 	       test   eax, eax
-		jnz   Failed_sys_mbind
-
+		 jz   .Done
+                lea   rcx, [.sz_mbind]
+                mov   edx, WARNIDX_MBIND
+               call   _Warn
+.Done:
 		mov   rax, r15
 		add   rsp, 16
 		pop   r15 rdi rsi rbx rbp
 		ret
+
+.sz_mbind: db 'sys_mbind',0
+
+
+_Warn:
+                bts   dword[WarnMask], edx
+                jnc   @f
+                ret
+        @@:
+               push   rdi rsi rax
+                lea   rdi, [Output]
+                mov   rax, 'warning:'
+              stosq
+                mov   al, ' '
+              stosb
+               call   PrintString
+                mov   rax, ' failed '
+              stosq
+                mov   eax, 'rax:'
+              stosd
+                mov   al, ' '
+              stosb
+                pop   rcx rsi
+               call   PrintHex
+       PrintNewLine
+               call   Os_WriteOut_Output
+                pop   rdi
+                ret
 
 
 Os_VirtualAlloc:
@@ -607,13 +640,20 @@ end if
 		mov   edx, MADV_HUGEPAGE
 		mov   eax, sys_madvise
 	    syscall
-
+               test   eax, eax
+                 jz   .Over
+                lea   rcx, [.sz_madvise]
+                mov   edx, WARNIDX_MADVISE
+               call   _Warn
+.Over:
 		mov   rax, r15
                 mov   rdx, r14
 		mov   qword[LargePageMinSize], 1
 
 		pop   r15 r14 rdi rsi rbx
 		ret
+
+.sz_madvise: db 'sys_madvide',0
 
 
 
@@ -1238,10 +1278,6 @@ Failed_sys_sched_setaffinity:
 		lea   rdi, [.l1]
 		jmp   Failed
         .l1: db 'sys_sched_setaffinity',0
-Failed_sys_mbind:
-		lea   rdi, [.l1]
-		jmp   Failed
-        .l1: db 'sys_mbind',0
 
 Failed_EventWait:
 		lea   rdi, [.l1]

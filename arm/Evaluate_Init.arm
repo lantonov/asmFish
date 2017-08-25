@@ -1,0 +1,313 @@
+
+Evaluate_Init:
+        stp  x29, x30, [sp, -16]!
+
+
+        ldr  x0, Evaluate_Init.SeeSignBitMask
+        lea  x6, SeeSignBitMask
+        str  x0, [x6]
+
+
+        lea  x0, MobilityBonus_Knight
+        adr  x1, Evaluate_Init.MobilityBonus_Knight
+        mov  x2, 4*9
+         bl  MemoryCopy
+        lea  x0, MobilityBonus_Bishop
+        adr  x1, Evaluate_Init.MobilityBonus_Bishop
+        mov  x2, 4*14
+         bl  MemoryCopy
+        lea  x0, MobilityBonus_Rook
+        adr  x1, Evaluate_Init.MobilityBonus_Rook
+        mov  x2, 4*15
+         bl  MemoryCopy
+        lea  x0, MobilityBonus_Queen
+        adr  x1, Evaluate_Init.MobilityBonus_Queen
+        mov  x2, 4*28
+         bl  MemoryCopy
+
+        lea  x0, Lever
+        adr  x1, Evaluate_Init.Lever
+        mov  x2, 4*8
+         bl  MemoryCopy
+        lea  x0, ShelterWeakness
+        adr  x1, Evaluate_Init.ShelterWeakness
+        mov  x2, 4*8*8
+         bl  MemoryCopy
+        lea  x0, StormDanger
+        adr  x1, Evaluate_Init.StormDanger
+        mov  x2, 4*4*8*8
+         bl  MemoryCopy
+
+        lea  x0, Threat_Minor
+        adr  x1, Evaluate_Init.Threat_Minor
+        mov  x2, 4*8
+         bl  MemoryCopy
+        adr  x1, Evaluate_Init.Threat_Minor
+        mov  x2, 4*8
+         bl  MemoryCopy
+        lea  x0, Threat_Rook
+        adr  x1, Evaluate_Init.Threat_Rook
+        mov  x2, 4*8
+         bl  MemoryCopy
+        adr  x1, Evaluate_Init.Threat_Rook
+        mov  x2, 4*8
+         bl  MemoryCopy
+
+
+        lea  x0, PassedRank
+        adr  x1, Evaluate_Init.PassedRank
+        mov  x2, 4*8
+         bl  MemoryCopy
+        lea  x0, PassedFile
+        adr  x1, Evaluate_Init.PassedFile
+        mov  x2, 4*8
+         bl  MemoryCopy
+
+        lea  x0, DoMaterialEval_Data
+        adr  x1, Evaluate_Init.QuadraticOurs
+        mov  x2, 4*8*(6+6)
+         bl  MemoryCopy
+
+        lea  x0, KingFlank
+        mov  x1, FileABB or FileBBB or FileCBB or FileDBB
+        str  x1, [x0], 8
+        str  x1, [x0], 8
+        str  x1, [x0], 8
+        lsl  x1, x1, 2
+        str  x1, [x0], 8
+        str  x1, [x0], 8
+        lsl  x1, x1, 2
+        str  x1, [x0], 8
+        str  x1, [x0], 8
+        str  x1, [x0], 8
+
+        adr  x16, Evaluate_Init.PawnsSet
+        lea  x17, PawnsSet
+        mov  w1, 9
+         bl  RepMovsd
+
+        adr  x16, Evaluate_Init.QueenMinorsImbalance
+        lea  x17, QueenMinorsImbalance
+        mov  w1, 9
+         bl  RepMovsd
+
+
+        ldp  x29, x30, [sp], -16
+        ret
+
+        balign 8
+Evaluate_Init.SeeSignBitMask: ; 0x7c00406070787c7c
+ dd  0x70787c7c
+ dd  0x7c004060
+
+Evaluate_Init.MobilityBonus_Knight:
+ dd (-75 shl 16) + (-76)
+ dd (-57 shl 16) + (-54)
+ dd (- 9 shl 16) + (-28)
+ dd ( -2 shl 16) + (-10)
+ dd (  6 shl 16) + (5)
+ dd ( 14 shl 16) + (12)
+ dd ( 22 shl 16) + (26)
+ dd ( 29 shl 16) + (29)
+ dd ( 36 shl 16) + (29)
+
+Evaluate_Init.MobilityBonus_Bishop:
+ dd (-48 shl 16) + (-59)
+ dd (-20 shl 16) + (-23)
+ dd (16 shl 16) + (-3)
+ dd (26 shl 16) + (13)
+ dd (38 shl 16) + (24)
+ dd (51 shl 16) + (42)
+ dd (55 shl 16) + (54)
+ dd (63 shl 16) + (57)
+ dd (63 shl 16) + (65)
+ dd (68 shl 16) + (73)
+ dd (81 shl 16) + (78)
+ dd (81 shl 16) + (86)
+ dd (91 shl 16) + (88)
+ dd (98 shl 16) + (97)
+
+Evaluate_Init.MobilityBonus_Rook:
+ dd (-58 shl 16) + (-76)
+ dd (-27 shl 16) + (-18)
+ dd (-15 shl 16) + (28)
+ dd (-10 shl 16) + (55)
+ dd (-5 shl 16) + (69)
+ dd (-2 shl 16) + (82)
+ dd ( 9 shl 16) + (112)
+ dd (16 shl 16) + (118)
+ dd (30 shl 16) + (132)
+ dd (29 shl 16) + (142)
+ dd (32 shl 16) + (155)
+ dd (38 shl 16) + (165)
+ dd (46 shl 16) + (166)
+ dd (48 shl 16) + (169)
+ dd (58 shl 16) + (171)
+
+Evaluate_Init.MobilityBonus_Queen:
+ dd (-39 shl 16) + (-36)
+ dd (-21 shl 16) + (-15)
+ dd (3 shl 16) + (8)
+ dd (3 shl 16) + (18)
+ dd (14 shl 16) + (34)
+ dd (22 shl 16) + (54)
+ dd (28 shl 16) + (61)
+ dd (41 shl 16) + (73)
+ dd (43 shl 16) + (79)
+ dd (48 shl 16) + (92)
+ dd (56 shl 16) + (94)
+ dd (60 shl 16) + (104)
+ dd (60 shl 16) + (113)
+ dd (66 shl 16) + (120)
+ dd (67 shl 16) + (123)
+ dd (70 shl 16) + (126)
+ dd (71 shl 16) + (133)
+ dd (73 shl 16) + (136)
+ dd (79 shl 16) + (140)
+ dd (88 shl 16) + (143)
+ dd (88 shl 16) + (148)
+ dd (99 shl 16) + (166)
+ dd (102 shl 16) + (170)
+ dd (102 shl 16) + (175)
+ dd (106 shl 16) + (184)
+ dd (109 shl 16) + (191)
+ dd (113 shl 16) + (206)
+ dd (116 shl 16) + (212)
+
+Evaluate_Init.Lever:
+ dd (0 shl 16) + (0)
+ dd (0 shl 16) + (0)
+ dd (0 shl 16) + (0)
+ dd (0 shl 16) + (0)
+ dd (17 shl 16) + (16)
+ dd (33 shl 16) + (32)
+ dd (0 shl 16) + (0)
+ dd (0 shl 16) + (0)
+
+
+Evaluate_Init.Doubled:
+ dd (0 shl 16) + (0)
+ dd (18 shl 16) + (38)
+ dd (9 shl 16) + (19)
+ dd (6 shl 16) + (12)
+ dd (4 shl 16) + (9)
+ dd (3 shl 16) + (7)
+ dd (3 shl 16) + (6)
+ dd (2 shl 16) + (5)
+
+
+; ShelterWeakness and StormDanger are twice as big
+; to avoid an anoying min(f,FILE_H-f) in ShelterStorm
+Evaluate_Init.ShelterWeakness:
+ dd 100, 20, 10, 46, 82,  86,  98, 0
+ dd 116,  4, 28, 87, 94, 108, 104, 0
+ dd 109,  1, 59, 87, 62,  91, 116, 0
+ dd  75, 12, 43, 59, 90,  84, 112, 0
+ dd  75, 12, 43, 59, 90,  84, 112, 0
+ dd 109,  1, 59, 87, 62,  91, 116, 0
+ dd 116,  4, 28, 87, 94, 108, 104, 0
+ dd 100, 20, 10, 46, 82,  86,  98, 0
+
+Evaluate_Init.StormDanger:
+ dd 4, 73, 132, 46, 31 ,  0,0,0
+ dd 1, 64, 143, 26, 13 ,  0,0,0
+ dd 1, 47, 110, 44, 24 ,  0,0,0
+ dd 0, 72, 127, 50, 31 ,  0,0,0
+ dd 0, 72, 127, 50, 31 ,  0,0,0
+ dd 1, 47, 110, 44, 24 ,  0,0,0
+ dd 1, 64, 143, 26, 13 ,  0,0,0
+ dd 4, 73, 132, 46, 31 ,  0,0,0
+
+ dd 22,  45,  104, 62,  6 , 0,0,0
+ dd 31,  30,   99, 39, 19 , 0,0,0
+ dd 23,  29,   96, 41, 15 , 0,0,0
+ dd 21,  23,  116, 41, 15 , 0,0,0
+ dd 21,  23,  116, 41, 15 , 0,0,0
+ dd 23,  29,   96, 41, 15 , 0,0,0
+ dd 31,  30,   99, 39, 19 , 0,0,0
+ dd 22,  45,  104, 62,  6 , 0,0,0
+
+ dd  0,  0,   79, 23,  1 , 0,0,0
+ dd  0,  0,  148, 27,  2 , 0,0,0
+ dd  0,  0,  161, 16,  1 , 0,0,0
+ dd  0,  0,  171, 22, 15 , 0,0,0
+ dd  0,  0,  171, 22, 15 , 0,0,0
+ dd  0,  0,  161, 16,  1 , 0,0,0
+ dd  0,  0,  148, 27,  2 , 0,0,0
+ dd  0,  0,   79, 23,  1 , 0,0,0
+
+ dd  0, -290, -274, 57, 41 , 0,0,0
+ dd  0,   60,  144, 39, 13 , 0,0,0
+ dd  0,   65,  141, 41, 34 , 0,0,0
+ dd  0,   53,  127, 56, 14 , 0,0,0
+ dd  0,   53,  127, 56, 14 , 0,0,0
+ dd  0,   65,  141, 41, 34 , 0,0,0
+ dd  0,   60,  144, 39, 13 , 0,0,0
+ dd  0, -290, -274, 57, 41 , 0,0,0
+
+Evaluate_Init.Threat_Minor:
+ dd (0 shl 16) + (0)
+ dd (0 shl 16) + (0)
+ dd (0 shl 16) + (33)
+ dd (45 shl 16) + (43)
+ dd (46 shl 16) + (47)
+ dd (72 shl 16) + (107)
+ dd (48 shl 16) + (118)
+ dd (0 shl 16) + (0)
+
+Evaluate_Init.Threat_Rook:
+ dd (0 shl 16) + (0)
+ dd (0 shl 16) + (0)
+ dd (0 shl 16) + (25)
+ dd (40 shl 16) + (62)
+ dd (40 shl 16) + (59)
+ dd (0 shl 16) + (34)
+ dd (35 shl 16) + (48)
+ dd (0 shl 16) + (0)
+
+
+
+Evaluate_Init.PassedFile:
+ dd (9 shl 16) + (10)
+ dd (2 shl 16) + (10)
+ dd (1 shl 16) + (-8)
+ dd (-20 shl 16) + (-12)
+ dd (-20 shl 16) + (-12)
+ dd (1 shl 16) + (-8)
+ dd (2 shl 16) + (10)
+ dd (9 shl 16) + (10)
+
+
+Evaluate_Init.PassedRank:
+ dd 0
+ dd (5 shl 16) + (7)
+ dd (5 shl 16) + (14)
+ dd (31 shl 16) + (38)
+ dd (73 shl 16) + (73)
+ dd (166 shl 16) + (166)
+ dd (252 shl 16) + (252)
+ dd 0
+
+
+
+
+Evaluate_Init.PawnsSet:
+        dd 24, -32, 107, -51, 117, -9, -126, -21, 31
+
+Evaluate_Init.QueenMinorsImbalance:
+        dd 31, -8, -15, -25, -5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+Evaluate_Init.QuadraticOurs:
+	dd 0, 1667,    0,    0,    0,    0,    0,    0
+	dd 0,   40,    0,    0,    0,    0,    0,    0
+	dd 0,   32,  255,   -3,    0,    0,    0,    0
+	dd 0,    0,  104,    4,    0,    0,    0,    0
+	dd 0,  -26,   -2,   47,  105, -149,    0,    0
+	dd 0, -185,   24,  122,  137, -134,    0,    0
+Evaluate_Init.QuadraticTheirs:
+	dd 0,    0,    0,    0,    0,    0,    0,    0
+	dd 0,   36,    0,    0,    0,    0,    0,    0
+	dd 0,    9,   63,    0,    0,    0,    0,    0
+	dd 0,   59,   65,   42,    0,    0,    0,    0
+	dd 0,   46,   39,   24,  -24,    0,    0,    0
+	dd 0,  101,  100,  -37,  141,  268,    0,    0

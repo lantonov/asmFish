@@ -9,7 +9,52 @@
 ;Start:
 
 include 'arm/include/aarch64.inc'
-org 0
 
+include 'arm/fasm1macros.arm'
+DEBUG   = 0
+VERBOSE = 0
+USE_CURRMOVE    = 1
+USE_HASHFULL    = 1
+USE_CMDLINEQUIT = 1
+USE_SYZYGY      = 1
+
+include 'arm/def.arm'
+include 'arm/linux64.arm'
+include 'arm/macros.arm'
+include 'arm/AttackMacros.arm'
+
+org 0x0
+db 4096 dup 0
+dd 32 dup 0xd503201f
 include 'layout.arm'
+
+include 'arm/Endgame.arm'
+
+include 'arm/OsLinux.arm'
+include 'arm/PrintParse.arm'
+include 'arm/MainHash.arm'
+
+include 'arm/BitBoard_Init.arm'
+include 'arm/Gen_Init.arm'
+include 'arm/Position_Init.arm'
+include 'arm/BitTable_Init.arm'
+include 'arm/Search_Init.arm'
+include 'arm/Evaluate_Init.arm'
+include 'arm/Pawn_Init.arm'
+include 'arm/Endgame_Init.arm'
+
+
+
+include "arm/dataSection.arm"
+if USE_SYZYGY
+  include "arm/TablebaseData.arm"
+end if
+
+include "arm/bssSection.arm"
+if USE_SYZYGY
+  include "arm/TablebaseBss.arm"
+end if
+
+dd 2
+balign 4096
 

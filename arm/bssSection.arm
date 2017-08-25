@@ -1,0 +1,132 @@
+if DEBUG
+debug.output: rb 8192
+debug.position: rb 8192
+debug.address: rb 8
+debug.move: rb 4
+end if
+
+
+balign 16
+Output:         rb 4096
+DisplayOutput:  rb 1024
+
+        balign 16
+time:     rb sizeof.Time
+        balign 16
+limits:   rb sizeof.Limits
+        balign 16
+easyMoveMng:    rb sizeof.EasyMoveMng
+        balign 16
+signals:   rb sizeof.Signals
+        balign 16
+options:    rb sizeof.Options
+        balign 16
+ioBuffer:   rb sizeof.IOBuffer
+        balign 16
+mainHash:   rb sizeof.MainHash
+        balign 16
+threadPool: rb sizeof.ThreadPool
+
+
+; data for move generation
+        balign 64
+SlidingAttacksBB:    rb 8*8;9524
+
+        balign 4096
+RookAttacksPEXT:     rb 8*64
+RookAttacksIMUL:     rb 8*64
+RookAttacksMOFF:     rb 8*64
+RookAttacksPDEP:     rb 8*64
+
+PawnAttacks:
+WhitePawnAttacks:    rb 8*64
+BlackPawnAttacks:    rb 8*64
+KnightAttacks:	     rb 8*64
+KingAttacks:	     rb 8*64
+
+        balign 4096
+BishopAttacksPEXT:   rb 8*64
+BishopAttacksIMUL:   rb 8*64
+BishopAttacksMOFF:   rb 8*64
+BishopAttacksPDEP:   rb 8*64
+
+
+; bitboards 
+        balign 4096
+BetweenBB:	   rb 8*64*64
+LineBB:            rb 8*64*64
+SquareDistance:    rb 64*64
+DistanceRingBB:    rb 8*8*64
+ForwardBB:	   rb 8*2*64
+PawnAttackSpan:    rb 8*2*64
+PassedPawnMask:    rb 8*2*64
+InFrontBB:	   rb 8*2*8
+AdjacentFilesBB:   rb 8*8
+FileBB: 	   rb 8*8
+RankBB: 	   rb 8*8
+
+
+; DoMove data
+        balign 64
+Scores_Pieces:	   rb 8*16*64
+Zobrist_Pieces:    rb 8*16*64
+Zobrist_Castling:  rb 8*16
+Zobrist_Ep:	   rb 8*8
+Zobrist_side:	   rb 8*1
+Zobrist_noPawns:   rb 8*1
+PieceValue_MG:	   rb 4*16
+PieceValue_EG:	   rb 4*16
+IsNotPawnMasks:    rb 1*16
+IsNotPieceMasks:   rb 1*16
+IsPawnMasks:	   rb 1*16
+
+
+; data for search
+        balign 4096
+Reductions:	         rb 4*2*2*64*64
+FutilityMoveCounts:      rb 4*16*2
+RazorMargin:             rb 4*4
+_CaptureOrPromotion_or:  rb 1*4
+_CaptureOrPromotion_and: rb 1*4
+DrawValue:	         rb 4*2    ; it is updated when threads start to think
+SeeSignBitMask:          rb 8
+
+
+; data for evaluation
+        balign 64
+Connected:              rb 4*2*2*3*8
+MobilityBonus_Knight:   rb 4*16
+MobilityBonus_Bishop:   rb 4*16
+MobilityBonus_Rook:     rb 4*16
+MobilityBonus_Queen:    rb 4*32
+Lever:                  rb 4*8
+ShelterWeakness:        rb 4*8*8
+StormDanger:
+StormDanger_NoFriendlyPawn: rb 4*8*8
+StormDanger_Unblocked:	    rb 4*8*8
+StormDanger_BlockedByPawn:  rb 4*8*8
+StormDanger_BlockedByKing:  rb 4*8*8
+KingFlank:                  rb 8*8
+Threat_Minor:               rb 4*16
+Threat_Rook:                rb 4*16
+PassedRank:                 rb 4*8
+PassedFile:                 rb 4*8
+DoMaterialEval_Data:
+DoMaterialEval_Data.QuadraticOurs:     rb 4*8*6
+DoMaterialEval_Data.QuadraticTheirs:   rb 4*8*6
+PawnsSet:               rb 4*16
+QueenMinorsImbalance:   rb 4*16
+
+
+; data for endgames
+        balign 64
+EndgameEval_Map:        rb 2*ENDGAME_EVAL_MAX_INDEX*sizeof.EndgameMapEntry
+EndgameScale_Map:       rb 2*ENDGAME_SCALE_MAX_INDEX*sizeof.EndgameMapEntry
+EndgameEval_FxnTable:   rb 8*ENDGAME_EVAL_MAX_INDEX
+EndgameScale_FxnTable:  rb 8*ENDGAME_SCALE_MAX_INDEX
+KPKEndgameTable:        rb 8*48*64
+PushToEdges:            rb 64
+PushToCorners:          rb 64
+PushClose:              rb 8
+PushAway:               rb 8
+
