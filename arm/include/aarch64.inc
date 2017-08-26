@@ -6,10 +6,11 @@ element aarch64.r32
 element aarch64.r64
 element aarch64.f32
 element aarch64.f64
+element aarch64.v128
 
 repeat 31, i:0
-        element w#i : aarch64.r32 + i
-        element x#i : aarch64.r64 + i
+    element w#i : aarch64.r32 + i
+    element x#i : aarch64.r64 + i
 end repeat
 element wzr : aarch64.r32 + 31
 element xzr : aarch64.r64 + 31
@@ -17,10 +18,10 @@ element wsp : aarch64.r32 + 32
 element sp  : aarch64.r64 + 32
 
 repeat 32, i:0
-        element s#i : aarch64.f32 + i
-        element d#i : aarch64.f64 + i
+    element s#i : aarch64.f32 + i
+    element d#i : aarch64.f64 + i
+    element v#i : aarch64.v128 + i
 end repeat
-
 
 define @op0
 define @op1
@@ -48,13 +49,33 @@ define @adr
 @type_wn_wzr  = @type_wn or @type_wzr
 @type_wn_wzr_xn_xzr = @type_wn_wzr or @type_xn_xzr
 
-@type_immf           = 1 shl 8
-@type_immc           = 1 shl 10
-@type_immc_lo12      = 1 shl 12
-@type_immc_abs_g2    = 1 shl 14
-@type_immc_abs_g1_nc = 1 shl 16
-@type_immc_abs_g0_nc = 1 shl 18
-@type_immc_gp_hi21   = 1 shl 20
+@type_dn        = 1 shl 7
+@type_sn        = 1 shl 8
+
+@type_vn_8b   = 1 shl 9
+@type_vn_4h   = 1 shl 10
+@type_vn_2s   = 1 shl 11
+@type_vn_1d   = 1 shl 12
+@type_vn_16b  = 1 shl 13
+@type_vn_8h   = 1 shl 14
+@type_vn_4s   = 1 shl 15
+@type_vn_2d   = 1 shl 16
+@type_vn_b   = 1 shl 17
+@type_vn_h   = 1 shl 18
+@type_vn_s   = 1 shl 19
+@type_vn_d   = 1 shl 20
+
+@type_vn_16b_etc = @type_vn_16b or @type_vn_8b or @type_vn_8h or @type_vn_4h or @type_vn_4s or @type_vn_2s or @type_vn_2d or @type_vn_1d
+@type_vn_b_etc = @type_vn_b or @type_vn_h or @type_vn_s or @type_vn_d
+@type_vn = @type_vn_16b_etc or @type_vn_b_etc
+
+@type_immf           = 1 shl 22
+@type_immc           = 1 shl 24
+@type_immc_lo12      = 1 shl 26
+@type_immc_gp_hi21   = 1 shl 28
+@type_immc_abs_g2    = 1 shl 30
+@type_immc_abs_g1_nc = 1 shl 32
+@type_immc_abs_g0_nc = 1 shl 34
 @type_immr           = @type_immr shl 1
 @type_immr_lo12      = @type_immr_lo12 shl 1
 @type_immr_abs_g2    = @type_immr_abs_g2 shl 1
@@ -62,10 +83,6 @@ define @adr
 @type_immr_abs_g0_nc = @type_immr_abs_g0_nc shl 1
 @type_immr_gp_hi21   = @type_immr_gp_hi21 shl 1
 @type_immr_immc = @type_immr or @type_immc
-
-
-@type_dn        = 1 shl 32
-@type_sn        = 1 shl 33
 
 
 @atype_simple    = 1 shl 0
@@ -304,6 +321,24 @@ end macro
 ; parsing registers and immediates ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
+
+; err if y is not one of v0,...v31
+macro aarch64.parse_voperand ns, y
+    ns.data = +y
+    if elementsof ns.data = 1 & ns.data eq ns.data element 1
+        if ns.data metadata 1 relativeto aarch64.v128
+            ns.data = ns.data metadata 1 - aarch64.v128
+        else
+            err 'invalid vector name'
+        end if
+    else
+        err 'invalid vector name'
+    end if
+end macro
+
+
+
 macro aarch64.parse_operand ns, x
     ns.type = 0
     match :y:z, x
@@ -322,12 +357,48 @@ macro aarch64.parse_operand ns, x
         if ~(ns.data relativeto 0)
             ns.type = ns.type shl 1
         end if
+    else match y.=16b, x
+        ns.type = @type_vn_16b
+        aarch64.parse_voperand ns, y
+    else match y.=8b, x
+        ns.type = @type_vn_8b
+        aarch64.parse_voperand ns, y
+    else match y.=8h, x
+        ns.type = @type_vn_8h
+        aarch64.parse_voperand ns, y
+    else match y.=4h, x
+        ns.type = @type_vn_4h
+        aarch64.parse_voperand ns, y
+    else match y.=4s, x
+        ns.type = @type_vn_4s
+        aarch64.parse_voperand ns, y
+    else match y.=2s, x
+        ns.type = @type_vn_2s
+        aarch64.parse_voperand ns, y
+    else match y.=2d, x
+        ns.type = @type_vn_2d
+        aarch64.parse_voperand ns, y
+    else match y.=1d, x
+        ns.type = @type_vn_1d
+        aarch64.parse_voperand ns, y
+    else match y.=b, x
+        ns.type = @type_vn_b
+        aarch64.parse_voperand ns, y
+    else match y.=h, x
+        ns.type = @type_vn_h
+        aarch64.parse_voperand ns, y
+    else match y.=s, x
+        ns.type = @type_vn_s
+        aarch64.parse_voperand ns, y
+    else match y.=d, x
+        ns.type = @type_vn_d
+        aarch64.parse_voperand ns, y
     else
-        ns.op = +x
+        ns.data = +x
         ns.number = 0
-        if elementsof ns.op = 1 & ns.op eq ns.op element 1
-            if ns.op metadata 1 relativeto aarch64.r64
-                ns.data = ns.op metadata 1 - aarch64.r64
+        if elementsof ns.data = 1 & ns.data eq ns.data element 1
+            if ns.data metadata 1 relativeto aarch64.r64
+                ns.data = ns.data metadata 1 - aarch64.r64
                 if ns.data < 31
                     ns.type = @type_xn
                 else if ns.data = 31
@@ -336,8 +407,8 @@ macro aarch64.parse_operand ns, x
                     ns.data = 31
                     ns.type = @type_xsp
                 end if
-            else if ns.op metadata 1 relativeto aarch64.r32
-                ns.data = ns.op metadata 1 - aarch64.r32
+            else if ns.data metadata 1 relativeto aarch64.r32
+                ns.data = ns.data metadata 1 - aarch64.r32
                 if ns.data < 31
                     ns.type = @type_wn
                 else if ns.data = 31
@@ -346,19 +417,25 @@ macro aarch64.parse_operand ns, x
                     ns.data = 31
                     ns.type = @type_wsp
                 end if
-            else if ns.op metadata 1 relativeto aarch64.f64
-                ns.data = ns.op metadata 1 - aarch64.f64
+            else if ns.data metadata 1 relativeto aarch64.f64
+                ns.data = ns.data metadata 1 - aarch64.f64
                 ns.type = @type_dn
-            else if ns.op metadata 1 relativeto aarch64.f32
-                ns.data = ns.op metadata 1 - aarch64.f32
+            else if ns.data metadata 1 relativeto aarch64.f32
+                ns.data = ns.data metadata 1 - aarch64.f32
                 ns.type = @type_sn
+            else
+                if ns.data relativeto 0
+                    ns.type = @type_immc
+                else
+                    ns.type = @type_immr
+                end if
             end if
-        else if ns.op relativeto 0
-            ns.type = @type_immc
-            ns.data = ns.op
         else
-            ns.type = @type_immr
-            ns.data = ns.op
+            if ns.data relativeto 0
+                ns.type = @type_immc
+            else
+                ns.type = @type_immr
+            end if
         end if
     end match
 end macro
@@ -634,7 +711,6 @@ macro aarch64.parse_adr_f1 size, x&
             else
                 err 'invalid extension in address'
             end match
-
             if @adr.shift = size
                 @adr.encode = 0x00205800 + (@adr.kind shl 13) + (@opB.data shl 16) + (@opA.data shl 5)
             else if @adr.shift = -1
@@ -769,10 +845,6 @@ macro aarch64.restrict x, lower, upper, mask:0
         err 'value is out of range'
     end if
 end macro
-
-
-
-
 
 
 
@@ -1184,7 +1256,7 @@ iterate <instr,code>, beq,0x54000000, bne,0x54000001, bhs,0x54000002, blo,0x5400
                 err 'invalid target'
             end if
         else
-            err 'invalid argument
+            err 'invalid argument'
         end if
 	end macro
 end iterate
@@ -1393,7 +1465,7 @@ macro cbnz a*, b*
             err 'invalid target'
         end if
     else
-        err 'invalid argument
+        err 'invalid argument'
     end if
 end macro
 
@@ -1431,7 +1503,7 @@ macro cbz a*, b*
             err 'invalid target'
         end if
     else
-        err 'invalid argument
+        err 'invalid argument'
     end if
 end macro
 
@@ -2303,13 +2375,309 @@ macro sdiv a*, b*, c*
     end if
 end macro
 
-macro st1 a*, b&
-    dd 0x4c0073e0
+
+
+
+macro aarch64.parse_vstr3 x&
+    match =[a=], x
+        aarch64.parse_operand @op0, a
+        if (@op0.type and @type_xn_xsp)
+            @adr.encode = @adr.encode + (@op0.data shl 5)
+        else
+            err 'invalid address A'
+        end if
+    else match =[a=]=,b , x
+        aarch64.parse_operand @op0, a
+        aarch64.parse_operand @op1, b
+        if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn)
+            @adr.encode = 0x00800000 + @adr.encode + (@op1.data shl 16) + (@op0.data shl 5)
+        else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_immc)
+            @adr.encode = 0x00800000 + @adr.encode + (       31 shl 16) + (@op0.data shl 5)
+        else
+            err 'invalid address C'
+        end if
+    else
+        err 'invalid address B'
+    end match
 end macro
 
-macro ld1 a*, b&
-    dd 0x4c407020
+macro aarch64.parse_vstr2 e&
+    @adr.encode = @adr.encode + (@op0.data shl 0)
+    if @adr.expectindex
+        match =[i=]=,a , e
+            @adr.number = +i
+            if @adr.type and @type_vn_b
+                @adr.encode = @adr.encode + 0x00000000
+            else if @adr.type and @type_vn_h
+                @adr.encode = @adr.encode + 0x00004000
+                @adr.number = @adr.number shl 1
+            else if @adr.type and @type_vn_s
+                @adr.encode = @adr.encode + 0x00008000
+                @adr.number = @adr.number shl 2
+            else if @adr.type and @type_vn_d
+                @adr.encode = @adr.encode + 0x00008400
+                @adr.number = @adr.number shl 3
+            else
+                err 'internal error'
+            end if
+            @adr.encode = @adr.encode + ((@adr.number and 8) shl 27) + ((@adr.number and 7) shl 10)
+            aarch64.parse_vstr3 a
+        else
+            err 'no index found'
+        end match
+    else
+        @adr.number = (bsf @adr.type) - (bsf @type_vn_8b)
+        @adr.encode = @adr.encode + ((@adr.number and 4) shl 28) + ((@adr.number and 3) shl 10)
+        match =,a , e
+            aarch64.parse_vstr3 a
+        else
+            err 'no index found'
+        end match
+    end if
 end macro
+
+macro aarch64.parse_vstr x&
+    match ={a=,b=,c=,d=}e , x
+        @adr.length = 4
+        aarch64.parse_operand @op0, a
+        aarch64.parse_operand @op1, b
+        aarch64.parse_operand @op2, c
+        aarch64.parse_operand @op3, d
+        if @op0.type <> @op1.type | @op0.type <> @op2.type | @op0.type <> @op3.type
+            err 'vector type mismatch'
+        else if (@op0.type and @type_vn_16b_etc)
+            @adr.expectindex = 0
+            @adr.encode = @adr.encode4
+        else if (@op0.type and @type_vn_b_etc)
+            @adr.expectindex = 1
+            @adr.encode = @adr.encode4i
+        else
+            err 'arguments are not vectors'
+        end if
+        @adr.type = @op0.type
+        if (((@op1.data-@op0.data) and 31) <> 1) | (((@op2.data-@op0.data) and 31) <> 2) | (((@op3.data-@op0.data) and 31) <> 3)
+            err 'arguments are not consecutive'
+        end if
+        aarch64.parse_vstr2 e
+    else match ={a=,b=,c=}e , x
+        @adr.length = 3
+        aarch64.parse_operand @op0, a
+        aarch64.parse_operand @op1, b
+        aarch64.parse_operand @op2, c
+        if @op0.type <> @op1.type | @op0.type <> @op2.type
+            err 'vector type mismatch'
+        else if (@op0.type and @type_vn_16b_etc)
+            @adr.expectindex = 0
+            @adr.encode = @adr.encode3
+        else if (@op0.type and @type_vn_b_etc)
+            @adr.expectindex = 1
+            @adr.encode = @adr.encode3i
+        else
+            err 'arguments are not vectors'
+        end if
+        @adr.type = @op0.type
+        if (((@op1.data-@op0.data) and 31) <> 1) | (((@op2.data-@op0.data) and 31) <> 2)
+            err 'arguments are not consecutive'
+        end if
+        aarch64.parse_vstr2 e
+    else match ={a=,b=}e , x
+        @adr.length = 2
+        aarch64.parse_operand @op0, a
+        aarch64.parse_operand @op1, b
+        if @op0.type <> @op1.type
+            err 'vector type mismatch'
+        else if (@op0.type and @type_vn_16b_etc)
+            @adr.expectindex = 0
+            @adr.encode = @adr.encode2
+        else if (@op0.type and @type_vn_b_etc)
+            @adr.expectindex = 1
+            @adr.encode = @adr.encode2i
+        else
+            err 'arguments are not vectors'
+        end if
+        if (((@op1.data-@op0.data) and 31) <> 1)
+            err 'arguments are not consecutive'
+        end if
+        @adr.type = @op0.type
+        aarch64.parse_vstr2 e
+    else match ={a=}e , x
+        @adr.length = 1
+        aarch64.parse_operand @op0, a
+        if (@op0.type and @type_vn_16b_etc)
+            @adr.expectindex = 0
+            @adr.encode = @adr.encode1
+        else if (@op0.type and @type_vn_b_etc)
+            @adr.expectindex = 1
+            @adr.encode = @adr.encode1i
+        else
+            err 'arguments are not vectors'
+        end if
+        @adr.type = @op0.type
+        aarch64.parse_vstr2 e
+    else
+        err 'invalid structure'
+    end match        
+
+end macro
+
+macro st1 a&
+    @adr.encode1  = 0x0c007000
+    @adr.encode2  = 0x0c00a000
+    @adr.encode3  = 0x0c006000
+    @adr.encode4  = 0x0c002000
+    @adr.encode1i = 0x0d000000
+    @adr.encode2i = -1
+    @adr.encode3i = -1
+    @adr.encode4i = -1
+    aarch64.parse_vstr a
+    dd @adr.encode
+end macro
+
+macro st2 a&
+    @adr.encode1  = -1
+    @adr.encode2  = 0x0c008000
+    @adr.encode3  = -1
+    @adr.encode4  = -1
+    @adr.encode1i = -1
+    @adr.encode2i = 0x0d200000
+    @adr.encode3i = -1
+    @adr.encode4i = -1
+    aarch64.parse_vstr a
+    dd @adr.encode
+end macro
+
+macro st3 a&
+    @adr.encode1  = -1
+    @adr.encode2  = -1
+    @adr.encode3  = 0x0c004000
+    @adr.encode4  = -1
+    @adr.encode1i = -1
+    @adr.encode2i = -1
+    @adr.encode3i = 0x0d002000
+    @adr.encode4i = -1
+    aarch64.parse_vstr a
+    dd @adr.encode
+end macro
+
+macro st4 a&
+    @adr.encode1  = -1
+    @adr.encode2  = -1
+    @adr.encode3  = -1
+    @adr.encode4  = 0x0c000000
+    @adr.encode1i = -1
+    @adr.encode2i = -1
+    @adr.encode3i = -1
+    @adr.encode4i = 0x0d202000
+    aarch64.parse_vstr a
+    dd @adr.encode
+end macro
+
+
+macro ld1 a&
+    @adr.encode1  = 0x0c407000
+    @adr.encode2  = 0x0c40a000
+    @adr.encode3  = 0x0c406000
+    @adr.encode4  = 0x0c402000
+    @adr.encode1i = 0x0d400000
+    @adr.encode2i = -1
+    @adr.encode3i = -1
+    @adr.encode4i = -1
+    aarch64.parse_vstr a
+    dd @adr.encode
+end macro
+
+macro ld2 a&
+    @adr.encode1  = -1
+    @adr.encode2  = 0x0c408000
+    @adr.encode3  = -1
+    @adr.encode4  = -1
+    @adr.encode1i = -1
+    @adr.encode2i = 0x0d600000
+    @adr.encode3i = -1
+    @adr.encode4i = -1
+    aarch64.parse_vstr a
+    dd @adr.encode
+end macro
+
+macro ld3 a&
+    @adr.encode1  = -1
+    @adr.encode2  = -1
+    @adr.encode3  = 0x0c404000
+    @adr.encode4  = -1
+    @adr.encode1i = -1
+    @adr.encode2i = -1
+    @adr.encode3i = 0x0d402000
+    @adr.encode4i = -1
+    aarch64.parse_vstr a
+    dd @adr.encode
+end macro
+
+macro ld4 a&
+    @adr.encode1  = -1
+    @adr.encode2  = -1
+    @adr.encode3  = -1
+    @adr.encode4  = 0x0c400000
+    @adr.encode1i = -1
+    @adr.encode2i = -1
+    @adr.encode3i = -1
+    @adr.encode4i = 0x0d602000
+    aarch64.parse_vstr a
+    dd @adr.encode
+end macro
+
+macro ld1r a&
+    @adr.encode1  = 0x0d40c000
+    @adr.encode2  = -1
+    @adr.encode3  = -1
+    @adr.encode4  = -1
+    @adr.encode1i = -1
+    @adr.encode2i = -1
+    @adr.encode3i = -1
+    @adr.encode4i = -1
+    aarch64.parse_vstr a
+    dd @adr.encode
+end macro
+
+macro ld2r a&
+    @adr.encode1  = -1
+    @adr.encode2  = 0x0d60c000
+    @adr.encode3  = -1
+    @adr.encode4  = -1
+    @adr.encode1i = -1
+    @adr.encode2i = -1
+    @adr.encode3i = -1
+    @adr.encode4i = -1
+    aarch64.parse_vstr a
+    dd @adr.encode
+end macro
+
+macro ld3r a&
+    @adr.encode1  = -1
+    @adr.encode2  = -1
+    @adr.encode3  = 0x0d40e000
+    @adr.encode4  = -1
+    @adr.encode1i = -1
+    @adr.encode2i = -1
+    @adr.encode3i = -1
+    @adr.encode4i = -1
+    aarch64.parse_vstr a
+    dd @adr.encode
+end macro
+
+macro ld4r a&
+    @adr.encode1  = -1
+    @adr.encode2  = -1
+    @adr.encode3  = -1
+    @adr.encode4  = 0x0d60e000
+    @adr.encode1i = -1
+    @adr.encode2i = -1
+    @adr.encode3i = -1
+    @adr.encode4i = -1
+    aarch64.parse_vstr a
+    dd @adr.encode
+end macro
+
+
 
 macro sxtw a*, b*
     aarch64.parse_operand @op0, a
@@ -2424,94 +2792,3 @@ end macro
 
 
 
-
-;;;;;;;;;;;;;;;;;
-; junk
-;;;;;;;;;;;;
-
-
-
-
-if 0
-    if (@op0.type and @type_xn_xzr) & (@adr.type and @atype_postincr)
-        if -256 <= @adr.imm & @adr.imm <= 255
-            dd 0xf8400400 + ((@adr.imm and 0x1FF) shl 12) + (@adr.n shl 5) + (@op0.data shl 0)
-        else
-            err 'immediate offset out of range'
-        end if
-    else if (@op0.type and @type_wn_wzr) & (@adr.type and @atype_postincr)
-        if -256 <= @adr.imm & @adr.imm <= 255
-            dd 0xb8400400 + ((@adr.imm and 0x1FF) shl 12) + (@adr.n shl 5) + (@op0.data shl 0)
-        else
-            err 'immediate offset out of range'
-        end if
-    else if (@op0.type and @type_xn_xzr) & (@adr.type and @atype_preincr)
-        if -256 <= @adr.imm & @adr.imm <= 255
-            dd 0xf8400c00 + ((@adr.imm and 0x1FF) shl 12) + (@adr.n shl 5) + (@op0.data shl 0)
-        else
-            err 'immediate offset out of range'
-        end if
-    else if (@op0.type and @type_wn_wzr) & (@adr.type and @atype_preincr)
-        if -256 <= @adr.imm & @adr.imm <= 255
-            dd 0xb8400c00 + ((@adr.imm and 0x1FF) shl 12) + (@adr.n shl 5) + (@op0.data shl 0)
-        else
-            err 'immediate offset out of range'
-        end if
-    else if (@op0.type and @type_xn_xzr) & (@adr.type and @atype_simple)
-        if @adr.imm and 0x07 = 0 & 0 <= @adr.imm & @adr.imm < 1 shl 12
-            dd 0xf9400000 + (((@adr.imm shr 3) and 0xFFF) shl 10) + (@adr.n shl 5) + (@op0.data shl 0)
-        else if -1 shl 8 <= @adr.imm & @adr.imm < 1 shl 8
-            dd 0xf8400000 + ((@adr.imm and 0x1FF) shl 12) + (@adr.n shl 5) + (@op0.data shl 0)
-        else
-            err 'immediate offset out of range'     
-        end if
-    else if (@op0.type and @type_wn_wzr) & (@adr.type and @atype_simple)
-        if @adr.imm and 0x03 = 0 & 0 <= @adr.imm & @adr.imm < 1 shl 12
-            dd 0xb9400000 + (((@adr.imm shr 2) and 0xFFF) shl 10) + (@adr.n shl 5) + (@op0.data shl 0)
-        else if -1 shl 8 <= @adr.imm & @adr.imm < 1 shl 8
-            dd 0xb8400000 + ((@adr.imm and 0x1FF) shl 12) + (@adr.n shl 5) + (@op0.data shl 0)
-        else
-            err 'immediate offset out of range'
-        end if
-    else if (@op0.type and @type_xn_xzr) & (@adr.type and @atype_register)
-        if @adr.shift = 3
-            dd 0xf8605800 + (@adr.kind shl 13) + (@adr.m shl 16) + (@adr.n shl 5) + (@op0.data shl 0)
-        else if @adr.shift = -1
-            dd 0xf8604800 + (@adr.kind shl 13) + (@adr.m shl 16) + (@adr.n shl 5) + (@op0.data shl 0)
-        else
-            err 'invalid shift amount'
-        end if
-    else if (@op0.type and @type_wn_wzr) & (@adr.type and @atype_register)
-        if @adr.shift = 2
-            dd 0xb8605800 + (@adr.kind shl 13) + (@adr.m shl 16) + (@adr.n shl 5) + (@op0.data shl 0)
-        else if @adr.shift = -1
-            dd 0xb8604800 + (@adr.kind shl 13) + (@adr.m shl 16) + (@adr.n shl 5) + (@op0.data shl 0)
-        else
-            err 'invalid shift amount'
-        end if
-    else if (@op0.type and @type_xn_xzr) & (@adr.type and @atype_literal)
-        if @adr.imm relativeto $
-            @adr.imm = @adr.imm - $
-            if (@adr.imm and 0x03 = 0) & (-1 shl 20 <= @adr.imm & @adr.imm < 1 shl 20)
-                dd 0x58000000 + (((@adr.imm and 0x1FFFFF) shr 2) shl 5) + (@op0.data shl 0)
-            else
-                err 'literal out of range or unaligned'
-            end if
-        else
-            err 'invalid literal'
-        end if
-    else if (@op0.type and @type_wn_wzr) & (@adr.type and @atype_literal)
-        if @adr.imm relativeto $
-            @adr.imm = @adr.imm - $
-            if (@adr.imm and 0x03 = 0) & (-1 shl 20 <= @adr.imm & @adr.imm < 1 shl 20)
-                dd 0x18000000 + (((@adr.imm and 0x1FFFFF) shr 2) shl 5) + (@op0.data shl 0)
-            else
-                err 'literal out of range or unaligned'
-            end if
-        else
-            'invalid literal'
-        end if
-    else
-        err 'invalid argument'
-    end if
-end if
