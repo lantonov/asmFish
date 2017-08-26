@@ -321,7 +321,44 @@ end macro
 ; parsing registers and immediates ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+macro aarch64.parse_float ns
+    ns.type = @type_immf
+    if ns.data = 0.0
+        ns.data = 00000000b
+    else if ns.data = 1.0
+        ns.data = 01110000b
+    else if ns.data = -1.0
+        ns.data = 11110000b
+    else if ns.data = 0.25
+        ns.data = 01010000b
+    else if ns.data = 0.5
+        ns.data = 01100000b
+    else if ns.data = 2.0
+        ns.data = 00000000b
+    else if ns.data = 2.5
+        ns.data = 00000100b
+    else if ns.data = 3.0
+        ns.data = 00001000b
+    else if ns.data = 4.0
+        ns.data = 00010000b
+    else if ns.data = 5.0
+        ns.data = 00010100b
+    else if ns.data = 8.0
+        ns.data = 00100000b
+    else
+        err 'float cannot be encoded'
+    end if
+end macro
 
+macro aarch64.parse_immediate ns
+    if ns.data eqtype 0.0
+        aarch64.parse_float ns
+    else if ns.data relativeto 0
+        ns.type = @type_immc
+    else
+        ns.type = @type_immr
+    end if
+end macro
 
 ; err if y is not one of v0,...v31
 macro aarch64.parse_voperand ns, y
@@ -336,7 +373,6 @@ macro aarch64.parse_voperand ns, y
         err 'invalid vector name'
     end if
 end macro
-
 
 
 macro aarch64.parse_operand ns, x
@@ -424,55 +460,25 @@ macro aarch64.parse_operand ns, x
                 ns.data = ns.data metadata 1 - aarch64.f32
                 ns.type = @type_sn
             else
-                if ns.data relativeto 0
-                    ns.type = @type_immc
-                else
-                    ns.type = @type_immr
-                end if
+                aarch64.parse_immediate ns
+
+;                if ns.data relativeto 0
+;                    ns.type = @type_immc
+;                else
+;                    ns.type = @type_immr
+;                end if
             end if
         else
-            if ns.data relativeto 0
-                ns.type = @type_immc
-            else
-                ns.type = @type_immr
-            end if
+            aarch64.parse_immediate ns
+;            if ns.data eqtype 0.0
+;                aarch64.parse_foperand
+;            elseif ns.data relativeto 0
+;                ns.type = @type_immc
+;            else
+;                ns.type = @type_immr
+;            end if
         end if
     end match
-end macro
-
-macro aarch64.parse_foperand ns, x
-    ns.type = 0
-    ns.op = +x
-    if ns.op eqtype 0.0
-        ns.type = @type_immf
-        if x = 1.0
-            ns.data = 01110000b
-        else if x = 2.0
-            ns.data = 00000000b
-        else if x = 3.0
-            ns.data = 00000000b
-        else if x = 4.0
-            ns.data = 00010000b
-        else if x = 5.0
-            ns.data = 00010100b
-        else if x = 8.0
-            ns.data = 00100000b
-        else
-            err 'float cannot be encoded'
-        end if
-    else if elementsof ns.op = 1 & ns.op eq ns.op element 1
-        if ns.op metadata 1 relativeto aarch64.f64
-            ns.data = ns.op metadata 1 - aarch64.f64
-            ns.type = @type_dn
-        else if ns.op metadata 1 relativeto aarch64.f32
-            ns.data = ns.op metadata 1 - aarch64.f32
-            ns.type = @type_sn
-        else
-            err 'invalid operand'
-        end if
-    else
-        err 'invalid operand'
-    end if
 end macro
 
 
@@ -1507,7 +1513,7 @@ macro cbz a*, b*
     end if
 end macro
 
-macro ccmn a*, b*, c*, d
+macro ccmn a*, b*, c*, d*
     aarch64.parse_operand @op0, a
     aarch64.parse_operand @op1, b
     aarch64.parse_operand @op2, c
@@ -1533,7 +1539,7 @@ macro ccmn a*, b*, c*, d
     end if
 end macro
 
-macro ccmp a*, b*, c*, d
+macro ccmp a*, b*, c*, d*
     aarch64.parse_operand @op0, a
     aarch64.parse_operand @op1, b
     aarch64.parse_operand @op2, c
@@ -1560,7 +1566,7 @@ macro ccmp a*, b*, c*, d
 end macro
 
 
-macro cinc a*, b*, c
+macro cinc a*, b*, c*
     aarch64.parse_operand @op0, a
     aarch64.parse_operand @op1, b
     aarch64.parse_con           c
@@ -1973,7 +1979,7 @@ macro orr a*, b*, c*, d
     aarch64.parse_shf           d
     if (@op0.type and @type_wn_wsp) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_immc) & (@shf.empty)
         aarch64.parse_bimm32 @op2.data, 1
-        dd 0x12000000 + (@imm.n shl 22) + (@imm.r shl 16) + (@imm.s shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+        dd 0x32000000 + (@imm.n shl 22) + (@imm.r shl 16) + (@imm.s shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_immc) & (@shf.empty)
         aarch64.parse_bimm64 @op2.data, 1
         dd 0xb2000000 + (@imm.n shl 22) + (@imm.r shl 16) + (@imm.s shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
@@ -2097,6 +2103,9 @@ macro ldp a*, b*, c&
     else if (@op0.type and @type_dn) & (@op1.type and @type_dn)
         aarch64.parse_adr_f2 3, c
         dd 0x6c400000 + @adr.encode + (@op1.data shl 10) + (@op0.data shl 0)
+    else if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr)
+        aarch64.parse_adr_f2 2, c
+        dd 0x28400000 + @adr.encode + (@op1.data shl 10) + (@op0.data shl 0)
     else
         err 'invalid argument'
     end if
@@ -2149,7 +2158,7 @@ macro str a*, b&
         dd 0xb8000000 + @adr.encode + (@op0.data shl 0)
     else if @op0.type and @type_dn
         aarch64.parse_adr_f1 3, b
-        dd 0x00000000 + @adr.encode + (@op0.data shl 0)
+        dd 0xfc000000 + @adr.encode + (@op0.data shl 0)
     else if @op0.type and @type_sn
         aarch64.parse_adr_f1 2, b
         dd 0x00000000 + @adr.encode + (@op0.data shl 0)
@@ -2699,6 +2708,19 @@ macro uxtw a*, b*
     end if
 end macro
 
+macro fdiv a*, b*, c*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    aarch64.parse_operand @op2, c
+    if (@op0.type and @type_dn) & (@op1.type and @type_dn) & (@op2.type and @type_dn)
+        dd 0x1e601800 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_sn) & (@op1.type and @type_sn) & (@op2.type and @type_sn)
+        dd 0x00000000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid argument'
+    end if
+end macro
+
 macro fmul a*, b*, c*
     aarch64.parse_operand @op0, a
     aarch64.parse_operand @op1, b
@@ -2707,6 +2729,32 @@ macro fmul a*, b*, c*
         dd 0x1e600800 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_sn) & (@op1.type and @type_sn) & (@op2.type and @type_sn)
         dd 0x1e200800 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid argument'
+    end if
+end macro
+
+macro fadd a*, b*, c*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    aarch64.parse_operand @op2, c
+    if (@op0.type and @type_dn) & (@op1.type and @type_dn) & (@op2.type and @type_dn)
+        dd 0x1e602800 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_sn) & (@op1.type and @type_sn) & (@op2.type and @type_sn)
+        dd 0x00000000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid argument'
+    end if
+end macro
+
+macro fsub a*, b*, c*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    aarch64.parse_operand @op2, c
+    if (@op0.type and @type_dn) & (@op1.type and @type_dn) & (@op2.type and @type_dn)
+        dd 0x1e603800 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_sn) & (@op1.type and @type_sn) & (@op2.type and @type_sn)
+        dd 0x00000000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
     else
         err 'invalid argument'
     end if
@@ -2726,14 +2774,29 @@ macro fmadd a*, b*, c*, d*
     end if
 end macro
 
-macro fdiv a*, b*, c*
+macro fmsub a*, b*, c*, d*
     aarch64.parse_operand @op0, a
     aarch64.parse_operand @op1, b
     aarch64.parse_operand @op2, c
+    aarch64.parse_operand @op3, d
     if (@op0.type and @type_dn) & (@op1.type and @type_dn) & (@op2.type and @type_dn)
-        dd 0x1e601800 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+        dd 0x1f408000 + (@op2.data shl 16) + (@op3.data shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_sn) & (@op1.type and @type_sn) & (@op2.type and @type_sn)
-        dd 0x00000000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+        dd 0x00000000 + (@op2.data shl 16) + (@op2.data shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid argument'
+    end if
+end macro
+
+macro fnmsub a*, b*, c*, d*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    aarch64.parse_operand @op2, c
+    aarch64.parse_operand @op3, d
+    if (@op0.type and @type_dn) & (@op1.type and @type_dn) & (@op2.type and @type_dn)
+        dd 0x1f608000 + (@op2.data shl 16) + (@op3.data shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_sn) & (@op1.type and @type_sn) & (@op2.type and @type_sn)
+        dd 0x00000000 + (@op2.data shl 16) + (@op2.data shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
     else
         err 'invalid argument'
     end if
@@ -2778,11 +2841,75 @@ end macro
 
 macro fmov a*, b*
     aarch64.parse_operand @op0, a
-    aarch64.parse_foperand @op1, b
+    aarch64.parse_operand @op1, b
     if (@op0.type and @type_dn) & (@op1.type and @type_dn)
         dd 0x1e604000 + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_dn) & (@op1.type and @type_immf)
         dd 0x1e601000 + (@op1.data shl 13) + (@op0.data shl 0)
+    else if (@op0.type and @type_dn) & (@op1.type and @type_xn_xzr)
+        dd 0x9e670000 + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid operands'
+    end if
+end macro
+
+
+macro fcmp a*, b*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_dn) & (@op1.type and @type_dn)
+        dd 0x00000000 + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_dn) & (@op1.type and @type_immf)
+        dd 0x1e602008 + (@op1.data shl 13) + (@op0.data shl 0)
+    else
+        err 'invalid operands'
+    end if
+end macro
+
+
+macro fcmpe a*, b*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_dn) & (@op1.type and @type_dn)
+        dd 0x1e602010 + (@op1.data shl 16) + (@op0.data shl 5)
+    else if (@op0.type and @type_sn) & (@op1.type and @type_sn)
+        dd 0x00000000 + (@op1.data shl 13) + (@op0.data shl 0)
+    else     
+        err 'invalid operands'
+    end if
+end macro
+
+macro fneg a*, b*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_dn) & (@op1.type and @type_dn)
+        dd 0x1e614000 + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_sn) & (@op1.type and @type_sn)
+        dd 0x00000000 + (@op1.data shl 13) + (@op0.data shl 0)
+    else     
+        err 'invalid operands'
+    end if
+end macro
+
+macro fabs a*, b*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_dn) & (@op1.type and @type_dn)
+        dd 0x1e60c000 + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_sn) & (@op1.type and @type_sn)
+        dd 0x00000000 + (@op1.data shl 13) + (@op0.data shl 0)
+    else     
+        err 'invalid operands'
+    end if
+end macro
+
+macro fsqrt a*, b*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_dn) & (@op1.type and @type_dn)
+        dd 0x1e61c000 + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_sn) & (@op1.type and @type_sn)
+        dd 0x00000000 + (@op1.data shl 13) + (@op0.data shl 0)
     else     
         err 'invalid operands'
     end if
@@ -2790,5 +2917,15 @@ end macro
 
 
 
-
+macro fcsel a*, b*, c*, d*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    aarch64.parse_operand @op2, c
+    aarch64.parse_con           d
+    if (@op0.type and @type_dn) & (@op1.type and @type_dn) & (@op2.type and @type_dn) & (@con.success)
+        dd 0x1e600c00 + (@con.kind shl 12) + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid argument'
+    end if
+end macro
 
