@@ -1215,39 +1215,39 @@ WDLtoDTZ:
         db -1,-101,0,101,1
 
 
-.LC0:
+_LC0:
         db "/",0
-.LC1:
+_LC1:
         db "HSHMAX too low!",0
-.LC2:
+_LC2:
         db ".rtbw",0
-.LC3:
+_LC3:
         db "TBMAX_PIECE limit too low!",0
-.LC4:
+_LC4:
         db "TBMAX_PAWN limit too low!",0
-.LC5:
+_LC5:
         db "Could not find %s.rtbw",0
-.LC6:
+_LC6:
         db "Corrupted table.",0
-.LC7:
+_LC7:
         db ".rtbz",0
-.LC8:
+_LC8:
         db "<empty>",0
-.LC9:
+_LC9:
 ;        db "K%cvK"
-.LC10:
+_LC10:
 ;        db "K%cvK%c"
-.LC11:
+_LC11:
 ;        db "K%c%cvK"
-.LC12:
+_LC12:
 ;        db "K%c%cvK%c"
-.LC13:
+_LC13:
 ;        db "K%c%c%cvK"
-.LC14:
+_LC14:
 ;        db "K%c%cvK%c%c"
-.LC15:
+_LC15:
 ;        db "K%c%c%cvK%c"
-.LC16:
+_LC16:
 ;        db "K%c%c%c%cvK"
-.LC17:
+_LC17:
         db "info string Found %d tablebases.", 10, 0
