@@ -65,7 +65,7 @@ macro mov64 reg, num
                movk   reg, ((num) and 0x0FFFF000000000000) shr 48, lsl 48
 end macro
 
-macro AddSub T, A, B, C, D:0
+macro addsub? T, A, B, C, D:0
     if T = White
                 add   A, B, C, lsl D
     else

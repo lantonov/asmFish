@@ -1,15 +1,85 @@
-Position_PrintFen:
-SetCheckInfo:
 Gen_Legal:
-
-Math_Rand_i:
-Math_log_d_d:
-Math_pow_d_dd:
-
 AttackersTo_Side:
+
+Thread_Think:
+MainThread_Think:
+
 
 _start:
 start:
+
+    eor v0.8b, v0.8b, v0.8b
+    eor v0.8b, v0.8b, v1.8b
+    eor v0.8b, v1.8b, v0.8b
+    eor v1.8b, v0.8b, v0.8b
+    eor v0.16b, v0.16b, v0.16b
+
+    add v0.8b, v0.8b, v0.8b
+    add v0.8b, v0.8b, v1.8b
+    add v0.8b, v1.8b, v0.8b
+    add v1.8b, v0.8b, v0.8b
+
+    add v0.8b, v0.8b, v0.8b
+    add v0.4h, v0.4h, v0.4h
+    add v0.2s, v0.2s, v0.2s
+
+    add v0.16b, v0.16b, v0.16b
+    add v0.8h, v0.8h, v0.8h
+    add v0.4s, v0.4s, v0.4s
+    add v0.2d, v0.2d, v0.2d
+
+    str x0, [x0, -1]
+    str x0, [x0, -1]!
+    str x0, [x0], -1
+
+    str w0, [x0, -1]
+    str w0, [x0, -1]!
+    str w0, [x0], -1
+
+    str x0, [x0, 1]
+    str x0, [x0, 1]!
+    str x0, [x0], 1
+
+    str w0, [x0, 1]
+    str w0, [x0, 1]!
+    str w0, [x0], 1
+
+    ldr x0, [x0, -1]
+    ldr x0, [x0, -1]!
+    ldr x0, [x0], -1
+
+    ldr w0, [x0, -1]
+    ldr w0, [x0, -1]!
+    ldr w0, [x0], -1
+
+    ldr x0, [x0, 1]
+    ldr x0, [x0, 1]!
+    ldr x0, [x0], 1
+
+    ldr w0, [x0, 1]
+    ldr w0, [x0, 1]!
+    ldr w0, [x0], 1
+
+
+    uxtb w0, w0
+    uxtb w1, w0
+    uxtb w0, w1
+    uxtb x0, w0
+    uxtb x1, w0
+    uxtb x0, w1
+
+
+    fcmpe d0, d0
+    fcmpe d0, d1
+    fcmpe d1, d0
+
+    fcsel d0, d0, d0, eq
+    fcsel d0, d0, d0, ne
+    fcsel d0, d0, d1, eq
+    fcsel d0, d1, d0, eq
+    fcsel d1, d0, d0, eq
+
+
 
 	st1	{v0.8b},[x0]
 	st1	{v0.8b,v1.8b},[x0]

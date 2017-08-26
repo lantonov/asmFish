@@ -36,38 +36,41 @@ define @con
 define @adr
 
 
-@type_empty     = 1 shl 0
-@type_wsp       = 1 shl 1
-@type_wn        = 1 shl 2
-@type_wzr       = 1 shl 3
-@type_xsp       = 1 shl 4
-@type_xn        = 1 shl 5
-@type_xzr       = 1 shl 6
+@type_vn_8b   = 1 shl 0 ; must be 0
+@type_vn_4h   = 1 shl 1
+@type_vn_2s   = 1 shl 2
+@type_vn_1d   = 1 shl 3
+@type_vn_16b  = 1 shl 4
+@type_vn_8h   = 1 shl 5
+@type_vn_4s   = 1 shl 6
+@type_vn_2d   = 1 shl 7
+@type_vn_b   = 1 shl 8
+@type_vn_h   = 1 shl 9
+@type_vn_s   = 1 shl 10
+@type_vn_d   = 1 shl 11
+@type_vn_16b_etc = @type_vn_16b or @type_vn_8b or @type_vn_8h or @type_vn_4h or @type_vn_4s or @type_vn_2s or @type_vn_2d or @type_vn_1d
+@type_vn_16b_etc_no_1d = @type_vn_16b or @type_vn_8b or @type_vn_8h or @type_vn_4h or @type_vn_4s or @type_vn_2s or @type_vn_2d
+@type_vn_b_etc = @type_vn_b or @type_vn_h or @type_vn_s or @type_vn_d
+@type_vn = @type_vn_16b_etc or @type_vn_b_etc
+
+
+@type_empty     = 1 shl 12
+@type_wsp       = 1 shl 13
+@type_wn        = 1 shl 14
+@type_wzr       = 1 shl 15
+@type_xsp       = 1 shl 16
+@type_xn        = 1 shl 17
+@type_xzr       = 1 shl 18
 @type_xn_xsp  = @type_xn or @type_xsp
 @type_xn_xzr  = @type_xn or @type_xzr
 @type_wn_wsp  = @type_wn or @type_wsp
 @type_wn_wzr  = @type_wn or @type_wzr
 @type_wn_wzr_xn_xzr = @type_wn_wzr or @type_xn_xzr
 
-@type_dn        = 1 shl 7
-@type_sn        = 1 shl 8
+@type_dn        = 1 shl 19
+@type_sn        = 1 shl 20
 
-@type_vn_8b   = 1 shl 9
-@type_vn_4h   = 1 shl 10
-@type_vn_2s   = 1 shl 11
-@type_vn_1d   = 1 shl 12
-@type_vn_16b  = 1 shl 13
-@type_vn_8h   = 1 shl 14
-@type_vn_4s   = 1 shl 15
-@type_vn_2d   = 1 shl 16
-@type_vn_b   = 1 shl 17
-@type_vn_h   = 1 shl 18
-@type_vn_s   = 1 shl 19
-@type_vn_d   = 1 shl 20
 
-@type_vn_16b_etc = @type_vn_16b or @type_vn_8b or @type_vn_8h or @type_vn_4h or @type_vn_4s or @type_vn_2s or @type_vn_2d or @type_vn_1d
-@type_vn_b_etc = @type_vn_b or @type_vn_h or @type_vn_s or @type_vn_d
-@type_vn = @type_vn_16b_etc or @type_vn_b_etc
 
 @type_immf           = 1 shl 22
 @type_immc           = 1 shl 24
@@ -998,6 +1001,8 @@ macro add a*, b*, c*, d
         dd 0x11000000 + (       0 shl 30) + (         0 shl 22) + ((@op2.data and 0xFFF) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_immc_lo12)
         dd 0x91000000 + (       0 shl 30) + (         0 shl 22) + ((@op2.data and 0xFFF) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_vn_16b_etc_no_1d) & (@op1.type and @type_vn_16b_etc_no_1d) & (@op2.type and @type_vn_16b_etc_no_1d) & (@op0.type = @op1.type) & (@op0.type = @op1.type)
+        dd 0x0e208400 + (@op2.data shl 16) + (((bsf @op0.type) and 4) shl 28) + (((bsf @op0.type) and 3) shl 22) + (@op1.data shl 5) + (@op0.data shl 0)
     else
         err 'invalid argument'
     end if
@@ -1300,7 +1305,7 @@ macro sbfx a*, b*, c*, d*
     aarch64.parse_operand @op2, c
     aarch64.parse_operand @op3, d
     if (@op0.type and @type_wn_wzr) & (@op0.type and @type_wn_wzr) & (@op2.type and @type_immc) & (@op3.type and @type_immc)
-        dd 0x00000000 + ((@op2.data and 0x1F) shl 16) + (((@op2.data+@op3.data-1) and 0x1F) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+        dd 0x13000000 + ((@op2.data and 0x1F) shl 16) + (((@op2.data+@op3.data-1) and 0x1F) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_xn_xzr) & (@op0.type and @type_xn_xzr) & (@op2.type and @type_immc) & (@op3.type and @type_immc)
         dd 0x93400000 + ((@op2.data and 0x3F) shl 16) + (((@op2.data+@op3.data-1) and 0x3F) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
     else
@@ -1818,6 +1823,8 @@ macro eor a*, b*, c*, d
         dd 0x4a000000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr) & (@op2.type and @type_xn_xzr) & (@shf.success)
         dd 0xca000000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_vn_16b_etc) & (@op1.type and @type_vn_16b_etc) & (@op2.type and @type_vn_16b_etc) & (@op0.type = @op1.type) & (@op0.type = @op1.type)
+        dd 0x2e201c00 + (@op2.data shl 16) + (((bsf @op0.type) and 4) shl 28) + (@op1.data shl 5) + (@op0.data shl 0)        
     else
         err 'invalid argument'
     end if
@@ -2260,10 +2267,10 @@ macro sub a*, b*, c*, d
     aarch64.parse_shf           d
     if (@op0.type and @type_wn_wsp) & (@op1.type and @type_wn_wsp) & (@op2.type and @type_immc)
         aarch64.parse_aimm @op2.data, 1
-        dd 0x51000000 + (@imm.inv shl 30) + (@imm.shift shl 22) + (@imm.imm12 shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+        dd 0x51000000 - (@imm.inv shl 30) + (@imm.shift shl 22) + (@imm.imm12 shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_immc)
         aarch64.parse_aimm @op2.data, 1
-        dd 0xd1000000 + (@imm.inv shl 30) + (@imm.shift shl 22) + (@imm.imm12 shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+        dd 0xd1000000 - (@imm.inv shl 30) + (@imm.shift shl 22) + (@imm.imm12 shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_wn_wzr) & (@shf.success)
         dd 0x4b000000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr) & (@op2.type and @type_xn_xzr) & (@shf.success)
@@ -2274,6 +2281,8 @@ macro sub a*, b*, c*, d
         dd 0xcb200000 + (@op2.data shl 16) + (        2 shl 13) + (         0 shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_wn_wzr_xn_xzr) & (@ext.success)
         dd 0xcb200000 + (@op2.data shl 16) + (@ext.kind shl 13) + (@ext.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_vn_16b_etc_no_1d) & (@op1.type and @type_vn_16b_etc_no_1d) & (@op2.type and @type_vn_16b_etc_no_1d) & (@op0.type = @op1.type) & (@op0.type = @op1.type)
+        dd 0x2e208400 + (@op2.data shl 16) + (((bsf @op0.type) and 4) shl 28) + (((bsf @op0.type) and 3) shl 22) + (@op1.data shl 5) + (@op0.data shl 0)
     else
         err 'invalid argument'
     end if
@@ -2954,6 +2963,8 @@ macro fmov a*, b*
         dd 0x1e601000 + (@op1.data shl 13) + (@op0.data shl 0)
     else if (@op0.type and @type_dn) & (@op1.type and @type_xn_xzr)
         dd 0x9e670000 + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_dn)
+        dd 0x9e660000 + (@op1.data shl 5) + (@op0.data shl 0)
     else
         err 'invalid operands'
     end if

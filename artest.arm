@@ -41,11 +41,37 @@ USE_SYZYGY      = 1
 .word 0xd503201f
 .endr
 
+
 .include "layout.arm"
+
+.if USE_SYZYGY
+  .include "farm/guts/TablebaseCore.arm"
+  .include "farm/guts/Tablebase.arm"
+.endif
+        lea  x6, spEntry
+        mov  x0, sp
+        str  x0, [x6]
 
 .include "farm/guts/Endgame.arm"
 
+.include "farm/guts/Evaluate.arm"
 
+
+
+.include "farm/guts/CheckTime.arm"
+.include "farm/guts/RootMoves.arm"
+.include "farm/guts/Move_GivesCheck.arm"
+.include "farm/guts/Move_Undo.arm"
+.include "farm/guts/Move_Do.arm"
+.include "farm/guts/SetCheckInfo.arm"
+.include "farm/guts/Search_Clear.arm"
+.include "farm/guts/Perft.arm"
+.include "farm/guts/Limits.arm"
+.include "farm/guts/Thread.arm"
+.include "farm/guts/ThreadPool.arm"
+.include "farm/guts/Position.arm"
+.include "farm/guts/Uci.arm"
+.include "farm/guts/Math.arm"
 .include "farm/guts/OsLinux.arm"
 .include "farm/guts/PrintParse.arm"
 .include "farm/guts/MainHash.arm"

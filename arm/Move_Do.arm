@@ -1,0 +1,846 @@
+Move_Do__UciParseMoves:
+if DEBUG
+        adr  x4, @f
+        lea  x6, debug.address
+        str  x4, [x6]
+          b  MoveDo
+@@:
+ db "DoMove__UciParseMoves",0
+balign 4
+end if
+
+Move_Do__PerftGen_Root:
+if DEBUG
+        adr  x4, @f
+        lea  x6, debug.address
+        str  x4, [x6]
+          b  MoveDo
+@@:
+ db "Move_Do__PerftGen_Root",0
+balign 4
+end if
+
+Move_Do__PerftGen_Branch:
+if DEBUG
+        adr  x4, @f
+        lea  x6, debug.address
+        str  x4, [x6]
+          b  MoveDo
+@@:
+ db "Move_Do__PerftGen_Branch",0
+balign 4
+end if
+
+Move_Do__ExtractPonderFromTT:
+if DEBUG
+        adr  x4, @f
+        lea  x6, debug.address
+        str  x4, [x6]
+          b  MoveDo
+@@:
+ db "Move_Do__ExtractPonderFromTT",0
+balign 4
+end if
+
+Move_Do__Search:
+if DEBUG
+        adr  x4, @f
+        lea  x6, debug.address
+        str  x4, [x6]
+          b  MoveDo
+@@:
+ db "Move_Do__Search",0
+balign 4
+end if
+
+Move_Do__QSearch:
+if DEBUG
+        adr  x4, @f
+        lea  x6, debug.address
+        str  x4, [x6]
+          b  MoveDo
+@@:
+ db "Move_Do__QSearch",0
+balign 4
+end if
+
+Move_Do__EasyMoveMng:
+if DEBUG
+        adr  x4, @f
+        lea  x6, debug.address
+        str  x4, [x6]
+          b  MoveDo
+@@:
+ db "Move_Do__EasyMoveMng",0
+balign 4
+end if
+
+Move_Do__RootMove_InsertPVInTT:
+if DEBUG
+        adr  x4, @f
+        lea  x6, debug.address
+        str  x4, [x6]
+          b  MoveDo
+@@:
+ db "Move_Do__RootMove_InsertPVInTT",0
+balign 4
+end if
+
+Move_Do__ProbCut:
+if DEBUG
+        adr  x4, @f
+        lea  x6, debug.address
+        str  x4, [x6]
+          b  MoveDo
+@@:
+ db "Move_Do__ProbCut",0
+balign 4
+end if
+
+Move_Do__Tablebase_ProbeAB:
+if DEBUG
+        adr  x4, @f
+        lea  x6, debug.address
+        str  x4, [x6]
+          b  MoveDo
+@@:
+ db "Move_Do__Tablebase_ProbeAB",0
+balign 4
+end if
+
+Move_Do__Tablebase_ProbeWDL:
+if DEBUG
+        adr  x4, @f
+        lea  x6, debug.address
+        str  x4, [x6]
+          b  MoveDo
+@@:
+ db "Move_Do__Tablebase_ProbeWDL",0
+balign 4
+end if
+
+Move_Do__Tablebase_ProbeDTZNoEP:
+if DEBUG
+        adr  x4, @f
+        lea  x6, debug.address
+        str  x4, [x6]
+          b  MoveDo
+@@:
+ db "Move_Do__Tablebase_ProbeDTZNoEP",0
+balign 4
+end if
+
+Move_Do__Tablebase_ProbeDTZNoEP_SuccessIsNeg_WdlIsPositive:
+if DEBUG
+        adr  x4, @f
+        lea  x6, debug.address
+        str  x4, [x6]
+          b  MoveDo
+@@:
+ db "Move_Do__Tablebase_ProbeDTZNoEP_SuccessIsNeg_WdlIsPositive",0
+balign 4
+end if
+
+Move_Do__Tablebase_ProbeDTZNoEP_SuccessIsNeg_WdlIsNonpositive:
+if DEBUG
+        adr  x4, @f
+        lea  x6, debug.address
+        str  x4, [x6]
+          b  MoveDo
+@@:
+ db "Move_Do__Tablebase_ProbeDTZNoEP_SuccessIsNeg_WdlIsNonpositive",0
+balign 4
+end if
+
+Move_Do__Tablebase_ProbeDTZ:
+if DEBUG
+        adr  x4, @f
+        lea  x6, debug.address
+        str  x4, [x6]
+          b  MoveDo
+@@:
+ db "Move_Do__Tablebase_ProbeDTZ",0
+balign 4
+end if
+
+Move_Do__Tablebase_RootProbe:
+if DEBUG
+        adr  x4, @f
+        lea  x6, debug.address
+        str  x4, [x6]
+          b  MoveDo
+@@:
+ db "Move_Do__Tablebase_RootProbe",0
+balign 4
+end if
+
+Move_Do__Tablebase_RootProbeWDL:
+if DEBUG
+        adr  x4, @f
+        lea  x6, debug.address
+        str  x4, [x6]
+          b  MoveDo
+@@:
+ db "Move_Do__Tablebase_RootProbeWDL",0
+balign 4
+end if
+
+
+
+MoveDo:
+
+Display 2, "Move_Do(move=%m1)%n"
+
+
+if DEBUG
+        PushAll
+        mov  w4, MAX_MOVES*sizeof.ExtMove
+        sub  sp, sp, w4
+        lea  x27, debug.position
+        lea  x6, debug.move
+        str  w1, [x6]
+        mov  w0, 'm'
+        str  w0, [x27], 1
+        mov  w0, 'o'
+        str  w0, [x27], 1
+        mov  w0, 'v'
+        str  w0, [x27], 1
+        mov  w0, 'e'
+        str  w0, [x27], 1
+        mov  w0, ' '
+        str  w0, [x27], 1
+         bl  PrintUciMove
+
+       ldrb  w4, [x21, State.givesCheck]
+        cbz  w4, @f
+        mov  w0, ' '
+       strb  w0, [x27], 1
+        mov  w0, '+'
+       strb  w0, [x27], 1
+@@:
+
+        PrintNewLine
+        str  x21, [x20, Pos.state]
+
+         bl  Position_Print
+        PrintNewLine
+       strb  wzr, [x27]
+
+         bl  Position_IsLegal
+       cbnz  w0, Move_Do_posill
+
+        lea  x6, debug.move
+        ldr  w1, [x6]
+         bl  Move_IsPseudoLegal
+        cbz  x0, Move_Do_pillegal
+
+        lea  x6, debug.move
+        ldr  w1, [x6]
+         bl  Move_IsLegal
+        cbz  w0, Move_Do_illegal
+        mov  x27, sp
+         bl  Gen_Legal
+        mov  x1, sp
+@@:
+        cmp  x1, x27
+        bhs  Move_Do_DoIllegal
+        lea  x6, debug.move
+        ldr  w0, [x6]
+        ldr  w4, [x1]
+        cmp  w0, w4
+        add  x1, x1, sizeof.ExtMove
+        bne  @b
+
+        mov  w4, MAX_MOVES*sizeof.ExtMove
+        add  sp, sp, w4
+        PopAll
+end if
+
+
+        ldr  w16, [x20, Pos.sideToMove]
+        lea  x7, Zobrist_side
+        ldr  d15, [x7]
+       ubfx  x8, x1, 6, 6
+        and  x9, x1, 63
+        lsr  x1, x1, 12
+; x8 = from
+; x9 = to
+; x1 = move type
+
+        add  x6, x20, Pos.board
+       ldrb  w10, [x6, x8]
+       ldrb  w11, [x6, x9]
+; x10 = from piece
+; x11 = to piece
+
+        ldr  d5, [x21, State.key]
+        ldr  d4, [x21, State.pawnKey]
+        ldr  d3, [x21, State.materialKey]
+        ldr  d6, [x21, State.psq]
+        eor  v5.8b, v5.8b, v15.8b
+
+        ldr  x4, [x20, -Thread.rootPos + Thread.nodes]
+        add  x4, x4, 1
+        str  x4, [x20, -Thread.rootPos + Thread.nodes]
+
+        mov  x4, 1
+       movk  w4, 1, lsl 16
+        ldr  w0, [x21, State.rule50]
+        add  w0, w0, w4
+       strb  w11, [x21, 1*sizeof.State + State.capturedPiece]
+        str  w0, [x21, 1*sizeof.State + State.rule50]
+
+        add  x7, x20, -Thread.rootPos + Thread.castling_rightsMask
+       ldrb  w2, [x21, State.castlingRights]
+       ldrb  w0, [x7, x8] 
+       ldrb  w4, [x7, x9]
+        orr  w0, w0, w4
+       ands  w0, w0, w2
+
+        stp  x26, x27, [sp, -16]!
+        lea  x26, Zobrist_Pieces
+        add  x27, x26, Scores_Pieces - Zobrist_Pieces
+
+        bne  Move_Do.Rights
+
+Move_Do.RightsRet:	
+       strb  w2, [x21, 1*sizeof.State + State.castlingRights]
+
+; ep square
+       ldrb  w0, [x21, State.epSquare]
+        tbz  w0, 6, Move_Do.ResetEp
+       strb  w0, [x21, 1*sizeof.State + State.epSquare]
+Move_Do.ResetEpRet:
+
+; capture
+        and  x0, x11, 7
+        cmp  x1, MOVE_TYPE_CASTLE
+        beq  Move_Do.Castling
+       cbnz  x11, Move_Do.Capture
+Move_Do.CaptureRet:
+
+; move piece
+        eor  x11, x8, x9
+        mov  x4, 1
+        lsl  x2, x4, x8
+        lsl  x4, x4, x9
+       fmov  d8, x2
+       fmov  d9, x4
+        orr  x4, x4, x2
+        and  x0, x10, 7
+        add  x7, x20, Pos.board
+        add  x3, x20, Pos.typeBB
+       strb  wzr, [x7, x8]
+       strb  w10, [x7, x9]
+        ldr  x2, [x3, x0, lsl 3]
+        ldr  x5, [x3, x16, lsl 3]
+        add  x7, x20, Pos.pieceIdx
+        add  x6, x20, Pos.pieceList
+        eor  x2, x2, x4
+        eor  x5, x5, x4
+        str  x2, [x3, x0, lsl 3]
+        str  x5, [x3, x16, lsl 3]
+       ldrb  w0, [x7, x8]
+       strb  w9, [x6, x0]
+       strb  w0, [x7, x9]
+
+        lea  x4, IsPawnMasks
+      ldrsb  x0, [x4, x10]
+        and  x11, x11, x0
+        add  x6, x26, x10, lsl 9
+        add  x7, x27, x10, lsl 9
+        ldr  x2, [x6, x8, lsl 3]
+        ldr  x4, [x6, x9, lsl 3]
+        eor  x2, x2, x4
+        ldr  d1, [x7, x8, lsl 3]
+        ldr  d2, [x7, x9, lsl 3]
+       fmov  d7, x2
+        eor  v5.8b, v5.8b, v7.8b
+        and  x2, x2, x0
+       fmov  d7, x2
+        eor  v4.8b, v4.8b, v7.8b
+        sub  v6.2s, v6.2s, v1.2s
+        add  v6.2s, v6.2s, v2.2s
+
+        mvn  w0, w0
+       ldrh  w4, [x21, 1*sizeof.State + State.rule50]
+        and  w4, w4, w0
+       strh  w4, [x21, 1*sizeof.State + State.rule50]
+
+        cmp  w1, MOVE_TYPE_PROM
+        bhs  Move_Do.Special
+        cmp  x11, 16
+        beq  Move_Do.DoublePawn
+
+Move_Do.SpecialRet:
+
+; write remaining data to next state entry
+; x9 = to + from  bitboard
+; x8 =  from bitboard
+; x10 = from piece
+; x0 = is check
+; x1 = move
+
+       ldrb  w0, [x21, State.givesCheck]
+
+       fmov  x8, d8
+       fmov  x9, d9
+        eor  x16, x16, 1
+        add  x21, x21, sizeof.State
+        and  x10, x10, 7
+        str  w16, [x20, Pos.sideToMove]
+        
+        str  d5, [x21, State.key]
+        str  d4, [x21, State.pawnKey]
+        str  d3, [x21, State.materialKey]
+        str  d6, [x21, State.psq]
+
+        add  x6, x20, Pos.typeBB 
+        ldr  x4, [x20, Pos.typeBB + 8*King]
+        ldr  x13, [x6, x16, lsl 3]
+        eor  x16, x16, 1
+        ldr  x12, [x6, x16, lsl 3]
+
+        and  x14, x12, x4
+        and  x15, x13, x4
+        orr  x17, x12, x13
+       rbit  x14, x14
+       rbit  x15, x15
+        clz  x14, x14
+        clz  x15, x15
+
+        ldp  x26, x27, [sp], 16
+
+       cbnz  w0, Move_Do.MoveIsCheck
+        
+
+Move_Do.CheckersDone:
+        str  xzr, [x21, State.checkersBB]
+          b  SetCheckInfo.go
+
+
+Move_Do.Capture:
+        and  x12, x11, 8
+        add  x3, x20, Pos.typeBB
+        ldr  x17, [x3, x12]
+        ldr  x2, [x3, x0, lsl 3]
+        mov  x4, 1
+        lsl  x4, x4, x9
+        bic  x17, x17, x4
+        bic  x2, x2, x4
+        str  x17, [x3, x12]
+        str  x2, [x3, x0, lsl 3]
+
+        add  x7, x20, Pos.pieceEnd
+       ldrb  w17, [x7, x11]
+        and  w17, w17, 15
+
+
+        lea  x7, IsPawnMasks
+      ldrsb  x0, [x7, x11]
+        add  x6, x26, x11, lsl 9
+        add  x7, x27, x11, lsl 9
+        ldr  x2, [x6, x9, lsl 3]
+       fmov  d7, x2
+        eor  v5.8b, v5.8b, v7.8b
+        and  x2, x2, x0
+       fmov  d7, x2
+        eor  v4.8b, v4.8b, v7.8b
+        sub  x17, x17, 1
+        ldr  d7, [x6, x17, lsl 3]
+        eor  v3.8b, v3.8b, v7.8b
+        ldr  d1, [x7, x9, lsl 3]
+        sub  v6.2s, v6.2s, v1.2s
+       strh  wzr, [x21, sizeof.State + State.rule50]
+
+        add  x7, x20, Pos.pieceEnd
+       ldrb  w17, [x7, x11]
+        sub  w17, w17, 1
+        add  x7, x20, Pos.pieceList
+       ldrb  w2, [x7, x17]
+        add  x7, x20, Pos.pieceIdx
+       ldrb  w0, [x7, x9]
+        add  x7, x20, Pos.pieceEnd
+       strb  w17, [x7, x11]
+        add  x7, x20, Pos.pieceIdx
+       strb  w0, [x7, x2]
+        add  x7, x20, Pos.pieceList
+       strb  w2, [x7, x0]
+        mov  w4, 64
+       strb  w4, [x7, x17]
+
+          b  Move_Do.CaptureRet
+
+Move_Do.MoveIsCheck:
+
+        ldr  x2, [x21, -1*sizeof.State + State.dcCandidates]
+        add  x7, x21, -1*sizeof.State + State.checkSq
+        ldr  x0, [x7, x10, lsl 3]
+       cbnz  w1, Move_Do.DoFull
+        and  x0, x0, x9
+        tst  x2, x8
+        bne  Move_Do.DoFull
+        str  x0, [x21, State.checkersBB]
+          b  SetCheckInfo.go
+
+Move_Do.DoFull:
+
+        eor  x1, x16, 1
+        lea  x7, PawnAttacks
+        add  x7, x7, x15, lsl 3
+        ldr  x0, [x7, KingAttacks - PawnAttacks]
+        ldr  x4, [x20, Pos.typeBB + 8*King]
+        and  x0, x0, x4
+        ldr  x8, [x7, KnightAttacks - PawnAttacks]
+        ldr  x4, [x20, Pos.typeBB + 8*Knight]
+        and  x8, x8, x4
+        orr  x0, x0, x8
+        add  x7, x7, x1, lsl 9
+        ldr  x8, [x7]
+        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
+        and  x8, x8, x4
+        orr  x0, x0, x8
+
+        ldr  x5, [x20, Pos.typeBB + 8*Queen]
+        RookAttacks x8, x15, x17, x9, x1
+        ldr  x9, [x20, Pos.typeBB + 8*Rook]
+        orr  x9, x9, x5
+        and  x8, x8, x9
+        orr  x0, x0, x8
+        BishopAttacks x8, x15, x17, x9, x1
+        ldr  x9, [x20, Pos.typeBB + 8*Bishop]
+        orr  x9, x9, x5
+        and  x8, x8, x9
+        orr  x0, x0, x8
+        and  x0, x0, x12
+        str  x0, [x21, State.checkersBB]
+          b  SetCheckInfo.go
+
+        
+
+
+Move_Do.ResetEp:
+
+        lea  x7, Zobrist_Ep
+        and  w0, w0, 7
+        ldr  d7, [x7, x0, lsl 3]
+        eor  v5.8b, v5.8b, v7.8b
+        mov  w4, 64
+       strb  w4, [x21, 1*sizeof.State + State.epSquare]
+          b  Move_Do.ResetEpRet
+
+Move_Do.Rights:
+
+        lea  x7, Zobrist_Castling
+        eor  w2, w2, w0
+        ldr  d7, [x7, x0, lsl 3]
+        eor  v5.8b, v5.8b, v7.8b
+          b  Move_Do.RightsRet
+
+Move_Do.DoublePawn:
+
+        lea  x7, WhitePawnAttacks
+        add  x7, x7, x16, lsl 9
+        add  x8, x8, x9
+        lsr  x8, x8, 1
+        ldr  x0, [x7, x8, lsl 3]
+
+        eor  x2, x16, 1
+        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
+        and  x0, x0, x4
+        add  x6, x20, Pos.typeBB
+        ldr  x4, [x6, x2, lsl 3]
+        and  x0, x0, x4
+        cbz  x0, Move_Do.SpecialRet
+       strb  w8, [x21, 1*sizeof.State + State.epSquare]
+        and  x8, x8, 7        
+        lea  x7, Zobrist_Ep
+        ldr  d7, [x7, x8, lsl 3]
+        eor  v5.8b, v5.8b, v7.8b
+          b  Move_Do.SpecialRet
+
+Move_Do.Special:
+
+        cmp  x1, MOVE_TYPE_EPCAP
+        beq  Move_Do.EpCapture
+
+Move_Do.Promotion:
+
+        add  x14, x1, -MOVE_TYPE_PROM + Knight
+        add  x14, x14, x16, lsl 3
+
+        add  x7, x20, Pos.pieceEnd
+       ldrb  w17, [x7, x10]
+        sub  w17, w17, 1
+        add  x7, x20, Pos.pieceList
+       ldrb  w2, [x7, x17]
+        add  x7, x20, Pos.pieceIdx
+       ldrb  w0, [x7, x9]
+        add  x7, x20, Pos.pieceEnd
+       strb  w17, [x7, x10]
+        add  x7, x20, Pos.pieceIdx
+       strb  w0, [x7, x2]
+        add  x7, x20, Pos.pieceList
+       strb  w2, [x7, x0]
+        mov  w4, 64
+       strb  w4, [x7, x17]
+
+        add  x7, x20, Pos.pieceEnd
+       ldrb  w2, [x7, x14]
+        add  x7, x20, Pos.pieceIdx
+       strb  w2, [x7, x9]
+        add  x7, x20, Pos.pieceList
+       strb  w9, [x7, x2]
+        add  x2, x2, 1
+        add  x7, x20, Pos.pieceEnd
+       strb  w2, [x7, x14]
+
+        ldr  x2, [x20, Pos.typeBB + 8*Pawn]
+        mov  x4, 1
+        lsl  x4, x4, x9
+        bic  x2, x2, x4
+        str  x2, [x20, Pos.typeBB + 8*Pawn]
+        add  x3, x20, Pos.typeBB
+        ldr  x4, [x3, x16, lsl 3]
+        and  x2, x2, x4
+        Popcnt  x0, x2, x8
+        add  x6, x26, x10, lsl 9
+        add  x7, x27, x10, lsl 9
+        ldr  d7, [x6, x9, lsl 3]
+        eor  v5.8b, v5.8b, v7.8b
+        eor  v4.8b, v4.8b, v7.8b
+        ldr  d7, [x6, x0, lsl 3]
+        eor  v3.8b, v3.8b, v7.8b
+        ldr  d1, [x7, x9, lsl 3]
+        sub  v6.2s, v6.2s, v1.2s
+
+        and  x0, x14, 7
+        add  x6, x20, Pos.typeBB
+        ldr  x2, [x6, x0, lsl 3]
+        mov  x4, 1
+        lsl  x4, x4, x9
+        orr  x2, x2, x4
+        str  x2, [x6, x0, lsl 3]
+        add  x7, x20, Pos.board
+       strb  w14, [x7, x9]
+        add  x6, x20, Pos.typeBB
+        ldr  x4, [x6, x16, lsl 3]
+        and  x2, x2, x4
+        Popcnt  x0, x2, x8
+        add  x6, x26, x14, lsl 9
+        add  x7, x27, x14, lsl 9
+        ldr  d7, [x6, x9, lsl 3]
+        eor  v5.8b, v5.8b, v7.8b
+        sub  x4, x0, 1
+        ldr  d7, [x6, x4, lsl 3]
+        eor  v3.8b, v3.8b, v7.8b
+        ldr  d1, [x7, x9, lsl 3]
+        add  v6.2s, v6.2s, v1.2s
+
+          b  Move_Do.SpecialRet
+
+
+Move_Do.EpCapture:
+        lsl  x14, x16, 1
+        sub  x14, x14, 1
+        add  x14, x9, x14, lsl 3
+        eor  x10, x10, 8
+        eor  x16, x16, 1
+        add  x3, x20, Pos.typeBB
+        ldr  x2, [x20, Pos.typeBB + 8*Pawn]
+        ldr  x17, [x3, x16, lsl 3]
+        mov  x4, 1
+        lsl  x4, x4, x14
+        bic  x2, x2, x4
+        bic  x17, x17, x4
+        str  x2, [x20, Pos.typeBB + 8*Pawn]
+        str  x17, [x3, x16, lsl 3]
+        add  x7, x20, Pos.board
+       strb  wzr, [x7, x14]
+        and  x17, x17, x2
+        Popcnt  x17, x17, x2
+        add  x6, x26, x10, lsl 9
+        add  x7, x27, x10, lsl 9
+        ldr  d7, [x6, x14, lsl 3]
+        eor  v5.8b, v5.8b, v7.8b
+        eor  v4.8b, v4.8b, v7.8b
+        ldr  d7, [x6, x17, lsl 3]
+        eor  v3.8b, v3.8b, v7.8b
+        ldr  d1, [x7, x14, lsl 3]
+        sub  v6.2s, v6.2s, v1.2s
+
+        mov  x0, Pawn
+        add  x0, x0, x16, lsl 3
+       strh  wzr, [x21, 1*sizeof.State + State.rule50]
+       strb  w0, [x21, 1*sizeof.State + State.capturedPiece]
+        add  x6, x20, x16, lsl 3
+       ldrb  w17, [x6, Pos.pieceEnd + Pawn]
+        sub  w17, w17, 1
+        add  x6, x20, Pos.pieceList
+       ldrb  w2, [x6, x17]
+        add  x6, x20, Pos.pieceIdx
+       ldrb  w0, [x6, x14]
+        add  x6, x20, x16, lsl 3
+       strb  w17, [x6, Pos.pieceEnd + Pawn]
+        add  x6, x20, Pos.pieceIdx
+       strb  w0, [x6, x2]
+        add  x6, x20, Pos.pieceList
+       strb  w2, [x6, x0]
+        mov  w0, 64
+       strb  w0, [x6, x17]
+        eor  x16, x16, 1
+        
+          b  Move_Do.SpecialRet
+
+Move_Do.Castling:
+
+	; r8 = kfrom
+	; r9 = rfrom
+	; ecx = kto
+	; edx = rto
+	; r10 = ourking
+	; r11 = our rook
+	; fix things caused by kingXrook encoding
+       strb  wzr, [x21, 1*sizeof.State + State.capturedPiece]
+
+	; move the pieces
+
+        and  x2, x8, 56
+        cmp  x9, x8
+       cset  x0, hi
+        add  x14, x2, x0, lsl 2
+        add  x2, x2, x0, lsl 1
+        add  x14, x14, FILE_C
+        add  x2, x2, FILE_D
+        add  x11, x10, -King + Rook
+
+        add  x7, x20, Pos.board
+       strb  wzr, [x7, x8]
+       strb  wzr, [x7, x9]
+       strb  w10, [x7, x14]
+       strb  w11, [x7, x2]
+
+        add  x7, x20, Pos.pieceIdx
+       ldrb  w0, [x7, x8]
+       ldrb  w17, [x7, x9]
+        add  x7, x20, Pos.pieceList
+       strb  w14, [x7, x0]
+       strb  w2, [x7, x17]
+        add  x7, x20, Pos.pieceIdx
+       strb  w0, [x7, x14]
+       strb  w17, [x7, x2]
+
+        add  x7, x20, Pos.pieceEnd
+       ldrb  w0, [x7, x11]
+        sub  w0, w0, 1
+        add  x7, x20, Pos.pieceList
+       ldrb  w12, [x7, x0]
+       ldrb  w2, [x7, x17]
+       ldrb  w13, [x7, x0]
+       strb  w13, [x7, x17]
+       strb  w2, [x7, x0]
+        add  x7, x20, Pos.pieceIdx
+       ldrb  w17, [x7, x2]
+       ldrb  w13, [x7, x12]
+       strb  w13, [x7, x2]
+       strb  w17, [x7, x12]
+
+        add  x6, x26, x10, lsl 6+3
+        add  x7, x26, x11, lsl 6+3
+        ldr  d7, [x6, x8, lsl 3]
+        eor  v5.8b, v5.8b, v7.8b
+        ldr  d7, [x7, x9, lsl 3]
+        eor  v5.8b, v5.8b, v7.8b
+        ldr  d7, [x6, x14, lsl 3]
+        eor  v5.8b, v5.8b, v7.8b
+        ldr  d7, [x7, x2, lsl 3]
+        eor  v5.8b, v5.8b, v7.8b
+        add  x6, x27, x10, lsl 6+3
+        add  x7, x27, x11, lsl 6+3
+        ldr  d1, [x6, x8, lsl 3]
+        ldr  d2, [x7, x9, lsl 3]
+        sub  v6.2s, v6.2s, v1.2s
+        sub  v6.2s, v6.2s, v2.2s
+        ldr  d1, [x6, x14, lsl 3]
+        ldr  d2, [x7, x2, lsl 3]
+        add  v6.2s, v6.2s, v1.2s
+        add  v6.2s, v6.2s, v2.2s
+
+        add  x3, x20, Pos.typeBB
+        ldr  x0, [x3, x16, lsl 3]
+        ldr  x13, [x20, Pos.typeBB + 8*King]
+        ldr  x11, [x20, Pos.typeBB + 8*Rook]
+
+        mov  x6, 1
+        lsl  x4, x6, x8
+        bic  x0, x0, x4
+        lsl  x4, x6, x9
+        bic  x0, x0, x4
+        lsl  x4, x6, x14
+        orr  x0, x0, x4
+        lsl  x4, x6, x2
+        orr  x0, x0, x4
+        lsl  x4, x6, x8
+        bic  x13, x13, x4
+        lsl  x4, x6, x14
+        orr  x13, x13, x4
+        lsl  x4, x6, x9
+        bic  x11, x11, x4
+        lsl  x4, x6, x2
+        orr  x11, x11, x4
+
+        add  x3, x20, Pos.typeBB
+        str  x0, [x3, x16, lsl 3]
+        str  x13, [x20, Pos.typeBB + 8*King]
+        str  x11, [x20, Pos.typeBB + 8*Rook]
+          b  Move_Do.SpecialRet
+
+if DEBUG
+
+Move_Do_posill:
+        lea  x27, debug.output
+        Print "position did not pass Position_IsLegal in DoMove"
+         bl  Move_Do_GoError
+Move_Do_pillegal:
+        lea  x27, debug.output
+        Print "move did not pass IsMovePseudoLegal in DoMove"
+         bl  Move_Do_GoError
+Move_Do_illegal:
+        lea  x27, debug.output
+        Print "move did not pass IsMoveLegal in DoMove"
+         bl  Move_Do_GoError
+Move_Do_DoIllegal:
+        lea  x27, debug.output
+        Print "move not in legal list in DoMove"
+         bl  Move_Do_GoError
+Move_Do_badcas:
+        lea  x27, debug.output
+        Print "bad castling in DoMove"
+         bl  Move_Do_GoError
+Move_Do_capself:
+        lea  x27, debug.output
+        Print "capture self in DoMove"
+         bl  Move_Do_GoError
+Move_Do_capking:
+        lea  x27, debug.output
+        Print "capture king in DoMove"
+         bl  Move_Do_GoError
+Move_Do_post_posill:
+        lea  x27, debug.output
+        Print "position not legal (%X0) after making"
+         bl  Move_Do_GoError
+
+Move_Do_GoError:
+        PrintNewLine
+        lea  x6, debug.address
+        ldr  x1, [x6]
+         bl  PrintString
+        PrintNewLine
+        lea  x1, debug.position
+         bl  PrintString
+        str  wzr, [x27]
+        lea  x27, debug.output
+         bl  Os_ErrorBox
+        brk  0
+end if
+

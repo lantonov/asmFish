@@ -1,0 +1,1145 @@
+Options_Init:
+        lea  x1, options
+        mov  w0, -1
+       strb  w0, [x1, Options.displayInfoMove]
+        mov  w0, 0
+        str  w0, [x1, Options.contempt]
+        mov  w0, 1
+        str  w0, [x1, Options.threads]
+        mov  w0, 16
+        str  w0, [x1, Options.hash]
+        mov  w0, 0
+       strb  w0, [x1, Options.ponder]
+        mov  w0, 1
+	str  w0, [x1, Options.multiPV]
+        mov  w0, 30
+	str  w0, [x1, Options.moveOverhead]
+        mov  w0, 0
+       strb  w0, [x1, Options.chess960]
+if USE_SYZYGY
+        mov  w0, 1
+        str  w0, [x1, Options.syzygyProbeDepth]
+        mov  w0, -1
+       strb  w0, [x1, Options.syzygy50MoveRule]
+        mov  w0, 6
+        str  w0, [x1, Options.syzygyProbeLimit]
+end if
+        mov  w0, 0
+       strb  w0, [x1, Options.largePages]
+        ret
+
+
+Options_Destroy:
+        ret
+
+
+UciLoop:
+
+UciLoop.th1    = 0
+UciLoop.th2    = sizeof.Thread + UciLoop.th1
+UciLoop.states = sizeof.Thread + UciLoop.th2
+UciLoop.limits = 2*sizeof.State + UciLoop.states
+UciLoop.time   = sizeof.Limits + UciLoop.limits
+UciLoop.nodes  = 8 + UciLoop.time
+UciLoop.localsize = 8 + UciLoop.nodes
+UciLoop.localsize = (UciLoop.localsize + 15) and (-16)
+
+
+        stp  x29, x30, [sp, -16]!
+        stp  x20, x21, [sp, -16]!
+        stp  x22, x23, [sp, -16]!
+        stp  x24, x25, [sp, -16]!
+        stp  x26, x27, [sp, -16]!
+        sub  sp, sp, UciLoop.localsize
+
+
+
+        lea  x6, options
+        mov  w4, -1
+       strb  w4, [x6, Options.displayInfoMove]
+
+        str  xzr, [sp, UciLoop.th1+Thread.rootPos+Pos.stateTable]
+
+        add  x1, sp, UciLoop.states
+        add  x2, x1, 2*sizeof.State
+        str  x1, [sp, UciLoop.th2+Thread.rootPos+Pos.state]
+        str  x1, [sp, UciLoop.th2+Thread.rootPos+Pos.stateTable]
+        str  x2, [sp, UciLoop.th2+Thread.rootPos+Pos.stateEnd]
+
+
+UciNewGame:
+
+        ldr  x1, [sp, UciLoop.th1+Thread.rootPos+Pos.stateTable]
+        ldr  x2, [sp, UciLoop.th1+Thread.rootPos+Pos.stateEnd]
+        sub  x2, x2, x1
+         bl  Os_VirtualFree
+        add  x20, sp, UciLoop.th1+Thread.rootPos
+        str  xzr, [x20, Pos.state]
+        str  xzr, [x20, Pos.stateTable]
+        str  xzr, [x20, Pos.stateEnd]
+        lea  x26, szStartFEN
+        mov  w1, 0
+         bl  Position_ParseFen
+         bl  Search_Clear
+          b  UciGetInput
+
+
+UciNextCmdFromCmdLine:
+        mov  x25, x26
+        lea  x16, ioBuffer
+        str  xzr, [x16, IOBuffer.cmdLineStart]
+       ldrb  w0, [x26]
+if USE_CMDLINEQUIT
+        cbz  w0, UciQuit
+else
+        cbz  w0, UciGetInput
+end if
+UciNextCmdFromCmdLine.Next:       
+       ldrb  w0, [x26]
+        cbz  w0, UciNextCmdFromCmdLine.Found
+        add  x26, x26, 1
+        cmp  w0, ' '
+        bhs  UciNextCmdFromCmdLine.Next
+UciNextCmdFromCmdLine.Found:
+        str  x26, [x16, IOBuffer.cmdLineStart]
+        mov  x26, x25
+          b  UciChoose
+
+
+UciWriteOut_NewLine:
+        PrintNewLine
+UciWriteOut:
+         bl  Os_WriteOut_Output
+UciGetInput:
+        lea  x6, ioBuffer
+        ldr  x26, [x6, IOBuffer.cmdLineStart]
+       cbnz  x26, UciNextCmdFromCmdLine
+         bl  GetLine
+       cbnz  w0, UciQuit
+
+UciChoose:
+
+       ldrb  w0, [x26]
+        cmp  w0, ' '
+        blo  UciGetInput
+         bl  SkipSpaces
+
+        lea  x1, sz_go
+         bl  CmpString
+       cbnz  w0, UciGo
+
+        lea  x1, sz_position
+         bl  CmpString
+       cbnz  w0, UciPosition
+
+        lea  x1, sz_stop
+         bl  CmpString
+       cbnz  w0, UciStop
+
+        lea  x1, sz_isready
+         bl  CmpString
+       cbnz  w0, UciIsReady
+
+        lea  x1, sz_ponderhit
+         bl  CmpString
+       cbnz  w0, UciPonderHit
+
+        lea  x1, sz_ucinewgame
+         bl  CmpString
+       cbnz  w0, UciNewGame
+
+        lea  x1, sz_uci
+         bl  CmpString
+       cbnz  w0, UciUci
+
+        lea  x1, sz_setoption
+         bl  CmpString
+       cbnz  w0, UciSetOption
+
+        lea  x1, sz_quit
+         bl  CmpString
+       cbnz  w0, UciQuit
+
+        lea  x1, sz_wait
+         bl  CmpString
+       cbnz  w0, UciWait
+
+        lea  x1, sz_perft
+         bl  CmpString
+       cbnz  w0, UciPerft
+
+        lea  x1, sz_bench
+         bl  CmpString
+       cbnz  w0, UciBench
+
+if VERBOSE > 0
+    lstring  x1, "show"
+         bl  CmpString
+       cbnz  w0, UciShow
+
+    lstring  x1, "undo"
+         bl  CmpString
+       cbnz  w0, UciUndo
+
+    lstring  x1, "moves"
+         bl  CmpString
+       cbnz  w0, UciMoves
+
+    lstring  x1, "donull"
+         bl  CmpString
+       cbnz  w0, UciDoNull
+
+    lstring  x1, "eval"
+         bl  CmpString
+       cbnz  w0, UciEval
+end if
+
+UciUnknown:
+
+        lea  x27, Output
+        lea  x1, sz_error_unknown
+         bl  PrintString
+        mov  x1, 64
+         bl  ParseToken
+          b  UciWriteOut_NewLine
+
+
+
+UciQuit:
+
+        mov  w0, -1
+        lea  x16, signals
+       strb  w0, [x16, Signals.stop]
+        lea  x16, threadPool
+        ldr  x1, [x16, ThreadPool.threadTable+8*0]
+         bl  Thread_StartSearching_TRUE
+        lea  x16, threadPool
+        ldr  x1, [x16, ThreadPool.threadTable+8*0]
+         bl  Thread_WaitForSearchFinished
+
+        add  x0, sp, UciLoop.th1+Thread.rootPos
+        ldr  x1, [sp, UciLoop.th1+Thread.rootPos+Pos.stateTable]
+        ldr  x2, [sp, UciLoop.th1+Thread.rootPos+Pos.stateEnd]
+        sub  x2, x2, x1
+         bl  Os_VirtualFree
+        add  sp, sp, UciLoop.localsize
+        ldp  x26, x27, [sp], 16
+        ldp  x24, x25, [sp], 16
+        ldp  x22, x23, [sp], 16
+        ldp  x20, x21, [sp], 16
+        ldp  x29, x30, [sp], 16
+        ret
+
+
+UciUci:
+
+        lea  x1, szUciResponse
+        lea  x27, szUciResponseEnd
+         bl  Os_WriteOut
+          b  UciGetInput
+
+UciIsReady:
+
+        lea  x16, options
+       ldrb  w0, [x16, Options.changed]
+        cbz  w0, UciIsReady.ok
+         bl  UciSync
+UciIsReady.ok:
+
+        lea  x27, Output
+        lea  x1, sz_readyok
+         bl  PrintString
+          b  UciWriteOut_NewLine
+        
+
+UciPonderHit:
+
+        lea  x16, signals
+       ldrb  w0, [x16, Signals.stopOnPonderhit]
+       cbnz  w0, UciPonderHit.stop
+        lea  x16, limits
+       strb  w0, [x16, Limits.ponder]
+         bl  CheckTime
+          b  UciGetInput
+UciPonderHit.stop:
+
+        mov  w0, -1
+       strb  w0, [x16, Signals.stop]
+        lea  x16, threadPool
+        ldr  x1, [x16, ThreadPool.threadTable+8*0]
+         bl  Thread_StartSearching_TRUE
+          b  UciGetInput
+
+UciStop:
+
+        lea  x16, signals
+        mov  w0, -1
+       strb  w0, [x16, Signals.stop]
+        lea  x16, threadPool
+        ldr  x1, [x16, ThreadPool.threadTable+8*0]
+         bl  Thread_StartSearching_TRUE
+                
+UciWait:
+
+        lea  x16, threadPool
+        ldr  x1, [x16, ThreadPool.threadTable+8*0]
+         bl  Thread_WaitForSearchFinished
+          b  UciGetInput
+
+UciSync:
+
+        stp  x21, x30, [sp, -16]!
+         bl  MainHash_ReadOptions
+         bl  ThreadPool_ReadOptions
+        lea  x6, options
+       strb  wzr, [x6, Options.changed]
+        ldp  x21, x30, [sp], 16
+        ret
+
+
+UciGo:
+
+        lea  x16, options
+       ldrb  w0, [x16, Options.changed]
+        cbz  w0, UciGo.ok
+         bl  UciSync
+UciGo.ok:
+
+        add  x1, sp, UciLoop.limits
+         bl  Limits_Init
+        
+UciGo.ReadLoop:
+
+         bl  SkipSpaces
+       ldrb  w0, [x26]
+        cmp  w0, ' '
+        blo  UciGo.ReadLoopDone
+
+        add  x27, sp, UciLoop.limits+Limits.time+4*White
+        lea  x1, sz_wtime
+         bl  CmpString
+       cbnz  w0, UciGo.parse_dword
+
+        add  x27, sp, UciLoop.limits+Limits.time+4*Black
+        lea  x1, sz_btime
+         bl  CmpString
+       cbnz  w0, UciGo.parse_dword
+
+        add  x27, sp, UciLoop.limits+Limits.incr+4*White
+        lea  x1, sz_winc
+         bl  CmpString
+       cbnz  w0, UciGo.parse_dword
+
+        add  x27, sp, UciLoop.limits+Limits.incr+4*Black
+        lea  x1, sz_binc
+         bl  CmpString
+       cbnz  w0, UciGo.parse_dword
+
+        add  x27, sp, UciLoop.limits+Limits.infinite
+        lea  x1, sz_infinite
+         bl  CmpString
+       cbnz  w0, UciGo.parse_true
+
+        add  x27, sp, UciLoop.limits+Limits.movestogo
+        lea  x1, sz_movestogo
+         bl  CmpString
+       cbnz  w0, UciGo.parse_dword
+
+        add  x27, sp, UciLoop.limits+Limits.nodes
+        lea  x1, sz_nodes
+         bl  CmpString
+       cbnz  w0, UciGo.parse_qword
+
+        add  x27, sp, UciLoop.limits+Limits.movetime
+        lea  x1, sz_movetime
+         bl  CmpString
+       cbnz  w0, UciGo.parse_dword
+
+        add  x27, sp, UciLoop.limits+Limits.depth
+        lea  x1, sz_depth
+         bl  CmpString
+       cbnz  w0, UciGo.parse_dword
+
+        add  x27, sp, UciLoop.limits+Limits.mate
+        lea  x1, sz_mate
+         bl  CmpString
+       cbnz  w0, UciGo.parse_dword
+
+        add  x27, sp, UciLoop.limits+Limits.ponder
+        lea  x1, sz_ponder
+         bl  CmpString
+       cbnz  w0, UciGo.parse_true 
+
+        lea  x1, sz_searchmoves
+         bl  CmpString
+       cbnz  w0, UciGo.parse_searchmoves 
+
+UciGo.Error:
+
+        lea  x27, Output
+        lea  x1, sz_error_token
+         bl  PrintString
+        mov  x1, 64
+         bl  ParseToken
+          b  UciWriteOut_NewLine
+        
+UciGo.ReadLoopDone:
+
+        add  x1, sp, UciLoop.limits
+         bl  Limits_Set
+        add  x1, sp, UciLoop.limits
+         bl  ThreadPool_StartThinking
+	  b  UciGetInput
+
+UciGo.parse_qword:
+
+         bl  SkipSpaces
+         bl  ParseInteger
+        str  x0, [x27]
+          b  UciGo.ReadLoop
+
+UciGo.parse_dword:
+
+         bl  SkipSpaces
+         bl  ParseInteger
+        str  w0, [x27]
+          b  UciGo.ReadLoop
+
+UciGo.parse_true:
+
+        mov  w0, -1
+       strb  w0, [x27]
+          b  UciGo.ReadLoop
+
+UciGo.parse_searchmoves:
+
+         bl  SkipSpaces
+         bl  ParseUciMove
+        cbz  w0, UciGo.ReadLoop
+        ldr  w1, [sp, UciLoop.limits+Limits.moveVecSize]
+        add  w5, w1, 1
+        add  x27, sp, UciLoop.limits+Limits.moveVec
+UciGo.parse_searchmoves_loop:
+        cbz  x1, UciGo.parse_searchmoves_new
+        sub  x1, x1, 1
+       ldrh  w4, [x27], 2
+        cmp  w4, w0
+        beq  UciGo.parse_searchmoves
+          b  UciGo.parse_searchmoves_loop
+UciGo.parse_searchmoves_new:
+       strh  w0, [x27], 2
+        str  w5, [sp, UciLoop.limits+Limits.moveVecSize]
+          b  UciGo.parse_searchmoves
+
+UciPosition:
+
+         bl  SkipSpaces
+       ldrb  w0, [x26]
+        cmp  w0, ' '
+        blo  UciUnknown
+        add  x20, sp, UciLoop.th2+Thread.rootPos
+
+        lea  x1, sz_fen
+         bl  CmpString
+       cbnz  w0, UciPosition.Fen
+
+        lea  x1, sz_startpos
+         bl  CmpString
+        cbz  w0, UciPosition.BadCmd
+
+UciPosition.Start:
+
+        mov  x25, x26
+        lea  x26, szStartFEN
+        lea  x7, options
+       ldrb  w1, [x7, Options.chess960]
+         bl  Position_ParseFen
+        mov  x26, x25
+          b  UciPosition.check
+
+UciPosition.Fen:
+
+        lea  x16, options
+       ldrb  w1, [x16, Options.chess960]
+         bl  Position_ParseFen
+        
+UciPosition.check:
+
+       cbnz  w0, UciPosition.illegal
+
+UciPosition.moves:
+
+        add  x1, sp, UciLoop.th1 + Thread.rootPos
+         bl  Position_CopyTo
+        add  x20, sp, UciLoop.th1 + Thread.rootPos
+         bl  SkipSpaces
+        lea  x1, sz_moves
+         bl  CmpString
+        lea  x27, Output
+        cbz  w0, UciPosition.CheckJunk
+         bl  UciParseMoves
+        cbz  x0, UciGetInput
+
+UciPosition.badmove:
+
+        mov  x26, x0
+        lea  x1, sz_error_moves
+         bl  PrintString
+        mov  x1, 6
+         bl  ParseToken
+        PrintNewLine
+        add  x20, sp, UciLoop.th1 + Thread.rootPos
+          b  UciWriteOut
+
+UciPosition.illegal:
+
+        lea  x27, Output
+        lea  x1, sz_error_fen
+         bl  PrintString
+        PrintNewLine
+        add  x20, sp, UciLoop.th1+Thread.rootPos
+          b  UciWriteOut
+
+UciPosition.BadCmd:
+        add  x20, sp, UciLoop.th1+Thread.rootPos
+          b  UciUnknown
+
+UciPosition.CheckJunk:
+       ldrb  w0, [x26]
+        cmp  w0, ' '
+        blo  UciGetInput
+        lea  x1, sz_error_token
+         bl  PrintString
+        mov  x1, 6
+         bl  ParseToken
+          b  UciWriteOut_NewLine
+
+UciParseMoves:
+
+        stp  x21, x30, [sp, -16]!
+        stp  x26, x27, [sp, -16]!
+UciParseMoves.get_move:
+         bl  SkipSpaces
+        mov  x0, 0
+       ldrb  w4, [x26]
+        cmp  w4, ' '
+        blo  UciParseMoves.done
+         bl  ParseUciMove
+        mov  x27, x0
+        tst  x0, x0
+        mov  x0, x26
+        beq  UciParseMoves.done
+        mov  x1, 2
+         bl  Position_SetExtraCapacity
+        ldr  x21, [x20, Pos.state]
+        mov  x1, x27
+        str  w27, [x21, sizeof.State + State.currentMove]
+         bl  Move_GivesCheck
+        mov  x1, x27
+       strb  w0, [x21, State.givesCheck]
+         bl  Move_Do__UciParseMoves
+        ldr  w4, [x20, Pos.gamePly]
+        add  w4, w4, 1
+        str  w4, [x20, Pos.gamePly]
+        str  x21, [x20, Pos.state]
+         bl  SetCheckInfo
+          b  UciParseMoves.get_move
+UciParseMoves.done:
+        ldp  x26, x27, [sp], 16
+        ldp  x21, x30, [sp], 16
+        ret
+
+UciSetOption:
+
+        lea  x6, threadPool
+        ldr  x0, [x6, ThreadPool.threadTable+8*0]
+       ldrb  w0, [x0, Thread.searching]
+        lea  x1, sz_error_think
+       cbnz  w0, UciSetOption.Error
+UciSetOption.Read:
+
+         bl  SkipSpaces
+        lea  x1, sz_name
+         bl  CmpString
+        lea  x1, sz_error_name
+        cbz  w0, UciSetOption.Error
+         bl  SkipSpaces
+
+        lea  x1, sz_threads
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.Threads
+       cbnz  w0, UciSetOption.CheckValue
+
+        lea  x1, sz_hash
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.Hash
+       cbnz  w0, UciSetOption.CheckValue
+
+        lea  x1, sz_largepages
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.LargePages
+       cbnz  w0, UciSetOption.CheckValue
+
+        lea  x1, sz_nodeaffinity
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.NodeAffinity
+       cbnz  w0, UciSetOption.CheckValue
+
+        lea  x1, sz_priority
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.Priority
+       cbnz  w0, UciSetOption.CheckValue
+
+        lea  x1, sz_clear_hash
+         bl  CmpStringCaseless
+       cbnz  w0, UciSetOption.ClearHash
+
+        lea  x1, sz_ponder
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.Ponder
+       cbnz  w0, UciSetOption.CheckValue
+
+        lea  x1, sz_contempt
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.Contempt
+       cbnz  w0, UciSetOption.CheckValue
+
+        lea  x1, sz_multipv
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.MultiPv
+       cbnz  w0, UciSetOption.CheckValue
+
+        lea  x1, sz_moveoverhead
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.MoveOverhead
+       cbnz  w0, UciSetOption.CheckValue
+
+        lea  x1, sz_uci_chess960
+         bl  CmpStringCaseless
+        adr  x21, UciSetOption.Chess960
+       cbnz  w0, UciSetOption.CheckValue
+
+
+if USE_SYZYGY
+		lea  x1, sz_syzygypath
+	         bl  CmpStringCaseless
+		adr  x21, UciSetOption.SyzygyPath
+               cbnz  w0, UciSetOption.CheckValue
+
+		lea  x1, sz_syzygyprobedepth
+	         bl  CmpStringCaseless
+		adr  x21, UciSetOption.SyzygyProbeDepth
+               cbnz  w0, UciSetOption.CheckValue
+
+		lea  x1, sz_syzygy50moverule
+	         bl  CmpStringCaseless
+		adr  x21, UciSetOption.Syzygy50MoveRule
+               cbnz  w0, UciSetOption.CheckValue
+
+		lea  x1, sz_syzygyprobelimit
+	         bl  CmpStringCaseless
+		adr  x21, UciSetOption.SyzygyProbeLimit
+               cbnz  w0, UciSetOption.CheckValue
+end if
+
+
+
+        lea  x27, Output
+        lea  x1, sz_error_option
+         bl  PrintString
+        mov  x1, 64
+         bl  ParseToken
+          b  UciWriteOut_NewLine
+
+UciSetOption.Error:
+
+        lea  x27, Output
+         bl  PrintString
+          b  UciWriteOut_NewLine
+        
+UciSetOption.CheckValue:
+
+         bl  SkipSpaces
+        lea  x1, sz_value
+         bl  CmpString
+        lea  x1, sz_error_value
+        cbz  w0, UciSetOption.Error
+         bl  SkipSpaces
+         br  x21
+
+UciSetOption.LargePages:
+
+         bl  ParseBoole
+        lea  x16, options
+       strb  w0, [x16, Options.largePages]
+        mov  w0, -1
+       strb  w0, [x16, Options.changed]
+          b  UciGetInput
+
+UciSetOption.Hash:
+
+         bl  ParseInteger
+        mov  w4, 1
+        mov  w5, 1 shl MAX_HASH_LOG2MB
+        ClampUnsigned w0, w4, w5
+        lea  x16, options
+        str  w0, [x16, Options.hash]
+        mov  w0, -1
+       strb  w0, [x16, Options.changed]
+          b  UciGetInput
+
+UciSetOption.Threads:
+
+         bl  ParseInteger
+        mov  w4, 1
+        mov  w5, MAX_THREADS
+        ClampUnsigned w0, w4, w5
+        lea  x16, options
+        str  w0, [x16, Options.threads]
+        mov  w0, -1
+       strb  w0, [x16, Options.changed]
+          b  UciGetInput
+        
+
+UciSetOption.NodeAffinity:
+
+         bl  ThreadPool_Destroy
+        mov  x1, x26
+         bl  ThreadPool_Create
+         bl  Os_DisplayThreadPoolInfo
+         bl  ThreadPool_ReadOptions
+          b  UciGetInput
+
+UciSetOption.Priority:
+
+         bl  SkipSpaces
+        lea  x1, sz_none
+         bl  CmpStringCaseless
+       cbnz  w0, UciGetInput
+
+        lea  x1, sz_normal
+         bl  CmpStringCaseless
+       cbnz  w0, UciSetOption.PriorityNormal
+
+        lea  x1, sz_low
+         bl  CmpStringCaseless
+       cbnz  w0, UciSetOption.PriorityLow
+        
+
+        lea  x1, sz_idle
+         bl  CmpStringCaseless
+       cbnz  w0, UciSetOption.PriorityIdle
+
+
+        lea  x27, Output
+        lea  x1, sz_error_priority
+         bl  PrintString
+        mov  x1, 64
+         bl  ParseToken
+          b  UciWriteOut_NewLine
+
+UciSetOption.PriorityNormal:
+
+         bl  Os_SetPriority_Normal
+          b  UciGetInput
+UciSetOption.PriorityLow:
+
+         bl  Os_SetPriority_Low
+          b  UciGetInput
+UciSetOption.PriorityIdle:
+
+         bl  Os_SetPriority_Idle
+          b  UciGetInput
+
+UciSetOption.ClearHash:
+         bl  Search_Clear
+        lea  x27, Output
+        lea  x1, sz_hash_cleared
+         bl  PrintString
+          b  UciWriteOut_NewLine
+
+
+if USE_SYZYGY
+UciSetOption.SyzygyPath:
+                lea  x1, sz_empty
+                 bl  CmpString
+                mov  x1, 0
+               cbnz  w0, UciSetOption.SyzygyPathDone
+                mov  x1, x26
+        @@:
+               ldrb  w4, [x26, 1]!
+                cmp  w4, ' '
+                bhs  @b
+               strb  wzr, [x26]
+UciSetOption.SyzygyPathDone:
+                mov  x0, x1
+                 bl  Tablebase_Init
+                 bl  Tablebase_DisplayInfo
+                  b  UciGetInput
+end if
+
+
+
+UciSetOption.MultiPv:
+         bl  ParseInteger
+        mov  w4, 1
+        mov  w5, MAX_MOVES
+        ClampUnsigned w0, w4, w5
+        lea  x16, options
+        str  w0, [x16, Options.multiPV]
+          b  UciGetInput
+
+UciSetOption.Chess960:
+         bl  ParseBoole
+        lea  x16, options
+       strb  w0, [x16, Options.chess960]
+          b  UciGetInput
+
+UciSetOption.Ponder:
+         bl  ParseBoole
+        lea  x16, options
+       strb  w0, [x16, Options.ponder]
+          b  UciGetInput
+
+UciSetOption.Contempt:
+         bl  ParseInteger
+        mov  w4, -100
+        mov  w5, 100
+        ClampSigned w0, w4, w5
+        lea  x16, options
+        str  w0, [x16, Options.contempt]
+          b  UciGetInput
+
+UciSetOption.MoveOverhead:
+         bl  ParseInteger
+        mov  w4, 0
+        mov  w5, 5000
+        ClampUnsigned w0, w4, w5
+        lea  x16, options
+        str  w0, [x16, Options.moveOverhead]
+          b  UciGetInput
+
+
+if USE_SYZYGY
+UciSetOption.SyzygyProbeDepth:
+	         bl   ParseInteger
+                mov  w4, 1
+                mov  w5, 100
+      ClampUnsigned  w0, w4, w5
+                lea  x6, options
+                str  w0, [x6, Options.syzygyProbeDepth]
+                  b  UciGetInput
+UciSetOption.Syzygy50MoveRule:
+	         bl  ParseBoole
+                lea  x6, options
+               strb  w0, [x6, Options.syzygy50MoveRule]
+                  b   UciGetInput
+UciSetOption.SyzygyProbeLimit:
+	         bl  ParseInteger
+                mov  w4, 0
+                mov  w5, 6
+      ClampUnsigned  w0, w4, w5
+                lea  x6, options
+                str  w0, [x6, Options.syzygyProbeLimit]
+                  b  UciGetInput
+end if
+
+
+
+UciPerft:
+         bl  SkipSpaces
+         bl  ParseInteger
+        cbz  x0, UciPerft.bad_depth
+        cmp  x0, 10
+        bhi  UciPerft.bad_depth
+        mov  x26, x0
+        mov  x1, x0
+         bl  Position_SetExtraCapacity
+        mov  x1, x26
+         bl  Perft_Root
+          b  UciGetInput
+UciPerft.bad_depth:
+        lea  x27, Output
+        lea  x1, sz_error_depth
+         bl  PrintString
+        mov  x1, 8
+         bl  ParseToken
+          b  UciWriteOut_NewLine
+
+UciBench:
+        mov  x22, 13
+        mov  x23, 1
+        mov  x24, 16
+        mov  x25, 0
+        adr  x27, UciBench.parse_hash
+UciBench.parse_loop:
+         bl  SkipSpaces
+       ldrb  w0, [x26]
+        cmp  w0, ' '
+        blo  UciBench.parse_done
+        cmp  w0, '1'
+        blo  @f
+        cmp  w0, '9'
+        bhi  @f
+        cbz  x27, @f
+         br  x27
+@@:
+        lea  x1, sz_threads
+         bl  CmpString
+       cbnz  w0, UciBench.parse_threads
+
+        lea  x1, sz_depth
+         bl  CmpString
+       cbnz  w0, UciBench.parse_depth
+
+        lea  x1, sz_hash
+         bl  CmpString
+       cbnz  w0, UciBench.parse_hash
+
+        lea  x1, sz_realtime
+         bl  CmpString
+       cbnz  w0, UciBench.parse_realtime
+          b  UciBench.parse_done
+UciBench.parse_hash:
+
+        adr  x27, UciBench.parse_threads
+         bl  SkipSpaces
+         bl  ParseInteger
+        mov  w4, 1
+        mov  w5, 1 shl MAX_HASH_LOG2MB
+        ClampUnsigned w0, w4, w5
+        mov  w24, w0
+          b  UciBench.parse_loop
+UciBench.parse_threads:
+
+        adr  x27, UciBench.parse_depth
+         bl  SkipSpaces
+         bl  ParseInteger
+        mov  w4, 1
+        mov  w5, MAX_THREADS
+        ClampUnsigned w0, w4, w5
+        mov  w23, w0
+          b  UciBench.parse_loop
+UciBench.parse_depth:
+
+        adr  x27, UciBench.parse_realtime
+         bl  SkipSpaces
+         bl  ParseInteger
+        mov  w4, 1
+        mov  w5, 40
+        ClampUnsigned w0, w4, w5
+        mov  w22, w0
+          b  UciBench.parse_loop
+
+UciBench.parse_realtime:
+
+        mov  x27, 0
+         bl  SkipSpaces
+         bl  ParseInteger
+        cmp  x0, 0
+       cset  x27, ne
+          b  UciBench.parse_loop
+UciBench.parse_done:
+
+        stp  x22, x25, [sp, -16]!
+        stp  x24, x23, [sp, -16]!
+        lea  x27, Output
+        lea  x1, sz_format_bench1
+        add  x2, sp, 0
+         bl  PrintFancy
+        add  sp, sp, 32
+if VERBOSE = 0
+         bl  Os_WriteOut_Output
+end if
+        lea  x16, options
+        str  w24, [x16, Options.hash]
+        str  w23, [x16, Options.threads]
+         bl  MainHash_ReadOptions
+         bl  ThreadPool_ReadOptions
+
+        lea  x6, options
+        str  xzr, [sp, UciLoop.nodes]
+if VERBOSE = 0
+       strb  wzr, [x6, Options.displayInfoMove]
+end if
+         bl  Search_Clear
+
+        cbz  w25, @f
+         bl  Os_SetPriority_Realtime
+    @@:
+
+        mov  x23, 0
+        str  xzr, [sp, UciLoop.time]
+        str  xzr, [sp, UciLoop.nodes]
+        lea  x26, BenchFens
+
+UciBench.nextpos:
+        add  x23, x23, 1
+         bl  SkipSpaces
+        mov  w1, 0
+         bl  Position_ParseFen
+        add  x1, sp, UciLoop.limits
+         bl  Limits_Init
+        add  x1, sp, UciLoop.limits
+        str  w22, [x1, Limits.depth]
+         bl  Limits_Set
+
+         bl  Os_GetTime
+        mov  x24, x0
+        add  x1, sp, UciLoop.limits
+         bl  ThreadPool_StartThinking
+        lea  x6, threadPool
+        ldr  x1, [x6, ThreadPool.threadTable + 8*0]
+         bl  Thread_WaitForSearchFinished
+         bl  Os_GetTime
+        sub  x24, x0, x24
+         bl  ThreadPool_NodesSearched_TbHits
+        ldr  x4, [sp, UciLoop.time]
+        ldr  x5, [sp, UciLoop.nodes]
+        add  x4, x4, x24
+        add  x5, x5, x0
+        str  x4, [sp, UciLoop.time]
+        str  x5, [sp, UciLoop.nodes]
+        mov  x25, x0
+
+        lea  x27, Output
+        cmp  x24, 0
+       cinc  x1, x24, eq
+       udiv  x2, x25, x1
+        stp  x23, x0, [sp, -32]!
+        str  x2, [sp, 16]
+        lea  x1, sz_format_bench2
+        add  x2, sp, 0
+        add  x3, sp, 0
+         bl  PrintFancy
+        add  sp, sp, 32
+if VERBOSE = 0
+         bl  Os_WriteOut_Output
+else
+        lea  x1, Output
+         bl  Os_WriteError
+end if
+
+        lea  x6, BenchFensEnd
+        cmp  x26, x6
+        blo  UciBench.nextpos
+
+         bl  Os_SetPriority_Normal
+
+        lea  x27, Output        
+        ldr  x0, [sp, UciLoop.time]
+        ldr  x1, [sp, UciLoop.nodes]
+        mov  x2, 1000
+        cmp  x0, 0
+       cinc  x0, x0, eq
+      scvtf  d0, x0
+      scvtf  d1, x1
+      scvtf  d2, x2
+       fmul  d2, d2, d1
+       fdiv  d2, d2, d0
+     fcvtzs  x2, d2
+        stp  x0, x1, [sp, -32]!
+        str  x2, [sp, 16]
+        lea  x1, sz_format_bench3
+        add  x2, sp, 0
+        add  x3, sp, 0
+         bl  PrintFancy
+        add  sp, sp, 32
+if VERBOSE = 0
+         bl  Os_WriteOut_Output
+else
+        lea  x1, Output
+         bl  Os_WriteError
+end if
+        mov  w4, -1
+        lea  x6, options
+       strb  w4, [x6, Options.displayInfoMove]
+          b  UciGetInput
+
+if VERBOSE > 0
+
+UciDoNull:
+        ldr  x21, [x20, Pos.state]
+        ldr  x0, [x21, State.checkersBB]
+       cbnz  x0, UciGetInput
+
+        ldr  x0, [x20, Pos.stateTable]
+        sub  x0, x21, x0
+        mov  w1, sizeof.State
+       udiv  w0, w0, w1
+        add  w1, w0, 8
+        add  w1, w0, w1, lsr 2
+         bl  Position_SetExtraCapacity
+        ldr  x21, [x20, Pos.state]
+        mov  w4, MOVE_NULL
+        str  w4, [x21, sizeof.State + State.currentMove]
+         bl  Move_DoNull
+        str  x21, [x20, Pos.state]
+          b  UciShow
+
+UciShow:
+        lea  x27, Output
+        ldr  x21, [x20, Pos.state]
+         bl  Position_Print
+          b  UciWriteOut
+
+UciUndo:
+        ldr  x21, [x20, Pos.state]
+         bl  SkipSpaces
+         bl  ParseInteger
+       subs  w0, w0, 1
+       cinc  w25, w0, lo
+UciUndo.Undo:
+        ldr  x4, [x20, Pos.stateTable]
+        cmp  x21, x4
+        bls  UciShow
+        ldr  w1, [x21, State.currentMove]
+         bl  Move_Undo
+       subs  w25, w25, 1
+        bpl  UciUndo.Undo
+          b  UciShow
+
+UciMoves:
+         bl  UciParseMoves
+          b  UciShow
+
+UciEval:
+        ldr  x21, [x20, Pos.state]
+
+      mov32  w1, PAWN_HASH_ENTRY_COUNT*sizeof.PawnEntry
+         bl  Os_VirtualAlloc
+        str  x0, [x20, Pos.pawnTable]
+
+      mov32  w1, MATERIAL_HASH_ENTRY_COUNT*sizeof.MaterialEntry
+         bl  Os_VirtualAlloc
+        str  x0, [x20, Pos.materialTable]
+
+         bl  Evaluate
+        mov  w25, w0
+
+        ldr  x1, [x20, Pos.materialTable]
+      mov32  w2, MATERIAL_HASH_ENTRY_COUNT*sizeof.MaterialEntry
+         bl  Os_VirtualFree
+        str  xzr, [x20, Pos.materialTable]
+
+        ldr  x1, [x20, Pos.pawnTable]
+      mov32  w2, PAWN_HASH_ENTRY_COUNT*sizeof.PawnEntry
+         bl  Os_VirtualFree
+        str  xzr, [x20, Pos.pawnTable]
+
+        lea  x27, Output
+       sxtw  x0, w25
+         bl  PrintInt
+        mov  w0, ' '
+       strb  w0, [x27], 1        
+        mov  w0, '='
+       strb  w0, [x27], 1        
+        mov  w0, '='
+       strb  w0, [x27], 1        
+        mov  w0, ' '
+       strb  w0, [x27], 1        
+        mov  w1, w25
+         bl  PrintScore_Uci
+        PrintNewLine
+          b  UciWriteOut
+end if

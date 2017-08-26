@@ -1,0 +1,43 @@
+
+Search_Clear:
+                stp  x29, x30, [sp, -16]!
+                 bl  MainHash_Clear
+                lea  x6, mainHash
+               strb  wzr, [x6, MainHash.date]
+                lea  x6, threadPool
+                ldr  w16, [x6, ThreadPool.threadCnt]
+
+Search_Clear.NextThread:
+        ; mainThread.previousScore is used in the time management part of idloop
+        ;  +VALUE_INFINITE causes us to think alot on the first move
+               subs  x16, x16, 1
+                bmi  Search_Clear.ThreadsDone
+                lea  x6, threadPool
+                add  x6, x6, ThreadPool.threadTable
+                ldr  x3, [x6, x16, lsl 3]
+                mov  w4, VALUE_INFINITE
+                str  w4, [x3, Thread.previousScore]
+
+        ; clear thread stats
+                ldr  x17, [x3, Thread.rootPos + Pos.history]
+                mov  w1, (sizeof.HistoryStats + sizeof.MoveStats)/4
+                mov  w0, 0
+                 bl  RepStosd
+
+        ; clear cmh table - some overlap possible here
+                ldr  x17, [x3, Thread.rootPos + Pos.counterMoveHistory]
+                mov  w1, (sizeof.CounterMoveHistoryStats)/4
+                mov  w0, 0
+                 bl  RepStosd
+
+                ldr  x17, [x3, Thread.rootPos + Pos.counterMoveHistory]
+                add  x17, x17, CmhDeadOffset
+                mov  w1, 16*64
+                mov  w0, CounterMovePruneThreshold - 1
+                 bl  RepStosd
+
+                  b  Search_Clear.NextThread
+
+Search_Clear.ThreadsDone:
+                ldp  x29, x30, [sp], 16
+                ret

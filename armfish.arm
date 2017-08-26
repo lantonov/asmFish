@@ -21,15 +21,48 @@ USE_SYZYGY      = 1
 include 'arm/def.arm'
 include 'arm/linux64.arm'
 include 'arm/macros.arm'
+
 include 'arm/AttackMacros.arm'
+include 'arm/SliderBlockers.arm'
+
+include 'arm/Pawn.arm'
 
 org 0x0
 db 4096 dup 0
 dd 32 dup 0xd503201f
+
 include 'layout.arm'
+
+
+
+
+if USE_SYZYGY
+  include 'arm/TablebaseCore.arm'
+  include 'arm/Tablebase.arm'
+end if
+        lea  x6, spEntry
+        mov  x0, sp
+        str  x0, [x6]
 
 include 'arm/Endgame.arm'
 
+include 'arm/Evaluate.arm'
+
+
+include 'arm/CheckTime.arm'
+include 'arm/RootMoves.arm'
+include 'arm/Move_GivesCheck.arm'
+include 'arm/Move_Undo.arm'
+include 'arm/Move_Do.arm'
+include 'arm/SetCheckInfo.arm'
+include 'arm/Search_Clear.arm'
+include 'arm/Perft.arm'
+include 'arm/Limits.arm'
+include 'arm/Thread.arm'
+include 'arm/ThreadPool.arm'
+include 'arm/Position.arm'
+include 'arm/Uci.arm'
+include 'arm/Math.arm'
 include 'arm/OsLinux.arm'
 include 'arm/PrintParse.arm'
 include 'arm/MainHash.arm'
