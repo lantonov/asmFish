@@ -1,0 +1,140 @@
+remaining:
+                lea  x6, limits
+                add  x7, x6, x21, lsl 2
+                ldr  w0, [x7, Limits.time]
+                ldr  w1, [x7, Limits.incr]
+                lea  x7, options
+                ldr  w2, [x7, Options.moveOverhead]
+                ldr  w3, [x6, Limits.movestogo]
+
+                cmp   w0, 0
+                ble  remaining.L11
+                add  w4, w4, 1
+                mov  w6, 2
+              scvtf  d1, w1
+               sdiv  w4, w4, w6
+                adr  x6, remaining.const1
+                sub  w1, w4, 25
+              scvtf  d0, w1
+                adr  x1, remaining.LC1
+                ldr  d2, [x1]
+                adr  x1, remaining.LC2
+                ldr  d3, [x1]
+               fmul  d2, d0, d2
+              fmsub  d0, d0, d2, d3
+                adr  x1, remaining.LC0
+                ldr  d2, [x1]
+               fmov  d3, 1.0
+              fcmpe  d0, d2
+              fcsel  d0, d0, d2, gt
+               fmul  d1, d1, d0
+                cbz  w3, remaining.L5
+                cmp  w3, 50
+                mov  w1, 50
+               csel  w3, w3, w1, lt
+              scvtf  d2, w3
+                cmp  w4, 40
+                ldr  d0, [x6, w5, uxtw 3]
+               fdiv  d2, d0, d2
+               fmov  d0, 1.5
+                bgt  remaining.L15
+                sub  w4, w4, 20
+              scvtf  d0, w4
+                adr  x1, remaining.LC3
+                ldr  d4, [x1]
+                adr  x1, remaining.LC4
+                ldr  d5, [x1]
+               fmul  d4, d0, d4
+              fmsub  d0, d0, d4, d5
+remaining.L15:
+               fmul  d0, d2, d0
+               fmov  d2, 8.5
+remaining.L8:
+              scvtf  d4, w0
+               fmul  d2, d4, d2
+               fdiv  d1, d1, d2
+               fadd  d1, d1, d3
+               fmul  d1, d1, d0
+               fmov  d0, 1.0
+              fcmpe  d1, d3
+              fcsel  d1, d1, d0, mi
+               subs  w0, w0, w2
+               csel  w0, w0, wzr, pl
+              scvtf  d0, w0
+               fmul  d0, d0, d1
+             fcvtzs  w0, d0
+                ret
+remaining.L5:
+                mov  w1, 20
+              scvtf  d0, w4
+                mul  w1, w4, w1
+                add  x6, x6, x5, uxtw 3
+              scvtf  d2, w1
+                adr  x1, remaining.LC5
+                ldr  d4, [x1]
+               fadd  d0, d0, d4
+               fdiv  d0, d2, d0
+               fadd  d2, d0, d3
+                ldr  d0, [x6, remaining.const2 - remaining.const1]
+               fmul  d0, d2, d0
+                  b  remaining.L8
+remaining.L11:
+                mov  w0, 0
+                ret
+remaining.LC0:
+        dd   0
+        dd   1078689792
+remaining.LC1:
+        dd   3951369912
+        dd   1069463633
+remaining.LC2:
+        dd   0
+        dd   1079902208
+remaining.LC3:
+        dd   3539053052
+        dd   1062232653
+remaining.LC4:
+        dd   2576980378
+        dd   1072798105
+remaining.LC5:
+        dd   0
+        dd   1082081280
+remaining.const1:
+        dd   0
+        dd   1072693248
+        dd   0
+        dd   1075314688
+remaining.const2:
+        dd   2954937500
+        dd   1066494066
+        dd   515396076
+        dd   1068624773
+
+
+
+TimeMng_Init:
+                stp  x21, x30, [sp, -16]!
+                stp  x22, x23, [sp, -16]!
+
+                mov  w21, w1
+                mov  w22, w2
+                lea  x23, time
+                lea  x6, limits
+                ldr  x0, [x6, Limits.startTime]
+                str  x0, [x23, Time.startTime]
+
+                mov  w4, w22
+                mov  w5, 0
+                 bl  remaining
+                str  x0, [x23, Time.optimumTime]
+Display 1, "optimumTime: %I0%n"
+
+                mov  w4, w22
+                mov  w5, 1
+                 bl  remaining
+                str  x0, [x23, Time.maximumTime]
+Display 1, " maximumTime: %I0%n"
+
+                ldp  x22, x23, [sp], 16
+                ldp  x21, x30, [sp], 16
+                ret

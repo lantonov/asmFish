@@ -93,6 +93,8 @@ define @adr
 @atype_preincr   = 1 shl 2
 @atype_postincr  = 1 shl 3
 @atype_literal   = 1 shl 4
+@atype_incr   = @atype_preincr or @atype_postincr
+
 
 macro use64
 end macro
@@ -101,6 +103,12 @@ end macro
 ;;;;;;;;;;;;;;;;;;;;;;;
 ; immediate encodings ;
 ;;;;;;;;;;;;;;;;;;;;;;;
+
+macro aarch64.restrict x, lower, upper, mask:0
+    if (x and mask) <> 0 | x < lower | x > upper
+        err 'value is out of range'
+    end if
+end macro
 
 ; determine if x can be encoded as a wide immediate
 macro aarch64.parse_uimm64 x
@@ -328,14 +336,16 @@ macro aarch64.parse_float ns
     ns.type = @type_immf
     if ns.data = 0.0
         ns.data = 00000000b
-    else if ns.data = 1.0
-        ns.data = 01110000b
     else if ns.data = -1.0
         ns.data = 11110000b
     else if ns.data = 0.25
         ns.data = 01010000b
     else if ns.data = 0.5
         ns.data = 01100000b
+    else if ns.data = 1.0
+        ns.data = 01110000b
+    else if ns.data = 1.5
+        ns.data = 01111000b
     else if ns.data = 2.0
         ns.data = 00000000b
     else if ns.data = 2.5
@@ -348,6 +358,8 @@ macro aarch64.parse_float ns
         ns.data = 00010100b
     else if ns.data = 8.0
         ns.data = 00100000b
+    else if ns.data = 8.5
+        ns.data = 00100001b
     else
         err 'float cannot be encoded'
     end if
@@ -616,6 +628,8 @@ macro aarch64.parse_con x
     end match    
 end macro
 
+
+; generic address parse
 macro aarch64.parse_adr x&
     match [a=,b=,c], x
         aarch64.parse_operand @op0, a
@@ -628,6 +642,8 @@ macro aarch64.parse_adr x&
             match =lsl d, c
                 @adr.kind = 1
                 @adr.shift = +d
+            else match =sxtx, c
+                @adr.kind = 1
             else match =uxtw, c
                 @adr.kind = 0
             else match =sxtw, c
@@ -637,6 +653,9 @@ macro aarch64.parse_adr x&
                 @adr.shift = +d
             else match =sxtw d, c
                 @adr.kind = 4
+                @adr.shift = +d
+            else match =sxtx d, c
+                @adr.kind = 1
                 @adr.shift = +d
             else
                 err 'invalid extension in address'
@@ -696,17 +715,25 @@ macro aarch64.parse_adr x&
 end macro
 
 
+; 5.2.1 Load-Store Single Register
+; 5.2.3 Load Single Register (pc-relative, literal load)
+;  - Scaled, 12-bit, unsigned immediate offset, without pre- and post-index options.
+;  - Unscaled, 9-bit, signed immediate offset with pre- or post-index writeback.
+;  - Scaled or unscaled 64-bit register offset.
+;  - Scaled or unscaled 32-bit extended register offset.
 macro aarch64.parse_adr_f1 size, x&
     @adr.mask = (1 shl size) - 1
     match [a=,b=,c], x
+        @adr.type = @atype_register
         aarch64.parse_operand @opA, a
         aarch64.parse_operand @opB, b        
         if (@opA.type and @type_xn_xsp) & (@opB.type and @type_wn_wzr_xn_xzr)
-            ;@adr.type = @atype_register
             @adr.shift = -1
             match =lsl d, c
                 @adr.kind = 1
                 @adr.shift = +d
+            else match =sxtx, c
+                @adr.kind = 1
             else match =uxtw, c
                 @adr.kind = 0
             else match =sxtw, c
@@ -716,6 +743,9 @@ macro aarch64.parse_adr_f1 size, x&
                 @adr.shift = +d
             else match =sxtw d, c
                 @adr.kind = 4
+                @adr.shift = +d
+            else match =sxtx d, c
+                @adr.kind = 1
                 @adr.shift = +d
             else
                 err 'invalid extension in address'
@@ -734,70 +764,59 @@ macro aarch64.parse_adr_f1 size, x&
         aarch64.parse_operand @opA, a
         aarch64.parse_operand @opB, b
         if (@opA.type and @type_xn_xsp) & (@opB.type and @type_immc)
-            ;@adr.type = @atype_simple
+            @adr.type = @atype_simple
             if (@opB.data and @adr.mask) = 0 & (0 <= @opB.data) & ((@opB.data shr size) <= 0xFFF)
                 @adr.encode = 0x01000000 + (((@opB.data shr size) and 0xFFF) shl 10) + (@opA.data shl 5)
-            else if (-256 <= @opB.data) & (@opB.data < 256)
-                @adr.encode = ((@opB.data and 0x1FF) shl 12) + (@opA.data shl 5)
             else
-                err 'immediate offset out of range'     
+                aarch64.restrict @opB.data, -256, 255
+                @adr.encode = 0x00000000 + ((@opB.data and 0x1FF) shl 12) + (@opA.data shl 5)
             end if
         else if (@opA.type and @type_xn_xsp) & (@opB.type and @type_xn_xzr)
-            ;@adr.type = @atype_register
+            @adr.type = @atype_register
             @adr.encode = 0x00206800 + (@opB.data shl 16) + (@opA.data shl 5)
         else if (@opA.type and @type_xn_xsp) & (@opB.type and @type_immc_lo12)
-            ;@adr.type = @atype_simple
-            if (@opB.data and @adr.mask) = 0
-                @adr.encode = 0x01000000 + (((@opB.data and 0xFFF) shr size) shl 10) + (@opA.data shl 5)
-            else
-                err 'immediate offset unaligned'     
-            end if
+            @adr.type = @atype_simple
+            @opB.data = @opB.data and 0xFFF
+            aarch64.restrict @opB.data, 0, 0xFFF, @adr.mask
+            @adr.encode = 0x01000000 + ((@opB.data shr size) shl 10) + (@opA.data shl 5)
         else
             err 'invalid address'
         end if
     else match [a], x
+        @adr.type = @atype_simple
         aarch64.parse_operand @opA, a
         if (@opA.type and @type_xn_xsp)
-            ;@adr.type = @atype_simple
             @adr.encode = 0x01000000 + (@opA.data shl 5)
         else
             err 'invalid address 3'
         end if
     else match [a=,b]!, x
+        @adr.type = @atype_preincr
         aarch64.parse_operand @opA, a
         aarch64.parse_operand @opB, b
         if (@opA.type and @type_xn_xsp) & (@opB.type and @type_immc)
-            ;@adr.type = @atype_preincr
-            if -256 <= @opB.data & @opB.data < 256
-                @adr.encode = 0x00000c00 + ((@opB.data and 0x1FF) shl 12) + (@opA.data shl 5)
-            else
-                err 'immediate offset out of range'
-            end if
+            aarch64.restrict @opB.data, -256, 255
+            @adr.encode = 0x00000c00 + ((@opB.data and 0x1FF) shl 12) + (@opA.data shl 5)
         else
             err 'invalid address 42'
         end if
     else match [a]=,b, x
+        @adr.type = @atype_postincr
         aarch64.parse_operand @opA, a
         aarch64.parse_operand @opB, b
         if (@opA.type and @type_xn_xsp) & (@opB.type and @type_immc)
-            if -256 <= @opB.data & @opB.data <= 255
-                @adr.encode = 0x00000400 + ((@opB.data and 0x1FF) shl 12) + (@opA.data shl 5)
-            else
-                err 'immediate offset out of range'
-            end if
+            aarch64.restrict @opB.data, -256, 255
+            @adr.encode = 0x00000400 + ((@opB.data and 0x1FF) shl 12) + (@opA.data shl 5)
         else
             err 'invalid address 5'
         end if
     else
-        ;@adr.type = @atype_literal
+        @adr.type = @atype_literal
         @adr.imm = +x
         if @adr.imm relativeto $
             @adr.imm = @adr.imm - $
-            if (@adr.imm and 0x03 = 0) & (-1 shl 20 <= @adr.imm & @adr.imm < 1 shl 20)
-                @adr.encode = -0xA0400000 + (((@adr.imm and 0x1FFFFF) shr 2) shl 5)
-            else
-                err 'literal out of range or unaligned'
-            end if
+            aarch64.restrict @adr.imm, -0x100000, 0xFFFFF, 0x03
+            @adr.encode = -0xA0400000 + (((@adr.imm and 0x1FFFFF) shr 2) shl 5)
         else
             err 'invalid literal'
         end if
@@ -805,21 +824,91 @@ macro aarch64.parse_adr_f1 size, x&
     end match
 end macro
 
-macro aarch64.parse_adr_f2 size, x&
+
+; 5.2.2 Load-Store Single Register (unscaled offset)
+; 5.2.6 Load-Store Unprivileged
+;  - Unscaled, 9-bit, signed immediate offset, without pre- and post-index options
+macro aarch64.parse_adr_f26 x&
+    aarch64.parse_adr x
+    if @adr.type = @atype_simple
+        aarch64.restrict @adr.imm, -0x100, 0xFF
+        @adr.encode = 0x00000000 + ((@adr.imm and 0x1FF) shl 12) + (@adr.n shl 5)
+    else
+        err 'invalid address'
+    end if
+end macro
+
+iterate <instr, code>, ldurb, 0x00000000,\
+                       ldurh, 0x00000000,\
+                       sturb, 0x00000000,\
+                       sturh, 0x78000000,\
+                       ldtrb, 0x00000000,\
+                       ldtrh, 0x00000000,\
+                       sttrb, 0x00000000,\
+                       sttrh, 0x00000000
+    macro instr a*, b&
+        aarch64.parse_adr_f26       b
+        aarch64.parse_operand @op0, a
+        if (@op0.type and @type_wn_wzr)
+            dd code + @adr.encode + (@op0.data shl 0)
+        else
+            err 'invalid operand'
+        end if
+    end macro
+end iterate
+
+iterate <instr, code>, ldursw, 0x00000000,\
+                       ldtrsw, 0x00000000
+    macro instr a*, b&
+        aarch64.parse_adr_f26       b
+        aarch64.parse_operand @op0, a
+        if (@op0.type and @type_xn_xzr)
+            dd code + @adr.encode + (@op0.data shl 0)
+        else
+            err 'invalid operand'
+        end if
+    end macro
+end iterate
+
+iterate <instr, code1, code2>, stur,   0x00000000, 0x00000000,\
+                               ldur,   0x00000000, 0x00000000,\
+                               ldursb, 0x00000000, 0x00000000,\
+                               ldursh, 0x00000000, 0x00000000,\
+                               sttr,   0x00000000, 0x00000000,\
+                               ldtr,   0x00000000, 0x00000000,\
+                               ldtrsb, 0x00000000, 0x00000000,\
+                               ldtrsh, 0x00000000, 0x00000000
+    macro instr a*, b&
+        aarch64.parse_adr_f26       b
+        aarch64.parse_operand @op0, a
+        if (@op0.type and @type_wn_wzr)
+            dd code1 + @adr.encode + (@op0.data shl 0)
+        else if (@op0.type and @type_xn_xzr)
+            dd code2 + @adr.encode + (@op0.data shl 0)
+        else
+            err 'invalid operand'
+        end if
+    end macro
+end iterate                              
+
+
+
+; 5.2.4 Load-Store Pair
+;  - Scaled 7-bit signed immediate offset, with pre- and post-index writeback options
+macro aarch64.parse_adr_f4 size, x&
     @adr.mask = (1 shl size) - 1
     match [a=,b], x
+        @adr.type = @atype_simple
         aarch64.parse_operand @opA, a
         aarch64.parse_operand @opB, b
         if (@opA.type and @type_xn_xsp) & (@opB.type and @type_immc)
-            if (-256 shl size) <= @opB.data & @opB.data <= (255 shl size)
-                @adr.encode = 0x01000000 + (((@opB.data and 0x3FF) shr size) shl 15) + (@opA.data shl 5)
-            else
-                err 'immediate offset out of range'     
-            end if
+            aarch64.restrict @opB.data, (-256 shl size), (255 shl size), @adr.mask
+            @adr.encode = 0x01000000 + (((@opB.data and 0x3FF) shr size) shl 15) + (@opA.data shl 5)
         else
             err 'invalid address'
         end if
     else match [a], x
+        @adr.type = @atype_postincr
         aarch64.parse_operand @opA, a
         if (@opA.type and @type_xn_xsp)
             @adr.encode = 0x01000000 + (@opA.data shl 5)
@@ -827,26 +916,22 @@ macro aarch64.parse_adr_f2 size, x&
             err 'invalid address 3'
         end if
     else match [a=,b]!, x
+        @adr.type = @atype_preincr
         aarch64.parse_operand @opA, a
         aarch64.parse_operand @opB, b
         if (@opA.type and @type_xn_xsp) & (@opB.type and @type_immc)
-            if (-256 shl size) <= @opB.data & @opB.data <= (255 shl size)
-                @adr.encode = 0x01800000 + (((@opB.data and 0x3FF) shr size) shl 15) + (@opA.data shl 5)
-            else
-                err 'immediate offset out of range'
-            end if
+            aarch64.restrict @opB.data, (-256 shl size), (255 shl size), @adr.mask
+            @adr.encode = 0x01800000 + (((@opB.data and 0x3FF) shr size) shl 15) + (@opA.data shl 5)
         else
             err 'invalid address 43'
         end if
     else match [a]=,b, x
+        @adr.type = @atype_literal
         aarch64.parse_operand @opA, a
         aarch64.parse_operand @opB, b
         if (@opA.type and @type_xn_xsp) & (@opB.type and @type_immc)
-            if (-256 shl size) <= @opB.data & @opB.data <= (255 shl size)
-                @adr.encode = 0x00800000 + (((@opB.data and 0x3FF) shr size) shl 15) + (@opA.data shl 5)
-            else
-                err 'immediate offset out of range'
-            end if
+            aarch64.restrict @opB.data, (-256 shl size), (255 shl size), @adr.mask
+            @adr.encode = 0x00800000 + (((@opB.data and 0x3FF) shr size) shl 15) + (@opA.data shl 5)
         else
             err 'invalid address 5'
         end if
@@ -856,11 +941,217 @@ macro aarch64.parse_adr_f2 size, x&
 end macro
 
 
-macro aarch64.restrict x, lower, upper, mask:0
-    if (x and mask) <> 0 | x < lower | x > upper
-        err 'value is out of range'
+; 5.2.5 Load-Store Non-temporal Pair
+;  - Scaled 7-bit signed immediate offset, without pre- and post-index options
+macro aarch64.parse_adr_f5 size, x&
+    aarch64.parse_adr x
+    if (@adr.type = @atype_simple)
+        aarch64.restrict @adr.imm, (-256 shl size), (255 shl size), @adr.mask
+        @adr.encode = 0x01800000 + (((@adr.imm and 0x3FF) shr size) shl 15) + (@adr.n shl 5)
+    else
+        err 'invalid address'
     end if
 end macro
+
+
+; 5.2.7 Load-Store Exclusive
+; 5.2.8 Load-Acquire / Store-Release
+macro aarch64.parse_adr_f78 x&
+    aarch64.parse_adr x
+    if (@adr.type = @atype_simple) & (@adr.imm = 0)
+        @adr.encode = @adr.n shl 5
+    else
+        err 'invalid address'
+    end if
+end macro
+
+macro ldxr a*, b&
+    aarch64.parse_adr_f78       b
+    aarch64.parse_operand @op0, a
+    if (@op0.type and @type_wn_wzr)
+        dd 0x00000000 + @adr.encode + (@op0.data shl 0)
+    else if (@op0.type and @type_xn_xzr)
+        dd 0x00000000 + @adr.encode + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+macro ldxrh a*, b&
+    aarch64.parse_adr_f78       b
+    aarch64.parse_operand @op0, a
+    if (@op0.type and @type_wn_wzr)
+        dd 0x00000000 + @adr.encode + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+macro ldxrb a*, b&
+    aarch64.parse_adr_f78       b
+    aarch64.parse_operand @op0, a
+    if (@op0.type and @type_wn_wzr)
+        dd 0x00000000 + @adr.encode + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+macro ldar a*, b&
+    aarch64.parse_adr_f78       b
+    aarch64.parse_operand @op0, a
+    if (@op0.type and @type_wn_wzr)
+        dd 0x88dffc00 + @adr.encode + (@op0.data shl 0)
+    else if (@op0.type and @type_xn_xzr)
+        dd 0xc8dffc00 + @adr.encode + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+macro ldxp a*, b*, c&
+    aarch64.parse_adr_f78       c
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, a
+    if (@op0.type and @type_wn_wzr)
+        dd 0x00000000 + @adr.encode + (@op0.data shl 0)
+    else if (@op0.type and @type_xn_xzr)
+        dd 0x00000000 + @adr.encode + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+macro ldarb a*, b&
+    aarch64.parse_adr_f78       b
+    aarch64.parse_operand @op0, a
+    if (@op0.type and @type_wn_wzr)
+        dd 0x08dffc00 + @adr.encode + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+macro ldaxr a*, b&
+    aarch64.parse_adr_f78       b
+    aarch64.parse_operand @op0, a
+    if (@op0.type and @type_wn_wzr)
+        dd 0x885ffc00 + @adr.encode + (@op0.data shl 0)
+    else if (@op0.type and @type_xn_xzr)
+        dd 0xc85ffc00 + @adr.encode + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+macro stlr a*, b&
+    aarch64.parse_adr_f78       b
+    aarch64.parse_operand @op0, a
+    if (@op0.type and @type_wn_wzr)
+            dd 0x889ffc00 + @adr.encode + (@op0.data shl 0)
+    else if (@op0.type and @type_xn_xzr)
+            dd 0x00000000 + @adr.encode + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+macro stlrb a*, b&
+    aarch64.parse_adr_f78       b
+    aarch64.parse_operand @op0, a
+    if (@op0.type and @type_wn_wzr)
+        dd 0x089ffc00 + @adr.encode + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+macro stlxr a*, b*, c&
+    aarch64.parse_adr_f78       c
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr)
+        dd 0x8800fc00 + @adr.encode + (@op0.data shl 16) + (@op1.data shl 0)
+    else if (@op0.type and @type_wn_wzr) & (@op1.type and @type_xn_xzr)
+        dd 0xc800fc00 + @adr.encode + (@op0.data shl 16) + (@op1.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+macro stxr a*, b*, c&
+    aarch64.parse_adr_f78       c
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr)
+        dd 0x00000000 + @adr.encode + (@op0.data shl 16) + (@op1.data shl 0)
+    else if (@op0.type and @type_wn_wzr) & (@op1.type and @type_xn_xzr)
+        dd 0x00000000 + @adr.encode + (@op0.data shl 16) + (@op1.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+
+macro stlxrb a*, b*, c&
+    aarch64.parse_adr_f78       c
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr)
+        dd 0x0800fc00 + @adr.encode + (@op0.data shl 16) + (@op1.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+macro stxrb a*, b*, c&
+    aarch64.parse_adr_f78       c
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr)
+        dd 0x00000000 + @adr.encode + (@op0.data shl 16) + (@op1.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+macro stxrh a*, b*, c&
+    aarch64.parse_adr_f78       c
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr)
+        dd 0x00000000 + @adr.encode + (@op0.data shl 16) + (@op1.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+
+macro ldaxrb a*, b&
+    aarch64.parse_adr_f78       b
+    aarch64.parse_operand @op0, a
+    if (@op0.type and @type_wn_wzr)
+        dd 0x085ffc00 + (@adr.n shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+
+macro stxp a*, b*, c*, d&
+    aarch64.parse_adr_f78       d
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    aarch64.parse_operand @op2, c
+    if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_wn_wzr)
+        dd 0x88200000 + @adr.encode + (@op0.data shl 16) + (@op2.data shl 10) + (@op1.data shl 0)
+    else if (@op0.type and @type_wn_wzr) & (@op1.type and @type_xn_xzr) & (@op2.type and @type_xn_xzr)
+        dd 0xc8200000 + @adr.encode + (@op0.data shl 16) + (@op2.data shl 10) + (@op1.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
 
 
 
@@ -868,6 +1159,50 @@ end macro
 ; the instruction set ;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
+macro aarch64.parse_prf x
+    match =PLDL1KEEP?, x
+        @imm.data = 0
+    else match =PLDL1STRM?, x
+        @imm.data = 1
+    else match =PLDL2KEEP?, x
+        @imm.data = 2
+    else match =PLDL2STRM?, x
+        @imm.data = 3
+    else match =PLDL3KEEP?, x
+        @imm.data = 4
+    else match =PLDL3STRM?, x
+        @imm.data = 5
+    else match =PSTL1KEEP?, x
+        @imm.data = 16
+    else match =PSTL1STRM?, x
+        @imm.data = 17
+    else match =PSTL2KEEP?, x
+        @imm.data = 18
+    else match =PSTL2STRM?, x
+        @imm.data = 19
+    else match =PSTL3KEEP?, x
+        @imm.data = 20
+    else match =PSTL3STRM?, x
+        @imm.data = 21
+    else
+        @imm.data = +x
+        if @imm.data relativeto 0
+            aarch64.restrict @imm.data, 0, 31
+        else
+            err 'invalid prefetch hint'
+        end if
+    end match 
+end macro
+
+macro prfm a*, b&
+    aarch64.parse_prf a
+    aarch64.parse_adr_f1 3, b
+    if @adr.type and @atype_incr = 0
+        dd 0xf8800000 + @adr.encode + (@imm.data shl 0)
+    else
+        err 'invalid post/pre increment'
+    end if
+end macro
 
 macro ldrb a*, b&
     aarch64.parse_operand @op0, a
@@ -1385,6 +1720,20 @@ macro bfm a*, b*, c*, d*
     end if
 end macro
 
+macro ubfm a*, b*, c*, d*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    aarch64.parse_operand @op2, c
+    aarch64.parse_operand @op3, d
+    if (@op0.type and @type_wn_wzr) & (@op0.type and @type_wn_wzr) & (@op2.type and @type_immc) & (@op3.type and @type_immc)
+        dd 0x33000000 + ((@op2.data and 0x1F) shl 16) + ((@op3.data and 0x1F) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_xn_xzr) & (@op0.type and @type_xn_xzr) & (@op2.type and @type_immc) & (@op3.type and @type_immc)
+        dd 0xb3400000 + ((@op2.data and 0x3F) shl 16) + ((@op3.data and 0x3F) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid operands'
+    end if
+end macro
+
 macro bfxil a*, b*, c*, d*
     aarch64.parse_operand @op0, a
     aarch64.parse_operand @op1, b
@@ -1844,73 +2193,8 @@ macro extr a*, b*, c*, d*
     end if
 end macro
 
-macro ldar a*, b&
-    aarch64.parse_adr           b
-    aarch64.parse_operand @op0, a
-    if (@op0.type and @type_wn_wzr) & (@adr.type and @atype_simple)
-        if @adr.imm = 0
-            dd 0x88dffc00 + (@adr.n shl 5) + (@op0.data shl 0)
-        else
-            err 'immediate offset is not zero'
-        end if
-    else if (@op0.type and @type_xn_xzr) & (@adr.type and @atype_simple)
-        if @adr.imm = 0
-            dd 0xc8dffc00 + (@adr.n shl 5) + (@op0.data shl 0)
-        else
-            err 'immediate offset is not zero'
-        end if
-    else
-        err 'invalid operand'
-    end if
-end macro
 
-macro ldarb a*, b&
-    aarch64.parse_adr           b
-    aarch64.parse_operand @op0, a
-    if (@op0.type and @type_wn_wzr) & (@adr.type and @atype_simple)
-        if @adr.imm = 0
-            dd 0x08dffc00 + (@adr.n shl 5) + (@op0.data shl 0)
-        else
-            err 'immediate offset is not zero'
-        end if
-    else
-        err 'invalid operand'
-    end if
-end macro
 
-macro ldaxr a*, b&
-    aarch64.parse_adr           b
-    aarch64.parse_operand @op0, a
-    if (@op0.type and @type_wn_wzr) & (@adr.type and @atype_simple)
-        if @adr.imm = 0
-            dd 0x885ffc00 + (@adr.n shl 5) + (@op0.data shl 0)
-        else
-            err 'immediate offset is not zero'
-        end if
-    else if (@op0.type and @type_xn_xzr) & (@adr.type and @atype_simple)
-        if @adr.imm = 0
-            dd 0xc85ffc00 + (@adr.n shl 5) + (@op0.data shl 0)
-        else
-            err 'immediate offset is not zero'
-        end if
-    else
-        err 'invalid operand'
-    end if
-end macro
-
-macro ldaxrb a*, b&
-    aarch64.parse_adr           b
-    aarch64.parse_operand @op0, a
-    if (@op0.type and @type_wn_wzr) & (@adr.type and @atype_simple)
-        if @adr.imm = 0
-            dd 0x085ffc00 + (@adr.n shl 5) + (@op0.data shl 0)
-        else
-            err 'immediate offset is not zero'
-        end if
-    else
-        err 'invalid operand'
-    end if
-end macro
 
 
 
@@ -1937,6 +2221,20 @@ macro smaddl a*, b*, c*, d*
         err 'invalid argument'
     end if
 end macro
+
+macro umsubl a*, b*, c*, d*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    aarch64.parse_operand @op2, c
+    aarch64.parse_operand @op3, d
+    if (@op0.type and @type_xn_xzr) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_wn_wzr) & (@op3.type and @type_xn_xzr)
+        dd 0x00000000 + (@op2.data shl 16) + (@op3.data shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid argument'
+    end if
+end macro
+
+
 
 
 macro madd a*, b*, c*, d*
@@ -2048,6 +2346,29 @@ macro smull a*, b*, c*
     end if
 end macro
 
+macro umull a*, b*, c*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    aarch64.parse_operand @op2, c
+    if (@op0.type and @type_xn_xzr) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_wn_wzr)
+        dd 0x00000000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid parameter'
+    end if
+end macro
+
+macro umnegl a*, b*, c*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    aarch64.parse_operand @op2, c
+    if (@op0.type and @type_xn_xzr) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_wn_wzr)
+        dd 0x00000000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid parameter'
+    end if
+end macro
+
+
 
 
 macro orr a*, b*, c*, d
@@ -2114,75 +2435,18 @@ macro ret? a:x30
 end macro
 
 
-macro stlr a*, b&
-    dd -1
-
-end macro
-
-macro stlrb a*, b&
-    aarch64.parse_adr           b
-    aarch64.parse_operand @op0, a
-    if (@op0.type and @type_wn_wzr) & (@adr.type and @atype_simple)
-        if @adr.imm = 0
-            dd 0x089ffc00 + (@adr.n shl 5) + (@op0.data shl 0)
-        else
-            err 'immediate offset is not zero'
-        end if
-    else
-        err 'invalid operand'
-    end if
-end macro
-
-macro stlxr a*, b*, c&
-    aarch64.parse_adr           c
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr) & (@adr.type and @atype_simple)
-        if @adr.imm = 0
-            dd 0x8800fc00 + (@op0.data shl 16) + (@adr.n shl 5) + (@op1.data shl 0)
-        else
-            err 'immediate offset is not zero'
-        end if
-    else if (@op0.type and @type_wn_wzr) & (@op1.type and @type_xn_xzr) & (@adr.type and @atype_simple)
-        if @adr.imm = 0
-            dd 0xc800fc00 + (@op0.data shl 16) + (@adr.n shl 5) + (@op1.data shl 0)
-        else
-            err 'immediate offset is not zero'
-        end if
-    else
-        err 'invalid operand'
-    end if
-end macro
-
-macro stlxrb a*, b*, c&
-    aarch64.parse_adr           c
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr) & (@adr.type and @atype_simple)
-        if @adr.imm = 0
-            dd 0x0800fc00 + (@op0.data shl 16) + (@adr.n shl 5) + (@op1.data shl 0)
-        else
-            err 'immediate offset is not zero'
-        end if
-    else
-        err 'invalid operand'
-    end if
-end macro
-
-
-
 
 macro ldp a*, b*, c&
     aarch64.parse_operand @op0, a
     aarch64.parse_operand @op1, b
     if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr)
-        aarch64.parse_adr_f2 3, c
+        aarch64.parse_adr_f4 3, c
         dd 0xa8400000 + @adr.encode + (@op1.data shl 10) + (@op0.data shl 0)
     else if (@op0.type and @type_dn) & (@op1.type and @type_dn)
-        aarch64.parse_adr_f2 3, c
+        aarch64.parse_adr_f4 3, c
         dd 0x6c400000 + @adr.encode + (@op1.data shl 10) + (@op0.data shl 0)
     else if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr)
-        aarch64.parse_adr_f2 2, c
+        aarch64.parse_adr_f4 2, c
         dd 0x28400000 + @adr.encode + (@op1.data shl 10) + (@op0.data shl 0)
     else
         err 'invalid argument'
@@ -2193,7 +2457,7 @@ macro ldpsw a*, b*, c&
     aarch64.parse_operand @op0, a
     aarch64.parse_operand @op1, b
     if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr)
-        aarch64.parse_adr_f2 3, c
+        aarch64.parse_adr_f4 3, c
         dd 0x68400000 + @adr.encode + (@op1.data shl 10) + (@op0.data shl 0)
     else
         err 'invalid argument'
@@ -2206,13 +2470,13 @@ macro stp a*, b*, c&
     aarch64.parse_operand @op0, a
     aarch64.parse_operand @op1, b
     if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr)
-        aarch64.parse_adr_f2 3, c
+        aarch64.parse_adr_f4 3, c
         dd 0xa8000000 + @adr.encode + (@op1.data shl 10) + (@op0.data shl 0)
     else if (@op0.type and @type_dn) & (@op1.type and @type_dn)
-        aarch64.parse_adr_f2 3, c
+        aarch64.parse_adr_f4 3, c
         dd 0x6c000000 + @adr.encode + (@op1.data shl 10) + (@op0.data shl 0)
     else if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr)
-        aarch64.parse_adr_f2 2, c
+        aarch64.parse_adr_f4 2, c
         dd 0x28000000 + @adr.encode + (@op1.data shl 10) + (@op0.data shl 0)
     else
         err 'invalid argument'
@@ -2235,7 +2499,7 @@ macro ldr a*, b&
         aarch64.parse_adr_f1 2, b
         dd 0x08400000 + @adr.encode + (@op0.data shl 0)
     else
-        err 'invalid argument
+        err 'invalid argument'
     end if
 end macro
 
@@ -2254,7 +2518,7 @@ macro str a*, b&
         aarch64.parse_adr_f1 2, b
         dd 0x00000000 + @adr.encode + (@op0.data shl 0)
     else
-        err 'invalid argument
+        err 'invalid argument'
     end if
 end macro
 
@@ -2802,6 +3066,31 @@ macro sxtw a*, b*
     end if
 end macro
 
+macro sxth a*, b*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_xn_xzr) & (@op1.type and @type_wn_wzr)
+        dd 0x00000000 + (@op1.data shl 16) + (@op0.data shl 0)
+    else if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr)
+        dd 0x00000000 + (@op1.data shl 16) + (@op0.data shl 0)
+    else
+        err 'invalid argument'
+    end if
+end macro
+
+macro sxtb a*, b*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_xn_xzr) & (@op1.type and @type_wn_wzr)
+        dd 0x00000000 + (@op1.data shl 16) + (@op0.data shl 0)
+    else if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr)
+        dd 0x00000000 + (@op1.data shl 16) + (@op0.data shl 0)
+    else
+        err 'invalid argument'
+    end if
+end macro
+
+
 macro uxtw a*, b*
     aarch64.parse_operand @op0, a
     aarch64.parse_operand @op1, b
@@ -2812,11 +3101,24 @@ macro uxtw a*, b*
     end if
 end macro
 
+
+
+
 macro uxtb a*, b*
     aarch64.parse_operand @op0, a
     aarch64.parse_operand @op1, b
     if (@op0.type and @type_wn_wzr_xn_xzr) & (@op1.type and @type_wn_wzr)
         dd 0x53001c00 + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid argument'
+    end if
+end macro
+
+macro uxth a*, b*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_wn_wzr_xn_xzr) & (@op1.type and @type_wn_wzr)
+        dd 0x00000000 + (@op1.data shl 5) + (@op0.data shl 0)
     else
         err 'invalid argument'
     end if
@@ -2929,6 +3231,19 @@ macro fcvtzs a*, b*
     end if
 end macro
 
+macro fcvtzu a*, b*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_wn_wzr) & (@op1.type and @type_dn)
+        dd 0x1e790000 + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_dn)
+        dd 0x9e790000 + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid argument'
+    end if
+end macro
+
+
 macro fcvtas a*, b*
     aarch64.parse_operand @op0, a
     aarch64.parse_operand @op1, b
@@ -2948,6 +3263,19 @@ macro scvtf a*, b*
         dd 0x9e620000 + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_dn) & (@op1.type and @type_wn_wzr)
         dd 0x1e620000 + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid argument'
+    end if
+end macro
+
+
+macro ucvtf a*, b*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_dn) & (@op1.type and @type_xn_xzr)
+        dd 0x9e630000 + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_dn) & (@op1.type and @type_wn_wzr)
+        dd 0x1e630000 + (@op1.data shl 5) + (@op0.data shl 0)
     else
         err 'invalid argument'
     end if
@@ -3045,4 +3373,30 @@ macro fcsel a*, b*, c*, d*
         err 'invalid argument'
     end if
 end macro
+
+macro wfe a&
+    dd -1
+end macro
+
+macro wfi a&
+    dd -1
+end macro
+
+macro yield a&
+    dd -1
+end macro
+
+macro tlbi a&
+    dd -1
+end macro
+
+macro sysl a&
+    dd -1
+end macro
+
+macro sys a&
+    dd -1
+end macro
+
+
 

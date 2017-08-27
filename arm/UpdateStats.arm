@@ -1,0 +1,112 @@
+
+macro UpdateCmStats ssreg, ssoff, offset, bonus32, absbonus, t1
+  local over1, over2, over3
+                add  x4, ssreg, ssoff - 1*sizeof.State
+                ldr  t1, [x4, State.counterMoves]
+                ldr  w4, [x4, State.currentMove]
+                cmp  w4, 1
+                blt  over1
+                ldr  w0, [t1, offset, lsl 2]
+                mov  w1, 936
+         ApplyBonus  w0, w2, bonus32, absbonus, w1
+                str  w0, [t1, offset, lsl 2]
+    over1:
+                add  x4, ssreg, ssoff - 2*sizeof.State
+                ldr  t1, [x4, State.counterMoves]
+                ldr  w4, [x4, State.currentMove]
+                cmp  w4, 1
+                blt  over2
+                ldr  w0, [t1, offset, lsl 2]
+                mov  w1, 936
+         ApplyBonus  w0, w2, bonus32, absbonus, w1
+                str  w0, [t1, offset, lsl 2]
+    over2:
+                add  x4, ssreg, ssoff - 4*sizeof.State
+                ldr  t1, [x4, State.counterMoves]
+                ldr  w4, [x4, State.currentMove]
+                cmp  w4, 1
+                blt  over3
+                ldr  w0, [t1, offset, lsl 2]
+                mov  w1, 936
+         ApplyBonus  w0, w2, bonus32, absbonus, w1
+                str  w0, [t1, offset, lsl 2]
+    over3:
+end macro
+
+
+macro UpdateStats move, quiets, usequiets, quietsCnt, bonus32, absbonus, prevOffset
+  local DontUpdateKillers, DontUpdateOpp, BonusTooBig, NextQuiet, Return
+	; clobbers rax, rcx, rdx, r8, r9
+	; it also might clobber rsi and change the sign of bonus32
+
+                ldr  w0, [x21, State.killers + 4*0]
+                cmp  w0, move
+                beq  DontUpdateKillers
+                str  w0, [x21, State.killers + 4*1]
+                str  move, [x21, State.killers + 4*0]
+    DontUpdateKillers:
+
+                ldr  w4, [x21, -1*sizeof.State + State.currentMove]
+                cmp  w4, 1
+                blt  DontUpdateOpp
+                ldr  x8, [x20, Pos.counterMoves]
+                str  move, [x8, prevOffset, lsl 2]
+    DontUpdateOpp:
+
+                lsl  bonus32, absbonus, 5
+                cmp  absbonus, 324
+                bhs  BonusTooBig
+
+                and  w0, move, 64*64-1
+                ldr  w8, [x20, Pos.sideToMove]
+                ldr  x4, [x20, Pos.history]
+                add  x8, x4, x8, lsl 14
+                add  x8, x8, x0, lsl 2
+
+                ldr  w0, [x8]
+                mov  w1, 324
+         ApplyBonus  w0, w2, bonus32, absbonus, w1
+                str  w0, [x8]
+
+
+                and  w9, move, 63
+               ubfx  w0, move, 6, 6
+                add  x6, x20, Pos.board
+               ldrb  w0, [x6, x0]
+                add  w9, w9, w0, lsl 6
+      UpdateCmStats  x21, -0*sizeof.State, x9, bonus32, absbonus, x8
+
+
+  if usequiets
+                neg  bonus32, bonus32
+                mov  w16, 0
+                cbz  quietsCnt, Return
+    NextQuiet:
+                ldr  w2, [quiets, x16, lsl 2]
+               ubfx  w0, w2, 6, 6
+                and  w1, w2, 63
+                and  w2, w2, 64*64-1
+                ldr  w8, [x20, Pos.sideToMove]
+                ldr  x4, [x20, Pos.history]
+                add  x8, x4, x8, lsl 14
+                add  x8, x8, x2, lsl 2
+
+                add  x6, x20, Pos.board
+               ldrb  w0, [x6, x0]
+                add  w9, w1, w0, lsl 6
+
+                ldr  w0, [x8]
+                mov  w1, 324
+         ApplyBonus  w0, w2, bonus32, absbonus, w1
+                str  w0, [x8]
+
+      UpdateCmStats  x21, -0*sizeof.State, x9, bonus32, absbonus, x8
+
+                add  w16, w16, 1
+                cmp  w16, quietsCnt
+                blo  NextQuiet
+  end if
+    BonusTooBig:
+    Return:
+end macro
+

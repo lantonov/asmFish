@@ -175,6 +175,15 @@ HistoryStats_Max = 268435456
 CmhDeadOffset    = 4*(8*64)*(16*64)
 CounterMovePruneThreshold = 0
 
+; depths for search
+ONE_PLY = 1
+MAX_PLY = 128
+MAX_SYZYGY_PLY = 20
+DEPTH_QS_CHECKS     =  0
+DEPTH_QS_NO_CHECKS  = -1
+DEPTH_QS_RECAPTURES = -5
+DEPTH_NONE	    = -6
+
 ; values for evaluation
 VALUE_ZERO	 = 0
 VALUE_DRAW	 = 0
@@ -193,15 +202,6 @@ SCALE_FACTOR_NORMAL  = 64
 SCALE_FACTOR_MAX     = 128
 SCALE_FACTOR_NONE    = 255
 
-
-; depths for search
-ONE_PLY = 1
-MAX_PLY = 128
-MAX_SYZYGY_PLY = 20
-DEPTH_QS_CHECKS     =  0
-DEPTH_QS_NO_CHECKS  = -1
-DEPTH_QS_RECAPTURES = -5
-DEPTH_NONE	    = -6
 
 ; definitions for move gen macros
 CAPTURES     = 0
@@ -285,9 +285,9 @@ MainHashEntry.___ = 0
 MainHashEntry.genBound = 0 + MainHashEntry.___
 MainHashEntry.depth = 1*sizeof.rb + MainHashEntry.genBound
 MainHashEntry.move = 1*sizeof.rb + MainHashEntry.depth
-MainHashEntry.eval = 1*sizeof.rw + MainHashEntry.move
-MainHashEntry.value = 1*sizeof.rw + MainHashEntry.eval
-sizeof.MainHashEntry = 1*sizeof.rw + MainHashEntry.value
+MainHashEntry.eval_ = 1*sizeof.rw + MainHashEntry.move
+MainHashEntry.value_ = 1*sizeof.rw + MainHashEntry.eval_
+sizeof.MainHashEntry = 1*sizeof.rw + MainHashEntry.value_
 
 MaterialEntry.___ = 0
 MaterialEntry.key = 0 + MaterialEntry.___

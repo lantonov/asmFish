@@ -1,0 +1,85 @@
+Move_DoNull:
+
+if DEBUG
+        PushAll
+        adr  x4, ._1
+        lea  x6, debug.address
+        str  x4, [x6]
+
+        lea  x27, debug.position
+        str  x21, [x20, Pos.state]
+         bl  Position_Print
+        PrintNewLine
+       strb  wzr, [x27]
+
+         bl  Position_IsLegal
+       cbnz  w0, Move_DoNull_posill
+          b  ._2
+._1: db "Move_DoNull", 0
+    balign 4
+._2:
+        PopAll
+end if
+
+        ldr  x12, [x21, -1*sizeof.State + State.endMoves]
+       ldrh  w0, [x21, State.rule50]
+        ldr  w2, [x21, State.epSquare]
+        ldr  x8, [x21, State.key]
+        ldr  x9, [x21, State.pawnKey]
+        ldr  x10, [x21, State.materialKey]
+        ldr  x11, [x21, State.psq]
+        lea  x7, Zobrist_Ep
+
+        str  x12, [x21, State.endMoves]
+        add  x21, x21, sizeof.State
+        ldr  w4, [x20, Pos.sideToMove]
+        eor  w4, w4, 1
+        str  w4, [x20, Pos.sideToMove]
+        ldr  x4, [x7, Zobrist_side - Zobrist_Ep]
+        eor  x8, x8, x4
+
+        tst  w2, 63
+        bne  Move_DoNull.epsq
+Move_DoNull.epsq_ret:
+
+        add  w0, w0, 1
+        str  x8, [x21, State.key]
+        str  x9, [x21, State.pawnKey]
+        str  x10, [x21, State.materialKey]
+        str  x11, [x21, State.psq]
+        str  w0, [x21, State.rule50]
+        str  w2, [x21, State.epSquare]
+        str  xzr, [x21, State.checkersBB]
+
+        lea  x6, mainHash
+        ldr  x4, [x6, MainHash.mask]
+        ldr  x5, [x6, MainHash.table]
+        and  x8, x8, x4
+        add  x8, x5, x8, lsl 5
+       prfm  PLDL1KEEP, [x8]
+
+        str  x21, [x20, Pos.state]
+
+          b  SetCheckInfo.AfterPrologue
+
+Move_DoNull.epsq:
+        and  w1, w2, 7
+        and  w2, w2, -256
+        add  w2, w2, 64
+        ldr  x4, [x7, x1, lsl 3]
+        eor  x8, x8, x4
+          b  Move_DoNull.epsq_ret
+
+
+if DEBUG
+Move_DoNull_posill:
+        lea  x27, debug.output
+        Print "position did not pass Position_IsLegal in Do_NullMove"
+        PrintNewLine
+        lea  x1, debug.position
+         bl  PrintString
+        str  wzr, [x27]
+        lea  x27, debug.output
+         bl  Os_ErrorBox
+        brk  0
+end if

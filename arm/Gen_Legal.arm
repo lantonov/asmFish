@@ -1,0 +1,239 @@
+
+Gen_Legal:
+
+        stp  x22, x23, [sp, -16]!
+        stp  x24, x25, [sp, -16]!
+        stp  x26, x30, [sp, -16]!
+
+        ldr  x0, [x21, State.checkersBB]
+        mov  x26, x27
+        ldr  x25, [x21, State.pinned]
+        ldr  w23, [x20, Pos.sideToMove]
+        ldr  x22, [x20, Pos.typeBB + 8*King]
+        add  x3, x20, Pos.typeBB
+        ldr  x4, [x3, x23, lsl 3]
+        and  x22, x22, x4
+       rbit  x24, x22
+        clz  x24, x24        
+
+       cbnz  x0, Gen_Legal.InCheck
+Gen_Legal.NotInCheck:
+         bl  Gen_NonEvasions
+          b  Gen_Legal.GenDone
+Gen_Legal.InCheck:
+         bl  Gen_Evasions
+Gen_Legal.GenDone:
+
+        lsl  x24, x24, 6
+        ldr  w2, [x26]
+        mov  w1, w2
+        mov  w0, w2
+        cmp  x26, x27
+        beq  Gen_Legal.FilterDone
+       cbnz  x25, Gen_Legal.FilterYesPinned
+
+Gen_Legal.FilterNoPinned:
+
+        and  w1, w1, 0x0FC0
+        add  x26, x26, sizeof.ExtMove
+        cmp  w1, w24
+        beq  Gen_Legal.KingMove
+        cmp  w2, MOVE_TYPE_EPCAP shl 12
+        bhs  Gen_Legal.EpCapture
+        ldr  w2, [x26]
+        mov  w1, w2
+        mov  w0, w2
+        cmp  x26, x27
+        bne  Gen_Legal.FilterNoPinned
+
+Gen_Legal.FilterDone:
+
+        ldp  x26, x30, [sp], 16
+        ldp  x24, x25, [sp], 16
+        ldp  x22, x23, [sp], 16
+        ret
+
+Gen_Legal.KingMove:
+
+
+        and  x0, x0, 63
+        lea  x7, PawnAttacks
+        add  x7, x7, x23, lsl 9
+        ldr  x1, [x7, x0, lsl 3]        
+	; pseudo legal castling moves are always legal  ep captures have already been caught
+
+        cmp  w2, MOVE_TYPE_CASTLE shl 12
+        bhs  Gen_Legal.FilterLegalChoose
+
+        add  x3, x20, Pos.typeBB
+        ldr  x9, [x3, x23, lsl 3]
+        eor  x4, x23, 1
+        ldr  x10, [x3, x4, lsl 3]
+        orr  x9, x9, x10
+
+	; pawn
+
+        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
+        and  x1, x1, x4
+        tst  x1, x10
+        bne  Gen_Legal.FilterIllegalChoose
+
+	; king
+
+        lea  x7, KingAttacks
+        ldr  x2, [x7, x0, lsl 3]
+        ldr  x4, [x20, Pos.typeBB + 8*King]
+        and  x2, x2, x4
+        tst  x2, x10
+        bne  Gen_Legal.FilterIllegalChoose
+
+	; knight
+
+        lea  x7, KnightAttacks
+        ldr  x2, [x7, x0, lsl 3]
+        ldr  x4, [x20, Pos.typeBB + 8*Knight]
+        and  x2, x2, x4
+        tst  x2, x10
+        bne  Gen_Legal.FilterIllegalChoose
+
+	; bishop + queen
+
+        BishopAttacks  x2, x0, x9, x8, x4
+        ldr  x8, [x20, Pos.typeBB + 8*Bishop]
+        ldr  x4, [x20, Pos.typeBB + 8*Queen]
+        orr  x8, x8, x4
+        and  x8, x8, x10
+        tst  x2, x8
+        bne  Gen_Legal.FilterIllegalChoose
+
+	; rook + queen
+
+        RookAttacks  x2, x0, x9, x8, x4
+        ldr  x8, [x20, Pos.typeBB + 8*Rook]
+        ldr  x4, [x20, Pos.typeBB + 8*Queen]
+        orr  x8, x8, x4
+        and  x8, x8, x10
+        tst  x2, x8
+        bne  Gen_Legal.FilterIllegalChoose
+Gen_Legal.FilterLegalChoose:
+
+        ldr  w2, [x26]
+        mov  w1, w2
+        mov  w0, w2
+        cmp  x26, x27
+        beq  Gen_Legal.FilterDone
+        cbz  x25, Gen_Legal.FilterNoPinned
+          b  Gen_Legal.FilterYesPinned
+
+Gen_Legal.FilterIllegalChoose:
+
+        sub  x27, x27, sizeof.ExtMove
+        sub  x26, x26, sizeof.ExtMove
+        ldr  w2, [x27]
+        str  w2, [x26]
+        mov  w1, w2
+        mov  w0, w2
+        cmp  x26, x27
+        beq  Gen_Legal.FilterDone
+        cbz  x25, Gen_Legal.FilterNoPinned
+
+Gen_Legal.FilterYesPinned:
+
+        and  w1, w1, 0x0FC0
+        add  x26, x26, sizeof.ExtMove
+        cmp  w1, w24
+        beq  Gen_Legal.KingMove
+        cmp  w2, MOVE_TYPE_EPCAP shl 12
+        bhs  Gen_Legal.EpCapture
+        lsr  w1, w1, 6
+        and  w0, w0, 0x0FFF
+        lsr  x4, x25, x1
+       tbnz  x4, 0, Gen_Legal.FilterYesPinnedWeArePinned
+
+Gen_Legal.FilterYesPinnedLegal:
+
+        ldr  w2, [x26]
+        mov  w1, w2
+        mov  w0, w2
+        cmp  x26, x27
+        bne  Gen_Legal.FilterYesPinned
+          b  Gen_Legal.FilterDone
+        
+Gen_Legal.FilterYesPinnedWeArePinned:
+
+        lea  x7, LineBB
+        ldr  x4, [x7, x0, lsl 3]
+        tst  x22, x4
+        bne  Gen_Legal.FilterYesPinnedLegal
+
+Gen_Legal.FilterYesPinnedIllegal:
+
+        sub  x27, x27, sizeof.ExtMove
+        sub  x26, x26, sizeof.ExtMove
+        ldr  w2, [x27]
+        str  w2, [x26]
+        mov  w1, w2
+        mov  w0, w2
+        cmp  x26, x27
+        bne  Gen_Legal.FilterYesPinned
+          b  Gen_Legal.FilterDone
+
+Gen_Legal.EpCapture:
+
+	; for ep captures, just make the move and test if our king is attacked
+
+        eor  x4, x23, 1
+        add  x3, x20, Pos.typeBB
+        ldr  x10, [x3, x4, lsl 3]
+        lsr  x9, x24, 6
+
+	; all pieces
+
+        ldr  x2, [x20, Pos.typeBB + 8*White]
+        ldr  x4, [x20, Pos.typeBB + 8*Black]
+        orr  x2, x2, x4
+
+	; remove source square
+
+        lsr  x1, x1, 6
+        mov  x4, 1
+        lsl  x4, x4, x1
+        bic  x2, x2, x4
+
+	; add destination square (ep square)
+
+        and  x0, x0, 63
+        mov  x4, 1
+        lsl  x4, x4, x0
+        orr  x2, x2, x4
+
+	; remove captured pawn
+
+        lsl  x1, x23, 1
+        sub  x1, x1, 1
+        add  x1, x0, x1, lsl 3
+        mov  x4, 1
+        lsl  x4, x4, x1
+        bic  x2, x2, x4
+
+	; check for rook attacks
+
+        RookAttacks  x0, x9, x2, x8, x4
+        ldr  x1, [x20, Pos.typeBB + 8*Rook]
+        ldr  x4, [x20, Pos.typeBB + 8*Queen]
+        orr  x1, x1, x4
+        and  x1, x1, x10
+        tst  x0, x1
+        bne  Gen_Legal.FilterIllegalChoose
+
+	; check for bishop attacks
+
+        BishopAttacks  x0, x9, x2, x8, x4
+        ldr  x1, [x20, Pos.typeBB + 8*Bishop]
+        ldr  x4, [x20, Pos.typeBB + 8*Queen]
+        orr  x1, x1, x4
+        and  x1, x1, x10
+        tst  x0, x1
+        bne  Gen_Legal.FilterIllegalChoose
+          b  Gen_Legal.FilterLegalChoose
+

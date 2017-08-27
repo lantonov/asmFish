@@ -1,0 +1,27 @@
+Gen_Quiets:
+; in x20 address of position
+;    x21 address of state
+; io x27 address to write moves
+
+        ldr  w0, [x20, Pos.sideToMove]
+        stp  x29, x30, [sp, -16]!
+
+        ldr  x14, [x20, Pos.typeBB + 8*White]
+        ldr  x4, [x20, Pos.typeBB + 8*Black]
+        orr  x14, x14, x4
+        mvn  x15, x14
+       cbnz  w0, Gen_Quiets_Black
+
+Gen_Quiets_White:
+        GenAll  White, QUIETS
+        ldp  x29, x30, [sp], 16
+        ret
+        GenPawnJmp  White, QUIETS
+        GenCastlingJmp  White, QUIETS
+
+Gen_Quiets_Black:
+        GenAll  Black, QUIETS
+        ldp  x29, x30, [sp], 16
+        ret
+        GenPawnJmp  Black, QUIETS
+        GenCastlingJmp  Black, QUIETS

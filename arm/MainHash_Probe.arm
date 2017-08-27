@@ -1,0 +1,66 @@
+MainHash_Probe:
+                lea  x6, mainHash
+                ldr  x4, [x6, MainHash.mask]
+                ldr  x0, [x6, MainHash.table]
+                and  x4, x4, x1
+                lsr  x1, x1, 48
+                add  x0, x0, x4, lsl 5
+               ldrb  w11, [x6, MainHash.date]
+
+                ldr  x2, [x0, 8*3]
+              ldrsh  w8, [x0]
+               ands  w4, w2, 0x0FFFF
+               ubfx  x5, x2, 16, 16
+               ubfx  x6, x2, 32, 16
+                beq  .Found
+                cmp  w4, w1
+                beq  .FoundRefresh
+              ldrsh  w9, [x0, 8]!
+                cbz  w5, .Found
+                cmp  w5, w1
+                beq  .FoundRefresh
+              ldrsh  w10, [x0, 8]!
+                cbz  w6, .Found
+                cmp  w6, w1
+                beq  .FoundRefresh
+
+                add  w11, w11, 259
+
+                and  w1, w8, 0x0FF
+                asr  w8, w8, 8
+                sub  w2, w11, w1
+                and  w2, w2, 0x0FC
+                sub  w8, w8, w2, lsl 1
+
+                and  w1, w9, 0x0FF
+                asr  w9, w9, 8
+                sub  w2, w11, w1
+                and  w2, w2, 0x0FC
+                sub  w9, w9, w2, lsl 1
+
+                and  w1, w10, 0x0FF
+                asr  w10, w10, 8
+                sub  w2, w11, w1
+                and  w2, w2, 0x0FC
+                sub  w10, w10, w2, lsl 1
+
+                sub  x1, x0, 8*1
+                sub  x2, x0, 8*2
+                cmp  w8, w9
+               csel  w8, w9, w8, gt
+               csel  x2, x1, x2, gt
+                cmp  w8, w10
+               csel  x0, x0, x2, gt
+
+.Found:
+                mov  x1, VALUE_NONE shl (8*MainHashEntry.value_)
+                mov  w2, wzr
+                ret
+
+.FoundRefresh:
+                ldr  x1, [x0]
+                and  x1, x1, not 0x0FC
+                orr  x1, x1, x11
+               strb  w1, [x0, MainHashEntry.genBound]
+                mov  w2, -1
+                ret

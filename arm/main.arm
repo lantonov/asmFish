@@ -1,0 +1,65 @@
+
+
+                 bl  Os_SetStdHandles
+                 bl  Os_InitializeTimer
+                 bl  Os_CheckCPU
+
+                lea  x1, DisplayLock
+                 bl  Os_MutexCreate
+
+    ; initialize the engine
+                 bl  Options_Init
+                 bl  Gen_Init
+                 bl  BitBoard_Init
+                 bl  Position_Init
+                 bl  BitTable_Init
+                 bl  Search_Init
+                 bl  Evaluate_Init
+                 bl  Pawn_Init
+                 bl  Endgame_Init
+
+    ; write engine name
+if VERBOSE = 0
+                lea  x27, szGreetingEnd
+                lea  x1, szGreeting
+                 bl  Os_WriteOut
+end if
+
+    ; set up threads and hash
+                 bl  MainHash_Create
+                 bl  ThreadPool_Create
+if USE_SYZYGY
+                mov  x0, 0
+                 bl  Tablebase_Init
+end if
+    ; command line could contain commands
+    ; this function also initializes InputBuffer
+    ; which contains the commands we should process first
+                 bl  Os_ParseCommandLine
+
+    ; enter the main loop
+                 bl  UciLoop
+
+if USE_SYZYGY
+                mov  x0, 0
+                 bl  Tablebase_Init
+end if
+    ; clean up threads and hash
+                 bl  ThreadPool_Destroy
+                 bl  MainHash_Destroy
+
+    ; options may also require cleaning
+                 bl  Options_Destroy
+
+    ; clean up input buffer
+                lea  x2, ioBuffer
+                ldr  x1, [x2, IOBuffer.inputBuffer]
+                ldr  x2, [x2, IOBuffer.inputBufferSizeB]
+                 bl  Os_VirtualFree
+
+                lea  x1, DisplayLock
+                 bl  Os_MutexDestroy
+
+                mov  w0, 0
+                 bl  Os_ExitProcess
+

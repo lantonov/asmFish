@@ -1,0 +1,205 @@
+
+macro ApplyBonus X, T, bonus32, absbonus, denominator
+        mul  T, X, absbonus
+        add  X, X, bonus32
+       sdiv  T, T, denominator
+        sub  X, X, T
+end macro
+
+
+macro GetNextMove
+        ; due to multiple entry points in MovePick.arm
+        ; easiest to manually do the call and return with
+        ; adr(x29)+br for call, br(x29) for return
+        ; x22, x23, x24, x25, x27, x29 clobered
+                ldr  x0, [x21, State.stage]
+                ldr  x24, [x21, State.cur]
+                ldr  x25, [x21, State.endMoves]
+                adr  x29, @f
+                 br  x0
+        @@:
+                str  x24, [x21, State.cur]
+                str  x25, [x21, State.endMoves]
+end macro
+
+
+macro InsertionSort begin, ender, p, q
+  local Outer, Inner, InnerDone, OuterDone
+                add  p, begin, sizeof.ExtMove
+                cmp  p, ender
+                bhs  OuterDone
+    Outer:
+                ldr  x0, [p]
+                ldr  w2, [p, ExtMove.value]
+                mov  q, p
+                cmp  q, begin
+                bls  InnerDone
+                ldr  x1, [q, -sizeof.ExtMove + ExtMove.move]
+                ldr  w4, [q, -sizeof.ExtMove + ExtMove.value]
+                cmp  w2, w4
+                ble  InnerDone
+    Inner:
+                str  x1, [q]
+                sub  q, q, sizeof.ExtMove
+                cmp  q, begin
+                bls  InnerDone
+                ldr  x1, [q, -sizeof.ExtMove + ExtMove.move]
+                ldr  w4, [q, -sizeof.ExtMove + ExtMove.value]
+                cmp  w2, w4
+                bgt  Inner
+    InnerDone:
+                str  x0, [q]
+                add  p, p, sizeof.ExtMove
+                cmp  p, ender
+                blo  Outer
+    OuterDone:
+end macro
+
+
+macro PickBest beg, start, ender
+  local Next, Done
+	; out: ecx best move
+                ldr  w1, [beg, 0]
+                ldr  w0, [beg, 4]
+                mov  x2, beg
+                add  beg, beg, sizeof.ExtMove
+                mov  start, beg
+                cmp  beg, ender
+                bhs  Done
+    Next:
+                ldr  w1, [start, 4]
+                cmp  w1, w0
+               csel  x2, start, x2, gt
+               csel  w0, w1, w0, gt
+                add  start, start, sizeof.ExtMove
+                cmp  start, ender
+                blo  Next
+                ldr  x1, [x2]
+                ldr  x0, [beg, -sizeof.ExtMove]
+                str  x0, [x2]
+                str  x1, [beg, -sizeof.ExtMove]
+    Done:
+end macro
+
+
+macro SeeSignTest JmpTo
+	; w0 = 1 if see >= 0
+	; w1 = 0 if see <  0
+	; jmp to JmpTo if see value is >=0 w0 is undefined in this case
+               ubfx  w8, w1, 6, 6
+                and  w9, w1, 63
+                add  x6, x20, Pos.board
+               ldrb  w0, [x6, x8]
+               ldrb  w2, [x6, x9]
+                and  w0, w0, 7
+                and  w2, w2, 7
+                lea  x6, SeeSignBitMask
+               ldrb  w4, [x6, x2]
+                lsr  w4, w4, w0
+                tbz  w4, 0, JmpTo
+                mov  w2, 0
+                 bl  SeeTestGe.HaveFromTo
+end macro
+
+
+macro ScoreCaptures start, ender
+  local WhileLoop, Done
+                ldr  w1, [x20, Pos.sideToMove]
+                lsl  w4, w1, 3
+                sub  w1, w4, w1
+                cmp  start, ender
+                bhs  Done
+    WhileLoop:
+                ldr  w0, [start, ExtMove.move]
+                and  w0, w0, 63
+                add  start, start, sizeof.ExtMove
+                add  x6, x20, Pos.board
+               ldrb  w2, [x6, x0]
+                lea  x6, PieceValue_MG
+                ldr  w2, [x6, x2, lsl 2]
+                eor  w0, w1, w0, lsr 3
+                mov  w4, 200
+                mul  w0, w0, w4
+                sub  w2, w2, w0
+                str  w2, [start, -sizeof.ExtMove + ExtMove.value]
+                cmp  start, ender
+                blo  WhileLoop
+    Done:
+end macro
+
+
+macro ScoreQuiets start, ender
+  local Loop, Done
+                add  x6, x21, -4*sizeof.State + State.counterMoves
+                ldr  x9, [x21, -1*sizeof.State + State.counterMoves]
+                ldr  x10, [x6, 2*sizeof.State]
+                ldr  x11, [x6]
+                ldr  w8, [x20, Pos.sideToMove]
+                ldr  x4, [x20, Pos.history]
+                add  x8, x4, x8, lsl 14
+                cmp  start, ender
+                bhs  Done
+    Loop:
+                ldr  w1, [start, ExtMove.move]
+                and  w0, w1, 64*64-1
+                ldr  w0, [x8, x0, lsl 2]
+               ubfx  w2, w1, 6, 6
+                and  w1, w1, 63
+                add  x6, x20, Pos.board
+               ldrb  w2, [x6, x2]
+                add  w2, w1, w2, lsl 6
+                add  start, start, sizeof.ExtMove
+                ldr  w4, [x9, x2, lsl 2]
+                add  w0, w0, w4
+                ldr  w4, [x10, x2, lsl 2]
+                add  w0, w0, w4
+                ldr  w4, [x11, x2, lsl 2]
+                add  w0, w0, w4
+                str  w0, [start, -1*sizeof.ExtMove + ExtMove.value]
+                cmp  start, ender
+                blo  Loop
+    Done:
+end macro
+
+
+macro ScoreEvasions start, ender
+  local WhileLoop, Normal, Special, Done, Capture
+                ldr  w17, [x20, Pos.sideToMove]
+                ldr  x4, [x20, Pos.history]
+                add  x17, x4, x17, lsl 14
+                cmp  start, ender
+                bhs  Done
+    WhileLoop:
+                ldr  w10, [start, ExtMove.move]
+               ubfx  w8, w10, 6, 6
+                and  w1, w10, 63
+                add  start, start, sizeof.ExtMove
+                add  x6, x20, Pos.board
+               ldrb  w1, [x6, x1]
+               ldrb  w2, [x6, x8]
+                cmp  w10, MOVE_TYPE_EPCAP shl 12
+                bhs  Special
+               cbnz  w1, Capture  
+    Normal:
+                and  w10, w10, 64*64-1
+                ldr  w0, [x17, x10, lsl 2]
+                str  w0, [start, -1*sizeof.ExtMove + ExtMove.value]
+                cmp  start, ender
+                blo  WhileLoop
+                  b  Done
+    Special:
+                cmp  w10, MOVE_TYPE_CASTLE shl 12
+                bhs  Normal
+    Capture:
+                lea  x6, PieceValue_MG
+                ldr  w0, [x6, x1, lsl 2]
+                and  w2, w2, 7
+                sub  w0, w0, w2
+                mov  w4, HistoryStats_Max
+                add  w4, w4, 1
+                add  w0, w0, w4
+                str  w0, [start, -1*sizeof.ExtMove + ExtMove.value]
+                cmp  start, ender
+                blo  WhileLoop
+    Done:
+end macro

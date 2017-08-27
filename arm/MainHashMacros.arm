@@ -1,0 +1,58 @@
+macro MainHash_Save lcopy, entr, key16, vvalue, bbounder, ddepth, mmove, eev
+  local dont_write_move, write_everything, write_after_move, done
+
+        ldr  x1, [entr]
+        str  x1, [sp, lcopy]
+
+        mov  x1, entr
+        lsr  w1, w1, 3 - 1
+        and  w1, w1, 3 shl 1
+        neg  x1, x1
+        add  x1, x1, x1, lsl 1
+        add  x1, x1, 8*3
+        add  x1, x1, entr
+
+       ldrh  w4, [x1]
+        cmp  key16, w4
+        bne  write_everything
+
+        cbz  w0, dont_write_move
+       strh  w0, [sp, lcopy + MainHashEntry.move]
+      
+dont_write_move:
+
+        mov  w0, bbounder
+        cmp  w0, BOUND_EXACT
+        beq  write_after_move
+      ldrsb  w0, [sp, lcopy + MainHashEntry.depth]
+        sub  w0, w0, 4
+       sbfx  w4, ddepth, 0, 8
+        cmp  w0, w4
+        blt  write_after_move
+          b  done
+
+write_everything:
+
+       strh  w0, [sp, lcopy + MainHashEntry.move]
+       strh  key16, [x1]
+
+
+write_after_move:
+
+        lea  x6, mainHash + MainHash.date
+       ldrb  w0, [x6]
+        orr  w0, w0, bbounder
+       strb  w0, [sp, lcopy + MainHashEntry.genBound]
+        mov  w0, ddepth
+
+
+       strb  w0, [sp, lcopy + MainHashEntry.depth]
+        mov  w0, eev
+       strh  w0, [sp, lcopy + MainHashEntry.eval_]
+       strh  w2, [sp, lcopy + MainHashEntry.value_]
+
+done:
+
+        ldr  x0, [sp, lcopy]
+        str  x0, [entr]
+end macro

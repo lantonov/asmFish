@@ -24,14 +24,20 @@ include 'arm/macros.arm'
 
 include 'arm/AttackMacros.arm'
 include 'arm/SliderBlockers.arm'
-
+include 'arm/GenMacros.arm'
+include 'arm/MovePickMacros.arm'
+include 'arm/UpdateStats.arm'
+include 'arm/MainHashMacros.arm'
+include 'arm/SearchMacros.arm'
+include 'arm/QSearchMacros.arm'
+include 'arm/PosIsDrawMacro.arm'
 include 'arm/Pawn.arm'
 
 org 0x0
 db 4096 dup 0
 dd 32 dup 0xd503201f
 
-include 'layout.arm'
+;include 'layout.arm'
 
 
 
@@ -43,11 +49,42 @@ end if
         lea  x6, spEntry
         mov  x0, sp
         str  x0, [x6]
-
+include 'arm/main.arm'
+include 'arm/Castling.arm'
+include 'arm/AttackersTo.arm'
 include 'arm/Endgame.arm'
-
+include 'arm/Think.arm'
+include 'arm/Gen_Legal.arm'
+include 'arm/Gen_Evasions.arm'
+include 'arm/Gen_NonEvasions.arm'
+include 'arm/Gen_QuietChecks.arm'
+include 'arm/Gen_Captures.arm'
+include 'arm/Gen_Quiets.arm'
+include 'arm/EasyMoveMng.arm'
+include 'arm/TimeMng.arm'
+include 'arm/MainHash_Probe.arm'
+include 'arm/Move_DoNull.arm'
+include 'arm/Move_IsLegal.arm'
+include 'arm/Move_IsPseudoLegal.arm'
+include 'arm/MovePick.arm'
+include "arm/SeeTest.arm"
 include 'arm/Evaluate.arm'
 
+Search_Root:
+        Search 1, 1
+Search_Pv:
+        Search 1, 0
+Search_NonPv:
+        Search 0, 0
+
+QSearch_NonPv_NoCheck:
+        QSearch 0, 0
+QSearch_NonPv_InCheck:
+        QSearch 0, 1
+QSearch_Pv_InCheck:
+        QSearch 1, 1
+QSearch_Pv_NoCheck:
+        QSearch 1, 0
 
 include 'arm/CheckTime.arm'
 include 'arm/RootMoves.arm'

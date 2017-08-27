@@ -1,0 +1,49 @@
+
+macro PosIsDraw WeHaveADraw, coldlabel, coldreturnlabel
+  local CheckNext, noDraw, KeysDontMatch
+                cmp  w2, 100
+                bhs  coldlabel
+    coldreturnlabel:
+                cmp  w2, w1
+               csel  w2, w1, w2, hi
+                cmp  w2, 4
+                blo  noDraw
+                mov  x4, -sizeof.State
+                mul  x10, x2, x4
+                lsl  x9, x4, 2
+                sub  w0, w0, 6
+                mov  w1, 0
+    CheckNext:
+                add  x6, x21, State.key
+                ldr  x4, [x6, x9]
+                cmp  x8, x4
+                bne  KeysDontMatch
+                cmp  w1, w0, asr 31
+                beq  WeHaveADraw
+                sub  w1, w1, 1
+    KeysDontMatch:
+                sub  x9, x9, 2*sizeof.State
+                sub  w0, w0, 2
+                cmp  x9, x10
+                bhs  CheckNext
+    noDraw:
+end macro
+
+
+macro PosIsDraw_Cold WeHaveADraw, coldreturnlabel
+                ldr  x11, [x21, State.checkersBB]
+                cbz  x11, WeHaveADraw
+                stp  x0, x1, [sp, -16]!
+                stp  x2, x8, [sp, -16]!
+                stp  x9, x17, [sp, -16]!
+                ldr  x27, [x21, -1*sizeof.State + State.endMoves]
+                 bl  Gen_Legal
+                ldr  x4, [x21, -1*sizeof.State + State.endMoves]
+                cmp  x27, x4
+                ldp  x9, x17, [sp], 16
+                ldp  x2, x8, [sp], 16
+                ldp  x0, x1, [sp], 16
+                bne  WeHaveADraw
+                  b  coldreturnlabel
+end macro
+

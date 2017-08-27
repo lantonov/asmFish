@@ -1,0 +1,262 @@
+
+
+
+SeeTestGe:
+; in: x20 address of Pos
+;     x21 address of State
+;     w1  capture move
+;     w2  value
+; out: w0 = 1 if  see >= w2
+;      w0 = 0 if  see <  w2
+
+from         equ x8
+from_d       equ w8
+to           equ x9
+to_d         equ w9
+stm	     equ x16
+stm_d	     equ w16
+attackers    equ x15
+occupied     equ x14
+bb	     equ x13
+stmAttackers equ x12
+swap	     equ w2
+res	     equ w0
+
+       ubfx  w8, w1, 6, 6
+        and  w9, w1, 63
+
+SeeTestGe.HaveFromTo:
+        ldr  occupied, [x20, Pos.typeBB + 8*White]
+        ldr  x4, [x20, Pos.typeBB + 8*Black]
+        orr  occupied, occupied, x4
+        mov  x4, 1
+        lsl  x4, x4, from
+        bic  occupied, occupied, x4
+        mov  x4, 1
+        lsl  x4, x4, to
+        eor  occupied, occupied, x4
+
+; x10 = bishops + queens
+; x11 = rooks + queens
+        ldr  x17, [x20, Pos.typeBB + 8*Queen]
+        ldr  x10, [x20, Pos.typeBB + 8*Bishop]
+        ldr  x11, [x20, Pos.typeBB + 8*Rook]
+        orr  x10, x10, x17
+        orr  x11, x11, x17
+
+        neg  swap, swap
+        mov  res, 0
+        cmp  w1, MOVE_TYPE_EPCAP shl 12
+        bhs  SeeTestGe.Special
+
+        add  x6, x20, Pos.board
+       ldrb  w1, [x6, to]
+        lea  x6, PieceValue_MG
+        ldr  w4, [x6, x1, lsl 2]
+        add  swap, swap, w4
+        cmp  swap, res
+        blt  SeeTestGe.Return
+
+SeeTestGe.EpCaptureRet:
+; at this point .from register x8 is free
+;  x17, x1 are also free
+        eor  res, res, 1
+        neg  swap, swap
+        add  x6, x20, Pos.board
+       ldrb  stm_d, [x6, from]
+        lea  x6, PieceValue_MG
+        ldr  w4, [x6, stm, lsl 2]
+        add  swap, swap, w4
+        and  stm_d, stm_d, 8
+        cmp  swap, res
+        blt  SeeTestGe.Return
+
+        lea  x6, KingAttacks
+        ldr  attackers, [x6, to, lsl 3]
+        ldr  x4, [x20, Pos.typeBB + 8*King]
+        and  attackers, attackers, x4
+        lea  x6, BlackPawnAttacks
+        ldr  x17, [x6, to, lsl 3]
+        ldr  x4, [x20, Pos.typeBB + 8*White]
+        and  x17, x17, x4
+        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
+        and  x17, x17, x4
+        orr  attackers, attackers, x17
+        lea  x6, WhitePawnAttacks
+        ldr  x17, [x6, to, lsl 3]
+        ldr  x4, [x20, Pos.typeBB + 8*Black]
+        and  x17, x17, x4
+        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
+        and  x17, x17, x4
+        orr  attackers, attackers, x17
+
+        lea  x6, KnightAttacks
+        ldr  x17, [x6, to, lsl 3]
+        ldr  x4, [x20, Pos.typeBB + 8*Knight]
+        and  x17, x17, x4
+        orr  attackers, attackers, x17
+        RookAttacks  x17, to, occupied, x8, x4
+        and  x17, x17, x11
+        orr  attackers, attackers, x17
+        BishopAttacks  x17, to, occupied, x8, x4
+        and  x17, x17, x10
+        orr  attackers, attackers, x17
+
+
+SeeTestGe.Loop:
+
+        eor  stm_d, stm_d, 8
+        and  attackers, attackers, occupied
+
+        add  x6, x20, Pos.typeBB
+        ldr  stmAttackers, [x6, stm]
+       ands  stmAttackers, stmAttackers, attackers
+        beq  SeeTestGe.Return
+        add  x6, x21, State.blockersForKing
+        ldr  x4, [x6, stm]
+        tst  stmAttackers, x4
+        beq  @f
+
+        add  x6, x21, State.pinnersForKing
+        ldr  x17, [x6, stm]
+        and  x17, x17, occupied
+        add  x6, x21, State.pinnersForKing
+        ldr  x4, [x6, stm]
+        cmp  x17, x4
+        bne  @f
+
+        add  x6, x21, State.blockersForKing
+        ldr  x1, [x6, stm]
+        mvn  x1, x1
+       ands  stmAttackers, stmAttackers, x1
+        beq  SeeTestGe.Return
+@@:
+
+        neg  swap, swap
+        eor  res, res, 1
+
+        ldr  bb, [x20, Pos.typeBB + 8*Pawn]
+       ands  bb, bb, stmAttackers
+        bne  SeeTestGe.FoundPawn
+
+        ldr  bb, [x20, Pos.typeBB + 8*Knight]
+       ands  bb, bb, stmAttackers
+        bne  SeeTestGe.FoundKnight
+
+        ldr  bb, [x20, Pos.typeBB + 8*Bishop]
+       ands  bb, bb, stmAttackers
+        bne  SeeTestGe.FoundBishop
+
+        ldr  bb, [x20, Pos.typeBB + 8*Rook]
+       ands  bb, bb, stmAttackers
+        bne  SeeTestGe.FoundRook
+
+        ldr  bb, [x20, Pos.typeBB + 8*Queen]
+       ands  bb, bb, stmAttackers
+        bne  SeeTestGe.FoundQueen
+
+SeeTestGe.FoundKing:
+        eor  stm_d, stm_d, 8
+        add  x6, x20, Pos.typeBB
+        ldr  stmAttackers, [x6, stm]
+       ands  stmAttackers, stmAttackers, attackers
+; .res has already been flipped so we must do
+;    return stmAttackers ? res^1 : res;
+       cinc  w0, w0, ne
+        and  w0, w0, 1
+        
+
+SeeTestGe.Return:
+        ret
+
+SeeTestGe.FoundQueen:
+        add  swap, swap, QueenValueMg
+        cmp  swap, res
+        blt  SeeTestGe.Return
+
+        neg  x8, bb
+        and  bb, bb, x8
+        eor  occupied, occupied, bb
+        BishopAttacks  x17, to, occupied, x8, x4
+        and  x17, x17, x10
+        orr  attackers, attackers, x17
+        RookAttacks  x17, to, occupied, x8, x4
+        and  x17, x17, x11
+        orr  attackers, attackers, x17
+          b  SeeTestGe.Loop
+
+SeeTestGe.FoundRook:
+        add  swap, swap, RookValueMg
+        cmp  swap, res
+        blt  SeeTestGe.Return
+
+        neg  x8, bb
+        and  bb, bb, x8
+        eor  occupied, occupied, bb
+        RookAttacks  x17, to, occupied, x8, x4
+        and  x17, x17, x11
+        orr  attackers, attackers, x17
+          b  SeeTestGe.Loop
+
+SeeTestGe.FoundBishop:
+        add  swap, swap, BishopValueMg - PawnValueMg
+
+SeeTestGe.FoundPawn:
+        add  swap, swap, PawnValueMg
+        cmp  swap, res
+        blt  SeeTestGe.Return
+
+        neg  x1, bb
+        and  bb, bb, x1
+        eor  occupied, occupied, bb
+        BishopAttacks  x17, to, occupied, x8, x4
+        and  x17, x17, x10
+        orr  attackers, attackers, x17
+          b  SeeTestGe.Loop
+
+SeeTestGe.FoundKnight:
+        add  swap, swap, KnightValueMg
+        cmp  swap, res
+        blt  SeeTestGe.Return
+
+        neg  x1, bb
+        and  bb, bb, x1
+        eor  occupied, occupied, bb
+          b  SeeTestGe.Loop
+
+SeeTestGe.Special:
+; if we get here, .swap = -value
+;            and  .res = 0
+        cmp  w1, MOVE_TYPE_CASTLE shl 12
+        bhs  SeeTestGe.Castle
+        ldr  w1, [x20, Pos.sideToMove]
+        add  x1, to, x1, lsl 4
+        sub  w1, w1, 8
+        mov  x4, 1
+        lsl  x4, x4, x1
+        bic  occupied, occupied, x4
+        add  swap, swap, PawnValueMg
+        cmp  swap, res
+        bge  SeeTestGe.EpCaptureRet
+
+SeeTestGe.ReturnSpecial:
+        ret
+
+SeeTestGe.Castle:
+; return 0 <= swap
+        cmp  swap, 0
+       cset  res, ge
+          b  SeeTestGe.ReturnSpecial
+
+restore from
+restore from_d
+restore to
+restore to_d
+restore stm
+restore stm_d
+restore attackers
+restore occupied
+restore bb
+restore stmAttackers
+restore swap
+restore res

@@ -1,0 +1,38 @@
+CastleOOLegal_White:
+        CastlingJmp  (2*White+0), .Good, .Done
+.Good:
+        mov  w0, -1
+        ret
+.Done:
+        mov  w0, 0
+        ret
+
+
+CastleOOLegal_Black:
+        CastlingJmp  (2*Black+0), .Good, .Done
+.Good:
+        mov  w0, -1
+        ret
+.Done:
+        mov  w0, 0
+        ret
+
+
+CastleOOOLegal_White:
+        CastlingJmp  (2*White+1), .Good, .Done
+.Good:
+        mov  w0, -1
+        ret
+.Done:
+        mov  w0, 0
+        ret
+
+
+CastleOOOLegal_Black:
+        CastlingJmp  (2*Black+1), .Good, .Done
+.Good:
+        mov  w0, -1
+        ret
+.Done:
+        mov  w0, 0
+        ret

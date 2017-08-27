@@ -10,6 +10,15 @@ all:
 quick:
 	export INCLUDE="x86/include/";./fasmg "x86fish.asm" "afish" -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'" -e 1000
 test:
+	aarch64-linux-gnu-as -o artest.o tartest.arm
+	aarch64-linux-gnu-ld -o artest artest.o
+#	aarch64-linux-gnu-objcopy -O binary artest.o artest
+	aarch64-linux-gnu-strip artest
+	aarch64-linux-gnu-objdump -D -maarch64 -b binary artest > artest.txt
+	export INCLUDE="arm/include/";./fasmg "tarmfish.arm" "arfish" -e 1000
+	aarch64-linux-gnu-objdump -D -maarch64 -b binary arfish > arfish.txt
+	diff -U9 arfish.txt artest.txt | less
+tfish:
 	aarch64-linux-gnu-as -o artest.o artest.arm
 	aarch64-linux-gnu-ld -o artest artest.o
 #	aarch64-linux-gnu-objcopy -O binary artest.o artest
@@ -17,4 +26,4 @@ test:
 	aarch64-linux-gnu-objdump -D -maarch64 -b binary artest > artest.txt
 	export INCLUDE="arm/include/";./fasmg "armfish.arm" "arfish" -e 1000
 	aarch64-linux-gnu-objdump -D -maarch64 -b binary arfish > arfish.txt
-	diff -U16 arfish.txt artest.txt | less
+	diff -U9 arfish.txt artest.txt | less
