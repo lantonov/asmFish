@@ -108,8 +108,76 @@ define @adr
 @atype_literal   = 1 shl 4
 @atype_incr   = @atype_preincr or @atype_postincr
 
-
 macro use64
+end macro
+
+
+macro aarch64.reloc_movk_g0
+    err 'relocation macro not implemented'
+end macro
+
+macro aarch64.reloc_movk_g1
+    err 'relocation macro not implemented'
+end macro
+
+macro aarch64.reloc_movk_g2
+    err 'relocation macro not implemented'
+end macro
+
+macro aarch64.reloc_movk_g3
+    err 'relocation macro not implemented'
+end macro
+
+macro aarch64.reloc_ld_lo19
+    err 'relocation macro not implemented'
+end macro
+
+macro aarch64.reloc_adr_lo21
+    err 'relocation macro not implemented'
+end macro
+
+macro aarch64.reloc_adrp_pghi21
+    err 'relocation macro not implemented'
+end macro
+
+macro aarch64.reloc_add_lo12
+    err 'relocation macro not implemented'
+end macro
+
+macro aarch64.reloc_ldst8_lo12
+    err 'relocation macro not implemented'
+end macro
+
+macro aarch64.reloc_ldst16_lo12
+    err 'relocation macro not implemented'
+end macro
+
+macro aarch64.reloc_ldst32_lo12
+    err 'relocation macro not implemented'
+end macro
+
+macro aarch64.reloc_ldst64_lo12
+    err 'relocation macro not implemented'
+end macro
+
+macro aarch64.reloc_ldst128_lo12
+    err 'relocation macro not implemented'
+end macro
+
+macro aarch64.reloc_tstbr14
+    err 'relocation macro not implemented'
+end macro
+
+macro aarch64.reloc_condbr19
+    err 'relocation macro not implemented'
+end macro
+
+macro aarch64.reloc_jump26
+    err 'relocation macro not implemented'
+end macro
+
+macro aarch64.reloc_call26
+    err 'relocation macro not implemented'
 end macro
 
 
@@ -659,38 +727,7 @@ end macro
 ;;;;;;;;;;;;;;;;;;;;;;;
 
 include 'aarch64_ld_st_tb.inc'
-include 'aarch64_gprint.inc'
-
-
-
-
-
-
-
-macro ngc a*, c*
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op2, c
-    if (@op0.type and @type_wn_wzr) & (@op2.type and @type_wn_wzr)
-        dd 0x5a000000 + (@op2.data shl 16) + ( 31 shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xzr) & (@op2.type and @type_xn_xzr)
-        dd 0xda000000 + (@op2.data shl 16) + ( 31 shl 5) + (@op0.data shl 0)
-    else
-        err 'invalid operand'
-    end if
-end macro
-
-macro ngcs a*, c*
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op2, c
-    if (@op0.type and @type_wn_wzr) & (@op2.type and @type_wn_wzr)
-        dd 0x7a000000 + (@op2.data shl 16) + ( 31 shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xzr) & (@op2.type and @type_xn_xzr)
-        dd 0xfa000000 + (@op2.data shl 16) + ( 31 shl 5) + (@op0.data shl 0)
-    else
-        err 'invalid operand'
-    end if
-end macro
-
+include 'aarch64_done.inc'
 
 
 
@@ -721,8 +758,13 @@ macro add a*, b*, c*, d
         dd 0x11000000 + (        0 shl 30) + (         0 shl 22) + ((@op2.data and 0xFFF) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_immc_lo12)
         dd 0x91000000 + (        0 shl 30) + (         0 shl 22) + ((@op2.data and 0xFFF) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_vn_16b_etc_no_1d) & (@op1.type and @type_vn_16b_etc_no_1d) & (@op2.type and @type_vn_16b_etc_no_1d) & (@op0.type = @op1.type) & (@op0.type = @op1.type)
+    else if (@op0.type and @type_vn_16b_etc_no_1d) & (@op1.type and @type_vn_16b_etc_no_1d) & (@op2.type and @type_vn_16b_etc_no_1d) & (@op0.type = @op1.type) & (@op0.type = @op1.type) & (@ext.empty)
         dd 0x0e208400 + (@op2.data shl 16) + (((bsf @op0.type) and 4) shl 28) + (((bsf @op0.type) and 3) shl 22) + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_dn) & (@op1.type and @type_dn) & (@op2.type and @type_dn) & (@ext.empty)
+        dd 0x0e208400 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_immr_lo12)
+        aarch64.reloc_add_lo12_nc @op2.data
+        dd 0x91000000 + (        0 shl 30) + (         0 shl 22) + ((@op2.data and 0xFFF) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
     else
         err 'invalid operand'
     end if
