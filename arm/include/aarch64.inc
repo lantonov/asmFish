@@ -60,9 +60,22 @@ define @adr
 @type_vn_di   = 1 shl 15
 @type_vn_16b_etc = @type_vn_16b or @type_vn_8b or @type_vn_8h or @type_vn_4h or @type_vn_4s or @type_vn_2s or @type_vn_2d or @type_vn_1d
 @type_vn_16b_etc_no_1d = @type_vn_16b or @type_vn_8b or @type_vn_8h or @type_vn_4h or @type_vn_4s or @type_vn_2s or @type_vn_2d
-@type_vn_b_etc = @type_vn_b or @type_vn_h or @type_vn_s or @type_vn_d
-@type_vn = @type_vn_16b_etc or @type_vn_b_etc
 
+@type_vn_2s_4s = @type_vn_2s or @type_vn_4s
+@type_vn_4h_8h_2s_4s = @type_vn_4h or @type_vn_8h or @type_vn_2s or @type_vn_4s
+@type_vn_8b_16b = @type_vn_8b or @type_vn_16b
+
+@type_vn_8b_16b_4h_8h_2s_4s = @type_vn_8b or @type_vn_16b or @type_vn_4h or @type_vn_8h or @type_vn_2s or @type_vn_4s
+
+@type_vn_b_etc = @type_vn_b or @type_vn_h or @type_vn_s or @type_vn_d
+@type_vn_bi_etc = @type_vn_bi or @type_vn_hi or @type_vn_si or @type_vn_di
+
+
+@type_vn = @type_vn_16b_etc or @type_vn_b_etc
+@type_vn_all_b = @type_vn_16b or @type_vn_8b
+@type_vn_all_h = @type_vn_8h or @type_vn_4h
+@type_vn_all_s = @type_vn_4s or @type_vn_2s
+@type_vn_all_bhs = @type_vn_all_b or @type_vn_all_h or @type_vn_all_s
 
 @type_empty     = 1 shl 16
 @type_wsp       = 1 shl 17
@@ -82,6 +95,9 @@ define @adr
 @type_sn        = 1 shl 25
 @type_dn        = 1 shl 26
 @type_qn        = 1 shl 27
+@type_bn_hn_sn  = @type_bn or @type_hn or @type_sn
+
+@type_bn_hn_sn_dn  = @type_bn or @type_hn or @type_sn or @type_dn
 
 
 
@@ -112,78 +128,57 @@ macro use64
 end macro
 
 
-macro aarch64.reloc_movk_g0
+macro aarch64.reloc_movk_g0 x
     err 'relocation macro not implemented'
 end macro
 
-macro aarch64.reloc_movk_g1
+macro aarch64.reloc_movk_g1 x
     err 'relocation macro not implemented'
 end macro
 
-macro aarch64.reloc_movk_g2
+macro aarch64.reloc_movk_g2 x
     err 'relocation macro not implemented'
 end macro
 
-macro aarch64.reloc_movk_g3
+macro aarch64.reloc_movk_g3 x
     err 'relocation macro not implemented'
 end macro
 
-macro aarch64.reloc_ld_lo19
+macro aarch64.reloc_ld_lo19 x
     err 'relocation macro not implemented'
 end macro
 
-macro aarch64.reloc_adr_lo21
+macro aarch64.reloc_adr_lo21 x
     err 'relocation macro not implemented'
 end macro
 
-macro aarch64.reloc_adrp_pghi21
+macro aarch64.reloc_adrp_pghi21 x
     err 'relocation macro not implemented'
 end macro
 
-macro aarch64.reloc_add_lo12
+macro aarch64.reloc_add_lo12 x
     err 'relocation macro not implemented'
 end macro
 
-macro aarch64.reloc_ldst8_lo12
+macro aarch64.reloc_ldst_lo12 size, x
     err 'relocation macro not implemented'
 end macro
 
-macro aarch64.reloc_ldst16_lo12
+macro aarch64.reloc_tstbr14 x
     err 'relocation macro not implemented'
 end macro
 
-macro aarch64.reloc_ldst32_lo12
+macro aarch64.reloc_condbr19 x
     err 'relocation macro not implemented'
 end macro
 
-macro aarch64.reloc_ldst64_lo12
+macro aarch64.reloc_jump26 x
     err 'relocation macro not implemented'
 end macro
 
-macro aarch64.reloc_ldst128_lo12
+macro aarch64.reloc_call26 x
     err 'relocation macro not implemented'
 end macro
-
-macro aarch64.reloc_tstbr14
-    err 'relocation macro not implemented'
-end macro
-
-macro aarch64.reloc_condbr19
-    err 'relocation macro not implemented'
-end macro
-
-macro aarch64.reloc_jump26
-    err 'relocation macro not implemented'
-end macro
-
-macro aarch64.reloc_call26
-    err 'relocation macro not implemented'
-end macro
-
-
-;;;;;;;;;;;;;;;;;;;;;;;
-; immediate encodings ;
-;;;;;;;;;;;;;;;;;;;;;;;
 
 macro aarch64.restrict x, lower, upper, mask:0
     if ((x) and (mask)) <> 0 | (x) < (lower) | (x) > (upper)
@@ -191,644 +186,11 @@ macro aarch64.restrict x, lower, upper, mask:0
     end if
 end macro
 
-; determine if x can be encoded as a wide immediate
-macro aarch64.parse_uimm64 x
-    assert x relativeto 0
-    @imm.number = x and 0xFFFFFFFFFFFFFFFF
-    @imm.success = 1
-    @imm.shift = 0
-    @imm.inv = 0
-    if @imm.number < 0x10000
-        @imm.shift = 0
-    else if (@imm.number and 0xFFFF) = 0 & (@imm.number shr 16) < 0x10000
-        @imm.shift = 1
-    else if (@imm.number and 0xFFFFFFFF) = 0 & (@imm.number shr 32) < 0x10000
-        @imm.shift = 2
-    else if (@imm.number and 0xFFFFFFFFFFFF) = 0 & (@imm.number shr 48) < 0x10000
-        @imm.shift = 3
-    else
-        @imm.number = @imm.number xor 0xFFFFFFFFFFFFFFFF
-        @imm.inv = 1
-        if @imm.number < 0x10000
-            @imm.shift = 0
-        else if (@imm.number and 0xFFFF) = 0 & (@imm.number shr 16) < 0x10000
-            @imm.shift = 1
-        else if (@imm.number and 0xFFFFFFFF) = 0 & (@imm.number shr 32) < 0x10000
-            @imm.shift = 2
-        else if (@imm.number and 0xFFFFFFFFFFFF) = 0 & (@imm.number shr 48) < 0x10000
-            @imm.shift = 3
-        else
-            @imm.success = 0
-        end if
-    end if
-    if x > 0xFFFFFFFFFFFFFFFF
-        @imm.success = 0
-    else if x < -0x8000000000000000
-        @imm.success = 0
-    end if
-    @imm.imm16 = @imm.number shr (16*@imm.shift)
-end macro
-
-macro aarch64.parse_uimm32 x
-    assert x relativeto 0
-    @imm.number = +x and 0xFFFFFFFF
-    @imm.success = 1
-    @imm.shift = 0
-    @imm.inv = 0
-    if @imm.number < 0x10000
-        @imm.shift = 0
-    else if (@imm.number and 0xFFFF) = 0 & (@imm.number shr 16) < 0x10000
-        @imm.shift = 1
-    else
-        @imm.number = @imm.number xor 0xFFFFFFFF
-        @imm.inv = 1
-        if @imm.number < 0x10000
-            @imm.shift = 0
-        else if (@imm.number and 0xFFFF) = 0 & (@imm.number shr 16) < 0x10000
-            @imm.shift = 1
-        else
-            @imm.success = 0
-        end if
-    end if
-    if x > 0xFFFFFFFF
-        @imm.success = 0
-    else if x < -0x80000000
-        @imm.success = 0
-    end if
-    @imm.imm16 = @imm.number shr (16*@imm.shift)
-end macro
-
-; determine if x can be encoded as a logical immediate
-macro aarch64.parse_bimm64 x, ec:0
-    local value, negate, a, b, c, d, clz_a, clz_b, clz_c
-    assert x relativeto 0
-    value = x and 0xFFFFFFFFFFFFFFFF
-    negate = 0
-    @imm.success = 0
-    if value and 1 = 1
-        negate = 1
-        value = value xor 0xFFFFFFFFFFFFFFFF
-    end if
-    a = value and -value
-    b = (value + a) and -(value + a)
-    c = (value + a - b) and -(value + a - b)
-    if c <> 0 | a <> 0
-        if a = 0
-            clz_a = 64
-        else 
-            clz_a = 63 - bsr a    
-        end if
-        if c <> 0
-            clz_c = 63 - bsr c
-            d = clz_a - clz_c
-            @imm.n = 0
-        else
-            d = 64
-            @imm.n = 1
-        end if
-        mask = 1 shl d - 1
-        mult = 0
-        if d = 2
-            mult = 0x5555555555555555
-        else if d = 4
-            mult = 0x1111111111111111
-        else if d = 8
-            mult = 0x0101010101010101
-        else if d = 16
-            mult = 0x0001000100010001
-        else if d = 32
-            mult = 0x0000000100000001
-        else if d = 64
-            mult = 0x0000000000000001
-        end if
-        if mult <> 0 
-          if (b - a) and not mask = 0
-            if value = (b - a)*mult
-                if b = 0
-                    clz_b = -1
-                else
-                    clz_b = 63 - bsr b
-                end if
-                @imm.s = clz_a - clz_b
-                if negate
-                    @imm.s = d - @imm.s
-                    @imm.r = (clz_b + 1) and (d - 1)
-                else
-                    @imm.r = (clz_a + 1) and (d - 1)
-                end if
-                @imm.success = 1
-                @imm.s = ((-d shl 1) or (@imm.s - 1)) and 0x3F
-            end if
-          end if
-        end if
-    end if
-    if x > 0xFFFFFFFFFFFFFFFF
-        @imm.success = 0
-    else if x < -0x8000000000000000
-        @imm.success = 0
-    end if
-    if ec & @imm.success = 0
-        err 'logical immediate cannot be encoded'
-    end if
-end macro
-
-macro aarch64.parse_bimm32 x, ec:
-    aarch64.parse_bimm64 0x100000001*(x and 0xFFFFFFFF), ec
-    if x > 0xFFFFFFFF
-        @imm.success = 0
-    else if x < -0x80000000
-        @imm.success = 0
-    end if
-end macro
-
-
-; err if x can be encoded as a arithmetic immediate
-macro aarch64.parse_aimm x, ec:0
-    @imm.number = +x
-    @imm.success = 0
-    @imm.shift = 0
-    @imm.imm12 = 0
-    assert @imm.number relativeto 0
-    if @shf.empty
-        if @imm.number >= 0
-            @imm.inv = 0
-            if @imm.number < 0x1000
-                @imm.shift = 0
-                @imm.imm12 = @imm.number
-            else if (@imm.number and 0x0FFF) = 0 & (@imm.number shr 12) < 0x1000
-                @imm.shift = 1
-                @imm.imm12 = @imm.number shr 12
-            else if ec
-                err 'immediate out of range'
-            else
-                @imm.success = 0
-            end if        
-        else
-            @imm.inv = 1
-            @imm.number = -@imm.number
-            if @imm.number < 0x1000
-                @imm.shift = 0
-                @imm.imm12 = @imm.number
-            else if (@imm.number and 0x0FFF) = 0 & (@imm.number shr 12) < 0x1000
-                @imm.shift = 1
-                @imm.imm12 = @imm.number shr 12
-            else if ec
-                err 'immediate out of range'
-            else
-                @imm.success = 0
-            end if
-        end if
-    else if @shf.kind = 0 & @shf.shift = 12
-        if @imm.number >= 0
-            @imm.inv = 0
-            if @imm.number < 0x1000
-                @imm.shift = 1
-                @imm.imm12 = @imm.number
-            else if ec
-                err 'immediate out of range'
-            else
-                @imm.success = 0
-            end if        
-        else
-            @imm.inv = 1
-            @imm.number = -@imm.number
-            if @imm.number < 0x1000
-                @imm.shift = 1
-                @imm.imm12 = @imm.number
-            else if ec
-                err 'immediate out of range'
-            else
-                @imm.success = 0
-            end if
-        end if
-    else if ec
-        err 'invalid immediate and shift'
-    else
-        @imm.success = 0
-    end if
-end macro
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; parsing registers and immediates ;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-macro aarch64.parse_float ns
-    ns.type = @type_immf
-    if ns.data = 0.0
-        ns.data = 00000000b
-    else if ns.data = -1.0
-        ns.data = 11110000b
-    else if ns.data = 0.25
-        ns.data = 01010000b
-    else if ns.data = 0.5
-        ns.data = 01100000b
-    else if ns.data = 1.0
-        ns.data = 01110000b
-    else if ns.data = 1.5
-        ns.data = 01111000b
-    else if ns.data = 2.0
-        ns.data = 00000000b
-    else if ns.data = 2.5
-        ns.data = 00000100b
-    else if ns.data = 3.0
-        ns.data = 00001000b
-    else if ns.data = 4.0
-        ns.data = 00010000b
-    else if ns.data = 5.0
-        ns.data = 00010100b
-    else if ns.data = 8.0
-        ns.data = 00100000b
-    else if ns.data = 8.5
-        ns.data = 00100001b
-    else
-        err 'float cannot be encoded'
-    end if
-end macro
-
-macro aarch64.parse_immediate ns
-    if ns.data eqtype 0.0
-        aarch64.parse_float ns
-    else if ns.data relativeto 0
-        ns.type = @type_immc
-    else
-        ns.type = @type_immr
-    end if
-end macro
-
-; err if y is not one of v0,...v31
-macro aarch64.parse_voperand ns, y
-    ns.data = +y
-    if elementsof ns.data = 1 & ns.data eq ns.data element 1
-        if ns.data metadata 1 relativeto aarch64.v128
-            ns.data = ns.data metadata 1 - aarch64.v128
-        else
-            err 'invalid vector name'
-        end if
-    else
-        err 'invalid vector name'
-    end if
-end macro
-
-
-macro aarch64.parse_operand ns, x
-    ns.type = 0
-    match :y:z, x
-        ns.data = +z
-        match =lo12, y
-            ns.type = @type_immc_lo12
-        else match =abs_g0_nc, y
-            ns.type = @type_immc_abs_g0_nc
-        else match =abs_g1_nc, y
-            ns.type = @type_immc_abs_g1_nc
-        else match =abs_g2, y
-            ns.type = @type_immc_abs_g2
-        else match =pg_hi21, y
-            ns.type = @type_immc_pg_hi21
-        end match
-        if ~(ns.data relativeto 0)
-            ns.type = ns.type shl 1
-        end if
-    else match y.=16b, x
-        ns.type = @type_vn_16b
-        aarch64.parse_voperand ns, y
-    else match y.=8b, x
-        ns.type = @type_vn_8b
-        aarch64.parse_voperand ns, y
-    else match y.=8h, x
-        ns.type = @type_vn_8h
-        aarch64.parse_voperand ns, y
-    else match y.=4h, x
-        ns.type = @type_vn_4h
-        aarch64.parse_voperand ns, y
-    else match y.=4s, x
-        ns.type = @type_vn_4s
-        aarch64.parse_voperand ns, y
-    else match y.=2s, x
-        ns.type = @type_vn_2s
-        aarch64.parse_voperand ns, y
-    else match y.=2d, x
-        ns.type = @type_vn_2d
-        aarch64.parse_voperand ns, y
-    else match y.=1d, x
-        ns.type = @type_vn_1d
-        aarch64.parse_voperand ns, y
-    else match y.=b, x
-        ns.type = @type_vn_b
-        aarch64.parse_voperand ns, y
-    else match y.=h, x
-        ns.type = @type_vn_h
-        aarch64.parse_voperand ns, y
-    else match y.=s, x
-        ns.type = @type_vn_s
-        aarch64.parse_voperand ns, y
-    else match y.=d, x
-        ns.type = @type_vn_d
-        aarch64.parse_voperand ns, y
-    else match y.=b[i], x
-        ns.type = @type_vn_bi
-        ns.idx = +i
-        aarch64.parse_voperand ns, y
-    else match y.=h[i], x
-        ns.type = @type_vn_hi
-        ns.idx = +i
-        aarch64.parse_voperand ns, y
-    else match y.=s[i], x
-        ns.type = @type_vn_si
-        ns.idx = +i
-        aarch64.parse_voperand ns, y
-    else match y.=d[i], x
-        ns.type = @type_vn_di
-        ns.idx = +i
-        aarch64.parse_voperand ns, y
-    else
-        ns.data = +x
-        ns.number = 0
-        if elementsof ns.data = 1 & ns.data eq ns.data element 1
-            if ns.data metadata 1 relativeto aarch64.r64
-                ns.data = ns.data metadata 1 - aarch64.r64
-                if ns.data < 31
-                    ns.type = @type_xn
-                else if ns.data = 31
-                    ns.type = @type_xzr
-                else
-                    ns.data = 31
-                    ns.type = @type_xsp
-                end if
-            else if ns.data metadata 1 relativeto aarch64.r32
-                ns.data = ns.data metadata 1 - aarch64.r32
-                if ns.data < 31
-                    ns.type = @type_wn
-                else if ns.data = 31
-                    ns.type = @type_wzr
-                else
-                    ns.data = 31
-                    ns.type = @type_wsp
-                end if
-            else if ns.data metadata 1 relativeto aarch64.f64
-                ns.data = ns.data metadata 1 - aarch64.f64
-                ns.type = @type_dn
-            else if ns.data metadata 1 relativeto aarch64.f32
-                ns.data = ns.data metadata 1 - aarch64.f32
-                ns.type = @type_sn
-            else if ns.data metadata 1 relativeto aarch64.f128
-                ns.data = ns.data metadata 1 - aarch64.f128
-                ns.type = @type_qn
-            else if ns.data metadata 1 relativeto aarch64.f8
-                ns.data = ns.data metadata 1 - aarch64.f8
-                ns.type = @type_bn
-            else if ns.data metadata 1 relativeto aarch64.f16
-                ns.data = ns.data metadata 1 - aarch64.f16
-                ns.type = @type_hn
-            else
-                aarch64.parse_immediate ns
-            end if
-        else
-            aarch64.parse_immediate ns
-        end if
-    end match
-end macro
-
-
-
-macro aarch64.parse_ext x
-    @ext.empty = 0
-    @ext.success = 1
-    @ext.kind = 3
-    @ext.shift = 0
-    match , x
-        @ext.empty = 1
-    else match =lsl a, x
-        @ext.shift = +a
-    else match =uxtb a, x
-        @ext.kind = 0
-        @ext.shift = +a
-    else match =uxth a, x
-        @ext.kind = 1
-        @ext.shift = +a
-    else match =uxtw a, x
-        @ext.kind = 2
-        @ext.shift = +a
-    else match =uxtx a, x
-        @ext.kind = 3
-        @ext.shift = +a
-    else match =sxtb a, x
-        @ext.kind = 4
-        @ext.shift = +a
-    else match =sxth a, x
-        @ext.kind = 5
-        @ext.shift = +a
-    else match =sxtw a, x
-        @ext.kind = 6
-        @ext.shift = +a
-    else match =sxtx a, x
-        @ext.kind = 7
-        @ext.shift = +a
-    else match =uxtb, x
-        @ext.kind = 0
-    else match =uxth, x
-        @ext.kind = 1
-    else match =uxtw, x
-        @ext.kind = 2
-    else match =uxtx, x
-        @ext.kind = 3
-    else match =sxtb, x
-        @ext.kind = 4
-    else match =sxth, x
-        @ext.kind = 5
-    else match =sxtw, x
-        @ext.kind = 6
-    else match =sxtx, x
-        @ext.kind = 7
-    else
-        @ext.success = 0
-    end match
-    if @ext.success & (~(@ext.shift relativeto 0) | @ext.shift < 0 | 4 < @ext.shift)
-        @ext.success = 0
-    end if
-end macro
-
-macro aarch64.parse_shf x
-    @shf.empty = 0
-    @shf.success = 1
-    @shf.kind = 0
-    @shf.shift = 0
-    match , x
-        @shf.empty = 1
-    else match =lsl a, x
-        @shf.kind = 0
-        @shf.shift = +a
-    else match =lsr a, x
-        @shf.kind = 1
-        @shf.shift = +a
-    else match =asr a, x
-        @shf.kind = 2
-        @shf.shift = +a
-    else match =ror a, x
-        @shf.kind = 3
-        @shf.shift = +a
-    else
-        @shf.success = 0
-    end match
-    if @shf.success & (~(@shf.shift relativeto 0) | @shf.shift < 0 | 64 <= @shf.shift)
-        @shf.success = 0
-    end if
-end macro
-
-macro aarch64.parse_con x
-    @con.success = 1
-    @cond.kind = -1
-    match , x
-        @con.success = 0
-    else match =eq?, x
-        @con.kind = 0
-    else match =ne?, x
-        @con.kind = 1
-    else match =hs?, x
-        @con.kind = 2
-    else match =cs?, x
-        @con.kind = 2
-    else match =lo?, x
-        @con.kind = 3
-    else match =cc?, x
-        @con.kind = 3
-    else match =mi?, x
-        @con.kind = 4
-    else match =pl?, x
-        @con.kind = 5
-    else match =vs?, x
-        @con.kind = 6
-    else match =vc?, x
-        @con.kind = 7
-    else match =hi?, x
-        @con.kind = 8
-    else match =ls?, x
-        @con.kind = 9
-    else match =ge?, x
-        @con.kind = 10
-    else match =lt?, x
-        @con.kind = 11
-    else match =gt?, x
-        @con.kind = 12
-    else match =le?, x
-        @con.kind = 13
-    else match =al?, x
-        @con.kind = 14
-    else match =nv?, x
-        @con.kind = 15
-    else
-        @con.success = 0
-    end match    
-end macro
-
-
-;;;;;;;;;;;;;;;;;;;;;;;
-; the instruction set ;
-;;;;;;;;;;;;;;;;;;;;;;;
-
+include 'aarch64_parse.inc'
 include 'aarch64_ld_st_tb.inc'
 include 'aarch64_done.inc'
 
 
-
-
-macro add a*, b*, c*, d
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    aarch64.parse_operand @op2, c
-    aarch64.parse_ext           d
-    aarch64.parse_shf           d
-    if (@op0.type and @type_wn_wsp) & (@op1.type and @type_wn_wsp) & (@op2.type and @type_immc)
-        aarch64.parse_aimm @op2.data, 1
-        dd 0x11000000 + (@imm.inv shl 30) + (@imm.shift shl 22) + (@imm.imm12 shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_immc)
-        aarch64.parse_aimm @op2.data, 1
-        dd 0x91000000 + (@imm.inv shl 30) + (@imm.shift shl 22) + (@imm.imm12 shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_wn_wzr) & (@shf.success)
-        dd 0x0b000000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr) & (@op2.type and @type_xn_xzr) & (@shf.success)
-        dd 0x8b000000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_wn_wsp) & (@op1.type and @type_wn_wsp) & (@op2.type and @type_wn_wzr) & (@ext.success)
-        dd 0x0b200000 + (@op2.data shl 16) + (@ext.kind shl 13) + (@ext.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_wn_wzr) & (@ext.empty)
-        dd 0x8b200000 + (@op2.data shl 16) + (        2 shl 13) + (         0 shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_wn_wzr_xn_xzr) & (@ext.success)
-        dd 0x8b200000 + (@op2.data shl 16) + (@ext.kind shl 13) + (@ext.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_wn_wsp) & (@op1.type and @type_wn_wsp) & (@op2.type and @type_immc_lo12)
-        dd 0x11000000 + (        0 shl 30) + (         0 shl 22) + ((@op2.data and 0xFFF) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_immc_lo12)
-        dd 0x91000000 + (        0 shl 30) + (         0 shl 22) + ((@op2.data and 0xFFF) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_vn_16b_etc_no_1d) & (@op1.type and @type_vn_16b_etc_no_1d) & (@op2.type and @type_vn_16b_etc_no_1d) & (@op0.type = @op1.type) & (@op0.type = @op1.type) & (@ext.empty)
-        dd 0x0e208400 + (@op2.data shl 16) + (((bsf @op0.type) and 4) shl 28) + (((bsf @op0.type) and 3) shl 22) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_dn) & (@op1.type and @type_dn) & (@op2.type and @type_dn) & (@ext.empty)
-        dd 0x0e208400 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_immr_lo12)
-        aarch64.reloc_add_lo12_nc @op2.data
-        dd 0x91000000 + (        0 shl 30) + (         0 shl 22) + ((@op2.data and 0xFFF) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else
-        err 'invalid operand'
-    end if
-end macro
-
-
-
-macro adrp a*, b*
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    if (@op0.type and @type_xn_xzr) & (@op1.type and @type_immr_immc)
-        if @op1.data relativeto $
-            @imm.number = ((@op1.data-$$) shr 12) - (($-$$) shr 12)   ; assume $$ is divisible by 4096
-            if -1 shl 20 <= @imm.number & @imm.number < 1 shl 20
-                dd 0x90000000 + (@imm.number and 0x3) shl 29 + (((@imm.number and 0x1FFFFC) shr 2) shl 5) + (@op0.data shl 0)
-            else
-                err 'target is out of range'
-            end if
-        else
-            err 'invalid target'
-        end if
-    else
-        err 'invalid operand'
-    end if
-end macro
-
-macro adr a*, b*
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    if (@op0.type and @type_xn_xzr) & (@op1.type and @type_immr_immc)
-        if @op1.data relativeto $
-            @imm.number = @op1.data - $
-            if -1 shl 20 <= @imm.number & @imm.number < 1 shl 20
-                dd 0x10000000 + (@imm.number and 0x3) shl 29 + (((@imm.number shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
-            else
-                err 'target is out of range'
-            end if
-        else
-            err 'invalid target'
-        end if
-    else
-        err 'invalid operand'
-    end if
-end macro
-
-macro and a*, b*, c*, d
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    aarch64.parse_operand @op2, c
-    aarch64.parse_shf           d
-    if (@op0.type and @type_wn_wsp) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_immc) & (@shf.empty)
-        aarch64.parse_bimm32 @op2.data, 1
-        dd 0x12000000 + (@imm.n shl 22) + (@imm.r shl 16) + (@imm.s shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_immc) & (@shf.empty)
-        aarch64.parse_bimm64 @op2.data, 1
-        dd 0x92000000 + (@imm.n shl 22) + (@imm.r shl 16) + (@imm.s shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_wn_wzr) & (@shf.success)
-        dd 0x0a000000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr) & (@op2.type and @type_xn_xzr) & (@shf.success)
-        dd 0x8a000000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else
-        err 'invalid operand'
-    end if
-end macro
 
 macro ands a*, b*, c*, d
     aarch64.parse_operand @op0, a
@@ -1164,19 +526,7 @@ macro bfxil a*, b*, c*, d*
     end if
 end macro
 
-macro bic a*, b*, c*, d
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    aarch64.parse_operand @op2, c
-    aarch64.parse_shf           d
-    if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_wn_wzr) & (@shf.success)
-        dd 0x0a200000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr) & (@op2.type and @type_xn_xzr) & (@shf.success)
-        dd 0x8a200000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else
-        err 'invalid operand'
-    end if
-end macro
+
 
 macro bics a*, b*, c*, d
     aarch64.parse_operand @op0, a
@@ -1192,27 +542,6 @@ macro bics a*, b*, c*, d
     end if
 end macro
 
-macro bl a*
-    aarch64.parse_operand @op0, a
-    if (@op0.type and @type_immr_immc)
-        if @op0.data relativeto $
-            @imm.number = @op0.data - $
-            if @imm.number and 0x03 = 0
-                if -1 shl 27 <= @imm.number & @imm.number < 1 shl 27
-                    dd 0x94000000 + (((@imm.number shr 2) and 0x3FFFFFF) shl 0)
-                else
-                    err 'target is out of range'
-                end if
-            else
-                err 'target is misaligned'
-            end if
-        else
-            err 'invalid target'
-        end if
-    else
-        err 'invalid operand
-    end if
-end macro
 
 
 macro blr? a*
@@ -1338,29 +667,7 @@ macro cinc a*, b*, c*
     end if
 end macro
 
-macro cls a*, b*
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr)
-        dd 0x5ac01400 + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr)
-        dd 0xdac01400 + (@op1.data shl 5) + (@op0.data shl 0)
-    else
-        err 'invalid operand'
-    end if
-end macro
 
-macro clz a*, b*
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr)
-        dd 0x5ac01000 + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr)
-        dd 0xdac01000 + (@op1.data shl 5) + (@op0.data shl 0)
-    else
-        err 'invalid operand'
-    end if
-end macro
 
 macro cmn b*, c*, d
     aarch64.parse_operand @op1, b
@@ -1521,56 +828,6 @@ macro csneg a*, b*, c*, d*
 end macro
 
 
-macro eon a*, b*, c*, d
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    aarch64.parse_operand @op2, c
-    aarch64.parse_shf           d
-    if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_wn_wzr) & (@shf.success)
-        dd 0x4a200000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr) & (@op2.type and @type_xn_xzr) & (@shf.success)
-        dd 0xca200000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else
-        err 'invalid operand'
-    end if
-end macro
-
-
-macro eor a*, b*, c*, d
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    aarch64.parse_operand @op2, c
-    aarch64.parse_shf           d
-    if (@op0.type and @type_wn_wsp) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_immc) & (@shf.empty)
-        aarch64.parse_bimm32 @op2.data, 1
-        dd 0x52000000 + (@imm.n shl 22) + (@imm.r shl 16) + (@imm.s shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_immc) & (@shf.empty)
-        aarch64.parse_bimm64 @op2.data, 1
-        dd 0xd2000000 + (@imm.n shl 22) + (@imm.r shl 16) + (@imm.s shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_wn_wzr) & (@shf.success)
-        dd 0x4a000000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr) & (@op2.type and @type_xn_xzr) & (@shf.success)
-        dd 0xca000000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_vn_16b_etc) & (@op1.type and @type_vn_16b_etc) & (@op2.type and @type_vn_16b_etc) & (@op0.type = @op1.type) & (@op0.type = @op1.type)
-        dd 0x2e201c00 + (@op2.data shl 16) + (((bsf @op0.type) and 4) shl 28) + (@op1.data shl 5) + (@op0.data shl 0)        
-    else
-        err 'invalid operand'
-    end if
-end macro
-
-macro extr a*, b*, c*, d*
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    aarch64.parse_operand @op2, c
-    aarch64.parse_operand @op3, d
-    if (@op0.type and @type_wn_wzr) & (@op0.type and @type_wn_wzr) & (@op2.type and @type_wn_wzr) & (@op3.type and @type_immc)
-        dd 0x13800000 + (@op2.data shl 16) + ((@op3.data and 0x1F) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xzr) & (@op0.type and @type_xn_xzr) & (@op2.type and @type_xn_xzr) & (@op3.type and @type_immc)
-        dd 0x93c00000 + (@op2.data shl 16) + ((@op3.data and 0x3F) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else
-        err 'invalid operands'
-    end if
-end macro
 
 
 
@@ -1706,29 +963,6 @@ iterate <instr, code>, smnegl, 0x9b20fc00,\
     end macro
 end iterate
 
-
-
-
-macro orr a*, b*, c*, d
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    aarch64.parse_operand @op2, c
-    aarch64.parse_shf           d
-    if (@op0.type and @type_wn_wsp) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_immc) & (@shf.empty)
-        aarch64.parse_bimm32 @op2.data, 1
-        dd 0x32000000 + (@imm.n shl 22) + (@imm.r shl 16) + (@imm.s shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_immc) & (@shf.empty)
-        aarch64.parse_bimm64 @op2.data, 1
-        dd 0xb2000000 + (@imm.n shl 22) + (@imm.r shl 16) + (@imm.s shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_wn_wzr) & (@shf.success)
-        dd 0x2a000000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr) & (@op2.type and @type_xn_xzr) & (@shf.success)
-        dd 0xaa000000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else
-        err 'invalid operand'
-    end if
-end macro
-
 macro orn a*, b*, c*, d
     aarch64.parse_operand @op0, a
     aarch64.parse_operand @op1, b
@@ -1738,19 +972,6 @@ macro orn a*, b*, c*, d
         dd 0x2a200000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr) & (@op2.type and @type_xn_xzr) & (@shf.success)
         dd 0xaa200000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else
-        err 'invalid operand'
-    end if
-end macro
-
-macro mvn b*, c*, d
-    aarch64.parse_operand @op1, b
-    aarch64.parse_operand @op2, c
-    aarch64.parse_shf           d
-    if (@op1.type and @type_wn_wzr) & (@op2.type and @type_wn_wzr) & (@shf.success)
-        dd 0x2a200000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (31 shl 5) + (@op1.data shl 0)
-    else if (@op1.type and @type_xn_xzr) & (@op2.type and @type_xn_xzr) & (@shf.success)
-        dd 0xaa200000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (31 shl 5) + (@op1.data shl 0)
     else
         err 'invalid operand'
     end if
