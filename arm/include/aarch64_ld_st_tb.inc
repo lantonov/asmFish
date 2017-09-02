@@ -393,7 +393,7 @@ end iterate
 
 iterate <instr, code1, code2, code3, code4, code5, code6, code7>,\
          stur, 0xb8000000, 0xf8000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,\
-         ldur, 0xb8400000, 0xf8400000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000
+         ldur, 0xb8400000, 0xf8400000, 0x3cc00000, 0xfc400000, 0xbc400000, 0x7c400000, 0x3c400000
     macro instr a*, b&
         aarch64.parse_adr_f26       b
         aarch64.parse_operand @op0, a
@@ -446,7 +446,7 @@ macro ldpsw a*, b*, c&
     end if
 end macro
 
-iterate <instr, code1, code2, code3, code4, code5>, ldp, 0xa8400000, 0x6c400000, 0x28400000, 0x00000000, 0x00000000,\
+iterate <instr, code1, code2, code3, code4, code5>, ldp, 0xa8400000, 0x6c400000, 0x28400000, 0x2c400000, 0xac400000,\
                                                     stp, 0xa8000000, 0x6c000000, 0x28000000, 0x00000000, 0x00000000
     macro instr a*, b*, c&
         aarch64.parse_operand @op0, a
@@ -464,7 +464,7 @@ iterate <instr, code1, code2, code3, code4, code5>, ldp, 0xa8400000, 0x6c400000,
             aarch64.parse_adr_f4 2, c
             dd code4 + @adr.encode + (@op1.data shl 10) + (@op0.data shl 0)
         else if (@op0.type and @type_qn) & (@op1.type and @type_qn)
-            aarch64.parse_adr_f4 2, c
+            aarch64.parse_adr_f4 4, c
             dd code5 + @adr.encode + (@op1.data shl 10) + (@op0.data shl 0)
         else
             err 'invalid operand'
@@ -487,7 +487,7 @@ macro aarch64.parse_adr_f5 size, x&
     end if
 end macro
 
-iterate <instr, code1, code2, code3, code4, code5>, ldnp, 0x28400000, 0xa8400000, 0x00000000, 0x00000000, 0x00000000,\
+iterate <instr, code1, code2, code3, code4, code5>, ldnp, 0x28400000, 0xa8400000, 0x2c400000, 0x6c400000, 0xac400000,\
                                                     stnp, 0x28000000, 0xa8000000, 0x00000000, 0x00000000, 0x00000000
     macro instr a*, b*, c&
         aarch64.parse_operand @op0, a

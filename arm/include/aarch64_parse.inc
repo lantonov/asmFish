@@ -326,6 +326,10 @@ macro aarch64.parse_operand ns, x
         ns.type = @type_vn_1d
         ns.vt = 3
         aarch64.parse_voperand ns, y
+    else match y.=1q, x
+        ns.type = @type_vn_1q
+        ns.vt = 4
+        aarch64.parse_voperand ns, y
     else match y.=b, x
         ns.type = @type_vn_b
         ns.vt = 0
@@ -346,21 +350,25 @@ macro aarch64.parse_operand ns, x
         ns.type = @type_vn_bi
         ns.vt = 0
         ns.idx = +i
+        aarch64.restrict ns.idx, 0, 15
         aarch64.parse_voperand ns, y
     else match y.=h[i], x
         ns.type = @type_vn_hi
         ns.vt = 1
         ns.idx = +i
+        aarch64.restrict ns.idx, 0, 7
         aarch64.parse_voperand ns, y
     else match y.=s[i], x
         ns.type = @type_vn_si
         ns.vt = 2
         ns.idx = +i
+        aarch64.restrict ns.idx, 0, 3
         aarch64.parse_voperand ns, y
     else match y.=d[i], x
         ns.type = @type_vn_di
         ns.vt = 3
         ns.idx = +i
+        aarch64.restrict ns.idx, 0, 1
         aarch64.parse_voperand ns, y
     else
         ns.data = +x

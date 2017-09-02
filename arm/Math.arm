@@ -380,7 +380,7 @@ Math_log_d_d.L6:
         cmp  w2, 2
        fsub  d0, d1, d0
         bgt  Math_log_d_d.L7
-       fcmp  d0, 0.0
+       fcmp  d0, 0
         bne  Math_log_d_d.L8
        fmov  d0, xzr
         cbz  w0, Math_log_d_d.L4
