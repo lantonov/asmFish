@@ -496,13 +496,20 @@ macro fcvt a*, b*
     end if
 end macro
 
-macro aarch64.h_fcvt a*, b*, c*, code1*, code2*, code3, code4
+
+macro aarch64.h_fcvt a*, b*, c*, reverse*, code1*, code2*, code3, code4
     aarch64.parse_operand @op0, a
     aarch64.parse_operand @op1, b
     aarch64.parse_operand @op2, c
+    if reverse
+        @imm.data = @op0.type
+        @op0.type = @op1.type
+        @op1.type = @imm.data
+    end if
     if @op2.type <> @type_immc
         err 'invalid operand'
     end if
+    @imm.data = ((-@op2.data) and 63)
     if @op2.data = 0
         @adr.encode1 = code1
         @adr.encode2 = code2
@@ -510,79 +517,87 @@ macro aarch64.h_fcvt a*, b*, c*, code1*, code2*, code3, code4
         @adr.encode1 = code3
         @adr.encode2 = code4
     end if
-    @imm.data = ((-@op2.data) and 63)
+    @adr.encode1 = @adr.encode1 + (@imm.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    @adr.encode2 = @adr.encode2 + (@imm.data shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
     if (@op0.type = @type_dn) & (@op1.type = @type_dn)
         aarch64.restrict @op2.data, 0, 64
-        dd @adr.encode1 + 0x50400000 + (@imm.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+        dd @adr.encode1 + 0x50400000
     else if (@op0.type = @type_sn) & (@op1.type = @type_sn)
         aarch64.restrict @op2.data, 0, 32
-        dd @adr.encode1 + 0x50000000 + (@imm.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+        dd @adr.encode1 + 0x50000000
     else if (@op0.type = @type_vn_2d) & (@op1.type = @type_vn_2d)
         aarch64.restrict @op2.data, 0, 64
-        dd @adr.encode1 + 0x40400000 + (@imm.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+        dd @adr.encode1 + 0x40400000
     else if (@op0.type = @type_vn_2s) & (@op1.type = @type_vn_2s)
         aarch64.restrict @op2.data, 0, 32
-        dd @adr.encode1 + 0x00000000 + (@imm.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+        dd @adr.encode1 + 0x00000000
     else if (@op0.type = @type_vn_4s) & (@op1.type = @type_vn_4s)
         aarch64.restrict @op2.data, 0, 32
-        dd @adr.encode1 + 0x40000000 + (@imm.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type = @type_wn) & (@op1.type = @type_dn)
+        dd @adr.encode1 + 0x40000000
+    else if (@op0.type and @type_wn_wzr) & (@op1.type = @type_dn)
         aarch64.restrict @op2.data, 0, 32
-        dd @adr.encode2 + 0x00400000 + (@imm.data shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type = @type_wn) & (@op1.type = @type_sn)
+        dd @adr.encode2 + 0x00400000
+    else if (@op0.type and @type_wn_wzr) & (@op1.type = @type_sn)
         aarch64.restrict @op2.data, 0, 32
-        dd @adr.encode2 + 0x00000000 + (@imm.data shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type = @type_xn) & (@op1.type = @type_dn)
+        dd @adr.encode2 + 0x00000000
+    else if (@op0.type and @type_xn_xzr) & (@op1.type = @type_dn)
         aarch64.restrict @op2.data, 0, 64
-        dd @adr.encode2 + 0x80400000 + (@imm.data shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type = @type_xn) & (@op1.type = @type_sn)
+        dd @adr.encode2 + 0x80400000
+    else if (@op0.type and @type_xn_xzr) & (@op1.type = @type_sn)
         aarch64.restrict @op2.data, 0, 64
-        dd @adr.encode2 + 0x80000000 + (@imm.data shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+        dd @adr.encode2 + 0x80000000
     else
         err 'invalid operand'
     end if
 end macro
 
 macro fcvtas a*, b*
-    aarch64.h_fcvt a, b, 0, 0x0e21c800, 0x1e240000
+    aarch64.h_fcvt a, b, 0, 0, 0x0e21c800, 0x1e240000
 end macro
 
 macro fcvtau a*, b*
-    aarch64.h_fcvt a, b, 0, 0x2e21c800, 0x1e250000
+    aarch64.h_fcvt a, b, 0, 0, 0x2e21c800, 0x1e250000
 end macro
 
 macro fcvtms a*, b*
-    aarch64.h_fcvt a, b, 0, 0x0e21b800, 0x1e300000
+    aarch64.h_fcvt a, b, 0, 0, 0x0e21b800, 0x1e300000
 end macro
 
 macro fcvtmu a*, b*
-    aarch64.h_fcvt a, b, 0, 0x2e21b800, 0x1e310000
+    aarch64.h_fcvt a, b, 0, 0, 0x2e21b800, 0x1e310000
 end macro
 
 macro fcvtns a*, b*
-    aarch64.h_fcvt a, b, 0, 0x0e21a800, 0x1e200000
+    aarch64.h_fcvt a, b, 0, 0, 0x0e21a800, 0x1e200000
 end macro
 
 macro fcvtnu a*, b*
-    aarch64.h_fcvt a, b, 0, 0x2e21a800, 0x1e210000
+    aarch64.h_fcvt a, b, 0, 0, 0x2e21a800, 0x1e210000
 end macro
 
 macro fcvtps a*, b*
-    aarch64.h_fcvt a, b, 0, 0x0ea1a800, 0x1e280000
+    aarch64.h_fcvt a, b, 0, 0, 0x0ea1a800, 0x1e280000
 end macro
 
 macro fcvtpu a*, b*
-    aarch64.h_fcvt a, b, 0, 0x2ea1a800, 0x1e290000
+    aarch64.h_fcvt a, b, 0, 0, 0x2ea1a800, 0x1e290000
 end macro
 
 macro fcvtzs a*, b*, c:0
-    aarch64.h_fcvt a, b, c, 0x0ea1b800, 0x1e380000, 0x0f00fc00, 0x1e180000
+    aarch64.h_fcvt a, b, c, 0, 0x0ea1b800, 0x1e380000, 0x0f00fc00, 0x1e180000
 end macro
 
 macro fcvtzu a*, b*, c:0
-    aarch64.h_fcvt a, b, c, 0x2ea1b800, 0x1e390000, 0x2f00fc00, 0x1e190000
+    aarch64.h_fcvt a, b, c, 0, 0x2ea1b800, 0x1e390000, 0x2f00fc00, 0x1e190000
 end macro
 
+macro scvtf a*, b*, c:0
+    aarch64.h_fcvt a, b, c, 1, 0x0e21d800, 0x1e220000, 0x0f00e400, 0x1e020000
+end macro
+
+macro ucvtf a*, b*, c:0
+    aarch64.h_fcvt a, b, c, 1, 0x2e21d800, 0x1e230000, 0x2f00e400, 0x1e030000
+end macro
 
 
 macro fmul a*, b*, c*
@@ -688,32 +703,6 @@ macro fmls a*, b*, c*
         dd 0x4ea0cc00 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type = @type_vn_4s) & (@op1.type = @type_vn_4s) & (@op2.type = @type_vn_si)
         dd 0x4f805000 + ((@op2.idx and 1) shl 21) + ((@op2.idx and 2) shl 10) + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
-    else
-        err 'invalid operand'
-    end if
-end macro
-
-
-macro scvtf a*, b*
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    if (@op0.type and @type_dn) & (@op1.type and @type_xn_xzr)
-        dd 0x9e620000 + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_dn) & (@op1.type and @type_wn_wzr)
-        dd 0x1e620000 + (@op1.data shl 5) + (@op0.data shl 0)
-    else
-        err 'invalid operand'
-    end if
-end macro
-
-
-macro ucvtf a*, b*
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    if (@op0.type and @type_dn) & (@op1.type and @type_xn_xzr)
-        dd 0x9e630000 + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_dn) & (@op1.type and @type_wn_wzr)
-        dd 0x1e630000 + (@op1.data shl 5) + (@op0.data shl 0)
     else
         err 'invalid operand'
     end if

@@ -251,7 +251,12 @@ end macro
 
 macro aarch64.parse_immediate ns
     if ns.data eqtype 0.0
-        aarch64.parse_float ns
+        if ns.data = 0.0
+            ns.type = @type_immc
+            ns.data = 0
+        else
+            aarch64.parse_float ns
+        end if
     else if ns.data relativeto 0
         ns.type = @type_immc
     else
@@ -297,76 +302,101 @@ macro aarch64.parse_operand ns, x
     else match y.=16b, x
         ns.type = @type_vn_16b
         ns.vt = 4
+        ns.vsize = 0
+        ns.vfull = 1
         aarch64.parse_voperand ns, y
     else match y.=8b, x
         ns.type = @type_vn_8b
         ns.vt = 0
+        ns.vsize = 0
+        ns.vfull = 0
         aarch64.parse_voperand ns, y
     else match y.=8h, x
         ns.type = @type_vn_8h
         ns.vt = 5
+        ns.vsize = 1
+        ns.vfull = 1
         aarch64.parse_voperand ns, y
     else match y.=4h, x
         ns.type = @type_vn_4h
         ns.vt = 1
+        ns.vsize = 1
+        ns.vfull = 0
         aarch64.parse_voperand ns, y
     else match y.=4s, x
         ns.type = @type_vn_4s
         ns.vt = 6
+        ns.vsize = 2
+        ns.vfull = 1
         aarch64.parse_voperand ns, y
     else match y.=2s, x
         ns.type = @type_vn_2s
         ns.vt = 2
+        ns.vsize = 2
+        ns.vfull = 0
         aarch64.parse_voperand ns, y
     else match y.=2d, x
         ns.type = @type_vn_2d
         ns.vt = 7
+        ns.vsize = 3
+        ns.vfull = 1
         aarch64.parse_voperand ns, y
     else match y.=1d, x
         ns.type = @type_vn_1d
         ns.vt = 3
+        ns.vsize = 3
+        ns.vfull = 0
         aarch64.parse_voperand ns, y
     else match y.=1q, x
         ns.type = @type_vn_1q
         ns.vt = 4
+        ns.vsize = 4
         aarch64.parse_voperand ns, y
     else match y.=b, x
         ns.type = @type_vn_b
         ns.vt = 0
+        ns.vsize = 0
         aarch64.parse_voperand ns, y
     else match y.=h, x
         ns.type = @type_vn_h
         ns.vt = 1
+        ns.vsize = 1
         aarch64.parse_voperand ns, y
     else match y.=s, x
         ns.type = @type_vn_s
         ns.vt = 2
+        ns.vsize = 2
         aarch64.parse_voperand ns, y
     else match y.=d, x
         ns.type = @type_vn_d
         ns.vt = 3
+        ns.vsize = 3
         aarch64.parse_voperand ns, y
     else match y.=b[i], x
         ns.type = @type_vn_bi
         ns.vt = 0
+        ns.vsize = 0
         ns.idx = +i
         aarch64.restrict ns.idx, 0, 15
         aarch64.parse_voperand ns, y
     else match y.=h[i], x
         ns.type = @type_vn_hi
         ns.vt = 1
+        ns.vsize = 1
         ns.idx = +i
         aarch64.restrict ns.idx, 0, 7
         aarch64.parse_voperand ns, y
     else match y.=s[i], x
         ns.type = @type_vn_si
         ns.vt = 2
+        ns.vsize = 2
         ns.idx = +i
         aarch64.restrict ns.idx, 0, 3
         aarch64.parse_voperand ns, y
     else match y.=d[i], x
         ns.type = @type_vn_di
         ns.vt = 3
+        ns.vsize = 3
         ns.idx = +i
         aarch64.restrict ns.idx, 0, 1
         aarch64.parse_voperand ns, y
@@ -398,22 +428,27 @@ macro aarch64.parse_operand ns, x
                 ns.data = ns.data metadata 1 - aarch64.f64
                 ns.type = @type_dn
                 ns.vt = 3
+                ns.vsize = 3
             else if ns.data metadata 1 relativeto aarch64.f32
                 ns.data = ns.data metadata 1 - aarch64.f32
                 ns.type = @type_sn
                 ns.vt = 2
+                ns.vsize = 2
             else if ns.data metadata 1 relativeto aarch64.f128
                 ns.data = ns.data metadata 1 - aarch64.f128
                 ns.type = @type_qn
                 ns.vt = 4
+                ns.vsize = 4
             else if ns.data metadata 1 relativeto aarch64.f8
                 ns.data = ns.data metadata 1 - aarch64.f8
                 ns.type = @type_bn
                 ns.vt = 0
+                ns.vsize = 0
             else if ns.data metadata 1 relativeto aarch64.f16
                 ns.data = ns.data metadata 1 - aarch64.f16
                 ns.type = @type_hn
                 ns.vt = 1
+                ns.vsize = 1
             else
                 aarch64.parse_immediate ns
             end if

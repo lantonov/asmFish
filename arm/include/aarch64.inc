@@ -50,9 +50,7 @@ define @adr
 @type_vn_8h   = 1 shl 5
 @type_vn_4s   = 1 shl 6
 @type_vn_2d   = 1 shl 7
-
 @type_vn_1q   = 1 shl 62
-
 
 @type_vn_b   = 1 shl 8
 @type_vn_h   = 1 shl 9
@@ -65,6 +63,8 @@ define @adr
 @type_vn_16b_etc = @type_vn_16b or @type_vn_8b or @type_vn_8h or @type_vn_4h or @type_vn_4s or @type_vn_2s or @type_vn_2d or @type_vn_1d
 @type_vn_16b_etc_no_1d = @type_vn_16b or @type_vn_8b or @type_vn_8h or @type_vn_4h or @type_vn_4s or @type_vn_2s or @type_vn_2d
 
+@type_vn_8b_16b_4h_8h = @type_vn_8b or @type_vn_16b or @type_vn_4h or @type_vn_8h
+@type_vn_8b_16b_4h_8h_4s = @type_vn_8b or @type_vn_16b or @type_vn_4h or @type_vn_8h or @type_vn_4s
 @type_vn_2s_4s = @type_vn_2s or @type_vn_4s
 @type_vn_4h_8h = @type_vn_4h or @type_vn_8h
 @type_vn_2s_4s_2d = @type_vn_2s or @type_vn_4s or @type_vn_2d
@@ -72,6 +72,9 @@ define @adr
 
 @type_vn_hi_si = @type_vn_hi or @type_vn_si
 
+@type_vn_4h_8h = @type_vn_4h or @type_vn_8h
+@type_vn_2s_4s = @type_vn_2s or @type_vn_4s
+@type_vn_8b_4h_2s = @type_vn_8b or @type_vn_4h or @type_vn_2s
 @type_vn_4h_8h_2s_4s = @type_vn_4h or @type_vn_8h or @type_vn_2s or @type_vn_4s
 @type_vn_8b_16b = @type_vn_8b or @type_vn_16b
 
@@ -197,6 +200,7 @@ end macro
 
 include 'aarch64_parse.inc'
 include 'aarch64_ld_st_tb.inc'
+include 'aarch64_group.inc'
 include 'aarch64_done.inc'
 include 'aarch64_float.inc'
 
@@ -228,17 +232,11 @@ macro asr a*, b*, c*
     aarch64.parse_operand @op1, b
     aarch64.parse_operand @op2, c
     if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_immc)
-        if 0 <= @op2.data & @op2.data < 32
-            dd 0x13007c00 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
-        else
-            err, 'invalid shift amount'
-        end if
+        aarch64.restrict @op2.data, 0, 31
+        dd 0x13007c00 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr) & (@op2.type and @type_immc)
-        if 0 <= @op2.data & @op2.data < 64
-            dd 0x9340fc00 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
-        else
-            err, 'invalid shift amount'
-        end if
+        aarch64.restrict @op2.data, 0, 63
+        dd 0x9340fc00 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_wn_wzr)
         dd 0x1ac02800 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr) & (@op2.type and @type_xn_xzr)
@@ -509,7 +507,7 @@ end macro
 
 macro blr? a*
     aarch64.parse_operand @op0, a
-    if (@op0.type and @type_xn_xzr)
+    if @op0.type and @type_xn_xzr
         dd 0xd63f0000 + (@op0.data shl 5)
     else
         err 'invalid operand'
@@ -518,7 +516,7 @@ end macro
 
 macro br? a*
     aarch64.parse_operand @op0, a
-    if (@op0.type and @type_xn_xzr)
+    if @op0.type and @type_xn_xzr
         dd 0xd61f0000 + (@op0.data shl 5)
     else
         err 'invalid operand'
@@ -527,7 +525,7 @@ end macro
 
 macro brk? a*
     aarch64.parse_operand @op0, a
-    if (@op0.type and @type_immc)
+    if @op0.type and @type_immc
         aarch64.restrict @op0.data, 0, 0xFFFF
         dd 0xd4200000 + (@op0.data shl 5)
     else
@@ -788,8 +786,6 @@ end iterate
 
 
 iterate <instr, code>, smnegl, 0x9b20fc00,\
-                       smull,  0x9b207c00,\
-                       umull,  0x9ba07c00,\
                        umnegl, 0x9ba0fc00
     macro instr a*, b*, c*
         aarch64.parse_operand @op0, a
@@ -816,36 +812,7 @@ end macro
 
 
 
-macro sub a*, b*, c*, d
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    aarch64.parse_operand @op2, c
-    aarch64.parse_ext           d
-    aarch64.parse_shf           d
-    if (@op0.type and @type_wn_wsp) & (@op1.type and @type_wn_wsp) & (@op2.type and @type_immc)
-        aarch64.parse_aimm @op2.data, 1
-        dd 0x51000000 - (@imm.inv shl 30) + (@imm.shift shl 22) + (@imm.imm12 shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_immc)
-        aarch64.parse_aimm @op2.data, 1
-        dd 0xd1000000 - (@imm.inv shl 30) + (@imm.shift shl 22) + (@imm.imm12 shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr) & (@op2.type and @type_wn_wzr) & (@shf.success)
-        dd 0x4b000000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr) & (@op2.type and @type_xn_xzr) & (@shf.success)
-        dd 0xcb000000 + (@shf.kind shl 22) + (@op2.data shl 16) + (@shf.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_wn_wsp) & (@op1.type and @type_wn_wsp) & (@op2.type and @type_wn_wzr) & (@ext.success)
-        dd 0x4b200000 + (@op2.data shl 16) + (@ext.kind shl 13) + (@ext.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_wn_wzr) & (@ext.empty)
-        dd 0xcb200000 + (@op2.data shl 16) + (        2 shl 13) + (         0 shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_wn_wzr_xn_xzr) & (@ext.success)
-        dd 0xcb200000 + (@op2.data shl 16) + (@ext.kind shl 13) + (@ext.shift shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_vn_16b_etc_no_1d) & (@op0.type = @op1.type) & (@op0.type = @op1.type)
-        dd 0x2e208400 + (@op2.data shl 16) + (((bsf @op0.type) and 4) shl 28) + (((bsf @op0.type) and 3) shl 22) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type = @type_dn) & (@op0.type = @op1.type) & (@op0.type = @op2.type) & (@ext.empty)
-        dd 0x00000000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
-    else
-        err 'invalid operand'
-    end if
-end macro
+
 
 
 macro negs b*, c*, d
@@ -861,35 +828,10 @@ macro negs b*, c*, d
     end if
 end macro
 
-iterate <instr, code1, code2>, rbit,  0x5ac00000, 0xdac00000,\
-                               rev,   0x5ac00800, 0xdac00c00,\
-                               rev16, 0x5ac00400, 0xdac00400
-    macro instr a*, b*
-        aarch64.parse_operand @op0, a
-        aarch64.parse_operand @op1, b
-        if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr)
-            dd code1 + (@op1.data shl 5) + (@op0.data shl 0)
-        else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr)
-            dd code2 + (@op1.data shl 5) + (@op0.data shl 0)
-        else
-            err 'invalid operand'
-        end if
-    end macro
-end iterate
-
-macro rev32 a*, b*
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    if (@op0.type and @type_xn_xzr) & (@op1.type and @type_xn_xzr)
-        dd 0xdac00800 + (@op1.data shl 5) + (@op0.data shl 0)
-    else
-        err 'invalid operand'
-    end if
-end macro
 
 
 
-macro svc? a*
+macro svc a*
     aarch64.parse_operand @op0, a
     if (@op0.type and @type_immc)
         aarch64.restrict @op0.data, 0, 0xFFFF
@@ -1008,6 +950,9 @@ macro uxth a*, b*
 end macro
 
 
+
+
+
 macro nop
     dd 0xd503201f
 end macro
@@ -1090,41 +1035,6 @@ macro eret
     dd 0xd69f03e0
 end macro
 
-
-;macro at a*, b*
-;    aarch64.parse_operand @op0, b
-;    if (@op0.type and @type_xn_xzr)
-;        match =s12e0r?, a
-;            dd 0xd50c78c0 + @op0.data
-;        else match =s12e0w?, a
-;            dd 0xd50c78e0 + @op0.data
-;        else match =s12e1r?, a
-;            dd 0xd50c7880 + @op0.data
-;        else match =s12e1w?, a
-;            dd 0xd50c78a0 + @op0.data
-;        else match =s1e0r?, a
-;            dd 0xd5087840 + @op0.data
-;        else match =s1e0w?, a
-;            dd 0xd5087860 + @op0.data
-;        else match =s1e1r?, a
-;            dd 0xd5087800 + @op0.data
-;        else match =s1e1w?, a
-;            dd 0xd5087820 + @op0.data
-;        else match =s1e2r?, a
-;            dd 0xd50c7800 + @op0.data
-;        else match =s1e2w?, a
-;            dd 0xd50c7820 + @op0.data
-;        else match =s1e3r?, a
-;            dd 0xd50e7800 + @op0.data
-;        else match =s1e3w?, a
-;            dd 0xd50e7820 + @op0.data
-;        else
-;            err 'invalid operand'
-;        end match
-;    else
-;        err 'invalid operand'
-;    end if
-;end macro
 
 macro dc a, b
     aarch64.parse_operand @op0, b
@@ -1262,19 +1172,44 @@ macro clrex a:15
 end macro
 
 
+macro at A*, B*
+    aarch64.parse_operand @op1, B
+    if @op1.type and @type_xn_xzr
+        match =s12e0r, A
+            dd 0xd50c78c0 + @op1.data
+        else match =s12e0w, A
+            dd 0xd50c78e0 + @op1.data
+        else match =s12e1r, A
+            dd 0xd50c7880 + @op1.data
+        else match =s12e1w, A
+            dd 0xd50c78a0 + @op1.data
+        else match =s1e0r, A
+            dd 0xd5087840 + @op1.data
+        else match =s1e0w, A
+            dd 0xd5087860 + @op1.data
+        else match =s1e1r, A
+            dd 0xd5087800 + @op1.data
+        else match =s1e1w, A
+            dd 0xd5087820 + @op1.data
+        else match =s1e2r, A
+            dd 0xd50c7800 + @op1.data
+        else match =s1e2w, A
+            dd 0xd50c7820 + @op1.data
+        else match =s1e3r, A
+            dd 0xd50e7800 + @op1.data
+        else match =s1e3w, A
+            dd 0xd50e7820 + @op1.data
+        else
+            err 'invalid operand'
+        end match
+    else
+        err 'invalid operand'
+    end if
+end macro
 
 
-
-
-
-
-
-
-
-
-; Vd, Vn  - 2S or 4S
-iterate <instr, code1, code2>, ursqrte, 0x00000000, 0x00000000,\
-                               urecpe,  0x00000000, 0x00000000
+iterate <instr, code1, code2>, ursqrte, 0x2ea1c800, 0x6ea1c800,\
+                               urecpe,  0x0ea1c800, 0x4ea1c800
     macro instr a*, b*
         aarch64.parse_operand @op0, a
         aarch64.parse_operand @op1, b
@@ -1289,13 +1224,38 @@ iterate <instr, code1, code2>, ursqrte, 0x00000000, 0x00000000,\
 end iterate
 
 
+macro smov A*, B*
+    aarch64.parse_operand @op0, A
+    aarch64.parse_operand @op1, B
+    if (@op0.type and @type_wn_wzr) & (@op1.type = @type_vn_bi)
+        dd 0x0e012c00 + (@op1.data shl 5) + (@op0.data shl 0) + (@op1.idx shl 17)
+    else if (@op0.type and @type_wn_wzr) & (@op1.type = @type_vn_hi)
+        dd 0x0e022c00 + (@op1.data shl 5) + (@op0.data shl 0) + (@op1.idx shl 18)
+    else if (@op0.type and @type_xn_xzr) & (@op1.type = @type_vn_bi)
+        dd 0x4e012c00 + (@op1.data shl 5) + (@op0.data shl 0) + (@op1.idx shl 17)
+    else if (@op0.type and @type_xn_xzr) & (@op1.type = @type_vn_hi)
+        dd 0x4e022c00 + (@op1.data shl 5) + (@op0.data shl 0) + (@op1.idx shl 18)
+    else if (@op0.type and @type_xn_xzr) & (@op1.type = @type_vn_si)
+        dd 0x4e042c00 + (@op1.data shl 5) + (@op0.data shl 0) + (@op1.idx shl 19)
+    else
+        err 'invalid operand'
+    end if
+end macro
 
 
-
-
-
-
-
-
-
+macro umov A*, B*
+    aarch64.parse_operand @op0, A
+    aarch64.parse_operand @op1, B
+    if (@op0.type and @type_wn_wzr) & (@op1.type = @type_vn_bi)
+        dd 0x0e013c00 + (@op1.data shl 5) + (@op0.data shl 0) + (@op1.idx shl 17)
+    else if (@op0.type and @type_wn_wzr) & (@op1.type = @type_vn_hi)
+        dd 0x0e023c00 + (@op1.data shl 5) + (@op0.data shl 0) + (@op1.idx shl 18)
+    else if (@op0.type and @type_wn_wzr) & (@op1.type = @type_vn_si)
+        dd 0x0e043c00 + (@op1.data shl 5) + (@op0.data shl 0) + (@op1.idx shl 19)
+    else if (@op0.type and @type_xn_xzr) & (@op1.type = @type_vn_di)
+        dd 0x4e083c00 + (@op1.data shl 5) + (@op0.data shl 0) + (@op1.idx shl 20)
+    else
+        err 'invalid operand'
+    end if
+end macro
 

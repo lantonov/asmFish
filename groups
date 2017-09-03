@@ -1,0 +1,294 @@
+
+
+;;;;;;;;;;;; todo
+	sqxtn	b8,h8
+	sqxtn	h4,s4
+	sqxtn	s2,d2
+	sqxtn	v1.2s,v2.2d
+	sqxtn	v1.4h,v2.4s
+	sqxtn	v1.8b,v2.8h
+	sqxtun	b8,h8
+	sqxtun	h4,s4
+	sqxtun	s2,d2
+	sqxtun	v1.2s,v2.2d
+	sqxtun	v1.4h,v2.4s
+	sqxtun	v1.8b,v2.8h
+	uqxtn	b8,h8
+	uqxtn	h4,s4
+	uqxtn	s2,d2
+	uqxtn	v1.2s,v2.2d
+	uqxtn	v1.4h,v2.4s
+	uqxtn	v1.8b,v2.8h
+
+	sqshrun	b8,h8,1
+	sqshrun	h4,s4,2
+	sqshrun	s2,d2,3
+	sqshrun	v1.2s,v2.2d,3
+	sqshrun	v1.4h,v2.4s,2
+	sqshrun	v1.8b,v2.8h,1
+	uqrshrn	b8,h8,1
+	uqrshrn	h4,s4,2
+	uqrshrn	s2,d2,3
+	uqrshrn	v1.2s,v2.2d,3
+	uqrshrn	v1.4h,v2.4s,2
+	uqrshrn	v1.8b,v2.8h,1
+	sqrshrn	b8,h8,1
+	sqrshrn	h4,s4,2
+	sqrshrn	s2,d2,3
+	sqrshrn	v1.2s,v2.2d,3
+	sqrshrn	v1.4h,v2.4s,2
+	sqrshrn	v1.8b,v2.8h,1
+	sqrshrun	b8,h8,1
+	sqrshrun	h4,s4,2
+	sqrshrun	s2,d2,3
+	sqrshrun	v1.2s,v2.2d,3
+	sqrshrun	v1.4h,v2.4s,2
+	sqrshrun	v1.8b,v2.8h,1
+	sqshrn	b8,h8,1
+	sqshrn	h4,s4,2
+	sqshrn	s2,d2,3
+	sqshrn	v1.2s,v2.2d,3
+	sqshrn	v1.4h,v2.4s,2
+	sqshrn	v1.8b,v2.8h,1
+	uqshrn	b8,h8,1
+	uqshrn	h4,s4,2
+	uqshrn	s2,d2,3
+	uqshrn	v1.2s,v2.2d,3
+	uqshrn	v1.4h,v2.4s,2
+	uqshrn	v1.8b,v2.8h,1
+
+
+	rshrn	v1.2s,v2.2d,32
+	rshrn	v1.4h,v2.4s,16
+	rshrn	v1.8b,v2.8h,8
+
+	shrn	v1.2s,v2.2d,3
+	shrn	v1.4h,v2.4s,2
+	shrn	v1.8b,v2.8h,1
+
+
+	uqxtn2	v1.16b,v2.8h
+	uqxtn2	v1.4s,v2.2d
+	uqxtn2	v1.8h,v2.4s
+	xtn2	v1.16b,v2.8h
+	xtn2	v1.4s,v2.2d
+	xtn2	v1.8h,v2.4s
+	sqxtn2	v1.16b,v2.8h
+	sqxtn2	v1.4s,v2.2d
+	sqxtn2	v1.8h,v2.4s
+	sqxtun2	v1.16b,v2.8h
+	sqxtun2	v1.4s,v2.2d
+	sqxtun2	v1.8h,v2.4s
+
+
+	rshrn2	v1.16b,v2.8h,8
+	rshrn2	v1.4s,v2.2d,32
+	rshrn2	v1.8h,v2.4s,16
+	sqrshrn2	v1.16b,v2.8h,1
+	sqrshrn2	v1.4s,v2.2d,3
+	sqrshrn2	v1.8h,v2.4s,2
+	sqrshrun2	v1.16b,v2.8h,1
+	sqrshrun2	v1.4s,v2.2d,3
+	sqrshrun2	v1.8h,v2.4s,2
+	shrn2	v1.16b,v2.8h,1
+	shrn2	v1.4s,v2.2d,3
+	shrn2	v1.8h,v2.4s,2
+	sqshrn2	v1.16b,v2.8h,1
+	sqshrn2	v1.4s,v2.2d,3
+	sqshrn2	v1.8h,v2.4s,2
+	sqshrun2	v1.16b,v2.8h,1
+	sqshrun2	v1.4s,v2.2d,3
+	sqshrun2	v1.8h,v2.4s,2
+	uqrshrn2	v1.16b,v2.8h,1
+	uqrshrn2	v1.4s,v2.2d,3
+	uqrshrn2	v1.8h,v2.4s,2
+	uqshrn2	v1.16b,v2.8h,1
+	uqshrn2	v1.4s,v2.2d,3
+	uqshrn2	v1.8h,v2.4s,2
+
+	sxtl	v1.2d,v2.2s
+	sxtl	v1.4s,v2.4h
+	sxtl	v1.8h,v2.8b
+	uxtl	v1.2d,v2.2s
+	uxtl	v1.4s,v2.4h
+	uxtl	v1.8h,v2.8b
+
+	shll	v1.2d,v2.2s,32
+	shll	v1.4s,v2.4h,16
+	shll	v1.8h,v2.8b,8
+	sshll	v1.2d,v2.2s,3
+	sshll	v1.4s,v2.4h,2
+	sshll	v1.8h,v2.8b,1
+	ushll	v1.2d,v2.2s,3
+	ushll	v1.4s,v2.4h,2
+	ushll	v1.8h,v2.8b,1
+
+
+
+	sxtl2	v1.2d,v2.4s
+	sxtl2	v1.4s,v2.8h
+	sxtl2	v1.8h,v2.16b
+	uxtl2	v1.2d,v2.4s
+	uxtl2	v1.4s,v2.8h
+	uxtl2	v1.8h,v2.16b
+
+	shll2	v1.2d,v2.4s,32
+	shll2	v1.4s,v2.8h,16
+	shll2	v1.8h,v2.16b,8
+	sshll2	v1.2d,v2.4s,31
+	sshll2	v1.4s,v2.8h,15
+	sshll2	v1.8h,v2.16b,7
+	ushll2	v1.2d,v2.4s,31
+	ushll2	v1.4s,v2.8h,15
+	ushll2	v1.8h,v2.16b,7
+	
+
+;;;;;;;;;;;; end todo
+
+
+
+
+
+
+
+
+
+;;;;;;;; done 
+
+
+	sqdmlal	v1.2d,v2.2s,v31.s[3]
+	sqdmlal	v1.2d,v2.2s,v3.2s
+	sqdmlal	v1.4s,v2.4h,v15.h[7]
+	sqdmlal	v1.4s,v2.4h,v3.4h
+	sqdmlsl	v1.2d,v2.2s,v31.s[3]
+	sqdmlsl	v1.2d,v2.2s,v3.2s
+	sqdmlsl	v1.4s,v2.4h,v15.h[7]
+	sqdmlsl	v1.4s,v2.4h,v3.4h
+	sqdmull	v1.2d,v2.2s,v31.s[3]
+	sqdmull	v1.2d,v2.2s,v3.2s
+	sqdmull	v1.4s,v2.4h,v15.h[7]
+	sqdmull	v1.4s,v2.4h,v3.4h
+
+
+	smlal	v1.2d,v2.2s,v31.s[3]
+	smlal	v1.2d,v2.2s,v3.2s
+	smlal	v1.4s,v2.4h,v15.h[7]
+	smlal	v1.4s,v2.4h,v3.4h
+	smlal	v1.8h,v2.8b,v3.8b
+	smlsl	v1.2d,v2.2s,v31.s[3]
+	smlsl	v1.2d,v2.2s,v3.2s
+	smlsl	v1.4s,v2.4h,v15.h[7]
+	smlsl	v1.4s,v2.4h,v3.4h
+	smlsl	v1.8h,v2.8b,v3.8b
+	umlal	v1.2d,v2.2s,v31.s[3]
+	umlal	v1.2d,v2.2s,v3.2s
+	umlal	v1.4s,v2.4h,v15.h[7]
+	umlal	v1.4s,v2.4h,v3.4h
+	umlal	v1.8h,v2.8b,v3.8b
+	umlsl	v1.2d,v2.2s,v31.s[3]
+	umlsl	v1.2d,v2.2s,v3.2s
+	umlsl	v1.4s,v2.4h,v15.h[7]
+	umlsl	v1.4s,v2.4h,v3.4h
+	umlsl	v1.8h,v2.8b,v3.8b
+
+
+	smull	v1.2d,v2.2s,v31.s[3]
+	smull	v1.2d,v2.2s,v3.2s
+	smull	v1.2d,v2.2s,v3.s[0]
+	smull	v1.4s,v2.4h,v15.h[7]
+	smull	v1.4s,v2.4h,v3.4h
+	smull	v1.4s,v2.4h,v3.h[0]
+	smull	v1.8h,v2.8b,v3.8b
+	smull	x1,w2,w3
+
+	umull	v1.2d,v2.2s,v3.2s
+	umull	v1.2d,v2.2s,v3.s[0]
+	umull	v1.2d,v2.2s,v3.s[2]
+	umull	v1.4s,v2.4h,v3.4h
+	umull	v1.4s,v2.4h,v3.h[0]
+	umull	v1.4s,v2.4h,v3.h[4]
+	umull	v1.8h,v2.8b,v3.8b
+	umull	x1,w2,w3
+
+
+
+
+
+
+	sqdmlal2	v1.2d,v2.4s,v31.s[3]
+	sqdmlal2	v1.2d,v2.4s,v3.4s
+	sqdmlal2	v1.4s,v2.8h,v15.h[7]
+	sqdmlal2	v1.4s,v2.8h,v3.8h
+	sqdmlsl2	v1.2d,v2.4s,v31.s[3]
+	sqdmlsl2	v1.2d,v2.4s,v3.4s
+	sqdmlsl2	v1.4s,v2.8h,v15.h[7]
+	sqdmlsl2	v1.4s,v2.8h,v3.8h
+	sqdmull2	v1.2d,v2.4s,v31.s[3]
+	sqdmull2	v1.2d,v2.4s,v3.4s
+	sqdmull2	v1.4s,v2.8h,v15.h[7]
+	sqdmull2	v1.4s,v2.8h,v3.8h
+
+	umull2	v1.2d,v2.4s,v31.s[3]
+	umull2	v1.2d,v2.4s,v3.4s
+	umull2	v1.4s,v2.8h,v15.h[7]
+	umull2	v1.4s,v2.8h,v3.8h
+	umull2	v1.8h,v2.16b,v3.16b
+
+	umlsl2	v1.2d,v2.4s,v31.s[3]
+	umlsl2	v1.2d,v2.4s,v3.4s
+	umlsl2	v1.4s,v2.8h,v15.h[7]
+	umlsl2	v1.4s,v2.8h,v3.8h
+	umlsl2	v1.8h,v2.16b,v3.16b
+
+	umlal2	v1.2d,v2.4s,v31.s[3]
+	umlal2	v1.2d,v2.4s,v3.4s
+	umlal2	v1.4s,v2.8h,v15.h[7]
+	umlal2	v1.4s,v2.8h,v3.8h
+	umlal2	v1.8h,v2.16b,v3.16b
+
+	smull2	v1.2d,v2.4s,v31.s[3]
+	smull2	v1.2d,v2.4s,v3.4s
+	smull2	v1.4s,v2.8h,v15.h[7]
+	smull2	v1.4s,v2.8h,v3.8h
+	smull2	v1.8h,v2.16b,v3.16b
+
+	smlal2	v1.2d,v2.4s,v31.s[3]
+	smlal2	v1.2d,v2.4s,v3.4s
+	smlal2	v1.4s,v2.8h,v15.h[7]
+	smlal2	v1.4s,v2.8h,v3.8h
+	smlal2	v1.8h,v2.16b,v3.16b
+
+	smlsl2	v1.2d,v2.4s,v31.s[3]
+	smlsl2	v1.2d,v2.4s,v3.4s
+	smlsl2	v1.4s,v2.8h,v15.h[7]
+	smlsl2	v1.4s,v2.8h,v3.8h
+	smlsl2	v1.8h,v2.16b,v3.16b
+
+
+
+	sqdmulh	h1,h2,h3
+	sqdmulh	h1,h2,v3.h[7]
+	sqdmulh	s1,s2,s3
+	sqdmulh	s1,s2,v3.s[3]
+	sqdmulh	v1.2s,v2.2s,v3.2s
+	sqdmulh	v1.2s,v2.2s,v3.s[0]
+	sqdmulh	v1.4h,v2.4h,v3.4h
+	sqdmulh	v1.4h,v2.4h,v3.h[0]
+	sqdmulh	v1.4s,v2.4s,v3.4s
+	sqdmulh	v1.4s,v2.4s,v3.s[3]
+	sqdmulh	v1.8h,v2.8h,v3.8h
+	sqdmulh	v1.8h,v2.8h,v3.h[7]
+	sqrdmulh	h1,h2,h3
+	sqrdmulh	h1,h2,v3.h[7]
+	sqrdmulh	s1,s2,s3
+	sqrdmulh	s1,s2,v3.s[3]
+	sqrdmulh	v1.2s,v2.2s,v3.2s
+	sqrdmulh	v1.2s,v2.2s,v3.s[0]
+	sqrdmulh	v1.4h,v2.4h,v3.4h
+	sqrdmulh	v1.4h,v2.4h,v3.h[0]
+	sqrdmulh	v1.4s,v2.4s,v3.4s
+	sqrdmulh	v1.4s,v2.4s,v3.s[3]
+	sqrdmulh	v1.8h,v2.8h,v3.8h
+	sqrdmulh	v1.8h,v2.8h,v3.h[7]
+
+

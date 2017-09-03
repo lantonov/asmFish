@@ -170,16 +170,16 @@ macro str a*, b&
         dd 0xfc000000 + @adr.encode + (@op0.data shl 0)
     else if @op0.type and @type_qn
         aarch64.parse_adr_f13 -1, 4, b
-        dd 0x00000000 + @adr.encode + (@op0.data shl 0)
+        dd 0x3c800000 + @adr.encode + (@op0.data shl 0)
     else if @op0.type and @type_sn
         aarch64.parse_adr_f13 -1, 2, b
-        dd 0x00000000 + @adr.encode + (@op0.data shl 0)
+        dd 0xbc000000 + @adr.encode + (@op0.data shl 0)
     else if @op0.type and @type_bn
         aarch64.parse_adr_f13 -1, 0, b
-        dd 0x00000000 + @adr.encode + (@op0.data shl 0)
+        dd 0x3c000000 + @adr.encode + (@op0.data shl 0)
     else if @op0.type and @type_hn
         aarch64.parse_adr_f13 -1, 1, b
-        dd 0x00000000 + @adr.encode + (@op0.data shl 0)
+        dd 0x7c000000 + @adr.encode + (@op0.data shl 0)
     else
         err 'invalid operand'
     end if
@@ -392,7 +392,7 @@ iterate <instr, code1, code2>, ldursb, 0x38c00000, 0x38800000,\
 end iterate                              
 
 iterate <instr, code1, code2, code3, code4, code5, code6, code7>,\
-         stur, 0xb8000000, 0xf8000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,\
+         stur, 0xb8000000, 0xf8000000, 0x3c800000, 0xfc000000, 0xbc000000, 0x7c000000, 0x3c000000,\
          ldur, 0xb8400000, 0xf8400000, 0x3cc00000, 0xfc400000, 0xbc400000, 0x7c400000, 0x3c400000
     macro instr a*, b&
         aarch64.parse_adr_f26       b
@@ -447,7 +447,7 @@ macro ldpsw a*, b*, c&
 end macro
 
 iterate <instr, code1, code2, code3, code4, code5>, ldp, 0xa8400000, 0x6c400000, 0x28400000, 0x2c400000, 0xac400000,\
-                                                    stp, 0xa8000000, 0x6c000000, 0x28000000, 0x00000000, 0x00000000
+                                                    stp, 0xa8000000, 0x6c000000, 0x28000000, 0x2c000000, 0xac000000
     macro instr a*, b*, c&
         aarch64.parse_operand @op0, a
         aarch64.parse_operand @op1, b
@@ -488,7 +488,7 @@ macro aarch64.parse_adr_f5 size, x&
 end macro
 
 iterate <instr, code1, code2, code3, code4, code5>, ldnp, 0x28400000, 0xa8400000, 0x2c400000, 0x6c400000, 0xac400000,\
-                                                    stnp, 0x28000000, 0xa8000000, 0x00000000, 0x00000000, 0x00000000
+                                                    stnp, 0x28000000, 0xa8000000, 0x2c000000, 0x6c000000, 0xac000000
     macro instr a*, b*, c&
         aarch64.parse_operand @op0, a
         aarch64.parse_operand @op1, b
