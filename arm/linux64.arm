@@ -1,3 +1,7 @@
+stdin = 0
+stdout = 1
+stderror = 2
+
 sys_munmap = 215
 sys_mmap = 222
 sys_futex = 98
@@ -8,6 +12,7 @@ sys_exit_group = 94
 sys_fstat = 80
 sys_close = 57
 sys_openat = 56
+sys_write = 64
 
 
 stat.st_size = 48

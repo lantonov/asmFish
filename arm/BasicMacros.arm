@@ -228,3 +228,69 @@ lower:
                 add  Reg, Reg, 'A'
 end macro
 
+
+
+
+
+
+
+
+
+
+macro NewLineData
+        db 10
+end macro
+
+macro IntegerStringData number
+local value, pos, digit, disp
+  value = number
+  if value < 0
+    db '-'
+    value = -value
+  end if
+  pos = 10000000
+  disp = 0
+  repeat 8
+    digit = value/pos
+    value = value - (digit*pos)
+    pos = pos/10
+    disp = disp or digit
+    if disp <> 0 | pos = 1
+        db '0' + digit
+    end if
+  end repeat
+end macro
+
+
+macro BuildTimeData
+  local time, day, year, month, febdays
+  time = %t
+  day = time/(24*3600)
+  day = day - (day + 365)/(3*365+366) 
+  year = 1970 + day/365
+  day = day mod 365 + 1
+  month = 1
+  if year mod 4 = 0
+    febdays = 29
+  else
+    febdays = 28
+  end if
+  iterate dayscount, 31,febdays,31,30,31,30,31,31,30,31,30,31
+    if day > dayscount
+      day = day - dayscount
+      month = month + 1
+    end if
+  end iterate
+        db '0' + (year / 1000) 
+        db '0' + (year mod 1000) / 100
+        db '0' + (year mod 100) / 10
+        db '0' + (year mod 10)
+        db '-'
+        db '0' + (month / 10)
+        db '0' + (month mod 10)
+        db '-'
+        db '0' + (day / 10)
+        db '0' + (day mod 10)
+end macro
+
+

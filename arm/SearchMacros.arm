@@ -727,14 +727,14 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
                 ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
                 add  x1, x1, x4
                 ldr  x2, [x20, Pos.rootMovesVec + RootMovesVec.ender]
-        @@:
+        @1:
 
                 cmp  x1, x2
                 bhs  .MovePickLoop
                 ldr  w4, [x1, RootMove.pv + 4*0]
                 cmp  w0, w4
                 add  x1, x1, sizeof.RootMove
-                bne  @b
+                bne  @1b
   end if
 
                 ldr  w0, [sp, .moveCount]

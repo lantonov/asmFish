@@ -75,8 +75,9 @@ define @3f?
 macro balign boundary
     local size
     size = (boundary-1)-($+boundary-1) mod boundary
-	db (size mod 4) dup 0
-        dd (size/4) dup 0xd503201f
+    db size dup ?
+	;db (size mod 4) dup 0
+    ;    dd (size/4) dup 0xd503201f
 end macro
 
 macro dalign boundary, target

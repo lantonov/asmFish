@@ -1,0 +1,126 @@
+; VERSION_POST and VERSION_OS should be defined on cmd line
+if VERSION_POST <> 'v8'
+    err "only VERSION_POST = 'v8' supported"
+end if
+if VERSION_OS <> 'L'
+    err "only VERSION_POST = 'L' supported"
+end if
+VERSION_PRE = 'armFish'
+
+DEBUG   = 0
+VERBOSE = 0
+USE_SYZYGY      = 1
+USE_CURRMOVE    = 1
+USE_HASHFULL    = 1
+USE_CMDLINEQUIT = 1
+
+
+; instruction and format macros
+include 'format/format.inc'
+format ELF64 executable 0
+entry Start
+
+; assembler macros
+include 'fasm1macros.arm'
+
+; os headers
+include 'linux64.arm'
+
+; basic macros
+include 'Def.arm'
+include 'BasicMacros.arm'
+include 'Structs.arm'
+
+; engine macros
+include 'AttackMacros.arm'
+include 'GenMacros.arm'
+include 'MovePickMacros.arm'
+include 'SearchMacros.arm'
+include 'QSearchMacros.arm'
+include 'HashMacros.arm'
+include 'PosIsDrawMacro.arm'
+include 'SliderBlockers.arm'
+include 'UpdateStats.arm'
+include 'Pawn.arm'
+
+; code section
+segment readable executable
+              align  64
+if USE_SYZYGY
+  include 'TablebaseCore.arm'
+  include 'Tablebase.arm'
+end if
+Start:
+                lea  x6, spEntry
+                mov  x0, sp
+                str  x0, [x6]
+include 'Main.arm'
+include 'Castling.arm'
+include 'AttackersTo.arm'
+include 'Endgame.arm'
+include 'Think.arm'
+include 'Gen_Legal.arm'
+include 'Gen_Evasions.arm'
+include 'Gen_NonEvasions.arm'
+include 'Gen_QuietChecks.arm'
+include 'Gen_Captures.arm'
+include 'Gen_Quiets.arm'
+include 'EasyMoveMng.arm'
+include 'TimeMng.arm'
+include 'Hash_Probe.arm'
+include 'Move_DoNull.arm'
+include 'Move_IsLegal.arm'
+include 'Move_IsPseudoLegal.arm'
+include 'MovePick.arm'
+include 'SeeTest.arm'
+include 'Evaluate.arm'
+
+Search_Root:
+        Search 1, 1
+Search_Pv:
+        Search 1, 0
+Search_NonPv:
+        Search 0, 0
+
+QSearch_NonPv_NoCheck:
+        QSearch 0, 0
+QSearch_NonPv_InCheck:
+        QSearch 0, 1
+QSearch_Pv_InCheck:
+        QSearch 1, 1
+QSearch_Pv_NoCheck:
+        QSearch 1, 0
+
+include 'CheckTime.arm'
+include 'RootMoves.arm'
+include 'Move_GivesCheck.arm'
+include 'Move_Undo.arm'
+include 'Move_Do.arm'
+include 'SetCheckInfo.arm'
+include 'Search_Clear.arm'
+include 'Perft.arm'
+include 'Limits.arm'
+include 'Thread.arm'
+include 'ThreadPool.arm'
+include 'Position.arm'
+include 'Uci.arm'
+include 'Math.arm'
+include 'OsLinux.arm'
+include 'PrintParse.arm'
+include 'Hash.arm'
+
+include 'BitBoard_Init.arm'
+include 'Gen_Init.arm'
+include 'Position_Init.arm'
+include 'BitTable_Init.arm'
+include 'Search_Init.arm'
+include 'Evaluate_Init.arm'
+include 'Pawn_Init.arm'
+include 'Endgame_Init.arm'
+
+
+; data and bss section
+segment readable writeable
+include 'MainData.arm'
+include 'MainBss.arm'
+

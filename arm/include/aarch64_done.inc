@@ -1,3 +1,33 @@
+macro adrp a*, b*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_xn_xzr) & (@op1.type and @type_immc) & ($ relativeto 0)
+        @imm.number = (@op1.data shr 12) - ($ shr 12)
+        aarch64.restrict @imm.number, -0x100000, 0xFFFFF 
+        dd 0x90000000 + ((@imm.number and 0x3) shl 29) + (((@imm.number and 0x1FFFFC) shr 2) shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_immr)
+        aarch64.reloc_adrp_pghi21 @op1.data
+        dd 0x90000000 + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+macro adr a*, b*
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    if (@op0.type and @type_xn_xzr) & (@op1.type and @type_immr_immc) & (@op1.data relativeto $)
+        @imm.number = @op1.data - $
+        aarch64.restrict @imm.number, -0x100000, 0xFFFFF
+        dd 0x10000000 + (@imm.number and 0x3) shl 29 + (((@imm.number shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_immr)
+        aarch64.reloc_adr_lo21 @op1.data
+        dd 0x10000000 + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
 macro bl a*
     aarch64.parse_operand @op0, a
     if (@op0.type and @type_immr_immc)
@@ -131,37 +161,6 @@ macro tbz a*, b*, c*
         err 'invalid operand
     end if
 end macro
-
-macro adrp a*, b*
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    if (@op0.type and @type_xn_xzr) & (@op1.type and @type_immr_immc) & (@op1.data relativeto $)
-        @imm.number = ((@op1.data-$$) shr 12) - (($-$$) shr 12)   ; assume $$ is divisible by 4096
-        aarch64.restrict @imm.number, -0x100000, 0xFFFFF 
-        dd 0x90000000 + ((@imm.number and 0x3) shl 29) + (((@imm.number and 0x1FFFFC) shr 2) shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_immr)
-        aarch64.reloc_adrp_pghi21 @op1.data
-        dd 0x90000000 + (@op0.data shl 0)
-    else
-        err 'invalid operand'
-    end if
-end macro
-
-macro adr a*, b*
-    aarch64.parse_operand @op0, a
-    aarch64.parse_operand @op1, b
-    if (@op0.type and @type_xn_xzr) & (@op1.type and @type_immr_immc) & (@op1.data relativeto $)
-        @imm.number = @op1.data - $
-        aarch64.restrict @imm.number, -0x100000, 0xFFFFF
-        dd 0x10000000 + (@imm.number and 0x3) shl 29 + (((@imm.number shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_immr)
-        aarch64.reloc_adr_lo21 @op1.data
-        dd 0x10000000 + (@op0.data shl 0)
-    else
-        err 'invalid operand'
-    end if
-end macro
-
 
 iterate <instr, code1, code2>, adc, 0x1a000000, 0x9a000000,\
                                sbc, 0x5a000000, 0xda000000,\

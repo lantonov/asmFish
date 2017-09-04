@@ -31,87 +31,86 @@ end if
 
 
 szUciResponse:
-	db 'id name '
+    db 'id name '
 szGreeting:
-	db VERSION_PRE
-	db VERSION_OS
-	db '_'
-	BuildTimeData
-	db '_'
-	db VERSION_POST
-	NewLineData
+    db VERSION_PRE
+    db VERSION_OS
+    db '_'
+    BuildTimeData
+    db '_'
+    db VERSION_POST
+    NewLineData
 szGreetingEnd:
-	db 'id author TypingALot'
-	NewLineData
-	db 'option name Hash type spin default 16 min 1 max '
-	IntegerStringData (1 shl MAX_HASH_LOG2MB)
-	NewLineData
-	db 'option name LargePages type check default false'
-	NewLineData
-	db 'option name Threads type spin default 1 min 1 max '
-	IntegerStringData MAX_THREADS
-	NewLineData
-	db 'option name NodeAffinity type string default all'
-	NewLineData
-	db 'option name Priority type combo default none var none var normal var low var idle'
-	NewLineData
+    db 'id author TypingALot'
+    NewLineData
+    db 'option name Hash type spin default 16 min 1 max '
+    IntegerStringData (1 shl MAX_HASH_LOG2MB)
+    NewLineData
+    db 'option name LargePages type check default false'
+    NewLineData
+    db 'option name Threads type spin default 1 min 1 max '
+    IntegerStringData MAX_THREADS
+    NewLineData
+    db 'option name NodeAffinity type string default all'
+    NewLineData
+    db 'option name Priority type combo default none var none var normal var low var idle'
+    NewLineData
 
-	db 'option name TTFile type string default <empty>'
-	NewLineData
-	db 'option name TTSave type button'
-	NewLineData
-	db 'option name TTLoad type button'
-	NewLineData
+    db 'option name TTFile type string default <empty>'
+    NewLineData
+    db 'option name TTSave type button'
+    NewLineData
+    db 'option name TTLoad type button'
+    NewLineData
 
-	db 'option name Clear Hash type button'
-	NewLineData
+    db 'option name Clear Hash type button'
+    NewLineData
 
-	db 'option name Ponder type check default false'
-	NewLineData
-	db 'option name UCI_Chess960 type check default false'
-	NewLineData
+    db 'option name Ponder type check default false'
+    NewLineData
+    db 'option name UCI_Chess960 type check default false'
+    NewLineData
 
-	db 'option name MultiPV type spin default 1 min 1 max 224'
-	NewLineData
-	db 'option name Contempt type spin default 0 min -100 max 100'
-	NewLineData
-	db 'option name MoveOverhead type spin default 30 min 0 max 5000'
-	NewLineData
+    db 'option name MultiPV type spin default 1 min 1 max 224'
+    NewLineData
+    db 'option name Contempt type spin default 0 min -100 max 100'
+    NewLineData
+    db 'option name MoveOverhead type spin default 30 min 0 max 5000'
+    NewLineData
 
 if USE_SYZYGY
-	db 'option name SyzygyProbeDepth type spin default 1 min 1 max 100'
-	NewLineData
-	db 'option name SyzygyProbeLimit type spin default 6 min 0 max 6'
-	NewLineData
-	db 'option name Syzygy50MoveRule type check default true'
-	NewLineData
-	db 'option name SyzygyPath type string default <empty>'
-	NewLineData
+    db 'option name SyzygyProbeDepth type spin default 1 min 1 max 100'
+    NewLineData
+    db 'option name SyzygyProbeLimit type spin default 6 min 0 max 6'
+    NewLineData
+    db 'option name Syzygy50MoveRule type check default true'
+    NewLineData
+    db 'option name SyzygyPath type string default <empty>'
+    NewLineData
 end if
 
 if USE_WEAKNESS
-	db 'option name UCI_LimitStrength type check default false'
-	NewLineData
-	db 'option name UCI_Elo type spin default 1000 min 0 max 3300'
-	NewLineData
+    db 'option name UCI_LimitStrength type check default false'
+    NewLineData
+    db 'option name UCI_Elo type spin default 1000 min 0 max 3300'
+    NewLineData
 end if
 
 if USE_VARIETY
-	db 'option name Variety type spin default 0 min 0 max 40'
-	NewLineData
+    db 'option name Variety type spin default 0 min 0 max 40'
+    NewLineData
 end if
 
 if USE_BOOK
-	db 'option name OwnBook type check default false'
-	NewLineData
-	db 'option name BookFile type string default <empty>'
-	NewLineData
-	db 'option name BestBookMove type check default false'
-	NewLineData
-        db 'option name BookDepth type spin default 100 min -10 max 100'
-        NewLineData
+    db 'option name OwnBook type check default false'
+    NewLineData
+    db 'option name BookFile type string default <empty>'
+    NewLineData
+    db 'option name BestBookMove type check default false'
+    NewLineData
+    db 'option name BookDepth type spin default 100 min -10 max 100'
+    NewLineData
 end if
-
 	db 'uciok'
 sz_NewLine:
 	NewLineData
@@ -168,79 +167,77 @@ sz_error_affinity1 db 'error: parsing affinity failed after "',0
 sz_error_affinity2 db '"; proceeding as "all"',0
 sz_empty           db '<empty>',0
 
-sz_go			db 'go',0
-sz_all			db 'all',0
-sz_low			db 'low',0
-sz_uci			db 'uci',0
-sz_fen			db 'fen',0
-sz_wait 		db 'wait',0
-sz_quit 		db 'quit',0
-sz_none 		db 'none',0
-sz_winc 		db 'winc',0
-sz_binc 		db 'binc',0
-sz_mate 		db 'mate',0
-sz_name 		db 'name',0
-sz_idle 		db 'idle',0
-sz_hash 		db 'hash',0
-sz_stop 		db 'stop',0
-sz_value		db 'value',0
-sz_depth		db 'depth',0
-sz_nodes		db 'nodes',0
-sz_wtime		db 'wtime',0
-sz_btime		db 'btime',0
-sz_moves                db 'moves',0
-sz_perft		db 'perft',0
-sz_bench		db 'bench',0
-sz_ttfile		db 'ttfile',0
-sz_ttsave		db 'ttsave',0
-sz_ttload		db 'ttload',0
-sz_ponder		db 'ponder',0
-sz_normal		db 'normal',0
-sz_threads		db 'threads',0
-sz_isready		db 'isready',0
-sz_multipv		db 'multipv',0
-sz_realtime		db 'realtime',0
-sz_startpos		db 'startpos',0
-sz_infinite		db 'infinite',0
-sz_movetime		db 'movetime',0
-sz_contempt		db 'contempt',0
-sz_weakness		db 'weakness',0
-sz_priority		db 'priority',0
-sz_position		db 'position',0
-sz_movestogo		db 'movestogo',0
-sz_setoption		db 'setoption',0
-;sz_slowmover		db 'slowmover',0
-sz_ponderhit		db 'ponderhit',0
-sz_ucinewgame		db 'ucinewgame',0
-sz_clear_hash		db 'clear hash',0
-sz_largepages		db 'largepages',0
-sz_searchmoves		db 'searchmoves',0
-sz_nodeaffinity 	db 'nodeaffinity',0
-sz_moveoverhead 	db 'moveoverhead',0
-;sz_minthinktime 	db 'minthinktime',0
-sz_uci_chess960 	db 'uci_chess960',0
+sz_go           db 'go',0
+sz_all          db 'all',0
+sz_low          db 'low',0
+sz_uci          db 'uci',0
+sz_fen          db 'fen',0
+sz_wait         db 'wait',0
+sz_quit         db 'quit',0
+sz_none         db 'none',0
+sz_winc         db 'winc',0
+sz_binc         db 'binc',0
+sz_mate         db 'mate',0
+sz_name         db 'name',0
+sz_idle         db 'idle',0
+sz_hash         db 'hash',0
+sz_stop         db 'stop',0
+sz_value        db 'value',0
+sz_depth        db 'depth',0
+sz_nodes        db 'nodes',0
+sz_wtime        db 'wtime',0
+sz_btime        db 'btime',0
+sz_moves        db 'moves',0
+sz_perft        db 'perft',0
+sz_bench        db 'bench',0
+sz_ttfile       db 'ttfile',0
+sz_ttsave       db 'ttsave',0
+sz_ttload       db 'ttload',0
+sz_ponder       db 'ponder',0
+sz_normal       db 'normal',0
+sz_threads      db 'threads',0
+sz_isready      db 'isready',0
+sz_multipv      db 'multipv',0
+sz_realtime     db 'realtime',0
+sz_startpos     db 'startpos',0
+sz_infinite     db 'infinite',0
+sz_movetime     db 'movetime',0
+sz_contempt     db 'contempt',0
+sz_weakness     db 'weakness',0
+sz_priority     db 'priority',0
+sz_position     db 'position',0
+sz_movestogo        db 'movestogo',0
+sz_setoption        db 'setoption',0
+sz_ponderhit        db 'ponderhit',0
+sz_ucinewgame       db 'ucinewgame',0
+sz_clear_hash       db 'clear hash',0
+sz_largepages       db 'largepages',0
+sz_searchmoves      db 'searchmoves',0
+sz_nodeaffinity     db 'nodeaffinity',0
+sz_moveoverhead     db 'moveoverhead',0
+sz_uci_chess960     db 'uci_chess960',0
 
 if USE_SYZYGY
-sz_syzygypath		db 'syzygypath',0
-sz_syzygyprobedepth	db 'syzygyprobedepth',0
-sz_syzygy50moverule	db 'syzygy50moverule',0
-sz_syzygyprobelimit	db 'syzygyprobelimit',0
+sz_syzygypath       db 'syzygypath',0
+sz_syzygyprobedepth db 'syzygyprobedepth',0
+sz_syzygy50moverule db 'syzygy50moverule',0
+sz_syzygyprobelimit db 'syzygyprobelimit',0
 end if
 
 if USE_WEAKNESS
-sz_uci_limitstrength	db 'uci_limitstrength',0
-sz_uci_elo		db 'uci_elo',0
+sz_uci_limitstrength    db 'uci_limitstrength',0
+sz_uci_elo              db 'uci_elo',0
 end if
 
 if USE_VARIETY
-sz_variety              db 'variety',0
+sz_variety      db 'variety',0
 end if
 
 if USE_BOOK
-sz_ownbook		db 'ownbook',0
-sz_bookfile		db 'bookfile',0
-sz_bookdepth            db 'bookdepth',0
-sz_bestbookmove 	db 'bestbookmove',0
+sz_ownbook      db 'ownbook',0
+sz_bookfile     db 'bookfile',0
+sz_bookdepth    db 'bookdepth',0
+sz_bestbookmove db 'bestbookmove',0
 end if
 
 BenchFens: ;fens must be separated by one or more space char
@@ -301,10 +298,10 @@ if VERSION_OS = 'W'
    hStdIn      dq ?
    hStdError   dq ?
    hAdvapi32   dq ?
-   __imp_MessageBoxA                    dq ?
-   __imp_VirtualAllocExNuma             dq ?
-   __imp_SetThreadGroupAffinity         dq ?
-   __imp_GetLogicalProcessorInformationEx dq ?
+   __imp_MessageBoxA                        dq ?
+   __imp_VirtualAllocExNuma                 dq ?
+   __imp_SetThreadGroupAffinity             dq ?
+   __imp_GetLogicalProcessorInformationEx   dq ?
 
 else if VERSION_OS = 'L'
 

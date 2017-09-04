@@ -1,4 +1,5 @@
 ; VERSION_POST and VERSION_OS should be defined on cmd line
+VERSION_PRE = 'asmFish'
 
 DEBUG   = 0
 VERBOSE = 0
@@ -13,8 +14,6 @@ USE_WEAKNESS    = 0
 USE_VARIETY     = 0
 USE_BOOK        = 0
 USE_MATEFINDER  = 0
-
-VERSION_PRE = 'asmFish'
 
 CPU_HAS_POPCNT = 0
 CPU_HAS_BMI1 = 0
@@ -32,7 +31,6 @@ end if
 
 
 ; instruction and format macros
-
 if VERSION_OS = 'L'
   include 'format/format.inc'
   include 'bmi2.inc'
@@ -53,51 +51,53 @@ else if VERSION_OS = 'X'
   use64
   MachO.Settings.ProcessorType equ CPU_TYPE_X86_64
   MachO.Settings.BaseAddress = 0x00400000
-  include 'x86/macinc/macho.inc'
+  include 'macinc/macho.inc'
   entry Start
 end if
 
 ; assembler macros
-include 'x86/fasm1macros.asm'
+include 'fasm1macros.asm'
+
+; os headers
+if VERSION_OS = 'L'
+  include 'linux64.asm'
+else if VERSION_OS = 'W'
+  include 'windows64.asm'
+else if VERSION_OS = 'X'
+  include 'apple64.asm'
+end if
 
 ; basic macros
-if VERSION_OS = 'L'
-  include 'x86/linux64.asm'
-else if VERSION_OS = 'W'
-  include 'x86/windows64.asm'
-else if VERSION_OS = 'X'
-  include 'x86/apple64.asm'
-end if
-include 'x86/Def.asm'
-include 'x86/Structs.asm'
-include 'x86/AvxMacros.asm'
-include 'x86/BasicMacros.asm'
-include 'x86/Debug.asm'
+include 'Def.asm'
+include 'Structs.asm'
+include 'AvxMacros.asm'
+include 'BasicMacros.asm'
+include 'Debug.asm'
 
 ; engine macros
-include 'x86/AttackMacros.asm'
-include 'x86/GenMacros.asm'
-include 'x86/MovePickMacros.asm'
-include 'x86/SearchMacros.asm'
-include 'x86/QSearchMacros.asm'
-include 'x86/HashMacros.asm'
-include 'x86/PosIsDrawMacro.asm'
-include 'x86/Pawn.asm'
-include 'x86/SliderBlockers.asm'
-include 'x86/UpdateStats.asm'
+include 'AttackMacros.asm'
+include 'GenMacros.asm'
+include 'MovePickMacros.asm'
+include 'SearchMacros.asm'
+include 'QSearchMacros.asm'
+include 'HashMacros.asm'
+include 'PosIsDrawMacro.asm'
+include 'SliderBlockers.asm'
+include 'UpdateStats.asm'
+include 'Pawn.asm'
 
 
 ; data and bss section
 if VERSION_OS = 'L'
   segment readable writeable
-  include 'x86/MainData.asm'
+  include 'MainData.asm'
   segment readable writeable
-  include 'x86/MainBss.asm'
+  include 'MainBss.asm'
 else if VERSION_OS = 'W'
   section '.data' data readable writeable
-  include 'x86/MainData.asm'
+  include 'MainData.asm'
   section '.bss' data readable writeable
-  include 'x86/MainBss.asm'
+  include 'MainBss.asm'
 end if
 
 
@@ -112,23 +112,23 @@ else if VERSION_OS = 'X'
 end if
 
 if USE_SYZYGY
-  include 'x86/TablebaseCore.asm'
-  include 'x86/Tablebase.asm'
+  include 'TablebaseCore.asm'
+  include 'Tablebase.asm'
 end if
-include 'x86/Endgame.asm'
-include 'x86/Evaluate.asm'
-include 'x86/Hash_Probe.asm'
-include 'x86/Move_IsPseudoLegal.asm'
-include 'x86/SetCheckInfo.asm'
-include 'x86/Move_GivesCheck.asm'
-include 'x86/Gen_Captures.asm'
-include 'x86/Gen_Quiets.asm'
-include 'x86/Gen_QuietChecks.asm'
-include 'x86/Gen_Evasions.asm'
-include 'x86/MovePick.asm'
-include 'x86/Move_IsLegal.asm'
-include 'x86/Move_Do.asm'
-include 'x86/Move_Undo.asm'
+include 'Endgame.asm'
+include 'Evaluate.asm'
+include 'Hash_Probe.asm'
+include 'Move_IsPseudoLegal.asm'
+include 'SetCheckInfo.asm'
+include 'Move_GivesCheck.asm'
+include 'Gen_Captures.asm'
+include 'Gen_Quiets.asm'
+include 'Gen_QuietChecks.asm'
+include 'Gen_Evasions.asm'
+include 'MovePick.asm'
+include 'Move_IsLegal.asm'
+include 'Move_Do.asm'
+include 'Move_Undo.asm'
 
 	     calign   16
 QSearch_NonPv_NoCheck:  QSearch   0, 0
@@ -141,66 +141,66 @@ QSearch_Pv_NoCheck:     QSearch   1, 0
 	     calign   64
 Search_NonPv:   search   0, 0
 
-include 'x86/SeeTest.asm'
+include 'SeeTest.asm'
 if DEBUG
-  include 'x86/See.asm'
+  include 'See.asm'
 end if
-include 'x86/Move_DoNull.asm'
-include 'x86/CheckTime.asm'
-include 'x86/Castling.asm'
+include 'Move_DoNull.asm'
+include 'CheckTime.asm'
+include 'Castling.asm'
 
 	    calign   16
 Search_Pv:      search   0, 1
 	    calign   16
 Search_Root:    search   1, 1
 
-include 'x86/Gen_NonEvasions.asm'
-include 'x86/Gen_Legal.asm'
-include 'x86/Perft.asm'
-include 'x86/AttackersTo.asm'
-include 'x86/EasyMoveMng.asm'
-include 'x86/Think.asm'
-include 'x86/TimeMng.asm'
+include 'Gen_NonEvasions.asm'
+include 'Gen_Legal.asm'
+include 'Perft.asm'
+include 'AttackersTo.asm'
+include 'EasyMoveMng.asm'
+include 'Think.asm'
+include 'TimeMng.asm'
 if USE_WEAKNESS
-  include 'x86/Weakness.asm'
+  include 'Weakness.asm'
 end if
-include 'x86/Position.asm'
-include 'x86/Hash.asm'
-include 'x86/RootMoves.asm'
-include 'x86/Limits.asm'
-include 'x86/Thread.asm'
-include 'x86/ThreadPool.asm'
-include 'x86/Uci.asm'
-include 'x86/Search_Clear.asm'
-include 'x86/PrintParse.asm'
-include 'x86/Math.asm'
+include 'Position.asm'
+include 'Hash.asm'
+include 'RootMoves.asm'
+include 'Limits.asm'
+include 'Thread.asm'
+include 'ThreadPool.asm'
+include 'Uci.asm'
+include 'Search_Clear.asm'
+include 'PrintParse.asm'
+include 'Math.asm'
 if VERSION_OS = 'L'
-  include 'x86/OsLinux.asm'
+  include 'OsLinux.asm'
 else if VERSION_OS = 'W'
-  include 'x86/OsWindows.asm'
+  include 'OsWindows.asm'
 else if VERSION_OS = 'X'
-  include 'x86/OsMac.asm'
+  include 'OsMac.asm'
 end if
 if USE_BOOK
   include 'Book.asm'
 end if
-include 'x86/Main.asm'          ; entry point in here
-include 'x86/Search_Init.asm'
-include 'x86/Position_Init.asm'
-include 'x86/MoveGen_Init.asm'
-include 'x86/BitBoard_Init.asm'
-include 'x86/BitTable_Init.asm'
-include 'x86/Evaluate_Init.asm'
-include 'x86/Pawn_Init.asm'
-include 'x86/Endgame_Init.asm'
+include 'Main.asm'          ; entry point in here
+include 'Search_Init.asm'
+include 'Position_Init.asm'
+include 'MoveGen_Init.asm'
+include 'BitBoard_Init.asm'
+include 'BitTable_Init.asm'
+include 'Evaluate_Init.asm'
+include 'Pawn_Init.asm'
+include 'Endgame_Init.asm'
 
 ; for mac, data and bss cannot come before first code section (?)
 if VERSION_OS = 'X'
   segment '__DATA' readable writeable
   section '__data' align 16
-  include 'x86/MainData.asm'
+  include 'MainData.asm'
   section '__bss' align 4096
-  include 'x86/MainBss.asm'
+  include 'MainBss.asm'
 end if
 
 

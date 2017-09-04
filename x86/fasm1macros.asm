@@ -34,6 +34,42 @@ end macro
 define @f? 
 @@
 
+macro @1 tail 
+        match label, @1f?
+                label tail 
+                @1b? equ @1f?
+        end match 
+        local anonymous 
+        @1f? equ anonymous 
+end macro 
+define @1f? 
+@1
+
+
+macro @2 tail 
+        match label, @2f?
+                label tail 
+                @2b? equ @2f?
+        end match 
+        local anonymous 
+        @2f? equ anonymous 
+end macro 
+define @2f? 
+@2
+
+macro @3 tail 
+        match label, @3f?
+                label tail 
+                @3b? equ @3f?
+        end match 
+        local anonymous 
+        @3f? equ anonymous 
+end macro 
+define @3f? 
+@3
+
+
+
 
 iterate instr, push,pop 
         macro instr? op 

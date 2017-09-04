@@ -351,6 +351,8 @@ Os_SetPriority_Realtime:
 Os_SetPriority_Normal:
 Os_SetPriority_Low:
 Os_SetPriority_Idle:
+Os_SetStdHandles:
+Os_InitializeTimer:
                 ret
 
 
@@ -359,14 +361,6 @@ Os_ExitProcess:
                 mov  x0, x1
                 mov  x8, sys_exit_group
                 svc  0
-
-
-Os_SetStdHandles:
-                ret
-
-
-Os_InitializeTimer:
-                ret
 
 
 Os_GetTime:

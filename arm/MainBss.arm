@@ -30,7 +30,7 @@ threadPool: rb sizeof.ThreadPool
 
 ; data for move generation
         balign 64
-SlidingAttacksBB:    rb 8*8;9524
+SlidingAttacksBB:    rb 8*89524
 
         balign 4096
 RookAttacksPEXT:     rb 8*64
@@ -129,4 +129,65 @@ PushToEdges:            rb 64
 PushToCorners:          rb 64
 PushClose:              rb 8
 PushAway:               rb 8
+
+
+if USE_SYZYGY
+
+        balign 64
+
+Tablebases__MaxCardinality:
+Tablebase_MaxCardinality:
+        rb 4
+Tablebase_Cardinality:
+        rb 4
+Tablebase_ProbeDepth:
+        rb 4
+Tablebase_Score:
+        rb 4
+Tablebase_RootInTB:
+        rb 1         ; boole 0 or -1
+Tablebase_UseRule50:
+        rb 1         ; boole 0 or -1
+        rb 2
+        rb 44
+
+        balign 16
+
+pfactor:
+        rb 128
+pawnidx:
+        rb 512
+binomial:
+        rb 1280
+
+DTZ_table:
+        rb 1536
+TB_hash:
+        rb 81920
+TB_pawn:
+        rb 98304
+TB_piece:
+        rb 30480
+
+TBnum_pawn:
+        rb 4
+TBnum_piece:
+        rb 4
+paths:
+        rb 8
+path_string:
+        rb 8
+num_paths:
+        rb 4
+initialized:
+        rb 1
+        rb 3
+tb_total_cnt:
+        rb 4
+
+        balign 16
+TB_mutex:
+        rb 64
+
+end if
 
