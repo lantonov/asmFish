@@ -646,7 +646,7 @@ macro umull A*, B*, C*
     aarch64.h_smull A, B, C,  0x9ba07c00, 0x2f00a000, 0x2e20c000
 end macro
 
-macro smlal A*, B*, C*
+macro smlal A*, B*, C*  ; this and following dont operand on gpr, so overflow in that case
     aarch64.h_smull A, B, C, 0x100000000, 0x0f002000, 0x0e208000
 end macro
 
@@ -660,6 +660,37 @@ end macro
 
 macro umlsl A*, B*, C*
     aarch64.h_smull A, B, C, 0x100000000, 0x2f006000, 0x2e20a000
+end macro
+
+
+macro aarch64.h_sqdmlal A*, B*, C*, code2*, code3*
+    aarch64.parse_operand @op0, A
+    aarch64.parse_operand @op1, B
+    aarch64.parse_operand @op2, C
+    if (@op0.type = @type_vn_2d) & (@op1.type = @type_vn_2s) & (@op2.type = @type_vn_si)
+        dd code2 + 0x00800000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0) + ((@op2.idx and 1) shl 21) + ((@op2.idx and 2) shl 10)
+    else if (@op0.type = @type_vn_4s) & (@op1.type = @type_vn_4h) & (@op2.type = @type_vn_hi)
+        aarch64.restrict @op2.data, 0, 15
+        dd code2 + 0x00400000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0) + ((@op2.idx and 3) shl 20) + ((@op2.idx and 4) shl 9)
+    else if (@op0.type = @type_vn_2d) & (@op1.type = @type_vn_2s) & (@op2.type = @type_vn_2s)
+        dd code3 + 0x00800000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type = @type_vn_4s) & (@op1.type = @type_vn_4h) & (@op2.type = @type_vn_4h)
+        dd code3 + 0x00400000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+macro sqdmlal A*, B*, C*
+    aarch64.h_sqdmlal A, B, C, 0x0f003000, 0x0e209000
+end macro
+
+macro sqdmlsl A*, B*, C*
+    aarch64.h_sqdmlal A, B, C, 0x0f007000, 0x0e20b000
+end macro
+
+macro sqdmull A*, B*, C*
+    aarch64.h_sqdmlal A, B, C, 0x0f00b000, 0x0e20d000
 end macro
 
 
@@ -740,62 +771,277 @@ macro smlsl2 A*, B*, C*
 end macro
 
 
-macro sqdmulh A*, B*, C*
+macro aarch64.h_sqdmulh A*, B*, C*, code1*, code2*
     aarch64.parse_operand @op0, A
     aarch64.parse_operand @op1, B
     aarch64.parse_operand @op2, C
     if (@op0.type = @type_sn) & (@op1.type = @op0.type) & (@op2.type = @op0.type)
-        dd 0x5ea0b400 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+        dd code1 + 0x50800000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_vn_2s_4s) & (@op1.type = @op0.type) & (@op2.type = @op0.type)
-        dd 0x0ea0b400 + (@op0.vfull shl 30) + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+        dd code1 + 0x00800000 + (@op0.vfull shl 30) + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type = @type_hn) & (@op1.type = @op0.type) & (@op2.type = @op0.type)
-        dd 0x5e60b400 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+        dd code1 + 0x50400000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_vn_4h_8h) & (@op1.type = @op0.type) & (@op2.type = @op0.type)
-        dd 0x0e60b400 + (@op0.vfull shl 30) + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+        dd code1 + 0x00400000 + (@op0.vfull shl 30) + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type = @type_sn) & (@op1.type = @op0.type) & (@op2.type = @type_vn_si)
-        dd 0x5f00c000 + 0x00800000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0) + ((@op2.idx and 1) shl 21) + ((@op2.idx and 2) shl 10)
+        dd code2 + 0x50800000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0) + ((@op2.idx and 1) shl 21) + ((@op2.idx and 2) shl 10)
     else if (@op0.type and @type_vn_2s_4s) & (@op1.type = @op0.type) & (@op2.type = @type_vn_si)
-        dd 0x0f00c000 + 0x00800000 + (@op0.vfull shl 30) + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0) + ((@op2.idx and 1) shl 21) + ((@op2.idx and 2) shl 10)
+        dd code2 + 0x00800000 + (@op0.vfull shl 30) + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0) + ((@op2.idx and 1) shl 21) + ((@op2.idx and 2) shl 10)
     else if (@op0.type = @type_hn) & (@op1.type = @type_hn) & (@op2.type = @type_vn_hi)
         aarch64.restrict @op2.data, 0, 15
-        dd 0x5f00c000 + 0x00400000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0) + ((@op2.idx and 3) shl 20) + ((@op2.idx and 4) shl 9)
+        dd code2 + 0x50400000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0) + ((@op2.idx and 3) shl 20) + ((@op2.idx and 4) shl 9)
     else if (@op0.type and @type_vn_4h_8h) & (@op1.type = @op0.type) & (@op2.type = @type_vn_hi)
         aarch64.restrict @op2.data, 0, 15
-        dd 0x0f00c000 + 0x00400000 + (@op0.vfull shl 30) + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0) + ((@op2.idx and 3) shl 20) + ((@op2.idx and 4) shl 9)
+        dd code2 + 0x00400000 + (@op0.vfull shl 30) + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0) + ((@op2.idx and 3) shl 20) + ((@op2.idx and 4) shl 9)
     else
         err 'invalid operand'
     end if
 end macro
 
+macro sqdmulh A*, B*, C*
+    aarch64.h_sqdmulh A, B, C, 0x0e20b400, 0x0f00c000
+end macro
 
 macro sqrdmulh A*, B*, C*
+    aarch64.h_sqdmulh A, B, C, 0x2e20b400, 0x0f00d000
+end macro
+
+
+
+
+macro aarch64.h_sqxtn A*, B*, code1*, code2*
+    aarch64.parse_operand @op0, A
+    aarch64.parse_operand @op1, B
+    if (@op0.type and @type_bn_hn_sn) & (@op1.type = 2*@op0.type)
+        dd code1 + (@op0.vsize shl 22) + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_vn_8b_4h_2s) & (@op1.type = 32*@op0.type)
+        dd code2 + (@op0.vsize shl 22) + (@op1.data shl 5) + (@op0.data shl 0)
+    end if    
+end macro
+
+macro sqxtn A*, B*
+    aarch64.h_sqxtn A, B, 0x5e214800, 0x0e214800
+end macro
+
+macro sqxtun A*, B*
+    aarch64.h_sqxtn A, B, 0x7e212800, 0x2e212800
+end macro
+
+macro uqxtn A*, B*
+    aarch64.h_sqxtn A, B, 0x7e214800, 0x2e214800
+end macro
+
+
+macro aarch64.h_sqshrun A*, B*, C*, code1*, code2*
     aarch64.parse_operand @op0, A
     aarch64.parse_operand @op1, B
     aarch64.parse_operand @op2, C
-    if (@op0.type = @type_sn) & (@op1.type = @op0.type) & (@op2.type = @op0.type)
-        dd 0x7ea3b441 - 0x00030041 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_vn_2s_4s) & (@op1.type = @op0.type) & (@op2.type = @op0.type)
-        dd 0x6ea3b441 - 0x40030041 + (@op0.vfull shl 30) + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    if (@op0.type and @type_bn_hn_sn) & (@op1.type = 2*@op0.type) & (@op2.type = @type_immc)
+        aarch64.restrict @op2.data, 1, (8 shl @op0.vsize)
+        dd code1 + (((16 shl @op0.vsize) - @op2.data) shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_vn_8b_4h_2s) & (@op1.type = 32*@op0.type) & (@op2.type = @type_immc)
+        aarch64.restrict @op2.data, 1, (8 shl @op0.vsize)
+        dd code2 + (((16 shl @op0.vsize) - @op2.data) shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    end if    
+end macro
 
-    else if (@op0.type = @type_hn) & (@op1.type = @op0.type) & (@op2.type = @op0.type)
-        dd 0x7e60b400 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_vn_4h_8h) & (@op1.type = @op0.type) & (@op2.type = @op0.type)
-        dd 0x2e63b441 - 0x00030041 + (@op0.vfull shl 30) + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+macro sqshrun A*, B*, C*
+    aarch64.h_sqshrun A, B, C, 0x7f008400, 0x2f008400
+end macro
 
-    else if (@op0.type = @type_sn) & (@op1.type = @op0.type) & (@op2.type = @type_vn_si)
-        dd 0x5fa3d841 - 0x00a30841 + 0x00800000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0) + ((@op2.idx and 1) shl 21) + ((@op2.idx and 2) shl 10)
-    else if (@op0.type and @type_vn_2s_4s) & (@op1.type = @op0.type) & (@op2.type = @type_vn_si)
-        dd 0x4fa3d841 - 0x40a30841 + 0x00800000 + (@op0.vfull shl 30) + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0) + ((@op2.idx and 1) shl 21) + ((@op2.idx and 2) shl 10)
+macro uqrshrn A*, B*, C*
+    aarch64.h_sqshrun A, B, C, 0x7f009c00, 0x2f009c00
+end macro
 
-    else if (@op0.type = @type_hn) & (@op1.type = @type_hn) & (@op2.type = @type_vn_hi)
-        aarch64.restrict @op2.data, 0, 15
-        dd 0x5f73d841 - 0x00730841 + 0x00400000 + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0) + ((@op2.idx and 3) shl 20) + ((@op2.idx and 4) shl 9)
-    else if (@op0.type and @type_vn_4h_8h) & (@op1.type = @op0.type) & (@op2.type = @type_vn_hi)
-        aarch64.restrict @op2.data, 0, 15
-        dd 0x4f73d841 - 0x40730841 + 0x00400000 + (@op0.vfull shl 30) + (@op2.data shl 16) + (@op1.data shl 5) + (@op0.data shl 0) + ((@op2.idx and 3) shl 20) + ((@op2.idx and 4) shl 9)
+macro sqrshrn A*, B*, C*
+    aarch64.h_sqshrun A, B, C, 0x5f009c00, 0x0f009c00
+end macro
+
+macro sqrshrun A*, B*, C*
+    aarch64.h_sqshrun A, B, C, 0x7f008c00, 0x2f008c00
+end macro
+
+macro sqshrn A*, B*, C*
+    aarch64.h_sqshrun A, B, C, 0x5f009400, 0x0f009400
+end macro
+
+macro uqshrn A*, B*, C*
+    aarch64.h_sqshrun A, B, C, 0x7f009400, 0x2f009400
+end macro
+
+
+macro aarch64.h_rshrn2 A*, B*, C*, code*
+    aarch64.parse_operand @op0, A
+    aarch64.parse_operand @op1, B
+    aarch64.parse_operand @op2, C
+    if (@op0.type and @type_vn_16b_8h_4s) & (@op1.type = 2*@op0.type) & (@op2.type = @type_immc)
+        aarch64.restrict @op2.data, 1, (8 shl @op0.vsize)
+        dd code + (((16 shl @op0.vsize) - @op2.data) shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    end if    
+end macro
+
+macro rshrn2 A*, B*, C*
+    aarch64.h_rshrn2 A, B, C, 0x4f008c00
+end macro
+
+macro sqrshrn2 A*, B*, C*
+    aarch64.h_rshrn2 A, B, C, 0x4f009c00
+end macro
+
+macro sqrshrun2 A*, B*, C*
+    aarch64.h_rshrn2 A, B, C, 0x6f008c00
+end macro
+
+macro shrn2 A*, B*, C*
+    aarch64.h_rshrn2 A, B, C, 0x4f008400
+end macro
+
+macro sqshrn2 A*, B*, C*
+    aarch64.h_rshrn2 A, B, C, 0x4f009400
+end macro
+
+macro sqshrun2 A*, B*, C*
+    aarch64.h_rshrn2 A, B, C, 0x6f008400
+end macro
+
+macro uqrshrn2 A*, B*, C*
+    aarch64.h_rshrn2 A, B, C, 0x6f009c00
+end macro
+
+macro uqshrn2 A*, B*, C*
+    aarch64.h_rshrn2 A, B, C, 0x6f009400
+end macro
+
+
+macro shll A*, B*, C*
+    aarch64.parse_operand @op0, A
+    aarch64.parse_operand @op1, B
+    aarch64.parse_operand @op2, C
+    if @op1.type and @type_vn_8b_4h_2s & @op0.type = 32*@op1.type & @op2.type = @type_immc
+        aarch64.restrict @op2.data, (8 shl @op1.vsize), (8 shl @op1.vsize)
+        dd 0x2e213800 + (@op1.vsize shl 22) + (@op1.data shl 5) + (@op0.data shl 0)
     else
         err 'invalid operand'
     end if
 end macro
+
+macro aarch64.h_sshll A*, B*, C*, code*
+    aarch64.parse_operand @op0, A
+    aarch64.parse_operand @op1, B
+    aarch64.parse_operand @op2, C
+    if (@op1.type and @type_vn_8b_4h_2s) & (@op0.type = 32*@op1.type) & (@op2.type = @type_immc)
+        aarch64.restrict @op2.data, 0, (8 shl @op1.vsize) - 1
+        dd code + (((8 shl @op1.vsize) + @op2.data) shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if    
+end macro
+
+macro sshll A*, B*, C*
+    aarch64.h_sshll A, B, C, 0x0f00a400
+end macro
+
+macro sxtl A*, B*
+    aarch64.h_sshll A, B, 0, 0x0f00a400
+end macro
+
+macro ushll A*, B*, C*
+    aarch64.h_sshll A, B, C, 0x2f00a400
+end macro
+
+macro uxtl A*, B*
+    aarch64.h_sshll A, B, 0, 0x2f00a400
+end macro
+
+
+macro shll2 A*, B*, C*
+    aarch64.parse_operand @op0, A
+    aarch64.parse_operand @op1, B
+    aarch64.parse_operand @op2, C
+    if @op1.type and @type_vn_16b_8h_4s & @op0.type = 2*@op1.type & @op2.type = @type_immc
+        aarch64.restrict @op2.data, (8 shl @op1.vsize), (8 shl @op1.vsize)
+        dd 0x6e213800 + (@op1.vsize shl 22) + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+macro aarch64.h_sshll2 A*, B*, C*, code*
+    aarch64.parse_operand @op0, A
+    aarch64.parse_operand @op1, B
+    aarch64.parse_operand @op2, C
+    if (@op1.type and @type_vn_16b_8h_4s) & (@op0.type = 2*@op1.type) & (@op2.type = @type_immc)
+        aarch64.restrict @op2.data, 0, (8 shl @op1.vsize) - 1
+        dd code + (((8 shl @op1.vsize) + @op2.data) shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if    
+end macro
+
+macro sshll2 A*, B*, C*
+    aarch64.h_sshll2 A, B, C, 0x4f00a400
+end macro
+
+macro sxtl2 A*, B*
+    aarch64.h_sshll2 A, B, 0, 0x4f00a400
+end macro
+
+macro ushll2 A*, B*, C*
+    aarch64.h_sshll2 A, B, C, 0x6f00a400
+end macro
+
+macro uxtl2 A*, B*
+    aarch64.h_sshll2 A, B, 0, 0x6f00a400
+end macro
+
+
+macro aarch64.h_rshrn A*, B*, C*, code*
+    aarch64.parse_operand @op0, A
+    aarch64.parse_operand @op1, B
+    aarch64.parse_operand @op2, C
+    if (@op0.type and @type_vn_8b_4h_2s) & (@op1.type = 32*@op0.type) & (@op2.type = @type_immc)
+        aarch64.restrict @op2.data, 1, (8 shl @op0.vsize)
+        dd code + (((16 shl @op0.vsize) - @op2.data) shl 16) + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if    
+end macro
+
+macro rshrn A*, B*, C*
+    aarch64.h_rshrn A, B, C, 0x0f008c00
+end macro
+
+macro shrn A*, B*, C*
+    aarch64.h_rshrn A, B, C, 0x0f008400
+end macro
+
+
+
+macro aarch64.h_uqxtn2 A*, B*, code
+    aarch64.parse_operand @op0, A
+    aarch64.parse_operand @op1, B
+    if (@op0.type and @type_vn_16b_8h_4s) & (@op1.type = 2*@op0.type)
+        dd code + (@op0.vsize shl 22) + (@op1.data shl 5) + (@op0.data shl 0)
+    else
+        err 'invalid operand'
+    end if    
+end macro
+
+macro uqxtn2 A*, B*
+    aarch64.h_uqxtn2 A, B, 0x6e214800
+end macro
+
+macro xtn2 A*, B*
+    aarch64.h_uqxtn2 A, B, 0x4e212800
+end macro
+
+macro sqxtn2 A*, B*
+    aarch64.h_uqxtn2 A, B, 0x4e214800
+end macro
+
+macro sqxtun2 A*, B*
+    aarch64.h_uqxtn2 A, B, 0x6e212800
+end macro
+
 
 

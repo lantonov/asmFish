@@ -1,3 +1,8 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; encoding immediates
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 ; determine if x can be encoded as a wide immediate
 macro aarch64.parse_uimm64 x
     assert x relativeto 0
@@ -149,7 +154,7 @@ macro aarch64.parse_bimm32 x, ec:
 end macro
 
 
-; err if x can be encoded as a arithmetic immediate
+; err if x cannot be encoded as a arithmetic immediate
 macro aarch64.parse_aimm x, ec:0
     @imm.number = +x
     @imm.success = 0
@@ -215,11 +220,7 @@ macro aarch64.parse_aimm x, ec:0
     end if
 end macro
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; parsing registers and immediates ;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+; err if ns.data cannot be encoded as an 8 bit float
 macro aarch64.parse_float ns
     local f, t, msb, lsb
     ns.type = @type_immf
@@ -249,216 +250,86 @@ macro aarch64.parse_float ns
     end if
 end macro
 
-macro aarch64.parse_immediate ns
-    if ns.data eqtype 0.0
-        if ns.data = 0.0
-            ns.type = @type_immc
-            ns.data = 0
-        else
-            aarch64.parse_float ns
-        end if
-    else if ns.data relativeto 0
-        ns.type = @type_immc
-    else
-        ns.type = @type_immr
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; parsing registers and immediates ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+macro aarch64.parse_colon ns, y, z
+    ns.data = +z
+    match =lo12, y
+        ns.type = @type_immc_lo12
+    else match =abs_g0_nc, y
+        ns.type = @type_immc_abs_g0_nc
+    else match =abs_g1_nc, y
+        ns.type = @type_immc_abs_g1_nc
+    else match =abs_g2, y
+        ns.type = @type_immc_abs_g2
+    else match =pg_hi21, y
+        ns.type = @type_immc_pg_hi21
+    end match
+    if ~(ns.data relativeto 0)
+        ns.type = ns.type shl 1
     end if
 end macro
 
-; err if y is not one of v0,...v31
-macro aarch64.parse_voperand ns, y
+macro aarch64.parse_bracket ns, y, z
+    ns.idx = +z
     ns.data = +y
-    if elementsof ns.data = 1 & ns.data eq ns.data element 1
-        if ns.data metadata 1 relativeto aarch64.v128
-            ns.data = ns.data metadata 1 - aarch64.v128
+    if (elementsof ns.data = 1 & ns.data eq ns.data element 1) & (ns.data metadata 1 relativeto aarch64.reg)
+        ns.data = ns.data metadata 1 - aarch64.reg
+        ns.vfull = 0
+        ns.vsize = (ns.data shr 16) and 255
+        ns.type  = 1 shl ((ns.data shr 8) and 255)
+        if ns.data and @type_vn_all
+            ns.type = @type_vn_bi shl ns.vsize
         else
-            err 'invalid vector name'
+            err 'invalid index register'
         end if
+        ns.data = ns.data and 255
+        aarch64.restrict ns.idx, 0, (1 shl (4 - ns.vsize)) - 1
     else
-        err 'invalid vector name'
+        err 'invalid index register'
     end if
 end macro
-
 
 macro aarch64.parse_operand ns, x
     ns.type = 0
     match , x
         ns.type = @type_empty
     else match :y:z, x
-        ns.data = +z
-        match =lo12, y
-            ns.type = @type_immc_lo12
-        else match =abs_g0_nc, y
-            ns.type = @type_immc_abs_g0_nc
-        else match =abs_g1_nc, y
-            ns.type = @type_immc_abs_g1_nc
-        else match =abs_g2, y
-            ns.type = @type_immc_abs_g2
-        else match =pg_hi21, y
-            ns.type = @type_immc_pg_hi21
-        end match
-        if ~(ns.data relativeto 0)
-            ns.type = ns.type shl 1
-        end if
-    else match y.=16b, x
-        ns.type = @type_vn_16b
-        ns.vt = 4
-        ns.vsize = 0
-        ns.vfull = 1
-        aarch64.parse_voperand ns, y
-    else match y.=8b, x
-        ns.type = @type_vn_8b
-        ns.vt = 0
-        ns.vsize = 0
-        ns.vfull = 0
-        aarch64.parse_voperand ns, y
-    else match y.=8h, x
-        ns.type = @type_vn_8h
-        ns.vt = 5
-        ns.vsize = 1
-        ns.vfull = 1
-        aarch64.parse_voperand ns, y
-    else match y.=4h, x
-        ns.type = @type_vn_4h
-        ns.vt = 1
-        ns.vsize = 1
-        ns.vfull = 0
-        aarch64.parse_voperand ns, y
-    else match y.=4s, x
-        ns.type = @type_vn_4s
-        ns.vt = 6
-        ns.vsize = 2
-        ns.vfull = 1
-        aarch64.parse_voperand ns, y
-    else match y.=2s, x
-        ns.type = @type_vn_2s
-        ns.vt = 2
-        ns.vsize = 2
-        ns.vfull = 0
-        aarch64.parse_voperand ns, y
-    else match y.=2d, x
-        ns.type = @type_vn_2d
-        ns.vt = 7
-        ns.vsize = 3
-        ns.vfull = 1
-        aarch64.parse_voperand ns, y
-    else match y.=1d, x
-        ns.type = @type_vn_1d
-        ns.vt = 3
-        ns.vsize = 3
-        ns.vfull = 0
-        aarch64.parse_voperand ns, y
-    else match y.=1q, x
-        ns.type = @type_vn_1q
-        ns.vt = 4
-        ns.vsize = 4
-        aarch64.parse_voperand ns, y
-    else match y.=b, x
-        ns.type = @type_vn_b
-        ns.vt = 0
-        ns.vsize = 0
-        aarch64.parse_voperand ns, y
-    else match y.=h, x
-        ns.type = @type_vn_h
-        ns.vt = 1
-        ns.vsize = 1
-        aarch64.parse_voperand ns, y
-    else match y.=s, x
-        ns.type = @type_vn_s
-        ns.vt = 2
-        ns.vsize = 2
-        aarch64.parse_voperand ns, y
-    else match y.=d, x
-        ns.type = @type_vn_d
-        ns.vt = 3
-        ns.vsize = 3
-        aarch64.parse_voperand ns, y
-    else match y.=b[i], x
-        ns.type = @type_vn_bi
-        ns.vt = 0
-        ns.vsize = 0
-        ns.idx = +i
-        aarch64.restrict ns.idx, 0, 15
-        aarch64.parse_voperand ns, y
-    else match y.=h[i], x
-        ns.type = @type_vn_hi
-        ns.vt = 1
-        ns.vsize = 1
-        ns.idx = +i
-        aarch64.restrict ns.idx, 0, 7
-        aarch64.parse_voperand ns, y
-    else match y.=s[i], x
-        ns.type = @type_vn_si
-        ns.vt = 2
-        ns.vsize = 2
-        ns.idx = +i
-        aarch64.restrict ns.idx, 0, 3
-        aarch64.parse_voperand ns, y
-    else match y.=d[i], x
-        ns.type = @type_vn_di
-        ns.vt = 3
-        ns.vsize = 3
-        ns.idx = +i
-        aarch64.restrict ns.idx, 0, 1
-        aarch64.parse_voperand ns, y
+        aarch64.parse_colon ns, y, z    ; uncommon case
+    else match y[z], x
+        aarch64.parse_bracket ns, y, z  ; uncommon case
     else
         ns.data = +x
-        ns.number = 0
-        if elementsof ns.data = 1 & ns.data eq ns.data element 1
-            if ns.data metadata 1 relativeto aarch64.r64
-                ns.data = ns.data metadata 1 - aarch64.r64
-                if ns.data < 31
-                    ns.type = @type_xn
-                else if ns.data = 31
-                    ns.type = @type_xzr
-                else
-                    ns.data = 31
-                    ns.type = @type_xsp
-                end if
-            else if ns.data metadata 1 relativeto aarch64.r32
-                ns.data = ns.data metadata 1 - aarch64.r32
-                if ns.data < 31
-                    ns.type = @type_wn
-                else if ns.data = 31
-                    ns.type = @type_wzr
-                else
-                    ns.data = 31
-                    ns.type = @type_wsp
-                end if
-            else if ns.data metadata 1 relativeto aarch64.f64
-                ns.data = ns.data metadata 1 - aarch64.f64
-                ns.type = @type_dn
-                ns.vt = 3
-                ns.vsize = 3
-            else if ns.data metadata 1 relativeto aarch64.f32
-                ns.data = ns.data metadata 1 - aarch64.f32
-                ns.type = @type_sn
-                ns.vt = 2
-                ns.vsize = 2
-            else if ns.data metadata 1 relativeto aarch64.f128
-                ns.data = ns.data metadata 1 - aarch64.f128
-                ns.type = @type_qn
-                ns.vt = 4
-                ns.vsize = 4
-            else if ns.data metadata 1 relativeto aarch64.f8
-                ns.data = ns.data metadata 1 - aarch64.f8
-                ns.type = @type_bn
-                ns.vt = 0
-                ns.vsize = 0
-            else if ns.data metadata 1 relativeto aarch64.f16
-                ns.data = ns.data metadata 1 - aarch64.f16
-                ns.type = @type_hn
-                ns.vt = 1
-                ns.vsize = 1
-            else
-                aarch64.parse_immediate ns
-            end if
+        if (elementsof ns.data = 1 & ns.data eq ns.data element 1) & (ns.data metadata 1 relativeto aarch64.reg)
+            ns.data = ns.data metadata 1 - aarch64.reg
+            ns.vfull = (ns.data shr 24) and 255
+            ns.vsize = (ns.data shr 16) and 255
+            ns.type  = 1 shl ((ns.data shr 8) and 255)
+            ns.data = ns.data and 255
         else
-            aarch64.parse_immediate ns
+            if ns.data eqtype 0.0
+                if ns.data = 0.0
+                    ns.type = @type_immc
+                    ns.data = 0
+                else
+                    aarch64.parse_float ns
+                end if
+            else if ns.data relativeto 0
+                ns.type = @type_immc
+            else
+                ns.type = @type_immr
+            end if
         end if
     end match
 end macro
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; parsing extensions, shifts, and conditions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 macro aarch64.parse_ext x
     @ext.empty = 0
