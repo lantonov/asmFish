@@ -11,20 +11,11 @@ all:
 quick:
 	export INCLUDE="arm/include/";./fasmg "arm/fish.arm" "armfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'v8'"
 test:
-	aarch64-linux-gnu-as -o artest.o -march=armv8-a+crc+crypto tartest.arm
-	aarch64-linux-gnu-ld -o artest artest.o
-#	aarch64-linux-gnu-objcopy -O binary artest.o artest
-	aarch64-linux-gnu-strip artest
-	aarch64-linux-gnu-objdump -D -maarch64 -b binary artest > artest.txt
-	export INCLUDE="arm/include/";./fasmg "tarmfish.arm" "arfish" -e 1000
-	aarch64-linux-gnu-objdump -D -maarch64 -b binary arfish > arfish.txt
-	diff -U9 arfish.txt artest.txt | less
-tfish:
-	aarch64-linux-gnu-as -o artest.o artest.arm
-	aarch64-linux-gnu-ld -o artest artest.o
-#	aarch64-linux-gnu-objcopy -O binary artest.o artest
-	aarch64-linux-gnu-strip artest
-	aarch64-linux-gnu-objdump -D -maarch64 -b binary artest > artest.txt
-	export INCLUDE="arm/include/";./fasmg "armfish.arm" "arfish" -e 1000
-	aarch64-linux-gnu-objdump -D -maarch64 -b binary arfish > arfish.txt
-	diff -U9 arfish.txt artest.txt | less
+	aarch64-linux-gnu-as -o master.o -march=armv8-a+crc+crypto "arm/include/master.arm"
+	aarch64-linux-gnu-ld -o master master.o
+#	aarch64-linux-gnu-objcopy -O binary master.o master
+	aarch64-linux-gnu-strip master
+	aarch64-linux-gnu-objdump -D -maarch64 -b binary master > master.txt
+	export INCLUDE="arm/include/";./fasmg "arm/include/slave.arm" "slave" -e 1000
+	aarch64-linux-gnu-objdump -D -maarch64 -b binary slave > slave.txt
+	diff -U9 slave.txt master.txt | less

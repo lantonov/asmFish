@@ -1,0 +1,22 @@
+include 'arm/include/aarch64.inc'
+
+macro balign boundary
+    local size
+    size = (boundary-1)-($+boundary-1) mod boundary
+    db (size mod 4) dup 0
+    dd (size/4) dup 0xd503201f
+end macro
+
+
+
+org 0x0
+db 4096 dup 0
+dd 32 dup 0xd503201f
+
+include 'isa_sampler.arm'
+
+
+dd 2
+balign 4096
+dd 2
+balign 4096

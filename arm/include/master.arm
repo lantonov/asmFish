@@ -1,0 +1,10 @@
+.rept 32
+.word 0xd503201f
+.endr
+
+.include "arm/include/isa_sampler.arm"
+
+.word 1
+.balign 4096
+.word 1
+
