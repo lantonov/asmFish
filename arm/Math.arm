@@ -1,29 +1,29 @@
 
 Math_Rand_i:
-; in: x1 address of Prng
-; out: x0 integer in [0,2^64)
-        ldr  x0, [x1]
-        mov  x2, 0xdd1d
-        eor  x0, x0, x0, lsr 12
-       movk  x2, 0x4f6c, lsl 16
-        eor  x0, x0, x0, lsl 25
-       movk  x2, 0xf491, lsl 32
-        eor  x0, x0, x0, lsr 27
-       movk  x2, 0x2545, lsl 48
-        str  x0, [x1]
-        mul  x0, x0, x2
-        ret
+        ; in: x1 address of Prng
+        ; out: x0 integer in (0,2^64)
+                ldr  x0, [x1]
+                mov  x2, 0xdd1d
+                eor  x0, x0, x0, lsr 12
+               movk  x2, 0x4f6c, lsl 16
+                eor  x0, x0, x0, lsl 25
+               movk  x2, 0xf491, lsl 32
+                eor  x0, x0, x0, lsr 27
+               movk  x2, 0x2545, lsl 48
+                str  x0, [x1]
+                mul  x0, x0, x2
+                ret
 
 
 
 Math_fabs_d_d:
-       fabs  d0, d0
-        ret
+               fabs  d0, d0
+                ret
 
 
 Math_sqrt_d_d:
-      fsqrt  d0, d0
-        ret
+              fsqrt  d0, d0
+                ret
 
 
 Math_scalbn_d_di:

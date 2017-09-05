@@ -60,6 +60,14 @@ Thread_Create:
                 str  wzr, [x21, Thread.callsCnt]
                 str  w26, [x21, Thread.idx]
                 str  x27, [x21, Thread.numaNode]
+if USE_VARIETY = 1
+                 bl  Os_GetTime
+                eor  x0, x0, x2
+                orr  x0, x0, 1
+mov x0, 1
+                str  x0, [x21, Thread.randSeed]
+end if
+
 
         ; per thread memory allocations
          ; create sync objects

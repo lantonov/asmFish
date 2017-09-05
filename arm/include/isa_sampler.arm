@@ -2,6 +2,10 @@
 
 _start:
 
+mov  w4, 2*10000 - 1
+mov  w4, 3*10000 - 1
+mov  w4, 4*10000 - 1
+
                 sub  sp, sp, 16*4
                 st1  {v28.16b, v29.16b, v30.16b, v31.16b}, [sp]
                 sub  sp, sp, 16*4

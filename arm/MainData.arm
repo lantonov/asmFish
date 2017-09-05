@@ -76,6 +76,12 @@ if USE_SYZYGY
 	db 'option name SyzygyPath type string default <empty>'
 	NewLineData
 end if
+
+if USE_VARIETY
+    db 'option name Variety type spin default 0 min 0 max 40'
+    NewLineData
+end if
+
 	db 'uciok'
 sz_NewLine:
 	NewLineData
@@ -199,11 +205,16 @@ sz_moveoverhead:    db "moveoverhead", 0
 sz_uci_chess960:    db "uci_chess960", 0
 
 if USE_SYZYGY
-sz_syzygypath:          db "syzygypath", 0
-sz_syzygyprobedepth:    db "syzygyprobedepth", 0
-sz_syzygy50moverule:    db "syzygy50moverule", 0
-sz_syzygyprobelimit:    db "syzygyprobelimit", 0
+sz_syzygypath           db "syzygypath", 0
+sz_syzygyprobedepth     db "syzygyprobedepth", 0
+sz_syzygy50moverule     db "syzygy50moverule", 0
+sz_syzygyprobelimit     db "syzygyprobelimit", 0
 end if
+
+if USE_VARIETY
+sz_variety      db 'variety',0
+end if
+
 
 BenchFens: ;fens must be separated by one or more space char
 db "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "

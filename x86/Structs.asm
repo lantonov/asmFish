@@ -254,11 +254,11 @@ struct Options
  syzygy50MoveRule rb 1	    ; bool 0 or -1
  syzygyProbeDepth rd 1
  syzygyProbeLimit rd 1
-;if USE_VARIETY
-; varietyMod   rd 1
-; varietyBound rd 1
-;              rq 1
-;end if
+if USE_VARIETY = 1
+ varietyMod   rd 1
+ varietyBound rd 1
+              rq 1
+end if
  hashPath	rq 1
  hashPathSizeB	rq 1
  hashPathBuffer rq 14
@@ -379,10 +379,10 @@ struct Thread
 		  rb 1
  nodes		rq 1
  tbHits 	rq 1
-;if USE_VARIETY
-; randSeed     rq 1
-;              rq 1
-;end if
+if USE_VARIETY = 1
+ randSeed     rq 1
+              rq 1
+end if
  idx		rd 1
  rootDepth	rd 1
 

@@ -13,22 +13,22 @@ end macro
 ;;;;;;;;;;;;;;;;;;;;;
 macro PushAll
                 sub   rsp, 16*16
-            vmovups   dqword[rsp+16*0], xmm0
-            vmovups   dqword[rsp+16*1], xmm1
-            vmovups   dqword[rsp+16*2], xmm2
-            vmovups   dqword[rsp+16*3], xmm3
-            vmovups   dqword[rsp+16*4], xmm4
-            vmovups   dqword[rsp+16*5], xmm5
-            vmovups   dqword[rsp+16*6], xmm6
-            vmovups   dqword[rsp+16*7], xmm7
-            vmovups   dqword[rsp+16*8], xmm8
-            vmovups   dqword[rsp+16*9], xmm9
-            vmovups   dqword[rsp+16*10], xmm10
-            vmovups   dqword[rsp+16*11], xmm11
-            vmovups   dqword[rsp+16*12], xmm12
-            vmovups   dqword[rsp+16*13], xmm13
-            vmovups   dqword[rsp+16*14], xmm14
-            vmovups   dqword[rsp+16*15], xmm15
+           _vmovups   dqword[rsp+16*0], xmm0
+           _vmovups   dqword[rsp+16*1], xmm1
+           _vmovups   dqword[rsp+16*2], xmm2
+           _vmovups   dqword[rsp+16*3], xmm3
+           _vmovups   dqword[rsp+16*4], xmm4
+           _vmovups   dqword[rsp+16*5], xmm5
+           _vmovups   dqword[rsp+16*6], xmm6
+           _vmovups   dqword[rsp+16*7], xmm7
+           _vmovups   dqword[rsp+16*8], xmm8
+           _vmovups   dqword[rsp+16*9], xmm9
+           _vmovups   dqword[rsp+16*10], xmm10
+           _vmovups   dqword[rsp+16*11], xmm11
+           _vmovups   dqword[rsp+16*12], xmm12
+           _vmovups   dqword[rsp+16*13], xmm13
+           _vmovups   dqword[rsp+16*14], xmm14
+           _vmovups   dqword[rsp+16*15], xmm15
                 sub   rsp, 8*16
                 mov   qword[rsp+8*0], rax
                 mov   qword[rsp+8*1], rcx
@@ -66,22 +66,22 @@ macro PopAll
                 mov   r14, qword[rsp+8*14]
                 mov   r15, qword[rsp+8*15]
                 add   rsp, 8*16
-            vmovups   xmm0, dqword[rsp+16*0]
-            vmovups   xmm1, dqword[rsp+16*1]
-            vmovups   xmm2, dqword[rsp+16*2]
-            vmovups   xmm3, dqword[rsp+16*3]
-            vmovups   xmm4, dqword[rsp+16*4]
-            vmovups   xmm5, dqword[rsp+16*5]
-            vmovups   xmm6, dqword[rsp+16*6]
-            vmovups   xmm7, dqword[rsp+16*7]
-            vmovups   xmm8, dqword[rsp+16*8]
-            vmovups   xmm9, dqword[rsp+16*9]
-            vmovups   xmm10, dqword[rsp+16*10]
-            vmovups   xmm11, dqword[rsp+16*11]
-            vmovups   xmm12, dqword[rsp+16*12]
-            vmovups   xmm13, dqword[rsp+16*13]
-            vmovups   xmm14, dqword[rsp+16*14]
-            vmovups   xmm15, dqword[rsp+16*15]
+           _vmovups   xmm0, dqword[rsp+16*0]
+           _vmovups   xmm1, dqword[rsp+16*1]
+           _vmovups   xmm2, dqword[rsp+16*2]
+           _vmovups   xmm3, dqword[rsp+16*3]
+           _vmovups   xmm4, dqword[rsp+16*4]
+           _vmovups   xmm5, dqword[rsp+16*5]
+           _vmovups   xmm6, dqword[rsp+16*6]
+           _vmovups   xmm7, dqword[rsp+16*7]
+           _vmovups   xmm8, dqword[rsp+16*8]
+           _vmovups   xmm9, dqword[rsp+16*9]
+           _vmovups   xmm10, dqword[rsp+16*10]
+           _vmovups   xmm11, dqword[rsp+16*11]
+           _vmovups   xmm12, dqword[rsp+16*12]
+           _vmovups   xmm13, dqword[rsp+16*13]
+           _vmovups   xmm14, dqword[rsp+16*14]
+           _vmovups   xmm15, dqword[rsp+16*15]
                 add   rsp, 16*16
 end macro
 
@@ -100,7 +100,7 @@ macro Display vLevel, Mes
                 mov  rdx, rsp
                 lea  r8, [rsp + 16*8]
                call  PrintFancy
-               call  _WriteOut_Output
+               call  Os_WriteOut_Output
              PopAll
   end if
 end macro

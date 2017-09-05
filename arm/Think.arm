@@ -1,39 +1,41 @@
 Thread_Think:
-        ; in:  rcx address of Thread struct
-Thread_Think.completedDepth = 0
-Thread_Think.alpha          = sizeof.rd + Thread_Think.completedDepth
-Thread_Think.beta	    = sizeof.rd + Thread_Think.alpha
-Thread_Think.delta          = sizeof.rd + Thread_Think.beta
-Thread_Think.bestValue      = sizeof.rd + Thread_Think.delta
-Thread_Think.easyMove       = sizeof.rd + Thread_Think.bestValue
-Thread_Think.multiPV        = sizeof.rd + Thread_Think.easyMove
-Thread_Think.lend	    = sizeof.rd + Thread_Think.multiPV
-Thread_Think.localsize      = (ThreadPool_StartThinking.lend + 15) and -16
+        ; in:  x1 address of Thread struct
+virtual at 0
+ .completedDepth rd 1
+ .alpha      rd 1
+ .beta	     rd 1
+ .delta      rd 1
+ .bestValue  rd 1
+ .easyMove   rd 1
+ .multiPV    rd 1
+ .lend	     rb 0
+end virtual
+.localsize = (.lend + 15) and -16
 
                 stp  x20, x30, [sp, -16]!
                 stp  x21, x26, [sp, -16]!
                 stp  x27, x23, [sp, -16]!
                 stp  x24, x25, [sp, -16]!
-                sub  sp, sp, Thread_Think.localsize
+                sub  sp, sp, .localsize
 
                 add  x20, x1, Thread.rootPos
                 ldr  x21, [x20, Pos.state]
 
                 mov  w4, -VALUE_INFINITE
                 mov  w5, +VALUE_INFINITE
-                str  wzr, [sp, Thread_Think.easyMove]
-                str  w4, [sp, Thread_Think.alpha]
-                str  w5, [sp, Thread_Think.beta]
-                str  w4, [sp, Thread_Think.delta]
-                str  w4, [sp, Thread_Think.bestValue]
-                str  wzr, [sp, Thread_Think.completedDepth]
+                str  wzr, [sp, .easyMove]
+                str  w4, [sp, .alpha]
+                str  w5, [sp, .beta]
+                str  w4, [sp, .delta]
+                str  w4, [sp, .bestValue]
+                str  wzr, [sp, .completedDepth]
 
                 sub  x2, x21, 5*sizeof.State
                 add  x8, x21, 3*sizeof.State
                 ldr  x9, [x20, Pos.counterMoveHistory]
                 add  x9, x9, CmhDeadOffset
 
-Thread_Think.clear_stack:
+.clear_stack:
                 mov  w0, 0
                 add  x17, x2, State._stack_start
                 mov  w1, State._stack_end - State._stack_start
@@ -41,110 +43,110 @@ Thread_Think.clear_stack:
                 str  x9, [x2, State.counterMoves]
                 add  x2, x2, sizeof.State
                 cmp  x2, x8
-                blo  Thread_Think.clear_stack
+                blo  .clear_stack
 
-	; set move list for current state
+        ; set move list for current state
                 ldr  x0, [x20, Pos.moveList]
                 str  x0, [x21, -1*sizeof.State + State.endMoves]
 
-	; resets for main thread
+        ; resets for main thread
                 add  x7, x20, -Thread.rootPos 
                strb  wzr, [x7, Thread.easyMovePlayed]
                strb  wzr, [x7, Thread.failedLow]
                 str  xzr, [x7, Thread.bestMoveChanges]
                 ldr  w0, [x7, Thread.idx]
-               cbnz  w0, Thread_Think.skip_easymove
+               cbnz  w0, .skip_easymove
                 ldr  x1, [x21, State.key]
                  bl  EasyMoveMng_Get
-                str  w0, [sp, Thread_Think.easyMove]
+                str  w0, [sp, .easyMove]
                  bl  EasyMoveMng_Clear
 
-Thread_Think.skip_easymove:
+.skip_easymove:
                 add  x1, x20, Pos.rootMovesVec
                  bl  RootMovesVec_Size
-                lea  x6, options
+               _lea  x6, options
                 ldr  w1, [x6, Options.multiPV]
                 cmp  w0, w1
                csel  w0, w1, w0, hi
-                str  w0, [sp, Thread_Think.multiPV]
+                str  w0, [sp, .multiPV]
 
                 add  x6, x20, -Thread.rootPos + Thread.rootDepth
                ldar  w25, [x6]
-Thread_Think.id_loop:
-                lea  x6, limits
+.id_loop:
+               _lea  x6, limits
                 ldr  w1, [x6, Limits.depth]
                 ldr  w4, [x20, -Thread.rootPos + Thread.idx]
                 tst  w4, w4
                csel  w1, wzr, w1, ne
                 sub  w1, w1, 1
-                lea  x6, signals
+               _lea  x6, signals
                ldrb  w0, [x6, Signals.stop]
-               cbnz  w0, Thread_Think.id_loop_done
+               cbnz  w0, .id_loop_done
                 cmp  w25, w1
-                bhi  Thread_Think.id_loop_done
+                bhi  .id_loop_done
                 add  w25, w25, 1
                 add  x6, x20, -Thread.rootPos + Thread.rootDepth
                stlr  w25, [x6]
                 cmp  w25, MAX_PLY
-                bge  Thread_Think.id_loop_done
+                bge  .id_loop_done
 
         ; skip depths for helper threads
                 ldr  w0, [x20, -Thread.rootPos + Thread.idx]
                 mov  w1, 20
                subs  w0, w0, 1
-                blo  Thread_Think.age_out
+                blo  .age_out
                udiv  w2, w0, w1
                msub  w2, w2, w1, w0
                 mov  w1, 0
-Thread_Think.loopSkipPly:
+.loopSkipPly:
                 add  w1, w1, 1
                 add  w0, w1, 1
                 mul  w0, w0, w1
                 cmp  w0, w2
-                bls  Thread_Think.loopSkipPly
+                bls  .loopSkipPly
                 add  w0, w25, w2
                 ldr  w4, [x20, Pos.gamePly]
                 add  w0, w0, w4
                udiv  w2, w0, w1
                msub  w2, w2, w1, w0
                 sub  w0, w0, w1
-                tbz  w0, 0, Thread_Think.id_loop
-                  b  Thread_Think.save_prev_score
+                tbz  w0, 0, .id_loop
+                  b  .save_prev_score
 
-Thread_Think.age_out:
+.age_out:
         ; Age out PV variability metric
                 add  x6, x20, -Thread.rootPos
                 ldr  d0, [x6, Thread.bestMoveChanges]
-                lea  x4, constd._0p505
+               _lea  x4, constd._0p505
                 ldr  d1, [x4]
                fmul  d0, d0, d1
                strb  wzr, [x6, Thread.failedLow]
                 str  d0, [x6, Thread.bestMoveChanges]
 
 
-Thread_Think.save_prev_score:
+.save_prev_score:
         ; Save the last iteration's scores before first PV line is searched and all the move scores except the (new) PV are set to -VALUE_INFINITE.
                 ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
                 ldr  x2, [x20, Pos.rootMovesVec + RootMovesVec.ender]
-        Thread_Think.save_next:
+.save_next:
                 ldr  w0, [x1, RootMove.score]
                 str  w0, [x1, RootMove.prevScore]
                 add  x1, x1, sizeof.RootMove
                 cmp  x1, x2
-                blo  Thread_Think.save_next
+                blo  .save_next
 
         ; MultiPV loop. We perform a full root search for each PV line
                 mov  w24, -1
-Thread_Think.multipv_loop:
+.multipv_loop:
                 add  w24, w24, 1
                 lea  x6, signals
                ldrb  w0, [x6, Signals.stop]
                 add  x7, x20, -Thread.rootPos
                 str  w24, [x7, Thread.PVIdx]
-                ldr  w4, [sp, Thread_Think.multiPV]
+                ldr  w4, [sp, .multiPV]
                 cmp  w24, w4
-                bhs  Thread_Think.multipv_done
-               cbnz  w0, Thread_Think.multipv_done
+                bhs  .multipv_done
+               cbnz  w0, .multipv_done
 
         ; Reset UCI info selDepth for each depth and each PV line
                 add  x6, x20, -Thread.rootPos
@@ -157,32 +159,32 @@ Thread_Think.multipv_loop:
                 ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
                 add  x8, x8, x4
                 cmp  w25, 5
-                blt  Thread_Think.reset_window_done
+                blt  .reset_window_done
                 ldr  w0, [x8, RootMove.prevScore]
                 mov  w1, -VALUE_INFINITE
                 sub  w0, w0, w2
                 cmp  w0, w1
                csel  w0, w1, w0, lt
-                str  w0, [sp, Thread_Think.alpha]
+                str  w0, [sp, .alpha]
                 ldr  w0, [x8, RootMove.prevScore]
                 mov  w1, VALUE_INFINITE
                 add  w0, w0, w2
                 cmp  w0, w1
                csel  w0, w1, w0, gt
-                str  w0, [sp, Thread_Think.beta]
-                str  w2, [sp, Thread_Think.delta]
+                str  w0, [sp, .beta]
+                str  w2, [sp, .delta]
 
-Thread_Think.reset_window_done:
+.reset_window_done:
         ; Start with a small aspiration window and, in the case of a fail high/low,
         ; re-search with a bigger window until we're not failing high/low anymore.
-Thread_Think.search_loop:
-                ldr  w1, [sp, Thread_Think.alpha]
-                ldr  w2, [sp, Thread_Think.beta]
+.search_loop:
+                ldr  w1, [sp, .alpha]
+                ldr  w2, [sp, .beta]
                 mov  w8, w25
                 mov  w9, 0
                  bl  Search_Root
                 mov  w22, w0
-                str  w0, [sp, Thread_Think.bestValue]
+                str  w0, [sp, .bestValue]
                 str  x21, [x20, Pos.state]
 
                 mov  w4, sizeof.RootMove
@@ -195,20 +197,20 @@ Thread_Think.search_loop:
         ; If search has been stopped, break immediately. Sorting and writing PV back to TT is safe because RootMoves is still valid, although it refers to the previous iteration.
                 lea  x6, signals
                ldrb  w0, [x6, Signals.stop]
-               cbnz  w0, Thread_Think.search_done
+               cbnz  w0, .search_done
 
         ; When failing high/low give some update before a re-search.
                 ldr  w4, [x20, -Thread.rootPos + Thread.idx]
-               cbnz  w4, Thread_Think.dont_print_pv
-                ldr  w0, [sp, Thread_Think.multiPV]
+               cbnz  w4, .dont_print_pv
+                ldr  w0, [sp, .multiPV]
                 cmp  w0, 1
-                bne  Thread_Think.dont_print_pv
-                ldr  w4, [sp, Thread_Think.alpha]
+                bne  .dont_print_pv
+                ldr  w4, [sp, .alpha]
                 cmp  w22, w4
                 ble  @f
-                ldr  w4, [sp, Thread_Think.beta]
+                ldr  w4, [sp, .beta]
                 cmp  w22, w4        
-                blt  Thread_Think.dont_print_pv
+                blt  .dont_print_pv
         @@:
                  bl  Os_GetTime
                 lea  x6, time
@@ -216,20 +218,20 @@ Thread_Think.search_loop:
                 sub  x0, x0, x4
         if VERBOSE = 0
                 cmp  x0, 3000
-                ble  Thread_Think.dont_print_pv
+                ble  .dont_print_pv
         end if
                 mov  w1, w25
-                ldr  w2, [sp, Thread_Think.alpha]
-                ldr  w8, [sp, Thread_Think.beta]
+                ldr  w2, [sp, .alpha]
+                ldr  w8, [sp, .beta]
                 mov  x9, x0
-                ldr  w10, [sp, Thread_Think.multiPV]
+                ldr  w10, [sp, .multiPV]
                  bl  DisplayInfo_Uci
 
-Thread_Think.dont_print_pv:
+.dont_print_pv:
 	; In case of failing low/high increase aspiration window and re-search, otherwise exit the loop.
-                ldr  w8, [sp, Thread_Think.alpha]
-                ldr  w9, [sp, Thread_Think.beta]
-                ldr  w0, [sp, Thread_Think.delta]
+                ldr  w8, [sp, .alpha]
+                ldr  w9, [sp, .beta]
+                ldr  w0, [sp, .delta]
                 mov  w10, w0
                 asr  w2, w0, 31
                 and  w2, w2, 3
@@ -245,38 +247,38 @@ Thread_Think.dont_print_pv:
 	; eax = (alpha + beta) / 2
                 mov  w2, w22
                 cmp  w22, w8
-                ble  Thread_Think.fail_low
+                ble  .fail_low
                 cmp  w22, w9
-                blt  Thread_Think.search_done
+                blt  .search_done
 
-Thread_Think.fail_high:
-                ldr  w4, [sp, Thread_Think.delta]
+.fail_high:
+                ldr  w4, [sp, .delta]
                 add  w2, w2, w4
                 mov  w1, VALUE_INFINITE
                 cmp  w2, w1
                csel  w2, w1, w2, gt
-                str  w2, [sp, Thread_Think.beta]
-                str  w10, [sp, Thread_Think.delta]
-                  b  Thread_Think.search_loop
+                str  w2, [sp, .beta]
+                str  w10, [sp, .delta]
+                  b  .search_loop
 
-Thread_Think.fail_low:
-                ldr  w4, [sp, Thread_Think.delta]
+.fail_low:
+                ldr  w4, [sp, .delta]
                 sub  w2, w2, w4
                 mov  w1, -VALUE_INFINITE
                 cmp  w2, w1
                csel  w2, w1, w2, lt
-                str  w2, [sp, Thread_Think.alpha]
-                str  w0, [sp, Thread_Think.beta]
-                str  w10, [sp, Thread_Think.delta]
+                str  w2, [sp, .alpha]
+                str  w0, [sp, .beta]
+                str  w10, [sp, .delta]
                 ldr  w4, [x20, -Thread.rootPos + Thread.idx]
-               cbnz  w4, Thread_Think.search_loop
+               cbnz  w4, .search_loop
                 mov  w4, -1
                strb  w4, [x20, -Thread.rootPos + Thread.failedLow]
                 lea  x6, signals
                strb  wzr, [x6, Signals.stopOnPonderhit]
-                  b  Thread_Think.search_loop
+                  b  .search_loop
 
-Thread_Think.search_done:
+.search_done:
         ; Sort the PV lines searched so far and update the GUI
                 mov  w4, sizeof.RootMove
                 mul  w2, w24, w4
@@ -285,7 +287,7 @@ Thread_Think.search_done:
                 add  x2, x2, x1
                  bl  RootMovesVec_StableSort
                 ldr  w4, [x20, -Thread.rootPos + Thread.idx]
-               cbnz  w4, Thread_Think.multipv_loop
+               cbnz  w4, .multipv_loop
                  bl  Os_GetTime
                 mov  x9, x0
                 lea  x6, time
@@ -294,25 +296,25 @@ Thread_Think.search_done:
 
                 lea  x6, signals
                ldrb  w4, [x6, Signals.stop]
-               cbnz  w4, Thread_Think.print_pv2
+               cbnz  w4, .print_pv2
                 add  w0, w24, 1
-                ldr  w4, [sp, Thread_Think.multiPV]
+                ldr  w4, [sp, .multiPV]
                 cmp  w0, w4
-                beq  Thread_Think.print_pv2
+                beq  .print_pv2
         if VERBOSE < 2
                 cmp  x9, 3000
-                ble  Thread_Think.multipv_loop
+                ble  .multipv_loop
         end if
 
-Thread_Think.print_pv2:
+.print_pv2:
                 mov  w1, w25
-                ldr  w2, [sp, Thread_Think.alpha]
-                ldr  w8, [sp, Thread_Think.beta]
-                ldr  w10, [sp, Thread_Think.multiPV]
+                ldr  w2, [sp, .alpha]
+                ldr  w8, [sp, .beta]
+                ldr  w10, [sp, .multiPV]
                  bl  DisplayInfo_Uci
-                  b  Thread_Think.multipv_loop
+                  b  .multipv_loop
 
-Thread_Think.multipv_done:
+.multipv_done:
                 lea  x6, signals
                 add  x7, x20, -Thread.rootPos
                ldrb  w0, [x6, Signals.stop]
@@ -320,7 +322,7 @@ Thread_Think.multipv_done:
                 str  w25, [x7, Thread.completedDepth]
         @@:
                 ldr  w4, [x7, Thread.idx]
-               cbnz  w4, Thread_Think.id_loop
+               cbnz  w4, .id_loop
 
         ; If skill level is enabled and time is up, pick a sub-optimal best move
 	        ; not implemented
@@ -332,13 +334,13 @@ Thread_Think.multipv_done:
 
                 lea  x6, limits
                ldrb  w0, [x6, Limits.useTimeMgmt]
-                cbz  w0, Thread_Think.id_loop
+                cbz  w0, .id_loop
 
                 lea  x6, signals
                ldrb  w0, [x6, Signals.stop]
                ldrb  w4, [x6, Signals.stopOnPonderhit]
                 orr  w0, w0, w4
-               cbnz  w0, Thread_Think.handle_easymove
+               cbnz  w0, .handle_easymove
 
                  bl  Os_GetTime
                 lea  x6, time
@@ -382,7 +384,7 @@ Thread_Think.multipv_done:
                 mov  w9, 0
                 cmp  w11, w0
                 bls  @f
-                ldr  w4, [sp, Thread_Think.easyMove]
+                ldr  w4, [sp, .easyMove]
                 cmp  w1, w4
                 bne  @f
                 lea  x6, constd._0p03
@@ -404,49 +406,49 @@ Thread_Think.multipv_done:
                 add  x8, x8, sizeof.RootMove
                 ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
                 cmp  x8, x4
-                beq  Thread_Think.set_stop
+                beq  .set_stop
               fcmpe  d0, d1
-                bpl  Thread_Think.set_stop
+                bpl  .set_stop
 
                strb  w9, [x20, -Thread.rootPos + Thread.easyMovePlayed]
-                cbz  w9, Thread_Think.handle_easymove
+                cbz  w9, .handle_easymove
 
-Thread_Think.set_stop:
+.set_stop:
                 lea  x6, limits
                 lea  x7, signals
                 mov  w4, -1
                ldrb  w0, [x6, Limits.ponder]
                cbnz  w0, @f
                strb  w4, [x7, Signals.stop]
-                  b  Thread_Think.handle_easymove
+                  b  .handle_easymove
         @@:
                strb  w4, [x7, Signals.stopOnPonderhit]
 
-Thread_Think.handle_easymove:
+.handle_easymove:
                 ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
                 ldr  w0, [x1, RootMove.pvSize]
                 cmp  w0, 3
                 blo  @f
                  bl  EasyMoveMng_Update
-                  b  Thread_Think.id_loop
+                  b  .id_loop
         @@:
                  bl  EasyMoveMng_Clear
-                  b  Thread_Think.id_loop
+                  b  .id_loop
 
-Thread_Think.id_loop_done:
+.id_loop_done:
                ldrb  w0, [x20, -Thread.rootPos + Thread.easyMovePlayed]
                 lea  x6, easyMoveMng
                 ldr  w1, [x6, EasyMoveMng.stableCnt]
                 ldr  w4, [x20, -Thread.rootPos + Thread.idx]
-               cbnz  w4, Thread_Think.done
+               cbnz  w4, .done
                 cmp  w1, 6
                 blo  @f
-                cbz  w0, Thread_Think.done
+                cbz  w0, .done
         @@:
                  bl  EasyMoveMng_Clear
 
-Thread_Think.done:
-                add  sp, sp, Thread_Think.localsize
+.done:
+                add  sp, sp, .localsize
                 ldp  x24, x25, [sp], 16
                 ldp  x27, x23, [sp], 16
                 ldp  x21, x26, [sp], 16

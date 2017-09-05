@@ -687,7 +687,7 @@ UciSetOption:
 	       test   eax, eax
 		jnz   .CheckValue
 
-if USE_SYZYGY
+if USE_SYZYGY = 1
 		lea   rcx, [sz_syzygypath]
 	       call   CmpStringCaseless
 		lea   rbx, [.SyzygyPath]
@@ -729,7 +729,7 @@ end if
 	       test   eax, eax
 		jnz   .HashLoad
 
-if USE_BOOK
+if USE_BOOK = 1
 		lea   rcx, [sz_bookfile]
 	       call   CmpStringCaseless
 		lea   rbx, [.BookFile]
@@ -755,7 +755,7 @@ if USE_BOOK
                 jnz   .CheckValue
 end if
 
-if USE_WEAKNESS
+if USE_WEAKNESS = 1
 		lea   rcx, [sz_uci_limitstrength]
 	       call   CmpStringCaseless
 		lea   rbx, [.UciLimitStrength]
@@ -769,7 +769,7 @@ if USE_WEAKNESS
 		jnz   .CheckValue
 end if
 
-if USE_VARIETY
+if USE_VARIETY = 1
 		lea   rcx, [sz_variety]
 	       call   CmpStringCaseless
 		lea   rbx, [.Variety]
@@ -882,7 +882,7 @@ end if
                call   PrintString
 		jmp   UciWriteOut_NewLine
 
-if USE_SYZYGY
+if USE_SYZYGY = 1
 .SyzygyPath:
         ; if path is <empty>, send NULL to init
                 lea   rcx, [sz_empty]
@@ -985,7 +985,7 @@ end if
 		mov   dword[options.moveOverhead], eax
 		jmp   UciGetInput
 
-if USE_SYZYGY
+if USE_SYZYGY = 1
 .SyzygyProbeDepth:
 	       call   ParseInteger
       ClampUnsigned   eax, 1, 100
@@ -1002,7 +1002,7 @@ if USE_SYZYGY
 		jmp   UciGetInput
 end if
 
-if USE_BOOK
+if USE_BOOK = 1
 .BookFile:
 	       call   Book_Load
 		jmp   UciGetInput
@@ -1022,7 +1022,7 @@ if USE_BOOK
 end if
 
 
-if USE_WEAKNESS
+if USE_WEAKNESS = 1
 .UciLimitStrength:
 	       call   ParseBoole
 		mov   byte[weakness.enabled], al
@@ -1035,9 +1035,9 @@ if USE_WEAKNESS
 		jmp   UciGetInput
 end if
 
-if USE_VARIETY
+if USE_VARIETY = 1
 .Variety:
-	       call   ParseInteger
+               call   ParseInteger
       ClampUnsigned   eax, 0, 40
                 lea   ecx, [rax+1]
                 mov   dword[options.varietyMod], ecx
@@ -1046,7 +1046,7 @@ if USE_VARIETY
                 mov   ecx, 100
                idiv   ecx
                 mov   dword[options.varietyBound], eax
-		jmp   UciGetInput
+                jmp   UciGetInput
 end if
 
 

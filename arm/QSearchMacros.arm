@@ -464,6 +464,29 @@ Display 2, "QSearch<0,0>(alpha=%i1, beta=%i2, depth=%i8) called%n"
 .MovePickDone:
                 ldr  x9, [x21, State.key]
                 ldr  w27, [sp, .bestValue]
+
+  if USE_VARIETY = 1
+                add  x7, x20, -Thread.rootPos
+                ldr  x0, [x7, Thread.randSeed]
+                mov  x2, 0xdd1d
+                eor  x0, x0, x0, lsr 12
+               movk  x2, 0x4f6c, lsl 16
+                eor  x0, x0, x0, lsl 25
+               _lea  x6, options
+                eor  x0, x0, x0, lsr 27
+                str  x0, [x7, Thread.randSeed]
+                mul  w0, w0, w2
+                ldr  w1, [x6, Options.varietyMod]
+               sdiv  w2, w0, w1
+               msub  w2, w2, w1, w0
+                add  w2, w2, w27
+                ldr  w4, [x6, Options.varietyBound]
+                cmp  w27, w4
+               csel  w27, w2, w27, ge
+  end if
+
+
+
                 mov  w4, VALUE_MATE_IN_MAX_PLY
                 add  w1, w27, w4
   if InCheck = 1

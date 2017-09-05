@@ -1,7 +1,7 @@
 
 Math_Rand_i:
 	; in: rcx address of Prng
-	; out: rax  integer in [0,2^64)
+	; out: rax  integer in (0,2^64)
 		mov   rax, qword[rcx]
 		mov   rdx, rax
 		shr   rdx, 12

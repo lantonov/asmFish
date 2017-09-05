@@ -1,39 +1,11 @@
 
-;macro QSearch NT, InCheck {
 macro QSearch PvNode, InCheck
-	; in:
-	;  rbp: address of Pos struct in thread struct
-	;  rbx: address of State
-	;  ecx: alpha
-	;  edx: beta
-	;  r8d: depth
-
-;jmp _Evaluate
-
-;match =_PV_NODE, NT \{
-; match =1, InCheck \\{
-;   ProfileInc QSearch_PV_TRUE
-; \\}
-; match =0, InCheck \\{
-;   ProfileInc QSearch_PV_FALSE
-; \\}
-;
-; .PvNode equ 1
-; \}
-;
-;match =_NONPV_NODE, NT \{
-; match =1, InCheck \\{
-;   ProfileInc QSearch_NONPV_TRUE
-; \\}
-; match =0, InCheck \\{
-;   ProfileInc QSearch_NONPV_FALSE
-; \\}
-;
-; .PvNode equ 0
-;\}
-
-
-
+        ; in:
+        ;  rbp: address of Pos struct in thread struct
+        ;  rbx: address of State
+        ;  ecx: alpha
+        ;  edx: beta
+        ;  r8d: depth
 
 
 virtual at rsp
@@ -498,173 +470,164 @@ end if
 		jmp   .FailHighValueToTTRet
 
 
-
 .MovePickDone:
-		mov   r9, qword[rbx+State.key]
-		mov   edi, dword[.bestValue]
+                mov   r9, qword[rbx+State.key]
+                mov   edi, dword[.bestValue]
 
-if USE_VARIETY
-		mov   rax, qword[rbp-Thread.rootPos+Thread.randSeed]
-		mov   rdx, rax
-		shr   rdx, 12
-		xor   rax, rdx
-		mov   rdx, rax
-		shl   rdx, 25
-		xor   rax, rdx
-		mov   rdx, rax
-		shr   rdx, 27
-		xor   rax, rdx
-		mov   edx, 2685821657736338717 and 0x0FFFFFFFF
-		mov   qword[rbp-Thread.rootPos+Thread.randSeed], rax
-	        mul   edx
+  if USE_VARIETY = 1
+                mov   rax, qword[rbp-Thread.rootPos+Thread.randSeed]
+                mov   rdx, rax
+                shr   rdx, 12
+                xor   rax, rdx
+                mov   rdx, rax
+                shl   rdx, 25
+                xor   rax, rdx
+                mov   rdx, rax
+                shr   rdx, 27
+                xor   rax, rdx
+                mov   edx, 2685821657736338717 and 0x0FFFFFFFF
+                mov   qword[rbp-Thread.rootPos+Thread.randSeed], rax
+                mul   edx
                 cdq
                idiv   dword[options.varietyMod]         ; varietyMod = 1 + variety
                 add   edx, edi
                 cmp   edi, dword[options.varietyBound]  ; varietyBound = - variety * PawnValueEg / 100
              cmovge   edi, edx
-end if
+  end if
 
-		lea   ecx, [rdi+VALUE_MATE_IN_MAX_PLY]
+                lea   ecx, [rdi+VALUE_MATE_IN_MAX_PLY]
 
-	if InCheck = 1
-	      movzx   eax, byte[rbx+State.ply]
-		sub   eax, VALUE_MATE
-		cmp   edi, -VALUE_INFINITE
-		 je   .Return
-	end if
+  if InCheck = 1
+              movzx   eax, byte[rbx+State.ply]
+                sub   eax, VALUE_MATE
+                cmp   edi, -VALUE_INFINITE
+                 je   .Return
+  end if
 
-	if PvNode = 1
-		mov   esi, dword[.oldAlpha]
-		sub   esi, edi
-		sar   esi, 31
-	end if
-		mov   r8, qword[.tte]
-		shr   r9, 48
-		mov   edx, edi
-		cmp   ecx, 2*VALUE_MATE_IN_MAX_PLY
-		jae   .ValueToTT
-     .ValueToTTRet:
+  if PvNode = 1
+                mov   esi, dword[.oldAlpha]
+                sub   esi, edi
+                sar   esi, 31
+  end if
+                mov   r8, qword[.tte]
+                shr   r9, 48
+                mov   edx, edi
+                cmp   ecx, 2*VALUE_MATE_IN_MAX_PLY
+                jae   .ValueToTT
+.ValueToTTRet:
 
 
-	if PvNode = 0
-		mov   eax, dword[.bestMove]
+  if PvNode = 0
+                mov   eax, dword[.bestMove]
       MainHash_Save   .ltte, r8, r9w, edx, BOUND_UPPER, byte[.ttDepth], eax, word[rbx+State.staticEval]
-	else
-		mov   eax, dword[.bestMove]
-		and   esi, BOUND_EXACT-BOUND_UPPER
-		add   esi, BOUND_UPPER
+  else
+                mov   eax, dword[.bestMove]
+                and   esi, BOUND_EXACT-BOUND_UPPER
+                add   esi, BOUND_UPPER
       MainHash_Save   .ltte, r8, r9w, edx, sil, byte[.ttDepth], eax, word[rbx+State.staticEval]
-	end if
-		mov   eax, edi
+  end if
+                mov   eax, edi
 
-	     calign   8
+             calign   8
 .Return:
-
 Display 2, "QSearch returning %i0%n"
+                add   rsp, .localsize
+                pop   r15 r14 r13 r12 rdi rsi rbx
+                ret
 
-		add   rsp, .localsize
-		pop   r15 r14 r13 r12 rdi rsi rbx
-		ret
 
+  if InCheck = 0
 
-    if InCheck = 0
-
-	     calign   8
+             calign   8
 .CheckAdvancedPawnPush:
-		and   edx, 7
-		shr   r8d, 3
-		xor   edx, r8d
-		cmp   edx, 4
-		 jb   .DoFutilityPruning
-		jmp   .SkipFutilityPruning
+                and   edx, 7
+                shr   r8d, 3
+                xor   edx, r8d
+                cmp   edx, 4
+                 jb   .DoFutilityPruning
+                jmp   .SkipFutilityPruning
 
-	     calign   8
+             calign   8
 .ContinueFromFutilityBase:
-		mov   edx, 1
-	       call   SeeTestGe
-		mov   ecx, dword[.move]
-		mov   edx, r12d
-	       test   eax, eax
-		jnz   .SkipFutilityPruning
+                mov   edx, 1
+               call   SeeTestGe
+                mov   ecx, dword[.move]
+                mov   edx, r12d
+               test   eax, eax
+                jnz   .SkipFutilityPruning
 
-
-	     calign   8
+             calign   8
 .ContinueFromFutilityValue:
-		cmp   edi, edx
-	      cmovl   edi, edx
-		mov   dword[.bestValue], edi
-		jmp   .MovePickLoop
+                cmp   edi, edx
+              cmovl   edi, edx
+                mov   dword[.bestValue], edi
+                jmp   .MovePickLoop
+  end if
 
-    end if
-
-
-	     calign   8
+             calign   8
 .AbortSearch_PlyBigger:
-		xor   eax, eax
-		cmp   rax, qword[rbx+State.checkersBB]
-		jne   .Return
-	       call   Evaluate
-		jmp   .Return
+                xor   eax, eax
+                cmp   rax, qword[rbx+State.checkersBB]
+                jne   .Return
+               call   Evaluate
+                jmp   .Return
 
-	     calign   8
+             calign   8
 .AbortSearch_PlySmaller:
-		xor   eax, eax
-		jmp   .Return
+                xor   eax, eax
+                jmp   .Return
 
-
-	     calign   8
+             calign   8
 .ReturnStaticValue:
-		mov   r8, qword[.tte]
-		mov   r9, qword[rbx+State.key]
-		shr   r9, 48
-		mov   edx, eax
-	       test   r13d, r13d
-		jnz   .Return
-		add   eax, VALUE_MATE_IN_MAX_PLY
-		cmp   eax, 2*VALUE_MATE_IN_MAX_PLY
-		jae   .ReturnStaticValue_ValueToTT
- .ReturnStaticValue_ValueToTTRet:
+                mov   r8, qword[.tte]
+                mov   r9, qword[rbx+State.key]
+                shr   r9, 48
+                mov   edx, eax
+               test   r13d, r13d
+                jnz   .Return
+                add   eax, VALUE_MATE_IN_MAX_PLY
+                cmp   eax, 2*VALUE_MATE_IN_MAX_PLY
+                jae   .ReturnStaticValue_ValueToTT
+.ReturnStaticValue_ValueToTTRet:
       MainHash_Save   .ltte, r8, r9w, edx, BOUND_LOWER, DEPTH_NONE, 0, word[rbx+State.staticEval]
-		mov   eax, dword[.bestValue]
-		jmp   .Return
+                mov   eax, dword[.bestValue]
+                jmp   .Return
 
- .ReturnStaticValue_ValueToTT:
-	      movzx   ecx, byte[rbx+State.ply]
-		mov   eax, edx
-		sar   eax, 31
-		xor   ecx, eax
-		sub   edx, eax
-		add   edx, ecx
-		jmp   .ReturnStaticValue_ValueToTTRet
+.ReturnStaticValue_ValueToTT:
+              movzx   ecx, byte[rbx+State.ply]
+                mov   eax, edx
+                sar   eax, 31
+                xor   ecx, eax
+                sub   edx, eax
+                add   edx, ecx
+                jmp   .ReturnStaticValue_ValueToTTRet
 
-
-	     calign   8
+             calign   8
 .ValueFromTT:
-	; value in edi is not VALUE_NONE
-	      movzx   r8d, byte[rbx+State.ply]
-		mov   r9d, edi
-		sar   r9d, 31
-		xor   r8d, r9d
-		add   edi, r9d
-		sub   edi, r8d
-		mov   dword[.ttValue], edi
-		mov   eax, edi
-		sub   eax, dword[.beta]
-		sar   eax, 31
-		jmp   .ValueFromTTRet
+        ; value in edi is not VALUE_NONE
+              movzx   r8d, byte[rbx+State.ply]
+                mov   r9d, edi
+                sar   r9d, 31
+                xor   r8d, r9d
+                add   edi, r9d
+                sub   edi, r8d
+                mov   dword[.ttValue], edi
+                mov   eax, edi
+                sub   eax, dword[.beta]
+                sar   eax, 31
+                jmp   .ValueFromTTRet
 
-	     calign   8
+             calign   8
 .ValueToTT:
-	      movzx   edx, byte[rbx+State.ply]
-		mov   eax, edi
-		sar   eax, 31
-		xor   edx, eax
-		sub   edx, eax
-		add   edx, edi
-		jmp   .ValueToTTRet
+              movzx   edx, byte[rbx+State.ply]
+                mov   eax, edi
+                sar   eax, 31
+                xor   edx, eax
+                sub   edx, eax
+                add   edx, edi
+                jmp   .ValueToTTRet
 
-
-	     calign   8
+             calign   8
 .CheckDraw_Cold:
      PosIsDraw_Cold   .AbortSearch_PlySmaller, .CheckDraw_ColdRet
 

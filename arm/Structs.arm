@@ -180,21 +180,36 @@ Limits.moveVecSize = 1*sizeof.rb + 1*sizeof.rb + Limits.useTimeMgmt
 Limits.moveVec = 1*sizeof.rd + Limits.moveVecSize
 sizeof.Limits = MAX_MOVES*sizeof.rw + Limits.moveVec
 
-Options.___ = 0
-Options.hash = 0 + Options.___
-Options.threads = 1*sizeof.rd + Options.hash
-Options.largePages = 1*sizeof.rd + Options.threads
-Options.changed = 1*sizeof.rb + Options.largePages
-Options.multiPV = 1*sizeof.rb + 2*sizeof.rb + Options.changed
-Options.chess960 = 1*sizeof.rd + Options.multiPV
-Options.moveOverhead = 1*sizeof.rd + 1*sizeof.rd + 1*sizeof.rd + Options.chess960
-Options.contempt = 1*sizeof.rd + Options.moveOverhead
-Options.ponder = 1*sizeof.rd + Options.contempt
-Options.displayInfoMove = 1*sizeof.rb + Options.ponder
-Options.syzygy50MoveRule = 1*sizeof.rb + 1*sizeof.rb + Options.displayInfoMove
-Options.syzygyProbeDepth = 1*sizeof.rb + Options.syzygy50MoveRule
-Options.syzygyProbeLimit = 1*sizeof.rd + Options.syzygyProbeDepth
-sizeof.Options = 1*sizeof.rd + Options.syzygyProbeLimit
+struct Options
+ hash	    rd 1
+ threads    rd 1
+ largePages rb 1     ; bool 0 or -1
+ changed    rb 1     ; have hash or threads changed?
+	    rb 2
+ multiPV    rd 1
+ chess960	rd 1
+                rd 1
+                rd 1
+ moveOverhead	rd 1
+ contempt	  rd 1
+ ponder 	  rb 1
+ displayInfoMove  rb 1	    ; should we display pv info and best move?
+		  rb 1
+ syzygy50MoveRule rb 1	    ; bool 0 or -1
+ syzygyProbeDepth rd 1
+ syzygyProbeLimit rd 1
+if USE_VARIETY = 1
+ varietyMod   rd 1
+ varietyBound rd 1
+              rq 1
+end if
+; hashPath	rq 1
+; hashPathSizeB	rq 1
+; hashPathBuffer rq 14
+ends
+
+
+
 
 EasyMoveMng.___ = 0
 EasyMoveMng.expectedPosKey = 0 + EasyMoveMng.___
@@ -224,42 +239,91 @@ sizeof.Mutex = 0 + 1*sizeof.rd + 1*sizeof.rd + 1*sizeof.rq + Mutex.___
 ConditionalVariable.___ = 0
 sizeof.ConditionalVariable = 0 + 1*sizeof.rd + 1*sizeof.rd + 1*sizeof.rq + ConditionalVariable.___
 
-Thread.___ = 0
-Thread.mutex = 0 + Thread.___
-Thread.sleep1 = 1*sizeof.Mutex + Thread.mutex
-Thread.sleep2 = 1*sizeof.ConditionalVariable + Thread.sleep1
-Thread.threadHandle = 1*sizeof.ConditionalVariable + Thread.sleep2
-Thread.numaNode = 1*sizeof.ThreadHandle + Thread.threadHandle
-Thread.bestMoveChanges = 1*sizeof.rq + Thread.numaNode
-Thread.PVIdx = 1*sizeof.rq + Thread.bestMoveChanges
-Thread.previousScore = 1*sizeof.rd + Thread.PVIdx
-Thread.completedDepth = 1*sizeof.rd + Thread.previousScore
-Thread.callsCnt = 1*sizeof.rd + Thread.completedDepth
-Thread.resetCnt = 1*sizeof.rd + Thread.callsCnt
-Thread.searching = 1*sizeof.rd + 1*sizeof.rd + Thread.resetCnt
-Thread.exit = 1*sizeof.rb + Thread.searching
-Thread.failedLow = 1*sizeof.rb + Thread.exit
-Thread.easyMovePlayed = 1*sizeof.rb + Thread.failedLow
-Thread.selDepth = 1*sizeof.rb + 1*sizeof.rb + 1*sizeof.rb + Thread.easyMovePlayed
-Thread.nodes = 1*sizeof.rb + 1*sizeof.rb + Thread.selDepth
-Thread.tbHits = 1*sizeof.rq + Thread.nodes
-Thread.idx = 1*sizeof.rq + Thread.tbHits
-Thread.rootDepth = 1*sizeof.rd + Thread.idx
-Thread.castling_start = 1*sizeof.rd + Thread.rootDepth
-Thread.castling_rfrom = 0*sizeof.rb + Thread.castling_start
-Thread.castling_rto = 4*sizeof.rb + Thread.castling_rfrom
-Thread.castling_path = 4*sizeof.rb + Thread.castling_rto
-Thread.castling_ksqpath = 4*sizeof.rq + Thread.castling_path
-Thread.castling_knights = 4*8*sizeof.rb + Thread.castling_ksqpath
-Thread.castling_kingpawns = 4*sizeof.rq + Thread.castling_knights
-Thread.castling_movgen = 4*sizeof.rq + Thread.castling_kingpawns
-Thread.castling_rightsMask = 4*sizeof.rd + Thread.castling_movgen
-Thread.castling_end = 64*sizeof.rb + Thread.castling_rightsMask
-Thread.rootPos = 0*sizeof.rb + Thread.castling_end
-sizeof.Thread = 1*sizeof.Pos + Thread.rootPos
+;Thread.___ = 0
+;Thread.mutex = 0 + Thread.___
+;Thread.sleep1 = 1*sizeof.Mutex + Thread.mutex
+;Thread.sleep2 = 1*sizeof.ConditionalVariable + Thread.sleep1
+;Thread.threadHandle = 1*sizeof.ConditionalVariable + Thread.sleep2
+;Thread.numaNode = 1*sizeof.ThreadHandle + Thread.threadHandle
+;Thread.bestMoveChanges = 1*sizeof.rq + Thread.numaNode
+;Thread.PVIdx = 1*sizeof.rq + Thread.bestMoveChanges
+;Thread.previousScore = 1*sizeof.rd + Thread.PVIdx
+;Thread.completedDepth = 1*sizeof.rd + Thread.previousScore
+;Thread.callsCnt = 1*sizeof.rd + Thread.completedDepth
+;Thread.resetCnt = 1*sizeof.rd + Thread.callsCnt
+;Thread.searching = 1*sizeof.rd + 1*sizeof.rd + Thread.resetCnt
+;Thread.exit = 1*sizeof.rb + Thread.searching
+;Thread.failedLow = 1*sizeof.rb + Thread.exit
+;Thread.easyMovePlayed = 1*sizeof.rb + Thread.failedLow
+;Thread.selDepth = 1*sizeof.rb + 1*sizeof.rb + 1*sizeof.rb + Thread.easyMovePlayed
+;Thread.nodes = 1*sizeof.rb + 1*sizeof.rb + Thread.selDepth
+;Thread.tbHits = 1*sizeof.rq + Thread.nodes
+;Thread.idx = 1*sizeof.rq + Thread.tbHits
+;Thread.rootDepth = 1*sizeof.rd + Thread.idx
+;Thread.castling_start = 1*sizeof.rd + Thread.rootDepth
+;Thread.castling_rfrom = 0*sizeof.rb + Thread.castling_start
+;Thread.castling_rto = 4*sizeof.rb + Thread.castling_rfrom
+;Thread.castling_path = 4*sizeof.rb + Thread.castling_rto
+;Thread.castling_ksqpath = 4*sizeof.rq + Thread.castling_path
+;Thread.castling_knights = 4*8*sizeof.rb + Thread.castling_ksqpath
+;Thread.castling_kingpawns = 4*sizeof.rq + Thread.castling_knights
+;Thread.castling_movgen = 4*sizeof.rq + Thread.castling_kingpawns
+;Thread.castling_rightsMask = 4*sizeof.rd + Thread.castling_movgen
+;Thread.castling_end = 64*sizeof.rb + Thread.castling_rightsMask
+;Thread.rootPos = 0*sizeof.rb + Thread.castling_end
+;sizeof.Thread = 1*sizeof.Pos + Thread.rootPos
+
+struct Thread
+ mutex		 rb sizeof.Mutex
+ sleep1 	 rb sizeof.ConditionalVariable
+ sleep2 	 rb sizeof.ConditionalVariable
+ threadHandle	 rb sizeof.ThreadHandle
+if USE_VARIETY = 1
+ randSeed     rq 1
+              rq 1
+end if
+ numaNode	 rq 1
+ bestMoveChanges rq 1
+ PVIdx		 rd 1
+ previousScore	 rd 1
+ completedDepth  rd 1
+ callsCnt	 rd 1
+ resetCnt	 rd 1
+		 rd 1
+ searching	  rb 1
+ exit		  rb 1
+ failedLow	  rb 1
+ easyMovePlayed   rb 1
+		  rb 1
+		  rb 1
+ selDepth         rb 1
+		  rb 1
+ nodes		rq 1
+ tbHits 	rq 1
+ idx		rd 1
+ rootDepth	rd 1
+
+ castling_start rb 0
+ castling_rfrom      rb 4
+ castling_rto	     rb 4
+ castling_path	     rq 4
+ castling_ksqpath    rb 4*8
+ castling_knights    rq 4
+ castling_kingpawns  rq 4
+ castling_movgen     rd 4       ; these are the four castling moves
+ castling_rightsMask rb 64
+ castling_end rb 0
+
+ rootPos	 rb sizeof.Pos
+ends
+
 if Thread.rootPos and 15
  err "Thread.rootPos is not divisible by 16"
 end if
+
+
+
+
 
 NumaNode.___ = 0
 NumaNode.nodeNumber = 0 + NumaNode.___

@@ -1,38 +1,37 @@
 
 ThreadIdxToNode:
-; in: ecx index (n) of thread
-; out: rax address of numa noda
-
-		mov   r8d, dword[threadPool.coreCnt]
-		mov   r9d, dword[threadPool.nodeCnt]
-		lea   r10, [threadPool.nodeTable]
-		mov   eax, ecx
-		xor   edx, edx
-		div   r8d
-		xor   eax, eax
-		cmp   r8d, 1
-		 je   .Return
-		cmp   ecx, r8d
-		jae   .MoreThreadsThanCores
-	       imul   ecx, r9d, sizeof.NumaNode
-.NextNode:	sub   edx, dword[r10+rax+NumaNode.coreCnt]
-		 js   .Return
-		add   eax, sizeof.NumaNode
-		cmp   eax, ecx
-		 jb   .NextNode
-	; shouldn't get here
-	; just return first node
-		xor   eax, eax
+        ; in: ecx index (n) of thread
+        ; out: rax address of numa noda
+                mov   r8d, dword[threadPool.coreCnt]
+                mov   r9d, dword[threadPool.nodeCnt]
+                lea   r10, [threadPool.nodeTable]
+                mov   eax, ecx
+                xor   edx, edx
+                div   r8d
+                xor   eax, eax
+                cmp   r8d, 1
+                 je   .Return
+                cmp   ecx, r8d
+                jae   .MoreThreadsThanCores
+               imul   ecx, r9d, sizeof.NumaNode
+.NextNode:
+                sub   edx, dword[r10+rax+NumaNode.coreCnt]
+                 js   .Return
+                add   eax, sizeof.NumaNode
+                cmp   eax, ecx
+                 jb   .NextNode
+        ; shouldn't get here
+        ; just return first node
+                xor   eax, eax
 .Return:
-		add   rax, r10
-		ret
-
+                add   rax, r10
+                ret
 .MoreThreadsThanCores:
-		mov   eax, edx
-		xor   edx, edx
-		div   r9d
-	       imul   eax, edx, sizeof.NumaNode
-		jmp   .Return
+                mov   eax, edx
+                xor   edx, edx
+                div   r9d
+               imul   eax, edx, sizeof.NumaNode
+                jmp   .Return
 
 
 
@@ -63,10 +62,11 @@ Thread_Create:
                 mov   dword[rbx+Thread.callsCnt], eax   ;  ThreadPool_StartThinking
 		mov   dword[rbx+Thread.idx], esi
 		mov   qword[rbx+Thread.numaNode], rdi
-if USE_VARIETY
+if USE_VARIETY = 1
                call   Os_GetTime
                 xor   rax, rdx
                  or   rax, 1
+mov rax, 1
                 mov   qword[rbx+Thread.randSeed], rax
 end if
 

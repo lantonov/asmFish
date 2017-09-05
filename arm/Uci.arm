@@ -1,36 +1,39 @@
 Options_Init:
-        lea  x1, options
-        mov  w0, -1
-       strb  w0, [x1, Options.displayInfoMove]
-        mov  w0, 0
-        str  w0, [x1, Options.contempt]
-        mov  w0, 1
-        str  w0, [x1, Options.threads]
-        mov  w0, 16
-        str  w0, [x1, Options.hash]
-        mov  w0, 0
-       strb  w0, [x1, Options.ponder]
-        mov  w0, 1
-	str  w0, [x1, Options.multiPV]
-        mov  w0, 30
-	str  w0, [x1, Options.moveOverhead]
-        mov  w0, 0
-       strb  w0, [x1, Options.chess960]
-if USE_SYZYGY
-        mov  w0, 1
-        str  w0, [x1, Options.syzygyProbeDepth]
-        mov  w0, -1
-       strb  w0, [x1, Options.syzygy50MoveRule]
-        mov  w0, 6
-        str  w0, [x1, Options.syzygyProbeLimit]
+               _lea  x1, options
+                mov  w0, -1
+               strb  w0, [x1, Options.displayInfoMove]
+                mov  w0, 0
+                str  w0, [x1, Options.contempt]
+                mov  w0, 1
+                str  w0, [x1, Options.threads]
+                mov  w0, 16
+                str  w0, [x1, Options.hash]
+                mov  w0, 0
+               strb  w0, [x1, Options.ponder]
+                mov  w0, 1
+                str  w0, [x1, Options.multiPV]
+                mov  w0, 30
+                str  w0, [x1, Options.moveOverhead]
+                mov  w0, 0
+               strb  w0, [x1, Options.chess960]
+                mov  w0, 1
+                str  w0, [x1, Options.syzygyProbeDepth]
+                mov  w0, -1
+               strb  w0, [x1, Options.syzygy50MoveRule]
+                mov  w0, 6
+                str  w0, [x1, Options.syzygyProbeLimit]
+                mov  w0, 0
+               strb  w0, [x1, Options.largePages]
+if USE_VARIETY
+                mov  w0, 1
+                str  w0, [x1, Options.varietyMod]
+                str  wzr, [x1, Options.varietyBound]
 end if
-        mov  w0, 0
-       strb  w0, [x1, Options.largePages]
-        ret
+                ret
 
 
 Options_Destroy:
-        ret
+                ret
 
 
 UciLoop:
@@ -621,35 +624,40 @@ UciSetOption.Read:
 
 
 if USE_SYZYGY
-		lea  x1, sz_syzygypath
-	         bl  CmpStringCaseless
-		adr  x21, UciSetOption.SyzygyPath
+               _lea  x1, sz_syzygypath
+                 bl  CmpStringCaseless
+                adr  x21, UciSetOption.SyzygyPath
                cbnz  w0, UciSetOption.CheckValue
 
-		lea  x1, sz_syzygyprobedepth
-	         bl  CmpStringCaseless
-		adr  x21, UciSetOption.SyzygyProbeDepth
+               _lea  x1, sz_syzygyprobedepth
+                 bl  CmpStringCaseless
+                adr  x21, UciSetOption.SyzygyProbeDepth
                cbnz  w0, UciSetOption.CheckValue
 
-		lea  x1, sz_syzygy50moverule
-	         bl  CmpStringCaseless
-		adr  x21, UciSetOption.Syzygy50MoveRule
+               _lea  x1, sz_syzygy50moverule
+                 bl  CmpStringCaseless
+                adr  x21, UciSetOption.Syzygy50MoveRule
                cbnz  w0, UciSetOption.CheckValue
 
-		lea  x1, sz_syzygyprobelimit
-	         bl  CmpStringCaseless
-		adr  x21, UciSetOption.SyzygyProbeLimit
+               _lea  x1, sz_syzygyprobelimit
+                 bl  CmpStringCaseless
+                adr  x21, UciSetOption.SyzygyProbeLimit
                cbnz  w0, UciSetOption.CheckValue
 end if
 
+if USE_VARIETY
+               _lea  x1, sz_variety
+                 bl  CmpStringCaseless
+                adr  x21, UciSetOption.Variety
+               cbnz  w0, UciSetOption.CheckValue
+end if
 
-
-        lea  x27, Output
-        lea  x1, sz_error_option
-         bl  PrintString
-        mov  x1, 64
-         bl  ParseToken
-          b  UciWriteOut_NewLine
+               _lea  x27, Output
+               _lea  x1, sz_error_option
+                 bl  PrintString
+                mov  x1, 64
+                 bl  ParseToken
+                  b  UciWriteOut_NewLine
 
 UciSetOption.Error:
 
@@ -822,7 +830,7 @@ UciSetOption.MoveOverhead:
 
 if USE_SYZYGY
 UciSetOption.SyzygyProbeDepth:
-	         bl   ParseInteger
+                 bl  ParseInteger
                 mov  w4, 1
                 mov  w5, 100
       ClampUnsigned  w0, w4, w5
@@ -830,12 +838,12 @@ UciSetOption.SyzygyProbeDepth:
                 str  w0, [x6, Options.syzygyProbeDepth]
                   b  UciGetInput
 UciSetOption.Syzygy50MoveRule:
-	         bl  ParseBoole
+                 bl  ParseBoole
                 lea  x6, options
                strb  w0, [x6, Options.syzygy50MoveRule]
                   b   UciGetInput
 UciSetOption.SyzygyProbeLimit:
-	         bl  ParseInteger
+                 bl  ParseInteger
                 mov  w4, 0
                 mov  w5, 6
       ClampUnsigned  w0, w4, w5
@@ -844,6 +852,23 @@ UciSetOption.SyzygyProbeLimit:
                   b  UciGetInput
 end if
 
+
+if USE_VARIETY
+UciSetOption.Variety:
+                 bl  ParseInteger
+                mov  w4, 0
+                mov  w5, 40
+      ClampUnsigned  w0, w4, w5
+                add  w1, w0, 1
+               _lea  x6, options
+                str  w1, [x6, Options.varietyMod]
+                mov  w1, -PawnValueEg
+                mul  w0, w0, w1
+                mov  w1, 100
+               sdiv  w0, w0, w1
+                str  w0, [x6, Options.varietyBound]
+                  b  UciGetInput            
+end if
 
 
 UciPerft:

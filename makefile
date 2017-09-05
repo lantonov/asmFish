@@ -1,15 +1,21 @@
 now := $(shell /bin/date "+%Y-%m-%d")
 all:
-	export INCLUDE="arm/include/";./fasmg "arm/fish.arm" "armFishL_$(now)_v8"         -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'v8'"
-	export INCLUDE="x86/include/";./fasmg "x86/fish.asm" "asmFishL_$(now)_popcnt"     -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'"
-	export INCLUDE="x86/include/";./fasmg "x86/fish.asm" "asmFishL_$(now)_bmi2"       -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'bmi2'"
-	export INCLUDE="x86/include/";./fasmg "x86/fish.asm" "asmFishW_$(now)_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'"
-	export INCLUDE="x86/include/";./fasmg "x86/fish.asm" "asmFishW_$(now)_bmi2.exe"   -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'bmi2'"
-	export INCLUDE="x86/include/";./fasmg "x86/fish.asm" "asmFishX_$(now)_base"       -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'base'"
-	export INCLUDE="x86/include/";./fasmg "x86/fish.asm" "asmFishX_$(now)_popcnt"     -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'popcnt'"
-	export INCLUDE="x86/include/";./fasmg "x86/fish.asm" "asmFishX_$(now)_bmi2"       -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'bmi2'"
+	export INCLUDE="arm/include/"; ./fasmg "arm/fish.arm" "armFishL_$(now)_v8"         -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'v8'"
+	export INCLUDE="x86/include/"; ./fasmg "x86/fish.asm" "asmFishL_$(now)_popcnt"     -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'"
+	export INCLUDE="x86/include/"; ./fasmg "x86/fish.asm" "asmFishL_$(now)_bmi2"       -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'bmi2'"
+	export INCLUDE="x86/include/"; ./fasmg "x86/fish.asm" "asmFishW_$(now)_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'"
+	export INCLUDE="x86/include/"; ./fasmg "x86/fish.asm" "asmFishW_$(now)_bmi2.exe"   -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'bmi2'"
+	export INCLUDE="x86/include/"; ./fasmg "x86/fish.asm" "asmFishX_$(now)_base"       -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'base'"
+	export INCLUDE="x86/include/"; ./fasmg "x86/fish.asm" "asmFishX_$(now)_popcnt"     -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'popcnt'"
+	export INCLUDE="x86/include/"; ./fasmg "x86/fish.asm" "asmFishX_$(now)_bmi2"       -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'bmi2'"
 quick:
-	export INCLUDE="arm/include/";./fasmg "arm/fish.arm" "armfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'v8'"
+	export INCLUDE="arm/include/"; ./fasmg "arm/fish.arm" "armfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'v8'";     chmod 755 ./armfish
+	export INCLUDE="x86/include/"; ./fasmg "x86/fish.asm" "asmfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'"; chmod 755 ./asmfish
+bincheck:
+	export INCLUDE="arm/include/"; ./fasmg "arm/fish.arm" "NEWarmfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'v8'"
+	export INCLUDE="x86/include/"; ./fasmg "x86/fish.asm" "NEWasmfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'"
+	diff "NEWarmfish" "armfish"
+	diff "NEWasmfish" "asmfish"
 test:
 	aarch64-linux-gnu-as -o master.o -march=armv8-a+crc+crypto "arm/include/master.arm"
 	aarch64-linux-gnu-ld -o master master.o

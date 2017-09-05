@@ -3,7 +3,7 @@ if VERSION_POST <> 'v8'
     err "only VERSION_POST = 'v8' supported"
 end if
 if VERSION_OS <> 'L'
-    err "only VERSION_POST = 'L' supported"
+    err "only VERSION_OS = 'L' supported"
 end if
 VERSION_PRE = 'armFish'
 
@@ -13,6 +13,9 @@ USE_SYZYGY      = 1
 USE_CURRMOVE    = 1
 USE_HASHFULL    = 1
 USE_CMDLINEQUIT = 1
+
+USE_VARIETY     = 0
+USE_MATEFINDER  = 0
 
 
 ; instruction and format macros
