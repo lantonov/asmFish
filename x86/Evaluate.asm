@@ -60,7 +60,7 @@ macro EvalInit Us
 		 jb   NotUsed
 		mov   r8, r9
                 neg   rax
-	   shift_bb   Down, r8
+	   ShiftBB   Down, r8
                 and   r8, rax
 		 or   r8, r9
 		and   r9, r10
@@ -501,7 +501,7 @@ KingSafetyDoneRet:
 		mov   r9, qword[rbp+Pos.typeBB+8*Pawn]
 		mov   rax, PiecesThem
 		and   rax, r9
-	   shift_bb   Up, r9
+	   ShiftBB   Up, r9
 		and   r9, rax
 		 or   r9, qword[.ei.attackedBy+8*(8*Us+Pawn)]
 		not   r9
@@ -891,8 +891,8 @@ macro EvalThreats Us
 		and   r9, PiecesUs
 		and   r9, PiecesPawn
 		mov   rdx, r9
-	   shift_bb   Right, r9, rcx
-	   shift_bb   Left, rdx, rcx
+	   ShiftBB   Right, r9, rcx
+	   ShiftBB   Left, rdx, rcx
 		 or   r9, rdx
 		and   r9, r8
 	; r9 = safeThreats
@@ -993,10 +993,10 @@ WeakDone:
 
 		mov   rcx, TRank2BB
 		and   rcx, rax
-	   shift_bb   Up, rcx
+	   ShiftBB   Up, rcx
 	      _andn   rdx, r8, rcx
 		 or   rax, rdx
-	   shift_bb   Up, rax
+	   ShiftBB   Up, rax
 
 		mov   rdx, r8
 		not   rdx
@@ -1010,8 +1010,8 @@ WeakDone:
 		and   rax, rdx
 
 		mov   rdx, rax
-	   shift_bb   Left, rax, rcx
-	   shift_bb   Right, rdx, rcx
+	   ShiftBB   Left, rax, rcx
+	   ShiftBB   Right, rdx, rcx
 		 or   rax, rdx
 		and   rax, PiecesThem
 		mov   rcx, qword[.ei.attackedBy+8*(8*Us+Pawn)]
@@ -1502,8 +1502,8 @@ end virtual
 		mov   rdx, rax
 		mov   r13, rax
 	; r13 = all pieces
-	   shift_bb   DELTA_S, rax
-	   shift_bb   DELTA_N, rdx
+	   ShiftBB   DELTA_S, rax
+	   ShiftBB   DELTA_N, rdx
 		and   r8, qword[rbp+Pos.typeBB+8*Pawn]
 		and   r9, qword[rbp+Pos.typeBB+8*Pawn]
 		 or   rax, rcx

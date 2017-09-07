@@ -1,9 +1,7 @@
 macro Search PvNode, RootNode
-
   if RootNode = 1 & PvNode = 0
     err 'bad params to search'
   end if
-
   virtual at 0
     .tte                rq 1
     .ltte               rq 1
@@ -48,1805 +46,1621 @@ macro Search PvNode, RootNode
     .lend               rb 0
   end virtual
   .localsize = (.lend + 15) and -16
-
-                stp  x21, x22, [sp, -16]!
-                stp  x23, x24, [sp, -16]!
-                stp  x25, x26, [sp, -16]!
-                stp  x27, x28, [sp, -16]!
-                stp  x29, x30, [sp, -16]!
-                sub  sp, sp, .localsize
-                str  w1, [sp, .alpha]
-                str  w2, [sp, .beta]
-                str  w8, [sp, .depth]
-               strb  w9, [sp, .cutNode]
-
+            stp  x21, x22, [sp, -16]!
+            stp  x23, x24, [sp, -16]!
+            stp  x25, x26, [sp, -16]!
+            stp  x27, x28, [sp, -16]!
+            stp  x29, x30, [sp, -16]!
+            sub  sp, sp, .localsize
+            str  w1, [sp, .alpha]
+            str  w2, [sp, .beta]
+            str  w8, [sp, .depth]
+           strb  w9, [sp, .cutNode]
 Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
-
-                mov  w0, 0
-                str  w0, [sp, .moveCount]
-                str  w0, [sp, .quietCount]
-                str  w0, [x21, State.moveCount]
-                str  w0, [x21, State.history]
-                mov  w4, -VALUE_INFINITE
-                str  w4, [sp, .bestValue]
-               ldrb  w22, [x21, -1*sizeof.State + State.ply]
-                add  w22, w22, 1
-               strb  w22, [x21, State.ply]
-
+            mov  w0, 0
+            str  w0, [sp, .moveCount]
+            str  w0, [sp, .quietCount]
+            str  w0, [x21, State.moveCount]
+            str  w0, [x21, State.history]
+            mov  w4, -VALUE_INFINITE
+            str  w4, [sp, .bestValue]
+           ldrb  w22, [x21, -1*sizeof.State + State.ply]
+            add  w22, w22, 1
+           strb  w22, [x21, State.ply]
   if PvNode = 1
-                add  x6, x20, -Thread.rootPos
-               ldrb  w0, [x6, Thread.selDepth]
-                cmp  w0, w22
-               csel  w0, w22, w0, lo
-               strb  w0, [x6, Thread.selDepth]
+            add  x6, x20, -Thread.rootPos
+           ldrb  w0, [x6, Thread.selDepth]
+            cmp  w0, w22
+           csel  w0, w22, w0, lo
+           strb  w0, [x6, Thread.selDepth]
   end if        
-
-
-        ; callsCnt counts down as in master
-        ; resetCnt, if nonzero, contains the count to which callsCnt should be reset
-                add  x6, x20, -Thread.rootPos
-                ldr  w0, [x6, Thread.resetCnt]
-                add  x6, x20, -Thread.rootPos
-                ldr  w2, [x6, Thread.callsCnt]
-                cbz  w0, .dontreset
-                mov  w2, w0
-                add  x6, x20, -Thread.rootPos
-                str  wzr, [x6, Thread.resetCnt]
+    ; callsCnt counts down as in master
+    ; resetCnt, if nonzero, contains the count to which callsCnt should be reset
+            add  x6, x20, -Thread.rootPos
+            ldr  w0, [x6, Thread.resetCnt]
+            add  x6, x20, -Thread.rootPos
+            ldr  w2, [x6, Thread.callsCnt]
+            cbz  w0, .dontreset
+            mov  w2, w0
+            add  x6, x20, -Thread.rootPos
+            str  wzr, [x6, Thread.resetCnt]
 .dontreset:
-               subs  w2, w2, 1
-                add  x6, x20, -Thread.rootPos
-                str  w2, [x6, Thread.callsCnt]
-                bpl  .dontchecktime
-                 bl  CheckTime  ; CheckTime sets resetCalls for all threads
+           subs  w2, w2, 1
+            add  x6, x20, -Thread.rootPos
+            str  w2, [x6, Thread.callsCnt]
+            bpl  .dontchecktime
+             bl  CheckTime  ; CheckTime sets resetCalls for all threads
 .dontchecktime:
-
-
   if RootNode = 0
-        ; Step 2. check for aborted search and immediate draws
-               ldrh  w2, [x21, State.rule50]
-               ldrh  w1, [x21, State.pliesFromNull]
-                ldr  x8, [x21, State.key]
-                mov  w0, w22
-                cmp  w22, MAX_PLY
-                bhs  .AbortSearch_PlyBigger
-               _lea  x6, signals + Signals.stop
-               ldrb  w4, [x6]
-               cbnz  w4, .AbortSearch_PlySmaller
-
-        ; ss->ply < MAX_PLY holds at this point, so if we should
-        ;   go to .AbortSearch_PlySmaller if a draw is detected
-          PosIsDraw  .AbortSearch_PlySmaller, .CheckDraw_Cold, .CheckDraw_ColdRet
-
-
-        ; Step 3. mate distance pruning
-                ldr  w1, [sp, .alpha]
-                ldr  w2, [sp, .beta]
-                mov  w4, VALUE_MATE
-                sub  w0, w22, w4
-                cmp  w1, w0
-               csel  w1, w0, w1, lt
-                mvn  w0, w0
-                cmp  w2, w0
-               csel  w2, w0, w2, gt
-                str  w1, [sp, .alpha]
-                str  w2, [sp, .beta]
-                mov  w0, w1
-                cmp  w1, w2
-                bge  .Return
+    ; Step 2. check for aborted search and immediate draws
+           ldrh  w2, [x21, State.rule50]
+           ldrh  w1, [x21, State.pliesFromNull]
+            ldr  x8, [x21, State.key]
+            mov  w0, w22
+            cmp  w22, MAX_PLY
+            bhs  .AbortSearch_PlyBigger
+           _lea  x6, signals + Signals.stop
+           ldrb  w4, [x6]
+           cbnz  w4, .AbortSearch_PlySmaller
+    ; ss->ply < MAX_PLY holds at this point, so if we should
+    ;   go to .AbortSearch_PlySmaller if a draw is detected
+      PosIsDraw  .AbortSearch_PlySmaller, .CheckDraw_Cold, .CheckDraw_ColdRet
+    ; Step 3. mate distance pruning
+            ldr  w1, [sp, .alpha]
+            ldr  w2, [sp, .beta]
+            mov  w4, VALUE_MATE
+            sub  w0, w22, w4
+            cmp  w1, w0
+           csel  w1, w0, w1, lt
+            mvn  w0, w0
+            cmp  w2, w0
+           csel  w2, w0, w2, gt
+            str  w1, [sp, .alpha]
+            str  w2, [sp, .beta]
+            mov  w0, w1
+            cmp  w1, w2
+            bge  .Return
   end if
-
-                mov  w0, 0
-                mov  w1, CmhDeadOffset
-                ldr  x4, [x20, Pos.counterMoveHistory]
-                add  x1, x1, x4
-                str  w0, [sp, .bestMove]
-                str  w0, [x21, 1*sizeof.State + State.excludedMove]
-                str  w0, [x21, 0*sizeof.State + State.currentMove]
-                str  x1, [x21, 0*sizeof.State + State.counterMoves]
-               strb  w0, [x21, 1*sizeof.State + State.skipEarlyPruning]
-                str  x0, [x21, 2*sizeof.State + State.killers]
-
-  if USE_SYZYGY & RootNode = 0
-                ldr  x0, [x20, Pos.typeBB+8*White]
-                ldr  x4, [x20, Pos.typeBB+8*Black]
-                orr  x0, x0, x4
-            _popcnt  x0, x0, x2
-               _lea  x25, Tablebase_Cardinality
-                ldr  w25, [x25]
-                sub  w25, w25, w0
-               ldrh  w0, [x21, State.rule50]
-               ldrb  w1, [x21, State.castlingRights]
-                orr  w0, w0, w1
-                neg  w0, w0
-                orr  w25, w25, w0
+            mov  w0, 0
+            mov  w1, CmhDeadOffset
+            ldr  x4, [x20, Pos.counterMoveHistory]
+            add  x1, x1, x4
+            str  w0, [sp, .bestMove]
+            str  w0, [x21, 1*sizeof.State + State.excludedMove]
+            str  w0, [x21, 0*sizeof.State + State.currentMove]
+            str  x1, [x21, 0*sizeof.State + State.counterMoves]
+           strb  w0, [x21, 1*sizeof.State + State.skipEarlyPruning]
+            str  x0, [x21, 2*sizeof.State + State.killers]
+  if USE_SYZYGY = 1 & RootNode = 0
+            ldr  x0, [x20, Pos.typeBB+8*White]
+            ldr  x4, [x20, Pos.typeBB+8*Black]
+            orr  x0, x0, x4
+        _popcnt  x0, x0, x2
+           _lea  x25, Tablebase_Cardinality
+            ldr  w25, [x25]
+            sub  w25, w25, w0
+           ldrh  w0, [x21, State.rule50]
+           ldrb  w1, [x21, State.castlingRights]
+            orr  w0, w0, w1
+            neg  w0, w0
+            orr  w25, w25, w0
   end if
-
-        ; Step 4. transposition table look up
-                ldr  w1, [x21, State.excludedMove]
-                str  w1, [sp, .excludedMove]
-                ldr  x4, [x21, State.key]
-                eor  x1, x1, x4
-                str  x1, [sp, .posKey]
-                 bl  MainHash_Probe
-
-                str  x0, [sp, .tte]
-                str  x1, [sp, .ltte]
-               strb  w2, [sp, .ttHit]
-                asr  x27, x1, 48
-               sbfx  w0, w1, 8, 8
-                mov  w23, w2
+    ; Step 4. transposition table look up
+            ldr  w1, [x21, State.excludedMove]
+            str  w1, [sp, .excludedMove]
+            ldr  x4, [x21, State.key]
+            eor  x1, x1, x4
+            str  x1, [sp, .posKey]
+             bl  MainHash_Probe
+            str  x0, [sp, .tte]
+            str  x1, [sp, .ltte]
+           strb  w2, [sp, .ttHit]
+            asr  x27, x1, 48
+           sbfx  w0, w1, 8, 8
+            mov  w23, w2
   if RootNode = 0
-                lsr  w1, w1, 16
+            lsr  w1, w1, 16
   else
-                add  x6, x20, -Thread.rootPos
-                ldr  w1, [x6, Thread.PVIdx]
-                mov  w4, sizeof.RootMove
-                mul  w1, w1, w4
-                ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
-                add  x1, x1, x4
-                ldr  w1, [x1, RootMove.pv + 4*0]
+            add  x6, x20, -Thread.rootPos
+            ldr  w1, [x6, Thread.PVIdx]
+            mov  w4, sizeof.RootMove
+            mul  w1, w1, w4
+            ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            add  x1, x1, x4
+            ldr  w1, [x1, RootMove.pv + 4*0]
  end if
-                str  w1, [sp, .ttMove]
-                ;str  w27, [.ttValue]
-
-                mov  w4, VALUE_MATE_IN_MAX_PLY
-                add  w8, w27, w4
-                cbz  w2, .DontReturnTTValue
-
-                mov  w4, VALUE_NONE
-                cmp  w27, w4
-                beq  .DontReturnTTValue
-
-                mov  w4, VALUE_MATE_IN_MAX_PLY
-                cmp  w8, w4, lsl 1
-                bhs  .ValueFromTT
+            str  w1, [sp, .ttMove]
+            ;str  w27, [.ttValue]
+            mov  w4, VALUE_MATE_IN_MAX_PLY
+            add  w8, w27, w4
+            cbz  w2, .DontReturnTTValue
+            mov  w4, VALUE_NONE
+            cmp  w27, w4
+            beq  .DontReturnTTValue
+            mov  w4, VALUE_MATE_IN_MAX_PLY
+            cmp  w8, w4, lsl 1
+            bhs  .ValueFromTT
 .ValueFromTTRet:
-
   if PvNode = 0
-                ldr  w4, [sp, .depth]
-                cmp  w0, w4
-                blt  .DontReturnTTValue
-                mov  w0, BOUND_UPPER
-                mov  w8, BOUND_LOWER
-                ldr  w4, [sp, .beta]
-                cmp  w27, w4
-               csel  w0, w8, w0, ge
-               ldrb  w4, [sp, .ltte+MainHashEntry.genBound]
-                tst  w0, w4
-                bne  .ReturnTTValue
+            ldr  w4, [sp, .depth]
+            cmp  w0, w4
+            blt  .DontReturnTTValue
+            mov  w0, BOUND_UPPER
+            mov  w8, BOUND_LOWER
+            ldr  w4, [sp, .beta]
+            cmp  w27, w4
+           csel  w0, w8, w0, ge
+           ldrb  w4, [sp, .ltte+MainHashEntry.genBound]
+            tst  w0, w4
+            bne  .ReturnTTValue
   end if
-
 .DontReturnTTValue:
-                str  w27, [sp, .ttValue]
-
-
+            str  w27, [sp, .ttValue]
   if USE_SYZYGY & RootNode = 0
                 tbz  w25, 31, .CheckTablebase
 .CheckTablebaseReturn:
   end if
-
-        ; step 5. evaluate the position statically
-                mov  w0, VALUE_NONE
-                str  w0, [sp, .evalu]
-                str  w0, [x21, State.staticEval]
-                ldr  x1, [x21, State.checkersBB]
-               cbnz  x1, .moves_loop
-                ldr  w2, [x21, -1*sizeof.State + State.currentMove]
-              ldrsh  w0, [sp, .ltte + MainHashEntry.eval_]
-               cbnz  w23, .StaticValueYesTTHit
+    ; step 5. evaluate the position statically
+            mov  w0, VALUE_NONE
+            str  w0, [sp, .evalu]
+            str  w0, [x21, State.staticEval]
+            ldr  x1, [x21, State.checkersBB]
+           cbnz  x1, .moves_loop
+            ldr  w2, [x21, -1*sizeof.State + State.currentMove]
+          ldrsh  w0, [sp, .ltte + MainHashEntry.eval_]
+           cbnz  w23, .StaticValueYesTTHit
 .StaticValueNoTTHit:
-
-                ldr  w0, [x21, -1*sizeof.State + State.staticEval]
-                neg  w0, w0
-                add  w0, w0, 2*Eval_Tempo
-                ldr  x22, [sp, .tte]
-                mov  w4, MOVE_NULL
-                cmp  w2, w4
-                beq  @1f
-                 bl  Evaluate
-        @1:
-                mov  w8, w0
-                str  w0, [x21, State.staticEval]
-                str  w0, [sp, .evalu]
-                ldr  x9, [sp, .posKey]
-                lsr  x9, x9, 48
-                mov  w2, VALUE_NONE
-                mov  w3, BOUND_NONE
-                mov  w5, DEPTH_NONE
-                mov  w0, 0
-      MainHash_Save  .ltte, x22, w9, w2, w3, w5, w0, w8
-                  b  .StaticValueDone
+            ldr  w0, [x21, -1*sizeof.State + State.staticEval]
+            neg  w0, w0
+            add  w0, w0, 2*Eval_Tempo
+            ldr  x22, [sp, .tte]
+            mov  w4, MOVE_NULL
+            cmp  w2, w4
+            beq  @1f
+             bl  Evaluate
+    @1:
+            mov  w8, w0
+            str  w0, [x21, State.staticEval]
+            str  w0, [sp, .evalu]
+            ldr  x9, [sp, .posKey]
+            lsr  x9, x9, 48
+            mov  w2, VALUE_NONE
+            mov  w3, BOUND_NONE
+            mov  w5, DEPTH_NONE
+            mov  w0, 0
+  MainHash_Save  .ltte, x22, w9, w2, w3, w5, w0, w8
+              b  .StaticValueDone
 .StaticValueYesTTHit:
-
-                mov  w4, VALUE_NONE
-                cmp  w0, w4
-                bne  @1f
-                 bl  Evaluate
-       @1:
-                mov  w1, 0
-                str  w0, [x21, State.staticEval]
-                cmp  w27, w0
-               cset  w1, gt
-                add  w1, w1, BOUND_UPPER
-                mov  w4, VALUE_NONE
-                cmp  w27, w4
-                beq  @1f
-               ldrb  w4, [sp, .ltte + MainHashEntry.genBound]
-                tst  w1, w4
-               csel  w0, w27, w0, ne
-       @1:
-                str  w0, [sp, .evalu]
+            mov  w4, VALUE_NONE
+            cmp  w0, w4
+            bne  @1f
+             bl  Evaluate
+   @1:
+            mov  w1, 0
+            str  w0, [x21, State.staticEval]
+            cmp  w27, w0
+           cset  w1, gt
+            add  w1, w1, BOUND_UPPER
+            mov  w4, VALUE_NONE
+            cmp  w27, w4
+            beq  @1f
+           ldrb  w4, [sp, .ltte + MainHashEntry.genBound]
+            tst  w1, w4
+           csel  w0, w27, w0, ne
+   @1:
+            str  w0, [sp, .evalu]
 .StaticValueDone:
-
-               ldrb  w0, [x21, State.skipEarlyPruning]
-               cbnz  w0, .moves_loop
-
-        ; Step 6. Razoring (skipped when in check)
+           ldrb  w0, [x21, State.skipEarlyPruning]
+           cbnz  w0, .moves_loop
+    ; Step 6. Razoring (skipped when in check)
   if PvNode = 0
-                ldr  w2, [sp, .depth]
-                cmp  w2, 4*ONE_PLY
-                bge  .6skip
-                ldr  w1, [sp, .evalu]
-                lea  x6, RazorMargin
-                ldr  w0, [x6, x2, lsl 2]
-                add  w0, w0, w1
-                ldr  w4, [sp, .alpha]
-                cmp  w0, w4
-                bgt  .6skip
+            ldr  w2, [sp, .depth]
+            cmp  w2, 4*ONE_PLY
+            bge  .6skip
+            ldr  w1, [sp, .evalu]
+            lea  x6, RazorMargin
+            ldr  w0, [x6, x2, lsl 2]
+            add  w0, w0, w1
+            ldr  w4, [sp, .alpha]
+            cmp  w0, w4
+            bgt  .6skip
     if USE_MATEFINDER = 1
-                mov  w4, 2*VALUE_KNOWN_WIN - 1
-                add  w0, w1, w4
-                mov  w4, 4*VALUE_KNOWN_WIN - 1
-                cmp  w0, w4
-                bhs  .6skip
+            mov  w4, 2*VALUE_KNOWN_WIN - 1
+            add  w0, w1, w4
+            mov  w4, 4*VALUE_KNOWN_WIN - 1
+            cmp  w0, w4
+            bhs  .6skip
     end if
-                ldr  w1, [sp, .alpha]
-                mov  w8, 0
-                cmp  w2, ONE_PLY
-                bgt  .6b
+            ldr  w1, [sp, .alpha]
+            mov  w8, 0
+            cmp  w2, ONE_PLY
+            bgt  .6b
 .6a:
-                ldr  w2, [sp, .beta]
-                 bl  QSearch_NonPv_NoCheck
-                  b  .Return
+            ldr  w2, [sp, .beta]
+             bl  QSearch_NonPv_NoCheck
+              b  .Return
 .6b:
-               _lea  x6, RazorMargin
-                ldr  w4, [x6, x2, lsl 2]
-                sub  w1, w1, w4
-                add  w2, w1, 1
-                mov  w26, w1
-                 bl  QSearch_NonPv_NoCheck
-                cmp  w0, w26
-                ble  .Return
+           _lea  x6, RazorMargin
+            ldr  w4, [x6, x2, lsl 2]
+            sub  w1, w1, w4
+            add  w2, w1, 1
+            mov  w26, w1
+             bl  QSearch_NonPv_NoCheck
+            cmp  w0, w26
+            ble  .Return
 .6skip:
   end if
-
-
     ; Step 7. Futility pruning: child node (skipped when in check)
   if (RootNode = 0 & USE_MATEFINDER = 0) | (PvNode = 0 & USE_MATEFINDER = 1)
-                ldr  w2, [sp, .depth]
-                ldr  w1, [x20, Pos.sideToMove]
-                cmp  w2, 7*ONE_PLY
-                bge  .7skip
-                mov  w4, -150
-                mul  w2, w2, w4
-                ldr  w0, [sp, .evalu]
-                mov  w4, VALUE_KNOWN_WIN
-                cmp  w0, w4
-                bge  .7skip
-                add  w2, w2, w0
-                ldr  w4, [sp, .beta]
-                cmp  w2, w4
-                blt  .7skip
+            ldr  w2, [sp, .depth]
+            ldr  w1, [x20, Pos.sideToMove]
+            cmp  w2, 7*ONE_PLY
+            bge  .7skip
+            mov  w4, -150
+            mul  w2, w2, w4
+            ldr  w0, [sp, .evalu]
+            mov  w4, VALUE_KNOWN_WIN
+            cmp  w0, w4
+            bge  .7skip
+            add  w2, w2, w0
+            ldr  w4, [sp, .beta]
+            cmp  w2, w4
+            blt  .7skip
     if USE_MATEFINDER = 0
-                add  x6, x21, x1, lsl 1
-               ldrh  w1, [x6, State.npMaterial]
-               cbnz  w1, .Return
+            add  x6, x21, x1, lsl 1
+           ldrh  w1, [x6, State.npMaterial]
+           cbnz  w1, .Return
     else
-                ldr  w1, [x21, State.npMaterial]
-                tst  w1, 0xFFFF
-                beq  .7skip
-                tst  w1, 0xFFFF0000
-                bne  .Return
+            ldr  w1, [x21, State.npMaterial]
+            tst  w1, 0xFFFF
+            beq  .7skip
+            tst  w1, 0xFFFF0000
+            bne  .Return
     end if
 .7skip:
   end if
-
-
     ; Step 8. Null move search with verification search (is omitted in PV nodes)
   if PvNode = 0
-                ldr  w2, [sp, .depth]
-                mov  w4, 35
-                mul  w0, w2, w4
-                ldr  w4, [x21, State.staticEval]
-                add  w0, w0, w4
-                ldr  w26, [sp, .beta]
-                ldr  w1, [x20, Pos.sideToMove]
-                ldr  w4, [sp, .evalu]
-                cmp  w26, w4
-                bgt  .8skip
-                add  w26, w26, 35*6
+            ldr  w2, [sp, .depth]
+            mov  w4, 35
+            mul  w0, w2, w4
+            ldr  w4, [x21, State.staticEval]
+            add  w0, w0, w4
+            ldr  w26, [sp, .beta]
+            ldr  w1, [x20, Pos.sideToMove]
+            ldr  w4, [sp, .evalu]
+            cmp  w26, w4
+            bgt  .8skip
+            add  w26, w26, 35*6
     if USE_MATEFINDER = 0
-                add  x6, x21, State.npMaterial
-               ldrh  w1, [x6, x1, lsl 1]
-                cbz  w1, .8skip
+            add  x6, x21, State.npMaterial
+           ldrh  w1, [x6, x1, lsl 1]
+            cbz  w1, .8skip
     else
-                ldr  w8, [sp, .evalu]
-                ldr  w1, [x21, State.npMaterial]
-                tst  w1, 0xFFFF
-                beq  .8skip
-                tst  w1, 0xFFFF0000
-                beq  .8skip
-                mov  w4, 2*VALUE_KNOWN_WIN - 1
-                add  w8, w8, w4
-                mov  w4, 4*VALUE_KNOWN_WIN - 1
-                cmp  w8, w4
-                bhs  .8skip
+            ldr  w8, [sp, .evalu]
+            ldr  w1, [x21, State.npMaterial]
+            tst  w1, 0xFFFF
+            beq  .8skip
+            tst  w1, 0xFFFF0000
+            beq  .8skip
+            mov  w4, 2*VALUE_KNOWN_WIN - 1
+            add  w8, w8, w4
+            mov  w4, 4*VALUE_KNOWN_WIN - 1
+            cmp  w8, w4
+            bhs  .8skip
     end if
-                sub  w2, w2, 13*ONE_PLY
-                sub  w0, w0, w26
-               ands  w2, w2, w0
-                bmi  .8skip
-
+            sub  w2, w2, 13*ONE_PLY
+            sub  w0, w0, w26
+           ands  w2, w2, w0
+            bmi  .8skip
     if USE_MATEFINDER
-                ldr  w2, [sp, .depth]
-                cmp  w2, 4
-                bls  .8do
-                sub  sp, sp, MAX_MOVES*sizeof.ExtMove
-                mov  x27, sp
-                 bl  Gen_Legal
-                mov  w1, 0
-                mov  w0, 0
-                mov  x2, sp
-                cmp  x2, x27
-                bhs  .8loopdone
-    .8loop:
-                ldr  w8, [x2, ExtMove.move]
-                lsr  w8, w8, 6
-                and  w8, w8, 63
-               ldrb  w4, [x20, x8]  ; Pos.board = 0
-                cmp  w4, King
-               cset  w8, eq
-                add  w1, w1, w8
-                add  x2, x2, sizeof.ExtMove
-                add  w0, w0, 1
-                cmp  x2, x27
-                blo  .8loop
-    .8loopdone:
-                add  sp, sp, MAX_MOVES*sizeof.ExtMove
-                cbz  w1, .8skip
-                cmp  w0, 6
-                blo  .8skip
+            ldr  w2, [sp, .depth]
+            cmp  w2, 4
+            bls  .8do
+            sub  sp, sp, MAX_MOVES*sizeof.ExtMove
+            mov  x27, sp
+             bl  Gen_Legal
+            mov  w1, 0
+            mov  w0, 0
+            mov  x2, sp
+            cmp  x2, x27
+            bhs  .8loopdone
+.8loop:
+            ldr  w8, [x2, ExtMove.move]
+            lsr  w8, w8, 6
+            and  w8, w8, 63
+           ldrb  w4, [x20, x8]  ; Pos.board = 0
+            cmp  w4, King
+           cset  w8, eq
+            add  w1, w1, w8
+            add  x2, x2, sizeof.ExtMove
+            add  w0, w0, 1
+            cmp  x2, x27
+            blo  .8loop
+.8loopdone:
+            add  sp, sp, MAX_MOVES*sizeof.ExtMove
+            cbz  w1, .8skip
+            cmp  w0, 6
+            blo  .8skip
     end if
-
-
 .8do:
-                mov  w0, CmhDeadOffset
-                ldr  x4, [x20, Pos.counterMoveHistory]
-                add  x0, x0, x4
-                mov  w4, MOVE_NULL
-                str  w4, [x21, State.currentMove]
-                str  x0, [x21, State.counterMoves]
-
-                ldr  w0, [sp, .evalu]
-                ldr  w4, [sp, .beta]
-                sub  w0, w0, w4
-                mov  w1, PawnValueMg
-               sdiv  x0, x0, x1
-                mov  w1, 3
-                cmp  w0, w1
-               csel  w0, w1, w0, gt
-                ldr  w1, [sp, .depth]
-                mov  w4, 67
-                mul  w1, w1, w4
-                add  w1, w1, 823
-                asr  w1, w1, 8
-                add  w0, w0, w1
-
-                ldr  w26, [sp, .depth]
-                sub  w26, w26, w0
-        ; esi = depth-R
-                 bl  Move_DoNull
-                mov  w4, -1
-               strb  w4, [x21, State.skipEarlyPruning]
-                mov  w8, w26
-                mov  w0, 0
-                adr  x22, QSearch_NonPv_NoCheck
-                adr  x1, Search_NonPv
-                cmp  w26, ONE_PLY
-               csel  x22, x1, x22, ge
-               csel  w8, w0, w8, lt
-                ldr  w1, [sp, .beta]
-                neg  w1, w1
-                add  w2, w1, 1
-               ldrb  w9, [sp, .cutNode]
-                mvn  w9, w9
-                blr  x22
-                neg  w0, w0
-               strb  wzr, [x21, State.skipEarlyPruning]
-                ldr  w4, [x20, Pos.sideToMove]
-                eor  w4, w4, 1
-                str  w4, [x20, Pos.sideToMove]
-                sub  x21, x21, sizeof.State
-
-                ldr  w2, [sp, .beta]
-                cmp  w0, w2
-                blt  .8skip
-
-                mov  w4, VALUE_MATE_IN_MAX_PLY
-                cmp  w0, w4
-               csel  w0, w2, w0, ge
-                mov  w27, w0
-        ; edi = nullValue
-
-                ldr  w1, [sp, .depth]
-                cmp  w1, 12*ONE_PLY
-                bge  .8check
-                mov  w4, VALUE_KNOWN_WIN-1
-                add  w1, w2, w4
-                mov  w4, VALUE_KNOWN_WIN-1
-                cmp  w1, w4, lsl 1
-                bls  .Return
+            mov  w0, CmhDeadOffset
+            ldr  x4, [x20, Pos.counterMoveHistory]
+            add  x0, x0, x4
+            mov  w4, MOVE_NULL
+            str  w4, [x21, State.currentMove]
+            str  x0, [x21, State.counterMoves]
+            ldr  w0, [sp, .evalu]
+            ldr  w4, [sp, .beta]
+            sub  w0, w0, w4
+            mov  w1, PawnValueMg
+           sdiv  x0, x0, x1
+            mov  w1, 3
+            cmp  w0, w1
+           csel  w0, w1, w0, gt
+            ldr  w1, [sp, .depth]
+            mov  w4, 67
+            mul  w1, w1, w4
+            add  w1, w1, 823
+            asr  w1, w1, 8
+            add  w0, w0, w1
+            ldr  w26, [sp, .depth]
+            sub  w26, w26, w0
+    ; esi = depth-R
+             bl  Move_DoNull
+            mov  w4, -1
+           strb  w4, [x21, State.skipEarlyPruning]
+            mov  w8, w26
+            mov  w0, 0
+            adr  x22, QSearch_NonPv_NoCheck
+            adr  x1, Search_NonPv
+            cmp  w26, ONE_PLY
+           csel  x22, x1, x22, ge
+           csel  w8, w0, w8, lt
+            ldr  w1, [sp, .beta]
+            neg  w1, w1
+            add  w2, w1, 1
+           ldrb  w9, [sp, .cutNode]
+            mvn  w9, w9
+            blr  x22
+            neg  w0, w0
+           strb  wzr, [x21, State.skipEarlyPruning]
+            ldr  w4, [x20, Pos.sideToMove]
+            eor  w4, w4, 1
+            str  w4, [x20, Pos.sideToMove]
+            sub  x21, x21, sizeof.State
+            ldr  w2, [sp, .beta]
+            cmp  w0, w2
+            blt  .8skip
+            mov  w4, VALUE_MATE_IN_MAX_PLY
+            cmp  w0, w4
+           csel  w0, w2, w0, ge
+            mov  w27, w0
+    ; edi = nullValue
+            ldr  w1, [sp, .depth]
+            cmp  w1, 12*ONE_PLY
+            bge  .8check
+            mov  w4, VALUE_KNOWN_WIN-1
+            add  w1, w2, w4
+            mov  w4, VALUE_KNOWN_WIN-1
+            cmp  w1, w4, lsl 1
+            bls  .Return
 .8check:
-                mov  w4, -1
-               strb  w4, [x21, State.skipEarlyPruning]
-                mov  w8, w26
-                mov  w0, 0
-                adr  x22, QSearch_NonPv_NoCheck
-                adr  x1, Search_NonPv
-                cmp  w26, ONE_PLY
-               csel  x22, x1, x22, ge
-               csel  w8, w0, w8, lt 
-                sub  w1, w2, 1
-                mov  w9, 0
-                blr  x22
-               strb  wzr, [x21, State.skipEarlyPruning]
-                ldr  w4, [sp, .beta]
-                cmp  w0, w4
-                mov  w0, w27
-                bge  .Return
+            mov  w4, -1
+           strb  w4, [x21, State.skipEarlyPruning]
+            mov  w8, w26
+            mov  w0, 0
+            adr  x22, QSearch_NonPv_NoCheck
+            adr  x1, Search_NonPv
+            cmp  w26, ONE_PLY
+           csel  x22, x1, x22, ge
+           csel  w8, w0, w8, lt 
+            sub  w1, w2, 1
+            mov  w9, 0
+            blr  x22
+           strb  wzr, [x21, State.skipEarlyPruning]
+            ldr  w4, [sp, .beta]
+            cmp  w0, w4
+            mov  w0, w27
+            bge  .Return
 .8skip:
   end if
-
-
-        ; Step 9. ProbCut (skipped when in check)
+    ; Step 9. ProbCut (skipped when in check)
   if PvNode = 0
-                ldr  w0, [sp, .depth]
-                cmp  w0, 5*ONE_PLY
-                blt  .9skip
-                ldr  w0, [sp, .beta]
-                mov  w4, VALUE_MATE_IN_MAX_PLY-1
-                add  w0, w0, w4
-                mov  w4, VALUE_MATE_IN_MAX_PLY-1
-                cmp  w0, w4, lsl 1
-                bhi  .9skip
+            ldr  w0, [sp, .depth]
+            cmp  w0, 5*ONE_PLY
+            blt  .9skip
+            ldr  w0, [sp, .beta]
+            mov  w4, VALUE_MATE_IN_MAX_PLY-1
+            add  w0, w0, w4
+            mov  w4, VALUE_MATE_IN_MAX_PLY-1
+            cmp  w0, w4, lsl 1
+            bhi  .9skip
     if USE_MATEFINDER = 1
-                ldr  w0, [sp, .evalu]
-               ldrb  w4, [x21, State.ply]
-                tbz  w4, 0, .9skip
-                mov  w4, 2*VALUE_KNOWN_WIN - 1
-                add  w0, w0, w4
-                mov  w4, 4*VALUE_KNOWN_WIN - 1
-                cmp  w0, w4
-                bhs  .9skip
+            ldr  w0, [sp, .evalu]
+           ldrb  w4, [x21, State.ply]
+            tbz  w4, 0, .9skip
+            mov  w4, 2*VALUE_KNOWN_WIN - 1
+            add  w0, w0, w4
+            mov  w4, 4*VALUE_KNOWN_WIN - 1
+            cmp  w0, w4
+            bhs  .9skip
     end if
-                ldr  w27, [sp, .beta]
-                add  w27, w27, 200
-                mov  w0, VALUE_INFINITE
-                cmp  w27, w0
-               csel  w27, w0, w27, gt
-                str  w27, [sp, .rbeta]
-                ldr  w4, [x21, State.staticEval]
-                sub  w27, w27, w4
-
+            ldr  w27, [sp, .beta]
+            add  w27, w27, 200
+            mov  w0, VALUE_INFINITE
+            cmp  w27, w0
+           csel  w27, w0, w27, gt
+            str  w27, [sp, .rbeta]
+            ldr  w4, [x21, State.staticEval]
+            sub  w27, w27, w4
         ; initialize movepick
-                adr  x25, MovePick_PROBCUT_GEN
-                str  w27, [x21, State.threshold]
-                ldr  w1, [sp, .ttMove]
-                mov  w0, w1
-                mov  w2, w1
-                and  w2, w2, 63
-                lsr  w0, w0, 12
-                add  x6, x20, Pos.board
-               ldrb  w2, [x6, x2]
-                mov  w27, 0
-                cbz  w1, .9NoTTMove
-                cmp  w0, MOVE_TYPE_CASTLE
-                beq  .9NoTTMove
-                cmp  w0, MOVE_TYPE_EPCAP
-                beq  @1f
-                cbz  w2, .9NoTTMove
-       @1:
-                ldr  w1, [sp, .ttMove]
-                 bl  Move_IsPseudoLegal
-                cbz  x0, .9NoTTMove
-                ldr  w1, [sp, .ttMove]
-                ldr  w2, [x21, State.threshold]
-                 bl  SeeTestGe
-                cbz  w0, .9NoTTMove
-                ldr  w27, [sp, .ttMove]
-                adr  x25, MovePick_PROBCUT
+            adr  x25, MovePick_PROBCUT_GEN
+            str  w27, [x21, State.threshold]
+            ldr  w1, [sp, .ttMove]
+            mov  w0, w1
+            mov  w2, w1
+            and  w2, w2, 63
+            lsr  w0, w0, 12
+            add  x6, x20, Pos.board
+           ldrb  w2, [x6, x2]
+            mov  w27, 0
+            cbz  w1, .9NoTTMove
+            cmp  w0, MOVE_TYPE_CASTLE
+            beq  .9NoTTMove
+            cmp  w0, MOVE_TYPE_EPCAP
+            beq  @1f
+            cbz  w2, .9NoTTMove
+   @1:
+            ldr  w1, [sp, .ttMove]
+             bl  Move_IsPseudoLegal
+            cbz  x0, .9NoTTMove
+            ldr  w1, [sp, .ttMove]
+            ldr  w2, [x21, State.threshold]
+             bl  SeeTestGe
+            cbz  w0, .9NoTTMove
+            ldr  w27, [sp, .ttMove]
+            adr  x25, MovePick_PROBCUT
 .9NoTTMove:
-                str  x25, [x21, State.stage]
-                str  w27, [x21, State.ttMove]
-
+            str  x25, [x21, State.stage]
+            str  w27, [x21, State.ttMove]
 .9moveloop:
-                mov  w26, 0
-        GetNextMove
-                str  w0, [sp, .move]
-
-                mov  w1, w0
-                cbz  w0, .9moveloop_done
-                 bl  Move_IsLegal
-                cbz  w0, .9moveloop
-
-                ldr  w1, [sp, .move]
-                str  w1, [x21, State.currentMove]
-
-               ubfx  w0, w1, 6, 6
-                and  w1, w1, 63
-                add  x6, x20, Pos.board
-               ldrb  w0, [x6, x0]
-                add  w0, w1, w0, lsl 6
-                ldr  x4, [x20, Pos.counterMoveHistory]
-                add  x0, x4, x0, lsl 12
-                str  x0, [x21, State.counterMoves]
-
-                ldr  w1, [sp, .move]
-                 bl  Move_GivesCheck
-                ldr  w1, [sp, .move]
-               strb  w0, [x21, State.givesCheck]
-                 bl  Move_Do__ProbCut
-                ldr  w1, [sp, .rbeta]
-                mov  w27, w1
-                neg  w1, w1
-                add  w2, w1, 1
-                ldr  w8, [sp, .depth]
-                sub  w8, w8, 4*ONE_PLY
-               ldrb  w9, [sp, .cutNode]
-                mvn  w9, w9
-                 bl  Search_NonPv
-                neg  w0, w0
-                mov  w26, w0
-                ldr  w1, [sp, .move]
-                 bl  Move_Undo
-                mov  w0, w26
-                cmp  w26, w27
-                blt  .9moveloop
-                  b  .Return
-
+            mov  w26, 0
+    GetNextMove
+            str  w0, [sp, .move]
+            mov  w1, w0
+            cbz  w0, .9moveloop_done
+             bl  Move_IsLegal
+            cbz  w0, .9moveloop
+            ldr  w1, [sp, .move]
+            str  w1, [x21, State.currentMove]
+           ubfx  w0, w1, 6, 6
+            and  w1, w1, 63
+            add  x6, x20, Pos.board
+           ldrb  w0, [x6, x0]
+            add  w0, w1, w0, lsl 6
+            ldr  x4, [x20, Pos.counterMoveHistory]
+            add  x0, x4, x0, lsl 12
+            str  x0, [x21, State.counterMoves]
+            ldr  w1, [sp, .move]
+             bl  Move_GivesCheck
+            ldr  w1, [sp, .move]
+           strb  w0, [x21, State.givesCheck]
+             bl  Move_Do__ProbCut
+            ldr  w1, [sp, .rbeta]
+            mov  w27, w1
+            neg  w1, w1
+            add  w2, w1, 1
+            ldr  w8, [sp, .depth]
+            sub  w8, w8, 4*ONE_PLY
+           ldrb  w9, [sp, .cutNode]
+            mvn  w9, w9
+             bl  Search_NonPv
+            neg  w0, w0
+            mov  w26, w0
+            ldr  w1, [sp, .move]
+             bl  Move_Undo
+            mov  w0, w26
+            cmp  w26, w27
+            blt  .9moveloop
+              b  .Return
 .9moveloop_done:
 .9skip:
   end if
-
-
-        ; Step 10. Internal iterative deepening (skipped when in check)
-                ldr  w8, [sp, .depth]
-                ldr  w1, [sp, .ttMove]
-               cbnz  w1, .10skip
-                cmp  w8, 6*ONE_PLY
-                blt  .10skip
-                add  w8, w8, w8, lsl 1
-                asr  w8, w8, 2
-                sub  w8, w8, 2*ONE_PLY
+    ; Step 10. Internal iterative deepening (skipped when in check)
+            ldr  w8, [sp, .depth]
+            ldr  w1, [sp, .ttMove]
+           cbnz  w1, .10skip
+            cmp  w8, 6*ONE_PLY
+            blt  .10skip
+            add  w8, w8, w8, lsl 1
+            asr  w8, w8, 2
+            sub  w8, w8, 2*ONE_PLY
   if PvNode = 1
-                ldr  w1, [sp, .alpha]
-                ldr  w2, [sp, .beta]
-               ldrb  w9, [sp, .cutNode]
-                mov  w4, -1
-               strb  w4, [x21, State.skipEarlyPruning]
-                 bl  Search_Pv
+            ldr  w1, [sp, .alpha]
+            ldr  w2, [sp, .beta]
+           ldrb  w9, [sp, .cutNode]
+            mov  w4, -1
+           strb  w4, [x21, State.skipEarlyPruning]
+             bl  Search_Pv
   else
-                ldr  w0, [x21, State.staticEval]
-                add  w0, w0, 256
-                ldr  w4, [sp, .beta]
-                cmp  w0, w4
-                blt  .10skip
-                ldr  w1, [sp, .alpha]
-                ldr  w2, [sp, .beta]
-               ldrb  w9, [sp, .cutNode]
-                mov  w4, -1
-               strb  w4, [x21, State.skipEarlyPruning]
-                 bl  Search_NonPv
+            ldr  w0, [x21, State.staticEval]
+            add  w0, w0, 256
+            ldr  w4, [sp, .beta]
+            cmp  w0, w4
+            blt  .10skip
+            ldr  w1, [sp, .alpha]
+            ldr  w2, [sp, .beta]
+           ldrb  w9, [sp, .cutNode]
+            mov  w4, -1
+           strb  w4, [x21, State.skipEarlyPruning]
+             bl  Search_NonPv
   end if
-               strb  wzr, [x21, State.skipEarlyPruning]
-                ldr  x1, [sp, .posKey]
-                 bl  MainHash_Probe
-                str  x0, [sp, .tte]
-                str  x1, [sp, .ltte]
-               strb  w2, [sp, .ttHit]
-                lsr  w1, w1, 16
-                str  w1, [sp, .ttMove]
-
+           strb  wzr, [x21, State.skipEarlyPruning]
+            ldr  x1, [sp, .posKey]
+             bl  MainHash_Probe
+            str  x0, [sp, .tte]
+            str  x1, [sp, .ltte]
+           strb  w2, [sp, .ttHit]
+            lsr  w1, w1, 16
+            str  w1, [sp, .ttMove]
 .10skip:
-
-
-
 .moves_loop:    ; this is actually not the head of the loop
-
-        ; The data at tte could have been changed by
-        ;   Step 6. Razoring
-        ;   Step 9. ProbCut
-        ; Note that after
-        ;   Step 10. Internal iterative deepening
-        ; the data is reloaded
-        ; Also, in the case of a tt miss, tte points to junk but must be used anyways.
-        ; We reload the data in .ltte for its use in .singularExtensionNode.
-                ldr  x0, [sp, .tte]
-                ldr  x0, [x0]
-                str  x0, [sp, .ltte]
-
-
-        ; initialize move pick
-                ldr  w1, [sp, .ttMove]
-                ldr  w2, [sp, .depth]
-
-                str  w2, [x21, State.depth]
-
-                ldr  x27, [x20, Pos.counterMoves]
-                ldr  w0, [x21, -1*sizeof.State + State.currentMove]
-                and  w0, w0, 63
-                add  x6, x20, Pos.board
-               ldrb  w2, [x6, x0]
-                add  w2, w0, w2, lsl 6
-                ldr  w0, [x27, x2, lsl 2]
-                str  w0, [x21, State.countermove]
-
-                adr  x25, MovePick_CAPTURES_GEN
-                adr  x24, MovePick_ALL_EVASIONS
-                mov  w27, w1
-                cbz  w1, .NoTTMove
-                 bl  Move_IsPseudoLegal
-
-                tst  x0, x0
-               csel  w27, w0, w27, eq
-                beq  .NoTTMove
-                adr  x25, MovePick_MAIN_SEARCH
-                adr  x24, MovePick_EVASIONS
+    ; The data at tte could have been changed by
+    ;   Step 6. Razoring
+    ;   Step 9. ProbCut
+    ; Note that after
+    ;   Step 10. Internal iterative deepening
+    ; the data is reloaded
+    ; Also, in the case of a tt miss, tte points to junk but must be used anyways.
+    ; We reload the data in .ltte for its use in .singularExtensionNode.
+            ldr  x0, [sp, .tte]
+            ldr  x0, [x0]
+            str  x0, [sp, .ltte]
+    ; initialize move pick
+            ldr  w1, [sp, .ttMove]
+            ldr  w2, [sp, .depth]
+            str  w2, [x21, State.depth]
+            ldr  x27, [x20, Pos.counterMoves]
+            ldr  w0, [x21, -1*sizeof.State + State.currentMove]
+            and  w0, w0, 63
+            add  x6, x20, Pos.board
+           ldrb  w2, [x6, x0]
+            add  w2, w0, w2, lsl 6
+            ldr  w0, [x27, x2, lsl 2]
+            str  w0, [x21, State.countermove]
+            adr  x25, MovePick_CAPTURES_GEN
+            adr  x24, MovePick_ALL_EVASIONS
+            mov  w27, w1
+            cbz  w1, .NoTTMove
+             bl  Move_IsPseudoLegal
+            tst  x0, x0
+           csel  w27, w0, w27, eq
+            beq  .NoTTMove
+            adr  x25, MovePick_MAIN_SEARCH
+            adr  x24, MovePick_EVASIONS
 .NoTTMove:
-                ldr  x8, [x21, State.checkersBB]
-                ldr  x0, [x21, State.killers]
-                tst  x8, x8
-               csel  x25, x24, x25, ne
-                str  x0, [x21, State.mpKillers]
-                str  w27, [x21, State.ttMove]
-                str  x25, [x21, State.stage]
-
-                ldr  w0, [sp, .bestValue]
-                str  w0, [sp, .value]
-
-                ldr  w2, [x21, -0*sizeof.State + State.staticEval]
-                add  x6, x21, -2*sizeof.State
-                ldr  w1, [x6, State.staticEval]
-                cmp  w2, w1
-               cset  w0, ge
-                mov  w4, VALUE_NONE
-                cmp  w2, w4
-               cset  w2, eq
-                mov  w4, VALUE_NONE
-                cmp  w1, w4
-               cset  w1, eq
-                orr  w0, w0, w2
-                orr  w0, w0, w1
-               strb  w0, [sp, .improving]
-
-                mov  w26, 63
-               ldrb  w0, [sp, .improving]
-                ldr  w2, [sp, .depth]
-                mov  w1, w2
-                cmp  w2, w26
-               csel  w1, w26, w1, hi
-
-                add  w0, w1, w0, lsl 6
-                lsl  w0, w0, 6
-                str  w0, [sp, .reductionOffset]
-
-               strb  wzr, [sp, .skipQuiets]
-                str  wzr, [sp, .ttCapture]
+            ldr  x8, [x21, State.checkersBB]
+            ldr  x0, [x21, State.killers]
+            tst  x8, x8
+           csel  x25, x24, x25, ne
+            str  x0, [x21, State.mpKillers]
+            str  w27, [x21, State.ttMove]
+            str  x25, [x21, State.stage]
+            ldr  w0, [sp, .bestValue]
+            str  w0, [sp, .value]
+            ldr  w2, [x21, -0*sizeof.State + State.staticEval]
+            add  x6, x21, -2*sizeof.State
+            ldr  w1, [x6, State.staticEval]
+            cmp  w2, w1
+           cset  w0, ge
+            mov  w4, VALUE_NONE
+            cmp  w2, w4
+           cset  w2, eq
+            mov  w4, VALUE_NONE
+            cmp  w1, w4
+           cset  w1, eq
+            orr  w0, w0, w2
+            orr  w0, w0, w1
+           strb  w0, [sp, .improving]
+            mov  w26, 63
+           ldrb  w0, [sp, .improving]
+            ldr  w2, [sp, .depth]
+            mov  w1, w2
+            cmp  w2, w26
+           csel  w1, w26, w1, hi
+            add  w0, w1, w0, lsl 6
+            lsl  w0, w0, 6
+            str  w0, [sp, .reductionOffset]
+           strb  wzr, [sp, .skipQuiets]
+            str  wzr, [sp, .ttCapture]
   if RootNode = 1
-               strb  wzr, [sp, .singularExtensionNode]
+           strb  wzr, [sp, .singularExtensionNode]
   else
-                ldr  w1, [sp, .depth]
-                cmp  w1, 8*ONE_PLY
-               cset  w0, ge
-                ldr  w2, [sp, .ttMove]
-                tst  w2, w2
-               cset  w1, ne
-                and  w0, w0, w1
-                ldr  w2, [sp, .ttValue]
-                mov  w4, VALUE_NONE
-                cmp  w2, w4
-               cset  w1, ne
-
-                and  w0, w0, w1
-                ldr  w2, [sp, .excludedMove]
-                tst  w2, w2
-               cset  w1, eq
-                and  w0, w0, w1
-               ldrb  w2, [sp, .ltte + MainHashEntry.genBound]
-                tst  w2, BOUND_LOWER
-               cset  w1, ne
-                and  w0, w0, w1
-              ldrsb  w2, [sp, .ltte + MainHashEntry.depth]
-                add  w2, w2, 3*ONE_PLY
-                ldr  w4, [sp, .depth]
-                cmp  w2, w4
-               cset  w1, ge
-                and  w0, w0, w1
-               strb  w0, [sp, .singularExtensionNode]
+            ldr  w1, [sp, .depth]
+            cmp  w1, 8*ONE_PLY
+           cset  w0, ge
+            ldr  w2, [sp, .ttMove]
+            tst  w2, w2
+           cset  w1, ne
+            and  w0, w0, w1
+            ldr  w2, [sp, .ttValue]
+            mov  w4, VALUE_NONE
+            cmp  w2, w4
+           cset  w1, ne
+            and  w0, w0, w1
+            ldr  w2, [sp, .excludedMove]
+            tst  w2, w2
+           cset  w1, eq
+            and  w0, w0, w1
+           ldrb  w2, [sp, .ltte + MainHashEntry.genBound]
+            tst  w2, BOUND_LOWER
+           cset  w1, ne
+            and  w0, w0, w1
+          ldrsb  w2, [sp, .ltte + MainHashEntry.depth]
+            add  w2, w2, 3*ONE_PLY
+            ldr  w4, [sp, .depth]
+            cmp  w2, w4
+           cset  w1, ge
+            and  w0, w0, w1
+           strb  w0, [sp, .singularExtensionNode]
   end if
-
         ; Step 11. Loop through moves
-
 .MovePickLoop:
-
-              ldrsb  w26, [sp, .skipQuiets]
-        GetNextMove
-                str  w0, [sp, .move]
-                cbz  w0, .MovePickDone
-                ldr  w4, [sp, .excludedMove]
-                cmp  w0, w4
-                beq  .MovePickLoop
-
+          ldrsb  w26, [sp, .skipQuiets]
+    GetNextMove
+            str  w0, [sp, .move]
+            cbz  w0, .MovePickDone
+            ldr  w4, [sp, .excludedMove]
+            cmp  w0, w4
+            beq  .MovePickLoop
  if RootNode = 1
-                add  x6, x20, -Thread.rootPos
-                ldr  w1, [x6, Thread.PVIdx]
-                mov  w4, sizeof.RootMove
-                mul  w1, w1, w4
-                ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
-                add  x1, x1, x4
-                ldr  x2, [x20, Pos.rootMovesVec + RootMovesVec.ender]
-        @1:
-
-                cmp  x1, x2
-                bhs  .MovePickLoop
-                ldr  w4, [x1, RootMove.pv + 4*0]
-                cmp  w0, w4
-                add  x1, x1, sizeof.RootMove
-                bne  @1b
+            add  x6, x20, -Thread.rootPos
+            ldr  w1, [x6, Thread.PVIdx]
+            mov  w4, sizeof.RootMove
+            mul  w1, w1, w4
+            ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            add  x1, x1, x4
+            ldr  x2, [x20, Pos.rootMovesVec + RootMovesVec.ender]
+    @1:
+            cmp  x1, x2
+            bhs  .MovePickLoop
+            ldr  w4, [x1, RootMove.pv + 4*0]
+            cmp  w0, w4
+            add  x1, x1, sizeof.RootMove
+            bne  @1b
   end if
-
-                ldr  w0, [sp, .moveCount]
-                add  w0, w0, 1
-                str  w0, [x21, State.moveCount]
-                str  w0, [sp, .moveCount]
-
-                mov  w0, 0
+            ldr  w0, [sp, .moveCount]
+            add  w0, w0, 1
+            str  w0, [x21, State.moveCount]
+            str  w0, [sp, .moveCount]
+            mov  w0, 0
   if PvNode = 1
-                str  x0, [x21, 1*sizeof.State + State.pv]
+            str  x0, [x21, 1*sizeof.State + State.pv]
   end if
-                str  w0, [sp, .extension]
-
-  if USE_CURRMOVE
-    if VERBOSE < 2
-      if RootNode = 1
-                add  x6, x20, -Thread.rootPos
-                ldr  w0, [x6, Thread.idx]
-               cbnz  w0, .PrintCurrentMoveRet
-                 bl  Os_GetTime
-               _lea  x6, time + Time.startTime
-                ldr  x4, [x6]
-                sub  x0, x0, x4
-                mov  w4, CURRMOVE_MIN_TIME
-                cmp  w0, w4
-                bge  .PrintCurrentMove
+            str  w0, [sp, .extension]
+  if USE_CURRMOVE & VERBOSE < 2 & RootNode = 1
+            add  x6, x20, -Thread.rootPos
+            ldr  w0, [x6, Thread.idx]
+           cbnz  w0, .PrintCurrentMoveRet
+             bl  Os_GetTime
+           _lea  x6, time + Time.startTime
+            ldr  x4, [x6]
+            sub  x0, x0, x4
+            mov  w4, CURRMOVE_MIN_TIME
+            cmp  w0, w4
+            bge  .PrintCurrentMove
 .PrintCurrentMoveRet:
-      end if
-    end if
   end if
-
-                ldr  w1, [sp, .move]
-
-               ubfx  w2, w1, 6, 6
-
-                add  x6, x20, Pos.board
-               ldrb  w2, [x6, x2]
-                and  w0, w1, 63
-                add  w2, w0, w2, lsl 6
-                str  w2, [sp, .moved_piece_to_sq]
-        ; moved_piece_to_sq = index of [moved_piece][to_sq(move)]
-                lsr  w1, w1, 14
-                add  x6, x20, Pos.board
-               ldrb  w0, [x6, x0]
-               _lea  x6, _CaptureOrPromotion_or
-               ldrb  w4, [x6, x1]
-                orr  w0, w0, w4
-               _lea  x6, _CaptureOrPromotion_and
-               ldrb  w4, [x6, x1]
-                and  w0, w0, w4
-               strb  w0, [sp, .captureOrPromotion]
-
-                ldr  w1, [sp, .move]
-                 bl  Move_GivesCheck
-               strb  w0, [x21, State.givesCheck]
-
-                ldr  w27, [sp, .depth]
-               ldrb  w1, [sp, .improving]
-                lsl  w1, w1, 6
-               _lea  x6, FutilityMoveCounts
-                add  x6, x6, x1
-                ldr  w1, [x6, x27, lsl 2]
-                ldr  w4, [sp, .moveCount]
-                sub  w1, w1, w4
-                sub  w1, w1, 1
-                sub  w27, w27, 16*ONE_PLY
-                and  w27, w27, w1
-                asr  w27, w27, 31
-               strb  w27, [sp, .moveCountPruning]
-
-                mvn  w27, w27
-                and  w27, w27, w0
-
-        ; Step 12. Extend checks
-               ldrb  w0, [sp, .singularExtensionNode]
-                ldr  w1, [sp, .move]
-                cbz  w0, .12else
-                ldr  w4, [sp, .ttMove]
-                cmp  w1, w4
-                bne  .12else
-                 bl  Move_IsLegal
-                ldr  w2, [sp, .ttValue]
-                ldr  w8, [sp, .depth]
-               ldrb  w9, [sp, .cutNode]
-                cbz  w0, .12else
-                mov  w0, -VALUE_MATE
-                sub  w2, w2, w8, lsl 1
-                cmp  w2, w0
-               csel  w2, w0, w2, lt
-                sub  w1, w2, 1
-                mov  w27, w2
-                asr  w8, w8, 1
-                ldr  w0, [sp, .move]
-                str  w0, [x21, State.excludedMove]
-                mov  w4, -1
-               strb  w4, [x21, State.skipEarlyPruning]
-        ; The call to search_NonPV with the same value of ss messed up our
-        ; move picker data. So we fix it.
-                ldr  x22, [x21, State.stage]
-                ldr  x23, [x21, State.ttMove]   ; ttMove and Depth
-                ldr  x24, [x21, State.countermove]      ; counter move and gives check
-                ldr  x25, [x21, State.mpKillers]
-                 bl  Search_NonPv
-                mov  w1, 0
-               strb  w1, [x21, State.skipEarlyPruning]
-                str  w1, [x21, State.excludedMove]
-                cmp  w0, w27
-               cset  w1, lt
-                str  w1, [sp, .extension]
-        ; The call to search_NonPV with the same value of ss messed up our
-        ; move picker data. So we fix it.
-                str  x22, [x21, State.stage]
-                str  x23, [x21, State.ttMove]
-                str  x24, [x21, State.countermove]
-                str  x25, [x21, State.mpKillers]
-                  b  .12done
-
+            ldr  w1, [sp, .move]
+           ubfx  w2, w1, 6, 6
+            add  x6, x20, Pos.board
+           ldrb  w2, [x6, x2]
+            and  w0, w1, 63
+            add  w2, w0, w2, lsl 6
+            str  w2, [sp, .moved_piece_to_sq]
+    ; moved_piece_to_sq = index of [moved_piece][to_sq(move)]
+            lsr  w1, w1, 14
+            add  x6, x20, Pos.board
+           ldrb  w0, [x6, x0]
+           _lea  x6, _CaptureOrPromotion_or
+           ldrb  w4, [x6, x1]
+            orr  w0, w0, w4
+           _lea  x6, _CaptureOrPromotion_and
+           ldrb  w4, [x6, x1]
+            and  w0, w0, w4
+           strb  w0, [sp, .captureOrPromotion]
+            ldr  w1, [sp, .move]
+             bl  Move_GivesCheck
+           strb  w0, [x21, State.givesCheck]
+            ldr  w27, [sp, .depth]
+           ldrb  w1, [sp, .improving]
+            lsl  w1, w1, 6
+           _lea  x6, FutilityMoveCounts
+            add  x6, x6, x1
+            ldr  w1, [x6, x27, lsl 2]
+            ldr  w4, [sp, .moveCount]
+            sub  w1, w1, w4
+            sub  w1, w1, 1
+            sub  w27, w27, 16*ONE_PLY
+            and  w27, w27, w1
+            asr  w27, w27, 31
+           strb  w27, [sp, .moveCountPruning]
+            mvn  w27, w27
+            and  w27, w27, w0
+    ; Step 12. Extend checks
+           ldrb  w0, [sp, .singularExtensionNode]
+            ldr  w1, [sp, .move]
+            cbz  w0, .12else
+            ldr  w4, [sp, .ttMove]
+            cmp  w1, w4
+            bne  .12else
+             bl  Move_IsLegal
+            ldr  w2, [sp, .ttValue]
+            ldr  w8, [sp, .depth]
+           ldrb  w9, [sp, .cutNode]
+            cbz  w0, .12else
+            mov  w0, -VALUE_MATE
+            sub  w2, w2, w8, lsl 1
+            cmp  w2, w0
+           csel  w2, w0, w2, lt
+            sub  w1, w2, 1
+            mov  w27, w2
+            asr  w8, w8, 1
+            ldr  w0, [sp, .move]
+            str  w0, [x21, State.excludedMove]
+            mov  w4, -1
+           strb  w4, [x21, State.skipEarlyPruning]
+    ; The call to search_NonPV with the same value of ss messed up our
+    ; move picker data. So we fix it.
+            ldr  x22, [x21, State.stage]
+            ldr  x23, [x21, State.ttMove]   ; ttMove and Depth
+            ldr  x24, [x21, State.countermove]      ; counter move and gives check
+            ldr  x25, [x21, State.mpKillers]
+             bl  Search_NonPv
+            mov  w1, 0
+           strb  w1, [x21, State.skipEarlyPruning]
+            str  w1, [x21, State.excludedMove]
+            cmp  w0, w27
+           cset  w1, lt
+            str  w1, [sp, .extension]
+    ; The call to search_NonPV with the same value of ss messed up our
+    ; move picker data. So we fix it.
+            str  x22, [x21, State.stage]
+            str  x23, [x21, State.ttMove]
+            str  x24, [x21, State.countermove]
+            str  x25, [x21, State.mpKillers]
+              b  .12done
 .12else:
-                ldr  w1, [sp, .move]
-                cbz  w27, .12dont_extend
-        SeeSignTest  .12extend_oneply
-                cbz  w0, .12dont_extend
+            ldr  w1, [sp, .move]
+            cbz  w27, .12dont_extend
+    SeeSignTest  .12extend_oneply
+            cbz  w0, .12dont_extend
 .12extend_oneply:
-                mov  w4, 1
-                str  w4, [sp, .extension]
+            mov  w4, 1
+            str  w4, [sp, .extension]
 .12dont_extend:
 .12done:
-
-
-        ; Step 13. Pruning at shallow depth
-                ldr  w23, [sp, .move]
-               ubfx  w22, w23, 6, 6
-                and  w23, w23, 63
-                add  x6, x20, Pos.board
-               ldrb  w24, [x6, x22]
-               ldrb  w25, [x6, x23]
-
-                ldr  w0, [sp, .extension]
-                ldr  w2, [sp, .depth]
-                sub  w0, w0, 1
-                add  w0, w0, w2
-                str  w0, [sp, .newDepth]
-        ; w2 = depth
-
+    ; Step 13. Pruning at shallow depth
+            ldr  w23, [sp, .move]
+           ubfx  w22, w23, 6, 6
+            and  w23, w23, 63
+            add  x6, x20, Pos.board
+           ldrb  w24, [x6, x22]
+           ldrb  w25, [x6, x23]
+            ldr  w0, [sp, .extension]
+            ldr  w2, [sp, .depth]
+            sub  w0, w0, 1
+            add  w0, w0, w2
+            str  w0, [sp, .newDepth]
+    ; w2 = depth
   if (RootNode = 0 & USE_MATEFINDER = 0) | (PvNode = 0 & USE_MATEFINDER = 1)
-
-                ldr  w8, [x20, Pos.sideToMove]
-                ldr  w1, [sp, .bestValue]
-               ldrh  w26, [x21, State.npMaterial + 2*0]
-                add  w0, w0, w1
-                mov  w4, VALUE_MATED_IN_MAX_PLY
-                cmp  w1, w4
-                ble  .13done
-                add  x6, x21, State.npMaterial
-               ldrh  w1, [x6, x8, lsl 1]
-                cbz  w1, .13done
-               ldrb  w0, [sp, .captureOrPromotion]
-               ldrh  w1, [x21, State.npMaterial + 2*1]
-                add  w26, w26, w1
-               ldrb  w4, [x21, State.givesCheck]
-                orr  w0, w0, w4
-               cbnz  w0, .13else
-                mov  w1, Pawn
-                add  w1, w1, w8, lsl 3
-                mov  w4, 5000
-                cmp  w26, w4
-                bhs  .13do
-                cmp  w24, w1
-                bne  .13do
-                mov  w4, 56
-                mul  w8, w8, w4
-                eor  w8, w8, w22
-                cmp  w8, SQ_A5
-                bhs  .13else
+            ldr  w8, [x20, Pos.sideToMove]
+            ldr  w1, [sp, .bestValue]
+           ldrh  w26, [x21, State.npMaterial + 2*0]
+            add  w0, w0, w1
+            mov  w4, VALUE_MATED_IN_MAX_PLY
+            cmp  w1, w4
+            ble  .13done
+            add  x6, x21, State.npMaterial
+           ldrh  w1, [x6, x8, lsl 1]
+            cbz  w1, .13done
+           ldrb  w0, [sp, .captureOrPromotion]
+           ldrh  w1, [x21, State.npMaterial + 2*1]
+            add  w26, w26, w1
+           ldrb  w4, [x21, State.givesCheck]
+            orr  w0, w0, w4
+           cbnz  w0, .13else
+            mov  w1, Pawn
+            add  w1, w1, w8, lsl 3
+            mov  w4, 5000
+            cmp  w26, w4
+            bhs  .13do
+            cmp  w24, w1
+            bne  .13do
+            mov  w4, 56
+            mul  w8, w8, w4
+            eor  w8, w8, w22
+            cmp  w8, SQ_A5
+            bhs  .13else
 .13do:
-        ; Move count based pruning
-               ldrb  w0, [sp, .moveCountPruning]
-               ldrb  w4, [sp, .skipQuiets]
-                orr  w4, w4, w0
-               strb  w4, [sp, .skipQuiets]
-               cbnz  w0, .MovePickLoop
-
-                ldr  w27, [sp, .newDepth]
-                mov  w26, 63
-                ldr  w1, [sp, .moveCount]
-                cmp  w1, w26
-               csel  w1, w26, w1, hi
-                ldr  w4, [sp, .reductionOffset]
-                add  w1, w1, w4
-                lea  x6, Reductions + 4*(2*64*64*PvNode)
-                ldr  w4, [x6, x1, lsl 2]
-                sub  w27, w27, w4
-        ; edi = lmrDepth
-
-        ; Countermoves based pruning
-                add  x6, x21, -1*sizeof.State + State.counterMoves
-                ldr  x8, [x6]
-                add  x6, x21, -2*sizeof.State + State.counterMoves
-                ldr  x9, [x6]
-                add  x11, x23, x24, lsl 6
-                ldr  w0, [x8, x11, lsl 2]
-                ldr  w1, [x9, x11, lsl 2]
-                cmp  w27, 3*ONE_PLY
-                bge  .13DontSkip2
-                and  w0, w0, w1
-               tbnz  w0, 31, .MovePickLoop
+    ; Move count based pruning
+           ldrb  w0, [sp, .moveCountPruning]
+           ldrb  w4, [sp, .skipQuiets]
+            orr  w4, w4, w0
+           strb  w4, [sp, .skipQuiets]
+           cbnz  w0, .MovePickLoop
+            ldr  w27, [sp, .newDepth]
+            mov  w26, 63
+            ldr  w1, [sp, .moveCount]
+            cmp  w1, w26
+           csel  w1, w26, w1, hi
+            ldr  w4, [sp, .reductionOffset]
+            add  w1, w1, w4
+           _lea  x6, Reductions + 4*(2*64*64*PvNode)
+            ldr  w4, [x6, x1, lsl 2]
+            sub  w27, w27, w4
+    ; edi = lmrDepth
+    ; Countermoves based pruning
+            add  x6, x21, -1*sizeof.State + State.counterMoves
+            ldr  x8, [x6]
+            add  x6, x21, -2*sizeof.State + State.counterMoves
+            ldr  x9, [x6]
+            add  x11, x23, x24, lsl 6
+            ldr  w0, [x8, x11, lsl 2]
+            ldr  w1, [x9, x11, lsl 2]
+            cmp  w27, 3*ONE_PLY
+            bge  .13DontSkip2
+            and  w0, w0, w1
+           tbnz  w0, 31, .MovePickLoop
 .13DontSkip2:
-
-        ; Futility pruning: parent node
-                mov  w2, 0
-                cmp  w27, 7*ONE_PLY
-                bgt  .13done
-                beq  .13check_see
-                tst  w27, w27
-               csel  w27, w2, w27, mi
-                mov  w0, 200
-                mul  w0, w0, w27
-                add  w0, w0, 256
-                ldr  w4, [x21, State.checkersBB]
-                cmp  w2, w4
-                bne  .13check_see
-                ldr  w4, [x21, State.staticEval]
-                add  w0, w0, w4
-                ldr  w4, [sp, .alpha]
-                cmp  w0, w4
-                ble  .MovePickLoop
+    ; Futility pruning: parent node
+            mov  w2, 0
+            cmp  w27, 7*ONE_PLY
+            bgt  .13done
+            beq  .13check_see
+            tst  w27, w27
+           csel  w27, w2, w27, mi
+            mov  w0, 200
+            mul  w0, w0, w27
+            add  w0, w0, 256
+            ldr  w4, [x21, State.checkersBB]
+            cmp  w2, w4
+            bne  .13check_see
+            ldr  w4, [x21, State.staticEval]
+            add  w0, w0, w4
+            ldr  w4, [sp, .alpha]
+            cmp  w0, w4
+            ble  .MovePickLoop
 .13check_see:
-        ; Prune moves with negative SEE at low depths
-                ldr  w1, [sp, .move]
-                mov  w2, -35
-                mul  w2, w2, w27
-                mul  w2, w2, w27
-                 bl  SeeTestGe
-                cbz  w0, .MovePickLoop
-                  b  .13done
+    ; Prune moves with negative SEE at low depths
+            ldr  w1, [sp, .move]
+            mov  w2, -35
+            mul  w2, w2, w27
+            mul  w2, w2, w27
+             bl  SeeTestGe
+            cbz  w0, .MovePickLoop
+              b  .13done
 .13else:
-                ldr  w1, [sp, .move]
-                cmp  w2, 7*ONE_PLY
-                bge  .13done
-               ldrb  w4, [sp, .extension]
-               cbnz  w4, .13done
-                mov  w4, -PawnValueEg
-                mul  w2, w2, w4
-                 bl  SeeTestGe
-                cbz  w0, .MovePickLoop
+            ldr  w1, [sp, .move]
+            cmp  w2, 7*ONE_PLY
+            bge  .13done
+           ldrb  w4, [sp, .extension]
+           cbnz  w4, .13done
+            mov  w4, -PawnValueEg
+            mul  w2, w2, w4
+             bl  SeeTestGe
+            cbz  w0, .MovePickLoop
 .13done:
   end if
-
-        ; Speculative prefetch as early as possible
-                ldr  x0, [x21, State.key]
-                lea  x6, Zobrist_side
-                ldr  x4, [x6]
-                eor  x0, x0, x4
-                lea  x6, Zobrist_Pieces
-                add  x6, x6, x24, lsl 9
-                ldr  x4, [x6, x22, lsl 3]
-                eor  x0, x0, x4
-                ldr  x4, [x6, x23, lsl 3]
-                eor  x0, x0, x4
-                lea  x6, Zobrist_Pieces
-                add  x6, x6, x25, lsl 9
-                ldr  x4, [x6, x23, lsl 3]
-                eor  x0, x0, x4
-                lea  x6, mainHash
-                ldr  x4, [x6, MainHash.mask]
-                and  x0, x0, x4
-                lsl  x0, x0, 5
-                ldr  x4, [x6, MainHash.table]
-                add  x0, x0, x4
-               prfm  PLDL1KEEP, [x0]
-
-        ; Check for legality just before making the move
+    ; Speculative prefetch as early as possible
+            ldr  x0, [x21, State.key]
+           _lea  x6, Zobrist_side
+            ldr  x4, [x6]
+            eor  x0, x0, x4
+           _lea  x6, Zobrist_Pieces
+            add  x6, x6, x24, lsl 9
+            ldr  x4, [x6, x22, lsl 3]
+            eor  x0, x0, x4
+            ldr  x4, [x6, x23, lsl 3]
+            eor  x0, x0, x4
+           _lea  x6, Zobrist_Pieces
+            add  x6, x6, x25, lsl 9
+            ldr  x4, [x6, x23, lsl 3]
+            eor  x0, x0, x4
+           _lea  x6, mainHash
+            ldr  x4, [x6, MainHash.mask]
+            and  x0, x0, x4
+            lsl  x0, x0, 5
+            ldr  x4, [x6, MainHash.table]
+            add  x0, x0, x4
+           prfm  PLDL1KEEP, [x0]
+    ; Check for legality just before making the move
   if RootNode = 0
-                ldr  w1, [sp, .move]
-                 bl  Move_IsLegal
-                cbz  x0, .IllegalMove
+            ldr  w1, [sp, .move]
+             bl  Move_IsLegal
+            cbz  x0, .IllegalMove
   end if
-
-                ldr  w1, [sp, .move]
-                ldr  w0, [sp, .moved_piece_to_sq]
-                lsl  w0, w0, 12
-                ldr  x4, [x20, Pos.counterMoveHistory]
-                add  x0, x0, x4
-                str  w1, [x21, State.currentMove]
-                str  x0, [x21, State.counterMoves]
-
-               ldrb  w4, [sp, .captureOrPromotion]
-                tst  w4, w4
-               cset  w0, ne
-                ldr  w4, [sp, .ttMove]
-                cmp  w1, w4
-               cset  w2, eq
-                and  w0, w0, w2
-                ldr  w4, [sp, .ttCapture]
-                orr  w4, w4, w0
-                str  w4, [sp, .ttCapture]
-
-        ; Step 14. Make the move
-                 bl  Move_Do__Search
-
-        ; Step 15. Reduced depth search (LMR)
-                ldr  w2, [sp, .depth]
-                ldr  w1, [sp, .moveCount]
-                cmp  w2, 3*ONE_PLY
-                blt  .15skip
-                cmp  w1, 1
-                bls  .15skip
+            ldr  w1, [sp, .move]
+            ldr  w0, [sp, .moved_piece_to_sq]
+            lsl  w0, w0, 12
+            ldr  x4, [x20, Pos.counterMoveHistory]
+            add  x0, x0, x4
+            str  w1, [x21, State.currentMove]
+            str  x0, [x21, State.counterMoves]
+           ldrb  w4, [sp, .captureOrPromotion]
+            tst  w4, w4
+           cset  w0, ne
+            ldr  w4, [sp, .ttMove]
+            cmp  w1, w4
+           cset  w2, eq
+            and  w0, w0, w2
+            ldr  w4, [sp, .ttCapture]
+            orr  w4, w4, w0
+            str  w4, [sp, .ttCapture]
+    ; Step 14. Make the move
+             bl  Move_Do__Search
+    ; Step 15. Reduced depth search (LMR)
+            ldr  w2, [sp, .depth]
+            ldr  w1, [sp, .moveCount]
+            cmp  w2, 3*ONE_PLY
+            blt  .15skip
+            cmp  w1, 1
+            bls  .15skip
   if USE_MATEFINDER = 1
-               ldrb  w4, [x20, -Thread.rootPos + Thread.selDepth]
-                cmp  w2, w4
-                bhs  .15skip
-               ldrb  w4, [x21, -1*sizeof.State + State.ply]
-                cmp  w4, 3
-                bhi  @1f
-                cmp  w2, 16
-                bhs  .15skip
-        @1:
+           ldrb  w4, [x20, -Thread.rootPos + Thread.selDepth]
+            cmp  w2, w4
+            bhs  .15skip
+           ldrb  w4, [x21, -1*sizeof.State + State.ply]
+            cmp  w4, 3
+            bhi  @1f
+            cmp  w2, 16
+            bhs  .15skip
+    @1:
   end if
-               ldrb  w8, [sp, .captureOrPromotion]
-                cbz  w8, @1f
-               ldrb  w0, [sp, .moveCountPruning]
-                cbz  w0, .15skip
-        @1:
-
-                mov  w26, 63
-                cmp  w1, w26
-               csel  w1, w26, w1, hi
-                ldr  w4, [sp, .reductionOffset]
-                add  w1, w1, w4
-               _lea  x6, Reductions + 4*(2*64*64*PvNode)
-                ldr  w27, [x6, x1, lsl 2]
-
-                cbz  w8, .15NotCaptureOrPromotion
-                mov  w0, 0
-                tst  w27, w27
-               cset  w0, ne
-                sub  w27, w27, w0
-                  b  .15ReadyToSearch
-
+           ldrb  w8, [sp, .captureOrPromotion]
+            cbz  w8, @1f
+           ldrb  w0, [sp, .moveCountPruning]
+            cbz  w0, .15skip
+    @1:
+            mov  w26, 63
+            cmp  w1, w26
+           csel  w1, w26, w1, hi
+            ldr  w4, [sp, .reductionOffset]
+            add  w1, w1, w4
+           _lea  x6, Reductions + 4*(2*64*64*PvNode)
+            ldr  w27, [x6, x1, lsl 2]
+            cbz  w8, .15NotCaptureOrPromotion
+            mov  w0, 0
+            tst  w27, w27
+           cset  w0, ne
+            sub  w27, w27, w0
+              b  .15ReadyToSearch
 .15NotCaptureOrPromotion:
-
-        ; r12d = from
-        ; r13d = to
-        ; r14d = from piece
-        ; r15d = to piece
-
-        ; Increase reduction if ttMove is a capture
-                ldr  w4, [sp, .ttCapture]
-                add  w27, w27, w4
-
-        ; Increase reduction for cut nodes
-               ldrb  w4, [sp, .cutNode]
-                cbz  w4, .15testA
-                add  w27, w27, 2*ONE_PLY
-                  b  .15skipA
+    ; r12d = from
+    ; r13d = to
+    ; r14d = from piece
+    ; r15d = to piece
+    ; Increase reduction if ttMove is a capture
+            ldr  w4, [sp, .ttCapture]
+            add  w27, w27, w4
+    ; Increase reduction for cut nodes
+           ldrb  w4, [sp, .cutNode]
+            cbz  w4, .15testA
+            add  w27, w27, 2*ONE_PLY
+              b  .15skipA
 .15testA:
-                ldr  w1, [sp, .move]
-                cmp  w1, MOVE_TYPE_PROM shl 12
-                bhs  .15skipA
-                mov  w9, w22
-                mov  w8, w23
-                mov  w2, 0
-                 bl  SeeTestGe.HaveFromTo
-               cbnz  w0, .15skipA
-                sub  w27, w27, 2*ONE_PLY
+            ldr  w1, [sp, .move]
+            cmp  w1, MOVE_TYPE_PROM shl 12
+            bhs  .15skipA
+            mov  w9, w22
+            mov  w8, w23
+            mov  w2, 0
+             bl  SeeTestGe.HaveFromTo
+           cbnz  w0, .15skipA
+            sub  w27, w27, 2*ONE_PLY
 .15skipA:
-                ldr  w1, [sp, .move]
-                and  w1, w1, 64*64-1
-                ldr  w2, [sp, .moved_piece_to_sq]
-                add  x6, x21, -1*sizeof.State+State.counterMoves - 1*sizeof.State
-                ldr  x9, [x6]
-                add  x6, x21, -2*sizeof.State+State.counterMoves - 1*sizeof.State
-                ldr  x10, [x6]
-                add  x6, x21, -4*sizeof.State+State.counterMoves - 1*sizeof.State
-                ldr  x11, [x6]
-                ldr  w0, [x20, Pos.sideToMove]
-                eor  w0, w0, 1
-                lsl  w0, w0, 14
-                ldr  x4, [x20, Pos.history]
-                add  x0, x0, x4
-                ldr  w0, [x0, x1, lsl 2]
-                sub  w0, w0, 4000
-
-                add  x6, x21, -2*sizeof.State
-                ldr  w1, [x6, State.history]
-
-                ldr  w4, [x9, x2, lsl 2]
-                add  w0, w0, w4
-                ldr  w4, [x10, x2, lsl 2]
-                add  w0, w0, w4
-                ldr  w4, [x11, x2, lsl 2]
-                add  w0, w0, w4
-
-                neg  w2, w0
-                and  w2, w2, w1
-                neg  w1, w1
-                and  w1, w1, w0
-                add  w27, w27, w2, asr 31
-                sub  w27, w27, w1, asr 31
-
-                str  w0, [x21, -1*sizeof.State + State.history]
-
-                mov  w1, 20000
-               sdiv  w0, w0, w1
-               subs  w27, w27, w0
-               csel  w27, wzr, w27, mi
-
+            ldr  w1, [sp, .move]
+            and  w1, w1, 64*64-1
+            ldr  w2, [sp, .moved_piece_to_sq]
+            add  x6, x21, -1*sizeof.State+State.counterMoves - 1*sizeof.State
+            ldr  x9, [x6]
+            add  x6, x21, -2*sizeof.State+State.counterMoves - 1*sizeof.State
+            ldr  x10, [x6]
+            add  x6, x21, -4*sizeof.State+State.counterMoves - 1*sizeof.State
+            ldr  x11, [x6]
+            ldr  w0, [x20, Pos.sideToMove]
+            eor  w0, w0, 1
+            lsl  w0, w0, 14
+            ldr  x4, [x20, Pos.history]
+            add  x0, x0, x4
+            ldr  w0, [x0, x1, lsl 2]
+            sub  w0, w0, 4000
+            add  x6, x21, -2*sizeof.State
+            ldr  w1, [x6, State.history]
+            ldr  w4, [x9, x2, lsl 2]
+            add  w0, w0, w4
+            ldr  w4, [x10, x2, lsl 2]
+            add  w0, w0, w4
+            ldr  w4, [x11, x2, lsl 2]
+            add  w0, w0, w4
+            neg  w2, w0
+            and  w2, w2, w1
+            neg  w1, w1
+            and  w1, w1, w0
+            add  w27, w27, w2, asr 31
+            sub  w27, w27, w1, asr 31
+            str  w0, [x21, -1*sizeof.State + State.history]
+            mov  w1, 20000
+           sdiv  w0, w0, w1
+           subs  w27, w27, w0
+           csel  w27, wzr, w27, mi
 .15ReadyToSearch:
-
-                mov  w0, 1
-                ldr  w8, [sp, .newDepth]
-                sub  w8, w8, w27
-                cmp  w8, w0
-               csel  w8, w0, w8, lt
-                mov  w27, w8
-
-                ldr  w2, [sp, .alpha]
-                neg  w2, w2
-                sub  w1, w2, 1
-                mov  w9, -1
-                 bl  Search_NonPv
-                neg  w0, w0
-                str  w0, [sp, .value]
-
-                ldr  w4, [sp, .alpha]
-                cmp  w0, w4
-                ble  .17entry
-                ldr  w4, [sp, .newDepth]
-                cmp  w27, w4
-                beq  .15dontdofulldepthsearch
-
-                mov  x9, 0
-                ldr  w8, [sp, .newDepth]
-                adr  x10, QSearch_NonPv_InCheck
-                adr  x11, QSearch_NonPv_NoCheck
-               ldrb  w4, [x21, -1*sizeof.State + State.givesCheck]
-                tst  w4, w4
-               csel  x11, x10, x11, ne
-                adr  x0, Search_NonPv
-                cmp  w8, 1
-               csel  x0, x11, x0, lt
-               csel  w8, w9, w8, lt
-                ldr  w2, [sp, .alpha]
-                neg  w2, w2
-                sub  w1, w2, 1
-               ldrb  w9, [sp, .cutNode]
-                mvn  w9, w9
-                blr  x0
-                neg  w0, w0
-                str  w0, [sp, .value]
-
-                ldr  w4, [sp, .alpha]
-                cmp  w0, w4
-                ble  .17entry
-
+            mov  w0, 1
+            ldr  w8, [sp, .newDepth]
+            sub  w8, w8, w27
+            cmp  w8, w0
+           csel  w8, w0, w8, lt
+            mov  w27, w8
+            ldr  w2, [sp, .alpha]
+            neg  w2, w2
+            sub  w1, w2, 1
+            mov  w9, -1
+             bl  Search_NonPv
+            neg  w0, w0
+            str  w0, [sp, .value]
+            ldr  w4, [sp, .alpha]
+            cmp  w0, w4
+            ble  .17entry
+            ldr  w4, [sp, .newDepth]
+            cmp  w27, w4
+            beq  .15dontdofulldepthsearch
+            mov  x9, 0
+            ldr  w8, [sp, .newDepth]
+            adr  x10, QSearch_NonPv_InCheck
+            adr  x11, QSearch_NonPv_NoCheck
+           ldrb  w4, [x21, -1*sizeof.State + State.givesCheck]
+            tst  w4, w4
+           csel  x11, x10, x11, ne
+            adr  x0, Search_NonPv
+            cmp  w8, 1
+           csel  x0, x11, x0, lt
+           csel  w8, w9, w8, lt
+            ldr  w2, [sp, .alpha]
+            neg  w2, w2
+            sub  w1, w2, 1
+           ldrb  w9, [sp, .cutNode]
+            mvn  w9, w9
+            blr  x0
+            neg  w0, w0
+            str  w0, [sp, .value]
+            ldr  w4, [sp, .alpha]
+            cmp  w0, w4
+            ble  .17entry
 .15dontdofulldepthsearch:
   if PvNode = 1
     if RootNode = 0
-                ldr  w0, [sp, .value]
-                ldr  w4, [sp, .beta]
-                cmp  w0, w4
-                bge  .17entry
+            ldr  w0, [sp, .value]
+            ldr  w4, [sp, .beta]
+            cmp  w0, w4
+            bge  .17entry
     end if
-                add  x0, sp, .pv
-                str  x0, [x21, State.pv]
-                str  wzr, [x0]
-
-                mov  x9, 0
-                ldr  w8, [sp, .newDepth]
-                adr  x10, QSearch_Pv_InCheck
-                adr  x11, QSearch_Pv_NoCheck
-               ldrb  w4, [x21, -1*sizeof.State + State.givesCheck]
-                tst  w4, w4
-               csel  x11, x10, x11, ne
-                adr  x0, Search_Pv
-                cmp  w8, 1
-               csel  x0, x11, x0, lt
-               csel  w8, w9, w8, lt
-                ldr  w1, [sp, .beta]
-                neg  w1, w1
-                ldr  w2, [sp, .alpha]
-                neg  w2, w2
-                mov  w9, 0
-                blr  x0
-                neg  w0, w0
-                str  w0, [sp, .value]
+            add  x0, sp, .pv
+            str  x0, [x21, State.pv]
+            str  wzr, [x0]
+            mov  x9, 0
+            ldr  w8, [sp, .newDepth]
+            adr  x10, QSearch_Pv_InCheck
+            adr  x11, QSearch_Pv_NoCheck
+           ldrb  w4, [x21, -1*sizeof.State + State.givesCheck]
+            tst  w4, w4
+           csel  x11, x10, x11, ne
+            adr  x0, Search_Pv
+            cmp  w8, 1
+           csel  x0, x11, x0, lt
+           csel  w8, w9, w8, lt
+            ldr  w1, [sp, .beta]
+            neg  w1, w1
+            ldr  w2, [sp, .alpha]
+            neg  w2, w2
+            mov  w9, 0
+            blr  x0
+            neg  w0, w0
+            str  w0, [sp, .value]
   end if
-                  b  .17entry
-
+              b  .17entry
 .15skip:
-
-        ; Step 16. full depth search   this is for when step 15 is skipped
+    ; Step 16. full depth search   this is for when step 15 is skipped
   if PvNode = 1
-                ldr  w4, [sp, .moveCount]
-                cmp  w4, 1
-                bls  .DoFullPvSearch
+            ldr  w4, [sp, .moveCount]
+            cmp  w4, 1
+            bls  .DoFullPvSearch
   end if
-
 .FullDepthSearch:
-                mov  x9, 0
-                ldr  w8, [sp, .newDepth]
-                adr  x10, QSearch_NonPv_InCheck
-                adr  x11, QSearch_NonPv_NoCheck
-               ldrb  w4, [x21, -1*sizeof.State + State.givesCheck]
-                tst  w4, w4
-               csel  x11, x10, x11, ne
-                adr  x0, Search_NonPv
-                cmp  w8, 1
-               csel  x0, x11, x0, lt
-               csel  w8, w9, w8, lt
-                ldr  w2, [sp, .alpha]
-                neg  w2, w2
-                sub  w1, w2, 1
-               ldrb  w9, [sp, .cutNode]
-                mvn  w9, w9
-                blr  x0
-                neg  w0, w0
-                mov  w27, w0
-                str  w0, [sp, .value]
-
+            mov  x9, 0
+            ldr  w8, [sp, .newDepth]
+            adr  x10, QSearch_NonPv_InCheck
+            adr  x11, QSearch_NonPv_NoCheck
+           ldrb  w4, [x21, -1*sizeof.State + State.givesCheck]
+            tst  w4, w4
+           csel  x11, x10, x11, ne
+            adr  x0, Search_NonPv
+            cmp  w8, 1
+           csel  x0, x11, x0, lt
+           csel  w8, w9, w8, lt
+            ldr  w2, [sp, .alpha]
+            neg  w2, w2
+            sub  w1, w2, 1
+           ldrb  w9, [sp, .cutNode]
+            mvn  w9, w9
+            blr  x0
+            neg  w0, w0
+            mov  w27, w0
+            str  w0, [sp, .value]
   if PvNode = 1
-                ldr  w4, [sp, .alpha]
-                cmp  w27, w4
-                ble  .SkipFullPvSearch
+            ldr  w4, [sp, .alpha]
+            cmp  w27, w4
+            ble  .SkipFullPvSearch
     if RootNode = 0
-                ldr  w4, [sp, .beta]
-                cmp  w27, w4
-                bge  .SkipFullPvSearch
+            ldr  w4, [sp, .beta]
+            cmp  w27, w4
+            bge  .SkipFullPvSearch
     end if
-
 .DoFullPvSearch:
-                add  x0, sp, .pv
-                str  x0, [x21, State.pv]
-                str  wzr, [x0]
-
-                mov  x9, 0
-                ldr  w8, [sp, .newDepth]
-                adr  x10, QSearch_Pv_InCheck
-                adr  x11, QSearch_Pv_NoCheck
-               ldrb  w4, [x21, -1*sizeof.State + State.givesCheck]
-                tst  w4, w4
-               csel  x11, x10, x11, ne
-                adr  x0, Search_Pv
-                cmp  w8, 1
-               csel  x0, x11, x0, lt
-               csel  w8, w9, w8, lt
-                ldr  w1, [sp, .beta]
-                neg  w1, w1
-                ldr  w2, [sp, .alpha]
-                neg  w2, w2
-                mov  w9, 0
-                blr  x0
-                neg  w0, w0
-                mov  w27, w0
-                str  w0, [sp, .value]
+            add  x0, sp, .pv
+            str  x0, [x21, State.pv]
+            str  wzr, [x0]
+            mov  x9, 0
+            ldr  w8, [sp, .newDepth]
+            adr  x10, QSearch_Pv_InCheck
+            adr  x11, QSearch_Pv_NoCheck
+           ldrb  w4, [x21, -1*sizeof.State + State.givesCheck]
+            tst  w4, w4
+           csel  x11, x10, x11, ne
+            adr  x0, Search_Pv
+            cmp  w8, 1
+           csel  x0, x11, x0, lt
+           csel  w8, w9, w8, lt
+            ldr  w1, [sp, .beta]
+            neg  w1, w1
+            ldr  w2, [sp, .alpha]
+            neg  w2, w2
+            mov  w9, 0
+            blr  x0
+            neg  w0, w0
+            mov  w27, w0
+            str  w0, [sp, .value]
 .SkipFullPvSearch:
   end if
-
-
-        ; Step 17. Undo move
+    ; Step 17. Undo move
 .17entry:
-                ldr  w1, [sp, .move]
-                 bl  Move_Undo
-
-
-        ; Step 18. Check for new best move
-                ldr  w27, [sp, .value]
-                mov  w0, 0
-                lea  x6, signals + Signals.stop
-               ldrb  w4, [x6]
-               cbnz  w4, .Return
-
+            ldr  w1, [sp, .move]
+             bl  Move_Undo
+    ; Step 18. Check for new best move
+            ldr  w27, [sp, .value]
+            mov  w0, 0
+            lea  x6, signals + Signals.stop
+           ldrb  w4, [x6]
+           cbnz  w4, .Return
  if RootNode = 1
-                ldr  w1, [sp, .move]
-                ldr  x2, [x20, Pos.rootMovesVec + RootMovesVec.table]
-                sub  x2, x2, sizeof.RootMove
+            ldr  w1, [sp, .move]
+            ldr  x2, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            sub  x2, x2, sizeof.RootMove
 .FindRootMove:
-                add  x2, x2, sizeof.RootMove
-                ldr  w4, [x2, RootMove.pv + 4*0]
-                cmp  w1, w4
-                bne  .FindRootMove
-                mov  w26, 1
-                mov  w10, -VALUE_INFINITE
-                ldr  w4, [sp, .moveCount]
-                cmp  w26, w4
-                beq  .FoundRootMove1
-                ldr  w4, [sp, .alpha]
-                cmp  w27, w4
-                ble  .FoundRootMoveDone
-
-                add  x6, x20, -Thread.rootPos
-                ldr  d0, [x6, Thread.bestMoveChanges]
-               fmov  d4, 1.0
-               fadd  d0, d0, d4
-                add  x6, x20, -Thread.rootPos
-                str  d0, [x6, Thread.bestMoveChanges]
-
+            add  x2, x2, sizeof.RootMove
+            ldr  w4, [x2, RootMove.pv + 4*0]
+            cmp  w1, w4
+            bne  .FindRootMove
+            mov  w26, 1
+            mov  w10, -VALUE_INFINITE
+            ldr  w4, [sp, .moveCount]
+            cmp  w26, w4
+            beq  .FoundRootMove1
+            ldr  w4, [sp, .alpha]
+            cmp  w27, w4
+            ble  .FoundRootMoveDone
+            add  x6, x20, -Thread.rootPos
+            ldr  d0, [x6, Thread.bestMoveChanges]
+           fmov  d4, 1.0
+           fadd  d0, d0, d4
+            add  x6, x20, -Thread.rootPos
+            str  d0, [x6, Thread.bestMoveChanges]
 .FoundRootMove1:
-                mov  w10, w27
-                add  x6, x20, -Thread.rootPos
-                ldr  w0, [x6, Thread.selDepth]
-                ldr  x1, [x21, 1*sizeof.State + State.pv]
-                str  w0, [x2, RootMove.selDepth]
-                  b  .CopyRootPvw
-
+            mov  w10, w27
+            add  x6, x20, -Thread.rootPos
+            ldr  w0, [x6, Thread.selDepth]
+            ldr  x1, [x21, 1*sizeof.State + State.pv]
+            str  w0, [x2, RootMove.selDepth]
+              b  .CopyRootPvw
 .CopyRootPv:
-                add  x1, x1, 4
-                add  x6, x2, RootMove.pv
-                str  w0, [x6, x26, lsl 2]
-                add  w26, w26, 1
+            add  x1, x1, 4
+            add  x6, x2, RootMove.pv
+            str  w0, [x6, x26, lsl 2]
+            add  w26, w26, 1
 .CopyRootPvw:
-                ldr  w0, [x1]
-               cbnz  w0, .CopyRootPv
-                str  w26, [x2, RootMove.pvSize]
+            ldr  w0, [x1]
+           cbnz  w0, .CopyRootPv
+            str  w26, [x2, RootMove.pvSize]
 .FoundRootMoveDone:
-                str  w10, [x2, RootMove.score]
+            str  w10, [x2, RootMove.score]
   end if
-
-        ; check for new best move
-                ldr  w1, [sp, .move]
-                ldr  w4, [sp, .bestValue]
-                cmp  w27, w4
-                ble  .18NoNewBestValue
-                str  w27, [sp, .bestValue]
-
-                ldr  w4, [sp, .alpha]
-                cmp  w27, w4
-                ble  .18NoNewAlpha
-                str  w1, [sp, .bestMove]
-
+    ; check for new best move
+            ldr  w1, [sp, .move]
+            ldr  w4, [sp, .bestValue]
+            cmp  w27, w4
+            ble  .18NoNewBestValue
+            str  w27, [sp, .bestValue]
+            ldr  w4, [sp, .alpha]
+            cmp  w27, w4
+            ble  .18NoNewAlpha
+            str  w1, [sp, .bestMove]
   if PvNode = 1 & RootNode = 0
-                ldr  w1, [sp, .move]
-                ldr  x8, [x21, 0*sizeof.State + State.pv]
-                ldr  x9, [x21, 1*sizeof.State + State.pv]
-                mov  w0, 0
-                str  w1, [x8]
-                add  x8, x8, 4
-                cbz  x9, .pv_copy_end
+            ldr  w1, [sp, .move]
+            ldr  x8, [x21, 0*sizeof.State + State.pv]
+            ldr  x9, [x21, 1*sizeof.State + State.pv]
+            mov  w0, 0
+            str  w1, [x8]
+            add  x8, x8, 4
+            cbz  x9, .pv_copy_end
 .pv_copy_loop:
-                ldr  w0, [x9]
-                add  x9, x9, 4
+            ldr  w0, [x9]
+            add  x9, x9, 4
 .pv_copy_end:
-                str  w0, [x8]
-                add  x8, x8, 4
-               cbnz  w0, .pv_copy_loop
+            str  w0, [x8]
+            add  x8, x8, 4
+           cbnz  w0, .pv_copy_loop
   end if
-
   if PvNode = 1
-                ldr  w4, [sp, .beta]
-                cmp  w27, w4
-                bge  .18fail_high
-                str  w27, [sp, .alpha]
-                  b  .18NoNewBestValue
+            ldr  w4, [sp, .beta]
+            cmp  w27, w4
+            bge  .18fail_high
+            str  w27, [sp, .alpha]
+              b  .18NoNewBestValue
   end if
-
 .18fail_high:
-                  b  .MovePickDone
-
+              b  .MovePickDone
 .18NoNewAlpha:
 .18NoNewBestValue:
-
-                ldr  w1, [sp, .move]
-                ldr  w0, [sp, .quietCount]
-               ldrb  w4, [sp, .captureOrPromotion]
-               cbnz  w4, .18Done
-                ldr  w4, [sp, .bestMove]
-                cmp  w1, w4
-                beq  .18Done
-                cmp  w0, 64
-                bhs  .18Done        
-                add  x6, sp, .quietsSearched
-                str  w1, [x6, x0, lsl 2]
-
-                add  w0, w0, 1
-                str  w0, [sp, .quietCount]
+            ldr  w1, [sp, .move]
+            ldr  w0, [sp, .quietCount]
+           ldrb  w4, [sp, .captureOrPromotion]
+           cbnz  w4, .18Done
+            ldr  w4, [sp, .bestMove]
+            cmp  w1, w4
+            beq  .18Done
+            cmp  w0, 64
+            bhs  .18Done        
+            add  x6, sp, .quietsSearched
+            str  w1, [x6, x0, lsl 2]
+            add  w0, w0, 1
+            str  w0, [sp, .quietCount]
 .18Done:
-                  b  .MovePickLoop
-
+              b  .MovePickLoop
 .MovePickDone:
-
-
-        ; Step 20. Check for mate and stalemate
-                ldr  w0, [x21, -1*sizeof.State + State.currentMove]
-                sub  w26, w0, 1
-                and  w0, w0, 63
-                add  x6, x20, Pos.board
-               ldrb  w1, [x6, x0] 
-                lsl  w1, w1, 6
-                add  w25, w0, w1
-                ldr  w22, [sp, .bestMove]
-                ldr  w0, [sp, .depth]
-                mov  w23, w0
-                mul  w0, w0, w0
-                add  w10, w0, w23, lsl 1
-                sub  w10, w10, 2
-                ldr  w24, [sp, .excludedMove]
-        ; w25 = offset of [piece_on(prevSq),prevSq]
-        ; w22 = move
-        ; w23 = depth
-        ; w10 = bonus
-        ; w24 = excludedMove
-                ldr  w27, [sp, .bestValue]
-                ldr  w4, [sp, .moveCount]
-                cbz  w4, .20Mate
-                cbz  w22, .20CheckBonus
+    ; Step 20. Check for mate and stalemate
+            ldr  w0, [x21, -1*sizeof.State + State.currentMove]
+            sub  w26, w0, 1
+            and  w0, w0, 63
+            add  x6, x20, Pos.board
+           ldrb  w1, [x6, x0] 
+            lsl  w1, w1, 6
+            add  w25, w0, w1
+            ldr  w22, [sp, .bestMove]
+            ldr  w0, [sp, .depth]
+            mov  w23, w0
+            mul  w0, w0, w0
+            add  w10, w0, w23, lsl 1
+            sub  w10, w10, 2
+            ldr  w24, [sp, .excludedMove]
+    ; w25 = offset of [piece_on(prevSq),prevSq]
+    ; w22 = move
+    ; w23 = depth
+    ; w10 = bonus
+    ; w24 = excludedMove
+            ldr  w27, [sp, .bestValue]
+            ldr  w4, [sp, .moveCount]
+            cbz  w4, .20Mate
+            cbz  w22, .20CheckBonus
 .20Quiet:
-                mov  w2, w22
-                mov  w0, w22
-                and  w0, w0, 63
-                lsr  w2, w2, 14
-                add  x6, x20, Pos.board
-               ldrb  w0, [x6, x0]
-                lea  x6, _CaptureOrPromotion_or
-               ldrb  w4, [x6, x2]
-                orr  w0, w0, w4
-                lea  x6, _CaptureOrPromotion_and
-               ldrb  w4, [x6, x2]
-                tst  w0, w4
-                bne  .20Quiet_SkipUpdateStats
-                add  x3, sp, .quietsSearched
-                ldr  w5, [sp, .quietCount]
-        UpdateStats  w22, x3, 1, w5, w11, w10, x25
-
+            mov  w2, w22
+            mov  w0, w22
+            and  w0, w0, 63
+            lsr  w2, w2, 14
+            add  x6, x20, Pos.board
+           ldrb  w0, [x6, x0]
+            lea  x6, _CaptureOrPromotion_or
+           ldrb  w4, [x6, x2]
+            orr  w0, w0, w4
+            lea  x6, _CaptureOrPromotion_and
+           ldrb  w4, [x6, x2]
+            tst  w0, w4
+            bne  .20Quiet_SkipUpdateStats
+            add  x3, sp, .quietsSearched
+            ldr  w5, [sp, .quietCount]
+    UpdateStats  w22, x3, 1, w5, w11, w10, x25
 .20Quiet_SkipUpdateStats:
-
-                add  w10, w10, w23, lsl 1
-                add  w10, w10, 3
-        ; r10d = penalty
-                ldr  w4, [x21, -1*sizeof.State + State.moveCount]
-                cmp  w4, 1
-                bne  .20TTStore
-               ldrb  w4, [x21, State.capturedPiece]
-               cbnz  w4, .20TTStore
-                sub  w11, wzr, w10, lsl 5
-                cmp  w10, 324
-                bhs  .20TTStore
-        UpdateCmStats  x21, -1*sizeof.State, x25, w11, w10, x8
-                  b  .20TTStore
-
+            add  w10, w10, w23, lsl 1
+            add  w10, w10, 3
+    ; r10d = penalty
+            ldr  w4, [x21, -1*sizeof.State + State.moveCount]
+            cmp  w4, 1
+            bne  .20TTStore
+           ldrb  w4, [x21, State.capturedPiece]
+           cbnz  w4, .20TTStore
+            sub  w11, wzr, w10, lsl 5
+            cmp  w10, 324
+            bhs  .20TTStore
+    UpdateCmStats  x21, -1*sizeof.State, x25, w11, w10, x8
+              b  .20TTStore
 .20Mate:
-                ldr  x0, [x21, State.checkersBB]
-                ldr  w1, [x20, Pos.sideToMove]
-               ldrb  w27, [x21, State.ply]
-                mov  w4, VALUE_MATE
-                sub  w27, w27, w4
-                tst  x0, x0
-                lea  x6, DrawValue
-                ldr  w4, [x6, x1, lsl 2]
-               csel  w27, w4, w27, eq
-                tst  w24, w24
-                ldr  w4, [sp, .alpha]
-               csel  w27, w4, w27, ne
-                  b  .20TTStore
+            ldr  x0, [x21, State.checkersBB]
+            ldr  w1, [x20, Pos.sideToMove]
+           ldrb  w27, [x21, State.ply]
+            mov  w4, VALUE_MATE
+            sub  w27, w27, w4
+            tst  x0, x0
+            lea  x6, DrawValue
+            ldr  w4, [x6, x1, lsl 2]
+           csel  w27, w4, w27, eq
+            tst  w24, w24
+            ldr  w4, [sp, .alpha]
+           csel  w27, w4, w27, ne
+              b  .20TTStore
 .20CheckBonus:
-        ; we already checked that bestMove = 0
-                sub  w2, w23, 3*ONE_PLY
-                orr  w2, w2, w26
-               tbnz  w2, 31, .20TTStore
-               ldrb  w4, [x21, State.capturedPiece]
-               cbnz  w4, .20TTStore
-
-                lsl  w11, w10, 5
-                cmp  w10, 324
-                bhs  .20TTStore
-      UpdateCmStats  x21, -1*sizeof.State, x25, w11, w10, x8
-
+    ; we already checked that bestMove = 0
+            sub  w2, w23, 3*ONE_PLY
+            orr  w2, w2, w26
+           tbnz  w2, 31, .20TTStore
+           ldrb  w4, [x21, State.capturedPiece]
+           cbnz  w4, .20TTStore
+            lsl  w11, w10, 5
+            cmp  w10, 324
+            bhs  .20TTStore
+  UpdateCmStats  x21, -1*sizeof.State, x25, w11, w10, x8
 .20TTStore:
-        ; edi = bestValue
-                ldr  x9, [sp, .posKey]
-                mov  w4, VALUE_MATE_IN_MAX_PLY
-                add  w1, w27, w4
-                ldr  x8, [sp, .tte]
-                lsr  x9, x9, 48
-                mov  w2, w27
-               cbnz  w24, .ReturnBestValue
-                mov  w4, VALUE_MATE_IN_MAX_PLY
-                cmp  w1, w4, lsl 1
-                bhs  .20ValueToTT
+    ; edi = bestValue
+            ldr  x9, [sp, .posKey]
+            mov  w4, VALUE_MATE_IN_MAX_PLY
+            add  w1, w27, w4
+            ldr  x8, [sp, .tte]
+            lsr  x9, x9, 48
+            mov  w2, w27
+           cbnz  w24, .ReturnBestValue
+            mov  w4, VALUE_MATE_IN_MAX_PLY
+            cmp  w1, w4, lsl 1
+            bhs  .20ValueToTT
 .20ValueToTTRet:
- if PvNode = 0
-                ldr  w0, [sp, .bestMove]
-                ldr  w4, [sp, .beta]
-                cmp  w27, w4
-               cset  w26, ge
-                add  w26, w26, BOUND_UPPER
- else
-                ldr  w0, [sp, .bestMove]
-                mov  w1, BOUND_LOWER
-                cmp  w0, 1
-              csetm  w26, lo
-                mov  w4, BOUND_EXACT
-                add  w26, w4, w26, lsl 1
-                ldr  w4, [sp, .beta]
-                cmp  w27, w4
-               csel  w26, w1, w26, ge
- end if
-               ldrb  w3, [sp, .depth]
-               ldrh  w7, [x21, State.staticEval]
-                MainHash_Save .ltte, x8, w9, w2, w26, w3, w0, w7
+  if PvNode = 0
+            ldr  w0, [sp, .bestMove]
+            ldr  w4, [sp, .beta]
+            cmp  w27, w4
+           cset  w26, ge
+            add  w26, w26, BOUND_UPPER
+  else
+            ldr  w0, [sp, .bestMove]
+            mov  w1, BOUND_LOWER
+            cmp  w0, 1
+          csetm  w26, lo
+            mov  w4, BOUND_EXACT
+            add  w26, w4, w26, lsl 1
+            ldr  w4, [sp, .beta]
+            cmp  w27, w4
+           csel  w26, w1, w26, ge
+  end if
+           ldrb  w3, [sp, .depth]
+           ldrh  w7, [x21, State.staticEval]
+            MainHash_Save .ltte, x8, w9, w2, w26, w3, w0, w7
 .ReturnBestValue:
-                mov  w0, w27
-
+            mov  w0, w27
 .Return:
-
 Display 2, "Search returning %i0n"
-
-                add  sp, sp, .localsize
-                ldp  x29, x30, [sp], 16
-                ldp  x27, x28, [sp], 16
-                ldp  x25, x26, [sp], 16
-                ldp  x23, x24, [sp], 16
-                ldp  x21, x22, [sp], 16
-                ret
-
-
+            add  sp, sp, .localsize
+            ldp  x29, x30, [sp], 16
+            ldp  x27, x28, [sp], 16
+            ldp  x25, x26, [sp], 16
+            ldp  x23, x24, [sp], 16
+            ldp  x21, x22, [sp], 16
+            ret
 .ValueFromTT:
-               ldrb  w8, [x21, State.ply]
-                asr  w9, w27, 31
-                eor  w8, w8, w9
-                add  w27, w27, w9
-                sub  w27, w27, w8
-                  b  .ValueFromTTRet
-
+           ldrb  w8, [x21, State.ply]
+            asr  w9, w27, 31
+            eor  w8, w8, w9
+            add  w27, w27, w9
+            sub  w27, w27, w8
+              b  .ValueFromTTRet
 .IllegalMove:
-                ldr  w0, [sp, .moveCount]
-                sub  w0, w0, 1
-                str  w0, [x21, State.moveCount]
-                str  w0, [sp, .moveCount]
-                  b  .MovePickLoop
-
+            ldr  w0, [sp, .moveCount]
+            sub  w0, w0, 1
+            str  w0, [x21, State.moveCount]
+            str  w0, [sp, .moveCount]
+              b  .MovePickLoop
   if RootNode = 0
 .AbortSearch_PlyBigger:
-                ldr  x1, [x21, State.checkersBB]
-                ldr  w0, [x20, Pos.sideToMove]
-               _lea  x6, DrawValue
-                ldr  w0, [x6, x0, lsl 2]
-                cbz  x1, .Return
-                 bl  Evaluate
-                  b  .Return
-
+            ldr  x1, [x21, State.checkersBB]
+            ldr  w0, [x20, Pos.sideToMove]
+           _lea  x6, DrawValue
+            ldr  w0, [x6, x0, lsl 2]
+            cbz  x1, .Return
+             bl  Evaluate
+              b  .Return
 .AbortSearch_PlySmaller:
-                ldr  w0, [x20, Pos.sideToMove]
-               _lea  x6, DrawValue
-                ldr  w0, [x6, x0, lsl 2]
-                  b  .Return
+            ldr  w0, [x20, Pos.sideToMove]
+           _lea  x6, DrawValue
+            ldr  w0, [x6, x0, lsl 2]
+              b  .Return
   end if
-
   if PvNode = 0
-
 .ReturnTTValue:
-        ; edi = ttValue
-                mov  w22, w1
-                ldr  w0, [sp, .depth]
-                mov  w23, w0
-                mul  w0, w0, w0
-                add  w10, w0, w23, lsl 1
-                sub  w10, w10, 2
-        ; r12d = move
-        ; r13d = depth
-        ; r10d = bonus
-
-                and  w2, w22, 63
-                lsr  w0, w22, 14
-                add  x6, x20, Pos.board
-               ldrb  w2, [x6, x2]
-               _lea  x6, _CaptureOrPromotion_or
-               ldrb  w4, [x6, x0]
-                orr  w2, w2, w4
-               _lea  x6, _CaptureOrPromotion_and
-               ldrb  w4, [x6, x0]
-                and  w2, w2, w4
-        ; dl = capture or promotion
-
-                mov  w0, w27
-                cbz  w1, .Return
-
-        ; ttMove is quiet; update move sorting heuristics on TT hit
-                ldr  w4, [sp, .beta]
-                cmp  w27, w4
-                blt  .ReturnTTValue_Penalty
-
-                ldr  w0, [x21, -1*sizeof.State + State.currentMove]
-                and  w0, w0, 63
-                add  x6, x20, Pos.board
-               ldrb  w1, [x6, x0]
-                lsl  w1, w1, 6
-                add  w25, w0, w1
-        ; r15d = offset of [piece_on(prevSq),prevSq]
-
-               cbnz  w2, .ReturnTTValue_SkipUpdateStats
-        UpdateStats  w22, 0, 0, 0, w11, w10, x25
-
+    ; edi = ttValue
+            mov  w22, w1
+            ldr  w0, [sp, .depth]
+            mov  w23, w0
+            mul  w0, w0, w0
+            add  w10, w0, w23, lsl 1
+            sub  w10, w10, 2
+    ; r12d = move
+    ; r13d = depth
+    ; r10d = bonus
+            and  w2, w22, 63
+            lsr  w0, w22, 14
+            add  x6, x20, Pos.board
+           ldrb  w2, [x6, x2]
+           _lea  x6, _CaptureOrPromotion_or
+           ldrb  w4, [x6, x0]
+            orr  w2, w2, w4
+           _lea  x6, _CaptureOrPromotion_and
+           ldrb  w4, [x6, x0]
+            and  w2, w2, w4
+    ; dl = capture or promotion
+            mov  w0, w27
+            cbz  w1, .Return
+    ; ttMove is quiet; update move sorting heuristics on TT hit
+            ldr  w4, [sp, .beta]
+            cmp  w27, w4
+            blt  .ReturnTTValue_Penalty
+            ldr  w0, [x21, -1*sizeof.State + State.currentMove]
+            and  w0, w0, 63
+            add  x6, x20, Pos.board
+           ldrb  w1, [x6, x0]
+            lsl  w1, w1, 6
+            add  w25, w0, w1
+    ; r15d = offset of [piece_on(prevSq),prevSq]
+           cbnz  w2, .ReturnTTValue_SkipUpdateStats
+    UpdateStats  w22, 0, 0, 0, w11, w10, x25
 .ReturnTTValue_SkipUpdateStats:
-
-                mov  w0, w27
-                add  w10, w10, w23, lsl 1
-                add  w10, w10, 3
-        ; r10d = penalty
-                ldr  w4, [x21, -1*sizeof.State + State.moveCount]
-                cmp  w4, 1
-                bne  .Return
-               ldrb  w4, [x21, State.capturedPiece]
-               cbnz  w4, .Return
-                sub  w11, wzr, w10, lsl 5
-                cmp  w10, 324
-                bhs  .Return
-      UpdateCmStats  x21, -1*sizeof.State, x25, w11, w10, x8
-
-                mov  w0, w27
-                  b  .Return
-
+            mov  w0, w27
+            add  w10, w10, w23, lsl 1
+            add  w10, w10, 3
+    ; r10d = penalty
+            ldr  w4, [x21, -1*sizeof.State + State.moveCount]
+            cmp  w4, 1
+            bne  .Return
+           ldrb  w4, [x21, State.capturedPiece]
+           cbnz  w4, .Return
+            sub  w11, wzr, w10, lsl 5
+            cmp  w10, 324
+            bhs  .Return
+  UpdateCmStats  x21, -1*sizeof.State, x25, w11, w10, x8
+            mov  w0, w27
+              b  .Return
 .ReturnTTValue_Penalty:
-
-                and  w1, w1, 64*64 - 1
-                ldr  w8, [x20, Pos.sideToMove]
-                lsl  w8, w8, 14
-                ldr  x4, [x20, Pos.history]
-                add  x8, x8, x4
-                add  x8, x8, x1, lsl 2
-        ; r8 = offset in history table
-
-               cbnz  w2, .Return
-                sub  w11, wzr, w10, lsl 5
-                cmp  w10, 324
-                bhs  .Return
-
-                ldr  w0, [x8]
-                mov  w1, 324
-         ApplyBonus  w0, w2, w11, w10, w1
-                str  w0, [x8]
-
-                and  w9, w22, 63
-               ubfx  w0, w22, 6, 6
-                add  x6, x20, Pos.board
-               ldrb  w0, [x6, x0]
-                add  w9, w9, w0, lsl 6
-        ; r9 = offset in cm table
-      UpdateCmStats  x21, -0*sizeof.State, x9, w11, w10, x8
-
-                mov  w0, w27
-                  b  .Return
- end if
-
+            and  w1, w1, 64*64 - 1
+            ldr  w8, [x20, Pos.sideToMove]
+            lsl  w8, w8, 14
+            ldr  x4, [x20, Pos.history]
+            add  x8, x8, x4
+            add  x8, x8, x1, lsl 2
+    ; r8 = offset in history table
+           cbnz  w2, .Return
+            sub  w11, wzr, w10, lsl 5
+            cmp  w10, 324
+            bhs  .Return
+            ldr  w0, [x8]
+            mov  w1, 324
+     ApplyBonus  w0, w2, w11, w10, w1
+            str  w0, [x8]
+            and  w9, w22, 63
+           ubfx  w0, w22, 6, 6
+            add  x6, x20, Pos.board
+           ldrb  w0, [x6, x0]
+            add  w9, w9, w0, lsl 6
+    ; r9 = offset in cm table
+  UpdateCmStats  x21, -0*sizeof.State, x9, w11, w10, x8
+            mov  w0, w27
+              b  .Return
+  end if
 .20ValueToTT:
-               ldrb  w2, [x21, State.ply]
-                asr  w0, w27, 31
-                eor  w2, w2, w0
-                sub  w2, w2, w0
-                add  w2, w2, w27
-                  b  .20ValueToTTRet
-
+           ldrb  w2, [x21, State.ply]
+            asr  w0, w27, 31
+            eor  w2, w2, w0
+            sub  w2, w2, w0
+            add  w2, w2, w27
+              b  .20ValueToTTRet
   if RootNode = 0
 .CheckDraw_Cold:
       PosIsDraw_Cold  .AbortSearch_PlySmaller, .CheckDraw_ColdRet
-
-
-
     if USE_SYZYGY
 .CheckTablebase:
-                ldr  w1, [sp, .depth]
-                ldr  x0, [x20, Pos.typeBB + 8*White]
-                ldr  x4, [x20, Pos.typeBB + 8*Black]
-                orr  x0, x0, x4
-            _popcnt  x0, x0, x2
-               _lea  x6, Tablebase_ProbeDepth
-                ldr  w4, [x6]
-                cmp  w1, w4
-                bge  .DoTbProbe
-               _lea  x6, Tablebase_Cardinality
-                ldr  w4, [x6]
-                cmp  w0, w4
-                bge  .CheckTablebaseReturn
+            ldr  w1, [sp, .depth]
+            ldr  x0, [x20, Pos.typeBB + 8*White]
+            ldr  x4, [x20, Pos.typeBB + 8*Black]
+            orr  x0, x0, x4
+        _popcnt  x0, x0, x2
+           _lea  x6, Tablebase_ProbeDepth
+            ldr  w4, [x6]
+            cmp  w1, w4
+            bge  .DoTbProbe
+           _lea  x6, Tablebase_Cardinality
+            ldr  w4, [x6]
+            cmp  w0, w4
+            bge  .CheckTablebaseReturn
 .DoTbProbe:
 Display 2,"DoTbProbe %p%n"
-                add  x25, sp, .success
-                 bl  Tablebase_Probe_WDL
-                ldr  w2, [sp, .success]
-                cbz   w2, .CheckTablebaseReturn
+            add  x25, sp, .success
+             bl  Tablebase_Probe_WDL
+            ldr  w2, [sp, .success]
+            cbz   w2, .CheckTablebaseReturn
 Display 2,"Tablebase_Probe_WDL returned %i0%n"
-
-               _lea  x6, Tablebase_UseRule50
-              ldrsb  w1, [x6]
-                add  w2, w0, w0
-                and  w2, w2, w1
-                mov  w27, w2
-
-              mov32  w8, -VALUE_MATE + MAX_PLY
-               ldrb  w9, [x21, State.ply]
-                add  w9, w9, w8
-                cmp  w0, w1
-               csel  w2, w8, w2, lt
-               csel  w27, w9, w27, lt
-                neg  w1, w1
-              mov32  w8, VALUE_MATE - MAX_PLY
-                neg  w9, w9
-                cmp  w0, w1
-               csel  w2, w8, w2, gt
-               csel  w27, w9, w27, gt
-        ; edi = value
-        ; edx = value_to_tt(value, ss->ply)
-
-                ldr  x4, [x20, -Thread.rootPos + Thread.tbHits]
-                add  x4, x4, 1
-                str  x4, [x20, -Thread.rootPos + Thread.tbHits]
-
-                ldr  x9, [sp, .posKey]
-              mov32  w1, VALUE_MATE_IN_MAX_PLY
-                add  w1, w1, w27
-                ldr  x8, [sp, .tte]
-                lsr  x9, x9, 48
-                mov  w0, MAX_PLY - 1
-                ldr  w26, [sp, .depth]
-                add  w26, w26, 6
-                cmp  w26, w0
-               csel  w26, w0, w26, gt
-                mov  w0, 0
-                mov  w3, BOUND_EXACT
-                mov  w5, VALUE_NONE
-      MainHash_Save  .ltte, x8, w9, w2, w3, w26, w0, w5
-                mov  w0, w27
-                  b  .Return
+           _lea  x6, Tablebase_UseRule50
+          ldrsb  w1, [x6]
+            add  w2, w0, w0
+            and  w2, w2, w1
+            mov  w27, w2
+          mov32  w8, -VALUE_MATE + MAX_PLY
+           ldrb  w9, [x21, State.ply]
+            add  w9, w9, w8
+            cmp  w0, w1
+           csel  w2, w8, w2, lt
+           csel  w27, w9, w27, lt
+            neg  w1, w1
+          mov32  w8, VALUE_MATE - MAX_PLY
+            neg  w9, w9
+            cmp  w0, w1
+           csel  w2, w8, w2, gt
+           csel  w27, w9, w27, gt
+    ; edi = value
+    ; edx = value_to_tt(value, ss->ply)
+            ldr  x4, [x20, -Thread.rootPos + Thread.tbHits]
+            add  x4, x4, 1
+            str  x4, [x20, -Thread.rootPos + Thread.tbHits]
+            ldr  x9, [sp, .posKey]
+          mov32  w1, VALUE_MATE_IN_MAX_PLY
+            add  w1, w1, w27
+            ldr  x8, [sp, .tte]
+            lsr  x9, x9, 48
+            mov  w0, MAX_PLY - 1
+            ldr  w26, [sp, .depth]
+            add  w26, w26, 6
+            cmp  w26, w0
+           csel  w26, w0, w26, gt
+            mov  w0, 0
+            mov  w3, BOUND_EXACT
+            mov  w5, VALUE_NONE
+  MainHash_Save  .ltte, x8, w9, w2, w3, w26, w0, w5
+            mov  w0, w27
+              b  .Return
     end if
   end if
-
   if USE_CURRMOVE & VERBOSE < 2 & RootNode = 1
 .PrintCurrentMove:
-               _lea  x6, options
-               ldrb  w4, [x6, Options.displayInfoMove]
-                cbz  w4, .PrintCurrentMoveRet
-               _lea  x27, Output
-                ldr  w0, [sp, .depth]
-                ldr  w1, [sp, .move]
-                ldr  w2, [sp, .moveCount]
-                add  x4, x20, -Thread.rootPos
-                ldr  w4, [x4, Thread.PVIdx]
-                add  w2, w2, w4
-                stp  x2, x2, [sp, -16]!
-                stp  x0, x1, [sp, -16]!
-               _lea  x1, sz_format_currmove
-                mov  x2, sp
-                mov  x3, 0
-                 bl  PrintFancy
-                add  sp, sp, 8*4
-                 bl  Os_WriteOut_Output
-                  b  .PrintCurrentMoveRet
+           _lea  x6, options
+           ldrb  w4, [x6, Options.displayInfoMove]
+            cbz  w4, .PrintCurrentMoveRet
+           _lea  x27, Output
+            ldr  w0, [sp, .depth]
+            ldr  w1, [sp, .move]
+            ldr  w2, [sp, .moveCount]
+            add  x4, x20, -Thread.rootPos
+            ldr  w4, [x4, Thread.PVIdx]
+            add  w2, w2, w4
+            stp  x2, x2, [sp, -16]!
+            stp  x0, x1, [sp, -16]!
+           _lea  x1, sz_format_currmove
+            mov  x2, sp
+            mov  x3, 0
+             bl  PrintFancy
+            add  sp, sp, 8*4
+             bl  Os_WriteOut_Output
+              b  .PrintCurrentMoveRet
   end if
 end macro

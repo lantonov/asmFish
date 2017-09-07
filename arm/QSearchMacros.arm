@@ -19,8 +19,8 @@ macro QSearch PvNode, InCheck
 .beta                    = 1*sizeof.rd + .alpha
 .depth                   = 1*sizeof.rd + .beta
 .bestValue               = 1*sizeof.rd + .depth
-.value	                = 1*sizeof.rd + .bestValue
-.evalu	                = 1*sizeof.rd + .value
+.value	                 = 1*sizeof.rd + .bestValue
+.evalu	                 = 1*sizeof.rd + .value
 .nullValue               = 1*sizeof.rd + .evalu
 .futilityValue           = 1*sizeof.rd + .nullValue
 .futilityBase            = 1*sizeof.rd + .futilityValue

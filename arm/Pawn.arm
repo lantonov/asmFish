@@ -2,7 +2,6 @@ macro EvalPawns Us
 	; in  x20 address of Pos struct
 	;     x27 address of pawn table entry
 	; out w26 score
-
   local Them, Up, Right, Left
   local Isolated0, Isolated1, Backward0, Backward1, Doubled
   local NextPiece, AllDone, Done, WritePawnSpan
@@ -10,8 +9,6 @@ macro EvalPawns Us
   local Neighbours_True__Lever_False__RelRank_small, Neighbours_False
   local Neighbours_True__Lever_True, Neighbours_True__Lever_False__RelRank_big
   local Continue, NoPassed, PopLoop
-
-
   if Us = White
         Them  = Black
         Up    = DELTA_N
@@ -23,266 +20,233 @@ macro EvalPawns Us
         Right = DELTA_SW
         Left  = DELTA_SE
   end if
-
-        Isolated0   = ((27 shl 16) + (30))
-        Isolated1   = ((13 shl 16) + (18))
-        Backward0   = ((40 shl 16) + (26))
-        Backward1   = ((24 shl 16) + (12))
-        Doubled     = ((18 shl 16) + (38))
-        
-                mov  w0, 0
-                str  x0, [x27, PawnEntry.passedPawns + 8*Us]
-                str  x0, [x27, PawnEntry.pawnAttacksSpan + 8*Us]
-                mov  w4, 64
-               strb  w4, [x27, PawnEntry.kingSquares + Us]
-                mov  w4, 255
-               strb  w4, [x27, PawnEntry.semiopenFiles + Us]
-
-                ldr  x25, [x20, Pos.typeBB + 8*Pawn]
-                mov  x24, x25
-                ldr  x4, [x20, Pos.typeBB + 8*Them]
-                and  x24, x24, x4
-                ldr  x4, [x20, Pos.typeBB + 8*Us]
-                and  x25, x25, x4
-                mov  x23, x25
-        ; r14 = their pawns
-        ; r13 = our pawns     = r15
-
-            ShiftBB  Right, x0, x25
-            ShiftBB  Left, x2, x25
-                orr  x0, x0, x2
-                str  x0, [x27, PawnEntry.pawnAttacks + 8*Us]
-
-              mov64  x0, LightSquares
-                and  x0, x0, x25
-             Popcnt  x0, x0, x1
-              mov64  x2, DarkSquares
-                and  x2, x2, x25
-             Popcnt  x2, x2, x1
-               strb  w0, [x27, PawnEntry.pawnsOnSquares + 2*Us + White]
-               strb  w2, [x27, PawnEntry.pawnsOnSquares + 2*Us + Black]
-
-                mov  w26, 0
-        ; esi = score
-
-                cbz  x25, AllDone
-
-
-                add  x25, x20, Pos.pieceList + 16*(8*Us + Pawn)
-               ldrb  w1, [x20, Pos.pieceList + 16*(8*Us + Pawn)]
+  Isolated0   = ((27 shl 16) + (30))
+  Isolated1   = ((13 shl 16) + (18))
+  Backward0   = ((40 shl 16) + (26))
+  Backward1   = ((24 shl 16) + (12))
+  Doubled     = ((18 shl 16) + (38))
+            mov  w0, 0
+            str  x0, [x27, PawnEntry.passedPawns + 8*Us]
+            str  x0, [x27, PawnEntry.pawnAttacksSpan + 8*Us]
+            mov  w4, 64
+           strb  w4, [x27, PawnEntry.kingSquares + Us]
+            mov  w4, 255
+           strb  w4, [x27, PawnEntry.semiopenFiles + Us]
+            ldr  x25, [x20, Pos.typeBB + 8*Pawn]
+            mov  x24, x25
+            ldr  x4, [x20, Pos.typeBB + 8*Them]
+            and  x24, x24, x4
+            ldr  x4, [x20, Pos.typeBB + 8*Us]
+            and  x25, x25, x4
+            mov  x23, x25
+    ; r14 = their pawns
+    ; r13 = our pawns     = r15
+        ShiftBB  Right, x0, x25
+        ShiftBB  Left, x2, x25
+            orr  x0, x0, x2
+            str  x0, [x27, PawnEntry.pawnAttacks + 8*Us]
+          mov64  x0, LightSquares
+            and  x0, x0, x25
+        _popcnt  x0, x0, x1
+          mov64  x2, DarkSquares
+            and  x2, x2, x25
+        _popcnt  x2, x2, x1
+           strb  w0, [x27, PawnEntry.pawnsOnSquares + 2*Us + White]
+           strb  w2, [x27, PawnEntry.pawnsOnSquares + 2*Us + Black]
+            mov  w26, 0
+    ; esi = score
+            cbz  x25, AllDone
+            add  x25, x20, Pos.pieceList + 16*(8*Us + Pawn)
+           ldrb  w1, [x20, Pos.pieceList + 16*(8*Us + Pawn)]
 NextPiece:
-                add  x25, x25, 1
-
-
-                and  w2, w1, 7
-                lsr  w22, w1, 3
-                lea  x3, RankBB
-                ldr  x3, [x3, x22, lsl 3]
+            add  x25, x25, 1
+            and  w2, w1, 7
+            lsr  w22, w1, 3
+           _lea  x3, RankBB
+            ldr  x3, [x3, x22, lsl 3]
  if Us = Black
-                eor  w22, w22, 7
+            eor  w22, w22, 7
  end if
-        ; w1 = s, w2 = f, w22 = relative_rank(Us, s)
-
-               ldrb  w0, [x27, PawnEntry.semiopenFiles + Us]
-                mov  w4, 1
-                lsl  w4, w4, w2
-                bic  w0, w0, w4
-               strb  w0, [x27, PawnEntry.semiopenFiles + Us]
-                lea  x6, PawnAttackSpan + 8*(64*Us)
-                ldr  x0, [x6, x1, lsl 3]
-                ldr  x4, [x27, PawnEntry.pawnAttacksSpan + 8*Us]
-                orr  x4, x4, x0
-                str  x4, [x27, PawnEntry.pawnAttacksSpan + 8*Us]
-
-                lea  x6, ForwardBB + 8*(64*Us)
-                ldr  x11, [x6, x1, lsl 3]
-                tst  x11, x24
-              csetm  w11, ne
-        ; w11 = opposed
-                lea  x6, AdjacentFilesBB
-                ldr  x2, [x6, x2, lsl 3]
-        ; x2 = adjacent_files_bb(f)
-                lea  x6, PassedPawnMask + 8*(64*Us)
-                ldr  x10, [x6, x1, lsl 3]
-                and  x10, x10, x24
-        ; x10 = stoppers
-                lsr  w8, w1, 3
-                lea  x6, RankBB - Up
-                ldr  x8, [x6, x8, lsl 3]
-                and  x9, x23, x2
-        ; x9 = neighbours
-                and  x8, x8, x9
-        ; x8 = supported
-                and  x3, x3, x9
-        ; x3 = phalanx
-                sub  w0, w1, Up
-                mov  x4, 1
-                lsl  x4, x4, x0
-                tst  x4, x23
-               ccmp  x8, xzr, 0, ne
-              mov32  w4, Doubled
-                sub  w4, w26, w4
-               csel  w26, w4, w26, eq
-        ; doubled is taken care of
-
-                lea  x6, PawnAttacks + 8*(64*Us)
-                ldr  x0, [x6, x1, lsl 3]
-                cbz  x9, Neighbours_False
-
+    ; w1 = s, w2 = f, w22 = relative_rank(Us, s)
+           ldrb  w0, [x27, PawnEntry.semiopenFiles + Us]
+            mov  w4, 1
+            lsl  w4, w4, w2
+            bic  w0, w0, w4
+           strb  w0, [x27, PawnEntry.semiopenFiles + Us]
+           _lea  x6, PawnAttackSpan + 8*(64*Us)
+            ldr  x0, [x6, x1, lsl 3]
+            ldr  x4, [x27, PawnEntry.pawnAttacksSpan + 8*Us]
+            orr  x4, x4, x0
+            str  x4, [x27, PawnEntry.pawnAttacksSpan + 8*Us]
+           _lea  x6, ForwardBB + 8*(64*Us)
+            ldr  x11, [x6, x1, lsl 3]
+            tst  x11, x24
+          csetm  w11, ne
+    ; w11 = opposed
+           _lea  x6, AdjacentFilesBB
+            ldr  x2, [x6, x2, lsl 3]
+    ; x2 = adjacent_files_bb(f)
+           _lea  x6, PassedPawnMask + 8*(64*Us)
+            ldr  x10, [x6, x1, lsl 3]
+            and  x10, x10, x24
+    ; x10 = stoppers
+            lsr  w8, w1, 3
+           _lea  x6, RankBB - Up
+            ldr  x8, [x6, x8, lsl 3]
+            and  x9, x23, x2
+    ; x9 = neighbours
+            and  x8, x8, x9
+    ; x8 = supported
+            and  x3, x3, x9
+    ; x3 = phalanx
+            sub  w0, w1, Up
+            mov  x4, 1
+            lsl  x4, x4, x0
+            tst  x4, x23
+           ccmp  x8, xzr, 0, ne
+          mov32  w4, Doubled
+            sub  w4, w26, w4
+           csel  w26, w4, w26, eq
+    ; doubled is taken care of
+           _lea  x6, PawnAttacks + 8*(64*Us)
+            ldr  x0, [x6, x1, lsl 3]
+            cbz  x9, Neighbours_False
 Neighbours_True:
-                tst  x0, x24
-                lea  x6, Lever
-                ldr  w4, [x6, x22, lsl 2]
-               csel  w0, w4, wzr, ne
-                add  w26, w26, w0
-                bne  Neighbours_True__Lever_True
-
+            tst  x0, x24
+           _lea  x6, Lever
+            ldr  w4, [x6, x22, lsl 2]
+           csel  w0, w4, wzr, ne
+            add  w26, w26, w0
+            bne  Neighbours_True__Lever_True
 Neighbours_True__Lever_False:
-                orr  x0, x9, x10
+            orr  x0, x9, x10
   if Us = White
-                cmp  w1, SQ_A5
-                bhs  Neighbours_True__Lever_False__RelRank_big
-               rbit  x0, x0
-                clz  x0, x0
+            cmp  w1, SQ_A5
+            bhs  Neighbours_True__Lever_False__RelRank_big
+           rbit  x0, x0
+            clz  x0, x0
   else
-                cmp  w1, SQ_A5
-                blo  Neighbours_True__Lever_False__RelRank_big
-                clz  x0, x0
-                eor  x0, x0, 63
+            cmp  w1, SQ_A5
+            blo  Neighbours_True__Lever_False__RelRank_big
+            clz  x0, x0
+            eor  x0, x0, 63
   end if
-
 Neighbours_True__Lever_False__RelRank_small:
-                lsr  w0, w0, 3
-                lea  x6, RankBB
-                ldr  x0, [x6, x0, lsl 3]
-                and  x2, x2, x0
-            ShiftBB  Up, x2, x2
-                orr  x2, x2, x0
-              mov32  w4, Backward0
-              mov32  w5, Backward1
-                sub  w0, w4, w5
-                and  w0, w0, w11
-                sub  w0, w0, w4
-                tst  x2, x10
-               csel  w2, w0, wzr, ne
-        ; w2 = backwards ? Backward[opposed] : 0
-                  b  Continue
-
+            lsr  w0, w0, 3
+           _lea  x6, RankBB
+            ldr  x0, [x6, x0, lsl 3]
+            and  x2, x2, x0
+        ShiftBB  Up, x2, x2
+            orr  x2, x2, x0
+          mov32  w4, Backward0
+          mov32  w5, Backward1
+            sub  w0, w4, w5
+            and  w0, w0, w11
+            sub  w0, w0, w4
+            tst  x2, x10
+           csel  w2, w0, wzr, ne
+    ; w2 = backwards ? Backward[opposed] : 0
+              b  Continue
 Neighbours_False:
-                tst  x0, x24
-                lea  x6, Lever
-                ldr  w4, [x6, x22, lsl 2]
-               csel  w0, w4, wzr, ne
-                add  w26, w26, w0
+            tst  x0, x24
+            lea  x6, Lever
+            ldr  w4, [x6, x22, lsl 2]
+           csel  w0, w4, wzr, ne
+            add  w26, w26, w0
 
-              mov32  w4, Isolated0
-              mov32  w5, Isolated1
-                sub  w2, w4, w5
-                and  w2, w2, w11
-                sub  w2, w2, w4
-        ; w2 = Isolated[opposed]
-                  b  Continue
-
+          mov32  w4, Isolated0
+          mov32  w5, Isolated1
+            sub  w2, w4, w5
+            and  w2, w2, w11
+            sub  w2, w2, w4
+    ; w2 = Isolated[opposed]
+              b  Continue
 Neighbours_True__Lever_True:
 Neighbours_True__Lever_False__RelRank_big:
-                mov  w2, 0
-
+            mov  w2, 0
 Continue:
-
-             Popcnt  x0, x8, x9
-             Popcnt  x9, x3, x4
-
-                sub  w11, wzr, w11, lsl 1
-                tst  x3, x3
-               cinc  w11, w11, ne 
-        ; w11 = [opposed][!!phalanx]
-                add  w11, w11, w11, lsl 1
-                add  w11, w11, w0
-        ; w11 = [opposed][!!phalanx][popcount(supported)]
-                add  w11, w22, w11, lsl 3
-        ; w11 = [opposed][!!phalanx][popcount(supported)][relative_rank(Us, s)]
-                orr  x3, x3, x8
-                tst  x3, x3
-                lea  x6, Connected
-                ldr  w4, [x6, x11, lsl 2]
-               csel  w2, w4, w2, ne
-                add  w26, w26, w2
-
-        ; r8 = supported
-        ; r9 = popcnt(phalanx)
-	; rax = popcnt(supported)
-        ; r10 = stoppers
-
-                lea  x6, PawnAttacks + 8*(64*Us)
-                ldr  x11, [x6, x1, lsl 3]
-                and  x11, x11, x24
-        ; x11 = lever
-                lea  x6, PawnAttacks + 8*(64*Us + Up)
-                ldr  x2, [x6, x1, lsl 3]
-                and  x2, x2, x24
-        ; x2 = leverPush
-
-                mov  x22, x10
-
-                lea  x6, ForwardBB + 8*(64*Us)
-                ldr  x4, [x6, x1, lsl 3]
-                tst  x23, x4
-                bne  NoPassed
-                eor  x10, x10, x11
-                eor  x10, x10, x2
-               cbnz  x10, NoPassed
-             Popcnt  x11, x11, x10
-             Popcnt  x2, x2, x10
-                cmp  w0, w11
-               ccmp  w9, w2, 0, cs
-                bcc  NoPassed
-                mov  x0, 1
-                lsl  x0, x0, x1
-                ldr  x4, [x27, PawnEntry.passedPawns + 8*Us]
-                orr  x4, x4, x0
-                str  x4, [x27, PawnEntry.passedPawns + 8*Us]
-                  b  Done        
-
+        _popcnt  x0, x8, x9
+        _popcnt  x9, x3, x4
+            sub  w11, wzr, w11, lsl 1
+            tst  x3, x3
+            cinc  w11, w11, ne 
+            add  w11, w11, w11, lsl 1
+            add  w11, w11, w0
+            add  w11, w22, w11, lsl 3
+    ; w11 = [opposed][!!phalanx][popcount(supported)][relative_rank(Us, s)]
+            orr  x3, x3, x8
+            tst  x3, x3
+            lea  x6, Connected
+            ldr  w4, [x6, x11, lsl 2]
+            csel  w2, w4, w2, ne
+            add  w26, w26, w2
+    ; r8 = supported
+    ; r9 = popcnt(phalanx)
+    ; rax = popcnt(supported)
+    ; r10 = stoppers
+           _lea  x6, PawnAttacks + 8*(64*Us)
+            ldr  x11, [x6, x1, lsl 3]
+            and  x11, x11, x24
+    ; x11 = lever
+           _lea  x6, PawnAttacks + 8*(64*Us + Up)
+            ldr  x2, [x6, x1, lsl 3]
+            and  x2, x2, x24
+    ; x2 = leverPush
+            mov  x22, x10
+           _lea  x6, ForwardBB + 8*(64*Us)
+            ldr  x4, [x6, x1, lsl 3]
+            tst  x23, x4
+            bne  NoPassed
+            eor  x10, x10, x11
+            eor  x10, x10, x2
+           cbnz  x10, NoPassed
+        _popcnt  x11, x11, x10
+        _popcnt  x2, x2, x10
+            cmp  w0, w11
+           ccmp  w9, w2, 0, cs
+            bcc  NoPassed
+            mov  x0, 1
+            lsl  x0, x0, x1
+            ldr  x4, [x27, PawnEntry.passedPawns + 8*Us]
+            orr  x4, x4, x0
+            str  x4, [x27, PawnEntry.passedPawns + 8*Us]
+              b  Done
 NoPassed:
-                add  w0, w1, Up
-                mov  x4, 1
-                lsl  x4, x4, x0
-                eor  x22, x22, x4
+            add  w0, w1, Up
+            mov  x4, 1
+            lsl  x4, x4, x0
+            eor  x22, x22, x4
   if Us = White
-                lsl  x8, x8, 8
-                cmp  w1, SQ_A5
-                blo  Done
+            lsl  x8, x8, 8
+            cmp  w1, SQ_A5
+            blo  Done
   else
-                lsr  x8, x8, 8
-                cmp  w1, SQ_A5
-                bhs  Done
+            lsr  x8, x8, 8
+            cmp  w1, SQ_A5
+            bhs  Done
   end if
-               cbnz  x22, Done
-               bics  x8, x8, x24
-                beq  Done
+           cbnz  x22, Done
+           bics  x8, x8, x24
+            beq  Done
 PopLoop:
-               rbit  x9, x8
-                clz  x9, x9
-                lea  x6, PawnAttacks + 8*(64*Us)
-                ldr  x9, [x6, x9, lsl 3]
-                and  x9, x9, x24
-                sub  x2, x9, 1
-               ands  x2, x2, x9
-               cset  w0, eq
-                lsl  x0, x0, x1
-                ldr  x4, [x27, PawnEntry.passedPawns + 8*Us]
-                orr  x4, x4, x0
-                str  x4, [x27, PawnEntry.passedPawns + 8*Us]
-                sub  x0, x8, 1
-                and  x8, x8, x0
-               cbnz  x8, PopLoop
-
+           rbit  x9, x8
+            clz  x9, x9
+           _lea  x6, PawnAttacks + 8*(64*Us)
+            ldr  x9, [x6, x9, lsl 3]
+            and  x9, x9, x24
+            sub  x2, x9, 1
+           ands  x2, x2, x9
+           cset  w0, eq
+            lsl  x0, x0, x1
+            ldr  x4, [x27, PawnEntry.passedPawns + 8*Us]
+            orr  x4, x4, x0
+            str  x4, [x27, PawnEntry.passedPawns + 8*Us]
+            sub  x0, x8, 1
+            and  x8, x8, x0
+           cbnz  x8, PopLoop
 Done:
-
-               ldrb  w1, [x25]
-                cmp  w1, 64
-                blo  NextPiece
-
+           ldrb  w1, [x25]
+            cmp  w1, 64
+            blo  NextPiece
 AllDone:
-
 end macro

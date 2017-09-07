@@ -8,77 +8,79 @@ WARNIDX_MADVISE = 2
 
 
 Os_MutexCreate:
-	; rcx: address of Mutex
+        ; rcx: address of Mutex
 
 Os_MutexDestroy:
-	; rcx: address of Mutex
+        ; rcx: address of Mutex
                 xor   eax, eax
-		mov   qword[rcx], rax
-		ret
+                mov   qword[rcx], rax
+                ret
 
 Os_MutexLock:
-	; rcx: address of Mutex
-	       push   rbx rsi rdi
-		mov   rdi, rcx
-		mov   ecx, 100
-	; Spin a bit to try to get lock
-.l1:		mov   dl, 1
-	       xchg   dl, byte[rdi]
-	       test   dl, dl
-		 jz   .l4
-	    rep nop
-		sub   ecx, 1
-		jnz   .l1
-	; Set up syscall details
-		mov   edx, 0x0101
-		mov   esi, FUTEX_WAIT_PRIVATE
-		xor   r10, r10
-		jmp   .l3
-	; Wait loop
-.l2:		mov   eax, sys_futex
-	    syscall
-	   ; can this syscall fail in some cases?
-	   ;  it has not been observed doing so
-	   ;    test   eax, eax
-	   ;      js   Failed_sys_futex_MutexLock
-.l3:		mov   eax, edx
-	       xchg   eax, dword[rdi]
-	       test   eax, 1
-		jnz   .l2
-.l4:		xor   eax, eax
-		pop   rdi rsi rbx
-		ret
+        ; rcx: address of Mutex
+               push   rbx rsi rdi
+                mov   rdi, rcx
+                mov   ecx, 100
+        ; Spin a bit to try to get lock
+.l1:
+                mov   dl, 1
+               xchg   dl, byte[rdi]
+               test   dl, dl
+                 jz   .l4
+            rep nop
+                sub   ecx, 1
+                jnz   .l1
+        ; Set up syscall details
+                mov   edx, 0x0101
+                mov   esi, FUTEX_WAIT_PRIVATE
+                xor   r10, r10
+                jmp   .l3
+        ; Wait loop
+.l2:
+                mov   eax, sys_futex
+            syscall
+.l3:
+                mov   eax, edx
+               xchg   eax, dword[rdi]
+               test   eax, 1
+                jnz   .l2
+.l4:
+                xor   eax, eax
+                pop   rdi rsi rbx
+                ret
 
 Os_MutexUnlock:
-	; rcx: address of Mutex
-	       push   rbx rsi rdi
-		mov   rdi, rcx
-		cmp   dword[rdi], 1
-		jne   .l1
-		mov   eax, 1
-		xor   ecx, ecx
-       lock cmpxchg   dword[rdi], ecx
-		 jz   .l3
-.l1:		mov   byte[rdi], 0
-	; Spin, and hope someone takes the lock
-		mov   ecx, 200
-.l2:	       test   byte[rdi], 1
-		jnz   .l3
-	    rep nop
-		sub   ecx, 1
-		jnz   .l2
-	; Wake up someone
-		mov   byte[rdi+1], 0
-		mov   esi, FUTEX_WAKE_PRIVATE
-		mov   edx, 1
-		mov   eax, sys_futex
-	    syscall
-	       test   eax, eax
-		 js   Failed_sys_futex
-
-.l3:		xor   eax, eax
-		pop   rdi rsi rbx
-		ret
+        ; rcx: address of Mutex
+               push   rbx rsi rdi
+                mov   rdi, rcx
+                cmp   dword[rdi], 1
+                jne   .l1
+                mov   eax, 1
+                xor   ecx, ecx
+                lock cmpxchg   dword[rdi], ecx
+                jz   .l3
+.l1:
+        		mov   byte[rdi], 0
+        ; Spin, and hope someone takes the lock
+                mov   ecx, 200
+.l2:
+    	       test   byte[rdi], 1
+                jnz   .l3
+            rep nop
+                sub   ecx, 1
+                jnz   .l2
+        ; Wake up someone
+                mov   byte[rdi+1], 0
+                mov   esi, FUTEX_WAKE_PRIVATE
+                mov   edx, 1
+                mov   eax, sys_futex
+            syscall
+               test   eax, eax
+                 js   Failed_sys_futex
+.l3:
+                xor   eax, eax
+                pop   rdi rsi rbx
+                ret
 
 
 
@@ -112,56 +114,53 @@ Os_EventSignal:
 		ret
 
 Os_EventWait:
-	; rcx: address of ConditionalVariable
-	; rdx: address of Mutex
-	       push   rbx rsi rdi r14 r15
-		mov   rdi, rcx
-		mov   rsi, rdx
-		cmp   rsi, qword[rdi+8]
-		jne   .l4
-	; save seq into r14d
-.l1:		mov   r14d, dword[rdi]
-	; save mutex into r15
-		mov   r15, rsi
-	; Unlock
-		mov   rbx, rdi
-		mov   rcx, rsi
-	       call   Os_MutexUnlock
-		mov   rdi, rbx
-	; Setup for wait on seq
-		mov   edx, r14d
-		xor   r10, r10
-		mov   esi, FUTEX_WAIT_PRIVATE
-		mov   eax, sys_futex
-	    syscall
-	   ; this syscall can and should fail in some cases
-	   ;    test   eax, eax
-	   ;      js   Failed_sys_futex_EventWait
-	; Set up for wait on mutex
-		mov   rdi, r15
-		mov   edx, 0x0101
-		jmp   .l3
-	; Wait loop
-.l2:		mov   eax, sys_futex
-	    syscall
-	   ; this syscall can and should fail in some cases
-	   ;    test   eax, eax
-	   ;      js   Failed_sys_futex_EventWait
-.l3:		mov   eax, edx
-	       xchg   eax, dword[rdi]
-	       test   eax, 1
-		jnz   .l2
-		xor   eax, eax
-		pop   r15 r14 rdi rsi rbx
-		ret
+        ; rcx: address of ConditionalVariable
+        ; rdx: address of Mutex
+               push  rbx rsi rdi r14 r15
+                mov   rdi, rcx
+                mov   rsi, rdx
+                cmp   rsi, qword[rdi+8]
+                jne   .l4
+        ; save seq into r14d
+.l1:
+                mov   r14d, dword[rdi]
+        ; save mutex into r15
+                mov   r15, rsi
+        ; Unlock
+                mov   rbx, rdi
+                mov   rcx, rsi
+               call   Os_MutexUnlock
+                mov   rdi, rbx
+        ; Setup for wait on seq
+                mov   edx, r14d
+                xor   r10, r10
+                mov   esi, FUTEX_WAIT_PRIVATE
+                mov   eax, sys_futex
+             syscall
+        ; Set up for wait on mutex
+                mov   rdi, r15
+                mov   edx, 0x0101
+                jmp   .l3
+.WaitLoop:
+                mov   eax, sys_futex
+            syscall
+.l3:
+                mov   eax, edx
+               xchg   eax, dword[rdi]
+               test   eax, 1
+                jnz   .WaitLoop
+                xor   eax, eax
+                pop   r15 r14 rdi rsi rbx
+                ret
 	
-.l4:		xor   rax, rax
+.l4:
+                xor   rax, rax
        lock cmpxchg   qword[rdi+8], rsi
-		 jz   .l1
-		cmp   qword[rdi+8], rsi
-		 je   .l1
+                 jz   .l1
+                cmp   qword[rdi+8], rsi
+                 je   .l1
 .l5:
-		jmp   Failed_EventWait
+                jmp   Failed_EventWait
 
 
 
@@ -174,16 +173,16 @@ Os_FileWrite:
 	;     rdx buffer
 	;     r8d size (32bits)
 	; out: eax !=0 success
-	       push   rsi rdi rbx
-		mov   rdi, rcx	; fd
-		mov   rsi, rdx	; buffer
-		mov   edx, r8d	; count
-		mov   eax, sys_write
-	    syscall
-		sar   rax, 63
-		add   eax, 1
-		pop   rbx rdi rsi
-		ret
+           push   rsi rdi rbx
+            mov   rdi, rcx	; fd
+            mov   rsi, rdx	; buffer
+            mov   edx, r8d	; count
+            mov   eax, sys_write
+        syscall
+            sar   rax, 63
+            add   eax, 1
+            pop   rbx rdi rsi
+            ret
 
 Os_FileRead:
 	; in: rcx handle from CreateFile (win), fd (linux)

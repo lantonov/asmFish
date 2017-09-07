@@ -1,1067 +1,938 @@
 
 Math_Rand_i:
-        ; in: x1 address of Prng
-        ; out: x0 integer in (0,2^64)
-                ldr  x0, [x1]
-                mov  x2, 0xdd1d
-                eor  x0, x0, x0, lsr 12
-               movk  x2, 0x4f6c, lsl 16
-                eor  x0, x0, x0, lsl 25
-               movk  x2, 0xf491, lsl 32
-                eor  x0, x0, x0, lsr 27
-               movk  x2, 0x2545, lsl 48
-                str  x0, [x1]
-                mul  x0, x0, x2
-                ret
-
+    ; in: x1 address of Prng
+    ; out: x0 integer in (0,2^64)
+            ldr  x0, [x1]
+            mov  x2, 0xdd1d
+            eor  x0, x0, x0, lsr 12
+           movk  x2, 0x4f6c, lsl 16
+            eor  x0, x0, x0, lsl 25
+           movk  x2, 0xf491, lsl 32
+            eor  x0, x0, x0, lsr 27
+           movk  x2, 0x2545, lsl 48
+            str  x0, [x1]
+            mul  x0, x0, x2
+            ret
 
 
 Math_fabs_d_d:
-               fabs  d0, d0
-                ret
+           fabs  d0, d0
+            ret
 
 
 Math_sqrt_d_d:
-              fsqrt  d0, d0
-                ret
+          fsqrt  d0, d0
+            ret
 
 
 Math_scalbn_d_di:
-        stp  x29, x30, [sp, -96]!
-        add  x29, sp, 0
-        mov  x2, 0
-        str  d0, [x29, 24]
-        ldr  w2, [x29, 28]
-       ubfx  x1, x2, 20, 11
-       cbnz  w1, Math_scalbn_d_di.L2
-        ldr  w1, [x29, 24]
-        and  w2, w2, 2147483647
-        orr  w2, w2, w1
-        cbz  w2, Math_scalbn_d_di.L4
-        ldr  d1, Math_scalbn_d_di.LC0
-        mov  w1, -50000
-        cmp  w0, w1
-       fmul  d0, d0, d1
-        ldr  d1, Math_scalbn_d_di.LC1
-        str  d0, [x29, 24]
-        blt  Math_scalbn_d_di.L13
-        ldr  w2, [x29, 28]
-       ubfx  x1, x2, 20, 11
-        sub  w1, w1, 54
-          b  Math_scalbn_d_di.L6
-Math_scalbn_d_di.L2:
-        cmp  w1, 2047
-        bne  Math_scalbn_d_di.L6
-       fadd  d0, d0, d0
-          b  Math_scalbn_d_di.L4
-Math_scalbn_d_di.L6:
-        add  w1, w0, w1
-        cmp  w1, 2046
-        ble  Math_scalbn_d_di.L7
-        ldr  x0, [x29, 24]
-        ldr  d1, Math_scalbn_d_di.LC2
-        str  x0, [x29, 48]
-        ldr  w0, [x29, 52]
-        str  d1, [x29, 40]
-        and  w1, w0, -2147483648
-        mov  w0, 58428
-       movk  w0, 0x7e37, lsl 16
-        orr  w0, w1, w0
-        str  w0, [x29, 44]
-        ldr  d0, [x29, 40]
-          b  Math_scalbn_d_di.L13
-Math_scalbn_d_di.L7:
-        cmp  w1, 0
-        ble  Math_scalbn_d_di.L8
-        and  w2, w2, -2146435073
-        orr  w1, w2, w1, lsl 20
-        str  w1, [x29, 28]
-        ldr  d0, [x29, 24]
-          b  Math_scalbn_d_di.L4
-Math_scalbn_d_di.L8:
-        cmn  w1, 53
-        bge  Math_scalbn_d_di.L9
-        mov  w1, 50000
-        cmp  w0, w1
-        ldr  x0, [x29, 24]
-        ble  Math_scalbn_d_di.L10
-        str  x0, [x29, 64]
-        ldr  d1, Math_scalbn_d_di.LC2
-        ldr  w0, [x29, 68]
-        and  w1, w0, -2147483648
-        mov  w0, 58428
-       movk  w0, 0x7e37, lsl 16
-        str  d1, [x29, 56]
-        orr  w0, w1, w0
-        str  w0, [x29, 60]
-        ldr  d0, [x29, 56]
-          b  Math_scalbn_d_di.L13
-Math_scalbn_d_di.L10:
-        str  x0, [x29, 80]
-        ldr  d1, Math_scalbn_d_di.LC1
-        ldr  w0, [x29, 84]
-        and  w1, w0, -2147483648
-        mov  w0, 28191
-       movk  w0, 0x1a5, lsl 16
-        str  d1, [x29, 72]
-        orr  w0, w1, w0
-        str  w0, [x29, 76]
-        ldr  d0, [x29, 72]
-          b  Math_scalbn_d_di.L13
-Math_scalbn_d_di.L9:
-        add  w1, w1, 54
-        and  w2, w2, -2146435073
-        ldr  d1, Math_scalbn_d_di.LC3
-        orr  w1, w2, w1, lsl 20
-        str  w1, [x29, 28]
-        ldr  d0, [x29, 24]
-Math_scalbn_d_di.L13:
-       fmul  d0, d0, d1
-Math_scalbn_d_di.L4:
-        ldp  x29, x30, [sp], 96
-        ret
-Math_scalbn_d_di.LC0:
-        dd   0
-        dd   1129316352
-Math_scalbn_d_di.LC1:
-        dd   3271095129
-        dd   27618847
-Math_scalbn_d_di.LC2:
-        dd   2281731484
-        dd   2117592124
-Math_scalbn_d_di.LC3:
-        dd   0
-        dd   1016070144
+            stp  x29, x30, [sp, -96]!
+            add  x29, sp, 0
+            mov  x2, 0
+            str  d0, [x29, 24]
+            ldr  w2, [x29, 28]
+           ubfx  x1, x2, 20, 11
+           cbnz  w1, .L2
+            ldr  w1, [x29, 24]
+            and  w2, w2, 2147483647
+            orr  w2, w2, w1
+            cbz  w2, .L4
+            ldr  d1, .LC0
+            mov  w1, -50000
+            cmp  w0, w1
+           fmul  d0, d0, d1
+            ldr  d1, .LC1
+            str  d0, [x29, 24]
+            blt  .L13
+            ldr  w2, [x29, 28]
+           ubfx  x1, x2, 20, 11
+            sub  w1, w1, 54
+              b  .L6
+.L2:
+            cmp  w1, 2047
+            bne  .L6
+           fadd  d0, d0, d0
+              b  .L4
+.L6:
+            add  w1, w0, w1
+            cmp  w1, 2046
+            ble  .L7
+            ldr  x0, [x29, 24]
+            ldr  d1, .LC2
+            str  x0, [x29, 48]
+            ldr  w0, [x29, 52]
+            str  d1, [x29, 40]
+            and  w1, w0, -2147483648
+            mov  w0, 58428
+           movk  w0, 0x7e37, lsl 16
+            orr  w0, w1, w0
+            str  w0, [x29, 44]
+            ldr  d0, [x29, 40]
+              b  .L13
+.L7:
+            cmp  w1, 0
+            ble  .L8
+            and  w2, w2, -2146435073
+            orr  w1, w2, w1, lsl 20
+            str  w1, [x29, 28]
+            ldr  d0, [x29, 24]
+              b  .L4
+.L8:
+            cmn  w1, 53
+            bge  .L9
+            mov  w1, 50000
+            cmp  w0, w1
+            ldr  x0, [x29, 24]
+            ble  .L10
+            str  x0, [x29, 64]
+            ldr  d1, .LC2
+            ldr  w0, [x29, 68]
+            and  w1, w0, -2147483648
+            mov  w0, 58428
+           movk  w0, 0x7e37, lsl 16
+            str  d1, [x29, 56]
+            orr  w0, w1, w0
+            str  w0, [x29, 60]
+            ldr  d0, [x29, 56]
+              b  .L13
+.L10:
+            str  x0, [x29, 80]
+            ldr  d1, .LC1
+            ldr  w0, [x29, 84]
+            and  w1, w0, -2147483648
+            mov  w0, 28191
+           movk  w0, 0x1a5, lsl 16
+            str  d1, [x29, 72]
+            orr  w0, w1, w0
+            str  w0, [x29, 76]
+            ldr  d0, [x29, 72]
+              b  .L13
+.L9:
+            add  w1, w1, 54
+            and  w2, w2, -2146435073
+            ldr  d1, .LC3
+            orr  w1, w2, w1, lsl 20
+            str  w1, [x29, 28]
+            ldr  d0, [x29, 24]
+.L13:
+           fmul  d0, d0, d1
+.L4:
+            ldp  x29, x30, [sp], 96
+            ret
 
+.LC0:   dd   0, 1129316352
+.LC1:   dd   3271095129, 27618847
+.LC2:   dd   2281731484, 2117592124
+.LC3:   dd   0, 1016070144
 
 
 Math_exp_d_d:
-        stp  x29, x30, [sp, -48]!
-        add  x29, sp, 0
-        mov  x3, 0
-        mov  w2, 11841
-       movk  w2, 0x4086, lsl 16
-        str  d0, [x29, 24]
-        ldr  w4, [x29, 28]
-        and  w3, w4, 2147483647
-        cmp  w3, w2
-        mov  x2, x1
-        lsr  w5, w4, 31
-        bls  Math_exp_d_d.L2
-        mov  w0, 2146435071
-        cmp  w3, w0
-        bls  Math_exp_d_d.L3
-        ldr  w0, [x29, 24]
-        and  w4, w4, 1048575
-        orr  w4, w4, w0
-        cbz  w4, Math_exp_d_d.L4
-       fadd  d0, d0, d0
-          b  Math_exp_d_d.L5
-Math_exp_d_d.L4:
-       fmov  d1, xzr
-        cmp  w5, 0
-      fcsel  d0, d0, d1, eq
-          b  Math_exp_d_d.L5
-Math_exp_d_d.L3:
-       fmov  d1, d0
-        ldr  d0, Math_exp_d_d.LC0
-      fcmpe  d1, d0
-        ble  Math_exp_d_d.L22
-        ldr  d0, Math_exp_d_d.LC1
-       fmul  d0, d0, d0
-          b  Math_exp_d_d.L5
-Math_exp_d_d.L22:
-        ldr  d2, Math_exp_d_d.LC2
-       fmov  d0, xzr
-      fcmpe  d1, d2
-        bpl  Math_exp_d_d.L8
-          b  Math_exp_d_d.L5
-Math_exp_d_d.L2:
-        mov  w1, 11842
-       movk  w1, 0x3fd6, lsl 16
-        cmp  w3, w1
-        bls  Math_exp_d_d.L9
-Math_exp_d_d.L8:
-        mov  w0, 41649
-        adr  x1, Math_exp_d_d.LANCHOR0
-       movk  w0, 0x3ff0, lsl 16
-        cmp  w3, w0
-        ldr  d4, [x29, 24]
-       sxtw  x0, w5
-        bhi  Math_exp_d_d.L10
-        ldr  d2, [x1, x0, lsl 3]
-        add  x0, x1, x0, lsl 3
-       fsub  d4, d4, d2
-        ldr  d2, [x0, 16]
-        mov  w0, 1
-        sub  w0, w0, w5, lsl 1
-          b  Math_exp_d_d.L11
-Math_exp_d_d.L10:
-        add  x0, x1, x0, lsl 3
-        ldr  d1, Math_exp_d_d.LC3
-        ldr  d0, [x0, 32]
-      fmadd  d1, d4, d1, d0
-        ldr  d0, Math_exp_d_d.LC4
-     fcvtzs  w0, d1
-      scvtf  d2, w0
-      fmsub  d4, d2, d0, d4
-        ldr  d0, Math_exp_d_d.LC5
-       fmul  d2, d2, d0
-Math_exp_d_d.L11:
-       fsub  d0, d4, d2
-        str  d0, [x29, 24]
-          b  Math_exp_d_d.L12
-Math_exp_d_d.L9:
-        mov  w1, 1043333119
-        cmp  w3, w1
-        bhi  Math_exp_d_d.L19
-        ldr  d1, Math_exp_d_d.LC1
-       fmov  d3, 1.0e+0
-       fadd  d1, d0, d1
-      fcmpe  d1, d3
-        ble  Math_exp_d_d.L12
-       fadd  d0, d0, d3
-          b  Math_exp_d_d.L5
-Math_exp_d_d.L19:
-        mov  w0, 0
-Math_exp_d_d.L12:
-        ldr  d5, [x29, 24]
-       fmov  d6, 2.0e+0
-        ldr  d3, Math_exp_d_d.LC6
-        ldr  d0, Math_exp_d_d.LC7
-       fmul  d1, d5, d5
-      fmadd  d3, d1, d3, d0
-        ldr  d0, Math_exp_d_d.LC8
-      fmadd  d3, d1, d3, d0
-        ldr  d0, Math_exp_d_d.LC9
-      fmadd  d3, d1, d3, d0
-        ldr  d0, Math_exp_d_d.LC10
-      fmadd  d3, d1, d3, d0
-       fmov  d0, 1.0e+0
-      fmsub  d1, d1, d3, d5
-       fmul  d3, d5, d1
-       cbnz  w0, Math_exp_d_d.L14
-       fsub  d1, d1, d6
-       fdiv  d1, d3, d1
-       fsub  d1, d1, d5
-       fsub  d0, d0, d1
-          b  Math_exp_d_d.L5
-Math_exp_d_d.L14:
-       fsub  d1, d6, d1
-        cmn  w0, 1021
-       fdiv  d1, d3, d1
-       fsub  d2, d2, d1
-       fsub  d2, d2, d4
-       fsub  d0, d0, d2
-        str  d0, [x29, 32]
-        ldr  w1, [x29, 36]
-        blt  Math_exp_d_d.L15
-        add  w0, w1, w0, lsl 20
-        str  w0, [x29, 36]
-        ldr  d0, [x29, 32]
-          b  Math_exp_d_d.L5
-Math_exp_d_d.L15:
-        add  w0, w0, 1000
-        ldr  d1, Math_exp_d_d.LC11
-        add  w0, w1, w0, lsl 20
-        str  w0, [x29, 36]
-        ldr  d0, [x29, 32]
-       fmul  d0, d0, d1
-Math_exp_d_d.L5:
-        ldp  x29, x30, [sp], 48
-        ret
-Math_exp_d_d.LC0:
-        dd   4277811695
-        dd   1082535490
-Math_exp_d_d.LC1:
-        dd   2281731484
-        dd   2117592124
-Math_exp_d_d.LC2:
-        dd   3576508497
-        dd   -1064875760
-Math_exp_d_d.LC3:
-        dd   1697350398
-        dd   1073157447
-Math_exp_d_d.LC4:
-        dd   4276092928
-        dd   1072049730
-Math_exp_d_d.LC5:
-        dd   897137782
-        dd   1038760431
-Math_exp_d_d.LC6:
-        dd   1925096656
-        dd   1046886249
-Math_exp_d_d.LC7:
-        dd   3318901745
-        dd   -1094992575
-Math_exp_d_d.LC8:
-        dd   2938494508
-        dd   1058100842
-Math_exp_d_d.LC9:
-        dd   381599123
-        dd   -1083784852
-Math_exp_d_d.LC10:
-        dd   1431655742
-        dd   1069897045
-Math_exp_d_d.LC11:
-        dd   0
-        dd   24117248
-Math_exp_d_d.LANCHOR0:
-ln2HI:
-        dd   4276092928
-        dd   1072049730
-        dd   4276092928
-        dd   -1075433918
-ln2LO:
-        dd   897137782
-        dd   1038760431
-        dd   897137782
-        dd   -1108723217
-halF:
-        dd   0
-        dd   1071644672
-        dd   0
-        dd   -1075838976
+            stp  x29, x30, [sp, -48]!
+            add  x29, sp, 0
+            mov  x3, 0
+            mov  w2, 11841
+           movk  w2, 0x4086, lsl 16
+            str  d0, [x29, 24]
+            ldr  w4, [x29, 28]
+            and  w3, w4, 2147483647
+            cmp  w3, w2
+            mov  x2, x1
+            lsr  w5, w4, 31
+            bls  .L2
+            mov  w0, 2146435071
+            cmp  w3, w0
+            bls  .L3
+            ldr  w0, [x29, 24]
+            and  w4, w4, 1048575
+            orr  w4, w4, w0
+            cbz  w4, .L4
+           fadd  d0, d0, d0
+              b  .L5
+.L4:
+           fmov  d1, xzr
+            cmp  w5, 0
+          fcsel  d0, d0, d1, eq
+              b  .L5
+.L3:
+           fmov  d1, d0
+            ldr  d0, .LC0
+          fcmpe  d1, d0
+            ble  .L22
+            ldr  d0, .LC1
+           fmul  d0, d0, d0
+              b  .L5
+.L22:
+            ldr  d2, .LC2
+           fmov  d0, xzr
+          fcmpe  d1, d2
+            bpl  .L8
+              b  .L5
+.L2:
+            mov  w1, 11842
+           movk  w1, 0x3fd6, lsl 16
+            cmp  w3, w1
+            bls  .L9
+.L8:
+            mov  w0, 41649
+            adr  x1, .LANCHOR0
+           movk  w0, 0x3ff0, lsl 16
+            cmp  w3, w0
+            ldr  d4, [x29, 24]
+           sxtw  x0, w5
+            bhi  .L10
+            ldr  d2, [x1, x0, lsl 3]
+            add  x0, x1, x0, lsl 3
+           fsub  d4, d4, d2
+            ldr  d2, [x0, 16]
+            mov  w0, 1
+            sub  w0, w0, w5, lsl 1
+              b  .L11
+.L10:
+            add  x0, x1, x0, lsl 3
+            ldr  d1, .LC3
+            ldr  d0, [x0, 32]
+          fmadd  d1, d4, d1, d0
+            ldr  d0, .LC4
+         fcvtzs  w0, d1
+          scvtf  d2, w0
+          fmsub  d4, d2, d0, d4
+            ldr  d0, .LC5
+           fmul  d2, d2, d0
+.L11:
+           fsub  d0, d4, d2
+            str  d0, [x29, 24]
+              b  .L12
+.L9:
+            mov  w1, 1043333119
+            cmp  w3, w1
+            bhi  .L19
+            ldr  d1, .LC1
+           fmov  d3, 1.0e+0
+           fadd  d1, d0, d1
+          fcmpe  d1, d3
+            ble  .L12
+           fadd  d0, d0, d3
+              b  .L5
+.L19:
+            mov  w0, 0
+.L12:
+            ldr  d5, [x29, 24]
+           fmov  d6, 2.0e+0
+            ldr  d3, .LC6
+            ldr  d0, .LC7
+           fmul  d1, d5, d5
+          fmadd  d3, d1, d3, d0
+            ldr  d0, .LC8
+          fmadd  d3, d1, d3, d0
+            ldr  d0, .LC9
+          fmadd  d3, d1, d3, d0
+            ldr  d0, .LC10
+          fmadd  d3, d1, d3, d0
+           fmov  d0, 1.0e+0
+          fmsub  d1, d1, d3, d5
+           fmul  d3, d5, d1
+           cbnz  w0, .L14
+           fsub  d1, d1, d6
+           fdiv  d1, d3, d1
+           fsub  d1, d1, d5
+           fsub  d0, d0, d1
+              b  .L5
+.L14:
+           fsub  d1, d6, d1
+            cmn  w0, 1021
+           fdiv  d1, d3, d1
+           fsub  d2, d2, d1
+           fsub  d2, d2, d4
+           fsub  d0, d0, d2
+            str  d0, [x29, 32]
+            ldr  w1, [x29, 36]
+            blt  .L15
+            add  w0, w1, w0, lsl 20
+            str  w0, [x29, 36]
+            ldr  d0, [x29, 32]
+              b  .L5
+.L15:
+            add  w0, w0, 1000
+            ldr  d1, .LC11
+            add  w0, w1, w0, lsl 20
+            str  w0, [x29, 36]
+            ldr  d0, [x29, 32]
+           fmul  d0, d0, d1
+.L5:
+            ldp  x29, x30, [sp], 48
+            ret
+
+.LC0:   dd   4277811695, 1082535490
+.LC1:   dd   2281731484, 2117592124
+.LC2:   dd   3576508497, -1064875760
+.LC3:   dd   1697350398, 1073157447
+.LC4:   dd   4276092928, 1072049730
+.LC5:   dd   897137782, 1038760431
+.LC6:   dd   1925096656, 1046886249
+.LC7:   dd   3318901745, -1094992575
+.LC8:   dd   2938494508, 1058100842
+.LC9:   dd   381599123, -1083784852
+.LC10:  dd   1431655742, 1069897045
+.LC11:  dd   0, 24117248
+.LANCHOR0:
+ln2HI:  dd   4276092928, 1072049730, 4276092928, -1075433918
+ln2LO:  dd   897137782, 1038760431, 897137782, -1108723217
+halF:   dd   0, 1071644672, 0, -1075838976
 
 
 Math_log_d_d:
-        sub  sp, sp, 16
-        mov  w0, 1048575
-        str  d0, [sp, 8]
-        ldr  w1, [sp, 12]
-        cmp  w1, w0
-        bgt  Math_log_d_d.L13
-        ldr  w2, [sp, 8]
-        and  w0, w1, 2147483647
-        orr  w0, w0, w2
-       cbnz  w0, Math_log_d_d.L3
-       fmov  d1, xzr
-        ldr  d0, Math_log_d_d.LC0
-          b  Math_log_d_d.L17
-Math_log_d_d.L3:
-        tbz  w1, 31, Math_log_d_d.L5
-       fmov  d1, xzr
-       fsub  d0, d0, d0
-Math_log_d_d.L17:
-       fdiv  d0, d0, d1
-          b  Math_log_d_d.L4
-Math_log_d_d.L5:
-        ldr  d1, Math_log_d_d.LC1
-        mov  w0, -54
-       fmul  d0, d0, d1
-        str  d0, [sp, 8]
-        ldr  w1, [sp, 12]
-          b  Math_log_d_d.L2
-Math_log_d_d.L13:
-        mov  w0, 0
-Math_log_d_d.L2:
-        mov  w2, 2146435071
-        cmp  w1, w2
-        ble  Math_log_d_d.L6
-        ldr  d0, [sp, 8]
-       fadd  d0, d0, d0
-          b  Math_log_d_d.L4
-Math_log_d_d.L6:
-        asr  w2, w1, 20
-        and  w1, w1, 1048575
-        sub  w2, w2, 1023
-       fmov  d0, 1.0e+0
-        add  w2, w2, w0
-        add  w0, w1, 610304
-        add  w0, w0, 3940
-        and  w0, w0, 1048576
-        eor  w3, w0, 1072693248
-        orr  w3, w3, w1
-        add  w0, w2, w0, lsr 20
-        str  w3, [sp, 12]
-        add  w2, w1, 2
-        and  w2, w2, 1048575
-        ldr  d1, [sp, 8]
-        cmp  w2, 2
-       fsub  d0, d1, d0
-        bgt  Math_log_d_d.L7
-       fcmp  d0, 0
-        bne  Math_log_d_d.L8
-       fmov  d0, xzr
-        cbz  w0, Math_log_d_d.L4
-      scvtf  d1, w0
-        ldr  d0, Math_log_d_d.LC2
-       fmul  d2, d1, d0
-        ldr  d0, Math_log_d_d.LC3
-      fmadd  d0, d1, d0, d2
-          b  Math_log_d_d.L4
-Math_log_d_d.L8:
-        ldr  d2, Math_log_d_d.LC4
-       fmov  d1, 5.0e-1
-      fmsub  d2, d0, d2, d1
-       fmul  d1, d0, d0
-       fmul  d2, d2, d1
-       cbnz  w0, Math_log_d_d.L9
-       fsub  d0, d0, d2
-          b  Math_log_d_d.L4
-Math_log_d_d.L9:
-      scvtf  d1, w0
-        ldr  d3, Math_log_d_d.LC2
-      fmsub  d2, d1, d3, d2
-       fsub  d2, d2, d0
-        ldr  d0, Math_log_d_d.LC3
-     fnmsub  d0, d1, d0, d2
-          b  Math_log_d_d.L4
-Math_log_d_d.L7:
-       fmov  d1, 2.0e+0
-        ldr  d3, Math_log_d_d.LC5
-        ldr  d6, Math_log_d_d.LC6
-        mov  w3, 47185
-        sub  w2, w1, 397312
-       movk  w3, 0x6, lsl 16
-       fadd  d1, d0, d1
-        sub  w2, w2, 1146
-        sub  w1, w3, w1
-      scvtf  d5, w0
-        orr  w1, w1, w2
-        cmp  w1, 0
-       fdiv  d1, d0, d1
-       fmul  d4, d1, d1
-       fmul  d2, d4, d4
-      fmadd  d3, d2, d3, d6
-        ldr  d6, Math_log_d_d.LC7
-      fmadd  d3, d2, d3, d6
-        ldr  d6, Math_log_d_d.LC8
-      fmadd  d3, d2, d3, d6
-        ldr  d6, Math_log_d_d.LC10
-       fmul  d3, d3, d4
-        ldr  d4, Math_log_d_d.LC9
-      fmadd  d4, d2, d4, d6
-        ldr  d6, Math_log_d_d.LC11
-      fmadd  d4, d2, d4, d6
-      fmadd  d2, d2, d4, d3
-        ble  Math_log_d_d.L10
-       fmov  d3, 5.0e-1
-       fmul  d3, d0, d3
-       fmul  d3, d3, d0
-       fadd  d2, d2, d3
-       cbnz  w0, Math_log_d_d.L11
-      fmsub  d1, d1, d2, d3
-       fsub  d0, d0, d1
-          b  Math_log_d_d.L4
-Math_log_d_d.L11:
-        ldr  d4, Math_log_d_d.LC2
-       fmul  d4, d5, d4
-      fmadd  d1, d1, d2, d4
-       fsub  d1, d3, d1
-          b  Math_log_d_d.L18
-Math_log_d_d.L10:
-       fsub  d2, d0, d2
-       cbnz  w0, Math_log_d_d.L12
-      fmsub  d0, d1, d2, d0
-          b  Math_log_d_d.L4
-Math_log_d_d.L12:
-        ldr  d3, Math_log_d_d.LC2
-       fmul  d3, d5, d3
-     fnmsub  d1, d1, d2, d3
-Math_log_d_d.L18:
-       fsub  d1, d1, d0
-        ldr  d0, Math_log_d_d.LC3
-     fnmsub  d0, d5, d0, d1
-Math_log_d_d.L4:
-        add     sp, sp, 16
-        ret
-Math_log_d_d.LC0:
-        dd   0
-        dd   -1018167296
-Math_log_d_d.LC1:
-        dd   0
-        dd   1129316352
-Math_log_d_d.LC2:
-        dd   897137782
-        dd   1038760431
-Math_log_d_d.LC3:
-        dd   4276092928
-        dd   1072049730
-Math_log_d_d.LC4:
-        dd   1431655765
-        dd   1070945621
-Math_log_d_d.LC5:
-        dd   3745403460
-        dd   1069740306
-Math_log_d_d.LC6:
-        dd   2529887198
-        dd   1070024292
-Math_log_d_d.LC7:
-        dd   2485293913
-        dd   1070745892
-Math_log_d_d.LC8:
-        dd   1431655827
-        dd   1071994197
-Math_log_d_d.LC9:
-        dd   3497576095
-        dd   1069783561
-Math_log_d_d.LC10:
-        dd   495876271
-        dd   1070363077
-Math_log_d_d.LC11:
-        dd   2576873988
-        dd   1071225241
+            sub  sp, sp, 16
+            mov  w0, 1048575
+            str  d0, [sp, 8]
+            ldr  w1, [sp, 12]
+            cmp  w1, w0
+            bgt  .L13
+            ldr  w2, [sp, 8]
+            and  w0, w1, 2147483647
+            orr  w0, w0, w2
+           cbnz  w0, .L3
+           fmov  d1, xzr
+            ldr  d0, .LC0
+              b  .L17
+.L3:
+            tbz  w1, 31, .L5
+           fmov  d1, xzr
+           fsub  d0, d0, d0
+.L17:
+           fdiv  d0, d0, d1
+              b  .L4
+.L5:
+            ldr  d1, .LC1
+            mov  w0, -54
+           fmul  d0, d0, d1
+            str  d0, [sp, 8]
+            ldr  w1, [sp, 12]
+              b  .L2
+.L13:
+            mov  w0, 0
+.L2:
+            mov  w2, 2146435071
+            cmp  w1, w2
+            ble  .L6
+            ldr  d0, [sp, 8]
+           fadd  d0, d0, d0
+              b  .L4
+.L6:
+            asr  w2, w1, 20
+            and  w1, w1, 1048575
+            sub  w2, w2, 1023
+           fmov  d0, 1.0e+0
+            add  w2, w2, w0
+            add  w0, w1, 610304
+            add  w0, w0, 3940
+            and  w0, w0, 1048576
+            eor  w3, w0, 1072693248
+            orr  w3, w3, w1
+            add  w0, w2, w0, lsr 20
+            str  w3, [sp, 12]
+            add  w2, w1, 2
+            and  w2, w2, 1048575
+            ldr  d1, [sp, 8]
+            cmp  w2, 2
+           fsub  d0, d1, d0
+            bgt  .L7
+           fcmp  d0, 0
+            bne  .L8
+           fmov  d0, xzr
+            cbz  w0, .L4
+          scvtf  d1, w0
+            ldr  d0, .LC2
+           fmul  d2, d1, d0
+            ldr  d0, .LC3
+          fmadd  d0, d1, d0, d2
+              b  .L4
+.L8:
+            ldr  d2, .LC4
+           fmov  d1, 5.0e-1
+          fmsub  d2, d0, d2, d1
+           fmul  d1, d0, d0
+           fmul  d2, d2, d1
+           cbnz  w0, .L9
+           fsub  d0, d0, d2
+              b  .L4
+.L9:
+          scvtf  d1, w0
+            ldr  d3, .LC2
+          fmsub  d2, d1, d3, d2
+           fsub  d2, d2, d0
+            ldr  d0, .LC3
+         fnmsub  d0, d1, d0, d2
+              b  .L4
+.L7:
+           fmov  d1, 2.0e+0
+            ldr  d3, .LC5
+            ldr  d6, .LC6
+            mov  w3, 47185
+            sub  w2, w1, 397312
+           movk  w3, 0x6, lsl 16
+           fadd  d1, d0, d1
+            sub  w2, w2, 1146
+            sub  w1, w3, w1
+          scvtf  d5, w0
+            orr  w1, w1, w2
+            cmp  w1, 0
+           fdiv  d1, d0, d1
+           fmul  d4, d1, d1
+           fmul  d2, d4, d4
+          fmadd  d3, d2, d3, d6
+            ldr  d6, .LC7
+          fmadd  d3, d2, d3, d6
+            ldr  d6, .LC8
+          fmadd  d3, d2, d3, d6
+            ldr  d6, .LC10
+           fmul  d3, d3, d4
+            ldr  d4, .LC9
+          fmadd  d4, d2, d4, d6
+            ldr  d6, .LC11
+          fmadd  d4, d2, d4, d6
+          fmadd  d2, d2, d4, d3
+            ble  .L10
+           fmov  d3, 5.0e-1
+           fmul  d3, d0, d3
+           fmul  d3, d3, d0
+           fadd  d2, d2, d3
+           cbnz  w0, .L11
+          fmsub  d1, d1, d2, d3
+           fsub  d0, d0, d1
+              b  .L4
+.L11:
+            ldr  d4, .LC2
+           fmul  d4, d5, d4
+          fmadd  d1, d1, d2, d4
+           fsub  d1, d3, d1
+              b  .L18
+.L10:
+           fsub  d2, d0, d2
+           cbnz  w0, .L12
+          fmsub  d0, d1, d2, d0
+              b  .L4
+.L12:
+            ldr  d3, .LC2
+           fmul  d3, d5, d3
+         fnmsub  d1, d1, d2, d3
+.L18:
+           fsub  d1, d1, d0
+            ldr  d0, .LC3
+         fnmsub  d0, d5, d0, d1
+.L4:
+            add     sp, sp, 16
+            ret
+
+.LC0:   dd   0, -1018167296
+.LC1:   dd   0, 1129316352
+.LC2:   dd   897137782, 1038760431
+.LC3:   dd   4276092928, 1072049730
+.LC4:   dd   1431655765, 1070945621
+.LC5:   dd   3745403460, 1069740306
+.LC6:   dd   2529887198, 1070024292
+.LC7:   dd   2485293913, 1070745892
+.LC8:   dd   1431655827, 1071994197
+.LC9:   dd   3497576095, 1069783561
+.LC10:  dd   495876271, 1070363077
+.LC11:  dd   2576873988, 1071225241
 
 
 Math_pow_d_dd:
-        stp  x29, x30, [sp, -160]!
-        add  x29, sp, 0
-        stp  x21, x22, [sp, 32]
-        stp  x23, x24, [sp, 48]
-        mov  x1,0
-        stp  d1, d0, [x29, 80]
-       fmov  d0, 1.0e+0
-        ldp  w0, w24, [x29, 80]
-        stp  x19, x20, [sp, 16]
-        str  x25, [sp, 64]
-        str  d8, [sp, 72]
-        and  w23, w24, 2147483647
-        orr  w1, w23, w0
-        cbz  w1, Math_pow_d_dd.L2
-        ldr  w20, [x29, 92]
-        mov  w1, 2146435072
-        and  w19, w20, 2147483647
-        cmp  w19, w1
-        bgt  Math_pow_d_dd.L3
-        ldr  w25, [x29, 88]
-       ccmp  w25, 0, 4, eq
-       ccmp  w23, w1, 0, eq
-        bgt  Math_pow_d_dd.L3
-        cmp  w23, w1
-       ccmp  w0, 0, 4, eq
-        beq  Math_pow_d_dd.L4
-Math_pow_d_dd.L3:
-        ldp  d1, d0, [x29, 80]
-       fadd  d0, d0, d1
-          b  Math_pow_d_dd.L2
-Math_pow_d_dd.L4:
-        mov  w22, 0
-        tbz  w20, 31, Math_pow_d_dd.L5
-        mov  w1, 1128267775
-        cmp  w23, w1
-        bgt  Math_pow_d_dd.L49
-        mov  w1, 1072693247
-        cmp  w23, w1
-        ble  Math_pow_d_dd.L5
-        asr  w1, w23, 20
-        sub  w2, w1, 1023
-        cmp  w2, 20
-        ble  Math_pow_d_dd.L6
-        mov  w1, 52
-        sub  w1, w1, w2
-        lsr  w2, w0, w1
-        lsl  w1, w2, w1
-        cmp  w0, w1
-        bne  Math_pow_d_dd.L5
-        and  w2, w2, 1
-        mov  w22, 2
-        sub  w22, w22, w2
-          b  Math_pow_d_dd.L5
-Math_pow_d_dd.L6:
-       cbnz  w0, Math_pow_d_dd.L7
-        mov  w0, 20
-        sub  w0, w0, w2
-        asr  w1, w23, w0
-        lsl  w0, w1, w0
-        cmp  w23, w0
-        bne  Math_pow_d_dd.L45
-        and  w1, w1, 1
-        mov  w22, 2
-        sub  w22, w22, w1
-          b  Math_pow_d_dd.L45
-Math_pow_d_dd.L49:
-        mov  w22, 2
-Math_pow_d_dd.L5:
-       cbnz  w0, Math_pow_d_dd.L7
-Math_pow_d_dd.L45:
-        mov  w0, 2146435072
-        cmp  w23, w0
-        bne  Math_pow_d_dd.L9
-        mov  w0, -1072693248
-        add  w0, w19, w0
-        orr  w0, w0, w25
-       cbnz  w0, Math_pow_d_dd.L10
-        ldr  d0, [x29, 80]
-       fsub  d0, d0, d0
-          b  Math_pow_d_dd.L2
-Math_pow_d_dd.L10:
-        mov  w0, 1072693247
-        cmp  w19, w0
-        ble  Math_pow_d_dd.L11
-        ldr  d0, [x29, 80]
-        tbz  w24, 31, Math_pow_d_dd.L2
-Math_pow_d_dd.L13:
-       fmov  d0, xzr
-          b  Math_pow_d_dd.L2
-Math_pow_d_dd.L11:
-        tbz  w24, 31, Math_pow_d_dd.L13
-        ldr  d0, [x29, 80]
-       fneg  d0, d0
-          b  Math_pow_d_dd.L2
-Math_pow_d_dd.L9:
-        mov  w0, 1072693248
-        cmp  w23, w0
-        bne  Math_pow_d_dd.L14
-        ldr  d1, [x29, 88]
-       fmov  d0, d1
-        tbz  w24, 31, Math_pow_d_dd.L2
-       fmov  d0, 1.0e+0
-       fdiv  d0, d0, d1
-          b  Math_pow_d_dd.L2
-Math_pow_d_dd.L14:
-        mov  w0, 1073741824
-        ldr  d0, [x29, 88]
-        cmp  w24, w0
-        beq  Math_pow_d_dd.L71
-        mov  w0, 1071644672
-        cmp  w24, w0
-       ccmp  w20, 0, 1, eq
-        blt  Math_pow_d_dd.L7
-        ldr  d0, [x29, 88]
-         bl  Math_sqrt_d_d
-          b  Math_pow_d_dd.L2
-Math_pow_d_dd.L7:
-        ldr  d8, [x29, 88]
-       fmov  d0, d8
-         bl  Math_fabs_d_d
-        str  d0, [x29, 104]
-       cbnz  w25, Math_pow_d_dd.L17
-        and  w1, w20, 1073741823
-        mov  w0, 1072693248
-        cmp  w1, w0
-       ccmp  w19, wzr, 4, ne
-        bne  Math_pow_d_dd.L17
-        tbz  w24, 31, Math_pow_d_dd.L69
-       fmov  d1, 1.0e+0
-       fdiv  d0, d1, d0
-Math_pow_d_dd.L69:
-        str  d0, [x29, 136]
-        tbz  w20, 31, Math_pow_d_dd.L20
-        mov  w0, -1072693248
-        ldr  d0, [x29, 136]
-        add  w19, w19, w0
-        orr  w19, w19, w22
-       cbnz  w19, Math_pow_d_dd.L21
-       fsub  d0, d0, d0
-       fdiv  d0, d0, d0
-          b  Math_pow_d_dd.L70
-Math_pow_d_dd.L21:
-        cmp  w22, 1
-        bne  Math_pow_d_dd.L20
-       fneg  d0, d0
-Math_pow_d_dd.L70:
-        str  d0, [x29, 136]
-Math_pow_d_dd.L20:
-        ldr  d0, [x29, 136]
-          b  Math_pow_d_dd.L2
-Math_pow_d_dd.L17:
-        asr  w20, w20, 31
-        add  w20, w20, 1
-        orr  w0, w20, w22
-       cbnz  w0, Math_pow_d_dd.L22
-       fsub  d0, d8, d8
-       fdiv  d0, d0, d0
-          b  Math_pow_d_dd.L2
-Math_pow_d_dd.L22:
-        sub  w22, w22, 1
-       fmov  d1, 1.0e+0
-        orr  w20, w22, w20
-       fmov  d8, -1.0e+0
-        cmp  w20, 0
-        mov  w0, 1105199104
-      fcsel  d8, d1, d8, ne
-        cmp  w23, w0
-        ble  Math_pow_d_dd.L24
-        mov  w0, 1139802112
-        cmp  w23, w0
-        ble  Math_pow_d_dd.L25
-        mov  w0, 1072693247
-        cmp  w19, w0
-        bgt  Math_pow_d_dd.L26
-        tbz  w24, 31, Math_pow_d_dd.L13
-Math_pow_d_dd.L27:
-        ldr  d0, Math_pow_d_dd.LC0
-Math_pow_d_dd.L71:
-       fmul  d0, d0, d0
-          b  Math_pow_d_dd.L2
-Math_pow_d_dd.L26:
-        cmp  w24, 0
-        bgt  Math_pow_d_dd.L27
-          b  Math_pow_d_dd.L13
-Math_pow_d_dd.L25:
-        mov  w0, 65534
-       movk  w0, 0x3fef, lsl 16
-        cmp  w19, w0
-        bgt  Math_pow_d_dd.L28
-        tbz  w24, 31, Math_pow_d_dd.L73
-          b  Math_pow_d_dd.L75
-Math_pow_d_dd.L28:
-        mov  w0, 1072693248
-        cmp  w19, w0
-        ble  Math_pow_d_dd.L30
-        cmp  w24, 0
-        bgt  Math_pow_d_dd.L75
-          b  Math_pow_d_dd.L73
-Math_pow_d_dd.L30:
-       fsub  d0, d0, d1
-       fmov  d1, 2.5e-1
-        ldr  d2, Math_pow_d_dd.LC2
-      fmsub  d1, d0, d1, d2
-       fmov  d2, 5.0e-1
-        str  d0, [x29, 128]
-      fmsub  d1, d0, d1, d2
-       fmul  d2, d0, d0
-       fmul  d1, d1, d2
-        ldr  d2, Math_pow_d_dd.LC3
-       fmul  d2, d1, d2
-        ldr  d1, Math_pow_d_dd.LC4
-     fnmsub  d1, d0, d1, d2
-        ldr  d2, Math_pow_d_dd.LC5
-      fmadd  d3, d0, d2, d1
-        str  d3, [x29, 120]
-        str  wzr, [x29, 120]
-        ldr  d3, [x29, 120]
-      fmsub  d0, d0, d2, d3
-       fsub  d0, d1, d0
-          b  Math_pow_d_dd.L32
-Math_pow_d_dd.L24:
-        mov  w1, 1048575
-        mov  w0, 0
-        cmp  w19, w1
-        bgt  Math_pow_d_dd.L33
-        ldr  d1, Math_pow_d_dd.LC6
-        mov  w0, -53
-       fmul  d0, d0, d1
-        str  d0, [x29, 104]
-        ldr  w19, [x29, 108]
-Math_pow_d_dd.L33:
-        mov  w3, 39054
-        asr  w1, w19, 20
-       movk  w3, 0x3, lsl 16
-        and  w19, w19, 1048575
-        cmp  w19, w3
-        sub  w1, w1, 1023
-        add  w0, w1, w0
-        mov  w2, 0
-        orr  w1, w19, 1072693248
-        ble  Math_pow_d_dd.L34
-        mov  w3, 46713
-        mov  w2, 1
-       movk  w3, 0xb, lsl 16
-        cmp  w19, w3
-        ble  Math_pow_d_dd.L34
-        sub  w1, w1, 1048576
-        add  w0, w0, w2
-        mov  w2, 0
-Math_pow_d_dd.L34:
-        adr  x4, Math.LANCHOR0
-       sxtw  x3, w2
-        str  w1, [x29, 108]
-       fmov  d1, 1.0e+0
-        asr  w1, w1, 1
-        ldr  d0, [x29, 104]
-        orr  w1, w1, 536870912
-        ldr  d3, [x4, x3, lsl 3]
-        add  w1, w1, 524288
-        str  xzr, [x29, 144]
-        add  w1, w1, w2, lsl 18
-        ldr  d7, Math_pow_d_dd.LC8
-        str  w1, [x29, 148]
-        add  x1, x4, x3, lsl 3
-       fadd  d4, d0, d3
-       fsub  d6, d0, d3
-       fdiv  d4, d1, d4
-       fmul  d5, d6, d4
-        str  d5, [x29, 136]
-        str  wzr, [x29, 136]
-        ldp  d2, d1, [x29, 136]
-       fsub  d3, d1, d3
-      fmsub  d1, d1, d2, d6
-       fadd  d6, d5, d2
-       fsub  d0, d0, d3
-        ldr  d3, Math_pow_d_dd.LC7
-      fmsub  d1, d0, d2, d1
-       fmul  d0, d5, d5
-      fmadd  d3, d0, d3, d7
-        ldr  d7, Math_pow_d_dd.LC9
-       fmul  d1, d1, d4
-       fmul  d4, d0, d0
-      fmadd  d3, d0, d3, d7
-        ldr  d7, Math_pow_d_dd.LC10
-       fmul  d6, d6, d1
-      fmadd  d3, d0, d3, d7
-        ldr  d7, Math_pow_d_dd.LC11
-      fmadd  d3, d0, d3, d7
-        ldr  d7, Math_pow_d_dd.LC12
-      fmadd  d0, d0, d3, d7
-       fmov  d3, 3.0e+0
-      fmadd  d0, d4, d0, d6
-      fmadd  d4, d2, d2, d3
-       fadd  d4, d4, d0
-        str  d4, [x29, 144]
-        str  wzr, [x29, 144]
-        ldr  d4, [x29, 144]
-       fsub  d3, d4, d3
-      fmsub  d3, d2, d2, d3
-       fsub  d0, d0, d3
-       fmul  d0, d0, d5
-        ldr  d5, [x1, 32]
-      fmadd  d1, d1, d4, d0
-      fmadd  d0, d2, d4, d1
-        str  d0, [x29, 112]
-        str  wzr, [x29, 112]
-        ldr  d0, Math_pow_d_dd.LC13
-        ldr  d3, [x29, 112]
-      fmsub  d2, d2, d4, d3
-        ldr  d4, Math_pow_d_dd.LC15
-       fsub  d1, d1, d2
-      scvtf  d2, w0
-       fmul  d1, d1, d0
-        ldr  d0, Math_pow_d_dd.LC14
-        str  d2, [x29, 128]
-      fmadd  d0, d3, d0, d1
-        ldr  d1, [x1, 16]
-       fadd  d0, d0, d1
-      fmadd  d1, d3, d4, d0
-       fadd  d1, d1, d5
-       fadd  d1, d1, d2
-        str  d1, [x29, 120]
-        str  wzr, [x29, 120]
-        ldr  d1, [x29, 120]
-       fsub  d2, d1, d2
-       fsub  d2, d2, d5
-      fmsub  d3, d3, d4, d2
-       fsub  d0, d0, d3
-Math_pow_d_dd.L32:
-        ldr  d3, [x29, 80]
-        mov  w1, 1083179007
-        ldr  d4, [x29, 120]
-        str  d3, [x29, 144]
-       fmul  d0, d0, d3
-        str  wzr, [x29, 144]
-        ldr  d2, [x29, 144]
-       fsub  d1, d3, d2
-      fmadd  d0, d1, d4, d0
-       fmul  d1, d2, d4
-        str  d1, [x29, 112]
-       fadd  d2, d0, d1
-        str  d2, [x29, 136]
-        ldp  w0, w2, [x29, 136]
-        cmp  w2, w1
-        ble  Math_pow_d_dd.L35
-        mov  w1, -1083179008
-        add  w1, w2, w1
-        orr  w0, w1, w0
-       cbnz  w0, Math_pow_d_dd.L75
-        ldr  d3, Math_pow_d_dd.LC16
-       fsub  d2, d2, d1
-       fadd  d3, d0, d3
-      fcmpe  d3, d2
-        ble  Math_pow_d_dd.L37
-Math_pow_d_dd.L75:
-        ldr  d1, Math_pow_d_dd.LC0
-          b  Math_pow_d_dd.L72
-Math_pow_d_dd.L35:
-        mov  w1, 52223
-        and  w3, w2, 2147483647
-       movk  w1, 0x4090, lsl 16
-        cmp  w3, w1
-        ble  Math_pow_d_dd.L37
-        mov  w1, 13312
-       movk  w1, 0x3f6f, lsl 16
-        add  w1, w2, w1
-        orr  w0, w1, w0
-       cbnz  w0, Math_pow_d_dd.L73
-       fsub  d2, d2, d1
-      fcmpe  d0, d2
-        bhi  Math_pow_d_dd.L37
-Math_pow_d_dd.L73:
-        ldr  d1, Math_pow_d_dd.LC1
-Math_pow_d_dd.L72:
-       fmul  d0, d8, d1
-       fmul  d0, d0, d1
-          b  Math_pow_d_dd.L2
-Math_pow_d_dd.L37:
-        and  w1, w2, 2147483647
-        mov  w3, 1071644672
-        cmp  w1, w3
-        mov  w0, 0
-        ble  Math_pow_d_dd.L41
-        asr  w1, w1, 20
-        mov  w3, 1048575
-        sub  w0, w1, 1022
-        mov  w1, 1048576
-        str  xzr, [x29, 128]
-        cmp  w2, 0
-        asr  w1, w1, w0
-        add  w1, w1, w2
-       ubfx  x4, x1, 20, 11
-        and  w0, w1, 1048575
-        sub  w4, w4, 1023
-        orr  w0, w0, 1048576
-        asr  w3, w3, w4
-        bic  w3, w1, w3
-        mov  w1, 20
-        str  w3, [x29, 132]
-        sub  w4, w1, w4
-        ldr  d2, [x29, 128]
-        asr  w0, w0, w4
-      csneg  w0, w0, w0, ge
-       fsub  d1, d1, d2
-        str  d1, [x29, 112]
-Math_pow_d_dd.L41:
-        ldr  d2, [x29, 112]
-        ldr  d3, Math_pow_d_dd.LC18
-        ldr  d4, Math_pow_d_dd.LC21
-       fadd  d1, d0, d2
-        str  d1, [x29, 128]
-        str  wzr, [x29, 128]
-        ldr  d1, [x29, 128]
-       fsub  d2, d1, d2
-       fsub  d0, d0, d2
-        ldr  d2, Math_pow_d_dd.LC17
-       fmul  d2, d1, d2
-      fmadd  d0, d0, d3, d2
-        ldr  d2, Math_pow_d_dd.LC19
-      fmadd  d3, d1, d2, d0
-      fmsub  d1, d1, d2, d3
-        ldr  d2, Math_pow_d_dd.LC20
-       fsub  d0, d0, d1
-       fmul  d1, d3, d3
-      fmadd  d0, d3, d0, d0
-      fmadd  d2, d1, d2, d4
-        ldr  d4, Math_pow_d_dd.LC22
-        str  d1, [x29, 128]
-      fmadd  d2, d1, d2, d4
-        ldr  d4, Math_pow_d_dd.LC23
-      fmadd  d2, d1, d2, d4
-        ldr  d4, Math_pow_d_dd.LC24
-      fmadd  d2, d1, d2, d4
-       fmov  d4, 2.0e+0
-      fmsub  d1, d1, d2, d3
-       fmul  d2, d3, d1
-        str  d1, [x29, 120]
-       fsub  d1, d1, d4
-       fdiv  d1, d2, d1
-       fsub  d0, d1, d0
-       fmov  d1, 1.0e+0
-       fsub  d0, d0, d3
-       fsub  d0, d1, d0
-        str  d0, [x29, 136]
-        ldr  w1, [x29, 140]
-        add  w1, w1, w0, lsl 20
-        asr  w2, w1, 20
-        cmp  w2, 0
-        bgt  Math_pow_d_dd.L43
-         bl  Math_scalbn_d_di
-        str  d0, [x29, 136]
-          b  Math_pow_d_dd.L44
-Math_pow_d_dd.L43:
-        str  w1, [x29, 140]
-Math_pow_d_dd.L44:
-        ldr  d0, [x29, 136]
-       fmul  d0, d8, d0
-Math_pow_d_dd.L2:
-        ldp  x19, x20, [sp, 16]
-        ldp  x21, x22, [sp, 32]
-        ldp  x23, x24, [sp, 48]
-        ldr  x25, [sp, 64]
-        ldr  d8, [sp, 72]
-        ldp  x29, x30, [sp], 160
-        ret
+            stp  x29, x30, [sp, -160]!
+            add  x29, sp, 0
+            stp  x21, x22, [sp, 32]
+            stp  x23, x24, [sp, 48]
+            mov  x1,0
+            stp  d1, d0, [x29, 80]
+           fmov  d0, 1.0e+0
+            ldp  w0, w24, [x29, 80]
+            stp  x19, x20, [sp, 16]
+            str  x25, [sp, 64]
+            str  d8, [sp, 72]
+            and  w23, w24, 2147483647
+            orr  w1, w23, w0
+            cbz  w1, .L2
+            ldr  w20, [x29, 92]
+            mov  w1, 2146435072
+            and  w19, w20, 2147483647
+            cmp  w19, w1
+            bgt  .L3
+            ldr  w25, [x29, 88]
+           ccmp  w25, 0, 4, eq
+           ccmp  w23, w1, 0, eq
+            bgt  .L3
+            cmp  w23, w1
+           ccmp  w0, 0, 4, eq
+            beq  .L4
+.L3:
+            ldp  d1, d0, [x29, 80]
+           fadd  d0, d0, d1
+              b  .L2
+.L4:
+            mov  w22, 0
+            tbz  w20, 31, .L5
+            mov  w1, 1128267775
+            cmp  w23, w1
+            bgt  .L49
+            mov  w1, 1072693247
+            cmp  w23, w1
+            ble  .L5
+            asr  w1, w23, 20
+            sub  w2, w1, 1023
+            cmp  w2, 20
+            ble  .L6
+            mov  w1, 52
+            sub  w1, w1, w2
+            lsr  w2, w0, w1
+            lsl  w1, w2, w1
+            cmp  w0, w1
+            bne  .L5
+            and  w2, w2, 1
+            mov  w22, 2
+            sub  w22, w22, w2
+              b  .L5
+.L6:
+           cbnz  w0, .L7
+            mov  w0, 20
+            sub  w0, w0, w2
+            asr  w1, w23, w0
+            lsl  w0, w1, w0
+            cmp  w23, w0
+            bne  .L45
+            and  w1, w1, 1
+            mov  w22, 2
+            sub  w22, w22, w1
+              b  .L45
+.L49:
+            mov  w22, 2
+.L5:
+           cbnz  w0, .L7
+.L45:
+            mov  w0, 2146435072
+            cmp  w23, w0
+            bne  .L9
+            mov  w0, -1072693248
+            add  w0, w19, w0
+            orr  w0, w0, w25
+           cbnz  w0, .L10
+            ldr  d0, [x29, 80]
+           fsub  d0, d0, d0
+              b  .L2
+.L10:
+            mov  w0, 1072693247
+            cmp  w19, w0
+            ble  .L11
+            ldr  d0, [x29, 80]
+            tbz  w24, 31, .L2
+.L13:
+           fmov  d0, xzr
+              b  .L2
+.L11:
+            tbz  w24, 31, .L13
+            ldr  d0, [x29, 80]
+           fneg  d0, d0
+              b  .L2
+.L9:
+            mov  w0, 1072693248
+            cmp  w23, w0
+            bne  .L14
+            ldr  d1, [x29, 88]
+           fmov  d0, d1
+            tbz  w24, 31, .L2
+           fmov  d0, 1.0e+0
+           fdiv  d0, d0, d1
+              b  .L2
+.L14:
+            mov  w0, 1073741824
+            ldr  d0, [x29, 88]
+            cmp  w24, w0
+            beq  .L71
+            mov  w0, 1071644672
+            cmp  w24, w0
+           ccmp  w20, 0, 1, eq
+            blt  .L7
+            ldr  d0, [x29, 88]
+             bl  Math_sqrt_d_d
+              b  .L2
+.L7:
+            ldr  d8, [x29, 88]
+           fmov  d0, d8
+             bl  Math_fabs_d_d
+            str  d0, [x29, 104]
+           cbnz  w25, .L17
+            and  w1, w20, 1073741823
+            mov  w0, 1072693248
+            cmp  w1, w0
+           ccmp  w19, wzr, 4, ne
+            bne  .L17
+            tbz  w24, 31, .L69
+           fmov  d1, 1.0e+0
+           fdiv  d0, d1, d0
+.L69:
+            str  d0, [x29, 136]
+            tbz  w20, 31, .L20
+            mov  w0, -1072693248
+            ldr  d0, [x29, 136]
+            add  w19, w19, w0
+            orr  w19, w19, w22
+           cbnz  w19, .L21
+           fsub  d0, d0, d0
+           fdiv  d0, d0, d0
+              b  .L70
+.L21:
+            cmp  w22, 1
+            bne  .L20
+           fneg  d0, d0
+.L70:
+            str  d0, [x29, 136]
+.L20:
+            ldr  d0, [x29, 136]
+              b  .L2
+.L17:
+            asr  w20, w20, 31
+            add  w20, w20, 1
+            orr  w0, w20, w22
+           cbnz  w0, .L22
+           fsub  d0, d8, d8
+           fdiv  d0, d0, d0
+              b  .L2
+.L22:
+            sub  w22, w22, 1
+           fmov  d1, 1.0e+0
+            orr  w20, w22, w20
+           fmov  d8, -1.0e+0
+            cmp  w20, 0
+            mov  w0, 1105199104
+          fcsel  d8, d1, d8, ne
+            cmp  w23, w0
+            ble  .L24
+            mov  w0, 1139802112
+            cmp  w23, w0
+            ble  .L25
+            mov  w0, 1072693247
+            cmp  w19, w0
+            bgt  .L26
+            tbz  w24, 31, .L13
+.L27:
+            ldr  d0, .LC0
+.L71:
+           fmul  d0, d0, d0
+              b  .L2
+.L26:
+            cmp  w24, 0
+            bgt  .L27
+              b  .L13
+.L25:
+            mov  w0, 65534
+           movk  w0, 0x3fef, lsl 16
+            cmp  w19, w0
+            bgt  .L28
+            tbz  w24, 31, .L73
+              b  .L75
+.L28:
+            mov  w0, 1072693248
+            cmp  w19, w0
+            ble  .L30
+            cmp  w24, 0
+            bgt  .L75
+              b  .L73
+.L30:
+           fsub  d0, d0, d1
+           fmov  d1, 2.5e-1
+            ldr  d2, .LC2
+          fmsub  d1, d0, d1, d2
+           fmov  d2, 5.0e-1
+            str  d0, [x29, 128]
+          fmsub  d1, d0, d1, d2
+           fmul  d2, d0, d0
+           fmul  d1, d1, d2
+            ldr  d2, .LC3
+           fmul  d2, d1, d2
+            ldr  d1, .LC4
+         fnmsub  d1, d0, d1, d2
+            ldr  d2, .LC5
+          fmadd  d3, d0, d2, d1
+            str  d3, [x29, 120]
+            str  wzr, [x29, 120]
+            ldr  d3, [x29, 120]
+          fmsub  d0, d0, d2, d3
+           fsub  d0, d1, d0
+              b  .L32
+.L24:
+            mov  w1, 1048575
+            mov  w0, 0
+            cmp  w19, w1
+            bgt  .L33
+            ldr  d1, .LC6
+            mov  w0, -53
+           fmul  d0, d0, d1
+            str  d0, [x29, 104]
+            ldr  w19, [x29, 108]
+.L33:
+            mov  w3, 39054
+            asr  w1, w19, 20
+           movk  w3, 0x3, lsl 16
+            and  w19, w19, 1048575
+            cmp  w19, w3
+            sub  w1, w1, 1023
+            add  w0, w1, w0
+            mov  w2, 0
+            orr  w1, w19, 1072693248
+            ble  .L34
+            mov  w3, 46713
+            mov  w2, 1
+           movk  w3, 0xb, lsl 16
+            cmp  w19, w3
+            ble  .L34
+            sub  w1, w1, 1048576
+            add  w0, w0, w2
+            mov  w2, 0
+.L34:
+            adr  x4, Math.LANCHOR0
+           sxtw  x3, w2
+            str  w1, [x29, 108]
+           fmov  d1, 1.0e+0
+            asr  w1, w1, 1
+            ldr  d0, [x29, 104]
+            orr  w1, w1, 536870912
+            ldr  d3, [x4, x3, lsl 3]
+            add  w1, w1, 524288
+            str  xzr, [x29, 144]
+            add  w1, w1, w2, lsl 18
+            ldr  d7, .LC8
+            str  w1, [x29, 148]
+            add  x1, x4, x3, lsl 3
+           fadd  d4, d0, d3
+           fsub  d6, d0, d3
+           fdiv  d4, d1, d4
+           fmul  d5, d6, d4
+            str  d5, [x29, 136]
+            str  wzr, [x29, 136]
+            ldp  d2, d1, [x29, 136]
+           fsub  d3, d1, d3
+          fmsub  d1, d1, d2, d6
+           fadd  d6, d5, d2
+           fsub  d0, d0, d3
+            ldr  d3, .LC7
+          fmsub  d1, d0, d2, d1
+           fmul  d0, d5, d5
+          fmadd  d3, d0, d3, d7
+            ldr  d7, .LC9
+           fmul  d1, d1, d4
+           fmul  d4, d0, d0
+          fmadd  d3, d0, d3, d7
+            ldr  d7, .LC10
+           fmul  d6, d6, d1
+          fmadd  d3, d0, d3, d7
+            ldr  d7, .LC11
+          fmadd  d3, d0, d3, d7
+            ldr  d7, .LC12
+          fmadd  d0, d0, d3, d7
+           fmov  d3, 3.0e+0
+          fmadd  d0, d4, d0, d6
+          fmadd  d4, d2, d2, d3
+           fadd  d4, d4, d0
+            str  d4, [x29, 144]
+            str  wzr, [x29, 144]
+            ldr  d4, [x29, 144]
+           fsub  d3, d4, d3
+          fmsub  d3, d2, d2, d3
+           fsub  d0, d0, d3
+           fmul  d0, d0, d5
+            ldr  d5, [x1, 32]
+          fmadd  d1, d1, d4, d0
+          fmadd  d0, d2, d4, d1
+            str  d0, [x29, 112]
+            str  wzr, [x29, 112]
+            ldr  d0, .LC13
+            ldr  d3, [x29, 112]
+          fmsub  d2, d2, d4, d3
+            ldr  d4, .LC15
+           fsub  d1, d1, d2
+          scvtf  d2, w0
+           fmul  d1, d1, d0
+            ldr  d0, .LC14
+            str  d2, [x29, 128]
+          fmadd  d0, d3, d0, d1
+            ldr  d1, [x1, 16]
+           fadd  d0, d0, d1
+          fmadd  d1, d3, d4, d0
+           fadd  d1, d1, d5
+           fadd  d1, d1, d2
+            str  d1, [x29, 120]
+            str  wzr, [x29, 120]
+            ldr  d1, [x29, 120]
+           fsub  d2, d1, d2
+           fsub  d2, d2, d5
+          fmsub  d3, d3, d4, d2
+           fsub  d0, d0, d3
+.L32:
+            ldr  d3, [x29, 80]
+            mov  w1, 1083179007
+            ldr  d4, [x29, 120]
+            str  d3, [x29, 144]
+           fmul  d0, d0, d3
+            str  wzr, [x29, 144]
+            ldr  d2, [x29, 144]
+           fsub  d1, d3, d2
+          fmadd  d0, d1, d4, d0
+           fmul  d1, d2, d4
+            str  d1, [x29, 112]
+           fadd  d2, d0, d1
+            str  d2, [x29, 136]
+            ldp  w0, w2, [x29, 136]
+            cmp  w2, w1
+            ble  .L35
+            mov  w1, -1083179008
+            add  w1, w2, w1
+            orr  w0, w1, w0
+           cbnz  w0, .L75
+            ldr  d3, .LC16
+           fsub  d2, d2, d1
+           fadd  d3, d0, d3
+          fcmpe  d3, d2
+            ble  .L37
+.L75:
+            ldr  d1, .LC0
+              b  .L72
+.L35:
+            mov  w1, 52223
+            and  w3, w2, 2147483647
+           movk  w1, 0x4090, lsl 16
+            cmp  w3, w1
+            ble  .L37
+            mov  w1, 13312
+           movk  w1, 0x3f6f, lsl 16
+            add  w1, w2, w1
+            orr  w0, w1, w0
+           cbnz  w0, .L73
+           fsub  d2, d2, d1
+          fcmpe  d0, d2
+            bhi  .L37
+.L73:
+            ldr  d1, .LC1
+.L72:
+           fmul  d0, d8, d1
+           fmul  d0, d0, d1
+              b  .L2
+.L37:
+            and  w1, w2, 2147483647
+            mov  w3, 1071644672
+            cmp  w1, w3
+            mov  w0, 0
+            ble  .L41
+            asr  w1, w1, 20
+            mov  w3, 1048575
+            sub  w0, w1, 1022
+            mov  w1, 1048576
+            str  xzr, [x29, 128]
+            cmp  w2, 0
+            asr  w1, w1, w0
+            add  w1, w1, w2
+           ubfx  x4, x1, 20, 11
+            and  w0, w1, 1048575
+            sub  w4, w4, 1023
+            orr  w0, w0, 1048576
+            asr  w3, w3, w4
+            bic  w3, w1, w3
+            mov  w1, 20
+            str  w3, [x29, 132]
+            sub  w4, w1, w4
+            ldr  d2, [x29, 128]
+            asr  w0, w0, w4
+          csneg  w0, w0, w0, ge
+           fsub  d1, d1, d2
+            str  d1, [x29, 112]
+.L41:
+            ldr  d2, [x29, 112]
+            ldr  d3, .LC18
+            ldr  d4, .LC21
+           fadd  d1, d0, d2
+            str  d1, [x29, 128]
+            str  wzr, [x29, 128]
+            ldr  d1, [x29, 128]
+           fsub  d2, d1, d2
+           fsub  d0, d0, d2
+            ldr  d2, .LC17
+           fmul  d2, d1, d2
+          fmadd  d0, d0, d3, d2
+            ldr  d2, .LC19
+          fmadd  d3, d1, d2, d0
+          fmsub  d1, d1, d2, d3
+            ldr  d2, .LC20
+           fsub  d0, d0, d1
+           fmul  d1, d3, d3
+          fmadd  d0, d3, d0, d0
+          fmadd  d2, d1, d2, d4
+            ldr  d4, .LC22
+            str  d1, [x29, 128]
+          fmadd  d2, d1, d2, d4
+            ldr  d4, .LC23
+          fmadd  d2, d1, d2, d4
+            ldr  d4, .LC24
+          fmadd  d2, d1, d2, d4
+           fmov  d4, 2.0e+0
+          fmsub  d1, d1, d2, d3
+           fmul  d2, d3, d1
+            str  d1, [x29, 120]
+           fsub  d1, d1, d4
+           fdiv  d1, d2, d1
+           fsub  d0, d1, d0
+           fmov  d1, 1.0e+0
+           fsub  d0, d0, d3
+           fsub  d0, d1, d0
+            str  d0, [x29, 136]
+            ldr  w1, [x29, 140]
+            add  w1, w1, w0, lsl 20
+            asr  w2, w1, 20
+            cmp  w2, 0
+            bgt  .L43
+             bl  Math_scalbn_d_di
+            str  d0, [x29, 136]
+              b  .L44
+.L43:
+            str  w1, [x29, 140]
+.L44:
+            ldr  d0, [x29, 136]
+           fmul  d0, d8, d0
+.L2:
+            ldp  x19, x20, [sp, 16]
+            ldp  x21, x22, [sp, 32]
+            ldp  x23, x24, [sp, 48]
+            ldr  x25, [sp, 64]
+            ldr  d8, [sp, 72]
+            ldp  x29, x30, [sp], 160
+            ret
 
-Math_pow_d_dd.LC0:
-        dd   2281731484
-        dd   2117592124
-Math_pow_d_dd.LC1:
-        dd   3271095129
-        dd   27618847
-Math_pow_d_dd.LC2:
-        dd   1431655765
-        dd   1070945621
-Math_pow_d_dd.LC3:
-        dd   1697350398
-        dd   1073157447
-Math_pow_d_dd.LC4:
-        dd   4166901572
-        dd   1045736971
-Math_pow_d_dd.LC5:
-        dd   1610612736
-        dd   1073157447
-Math_pow_d_dd.LC6:
-        dd   0
-        dd   1128267776
-Math_pow_d_dd.LC7:
-        dd   1246056175
-        dd   1070235176
-Math_pow_d_dd.LC8:
-        dd   2479479653
-        dd   1070433866
-Math_pow_d_dd.LC9:
-        dd   2837266689
-        dd   1070691424
-Math_pow_d_dd.LC10:
-        dd   1368335949
-        dd   1070945621
-Math_pow_d_dd.LC11:
-        dd   3681528831
-        dd   1071345078
-Math_pow_d_dd.LC12:
-        dd   858993411
-        dd   1071854387
-Math_pow_d_dd.LC13:
-        dd   3694789629
-        dd   1072613129
-Math_pow_d_dd.LC14:
-        dd   341508597
-        dd   -1103220768
-Math_pow_d_dd.LC15:
-        dd   3758096384
-        dd   1072613129
-Math_pow_d_dd.LC16:
-        dd   1697350398
-        dd   1016534343
-Math_pow_d_dd.LC17:
-        dd   212364345
-        dd   -1105175455
-Math_pow_d_dd.LC18:
-        dd   4277811695
-        dd   1072049730
-Math_pow_d_dd.LC19:
-        dd   0
-        dd   1072049731
-Math_pow_d_dd.LC20:
-        dd   1925096656
-        dd   1046886249
-Math_pow_d_dd.LC21:
-        dd   3318901745
-        dd   -1094992575
-Math_pow_d_dd.LC22:
-        dd   2938494508
-        dd   1058100842
-Math_pow_d_dd.LC23:
-        dd   381599123
-        dd   -1083784852
-Math_pow_d_dd.LC24:
-        dd   1431655742
-        dd   1069897045
+.LC0:   dd   2281731484, 2117592124
+.LC1:   dd   3271095129, 27618847
+.LC2:   dd   1431655765, 1070945621
+.LC3:   dd   1697350398, 1073157447
+.LC4:   dd   4166901572, 1045736971
+.LC5:   dd   1610612736, 1073157447
+.LC6:   dd   0, 1128267776
+.LC7:   dd   1246056175, 1070235176
+.LC8:   dd   2479479653, 1070433866
+.LC9:   dd   2837266689, 1070691424
+.LC10:  dd   1368335949, 1070945621
+.LC11:  dd   3681528831, 1071345078
+.LC12:  dd   858993411, 1071854387
+.LC13:  dd   3694789629, 1072613129
+.LC14:  dd   341508597, -1103220768
+.LC15:  dd   3758096384, 1072613129
+.LC16:  dd   1697350398, 1016534343
+.LC17:  dd   212364345, -1105175455
+.LC18:  dd   4277811695, 1072049730
+.LC19:  dd   0, 1072049731
+.LC20:  dd   1925096656, 1046886249
+.LC21:  dd   3318901745, -1094992575
+.LC22:  dd   2938494508, 1058100842
+.LC23:  dd   381599123, -1083784852
+.LC24:  dd   1431655742, 1069897045
 
 
 Math.LANCHOR0:
-bp:
-        dd   0
-        dd   1072693248
-        dd   0
-        dd   1073217536
-dp_l:
-        dd   0
-        dd   0
-        dd   1137692678
-        dd   1045233131
-dp_h:
-        dd   0
-        dd   0
-        dd   1073741824
-        dd   1071822851
+bp:     dd   0, 1072693248, 0, 1073217536
+dp_l:   dd   0, 0, 1137692678, 1045233131
+dp_h:   dd   0, 0, 1073741824, 1071822851
 
