@@ -12,629 +12,703 @@ virtual at 0
 end virtual
 .localsize = (.lend + 15) and -16
 
-                stp  x20, x30, [sp, -16]!
-                stp  x21, x26, [sp, -16]!
-                stp  x27, x23, [sp, -16]!
-                stp  x24, x25, [sp, -16]!
-                sub  sp, sp, .localsize
+            stp  x20, x30, [sp, -16]!
+            stp  x21, x26, [sp, -16]!
+            stp  x27, x23, [sp, -16]!
+            stp  x24, x25, [sp, -16]!
+            sub  sp, sp, .localsize
 
-                add  x20, x1, Thread.rootPos
-                ldr  x21, [x20, Pos.state]
+            add  x20, x1, Thread.rootPos
+            ldr  x21, [x20, Pos.state]
 
-                mov  w4, -VALUE_INFINITE
-                mov  w5, +VALUE_INFINITE
-                str  wzr, [sp, .easyMove]
-                str  w4, [sp, .alpha]
-                str  w5, [sp, .beta]
-                str  w4, [sp, .delta]
-                str  w4, [sp, .bestValue]
-                str  wzr, [sp, .completedDepth]
+            mov  w4, -VALUE_INFINITE
+            mov  w5, +VALUE_INFINITE
+            str  wzr, [sp, .easyMove]
+            str  w4, [sp, .alpha]
+            str  w5, [sp, .beta]
+            str  w4, [sp, .delta]
+            str  w4, [sp, .bestValue]
+            str  wzr, [sp, .completedDepth]
 
-                sub  x2, x21, 5*sizeof.State
-                add  x8, x21, 3*sizeof.State
-                ldr  x9, [x20, Pos.counterMoveHistory]
-                add  x9, x9, CmhDeadOffset
+            sub  x2, x21, 5*sizeof.State
+            add  x8, x21, 3*sizeof.State
+            ldr  x9, [x20, Pos.counterMoveHistory]
+            add  x9, x9, CmhDeadOffset
 
 .clear_stack:
-                mov  w0, 0
-                add  x17, x2, State._stack_start
-                mov  w1, State._stack_end - State._stack_start
-                 bl  RepStosb
-                str  x9, [x2, State.counterMoves]
-                add  x2, x2, sizeof.State
-                cmp  x2, x8
-                blo  .clear_stack
+            mov  w0, 0
+            add  x17, x2, State._stack_start
+            mov  w1, State._stack_end - State._stack_start
+             bl  RepStosb
+            str  x9, [x2, State.counterMoves]
+            add  x2, x2, sizeof.State
+            cmp  x2, x8
+            blo  .clear_stack
 
-        ; set move list for current state
-                ldr  x0, [x20, Pos.moveList]
-                str  x0, [x21, -1*sizeof.State + State.endMoves]
+    ; set move list for current state
+            ldr  x0, [x20, Pos.moveList]
+            str  x0, [x21, -1*sizeof.State + State.endMoves]
 
-        ; resets for main thread
-                add  x7, x20, -Thread.rootPos 
-               strb  wzr, [x7, Thread.easyMovePlayed]
-               strb  wzr, [x7, Thread.failedLow]
-                str  xzr, [x7, Thread.bestMoveChanges]
-                ldr  w0, [x7, Thread.idx]
-               cbnz  w0, .skip_easymove
-                ldr  x1, [x21, State.key]
-                 bl  EasyMoveMng_Get
-                str  w0, [sp, .easyMove]
-                 bl  EasyMoveMng_Clear
+    ; resets for main thread
+            add  x7, x20, -Thread.rootPos 
+           strb  wzr, [x7, Thread.easyMovePlayed]
+           strb  wzr, [x7, Thread.failedLow]
+            str  xzr, [x7, Thread.bestMoveChanges]
+            ldr  w0, [x7, Thread.idx]
+           cbnz  w0, .skip_easymove
+            ldr  x1, [x21, State.key]
+             bl  EasyMoveMng_Get
+            str  w0, [sp, .easyMove]
+             bl  EasyMoveMng_Clear
 
 .skip_easymove:
-                add  x1, x20, Pos.rootMovesVec
-                 bl  RootMovesVec_Size
-               _lea  x6, options
-                ldr  w1, [x6, Options.multiPV]
-                cmp  w0, w1
-               csel  w0, w1, w0, hi
-                str  w0, [sp, .multiPV]
+            add  x1, x20, Pos.rootMovesVec
+             bl  RootMovesVec_Size
+           _lea  x6, options
+            ldr  w1, [x6, Options.multiPV]
+            cmp  w0, w1
+           csel  w0, w1, w0, hi
+            str  w0, [sp, .multiPV]
 
-                add  x6, x20, -Thread.rootPos + Thread.rootDepth
-               ldar  w25, [x6]
+            add  x6, x20, -Thread.rootPos + Thread.rootDepth
+           ldar  w25, [x6]
 .id_loop:
-               _lea  x6, limits
-                ldr  w1, [x6, Limits.depth]
-                ldr  w4, [x20, -Thread.rootPos + Thread.idx]
-                tst  w4, w4
-               csel  w1, wzr, w1, ne
-                sub  w1, w1, 1
-               _lea  x6, signals
-               ldrb  w0, [x6, Signals.stop]
-               cbnz  w0, .id_loop_done
-                cmp  w25, w1
-                bhi  .id_loop_done
-                add  w25, w25, 1
-                add  x6, x20, -Thread.rootPos + Thread.rootDepth
-               stlr  w25, [x6]
-                cmp  w25, MAX_PLY
-                bge  .id_loop_done
+           _lea  x6, limits
+            ldr  w1, [x6, Limits.depth]
+            ldr  w4, [x20, -Thread.rootPos + Thread.idx]
+            tst  w4, w4
+           csel  w1, wzr, w1, ne
+            sub  w1, w1, 1
+           _lea  x6, signals
+           ldrb  w0, [x6, Signals.stop]
+           cbnz  w0, .id_loop_done
+            cmp  w25, w1
+            bhi  .id_loop_done
+            add  w25, w25, 1
+            add  x6, x20, -Thread.rootPos + Thread.rootDepth
+           stlr  w25, [x6]
+            cmp  w25, MAX_PLY
+            bge  .id_loop_done
 
-        ; skip depths for helper threads
-                ldr  w0, [x20, -Thread.rootPos + Thread.idx]
-                mov  w1, 20
-               subs  w0, w0, 1
-                blo  .age_out
-               udiv  w2, w0, w1
-               msub  w2, w2, w1, w0
-                mov  w1, 0
+    ; skip depths for helper threads
+            ldr  w0, [x20, -Thread.rootPos + Thread.idx]
+            mov  w1, 20
+           subs  w0, w0, 1
+            blo  .age_out
+           udiv  w2, w0, w1
+           msub  w2, w2, w1, w0
+            mov  w1, 0
 .loopSkipPly:
-                add  w1, w1, 1
-                add  w0, w1, 1
-                mul  w0, w0, w1
-                cmp  w0, w2
-                bls  .loopSkipPly
-                add  w0, w25, w2
-                ldr  w4, [x20, Pos.gamePly]
-                add  w0, w0, w4
-               udiv  w2, w0, w1
-               msub  w2, w2, w1, w0
-                sub  w0, w0, w1
-                tbz  w0, 0, .id_loop
-                  b  .save_prev_score
+            add  w1, w1, 1
+            add  w0, w1, 1
+            mul  w0, w0, w1
+            cmp  w0, w2
+            bls  .loopSkipPly
+            add  w0, w25, w2
+            ldr  w4, [x20, Pos.gamePly]
+            add  w0, w0, w4
+           udiv  w2, w0, w1
+           msub  w2, w2, w1, w0
+            sub  w0, w0, w1
+            tbz  w0, 0, .id_loop
+              b  .save_prev_score
 
 .age_out:
-        ; Age out PV variability metric
-                add  x6, x20, -Thread.rootPos
-                ldr  d0, [x6, Thread.bestMoveChanges]
-               _lea  x4, constd._0p505
-                ldr  d1, [x4]
-               fmul  d0, d0, d1
-               strb  wzr, [x6, Thread.failedLow]
-                str  d0, [x6, Thread.bestMoveChanges]
+    ; Age out PV variability metric
+            add  x6, x20, -Thread.rootPos
+            ldr  d0, [x6, Thread.bestMoveChanges]
+           _lea  x4, constd._0p505
+            ldr  d1, [x4]
+           fmul  d0, d0, d1
+           strb  wzr, [x6, Thread.failedLow]
+            str  d0, [x6, Thread.bestMoveChanges]
 
 
 .save_prev_score:
-        ; Save the last iteration's scores before first PV line is searched and all the move scores except the (new) PV are set to -VALUE_INFINITE.
-                ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
-                ldr  x2, [x20, Pos.rootMovesVec + RootMovesVec.ender]
+    ; Save the last iteration's scores before first PV line is searched and all the move scores except the (new) PV are set to -VALUE_INFINITE.
+            ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            ldr  x2, [x20, Pos.rootMovesVec + RootMovesVec.ender]
 .save_next:
-                ldr  w0, [x1, RootMove.score]
-                str  w0, [x1, RootMove.prevScore]
-                add  x1, x1, sizeof.RootMove
-                cmp  x1, x2
-                blo  .save_next
+            ldr  w0, [x1, RootMove.score]
+            str  w0, [x1, RootMove.prevScore]
+            add  x1, x1, sizeof.RootMove
+            cmp  x1, x2
+            blo  .save_next
 
-        ; MultiPV loop. We perform a full root search for each PV line
-                mov  w24, -1
+if USE_WEAKNESS
+;	; if using weakness, reset multiPV local variable
+;		cmp   byte[weakness.enabled], 0
+;		 je   @f
+           _lea  x6, weakness
+           ldrb  w4, [x6, Weakness.enabled]
+            cbz  w4, @1f
+;		mov   eax, dword[weakness.multiPV]
+            ldr  w0, [x6, Weakness.multiPV]
+;		mov   dword[.multiPV], eax
+            str  w0, [sp, .multiPV]
+;	@@:
+    @1:
+end if
+
+
+    ; MultiPV loop. We perform a full root search for each PV line
+            mov  w24, -1
 .multipv_loop:
-                add  w24, w24, 1
-                lea  x6, signals
-               ldrb  w0, [x6, Signals.stop]
-                add  x7, x20, -Thread.rootPos
-                str  w24, [x7, Thread.PVIdx]
-                ldr  w4, [sp, .multiPV]
-                cmp  w24, w4
-                bhs  .multipv_done
-               cbnz  w0, .multipv_done
+            add  w24, w24, 1
+           _lea  x6, signals
+           ldrb  w0, [x6, Signals.stop]
+            add  x7, x20, -Thread.rootPos
+            str  w24, [x7, Thread.PVIdx]
+            ldr  w4, [sp, .multiPV]
+            cmp  w24, w4
+            bhs  .multipv_done
+           cbnz  w0, .multipv_done
 
-        ; Reset UCI info selDepth for each depth and each PV line
-                add  x6, x20, -Thread.rootPos
-               strb  wzr, [x6, Thread.selDepth]
+    ; Reset UCI info selDepth for each depth and each PV line
+            add  x6, x20, -Thread.rootPos
+           strb  wzr, [x6, Thread.selDepth]
 
-        ; Reset aspiration window starting size
-                mov  w4, sizeof.RootMove
-                mul  w8, w24, w4
-                mov  w2, 18
-                ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
-                add  x8, x8, x4
-                cmp  w25, 5
-                blt  .reset_window_done
-                ldr  w0, [x8, RootMove.prevScore]
-                mov  w1, -VALUE_INFINITE
-                sub  w0, w0, w2
-                cmp  w0, w1
-               csel  w0, w1, w0, lt
-                str  w0, [sp, .alpha]
-                ldr  w0, [x8, RootMove.prevScore]
-                mov  w1, VALUE_INFINITE
-                add  w0, w0, w2
-                cmp  w0, w1
-               csel  w0, w1, w0, gt
-                str  w0, [sp, .beta]
-                str  w2, [sp, .delta]
+    ; Reset aspiration window starting size
+            mov  w4, sizeof.RootMove
+            mul  w8, w24, w4
+            mov  w2, 18
+            ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            add  x8, x8, x4
+            cmp  w25, 5
+            blt  .reset_window_done
+            ldr  w0, [x8, RootMove.prevScore]
+            mov  w1, -VALUE_INFINITE
+            sub  w0, w0, w2
+            cmp  w0, w1
+           csel  w0, w1, w0, lt
+            str  w0, [sp, .alpha]
+            ldr  w0, [x8, RootMove.prevScore]
+            mov  w1, VALUE_INFINITE
+            add  w0, w0, w2
+            cmp  w0, w1
+           csel  w0, w1, w0, gt
+            str  w0, [sp, .beta]
+            str  w2, [sp, .delta]
 
 .reset_window_done:
-        ; Start with a small aspiration window and, in the case of a fail high/low,
-        ; re-search with a bigger window until we're not failing high/low anymore.
+    ; Start with a small aspiration window and, in the case of a fail high/low,
+    ; re-search with a bigger window until we're not failing high/low anymore.
 .search_loop:
-                ldr  w1, [sp, .alpha]
-                ldr  w2, [sp, .beta]
-                mov  w8, w25
-                mov  w9, 0
-                 bl  Search_Root
-                mov  w22, w0
-                str  w0, [sp, .bestValue]
-                str  x21, [x20, Pos.state]
+            ldr  w1, [sp, .alpha]
+            ldr  w2, [sp, .beta]
+            mov  w8, w25
+            mov  w9, 0
+             bl  Search_Root
+            mov  w22, w0
+            str  w0, [sp, .bestValue]
+            str  x21, [x20, Pos.state]
 
-                mov  w4, sizeof.RootMove
-                mul  w1, w24, w4
-                ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
-                add  x1, x1, x4
-                ldr  x2, [x20, Pos.rootMovesVec + RootMovesVec.ender]
-                 bl  RootMovesVec_StableSort
+            mov  w4, sizeof.RootMove
+            mul  w1, w24, w4
+            ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            add  x1, x1, x4
+            ldr  x2, [x20, Pos.rootMovesVec + RootMovesVec.ender]
+             bl  RootMovesVec_StableSort
 
-        ; If search has been stopped, break immediately. Sorting and writing PV back to TT is safe because RootMoves is still valid, although it refers to the previous iteration.
-                lea  x6, signals
-               ldrb  w0, [x6, Signals.stop]
-               cbnz  w0, .search_done
+    ; If search has been stopped, break immediately. Sorting and writing PV back to TT is safe because RootMoves is still valid, although it refers to the previous iteration.
+           _lea  x6, signals
+           ldrb  w0, [x6, Signals.stop]
+           cbnz  w0, .search_done
 
-        ; When failing high/low give some update before a re-search.
-                ldr  w4, [x20, -Thread.rootPos + Thread.idx]
-               cbnz  w4, .dont_print_pv
-                ldr  w0, [sp, .multiPV]
-                cmp  w0, 1
-                bne  .dont_print_pv
-                ldr  w4, [sp, .alpha]
-                cmp  w22, w4
-                ble  @f
-                ldr  w4, [sp, .beta]
-                cmp  w22, w4        
-                blt  .dont_print_pv
-        @@:
-                 bl  Os_GetTime
-                lea  x6, time
-                ldr  x4, [x6, Time.startTime]
-                sub  x0, x0, x4
-        if VERBOSE = 0
-                cmp  x0, 3000
-                ble  .dont_print_pv
-        end if
-                mov  w1, w25
-                ldr  w2, [sp, .alpha]
-                ldr  w8, [sp, .beta]
-                mov  x9, x0
-                ldr  w10, [sp, .multiPV]
-                 bl  DisplayInfo_Uci
+    ; When failing high/low give some update before a re-search.
+            ldr  w4, [x20, -Thread.rootPos + Thread.idx]
+           cbnz  w4, .dont_print_pv
+            ldr  w0, [sp, .multiPV]
+            cmp  w0, 1
+            bne  .dont_print_pv
+            ldr  w4, [sp, .alpha]
+            cmp  w22, w4
+            ble  @1f
+            ldr  w4, [sp, .beta]
+            cmp  w22, w4        
+            blt  .dont_print_pv
+    @1:
+             bl  Os_GetTime
+           _lea  x6, time
+            ldr  x4, [x6, Time.startTime]
+            sub  x0, x0, x4
+    if VERBOSE = 0
+            cmp  x0, 3000
+            ble  .dont_print_pv
+    end if
+            mov  w1, w25
+            ldr  w2, [sp, .alpha]
+            ldr  w8, [sp, .beta]
+            mov  x9, x0
+            ldr  w10, [sp, .multiPV]
+             bl  DisplayInfo_Uci
 
 .dont_print_pv:
-	; In case of failing low/high increase aspiration window and re-search, otherwise exit the loop.
-                ldr  w8, [sp, .alpha]
-                ldr  w9, [sp, .beta]
-                ldr  w0, [sp, .delta]
-                mov  w10, w0
-                asr  w2, w0, 31
-                and  w2, w2, 3
-                add  w0, w0, w2
-                asr  w0, w0, 2
-                add  w10, w10, 5
-                add  w10, w10, w0
-	; r10d = delta + delta / 4 + 5
-                add  w0, w8, w9
-                asr  w2, w0, 31
-                sub  w0, w0, w2
-                asr  w0, w0, 1
-	; eax = (alpha + beta) / 2
-                mov  w2, w22
-                cmp  w22, w8
-                ble  .fail_low
-                cmp  w22, w9
-                blt  .search_done
+; In case of failing low/high increase aspiration window and re-search, otherwise exit the loop.
+            ldr  w8, [sp, .alpha]
+            ldr  w9, [sp, .beta]
+            ldr  w0, [sp, .delta]
+            mov  w10, w0
+            asr  w2, w0, 31
+            and  w2, w2, 3
+            add  w0, w0, w2
+            asr  w0, w0, 2
+            add  w10, w10, 5
+            add  w10, w10, w0
+; r10d = delta + delta / 4 + 5
+            add  w0, w8, w9
+            asr  w2, w0, 31
+            sub  w0, w0, w2
+            asr  w0, w0, 1
+; eax = (alpha + beta) / 2
+            mov  w2, w22
+            cmp  w22, w8
+            ble  .fail_low
+            cmp  w22, w9
+            blt  .search_done
 
 .fail_high:
-                ldr  w4, [sp, .delta]
-                add  w2, w2, w4
-                mov  w1, VALUE_INFINITE
-                cmp  w2, w1
-               csel  w2, w1, w2, gt
-                str  w2, [sp, .beta]
-                str  w10, [sp, .delta]
-                  b  .search_loop
+            ldr  w4, [sp, .delta]
+            add  w2, w2, w4
+            mov  w1, VALUE_INFINITE
+            cmp  w2, w1
+           csel  w2, w1, w2, gt
+            str  w2, [sp, .beta]
+            str  w10, [sp, .delta]
+              b  .search_loop
 
 .fail_low:
-                ldr  w4, [sp, .delta]
-                sub  w2, w2, w4
-                mov  w1, -VALUE_INFINITE
-                cmp  w2, w1
-               csel  w2, w1, w2, lt
-                str  w2, [sp, .alpha]
-                str  w0, [sp, .beta]
-                str  w10, [sp, .delta]
-                ldr  w4, [x20, -Thread.rootPos + Thread.idx]
-               cbnz  w4, .search_loop
-                mov  w4, -1
-               strb  w4, [x20, -Thread.rootPos + Thread.failedLow]
-                lea  x6, signals
-               strb  wzr, [x6, Signals.stopOnPonderhit]
-                  b  .search_loop
+            ldr  w4, [sp, .delta]
+            sub  w2, w2, w4
+            mov  w1, -VALUE_INFINITE
+            cmp  w2, w1
+           csel  w2, w1, w2, lt
+            str  w2, [sp, .alpha]
+            str  w0, [sp, .beta]
+            str  w10, [sp, .delta]
+            ldr  w4, [x20, -Thread.rootPos + Thread.idx]
+           cbnz  w4, .search_loop
+            mov  w4, -1
+           strb  w4, [x20, -Thread.rootPos + Thread.failedLow]
+           _lea  x6, signals
+           strb  wzr, [x6, Signals.stopOnPonderhit]
+              b  .search_loop
 
 .search_done:
-        ; Sort the PV lines searched so far and update the GUI
-                mov  w4, sizeof.RootMove
-                mul  w2, w24, w4
-                ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
-                add  x2, x2, x4
-                add  x2, x2, x1
-                 bl  RootMovesVec_StableSort
-                ldr  w4, [x20, -Thread.rootPos + Thread.idx]
-               cbnz  w4, .multipv_loop
-                 bl  Os_GetTime
-                mov  x9, x0
-                lea  x6, time
-                ldr  x4, [x6, Time.startTime]
-                sub  x9, x9, x4
+    ; Sort the PV lines searched so far and update the GUI
+            mov  w4, sizeof.RootMove
+            mul  w2, w24, w4
+            ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            add  x2, x2, x4
+            add  x2, x2, x1
+             bl  RootMovesVec_StableSort
+            ldr  w4, [x20, -Thread.rootPos + Thread.idx]
+           cbnz  w4, .multipv_loop
+             bl  Os_GetTime
+            mov  x9, x0
+           _lea  x6, time
+            ldr  x4, [x6, Time.startTime]
+            sub  x9, x9, x4
 
-                lea  x6, signals
-               ldrb  w4, [x6, Signals.stop]
-               cbnz  w4, .print_pv2
-                add  w0, w24, 1
-                ldr  w4, [sp, .multiPV]
-                cmp  w0, w4
-                beq  .print_pv2
-        if VERBOSE < 2
-                cmp  x9, 3000
-                ble  .multipv_loop
-        end if
+           _lea  x6, signals
+           ldrb  w4, [x6, Signals.stop]
+           cbnz  w4, .print_pv2
+            add  w0, w24, 1
+            ldr  w4, [sp, .multiPV]
+            cmp  w0, w4
+            beq  .print_pv2
+    if VERBOSE < 2
+            cmp  x9, 3000
+            ble  .multipv_loop
+    end if
 
 .print_pv2:
-                mov  w1, w25
-                ldr  w2, [sp, .alpha]
-                ldr  w8, [sp, .beta]
-                ldr  w10, [sp, .multiPV]
-                 bl  DisplayInfo_Uci
-                  b  .multipv_loop
+            mov  w1, w25
+            ldr  w2, [sp, .alpha]
+            ldr  w8, [sp, .beta]
+            ldr  w10, [sp, .multiPV]
+             bl  DisplayInfo_Uci
+
+
+if USE_WEAKNESS
+;		cmp   byte[weakness.enabled], 0
+;		 je   .multipv_loop
+           _lea  x6, weakness
+           ldrb  w4, [x6, Weakness.enabled]
+            cbz  w4, .multipv_loop
+;	       call   Weakness_SetMultiPV
+             bl  Weakness_SetMultiPV
+end if
+              b  .multipv_loop
 
 .multipv_done:
-                lea  x6, signals
-                add  x7, x20, -Thread.rootPos
-               ldrb  w0, [x6, Signals.stop]
-               cbnz  w0, @f
-                str  w25, [x7, Thread.completedDepth]
-        @@:
-                ldr  w4, [x7, Thread.idx]
-               cbnz  w4, .id_loop
+           _lea  x6, signals
+            add  x7, x20, -Thread.rootPos
+           ldrb  w0, [x6, Signals.stop]
+           cbnz  w0, @1f
+            str  w25, [x7, Thread.completedDepth]
+    @1:
+            ldr  w4, [x7, Thread.idx]
+           cbnz  w4, .id_loop
 
-        ; If skill level is enabled and time is up, pick a sub-optimal best move
-	        ; not implemented
+    ; If skill level is enabled and time is up, pick a sub-optimal best move
+        ; not implemented
 
-        ; Have we found a "mate in x"
-	        ; not implemented
+    ; Have we found a "mate in x"
+        ; not implemented
 
-        ; w22 = bestValue  remember
+    ; w22 = bestValue  remember
 
-                lea  x6, limits
-               ldrb  w0, [x6, Limits.useTimeMgmt]
-                cbz  w0, .id_loop
+           _lea  x6, limits
+           ldrb  w0, [x6, Limits.useTimeMgmt]
+            cbz  w0, .id_loop
 
-                lea  x6, signals
-               ldrb  w0, [x6, Signals.stop]
-               ldrb  w4, [x6, Signals.stopOnPonderhit]
-                orr  w0, w0, w4
-               cbnz  w0, .handle_easymove
+           _lea  x6, signals
+           ldrb  w0, [x6, Signals.stop]
+           ldrb  w4, [x6, Signals.stopOnPonderhit]
+            orr  w0, w0, w4
+           cbnz  w0, .handle_easymove
 
-                 bl  Os_GetTime
-                lea  x6, time
-                ldr  x4, [x6, Time.startTime]
-                sub  x11, x0, x4
-        ; r11 = Time.elapsed()
+             bl  Os_GetTime
+           _lea  x6, time
+            ldr  x4, [x6, Time.startTime]
+            sub  x11, x0, x4
+    ; r11 = Time.elapsed()
 
-                add  x7, x20, -Thread.rootPos
-               ldrb  w4, [x7, Thread.failedLow]
-                mov  w5, 119
-                tst  w4, w4
-               csel  w0, w5, wzr, ne
-                add  w0, w0, 357
-                ldr  w4, [x7, Thread.previousScore]
-                sub  w1, w22, w4
-                add  w1, w1, w1, lsl 1
-                sub  w0, w0, w1, lsl 1
-                mov  w2, 229
-                cmp  w0, w2
-               csel  w0, w2, w0, lt
-                mov  w2, 715
-                cmp  w0, w2
-               csel  w0, w2, w0, gt
-              scvtf  d3, w0
-	; d3 = improvingFactor
+            add  x7, x20, -Thread.rootPos
+           ldrb  w4, [x7, Thread.failedLow]
+            mov  w5, 119
+            tst  w4, w4
+           csel  w0, w5, wzr, ne
+            add  w0, w0, 357
+            ldr  w4, [x7, Thread.previousScore]
+            sub  w1, w22, w4
+            add  w1, w1, w1, lsl 1
+            sub  w0, w0, w1, lsl 1
+            mov  w2, 229
+            cmp  w0, w2
+           csel  w0, w2, w0, lt
+            mov  w2, 715
+            cmp  w0, w2
+           csel  w0, w2, w0, gt
+          scvtf  d3, w0
+; d3 = improvingFactor
 
-                lea  x6, time
-                ldr  w0, [x6, Time.optimumTime]
-                add  x0, x0, x0, lsl 2
-                mov  x4, 44
-               udiv  x0, x0, x4
-	; w0 = Time.optimum() * 5 / 42
-                ldr  x8, [x20, Pos.rootMovesVec + RootMovesVec.table]
-                ldr  w1, [x8, RootMove.pv + 4*0]
-                add  x6, x20, -Thread.rootPos
-                ldr  d0, [x6, Thread.bestMoveChanges]
-               fmov  d2, 1.0
-               fadd  d2, d2, d0
-	; d2 = unstablePvFactor
+           _lea  x6, time
+            ldr  w0, [x6, Time.optimumTime]
+            add  x0, x0, x0, lsl 2
+            mov  x4, 44
+           udiv  x0, x0, x4
+; w0 = Time.optimum() * 5 / 42
+            ldr  x8, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            ldr  w1, [x8, RootMove.pv + 4*0]
+            add  x6, x20, -Thread.rootPos
+            ldr  d0, [x6, Thread.bestMoveChanges]
+           fmov  d2, 1.0
+           fadd  d2, d2, d0
+; d2 = unstablePvFactor
 
-                mov  w9, 0
-                cmp  w11, w0
-                bls  @f
-                ldr  w4, [sp, .easyMove]
-                cmp  w1, w4
-                bne  @f
-                lea  x6, constd._0p03
-                ldr  d4, [x6]
-              fcmpe  d0, d4
-              csetm  w9, mi
-        @@:
-	; w9 = doEasyMove
+            mov  w9, 0
+            cmp  w11, w0
+            bls  @1f
+            ldr  w4, [sp, .easyMove]
+            cmp  w1, w4
+            bne  @1f
+           _lea  x6, constd._0p03
+            ldr  d4, [x6]
+          fcmpe  d0, d4
+          csetm  w9, mi
+    @1:
+; w9 = doEasyMove
 
-               fmul  d2, d2, d3
-              ucvtf  d0, w11
-                lea  x6, constd._628p0
-                ldr  d4, [x6]
-               fmul  d0, d0, d4
-                lea  x6, time
-                ldr  w4, [x6, Time.optimumTime]
-              ucvtf  d1, w4
-               fmul  d1, d1, d2
-                add  x8, x8, sizeof.RootMove
-                ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
-                cmp  x8, x4
-                beq  .set_stop
-              fcmpe  d0, d1
-                bpl  .set_stop
+           fmul  d2, d2, d3
+          ucvtf  d0, w11
+           _lea  x6, constd._628p0
+            ldr  d4, [x6]
+           fmul  d0, d0, d4
+           _lea  x6, time
+            ldr  w4, [x6, Time.optimumTime]
+          ucvtf  d1, w4
+           fmul  d1, d1, d2
+            add  x8, x8, sizeof.RootMove
+            ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
+            cmp  x8, x4
+            beq  .set_stop
+          fcmpe  d0, d1
+            bpl  .set_stop
 
-               strb  w9, [x20, -Thread.rootPos + Thread.easyMovePlayed]
-                cbz  w9, .handle_easymove
+           strb  w9, [x20, -Thread.rootPos + Thread.easyMovePlayed]
+            cbz  w9, .handle_easymove
 
 .set_stop:
-                lea  x6, limits
-                lea  x7, signals
-                mov  w4, -1
-               ldrb  w0, [x6, Limits.ponder]
-               cbnz  w0, @f
-               strb  w4, [x7, Signals.stop]
-                  b  .handle_easymove
-        @@:
-               strb  w4, [x7, Signals.stopOnPonderhit]
+           _lea  x6, limits
+           _lea  x7, signals
+            mov  w4, -1
+           ldrb  w0, [x6, Limits.ponder]
+           cbnz  w0, @1f
+           strb  w4, [x7, Signals.stop]
+              b  .handle_easymove
+    @1:
+           strb  w4, [x7, Signals.stopOnPonderhit]
 
 .handle_easymove:
-                ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
-                ldr  w0, [x1, RootMove.pvSize]
-                cmp  w0, 3
-                blo  @f
-                 bl  EasyMoveMng_Update
-                  b  .id_loop
-        @@:
-                 bl  EasyMoveMng_Clear
-                  b  .id_loop
+            ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            ldr  w0, [x1, RootMove.pvSize]
+            cmp  w0, 3
+            blo  @1f
+             bl  EasyMoveMng_Update
+              b  .id_loop
+    @1:
+             bl  EasyMoveMng_Clear
+              b  .id_loop
 
 .id_loop_done:
-               ldrb  w0, [x20, -Thread.rootPos + Thread.easyMovePlayed]
-                lea  x6, easyMoveMng
-                ldr  w1, [x6, EasyMoveMng.stableCnt]
-                ldr  w4, [x20, -Thread.rootPos + Thread.idx]
-               cbnz  w4, .done
-                cmp  w1, 6
-                blo  @f
-                cbz  w0, .done
-        @@:
-                 bl  EasyMoveMng_Clear
+           ldrb  w0, [x20, -Thread.rootPos + Thread.easyMovePlayed]
+           _lea  x6, easyMoveMng
+            ldr  w1, [x6, EasyMoveMng.stableCnt]
+            ldr  w4, [x20, -Thread.rootPos + Thread.idx]
+           cbnz  w4, .done
+            cmp  w1, 6
+            blo  @1f
+            cbz  w0, .done
+    @1:
+             bl  EasyMoveMng_Clear
 
 .done:
-                add  sp, sp, .localsize
-                ldp  x24, x25, [sp], 16
-                ldp  x27, x23, [sp], 16
-                ldp  x21, x26, [sp], 16
-                ldp  x20, x30, [sp], 16
-                ret
+            add  sp, sp, .localsize
+            ldp  x24, x25, [sp], 16
+            ldp  x27, x23, [sp], 16
+            ldp  x21, x26, [sp], 16
+            ldp  x20, x30, [sp], 16
+            ret
 
 
 
 MainThread_Think:
-        ; in: rcx address of Thread struct   should be mainThread
+    ; in: x1 address of Thread struct   should be mainThread
 
-                stp  x20, x30, [sp, -16]!
-                stp  x21, x26, [sp, -16]!
-                stp  x27, x25, [sp, -16]!
+            stp  x20, x30, [sp, -16]!
+            stp  x21, x26, [sp, -16]!
+            stp  x27, x25, [sp, -16]!
 
-                add  x20, x1, Thread.rootPos
-                ldr  x21, [x20, Pos.state]
+            add  x20, x1, Thread.rootPos
+            ldr  x21, [x20, Pos.state]
 
-                ldr  w1, [x20, Pos.sideToMove]
-                ldr  w2, [x20, Pos.gamePly]
-                 bl  TimeMng_Init
+            ldr  w1, [x20, Pos.sideToMove]
+            ldr  w2, [x20, Pos.gamePly]
+             bl  TimeMng_Init
 
-                lea  x6, options
-                ldr  w0, [x6, Options.contempt]
-                mov  w1, PawnValueEg
-                mul  w0, w0, w1
-                mov  w1, 100
-               sdiv  w0, w0, w1
-                mov  w1, w0
-                ldr  w0, [x20, Pos.sideToMove]
-                neg  w1, w1
-                lea  x6, DrawValue
-                str  w1, [x6, x0, lsl 2]
-                eor  x0, x0, 1
-                neg  w1, w1
-                str  w1, [x6, x0, lsl 2]
-                lea  x6, mainHash
-                ldr  w4, [x6, MainHash.date]
-                add  w4, w4, 4
-                str  w4, [x6, MainHash.date]
+           _lea  x6, options
+            ldr  w0, [x6, Options.contempt]
+            mov  w1, PawnValueEg
+            mul  w0, w0, w1
+            mov  w1, 100
+           sdiv  w0, w0, w1
+            mov  w1, w0
+            ldr  w0, [x20, Pos.sideToMove]
+            neg  w1, w1
+           _lea  x6, DrawValue
+            str  w1, [x6, x0, lsl 2]
+            eor  x0, x0, 1
+            neg  w1, w1
+            str  w1, [x6, x0, lsl 2]
+           _lea  x6, mainHash
+            ldr  w4, [x6, MainHash.date]
+            add  w4, w4, 4
+            str  w4, [x6, MainHash.date]
 
-        ; check for mate
-                ldr  x8, [x20, Pos.rootMovesVec + RootMovesVec.ender]
-                ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
-                cmp  x8, x4
-                beq  MainThread_Think.mate
 
-                mov  w26, 0
+if USE_WEAKNESS
+;	; set multipv and change maximumTime
+;		cmp   byte[weakness.enabled], 0
+;		 je   @f
+           _lea  x6, weakness
+           ldrb  w4, [x6, Weakness.enabled]
+            cbz  w4, @1f
+;	; start with one line, may be changed by Weakness_PickMove
+;		mov   dword[weakness.multiPV], 1
+            mov  w4, 1
+            str  w4, [x6, Weakness.multiPV]
+;	       call   Weakness_AdjustTime
+             bl  Weakness_AdjustTime
+;	@@:
+    @1:
+end if
+
+    ; check for mate
+            ldr  x8, [x20, Pos.rootMovesVec + RootMovesVec.ender]
+            ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            cmp  x8, x4
+            beq  MainThread_Think.mate
+
+            mov  w26, 0
 MainThread_Think.next_worker:
 
-                add  w26, w26, 1
-                lea  x6, threadPool
-                ldr  w4, [x6, ThreadPool.threadCnt]
-                cmp  w26, w4
-                bhs  MainThread_Think.workers_done
-                lea  x6, threadPool + ThreadPool.threadTable
-                ldr  x1, [x6, x26, lsl 3]
-                 bl  Thread_StartSearching
-                  b  MainThread_Think.next_worker
+            add  w26, w26, 1
+           _lea  x6, threadPool
+            ldr  w4, [x6, ThreadPool.threadCnt]
+            cmp  w26, w4
+            bhs  MainThread_Think.workers_done
+           _lea  x6, threadPool + ThreadPool.threadTable
+            ldr  x1, [x6, x26, lsl 3]
+             bl  Thread_StartSearching
+              b  MainThread_Think.next_worker
 
 MainThread_Think.workers_done:
-                add  x1, x20, -Thread.rootPos
-                 bl  Thread_Think
+            add  x1, x20, -Thread.rootPos
+             bl  Thread_Think
 
 MainThread_Think.search_done:
-        ; check for wait
-                lea  x6, signals
-               ldrb  w0, [x6, Signals.stop]
-               cbnz  w0, MainThread_Think.dont_wait
-                lea  x6, limits
-               ldrb  w0, [x6, Limits.ponder]
-               ldrb  w4, [x6, Limits.infinite]
-                orr  w0, w0, w4
-                cbz  w0, MainThread_Think.dont_wait
-                mov  w4, -1
-                lea  x6, signals
-               strb  w4, [x6, Signals.stopOnPonderhit]
-                add  x1, x20, -Thread.rootPos
-                add  x2, x6, Signals.stop
-                 bl  Thread_Wait
+    ; check for wait
+           _lea  x6, signals
+           ldrb  w0, [x6, Signals.stop]
+           cbnz  w0, MainThread_Think.dont_wait
+           _lea  x6, limits
+           ldrb  w0, [x6, Limits.ponder]
+           ldrb  w4, [x6, Limits.infinite]
+            orr  w0, w0, w4
+            cbz  w0, MainThread_Think.dont_wait
+            mov  w4, -1
+           _lea  x6, signals
+           strb  w4, [x6, Signals.stopOnPonderhit]
+            add  x1, x20, -Thread.rootPos
+            add  x2, x6, Signals.stop
+             bl  Thread_Wait
 
 MainThread_Think.dont_wait:
-                mov  w4, -1
-                lea  x6, signals
-               strb  w4, [x6, Signals.stop]
+            mov  w4, -1
+           _lea  x6, signals
+           strb  w4, [x6, Signals.stop]
 
-        ; wait for workers
-                mov  w26, 0
+    ; wait for workers
+            mov  w26, 0
 MainThread_Think.next_worker2:
-                add  w26, w26, 1
-                lea  x6, threadPool
-                ldr  w4, [x6, ThreadPool.threadCnt]
-                cmp  w26, w4
-                bhs  MainThread_Think.workers_done2
-                lea  x6, threadPool + ThreadPool.threadTable
-                ldr  x1, [x6, x26, lsl 3]
-                 bl  Thread_WaitForSearchFinished
-                  b  MainThread_Think.next_worker2
+            add  w26, w26, 1
+           _lea  x6, threadPool
+            ldr  w4, [x6, ThreadPool.threadCnt]
+            cmp  w26, w4
+            bhs  MainThread_Think.workers_done2
+           _lea  x6, threadPool + ThreadPool.threadTable
+            ldr  x1, [x6, x26, lsl 3]
+             bl  Thread_WaitForSearchFinished
+              b  MainThread_Think.next_worker2
 
 MainThread_Think.workers_done2:
-        ; check for mate again
-                ldr  x8, [x20, Pos.rootMovesVec + RootMovesVec.ender]
-                ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
-                cmp  x8, x4
-                beq  MainThread_Think.mate_bestmove
-        ; find best thread  index esi, best score in r9d
-                mov  w26, 0
-                lea  x6, threadPool + ThreadPool.threadTable
-                ldr  x10, [x6, x26, lsl 3]
-                ldr  w8, [x10, Thread.completedDepth]
-                ldr  x9, [x10, Thread.rootPos+Pos.rootMovesVec+RootMovesVec.table]
-                ldr  w9, [x9, 0*sizeof.RootMove + RootMove.score]
-                lea  x6, options
-                ldr  w0, [x6, Options.multiPV]
-                sub  w0, w0, 1
-                lea  x6, limits
-                ldr  w4, [x6, Limits.depth]
-                orr  w0, w0, w4
-               ldrb  w4, [x20, -Thread.rootPos + Thread.easyMovePlayed]
-                orr  w0, w0, w4
-               cbnz  w0, MainThread_Think.best_done
-                ldr  x1, [x20, Pos.rootMovesVec+RootMovesVec.table]
-                ldr  w1, [x1, 0*sizeof.RootMove+RootMove.pv+4*0]
-                cbz  w1, MainThread_Think.best_done
-                mov  w27, 0
+    ; check for mate again
+            ldr  x8, [x20, Pos.rootMovesVec + RootMovesVec.ender]
+            ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            cmp  x8, x4
+            beq  MainThread_Think.mate_bestmove
+
+if USE_WEAKNESS
+;		cmp   byte[weakness.enabled], 0
+;		jne   .pick_weak_move
+           _lea  x6, weakness
+           ldrb  w4, [x6, Weakness.enabled]
+           cbnz  w4, .pick_weak_move
+end if
+
+    ; find best thread  index esi, best score in r9d
+            mov  w26, 0
+           _lea  x6, threadPool + ThreadPool.threadTable
+            ldr  x10, [x6, x26, lsl 3]
+            ldr  w8, [x10, Thread.completedDepth]
+            ldr  x9, [x10, Thread.rootPos+Pos.rootMovesVec+RootMovesVec.table]
+            ldr  w9, [x9, 0*sizeof.RootMove + RootMove.score]
+           _lea  x6, options
+            ldr  w0, [x6, Options.multiPV]
+            sub  w0, w0, 1
+           _lea  x6, limits
+            ldr  w4, [x6, Limits.depth]
+            orr  w0, w0, w4
+           ldrb  w4, [x20, -Thread.rootPos + Thread.easyMovePlayed]
+            orr  w0, w0, w4
+           cbnz  w0, MainThread_Think.best_done
+            ldr  x1, [x20, Pos.rootMovesVec+RootMovesVec.table]
+            ldr  w1, [x1, 0*sizeof.RootMove+RootMove.pv+4*0]
+            cbz  w1, MainThread_Think.best_done
+            mov  w27, 0
 
 MainThread_Think.next_worker3:
-                add  w27, w27, 1
-                lea  x6, threadPool
-                ldr  w4, [x6, ThreadPool.threadCnt]
-                cmp  w27, w4
-                bhs  MainThread_Think.workers_done3
-                lea  x6, threadPool + ThreadPool.threadTable
-                ldr  x10, [x6, x27, lsl 3]
-                ldr  w0, [x10, Thread.completedDepth]
-                ldr  x1, [x10, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.table]
-                ldr  w1, [x1, 0*sizeof.RootMove + RootMove.score]
-                cmp  w0, w8
-                blt  MainThread_Think.workers_done3
-                cmp  w1, w9
-                ble  MainThread_Think.workers_done3
-                mov  w8, w0
-                mov  w9, w1
-                mov  w26, w27
-                  b  MainThread_Think.next_worker3
+            add  w27, w27, 1
+           _lea  x6, threadPool
+            ldr  w4, [x6, ThreadPool.threadCnt]
+            cmp  w27, w4
+            bhs  MainThread_Think.workers_done3
+           _lea  x6, threadPool + ThreadPool.threadTable
+            ldr  x10, [x6, x27, lsl 3]
+            ldr  w0, [x10, Thread.completedDepth]
+            ldr  x1, [x10, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.table]
+            ldr  w1, [x1, 0*sizeof.RootMove + RootMove.score]
+            cmp  w0, w8
+            blt  MainThread_Think.workers_done3
+            cmp  w1, w9
+            ble  MainThread_Think.workers_done3
+            mov  w8, w0
+            mov  w9, w1
+            mov  w26, w27
+              b  MainThread_Think.next_worker3
 
 MainThread_Think.workers_done3:
 MainThread_Think.best_done:
-                add  x7, x20, -Thread.rootPos
-                str  w9, [x7, Thread.previousScore]
-                lea  x6, threadPool + ThreadPool.threadTable
-                ldr  x1, [x6, x26, lsl 3]
+            add  x7, x20, -Thread.rootPos
+            str  w9, [x7, Thread.previousScore]
+           _lea  x6, threadPool + ThreadPool.threadTable
+            ldr  x1, [x6, x26, lsl 3]
 
 MainThread_Think.display_move:
-                 bl  DisplayMove_Uci
+             bl  DisplayMove_Uci
 
 MainThread_Think.return:
-                ldp  x27, x25, [sp], 16
-                ldp  x21, x26, [sp], 16
-                ldp  x20, x30, [sp], 16
-                ret
+            ldp  x27, x25, [sp], 16
+            ldp  x21, x26, [sp], 16
+            ldp  x20, x30, [sp], 16
+            ret
+
+
+
+if USE_WEAKNESS
+MainThread_Think.pick_weak_move:
+;	       call   Weakness_PickMove
+             bl  Weakness_PickMove
+;		mov   rax, qword[rbp+Pos.rootMovesVec.table]
+            ldr  x0, [x20, Pos.rootMovesVec + RootMovesVec.table]
+;		mov   eax, dword[rax+0*sizeof.RootMove+RootMove.score]
+            ldr  w0, [x0, 0*sizeof.RootMove + RootMove.score]
+;		lea   rcx, [rbp-Thread.rootPos]
+            add  x1, x20, -Thread.rootPos
+;		mov   dword[rcx+Thread.previousScore], eax
+            str  w0, [x1, Thread.previousScore]
+;		jmp   .display_move
+              b  MainThread_Think.display_move
+end if
+
+
 
 MainThread_Think.mate:
-                lea  x27, Output
-                adr  x1, MainThread_Think.sz1
-                 bl  PrintString
-                mov  w1, VALUE_DRAW + VALUE_MATE
-                mov  w4, VALUE_MATE
-                ldr  x5, [x21, State.checkersBB]
-                tst  x5, x5
-               csel  w1, w1, w4, ne
-                 bl  PrintScore_Uci
-       PrintNewLine
-                 bl  Os_WriteOut_Output
-                  b  MainThread_Think.search_done
+           _lea  x27, Output
+            adr  x1, MainThread_Think.sz1
+             bl  PrintString
+            mov  w1, VALUE_DRAW + VALUE_MATE
+            mov  w4, VALUE_MATE
+            ldr  x5, [x21, State.checkersBB]
+            tst  x5, x5
+           csel  w1, w1, w4, ne
+             bl  PrintScore_Uci
+   PrintNewLine
+             bl  Os_WriteOut_Output
+              b  MainThread_Think.search_done
 
 MainThread_Think.sz1:
         db 'info depth 0 score ',0
         balign 4
 
 MainThread_Think.mate_bestmove:
-                lea  x27, Output
-                adr  x1, MainThread_Think.sz2
-                 bl  PrintString
-                 bl  Os_WriteOut_Output
-                  b  MainThread_Think.return
+           _lea  x27, Output
+            adr  x1, MainThread_Think.sz2
+             bl  PrintString
+             bl  Os_WriteOut_Output
+              b  MainThread_Think.return
 
 MainThread_Think.sz2:
         db 'bestmove NONE', 10, 0
@@ -643,135 +717,135 @@ MainThread_Think.sz2:
 
 
 DisplayMove_Uci:
-        ; in:  x1 address of best thread
+    ; in:  x1 address of best thread
 
-                stp  x30, x26, [sp, -16]!
-                stp  x27, x20, [sp, -16]!
-                add  x20, x1, Thread.rootPos
+            stp  x30, x26, [sp, -16]!
+            stp  x27, x20, [sp, -16]!
+            add  x20, x1, Thread.rootPos
 
-                lea  x6, options
-               ldrb  w0, [x6, Options.displayInfoMove]
-                cbz  w0, DisplayMove_Uci.return
+           _lea  x6, options
+           ldrb  w0, [x6, Options.displayInfoMove]
+            cbz  w0, DisplayMove_Uci.return
 
-        ; print best move and ponder move
-                lea  x27, Output
-                mov  w0, 'b'
-               strb  w0, [x27], 1
-                mov  w0, 'e'
-               strb  w0, [x27], 1
-                mov  w0, 's'
-               strb  w0, [x27], 1
-                mov  w0, 't'
-               strb  w0, [x27], 1
-                mov  w0, 'm'
-               strb  w0, [x27], 1
-                mov  w0, 'o'
-               strb  w0, [x27], 1
-                mov  w0, 'v'
-               strb  w0, [x27], 1
-                mov  w0, 'e'
-               strb  w0, [x27], 1
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
-                ldr  w1, [x1, 0*sizeof.RootMove + RootMove.pv + 4*0]
-                 bl  PrintUciMove
-                ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
-                ldr  w0, [x1, 0*sizeof.RootMove+RootMove.pvSize]
-                cmp  w0, 2
-                blo  DisplayMove_Uci.get_ponder_from_tt
+    ; print best move and ponder move
+           _lea  x27, Output
+            mov  w0, 'b'
+           strb  w0, [x27], 1
+            mov  w0, 'e'
+           strb  w0, [x27], 1
+            mov  w0, 's'
+           strb  w0, [x27], 1
+            mov  w0, 't'
+           strb  w0, [x27], 1
+            mov  w0, 'm'
+           strb  w0, [x27], 1
+            mov  w0, 'o'
+           strb  w0, [x27], 1
+            mov  w0, 'v'
+           strb  w0, [x27], 1
+            mov  w0, 'e'
+           strb  w0, [x27], 1
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            ldr  w1, [x1, 0*sizeof.RootMove + RootMove.pv + 4*0]
+             bl  PrintUciMove
+            ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            ldr  w0, [x1, 0*sizeof.RootMove+RootMove.pvSize]
+            cmp  w0, 2
+            blo  DisplayMove_Uci.get_ponder_from_tt
 
 DisplayMove_Uci.have_ponder_from_tt:
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                mov  w0, 'p'
-               strb  w0, [x27], 1
-                mov  w0, 'o'
-               strb  w0, [x27], 1
-                mov  w0, 'n'
-               strb  w0, [x27], 1
-                mov  w0, 'd'
-               strb  w0, [x27], 1
-                mov  w0, 'e'
-               strb  w0, [x27], 1
-                mov  w0, 'r'
-               strb  w0, [x27], 1
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                ldr  w1, [x1, 0*sizeof.RootMove + RootMove.pv + 4*1]
-                 bl  PrintUciMove
-        
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            mov  w0, 'p'
+           strb  w0, [x27], 1
+            mov  w0, 'o'
+           strb  w0, [x27], 1
+            mov  w0, 'n'
+           strb  w0, [x27], 1
+            mov  w0, 'd'
+           strb  w0, [x27], 1
+            mov  w0, 'e'
+           strb  w0, [x27], 1
+            mov  w0, 'r'
+           strb  w0, [x27], 1
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            ldr  w1, [x1, 0*sizeof.RootMove + RootMove.pv + 4*1]
+             bl  PrintUciMove
+    
 DisplayMove_Uci.skip_ponder:
-                PrintNewLine
-                 bl  Os_WriteOut_Output
+            PrintNewLine
+             bl  Os_WriteOut_Output
 
 DisplayMove_Uci.return:
-                ldp  x27, x20, [sp], 16
-                ldp  x30, x26, [sp], 16
-                ret
+            ldp  x27, x20, [sp], 16
+            ldp  x30, x26, [sp], 16
+            ret
 
 DisplayMove_Uci.get_ponder_from_tt:
-                mov  x1, x20
-                 bl  ExtractPonderFromTT
-                ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
-               cbnz  w0, DisplayMove_Uci.have_ponder_from_tt
-                  b  DisplayMove_Uci.skip_ponder
+            mov  x1, x20
+             bl  ExtractPonderFromTT
+            ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
+           cbnz  w0, DisplayMove_Uci.have_ponder_from_tt
+              b  DisplayMove_Uci.skip_ponder
 
 ExtractPonderFromTT:
-        ; in:  x1 address of position
+    ; in:  x1 address of position
 
 ExtractPonderFromTT.movelist  = 0
 ExtractPonderFromTT.lend      = sizeof.ExtMove*MAX_MOVES + ExtractPonderFromTT.movelist
 ExtractPonderFromTT.localsize = (ExtractPonderFromTT.lend + 15) and -16
 
-                stp  x20, x30, [sp, -16]!
-                stp  x21, x26, [sp, -16]!
-                stp  x27, x23, [sp, -16]!
-                stp  x24, x25, [sp, -16]!
-                sub  sp, sp, ExtractPonderFromTT.localsize
+            stp  x20, x30, [sp, -16]!
+            stp  x21, x26, [sp, -16]!
+            stp  x27, x23, [sp, -16]!
+            stp  x24, x25, [sp, -16]!
+            sub  sp, sp, ExtractPonderFromTT.localsize
 
-                ldr  x25, [x1, Pos.rootMovesVec + RootMovesVec.table]
-                mov  x20, x1
-                ldr  x21, [x1, Pos.state]
-                ldr  w1, [x25, RootMove.pv + 4*0]
-                mov  w0, 0
-                cbz  w1, ExtractPonderFromTT.Return
-                 bl  Move_GivesCheck
-                ldr  w1, [x25, RootMove.pv + 4*0]
-               strb  w0, [x21, State.givesCheck]
-                 bl  Move_Do__ExtractPonderFromTT
-                ldr  x1, [x21, State.key]
-                 bl  MainHash_Probe
-                lsr  w26, w1, 16
-                mov  w24, 0
-                cbz  w2, ExtractPonderFromTT.done
-                add  x27, sp, ExtractPonderFromTT.movelist
-                 bl  Gen_Legal
-                add  x2, sp, ExtractPonderFromTT.movelist - sizeof.ExtMove
+            ldr  x25, [x1, Pos.rootMovesVec + RootMovesVec.table]
+            mov  x20, x1
+            ldr  x21, [x1, Pos.state]
+            ldr  w1, [x25, RootMove.pv + 4*0]
+            mov  w0, 0
+            cbz  w1, ExtractPonderFromTT.Return
+             bl  Move_GivesCheck
+            ldr  w1, [x25, RootMove.pv + 4*0]
+           strb  w0, [x21, State.givesCheck]
+             bl  Move_Do__ExtractPonderFromTT
+            ldr  x1, [x21, State.key]
+             bl  MainHash_Probe
+            lsr  w26, w1, 16
+            mov  w24, 0
+            cbz  w2, ExtractPonderFromTT.done
+            add  x27, sp, ExtractPonderFromTT.movelist
+             bl  Gen_Legal
+            add  x2, sp, ExtractPonderFromTT.movelist - sizeof.ExtMove
 
 ExtractPonderFromTT.loop:
-                add  x2, x2, sizeof.ExtMove
-                cmp  x2, x27
-                bhs  ExtractPonderFromTT.done
-                ldr  w4, [x2, ExtMove.move]
-                cmp  w26, w4
-                bne  ExtractPonderFromTT.loop
-                mov  w24, -1
-                mov  w4, 2
-                str  w26, [x25, RootMove.pv + 4*1]
-                str  w4, [x25, RootMove.pvSize]
+            add  x2, x2, sizeof.ExtMove
+            cmp  x2, x27
+            bhs  ExtractPonderFromTT.done
+            ldr  w4, [x2, ExtMove.move]
+            cmp  w26, w4
+            bne  ExtractPonderFromTT.loop
+            mov  w24, -1
+            mov  w4, 2
+            str  w26, [x25, RootMove.pv + 4*1]
+            str  w4, [x25, RootMove.pvSize]
 ExtractPonderFromTT.done:
-                ldr  w1, [x25, RootMove.pv + 4*0]
-                 bl  Move_Undo
-                mov  w0, w24
+            ldr  w1, [x25, RootMove.pv + 4*0]
+             bl  Move_Undo
+            mov  w0, w24
 
 ExtractPonderFromTT.Return:
-                add  sp, sp, ExtractPonderFromTT.localsize
-                ldp  x24, x25, [sp], 16
-                ldp  x27, x23, [sp], 16
-                ldp  x21, x26, [sp], 16
-                ldp  x20, x30, [sp], 16
-                ret
+            add  sp, sp, ExtractPonderFromTT.localsize
+            ldp  x24, x25, [sp], 16
+            ldp  x27, x23, [sp], 16
+            ldp  x21, x26, [sp], 16
+            ldp  x20, x30, [sp], 16
+            ret
 
 
 DisplayInfo_Uci:
@@ -782,349 +856,352 @@ DisplayInfo_Uci:
 	;      x9  elapsed
 	;      w10 multipv
 
-DisplayInfo_Uci.elapsed  = 0
-DisplayInfo_Uci.nodes    = sizeof.rq + DisplayInfo_Uci.elapsed
-DisplayInfo_Uci.tbHits   = sizeof.rq + DisplayInfo_Uci.nodes
-DisplayInfo_Uci.nps	 = sizeof.rq + DisplayInfo_Uci.tbHits
-DisplayInfo_Uci.depth    = sizeof.rq + DisplayInfo_Uci.nps
-DisplayInfo_Uci.alpha    = sizeof.rd + DisplayInfo_Uci.depth
-DisplayInfo_Uci.beta	 = sizeof.rd + DisplayInfo_Uci.alpha
-DisplayInfo_Uci.multiPV  = sizeof.rd + DisplayInfo_Uci.beta
-DisplayInfo_Uci.hashfull = sizeof.rd + DisplayInfo_Uci.multiPV
-DisplayInfo_Uci.output   = sizeof.rd + sizeof.rd + DisplayInfo_Uci.hashfull
-DisplayInfo_Uci.lend     = 8*MAX_PLY*sizeof.rb + DisplayInfo_Uci.output
-DisplayInfo_Uci.localsize = (DisplayInfo_Uci.lend + 15) and -16
+virtual at 0
+ .elapsed    rq 1
+ .nodes      rq 1
+ .tbHits     rq 1
+ .nps	     rq 1
+ .depth      rd 1
+ .alpha      rd 1
+ .beta	     rd 1
+ .multiPV    rd 1
+ .hashfull   rd 1
+	     rd 1
+ .output     rb 8*MAX_PLY
+ .lend rb 0
+end virtual
+.localsize = ((.lend+15) and (-16))
 
-                stp  x21, x30, [sp, -16]!
-                stp  x26, x27, [sp, -16]!
-                stp  x22, x23, [sp, -16]!
-                stp  x24, x25, [sp, -16]!
-                sub  sp, sp, DisplayInfo_Uci.localsize
-                str  w1, [sp, DisplayInfo_Uci.depth]
-                str  w2, [sp, DisplayInfo_Uci.alpha]
-                str  w8, [sp, DisplayInfo_Uci.beta]
-                str  x9, [sp, DisplayInfo_Uci.elapsed]
-                str  w10, [sp, DisplayInfo_Uci.multiPV]
+            stp  x21, x30, [sp, -16]!
+            stp  x26, x27, [sp, -16]!
+            stp  x22, x23, [sp, -16]!
+            stp  x24, x25, [sp, -16]!
+            sub  sp, sp, DisplayInfo_Uci.localsize
+            str  w1, [sp, DisplayInfo_Uci.depth]
+            str  w2, [sp, DisplayInfo_Uci.alpha]
+            str  w8, [sp, DisplayInfo_Uci.beta]
+            str  x9, [sp, DisplayInfo_Uci.elapsed]
+            str  w10, [sp, DisplayInfo_Uci.multiPV]
 
-                lea  x6, options
-               ldrb  w0, [x6, Options.displayInfoMove]
-                cbz  w0, DisplayInfo_Uci.return
+           _lea  x6, options
+           ldrb  w0, [x6, Options.displayInfoMove]
+            cbz  w0, DisplayInfo_Uci.return
 if USE_HASHFULL
   if VERBOSE < 2
-                mov  w0, -1
-                cmp  x9, 1000
-                blo  @f
+            mov  w0, -1
+            cmp  x9, 1000
+            blo  @1f
   end if
-                 bl  MainHash_HashFull
-        @@:
-                str  w0, [sp, DisplayInfo_Uci.hashfull]
+             bl  MainHash_HashFull
+    @1:
+            str  w0, [sp, DisplayInfo_Uci.hashfull]
 end if
 
-                 bl  ThreadPool_NodesSearched_TbHits
-                str  x0, [sp, DisplayInfo_Uci.nodes]
-                str  x2, [sp, DisplayInfo_Uci.tbHits]
+             bl  ThreadPool_NodesSearched_TbHits
+            str  x0, [sp, DisplayInfo_Uci.nodes]
+            str  x2, [sp, DisplayInfo_Uci.tbHits]
 
-                mov  x4, 1000
-                ldr  x1, [sp, DisplayInfo_Uci.elapsed]
-                tst  x1, x1
-               cinc  x1, x1, eq
-              ucvtf  d0, x0
-              ucvtf  d1, x1
-              ucvtf  d4, x4
-               fmul  d0, d0, d4
-               fdiv  d0, d0, d1
-             fcvtzu  x0, d0
-                str  x0, [sp, DisplayInfo_Uci.nps]
-                mov  w25, 0
+            mov  x4, 1000
+            ldr  x1, [sp, DisplayInfo_Uci.elapsed]
+            tst  x1, x1
+           cinc  x1, x1, eq
+          ucvtf  d0, x0
+          ucvtf  d1, x1
+          ucvtf  d4, x4
+           fmul  d0, d0, d4
+           fdiv  d0, d0, d1
+         fcvtzu  x0, d0
+            str  x0, [sp, DisplayInfo_Uci.nps]
+            mov  w25, 0
 
 DisplayInfo_Uci.multipv_loop:
-                mov  w4, sizeof.RootMove
-                mul  w26, w25, w4
-                ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
-                add  x26, x26, x4
-                ldr  w1, [x26, RootMove.score]
-                add  x7, x20, -Thread.rootPos
-                ldr  w4, [x7, Thread.PVIdx]
-                mov  w5, -VALUE_INFINITE
-                cmp  w1, w5
-               ccmp  w25, w4, 2, ne
-               cset  w0, ls
+            mov  w4, sizeof.RootMove
+            mul  w26, w25, w4
+            ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            add  x26, x26, x4
+            ldr  w1, [x26, RootMove.score]
+            add  x7, x20, -Thread.rootPos
+            ldr  w4, [x7, Thread.PVIdx]
+            mov  w5, -VALUE_INFINITE
+            cmp  w1, w5
+           ccmp  w25, w4, 2, ne
+           cset  w0, ls
 
-                ldr  w1, [sp, DisplayInfo_Uci.depth]
-                sub  w1, w1, 1
-                orr  w2, w0, w1
-                cbz  w2, DisplayInfo_Uci.multipv_cont
-                add  w1, w1, w0
-                add  x27, sp, DisplayInfo_Uci.output
-                ldr  w22, [x26, x0, lsl 2]
+            ldr  w1, [sp, DisplayInfo_Uci.depth]
+            sub  w1, w1, 1
+            orr  w2, w0, w1
+            cbz  w2, DisplayInfo_Uci.multipv_cont
+            add  w1, w1, w0
+            add  x27, sp, DisplayInfo_Uci.output
+            ldr  w22, [x26, x0, lsl 2]
 
-                mov  w0, 'i'
-               strb  w0, [x27], 1
-                mov  w0, 'n'
-               strb  w0, [x27], 1
-                mov  w0, 'f'
-               strb  w0, [x27], 1
-                mov  w0, 'o'
-               strb  w0, [x27], 1
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                mov  w0, 'd'
-               strb  w0, [x27], 1
-                mov  w0, 'e'
-               strb  w0, [x27], 1
-                mov  w0, 'p'
-               strb  w0, [x27], 1
-                mov  w0, 't'
-               strb  w0, [x27], 1
-                mov  w0, 'h'
-               strb  w0, [x27], 1
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                mov  w0, w1
-                 bl  PrintUInt
+            mov  w0, 'i'
+           strb  w0, [x27], 1
+            mov  w0, 'n'
+           strb  w0, [x27], 1
+            mov  w0, 'f'
+           strb  w0, [x27], 1
+            mov  w0, 'o'
+           strb  w0, [x27], 1
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            mov  w0, 'd'
+           strb  w0, [x27], 1
+            mov  w0, 'e'
+           strb  w0, [x27], 1
+            mov  w0, 'p'
+           strb  w0, [x27], 1
+            mov  w0, 't'
+           strb  w0, [x27], 1
+            mov  w0, 'h'
+           strb  w0, [x27], 1
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            mov  w0, w1
+             bl  PrintUInt
 
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                mov  w0, 's'
-               strb  w0, [x27], 1
-                mov  w0, 'e'
-               strb  w0, [x27], 1
-                mov  w0, 'l'
-               strb  w0, [x27], 1
-                mov  w0, 'd'
-               strb  w0, [x27], 1
-                mov  w0, 'e'
-               strb  w0, [x27], 1
-                mov  w0, 'p'
-               strb  w0, [x27], 1
-                mov  w0, 't'
-               strb  w0, [x27], 1
-                mov  w0, 'h'
-               strb  w0, [x27], 1
-                mov  w0, ' '
-               strb  w0, [x27], 1
-               ldrb  w0, [x26, RootMove.selDepth]
-                 bl  PrintUInt
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            mov  w0, 's'
+           strb  w0, [x27], 1
+            mov  w0, 'e'
+           strb  w0, [x27], 1
+            mov  w0, 'l'
+           strb  w0, [x27], 1
+            mov  w0, 'd'
+           strb  w0, [x27], 1
+            mov  w0, 'e'
+           strb  w0, [x27], 1
+            mov  w0, 'p'
+           strb  w0, [x27], 1
+            mov  w0, 't'
+           strb  w0, [x27], 1
+            mov  w0, 'h'
+           strb  w0, [x27], 1
+            mov  w0, ' '
+           strb  w0, [x27], 1
+           ldrb  w0, [x26, RootMove.selDepth]
+             bl  PrintUInt
 
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                mov  w0, 'm'
-               strb  w0, [x27], 1
-                mov  w0, 'u'
-               strb  w0, [x27], 1
-                mov  w0, 'l'
-               strb  w0, [x27], 1
-                mov  w0, 't'
-               strb  w0, [x27], 1
-                mov  w0, 'i'
-               strb  w0, [x27], 1
-                mov  w0, 'p'
-               strb  w0, [x27], 1
-                mov  w0, 'v'
-               strb  w0, [x27], 1
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                add  x0, x25, 1
-                 bl  PrintUInt
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            mov  w0, 'm'
+           strb  w0, [x27], 1
+            mov  w0, 'u'
+           strb  w0, [x27], 1
+            mov  w0, 'l'
+           strb  w0, [x27], 1
+            mov  w0, 't'
+           strb  w0, [x27], 1
+            mov  w0, 'i'
+           strb  w0, [x27], 1
+            mov  w0, 'p'
+           strb  w0, [x27], 1
+            mov  w0, 'v'
+           strb  w0, [x27], 1
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            add  x0, x25, 1
+             bl  PrintUInt
 
 if VERBOSE < 2
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                mov  w0, 't'
-               strb  w0, [x27], 1
-                mov  w0, 'i'
-               strb  w0, [x27], 1
-                mov  w0, 'm'
-               strb  w0, [x27], 1
-                mov  w0, 'e'
-               strb  w0, [x27], 1
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                ldr  x0, [sp, DisplayInfo_Uci.elapsed]
-                 bl  PrintUInt
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                mov  w0, 'n'
-               strb  w0, [x27], 1
-                mov  w0, 'p'
-               strb  w0, [x27], 1
-                mov  w0, 's'
-               strb  w0, [x27], 1
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                ldr  x0, [sp, DisplayInfo_Uci.nps]
-                 bl  PrintUInt
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            mov  w0, 't'
+           strb  w0, [x27], 1
+            mov  w0, 'i'
+           strb  w0, [x27], 1
+            mov  w0, 'm'
+           strb  w0, [x27], 1
+            mov  w0, 'e'
+           strb  w0, [x27], 1
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            ldr  x0, [sp, DisplayInfo_Uci.elapsed]
+             bl  PrintUInt
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            mov  w0, 'n'
+           strb  w0, [x27], 1
+            mov  w0, 'p'
+           strb  w0, [x27], 1
+            mov  w0, 's'
+           strb  w0, [x27], 1
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            ldr  x0, [sp, DisplayInfo_Uci.nps]
+             bl  PrintUInt
 end if      
 
 
 if USE_SYZYGY
-                lea  x6, Tablebase_RootInTB
-              ldrsb  w23, [x6]
-                asr  w2, w22, 31
-                eor  w0, w22, w2
-                sub  w0, w0, w2
-              mov32  w4, VALUE_MATE - MAX_PLY
-                sub  w0, w0, w4
-                asr  w0, w0, 31
-               ands  w23, w23, w0
-                lea  x6, Tablebase_Score
-                ldr  w4, [x6]
-               csel  w22, w4, w22, ne
+           _lea  x6, Tablebase_RootInTB
+          ldrsb  w23, [x6]
+            asr  w2, w22, 31
+            eor  w0, w22, w2
+            sub  w0, w0, w2
+          mov32  w4, VALUE_MATE - MAX_PLY
+            sub  w0, w0, w4
+            asr  w0, w0, 31
+           ands  w23, w23, w0
+           _lea  x6, Tablebase_Score
+            ldr  w4, [x6]
+           csel  w22, w4, w22, ne
 end if
 
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                mov  w0, 's'
-               strb  w0, [x27], 1
-                mov  w0, 'c'
-               strb  w0, [x27], 1
-                mov  w0, 'o'
-               strb  w0, [x27], 1
-                mov  w0, 'r'
-               strb  w0, [x27], 1
-                mov  w0, 'e'
-               strb  w0, [x27], 1
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                mov  w1, w22
-                 bl  PrintScore_Uci
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            mov  w0, 's'
+           strb  w0, [x27], 1
+            mov  w0, 'c'
+           strb  w0, [x27], 1
+            mov  w0, 'o'
+           strb  w0, [x27], 1
+            mov  w0, 'r'
+           strb  w0, [x27], 1
+            mov  w0, 'e'
+           strb  w0, [x27], 1
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            mov  w1, w22
+             bl  PrintScore_Uci
 
 if USE_SYZYGY
-               cbnz  w23, DisplayInfo_Uci.no_bound
+           cbnz  w23, DisplayInfo_Uci.no_bound
 end if
 
-                add  x7, x20, -Thread.rootPos
-                ldr  w4, [x7, Thread.PVIdx]
-                cmp  w25, w4
-                bne  DisplayInfo_Uci.no_bound
-                mov  x0, ' ' + ('l' shl 8)
-               movk  x0, 'o' + ('w' shl 8), lsl 16
-               movk  x0, 'e' + ('r' shl 8), lsl 32
-               movk  x0, 'b' + ('o' shl 8), lsl 48
-                ldr  w4, [sp, DisplayInfo_Uci.beta]
-                cmp  w22, w4
-                bge  DisplayInfo_Uci.yes_bound
-               movk  x0, ' ' + ('u' shl 8), lsl 0
-               movk  x0, 'p' + ('p' shl 8), lsl 16
-                ldr  w4, [sp, DisplayInfo_Uci.alpha]
-                cmp  w22, w4
-                bgt  DisplayInfo_Uci.no_bound
+            add  x7, x20, -Thread.rootPos
+            ldr  w4, [x7, Thread.PVIdx]
+            cmp  w25, w4
+            bne  DisplayInfo_Uci.no_bound
+            mov  x0, ' ' + ('l' shl 8)
+           movk  x0, 'o' + ('w' shl 8), lsl 16
+           movk  x0, 'e' + ('r' shl 8), lsl 32
+           movk  x0, 'b' + ('o' shl 8), lsl 48
+            ldr  w4, [sp, DisplayInfo_Uci.beta]
+            cmp  w22, w4
+            bge  DisplayInfo_Uci.yes_bound
+           movk  x0, ' ' + ('u' shl 8), lsl 0
+           movk  x0, 'p' + ('p' shl 8), lsl 16
+            ldr  w4, [sp, DisplayInfo_Uci.alpha]
+            cmp  w22, w4
+            bgt  DisplayInfo_Uci.no_bound
 DisplayInfo_Uci.yes_bound:
-                str  x0, [x27], 8
-                mov  w0, 'u'
-               strb  w0, [x27], 1
-                mov  w0, 'n'
-               strb  w0, [x27], 1
-                mov  w0, 'd'
-               strb  w0, [x27], 1
+            str  x0, [x27], 8
+            mov  w0, 'u'
+           strb  w0, [x27], 1
+            mov  w0, 'n'
+           strb  w0, [x27], 1
+            mov  w0, 'd'
+           strb  w0, [x27], 1
 DisplayInfo_Uci.no_bound:
 
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                mov  w0, 'n'
-               strb  w0, [x27], 1
-                mov  w0, 'o'
-               strb  w0, [x27], 1
-                mov  w0, 'd'
-               strb  w0, [x27], 1
-                mov  w0, 'e'
-               strb  w0, [x27], 1
-                mov  w0, 's'
-               strb  w0, [x27], 1
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                ldr  x0, [sp, DisplayInfo_Uci.nodes]
-                 bl  PrintUInt
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            mov  w0, 'n'
+           strb  w0, [x27], 1
+            mov  w0, 'o'
+           strb  w0, [x27], 1
+            mov  w0, 'd'
+           strb  w0, [x27], 1
+            mov  w0, 'e'
+           strb  w0, [x27], 1
+            mov  w0, 's'
+           strb  w0, [x27], 1
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            ldr  x0, [sp, DisplayInfo_Uci.nodes]
+             bl  PrintUInt
 
 if USE_HASHFULL
-                ldr  w1, [sp, DisplayInfo_Uci.hashfull]
-               tbnz  w1, 31, @f
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                mov  w0, 'h'
-               strb  w0, [x27], 1
-                mov  w0, 'a'
-               strb  w0, [x27], 1
-                mov  w0, 's'
-               strb  w0, [x27], 1
-                mov  w0, 'h'
-               strb  w0, [x27], 1
-                mov  w0, 'f'
-               strb  w0, [x27], 1
-                mov  w0, 'u'
-               strb  w0, [x27], 1
-                mov  w0, 'l'
-               strb  w0, [x27], 1
-                mov  w0, 'l'
-               strb  w0, [x27], 1
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                mov  w0, w1
-                 bl  PrintUInt
-        @@:
+            ldr  w1, [sp, DisplayInfo_Uci.hashfull]
+           tbnz  w1, 31, @f
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            mov  w0, 'h'
+           strb  w0, [x27], 1
+            mov  w0, 'a'
+           strb  w0, [x27], 1
+            mov  w0, 's'
+           strb  w0, [x27], 1
+            mov  w0, 'h'
+           strb  w0, [x27], 1
+            mov  w0, 'f'
+           strb  w0, [x27], 1
+            mov  w0, 'u'
+           strb  w0, [x27], 1
+            mov  w0, 'l'
+           strb  w0, [x27], 1
+            mov  w0, 'l'
+           strb  w0, [x27], 1
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            mov  w0, w1
+             bl  PrintUInt
+    @@:
 end if
 
 
 if USE_SYZYGY
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                mov  w0, 't'
-               strb  w0, [x27], 1
-                mov  w0, 'b'
-               strb  w0, [x27], 1
-                mov  w0, 'h'
-               strb  w0, [x27], 1
-                mov  w0, 'i'
-               strb  w0, [x27], 1
-                mov  w0, 't'
-               strb  w0, [x27], 1
-                mov  w0, 's'
-               strb  w0, [x27], 1
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                ldr  x0, [sp, DisplayInfo_Uci.tbHits]
-                 bl  PrintUInt
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            mov  w0, 't'
+           strb  w0, [x27], 1
+            mov  w0, 'b'
+           strb  w0, [x27], 1
+            mov  w0, 'h'
+           strb  w0, [x27], 1
+            mov  w0, 'i'
+           strb  w0, [x27], 1
+            mov  w0, 't'
+           strb  w0, [x27], 1
+            mov  w0, 's'
+           strb  w0, [x27], 1
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            ldr  x0, [sp, DisplayInfo_Uci.tbHits]
+             bl  PrintUInt
 end if
 
-                mov  w0, ' '
-               strb  w0, [x27], 1
-                mov  w0, 'p'
-               strb  w0, [x27], 1
-                mov  w0, 'v'
-               strb  w0, [x27], 1
-                ldr  w23, [x26, RootMove.pvSize]
-                add  x22, x26, RootMove.pv
-                add  x23, x22, x23, lsl 2
+            mov  w0, ' '
+           strb  w0, [x27], 1
+            mov  w0, 'p'
+           strb  w0, [x27], 1
+            mov  w0, 'v'
+           strb  w0, [x27], 1
+            ldr  w23, [x26, RootMove.pvSize]
+            add  x22, x26, RootMove.pv
+            add  x23, x22, x23, lsl 2
 
 DisplayInfo_Uci.next_move:
-                mov  w0, ' '
-                cmp  x22, x23
-                bhs  DisplayInfo_Uci.moves_done
-                str  w0, [x27], 1
-                ldr  w1, [x22]
-                 bl  PrintUciMove
-                add  x22, x22, 4
-                  b  DisplayInfo_Uci.next_move
+            mov  w0, ' '
+            cmp  x22, x23
+            bhs  DisplayInfo_Uci.moves_done
+            str  w0, [x27], 1
+            ldr  w1, [x22]
+             bl  PrintUciMove
+            add  x22, x22, 4
+              b  DisplayInfo_Uci.next_move
 
 DisplayInfo_Uci.moves_done:
-       PrintNewLine
-                add  x1, sp, DisplayInfo_Uci.output
-                 bl  Os_WriteOut
+   PrintNewLine
+            add  x1, sp, DisplayInfo_Uci.output
+             bl  Os_WriteOut
 
 DisplayInfo_Uci.multipv_cont:
-                add  w25, w25, 1
-                ldr  w4, [sp, DisplayInfo_Uci.multiPV]
-                cmp  w25, w4
-                blo  DisplayInfo_Uci.multipv_loop
+            add  w25, w25, 1
+            ldr  w4, [sp, DisplayInfo_Uci.multiPV]
+            cmp  w25, w4
+            blo  DisplayInfo_Uci.multipv_loop
 
 DisplayInfo_Uci.return:
-                add  sp, sp, DisplayInfo_Uci.localsize
-                ldp  x24, x25, [sp], 16
-                ldp  x22, x23, [sp], 16
-                ldp  x26, x27, [sp], 16
-                ldp  x21, x30, [sp], 16
+            add  sp, sp, DisplayInfo_Uci.localsize
+            ldp  x24, x25, [sp], 16
+            ldp  x22, x23, [sp], 16
+            ldp  x26, x27, [sp], 16
+            ldp  x21, x30, [sp], 16
 
 DisplayMove_None:
 DisplayInfo_None:
-                ret
+            ret
 

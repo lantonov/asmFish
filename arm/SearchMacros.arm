@@ -258,7 +258,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             cmp  w2, 4*ONE_PLY
             bge  .6skip
             ldr  w1, [sp, .evalu]
-            lea  x6, RazorMargin
+           _lea  x6, RazorMargin
             ldr  w0, [x6, x2, lsl 2]
             add  w0, w0, w1
             ldr  w4, [sp, .alpha]
@@ -1239,7 +1239,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
     ; Step 18. Check for new best move
             ldr  w27, [sp, .value]
             mov  w0, 0
-            lea  x6, signals + Signals.stop
+           _lea  x6, signals + Signals.stop
            ldrb  w4, [x6]
            cbnz  w4, .Return
  if RootNode = 1
@@ -1368,10 +1368,10 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             lsr  w2, w2, 14
             add  x6, x20, Pos.board
            ldrb  w0, [x6, x0]
-            lea  x6, _CaptureOrPromotion_or
+           _lea  x6, _CaptureOrPromotion_or
            ldrb  w4, [x6, x2]
             orr  w0, w0, w4
-            lea  x6, _CaptureOrPromotion_and
+           _lea  x6, _CaptureOrPromotion_and
            ldrb  w4, [x6, x2]
             tst  w0, w4
             bne  .20Quiet_SkipUpdateStats
@@ -1399,7 +1399,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             mov  w4, VALUE_MATE
             sub  w27, w27, w4
             tst  x0, x0
-            lea  x6, DrawValue
+           _lea  x6, DrawValue
             ldr  w4, [x6, x1, lsl 2]
            csel  w27, w4, w27, eq
             tst  w24, w24

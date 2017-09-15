@@ -210,6 +210,14 @@ ends
 
 
 
+struct Weakness
+ targetLoss rq 1
+ prng       rq 1
+            rq 1
+ multiPV    rd 1
+ enabled    rb 1
+            rb 3
+ends
 
 EasyMoveMng.___ = 0
 EasyMoveMng.expectedPosKey = 0 + EasyMoveMng.___
@@ -239,39 +247,6 @@ sizeof.Mutex = 0 + 1*sizeof.rd + 1*sizeof.rd + 1*sizeof.rq + Mutex.___
 ConditionalVariable.___ = 0
 sizeof.ConditionalVariable = 0 + 1*sizeof.rd + 1*sizeof.rd + 1*sizeof.rq + ConditionalVariable.___
 
-;Thread.___ = 0
-;Thread.mutex = 0 + Thread.___
-;Thread.sleep1 = 1*sizeof.Mutex + Thread.mutex
-;Thread.sleep2 = 1*sizeof.ConditionalVariable + Thread.sleep1
-;Thread.threadHandle = 1*sizeof.ConditionalVariable + Thread.sleep2
-;Thread.numaNode = 1*sizeof.ThreadHandle + Thread.threadHandle
-;Thread.bestMoveChanges = 1*sizeof.rq + Thread.numaNode
-;Thread.PVIdx = 1*sizeof.rq + Thread.bestMoveChanges
-;Thread.previousScore = 1*sizeof.rd + Thread.PVIdx
-;Thread.completedDepth = 1*sizeof.rd + Thread.previousScore
-;Thread.callsCnt = 1*sizeof.rd + Thread.completedDepth
-;Thread.resetCnt = 1*sizeof.rd + Thread.callsCnt
-;Thread.searching = 1*sizeof.rd + 1*sizeof.rd + Thread.resetCnt
-;Thread.exit = 1*sizeof.rb + Thread.searching
-;Thread.failedLow = 1*sizeof.rb + Thread.exit
-;Thread.easyMovePlayed = 1*sizeof.rb + Thread.failedLow
-;Thread.selDepth = 1*sizeof.rb + 1*sizeof.rb + 1*sizeof.rb + Thread.easyMovePlayed
-;Thread.nodes = 1*sizeof.rb + 1*sizeof.rb + Thread.selDepth
-;Thread.tbHits = 1*sizeof.rq + Thread.nodes
-;Thread.idx = 1*sizeof.rq + Thread.tbHits
-;Thread.rootDepth = 1*sizeof.rd + Thread.idx
-;Thread.castling_start = 1*sizeof.rd + Thread.rootDepth
-;Thread.castling_rfrom = 0*sizeof.rb + Thread.castling_start
-;Thread.castling_rto = 4*sizeof.rb + Thread.castling_rfrom
-;Thread.castling_path = 4*sizeof.rb + Thread.castling_rto
-;Thread.castling_ksqpath = 4*sizeof.rq + Thread.castling_path
-;Thread.castling_knights = 4*8*sizeof.rb + Thread.castling_ksqpath
-;Thread.castling_kingpawns = 4*sizeof.rq + Thread.castling_knights
-;Thread.castling_movgen = 4*sizeof.rq + Thread.castling_kingpawns
-;Thread.castling_rightsMask = 4*sizeof.rd + Thread.castling_movgen
-;Thread.castling_end = 64*sizeof.rb + Thread.castling_rightsMask
-;Thread.rootPos = 0*sizeof.rb + Thread.castling_end
-;sizeof.Thread = 1*sizeof.Pos + Thread.rootPos
 
 struct Thread
  mutex		 rb sizeof.Mutex

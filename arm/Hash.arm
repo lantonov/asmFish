@@ -2,7 +2,7 @@
 MainHash_Create:
                 stp  x21, x30, [sp, -16]!
                 stp  x26, x27, [sp, -16]!
-                lea  x21, mainHash
+               _lea  x21, mainHash
                 mov  w26, 16
                 str  w26, [x21, MainHash.sizeMB]
                 lsl  x26, x26, 20
@@ -23,8 +23,8 @@ MainHash_ReadOptions:
                 stp  x29, x30, [sp, -16]!
                 stp  x20, x21, [sp, -16]!
                 stp  x26, x27, [sp, -16]!
-                lea  x29, mainHash
-                lea  x20, options
+               _lea  x29, mainHash
+               _lea  x20, options
                 ldr  w1, [x20, Options.hash]
                 mov  x2, MAX_HASH_LOG2MB
                 clz  x0, x1
@@ -72,11 +72,11 @@ MainHash_ReadOptions:
 MainHash_DisplayInfo:
                 stp  x27, x30, [sp, -16]!
                 sub  sp, sp, 64
-                lea  x27, Output
-                lea  x6, mainHash
+               _lea  x27, Output
+               _lea  x6, mainHash
                 ldr  x0, [x6, MainHash.sizeMB]
                 ldr  x1, [x6, MainHash.lpSize]
-                lea  x2, LargePageMinSize
+               _lea  x2, LargePageMinSize
                 ldr  x2, [x2]
                 stp  x0, x2, [sp]
                 adr  x3, .nolp
@@ -98,7 +98,7 @@ MainHash_DisplayInfo:
 
 
 MainHash_Clear:
-                lea  x0, mainHash
+               _lea  x0, mainHash
                 ldr  w1, [x0, MainHash.sizeMB]
                 ldr  x17, [x0, MainHash.table]
                 lsl  x1, x1, 20-3
@@ -109,7 +109,7 @@ MainHash_Clear:
 MainHash_Destroy:
 MainHash_Free:
                 stp  x29, x30, [sp, -16]!
-                lea  x29, mainHash
+               _lea  x29, mainHash
                 ldr  x1, [x29, MainHash.table]
                 ldr  x0, [x29, MainHash.lpSize]
                 ldr  w2, [x29, MainHash.sizeMB]
@@ -124,7 +124,7 @@ MainHash_Free:
                 ret
 
 MainHash_HashFull:
-                lea  x6, mainHash
+               _lea  x6, mainHash
                 mov  w0, 0
                 ldr  x8, [x6, MainHash.table]
                ldrb  w4, [x6, MainHash.date]

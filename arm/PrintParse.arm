@@ -102,10 +102,10 @@ PrintFancy.GotOne:
 
                  bl  ParseInteger
                 and  x0, x0, 31
-                cbz  x29, @f
+                cbz  x29, @1f
                 add  x1, x29, x0, lsl 4
                 ld1  {v0.16b}, [x1]
-        @@:
+        @1:
                 ldr  x0, [x28, x0, lsl 3]
                 mov  x1, x0
                 mov  x2, 0
@@ -169,12 +169,12 @@ PrintFancy.Position:
 PrintFancy.Alignment:
                  bl  ParseInteger
                 add  x0, x0, x23
-        @@:
+        @1:
                 cmp  x27, x0
                 bhs  PrintFancy.Loop
                 mov  w4, ' '
                strb  w4, [x27], 1
-                  b  @b
+                  b  @1b
 
 PrintFancy.PrintScore:
                 stp  x0, x30, [sp, -16]!
@@ -571,12 +571,12 @@ ParseInteger.Done:
 
 ParseBoole:
                 stp  x29, x30, [sp, -16]!
-                lea  x1, sz_true
+               _lea  x1, sz_true
                  bl  CmpString
                 cmp  w0, 0
                 mov  x0, -1
                 bne  ParseBoole.Done
-                lea  x1, sz_false
+               _lea  x1, sz_false
                  bl  CmpString
                 mov  x0, 0
 ParseBoole.Done:
@@ -592,7 +592,7 @@ GetLine:
                 stp  x25, x28, [sp,-16]!
                 stp  x23, x24, [sp,-16]!
                 stp  x21, x22, [sp,-16]!
-                lea  x29, ioBuffer
+               _lea  x29, ioBuffer
                 ldr  w22, [x29, IOBuffer.tmp_i]
                 ldr  w23, [x29, IOBuffer.tmp_j]
                 ldr  x24, [x29, IOBuffer.inputBufferSizeB]

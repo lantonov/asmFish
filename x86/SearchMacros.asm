@@ -1236,10 +1236,6 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
              je   .FoundRootMove1
             cmp   edi, dword[.alpha]
             jle   .FoundRootMoveDone
-    if USE_WEAKNESS
-            cmp   dword[rbp-Thread.rootPos+Thread.PVIdx], 0
-            jne   .FoundRootMove1
-    end if
         _vmovsd   xmm0, qword[rbp-Thread.rootPos+Thread.bestMoveChanges]
         _vaddsd   xmm0, xmm0, qword[constd._1p0]
         _vmovsd   qword[rbp-Thread.rootPos+Thread.bestMoveChanges], xmm0

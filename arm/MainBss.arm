@@ -7,31 +7,33 @@ end if
 
 
 balign 16
-Output:         rb 4096
-DisplayOutput:  rb 1024
+DisplayOutput:
+Output:         rb 1024
 
-        balign 16
+if USE_WEAKNESS
+        balign  16
+weakness:   rb sizeof.Weakness
+end if
+
+        balign  16
 time:     rb sizeof.Time
-        balign 16
+        balign  16
 limits:   rb sizeof.Limits
-        balign 16
+        balign  16
 easyMoveMng:    rb sizeof.EasyMoveMng
-        balign 16
+        balign  16
 signals:   rb sizeof.Signals
-        balign 16
+        balign  16
 options:    rb sizeof.Options
-        balign 16
+        balign  16
 ioBuffer:   rb sizeof.IOBuffer
-        balign 16
+        balign  16
 mainHash:   rb sizeof.MainHash
-        balign 16
+        balign  16
 threadPool: rb sizeof.ThreadPool
 
 
 ; data for move generation
-        balign 64
-SlidingAttacksBB:    rb 8*89524
-
         balign 4096
 RookAttacksPEXT:     rb 8*64
 RookAttacksIMUL:     rb 8*64
@@ -190,4 +192,7 @@ TB_mutex:
         rb 64
 
 end if
+
+        balign 64
+SlidingAttacksBB:    rb 8*89524
 

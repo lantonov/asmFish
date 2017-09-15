@@ -4,8 +4,6 @@ LargePageMinSize:
 spEntry:
         dq 0
 
-DisplayLock: rb sizeof.Mutex
-
         balign 8
 
 constd._0p505:
@@ -74,6 +72,13 @@ if USE_SYZYGY
 	db 'option name Syzygy50MoveRule type check default true'
 	NewLineData
 	db 'option name SyzygyPath type string default <empty>'
+	NewLineData
+end if
+
+if USE_WEAKNESS
+	db 'option name UCI_LimitStrength type check default false'
+	NewLineData
+	db 'option name UCI_Elo type spin default 1000 min 0 max 3300'
 	NewLineData
 end if
 
@@ -190,7 +195,6 @@ sz_startpos:    db "startpos", 0
 sz_infinite:    db "infinite", 0
 sz_movetime:    db "movetime", 0
 sz_contempt:    db "contempt", 0
-sz_weakness:    db "weakness", 0
 sz_priority:    db "priority", 0
 sz_position:    db "position", 0
 sz_movestogo:   db "movestogo", 0
@@ -209,6 +213,11 @@ sz_syzygypath           db "syzygypath", 0
 sz_syzygyprobedepth     db "syzygyprobedepth", 0
 sz_syzygy50moverule     db "syzygy50moverule", 0
 sz_syzygyprobelimit     db "syzygyprobelimit", 0
+end if
+
+if USE_WEAKNESS
+sz_uci_limitstrength    db 'uci_limitstrength',0
+sz_uci_elo              db 'uci_elo',0
 end if
 
 if USE_VARIETY

@@ -1,6 +1,6 @@
 
 Math_Rand_i:
-    ; in: x1 address of Prng
+    ; in:  x1 address of Prng
     ; out: x0 integer in (0,2^64)
             ldr  x0, [x1]
             mov  x2, 0xdd1d
@@ -13,6 +13,28 @@ Math_Rand_i:
             str  x0, [x1]
             mul  x0, x0, x2
             ret
+
+
+Math_Rand_d:
+	; in:  x1 address of Prng
+	; out: d0  scalar double in (0,1)   *should* be uniformly distr
+            stp  x29, x30, [sp, -16]!
+	         bl  Math_Rand_i
+            mov  w1, 1023
+            lsl  x0, x0, 11
+            cbz  x0, .Return
+.Shift:
+            sub  w1, w1, 1
+            tst  x0, x0
+            lsl  x0, x0, 1
+            bpl  .Shift            
+            orr  x0, x0, x1
+            ror  x0, x0, 12
+.Return:
+           fmov  d0, x0
+            ldp  x29, x30, [sp], 16
+            ret
+
 
 
 Math_fabs_d_d:
@@ -935,4 +957,31 @@ Math.LANCHOR0:
 bp:     dd   0, 1072693248, 0, 1073217536
 dp_l:   dd   0, 0, 1137692678, 1045233131
 dp_h:   dd   0, 0, 1073741824, 1071822851
+
+
+if USE_WEAKNESS
+Math_Lerp:
+            ld1  {v3.16b}, [x1], 16
+           fcmp  d0, d3
+            bls  .Return_by
+.Next:
+            orr  v2.2d, v3.2d, v3.2d
+            ld1  {v3.16b}, [x1], 16
+           fcmp  d0, d3
+            bls  .Lerp
+            cmp  x1, x2
+            blo  .Next
+.Return_by:
+            dup  d0, v3.2d[1]
+            ret
+.Lerp:
+           fsub  v3.2d, v3.2d, v2.2d
+            dup  d1, v3.2d[1]
+           fsub  d0, d0, d2
+           fdiv  d1, d1, d3
+           fmul  d0, d0, d1
+            dup  d1, v2.2d[1]
+           fadd  d0, d0, d1
+            ret
+end if
 

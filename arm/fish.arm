@@ -10,10 +10,11 @@ VERSION_PRE = 'armFish'
 DEBUG   = 0
 VERBOSE = 0
 USE_SYZYGY      = 1
-USE_CURRMOVE    = 1
+USE_CURRMOVE    = 0
 USE_HASHFULL    = 1
 USE_CMDLINEQUIT = 1
 
+USE_WEAKNESS    = 1
 USE_VARIETY     = 0
 USE_MATEFINDER  = 0
 
@@ -52,6 +53,9 @@ segment readable executable
 if USE_SYZYGY
   include 'TablebaseCore.arm'
   include 'Tablebase.arm'
+end if
+if USE_WEAKNESS
+  include 'Weakness.arm'
 end if
 Start:
                 lea  x6, spEntry

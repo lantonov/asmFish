@@ -1,99 +1,96 @@
 
 Evaluate_Init:
-        stp  x29, x30, [sp, -16]!
+            stp  x29, x30, [sp, -16]!
+
+            ldr  x0, Evaluate_Init.SeeSignBitMask
+           _lea  x6, SeeSignBitMask
+            str  x0, [x6]
+
+           _lea  x0, MobilityBonus_Knight
+            adr  x1, Evaluate_Init.MobilityBonus_Knight
+            mov  x2, 4*9
+             bl  MemoryCopy
+           _lea  x0, MobilityBonus_Bishop
+            adr  x1, Evaluate_Init.MobilityBonus_Bishop
+            mov  x2, 4*14
+             bl  MemoryCopy
+           _lea  x0, MobilityBonus_Rook
+            adr  x1, Evaluate_Init.MobilityBonus_Rook
+            mov  x2, 4*15
+             bl  MemoryCopy
+           _lea  x0, MobilityBonus_Queen
+            adr  x1, Evaluate_Init.MobilityBonus_Queen
+            mov  x2, 4*28
+             bl  MemoryCopy
+
+           _lea  x0, Lever
+            adr  x1, Evaluate_Init.Lever
+            mov  x2, 4*8
+             bl  MemoryCopy
+           _lea  x0, ShelterWeakness
+            adr  x1, Evaluate_Init.ShelterWeakness
+            mov  x2, 4*8*8
+             bl  MemoryCopy
+           _lea  x0, StormDanger
+            adr  x1, Evaluate_Init.StormDanger
+            mov  x2, 4*4*8*8
+             bl  MemoryCopy
+
+           _lea  x0, Threat_Minor
+            adr  x1, Evaluate_Init.Threat_Minor
+            mov  x2, 4*8
+             bl  MemoryCopy
+            adr  x1, Evaluate_Init.Threat_Minor
+            mov  x2, 4*8
+             bl  MemoryCopy
+           _lea  x0, Threat_Rook
+            adr  x1, Evaluate_Init.Threat_Rook
+            mov  x2, 4*8
+             bl  MemoryCopy
+            adr  x1, Evaluate_Init.Threat_Rook
+            mov  x2, 4*8
+             bl  MemoryCopy
 
 
-        ldr  x0, Evaluate_Init.SeeSignBitMask
-        lea  x6, SeeSignBitMask
-        str  x0, [x6]
+           _lea  x0, PassedRank
+            adr  x1, Evaluate_Init.PassedRank
+            mov  x2, 4*8
+             bl  MemoryCopy
+           _lea  x0, PassedFile
+            adr  x1, Evaluate_Init.PassedFile
+            mov  x2, 4*8
+             bl  MemoryCopy
 
+           _lea  x0, DoMaterialEval_Data
+            adr  x1, Evaluate_Init.QuadraticOurs
+            mov  x2, 4*8*(6+6)
+             bl  MemoryCopy
 
-        lea  x0, MobilityBonus_Knight
-        adr  x1, Evaluate_Init.MobilityBonus_Knight
-        mov  x2, 4*9
-         bl  MemoryCopy
-        lea  x0, MobilityBonus_Bishop
-        adr  x1, Evaluate_Init.MobilityBonus_Bishop
-        mov  x2, 4*14
-         bl  MemoryCopy
-        lea  x0, MobilityBonus_Rook
-        adr  x1, Evaluate_Init.MobilityBonus_Rook
-        mov  x2, 4*15
-         bl  MemoryCopy
-        lea  x0, MobilityBonus_Queen
-        adr  x1, Evaluate_Init.MobilityBonus_Queen
-        mov  x2, 4*28
-         bl  MemoryCopy
+           _lea  x0, KingFlank
+            mov  x1, FileABB or FileBBB or FileCBB or FileDBB
+            str  x1, [x0], 8
+            str  x1, [x0], 8
+            str  x1, [x0], 8
+            lsl  x1, x1, 2
+            str  x1, [x0], 8
+            str  x1, [x0], 8
+            lsl  x1, x1, 2
+            str  x1, [x0], 8
+            str  x1, [x0], 8
+            str  x1, [x0], 8
 
-        lea  x0, Lever
-        adr  x1, Evaluate_Init.Lever
-        mov  x2, 4*8
-         bl  MemoryCopy
-        lea  x0, ShelterWeakness
-        adr  x1, Evaluate_Init.ShelterWeakness
-        mov  x2, 4*8*8
-         bl  MemoryCopy
-        lea  x0, StormDanger
-        adr  x1, Evaluate_Init.StormDanger
-        mov  x2, 4*4*8*8
-         bl  MemoryCopy
+            adr  x16, Evaluate_Init.PawnsSet
+           _lea  x17, PawnsSet
+            mov  w1, 9
+             bl  RepMovsd
 
-        lea  x0, Threat_Minor
-        adr  x1, Evaluate_Init.Threat_Minor
-        mov  x2, 4*8
-         bl  MemoryCopy
-        adr  x1, Evaluate_Init.Threat_Minor
-        mov  x2, 4*8
-         bl  MemoryCopy
-        lea  x0, Threat_Rook
-        adr  x1, Evaluate_Init.Threat_Rook
-        mov  x2, 4*8
-         bl  MemoryCopy
-        adr  x1, Evaluate_Init.Threat_Rook
-        mov  x2, 4*8
-         bl  MemoryCopy
+            adr  x16, Evaluate_Init.QueenMinorsImbalance
+           _lea  x17, QueenMinorsImbalance
+            mov  w1, 9
+             bl  RepMovsd
 
-
-        lea  x0, PassedRank
-        adr  x1, Evaluate_Init.PassedRank
-        mov  x2, 4*8
-         bl  MemoryCopy
-        lea  x0, PassedFile
-        adr  x1, Evaluate_Init.PassedFile
-        mov  x2, 4*8
-         bl  MemoryCopy
-
-        lea  x0, DoMaterialEval_Data
-        adr  x1, Evaluate_Init.QuadraticOurs
-        mov  x2, 4*8*(6+6)
-         bl  MemoryCopy
-
-        lea  x0, KingFlank
-        mov  x1, FileABB or FileBBB or FileCBB or FileDBB
-        str  x1, [x0], 8
-        str  x1, [x0], 8
-        str  x1, [x0], 8
-        lsl  x1, x1, 2
-        str  x1, [x0], 8
-        str  x1, [x0], 8
-        lsl  x1, x1, 2
-        str  x1, [x0], 8
-        str  x1, [x0], 8
-        str  x1, [x0], 8
-
-        adr  x16, Evaluate_Init.PawnsSet
-        lea  x17, PawnsSet
-        mov  w1, 9
-         bl  RepMovsd
-
-        adr  x16, Evaluate_Init.QueenMinorsImbalance
-        lea  x17, QueenMinorsImbalance
-        mov  w1, 9
-         bl  RepMovsd
-
-
-        ldp  x29, x30, [sp], -16
-        ret
+            ldp  x29, x30, [sp], -16
+            ret
 
         balign 8
 Evaluate_Init.SeeSignBitMask: ; 0x7c00406070787c7c

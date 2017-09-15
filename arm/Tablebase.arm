@@ -1,777 +1,743 @@
 Tablebase_Probe_AB:
-        ; in:  x20 address of position
-        ;      x21 address of state
-        ;      w1  alpha
-        ;      w2  beta
-        ;      x25  address of success
-        ; out: w0 v
-
-                stp  x26, x27, [sp, -16]!
-                stp  x22, x23, [sp, -16]!
-                stp  x24, x28, [sp, -16]!
-                stp  x29, x30, [sp, -16]!
-
-                ldr  x0, [x21, State.checkersBB]
-                mov  w22, w1
-                mov  w23, w2
-        ; w22 = alpha, w23 = beta
-
-        ; Generate (at least) all legal captures including (under)promotions.
-        ; It is OK to generate more, as long as they are filtered out below.
-                ldr  x27, [x21, -1*sizeof.State + State.endMoves]
-                mov  x26, x27
-                 bl  Gen_Legal
-                str  x27, [x21, State.endMoves]
-
-        ; loop through moves
-                sub  x26, x26, sizeof.ExtMove
-Tablebase_Probe_AB.MoveLoop:
-                add  x26, x26, sizeof.ExtMove
-                ldr  w1, [x26, ExtMove.move]
-                and  w0, w1, 63
-                lsr  w2, w1, 14
-               ldrb  w0, [x20, x0]      ; Pos.board = 0
-                cmp  x26, x27
-                bhs  Tablebase_Probe_AB.MovesDone
-                lea  x6, _CaptureOrPromotion_or
-               ldrb  w4, [x6, x2]
-                orr  w0, w0, w4
-                lea  x6, _CaptureOrPromotion_and
-                ldr  w4, [x6, x2]
-                and  w0, w0, w4
-                cbz  w0, Tablebase_Probe_AB.MoveLoop
-                 bl  Move_GivesCheck
-                ldr  w1, [x26, ExtMove.move]
-               strb  w0, [x21, State.givesCheck]
-                 bl  Move_Do__Tablebase_ProbeAB
-                neg  w1, w23
-                neg  w2, w22
-                 bl  Tablebase_Probe_AB
-                neg  w28, w0
-                ldr  w1, [x26, ExtMove.move]
-                 bl  Move_Undo
-                mov  w0, w28
-                mov  w2, 0
-                ldr  w4, [x25]
-                cmp  w2, w4
-               csel  w0, w2, w0, eq
-                beq  Tablebase_Probe_AB.Return
-                cmp  w0, w22
-                ble  Tablebase_Probe_AB.MoveLoop
-                cmp  w0, w23
-                bge  Tablebase_Probe_AB.Return
-                mov  w22, w0
-                  b  Tablebase_Probe_AB.MoveLoop
-
-Tablebase_Probe_AB.MovesDone:
-                mov  x0, x20
-                mov  x1, x25
-                 bl  probe_wdl_table
-                ldr  w2, [x25]
-
-                cmp  w0, w22
-               csel  w0, w22, w0, le
-Tablebase_Probe_AB.Return:
-                ldp  x29, x30, [sp], 16
-                ldp  x24, x28, [sp], 16
-                ldp  x22, x23, [sp], 16
-                ldp  x26, x27, [sp], 16
-                ret
+    ; in:  x20 address of position
+    ;      x21 address of state
+    ;      w1  alpha
+    ;      w2  beta
+    ;      x25  address of success
+    ; out: w0 v
+            stp  x26, x27, [sp, -16]!
+            stp  x22, x23, [sp, -16]!
+            stp  x24, x28, [sp, -16]!
+            stp  x29, x30, [sp, -16]!
+            ldr  x0, [x21, State.checkersBB]
+            mov  w22, w1
+            mov  w23, w2
+    ; w22 = alpha, w23 = beta
+    ; Generate (at least) all legal captures including (under)promotions.
+    ; It is OK to generate more, as long as they are filtered out below.
+            ldr  x27, [x21, -1*sizeof.State + State.endMoves]
+            mov  x26, x27
+             bl  Gen_Legal
+            str  x27, [x21, State.endMoves]
+    ; loop through moves
+            sub  x26, x26, sizeof.ExtMove
+.MoveLoop:
+            add  x26, x26, sizeof.ExtMove
+            ldr  w1, [x26, ExtMove.move]
+            and  w0, w1, 63
+            lsr  w2, w1, 14
+           ldrb  w0, [x20, x0]      ; Pos.board = 0
+            cmp  x26, x27
+            bhs  .MovesDone
+           _lea  x6, _CaptureOrPromotion_or
+           ldrb  w4, [x6, x2]
+            orr  w0, w0, w4
+           _lea  x6, _CaptureOrPromotion_and
+            ldr  w4, [x6, x2]
+            and  w0, w0, w4
+            cbz  w0, .MoveLoop
+             bl  Move_GivesCheck
+            ldr  w1, [x26, ExtMove.move]
+           strb  w0, [x21, State.givesCheck]
+             bl  Move_Do__Tablebase_ProbeAB
+            neg  w1, w23
+            neg  w2, w22
+             bl  Tablebase_Probe_AB
+            neg  w28, w0
+            ldr  w1, [x26, ExtMove.move]
+             bl  Move_Undo
+            mov  w0, w28
+            mov  w2, 0
+            ldr  w4, [x25]
+            cmp  w2, w4
+           csel  w0, w2, w0, eq
+            beq  .Return
+            cmp  w0, w22
+            ble  .MoveLoop
+            cmp  w0, w23
+            bge  .Return
+            mov  w22, w0
+              b  .MoveLoop
+.MovesDone:
+            mov  x0, x20
+            mov  x1, x25
+             bl  probe_wdl_table
+            ldr  w2, [x25]
+            cmp  w0, w22
+           csel  w0, w22, w0, le
+.Return:
+            ldp  x29, x30, [sp], 16
+            ldp  x24, x28, [sp], 16
+            ldp  x22, x23, [sp], 16
+            ldp  x26, x27, [sp], 16
+            ret
 
 
 Tablebase_Probe_WDL:
-        ; in:  x20 address of position
-        ;      x21 address of state
-        ;      x25  address of success
-        ; out: w0 v
+    ; in:  x20 address of position
+    ;      x21 address of state
+    ;      x25  address of success
+    ; out: w0 v
+            stp  x26, x27, [sp, -16]!
+            stp  x22, x23, [sp, -16]!
+            stp  x24, x28, [sp, -16]!
+            stp  x29, x30, [sp, -16]!
+            mov  w4, 1
+            str  w4, [x25]
+    ; Generate (at least) all legal captures including (under)promotions.
+            ldr  x27, [x21, -1*sizeof.State + State.endMoves]
+            mov  x26, x27
+             bl  Gen_Legal
+            str  x27, [x21, State.endMoves]
+            mov  w22, -3
+            mov  w23, w22
+    ; w22 = best_cap, w23 = best_ep
+    ; We do capture resolution, letting best_cap keep track of the best
+    ; capture without ep rights and letting best_ep keep track of still
+    ; better ep captures if they exist.
+            sub  x26, x26, sizeof.ExtMove
+.MoveLoop:
+            add  x26, x26, sizeof.ExtMove
+            ldr  w1, [x26, ExtMove.move]
+            and  w0, w1, 63
+           ldrb  w0, [x20, x0]      ; Pos.board = 0
+            lsr  w2, w1, 14
+            cmp  x26, x27
+            bhs  .MovesDone
+           _lea  x6, _CaptureOrPromotion_or
+           ldrb  w4, [x6, x2]
+            orr  w0, w0, w4
+           _lea  x6, _CaptureOrPromotion_and
+           ldrb  w4, [x6, x2]
+            and  w0, w0, w4
+            cbz  w0, .MoveLoop
+             bl  Move_GivesCheck
+            ldr  w1, [x26, ExtMove.move]
+           strb  w0, [x21, State.givesCheck]
+             bl  Move_Do__Tablebase_ProbeWDL
+            mov  w1, -2
+            neg  w2, w22
+             bl  Tablebase_Probe_AB
+            neg  w28, w0
+            ldr  w1, [x26, ExtMove.move]
+             bl  Move_Undo
+            mov  w0, w28
+            mov  w2, 0
+            ldr  w1, [x26, ExtMove.move]
+            ldr  w4, [x25]
+            cmp  w2, w4
+           csel  w0, w2, w0, eq
+            beq  .Return
+            add  w2, w2, 2
+            cmp  w0, w22
+            ble  .MoveLoop
+            cmp  w0, w2
+            beq  .ReturnStoreSuccess
+            lsr  w1, w1, 12
+            cmp  w1, MOVE_TYPE_EPCAP
+           csel  w22, w0, w22, ne
+            bne  .MoveLoop
+            cmp  w0, w23
+           csel  w23, w0, w23, gt
+              b  .MoveLoop
+.MovesDone:
+            mov  x0, x20
+            mov  x1, x25
+             bl  probe_wdl_table
+            ldr  w2, [x25]
 
-                stp  x26, x27, [sp, -16]!
-                stp  x22, x23, [sp, -16]!
-                stp  x24, x28, [sp, -16]!
-                stp  x29, x30, [sp, -16]!
+            mov  w24, w0
+            mov  w0, 0
+            ldr  w4, [x25]
+            cmp  w0, w4
+            beq  .Return
+    ; r14d = v
 
-                mov  w4, 1
-                str  w4, [x25]
-
-        ; Generate (at least) all legal captures including (under)promotions.
-                ldr  x27, [x21, -1*sizeof.State + State.endMoves]
-                mov  x26, x27
-                 bl  Gen_Legal
-                str  x27, [x21, State.endMoves]
-
-                mov  w22, -3
-                mov  w23, w22
-        ; w22 = best_cap, w23 = best_ep
-
-        ; We do capture resolution, letting best_cap keep track of the best
-        ; capture without ep rights and letting best_ep keep track of still
-        ; better ep captures if they exist.
-                sub  x26, x26, sizeof.ExtMove
-Tablebase_Probe_WDL.MoveLoop:
-                add  x26, x26, sizeof.ExtMove
-                ldr  w1, [x26, ExtMove.move]
-                and  w0, w1, 63
-               ldrb  w0, [x20, x0]      ; Pos.board = 0
-                lsr  w2, w1, 14
-                cmp  x26, x27
-                bhs  Tablebase_Probe_WDL.MovesDone
-                lea  x6, _CaptureOrPromotion_or
-               ldrb  w4, [x6, x2]
-                orr  w0, w0, w4
-                lea  x6, _CaptureOrPromotion_and
-               ldrb  w4, [x6, x2]
-                and  w0, w0, w4
-                cbz  w0, Tablebase_Probe_WDL.MoveLoop
-                 bl  Move_GivesCheck
-                ldr  w1, [x26, ExtMove.move]
-               strb  w0, [x21, State.givesCheck]
-                 bl  Move_Do__Tablebase_ProbeWDL
-                mov  w1, -2
-                neg  w2, w22
-                 bl  Tablebase_Probe_AB
-                neg  w28, w0
-                ldr  w1, [x26, ExtMove.move]
-                 bl  Move_Undo
-                mov  w0, w28
-                mov  w2, 0
-                ldr  w1, [x26, ExtMove.move]
-                ldr  w4, [x25]
-                cmp  w2, w4
-               csel  w0, w2, w0, eq
-                beq  Tablebase_Probe_WDL.Return
-                add  w2, w2, 2
-                cmp  w0, w22
-                ble  Tablebase_Probe_WDL.MoveLoop
-                cmp  w0, w2
-                beq  Tablebase_Probe_WDL.ReturnStoreSuccess
-                lsr  w1, w1, 12
-                cmp  w1, MOVE_TYPE_EPCAP
-               csel  w22, w0, w22, ne
-                bne  Tablebase_Probe_WDL.MoveLoop
-                cmp  w0, w23
-               csel  w23, w0, w23, gt
-                  b  Tablebase_Probe_WDL.MoveLoop
-
-Tablebase_Probe_WDL.MovesDone:
-                mov  x0, x20
-                mov  x1, x25
-                 bl  probe_wdl_table
-                ldr  w2, [x25]
-
-                mov  w24, w0
-                mov  w0, 0
-                ldr  w4, [x25]
-                cmp  w0, w4
-                beq  Tablebase_Probe_WDL.Return
-        ; r14d = v
-
-        ; Now max(v, best_cap) is the WDL value of the position without ep rights.
-        ; If the position without ep rights is not stalemate or no ep captures
-        ; exist, then the value of the position is max(v, best_cap, best_ep).
-        ; If the position without ep rights is stalemate and best_ep > -3,
-        ; then the value of the position is best_ep (and we will have v == 0).
-
-                mov  w0, w23
-                mov  w2, 2
-                cmp  w23, w22
-                ble  @f
-                cmp  w23, w24
-                bgt  Tablebase_Probe_WDL.ReturnStoreSuccess
-                mov  w22, w23
-        @@:
-
-        ; Now max(v, best_cap) is the WDL value of the position unless
-        ; the position without ep rights is stalemate and best_ep > -3.
-                mov  w0, w22
-                sub  w1, w0, 1
-                asr  w1, w1, 31
-                add  w2, w2, w1
-                cmp  w22, w24
-                bge  Tablebase_Probe_WDL.ReturnStoreSuccess
-
-        ; Now handle the stalemate case.
-                mov  w0, w24
-                cmp  w23, -3
-                ble  Tablebase_Probe_WDL.Return
-               cbnz  w0, Tablebase_Probe_WDL
-        ; check for stalemate in the position with ep captures
-                ldr  x26, [x21, -1*sizeof.State + State.endMoves]
-                  b  Tablebase_Probe_WDL.CheckLoop
-Tablebase_Probe_WDL.CheckNext:
-                ldr  w1, [x26, ExtMove.move]
-                lsr  w1, w1, 12
-                cmp  w1, MOVE_TYPE_EPCAP
-                bne  Tablebase_Probe_WDL.Return
-                add  x26, x26, sizeof.ExtMove
-Tablebase_Probe_WDL.CheckLoop:
-                cmp  x26, x27
-                blo  Tablebase_Probe_WDL.CheckNext
-                mov  w2, 2
-                mov  w0, w23
-
-Tablebase_Probe_WDL.ReturnStoreSuccess:
-                str  w2, [x25]
-
-Tablebase_Probe_WDL.Return:
-                ldp  x29, x30, [sp], 16
-                ldp  x24, x28, [sp], 16
-                ldp  x22, x23, [sp], 16
-                ldp  x26, x27, [sp], 16
-                ret
+    ; Now max(v, best_cap) is the WDL value of the position without ep rights.
+    ; If the position without ep rights is not stalemate or no ep captures
+    ; exist, then the value of the position is max(v, best_cap, best_ep).
+    ; If the position without ep rights is stalemate and best_ep > -3,
+    ; then the value of the position is best_ep (and we will have v == 0).
+            mov  w0, w23
+            mov  w2, 2
+            cmp  w23, w22
+            ble  @1f
+            cmp  w23, w24
+            bgt  .ReturnStoreSuccess
+            mov  w22, w23
+    @1:
+    ; Now max(v, best_cap) is the WDL value of the position unless
+    ; the position without ep rights is stalemate and best_ep > -3.
+            mov  w0, w22
+            sub  w1, w0, 1
+            asr  w1, w1, 31
+            add  w2, w2, w1
+            cmp  w22, w24
+            bge  .ReturnStoreSuccess
+    ; Now handle the stalemate case.
+            mov  w0, w24
+            cmp  w23, -3
+            ble  .Return
+           cbnz  w0, Tablebase_Probe_WDL
+    ; check for stalemate in the position with ep captures
+            ldr  x26, [x21, -1*sizeof.State + State.endMoves]
+              b  .CheckLoop
+.CheckNext:
+            ldr  w1, [x26, ExtMove.move]
+            lsr  w1, w1, 12
+            cmp  w1, MOVE_TYPE_EPCAP
+            bne  .Return
+            add  x26, x26, sizeof.ExtMove
+.CheckLoop:
+            cmp  x26, x27
+            blo  .CheckNext
+            mov  w2, 2
+            mov  w0, w23
+.ReturnStoreSuccess:
+            str  w2, [x25]
+.Return:
+            ldp  x29, x30, [sp], 16
+            ldp  x24, x28, [sp], 16
+            ldp  x22, x23, [sp], 16
+            ldp  x26, x27, [sp], 16
+            ret
 
 
 
 Tablebase_Probe_DTZ:
-        ; in: rbp address of position
-        ;     rbx address of state
-        ;     r15  address of success
-        ; out: eax v
+    ; in: rbp address of position
+    ;     rbx address of state
+    ;     r15  address of success
+    ; out: eax v
+            stp  x26, x27, [sp, -16]!
+            stp  x22, x23, [sp, -16]!
+            stp  x24, x28, [sp, -16]!
+            stp  x29, x30, [sp, -16]!
+             bl  Tablebase_Probe_WDL
+            mov  w24, w0
+            ldr  w2, [x25]
+            mov  w0, 0
+            cbz  w2, .Return
+            cbz  w24, .Return
+            add  w0, w24, 2
+           _lea  x6, WDLtoDTZ
+          ldrsb  w0, [x6, x0]
+            mov  w23, w0
+            cmp  w2, 2
+            beq  .Return
+            ldr  x27, [x21, -1*sizeof.State + State.endMoves]
+            mov  x26, x27
+             bl  Gen_Legal
+            str  x27, [x21, State.endMoves]
+    ; If winning, check for a winning pawn move.
+            sub  x26, x26, sizeof.ExtMove
+            cmp  w24, 0
+            ble  .MovesDone1
+.MoveLoop1:
+            add  x26, x26, sizeof.ExtMove
+            ldr  w1, [x26, ExtMove.move]
+            and  w0, w1, 63
+           ldrb  w0, [x20, x0]      ; Pos.board = 0
+            lsr  w2, w1, 14
+            cmp  x26, x27
+            bhs  .MovesDone1
+           _lea  x6, _CaptureOrPromotion_or
+           ldrb  w4, [x6, x2]
+            orr  w0, w0, w4
+           _lea  x6, _CaptureOrPromotion_and
+           ldrb  w4, [x6, x2]
+            and  w0, w0, w4
+           cbnz  w0, .MoveLoop1
+           ubfx  w0, w1, 6, 6
+           ldrb  w0, [x20, x0]      ; Pos.board = 0
+            and  w0, w0, 7
+            cmp  w0, Pawn
+            bne  .MoveLoop1
+             bl  Move_GivesCheck
+            ldr  w1, [x26, ExtMove.move]
+           strb  w0, [x21, State.givesCheck]
+             bl  Move_Do__Tablebase_ProbeDTZ
+             bl  Tablebase_Probe_WDL
+            neg  w28, w0
+            ldr  w1, [x26, ExtMove.move]
+             bl  Move_Undo
+            mov  w0, w28
+            mov  w2, 0
+            ldr  w4, [x25]
+            cmp  w2, w4
+           csel  w0, w2, w0, eq
+            beq  .Return
+            cmp  w0, w24
+            mov  w0, w23
+            beq  .Return
+              b  .MoveLoop1
+.MovesDone1:
+    ; If we are here, we know that the best move is not an ep capture.
+    ; In other words, the value of wdl corresponds to the WDL value of
+    ; the position without ep rights. It is therefore safe to probe the
+    ; DTZ table with the current value of wdl.
+            mov  x0, x20
+            mov  w1, w24
+            mov  x2, x25
+             bl  probe_dtz_table
+            ldr  w2, [x25]
+          mov32  w22, 0x07FFFFFFF
+            add  w1, w23, w0
+            sub  w0, w23, w0
+            cmp  w24, 0
+           csel  w22, w23, w22, le
+           csel  w0, w1, w0, gt
+             tbz  w2, 31, .Return
+    ; r12d = best
+    ;
+    ; *success < 0 means we need to probe DTZ for the other side to move.
+    ;
+    ; We can skip pawn moves and captures.
+    ; If wdl > 0, we already caught them. If wdl < 0, the initial value
+    ; of best already takes account of them.
+            ldr  x26, [x21, -1*sizeof.State + State.endMoves]
+            sub  x26, x26, sizeof.ExtMove
+.MoveLoop2:
+            add  x26, x26, sizeof.ExtMove
+            ldr  w1, [x26, ExtMove.move]
+            and  w0, w1, 63
+           ldrb  w0, [x20, x0]      ; Pos.board = 0
+            lsr  w2, w1, 14
+            cmp  x26, x27
+            bhs  .MovesDone2
+           _lea  x6, _CaptureOrPromotion_or
+           ldrb  w4, [x6, x2]
+            orr  w0, w0, w4
+           _lea  x6, _CaptureOrPromotion_and
+           ldrb  w4, [x6, x2]
+            and  w0, w0, w4
+           cbnz  w0, .MoveLoop2
+           ubfx  w0, w1, 6, 6
+           ldrb  w0, [x20, x0]      ; Pos.board = 0
+            and  w0, w0, 7
+            cmp  w0, Pawn
+            beq  .MoveLoop2
+             bl  Move_GivesCheck
+            ldr  w1, [x26, ExtMove.move]
+           strb  w0, [x21, State.givesCheck]
+             bl  Move_Do__Tablebase_ProbeDTZ
+             bl  Tablebase_Probe_DTZ
+            neg  w28, w0
+            ldr  w1, [x26, ExtMove.move]
+             bl  Move_Undo
+            mov  w0, w28
+            mov  w2, 0
+            ldr  w4, [x25]
+            cmp  w2, w4
+           csel  w0, w2, w0, eq
+            beq  .Return
+            cmp  w24, 0
+            bgt  .WdlIsPos
+            sub  w0, w0, 1
+            cmp  w0, w22
+           csel  w22, w0, w22, lt
+              b  .MoveLoop2
+.WdlIsPos:
+            add  w0, w0, 1
+            cmp  w0, 1
+            ble  .MoveLoop2
+            cmp  w0, w22
+           csel  w22, w0, w22, lt
+              b  .MoveLoop2
+.MovesDone2:
+            mov  w0, w22
+.Return:
+            ldp  x29, x30, [sp], 16
+            ldp  x24, x28, [sp], 16
+            ldp  x22, x23, [sp], 16
+            ldp  x26, x27, [sp], 16
+            ret
 
-                stp  x26, x27, [sp, -16]!
-                stp  x22, x23, [sp, -16]!
-                stp  x24, x28, [sp, -16]!
-                stp  x29, x30, [sp, -16]!
-
-                 bl  Tablebase_Probe_WDL
-                mov  w24, w0
-                ldr  w2, [x25]
-                mov  w0, 0
-                cbz  w2, Tablebase_Probe_DTZ.Return
-                cbz  w24, Tablebase_Probe_DTZ.Return
-                add  w0, w24, 2
-                lea  x6, WDLtoDTZ
-              ldrsb  w0, [x6, x0]
-
-                mov  w23, w0
-                cmp  w2, 2
-                beq  Tablebase_Probe_DTZ.Return
-
-                ldr  x27, [x21, -1*sizeof.State + State.endMoves]
-                mov  x26, x27
-                 bl  Gen_Legal
-                str  x27, [x21, State.endMoves]
-
-        ; If winning, check for a winning pawn move.
-                sub  x26, x26, sizeof.ExtMove
-                cmp  w24, 0
-                ble  Tablebase_Probe_DTZ.MovesDone1
-
-Tablebase_Probe_DTZ.MoveLoop1:
-                add  x26, x26, sizeof.ExtMove
-                ldr  w1, [x26, ExtMove.move]
-                and  w0, w1, 63
-               ldrb  w0, [x20, x0]      ; Pos.board = 0
-                lsr  w2, w1, 14
-                cmp  x26, x27
-                bhs  Tablebase_Probe_DTZ.MovesDone1
-                lea  x6, _CaptureOrPromotion_or
-               ldrb  w4, [x6, x2]
-                orr  w0, w0, w4
-                lea  x6, _CaptureOrPromotion_and
-               ldrb  w4, [x6, x2]
-                and  w0, w0, w4
-               cbnz  w0, Tablebase_Probe_DTZ.MoveLoop1
-               ubfx  w0, w1, 6, 6
-               ldrb  w0, [x20, x0]      ; Pos.board = 0
-                and  w0, w0, 7
-                cmp  w0, Pawn
-                bne  Tablebase_Probe_DTZ.MoveLoop1
-                 bl  Move_GivesCheck
-                ldr  w1, [x26, ExtMove.move]
-               strb  w0, [x21, State.givesCheck]
-                 bl  Move_Do__Tablebase_ProbeDTZ
-                 bl  Tablebase_Probe_WDL
-                neg  w28, w0
-                ldr  w1, [x26, ExtMove.move]
-                 bl  Move_Undo
-                mov  w0, w28
-
-                mov  w2, 0
-                ldr  w4, [x25]
-                cmp  w2, w4
-               csel  w0, w2, w0, eq
-                beq  Tablebase_Probe_DTZ.Return
-
-                cmp  w0, w24
-                mov  w0, w23
-                beq  Tablebase_Probe_DTZ.Return
-                  b  Tablebase_Probe_DTZ.MoveLoop1
-
-Tablebase_Probe_DTZ.MovesDone1:
-
-        ; If we are here, we know that the best move is not an ep capture.
-        ; In other words, the value of wdl corresponds to the WDL value of
-        ; the position without ep rights. It is therefore safe to probe the
-        ; DTZ table with the current value of wdl.
-                mov  x0, x20
-                mov  w1, w24
-                mov  x2, x25
-                 bl  probe_dtz_table
-                ldr  w2, [x25]
-              mov32  w22, 0x07FFFFFFF
-                add  w1, w23, w0
-                sub  w0, w23, w0
-                cmp  w24, 0
-               csel  w22, w23, w22, le
-               csel  w0, w1, w0, gt
-                 tbz  w2, 31, Tablebase_Probe_DTZ.Return
-        ; r12d = best
-        ;
-        ; *success < 0 means we need to probe DTZ for the other side to move.
-        ;
-        ; We can skip pawn moves and captures.
-        ; If wdl > 0, we already caught them. If wdl < 0, the initial value
-        ; of best already takes account of them.
-                ldr  x26, [x21, -1*sizeof.State + State.endMoves]
-                sub  x26, x26, sizeof.ExtMove
-Tablebase_Probe_DTZ.MoveLoop2:
-                add  x26, x26, sizeof.ExtMove
-                ldr  w1, [x26, ExtMove.move]
-                and  w0, w1, 63
-               ldrb  w0, [x20, x0]      ; Pos.board = 0
-                lsr  w2, w1, 14
-                cmp  x26, x27
-                bhs  Tablebase_Probe_DTZ.MovesDone2
-                lea  x6, _CaptureOrPromotion_or
-               ldrb  w4, [x6, x2]
-                orr  w0, w0, w4
-                lea  x6, _CaptureOrPromotion_and
-               ldrb  w4, [x6, x2]
-                and  w0, w0, w4
-               cbnz  w0, Tablebase_Probe_DTZ.MoveLoop2
-               ubfx  w0, w1, 6, 6
-               ldrb  w0, [x20, x0]      ; Pos.board = 0
-                and  w0, w0, 7
-                cmp  w0, Pawn
-                beq  Tablebase_Probe_DTZ.MoveLoop2
-                 bl  Move_GivesCheck
-                ldr  w1, [x26, ExtMove.move]
-               strb  w0, [x21, State.givesCheck]
-                 bl  Move_Do__Tablebase_ProbeDTZ
-                 bl  Tablebase_Probe_DTZ
-                neg  w28, w0
-                ldr  w1, [x26, ExtMove.move]
-                 bl  Move_Undo
-                mov  w0, w28
-                mov  w2, 0
-                ldr  w4, [x25]
-                cmp  w2, w4
-               csel  w0, w2, w0, eq
-                beq  Tablebase_Probe_DTZ.Return
-                cmp  w24, 0
-                bgt  Tablebase_Probe_DTZ.WdlIsPos
-                sub  w0, w0, 1
-                cmp  w0, w22
-               csel  w22, w0, w22, lt
-                  b  Tablebase_Probe_DTZ.MoveLoop2
-
-Tablebase_Probe_DTZ.WdlIsPos:
-                add  w0, w0, 1
-                cmp  w0, 1
-                ble  Tablebase_Probe_DTZ.MoveLoop2
-                cmp  w0, w22
-               csel  w22, w0, w22, lt
-                  b  Tablebase_Probe_DTZ.MoveLoop2
-
-Tablebase_Probe_DTZ.MovesDone2:
-                mov  w0, w22
-
-Tablebase_Probe_DTZ.Return:
-                ldp  x29, x30, [sp], 16
-                ldp  x24, x28, [sp], 16
-                ldp  x22, x23, [sp], 16
-                ldp  x26, x27, [sp], 16
-                ret
 
 Tablebase_RootProbe:
-        ; in:  x20 address of position
-        ;      x21 address of state
-        ; out: w0 bool
-        ;          score is in Tablebase_Score
-                stp  x26, x27, [sp, -16]!
-                stp  x22, x23, [sp, -16]!
-                stp  x24, x25, [sp, -16]!
-                stp  xzr, x30, [sp, -16]!
+    ; in:  x20 address of position
+    ;      x21 address of state
+    ; out: w0 bool
+    ;          score is in Tablebase_Score
+            stp  x26, x27, [sp, -16]!
+            stp  x22, x23, [sp, -16]!
+            stp  x24, x25, [sp, -16]!
+            stp  xzr, x30, [sp, -16]!
 
-                mov  x25, sp
-                 bl  Tablebase_Probe_DTZ
-                ldr  w2, [sp]
-                mov  w23, w0
-        ; w23 = dtz
-                tst  w2, w2
-               csel  w0, w2, w0, eq
-                beq  Tablebase_RootProbe.Return
+            mov  x25, sp
+             bl  Tablebase_Probe_DTZ
+            ldr  w2, [sp]
+            mov  w23, w0
+    ; w23 = dtz
+            tst  w2, w2
+           csel  w0, w2, w0, eq
+            beq  .Return
+            ldr  x22, [x20, Pos.rootMovesVec + RootMovesVec.table]
+.RootMoveLoop:
+            ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
+            cmp  x22, x4
+            bhs  .RootMovesDone
 
-                ldr  x22, [x20, Pos.rootMovesVec + RootMovesVec.table]
-Tablebase_RootProbe.RootMoveLoop:
-                ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
-                cmp  x22, x4
-                bhs  Tablebase_RootProbe.RootMovesDone
+            ldr  w1, [x22, RootMove.pv + 4*0]
+             bl  Move_GivesCheck
+            ldr  w1, [x22, RootMove.pv + 4*0]            
+           strb  w0, [x21, State.givesCheck]
+             bl  Move_Do__Tablebase_RootProbe
 
-                ldr  w1, [x22, RootMove.pv + 4*0]
-                 bl  Move_GivesCheck
-                ldr  w1, [x22, RootMove.pv + 4*0]            
-               strb  w0, [x21, State.givesCheck]
-                 bl  Move_Do__Tablebase_RootProbe
+            mov  w26, 0
+    ; w26 = v
+            ldr  x1, [x21, State.checkersBB]
+            cbz  x1, @1f
+            cmp  w23, 0
+            ble  @1f
+            ldr  x27, [x21, -1*sizeof.State + State.endMoves]
+             bl  Gen_Legal
+            ldr  x1, [x21, -1*sizeof.State + State.endMoves]
+            cmp  x1, x27
+            bne  @1f
+            mov  w26, 1
+              b  .UndoMove
+    @1:
+           ldrh  w4, [x21, State.rule50]
+            cbz  w4, .Rule50Is0
+.Rule50IsNot0:
+             bl  Tablebase_Probe_DTZ
+            neg  w26, w0
+            add  w0, w26, 1
+            cmp  w26, 0
+           csel  w26, w0, w26, gt
+            sub  w0, w26, 1
+            cmp  w26, 0
+           csel  w26, w0, w26, lt
+              b  .UndoMove
+.Rule50Is0:
+             bl  Tablebase_Probe_WDL
+            mov  w4, 2
+            sub  w0, w4, w0
+           _lea  x6, WDLtoDTZ
+          ldrsb  x26, [x6, x0]
+.UndoMove:
+            ldr  w1, [x22, RootMove.pv + 4*0]
+             bl  Move_Undo
+            ldr  w2, [x25]
+            tst  w2, w2
+           csel  w0, w2, w0, eq
+            beq  .Return
+            str  w26, [x22, RootMove.score]
+            add  x22, x22, sizeof.RootMove
+              b  .RootMoveLoop
+.RootMovesDone:
+           ldrh  w24, [x21, State.rule50]
+    ; w23 = cnt50
+            mov  w27, 0
+    ; w26 = wdl
+            mov  w0, w24
+            cmp  w23, 0
+            bgt  .DtzPos
+            beq  @1f
+            mov  w27, -1
+            mov  w1, -2
+            sub  w0, w0, w23
+            cmp  w0, 100
+           csel  w27, w1, w27, le
+              b  @1f
+.DtzPos:
+            mov  w27, 1
+            mov  w1, 2
+            add  w0, w0, w23
+            cmp  w0, 100
+           csel  w27, w1, w27, le
+    @1:
+    ; w27 = wdl
+            add  w0, w27, 2
+           _lea  x6, wdl_to_Value5
+            ldr  w0, [x6, x0, lsl 2]
+    ; w0 = score
+.TestA:
+            cmp  w27, 1
+            bne  .TestB
+            cmp  w23, 100
+            bgt  .TestB
+            mov  w0, 200
+            sub  w0, w0, w23
+            sub  w0, w0, w24
+            mov  w1, PawnValueEg
+            mul  w0, w0, w1
+            mov  w1, 200
+           sdiv  w0, w0, w1
+              b  .TestDone
+.TestB:
+            cmp  w27, -1
+            bne  .TestDone
+            cmp  w23, -100
+            blt  .TestDone
+            mov  w0, 200
+            add  w0, w0, w23
+            sub  w0, w0, w24
+            mov  w1, PawnValueEg
+            mul  w0, w0, w1
+            mov  w1, 200
+           sdiv  w0, w0, w1
+.TestDone:
+           _lea  x6, Tablebase_Score
+            str  w0, [x6]
+            ldr  x27, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            cmp  w23, 0
+            bgt  .Winning
+            blt  .Losing
 
-                mov  w26, 0
-        ; w26 = v
-                ldr  x1, [x21, State.checkersBB]
-                cbz  x1, @f
-                cmp  w23, 0
-                ble  @f
-                ldr  x27, [x21, -1*sizeof.State + State.endMoves]
-                 bl  Gen_Legal
-                ldr  x1, [x21, -1*sizeof.State + State.endMoves]
-                cmp  x1, x27
-                bne  @f
-                mov  w26, 1
-                  b  Tablebase_RootProbe.UndoMove
-        @@:
-
-               ldrh  w4, [x21, State.rule50]
-                cbz  w4, Tablebase_RootProbe.Rule50Is0
-Tablebase_RootProbe.Rule50IsNot0:
-                 bl  Tablebase_Probe_DTZ
-                neg  w26, w0
-                add  w0, w26, 1
-                cmp  w26, 0
-               csel  w26, w0, w26, gt
-                sub  w0, w26, 1
-                cmp  w26, 0
-               csel  w26, w0, w26, lt
-                  b  Tablebase_RootProbe.UndoMove
-Tablebase_RootProbe.Rule50Is0:
-                 bl  Tablebase_Probe_WDL
-                mov  w4, 2
-                sub  w0, w4, w0
-                lea  x6, WDLtoDTZ
-              ldrsb  x26, [x6, x0]
-
-Tablebase_RootProbe.UndoMove:
-
-                ldr  w1, [x22, RootMove.pv + 4*0]
-                 bl  Move_Undo
-                ldr  w2, [x25]
-                tst  w2, w2
-               csel  w0, w2, w0, eq
-                beq  Tablebase_RootProbe.Return
-                str  w26, [x22, RootMove.score]
-                add  x22, x22, sizeof.RootMove
-                  b  Tablebase_RootProbe.RootMoveLoop
-
-Tablebase_RootProbe.RootMovesDone:
-               ldrh  w24, [x21, State.rule50]
-        ; w23 = cnt50
-                mov  w27, 0
-        ; w26 = wdl
-                mov  w0, w24
-                cmp  w23, 0
-                bgt  Tablebase_RootProbe.DtzPos
-                beq  @f
-                mov  w27, -1
-                mov  w1, -2
-                sub  w0, w0, w23
-                cmp  w0, 100
-               csel  w27, w1, w27, le
-                  b  @f
-Tablebase_RootProbe.DtzPos:
-                mov  w27, 1
-                mov  w1, 2
-                add  w0, w0, w23
-                cmp  w0, 100
-               csel  w27, w1, w27, le
-        @@:
-        ; w27 = wdl
-                add  w0, w27, 2
-                lea  x6, wdl_to_Value5
-                ldr  w0, [x6, x0, lsl 2]
-        ; w0 = score
-Tablebase_RootProbe.TestA:
-                cmp  w27, 1
-                bne  Tablebase_RootProbe.TestB
-                cmp  w23, 100
-                bgt  Tablebase_RootProbe.TestB
-                mov  w0, 200
-                sub  w0, w0, w23
-                sub  w0, w0, w24
-                mov  w1, PawnValueEg
-                mul  w0, w0, w1
-                mov  w1, 200
-               sdiv  w0, w0, w1
-                  b  Tablebase_RootProbe.TestDone
-Tablebase_RootProbe.TestB:
-                cmp  w27, -1
-                bne  Tablebase_RootProbe.TestDone
-                cmp  w23, -100
-                blt  Tablebase_RootProbe.TestDone
-                mov  w0, 200
-                add  w0, w0, w23
-                sub  w0, w0, w24
-                mov  w1, PawnValueEg
-                mul  w0, w0, w1
-                mov  w1, 200
-               sdiv  w0, w0, w1
-Tablebase_RootProbe.TestDone:
-                lea  x6, Tablebase_Score
-                str  w0, [x6]
-                ldr  x27, [x20, Pos.rootMovesVec + RootMovesVec.table]
-                cmp  w23, 0
-                bgt  Tablebase_RootProbe.Winning
-                blt  Tablebase_RootProbe.Losing
-
-Tablebase_RootProbe.Drawing:
-                sub  x26, x27, sizeof.RootMove
-Tablebase_RootProbe.Drawing1:
-                add  x26, x26, sizeof.RootMove
-Tablebase_RootProbe.Drawing1a:
-                ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
-                cmp  x26, x4
-                bhs  Tablebase_RootProbe.Drawing1Done
-                ldr  w0, [x26, RootMove.score]
-               cbnz  w0, Tablebase_RootProbe.Drawing1
+.Drawing:
+            sub  x26, x27, sizeof.RootMove
+.Drawing1:
+            add  x26, x26, sizeof.RootMove
+.Drawing1a:
+            ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
+            cmp  x26, x4
+            bhs  .Drawing1Done
+            ldr  w0, [x26, RootMove.score]
+           cbnz  w0, .Drawing1
 
 if VERBOSE = 2
 ldr w1, [x26, RootMove.pv + 4*0]
 Display 2, 'DTZ filtered drawing move %m1%n'
 end if
 
-                mov  w1, sizeof.RootMove
-        @@:
-               ldrb  w4, [x26], 1
-               strb  w4, [x27], 1
-               subs  w1, w1, 1
-                bne  @b
-                  b  Tablebase_RootProbe.Drawing1a
+            mov  w1, sizeof.RootMove
+    @1:
+           ldrb  w4, [x26], 1
+           strb  w4, [x27], 1
+           subs  w1, w1, 1
+            bne  @1b
+              b  .Drawing1a
 
-Tablebase_RootProbe.Drawing1Done:
+.Drawing1Done:
 
-Tablebase_RootProbe.Resize:
-                str  x27, [x20, Pos.rootMovesVec + RootMovesVec.ender]
+.Resize:
+            str  x27, [x20, Pos.rootMovesVec + RootMovesVec.ender]
 
-Tablebase_RootProbe.ReturnTrue:
-                mov  w0, -1
-Tablebase_RootProbe.Return:
-                ldp  xzr, x30, [sp], 16
-                ldp  x24, x25, [sp], 16
-                ldp  x22, x23, [sp], 16
-                ldp  x26, x27, [sp], 16
-                ret
+.ReturnTrue:
+            mov  w0, -1
+.Return:
+            ldp  xzr, x30, [sp], 16
+            ldp  x24, x25, [sp], 16
+            ldp  x22, x23, [sp], 16
+            ldp  x26, x27, [sp], 16
+            ret
 
 
-Tablebase_RootProbe.Winning:
-                mov  w22, 0x0FFFF
-        ; w22 = best
-                sub  x26, x27, sizeof.RootMove
-Tablebase_RootProbe.Winning1:
-                add  x26, x26, sizeof.RootMove
-                ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
-                cmp  x26, x4
-                bhs  Tablebase_RootProbe.Winning1Done
-                ldr  w0, [x26, RootMove.score]
-                cmp  w0, 0
-                ble  Tablebase_RootProbe.Winning1
-                cmp  w0, w22
-                bge  Tablebase_RootProbe.Winning1
-                mov  w22, w0
-                  b  Tablebase_RootProbe.Winning1
-Tablebase_RootProbe.Winning1Done:
-                mov  w11, w22
-        ; w11 = max
+.Winning:
+            mov  w22, 0x0FFFF
+    ; w22 = best
+            sub  x26, x27, sizeof.RootMove
+.Winning1:
+            add  x26, x26, sizeof.RootMove
+            ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
+            cmp  x26, x4
+            bhs  .Winning1Done
+            ldr  w0, [x26, RootMove.score]
+            cmp  w0, 0
+            ble  .Winning1
+            cmp  w0, w22
+            bge  .Winning1
+            mov  w22, w0
+              b  .Winning1
+.Winning1Done:
+            mov  w11, w22
+    ; w11 = max
 
-                add  w0, w22, w24
-                cmp  w0, 99
-                bgt  Tablebase_RootProbe.WinningDontMax
+            add  w0, w22, w24
+            cmp  w0, 99
+            bgt  .WinningDontMax
 
-                mov  x8, x21
-        ; r8 = st
-Tablebase_RootProbe.WinningLoop:
-                mov  w1, 4
-        ; w1 = i
-               ldrh  w2, [x8, State.rule50]
-               ldrh  w0, [x8, State.pliesFromNull]
-                cmp  w2, w0
-               csel  w2, w0, w2, hi
-                sub  x9, x8, 2*sizeof.State
-        ; x9 = *stp = st->previous->previous
-                cmp  w2, w1
-                blo  Tablebase_RootProbe.WinningDoMax
-Tablebase_RootProbe.WinningStateLoop:
-                sub  x9, x9, 2*sizeof.State
-                ldr  x0, [x9, State.key]
-                ldr  x4, [x8, State.key]
-                cmp  x0, x4
-                beq  Tablebase_RootProbe.WinningDontMax
-                add  w1, w1, 2
-                cmp  w1, w2
-                bls  Tablebase_RootProbe.WinningStateLoop
-                sub  x8, x8, 1*sizeof.State
-                  b  Tablebase_RootProbe.WinningLoop
+            mov  x8, x21
+    ; r8 = st
+.WinningLoop:
+            mov  w1, 4
+    ; w1 = i
+           ldrh  w2, [x8, State.rule50]
+           ldrh  w0, [x8, State.pliesFromNull]
+            cmp  w2, w0
+           csel  w2, w0, w2, hi
+            sub  x9, x8, 2*sizeof.State
+    ; x9 = *stp = st->previous->previous
+            cmp  w2, w1
+            blo  .WinningDoMax
+.WinningStateLoop:
+            sub  x9, x9, 2*sizeof.State
+            ldr  x0, [x9, State.key]
+            ldr  x4, [x8, State.key]
+            cmp  x0, x4
+            beq  .WinningDontMax
+            add  w1, w1, 2
+            cmp  w1, w2
+            bls  .WinningStateLoop
+            sub  x8, x8, 1*sizeof.State
+              b  .WinningLoop
 
-Tablebase_RootProbe.WinningDoMax:
-                mov  w11, 99
-                sub  w11, w11, w24
-Tablebase_RootProbe.WinningDontMax:
-                sub  x26, x27, sizeof.RootMove
-Tablebase_RootProbe.Winning2:
-                add  x26, x26, sizeof.RootMove
-Tablebase_RootProbe.Winning2a:
-                ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
-                cmp  x26, x4
-                bhs  Tablebase_RootProbe.Winning2Done
-                ldr  w0, [x26, RootMove.score]
-                cmp  w0, 0
-                ble  Tablebase_RootProbe.Winning2
-                cmp  w0, w21
-                bgt  Tablebase_RootProbe.Winning2
+.WinningDoMax:
+            mov  w11, 99
+            sub  w11, w11, w24
+.WinningDontMax:
+            sub  x26, x27, sizeof.RootMove
+.Winning2:
+            add  x26, x26, sizeof.RootMove
+.Winning2a:
+            ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
+            cmp  x26, x4
+            bhs  .Winning2Done
+            ldr  w0, [x26, RootMove.score]
+            cmp  w0, 0
+            ble  .Winning2
+            cmp  w0, w21
+            bgt  .Winning2
 
 if VERBOSE = 2
 ldr w1, [x26, RootMove.pv + 4*0]
 Display 2,"DTZ filtered winning move %m1%n"
 end if
 
-                mov  w1, sizeof.RootMove
-        @@:
-               ldrb  w4, [x26], 1
-               strb  w4, [x27], 1
-               subs  w1, w1, 1
-                bne  @b
-                  b  Tablebase_RootProbe.Winning2a
+            mov  w1, sizeof.RootMove
+    @1:
+           ldrb  w4, [x26], 1
+           strb  w4, [x27], 1
+           subs  w1, w1, 1
+            bne  @1b
+              b  .Winning2a
 
-Tablebase_RootProbe.Winning2Done:
-                  b  Tablebase_RootProbe.Resize
+.Winning2Done:
+              b  .Resize
 
-Tablebase_RootProbe.Losing:
-                mov  w2, 0
-        ; w2 = best
-                sub  x26, x27, sizeof.RootMove
-Tablebase_RootProbe.Losing1:
-                add  x26, x26, sizeof.RootMove
-                ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
-                cmp  x26, x4
-                bhs  Tablebase_RootProbe.Losing1Done
-                ldr  w0, [x26, RootMove.score]
-                cmp  w0, w2
-               csel  w2, w0, w2, lt
-                  b  Tablebase_RootProbe.Losing1
+.Losing:
+            mov  w2, 0
+    ; w2 = best
+            sub  x26, x27, sizeof.RootMove
+.Losing1:
+            add  x26, x26, sizeof.RootMove
+            ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
+            cmp  x26, x4
+            bhs  .Losing1Done
+            ldr  w0, [x26, RootMove.score]
+            cmp  w0, w2
+           csel  w2, w0, w2, lt
+              b  .Losing1
 
-Tablebase_RootProbe.Losing1Done:
-                sub  w0, w24, w2
-                sub  w0, w0, w2
-                cmp  w0, 100
-                blt  Tablebase_RootProbe.ReturnTrue
+.Losing1Done:
+            sub  w0, w24, w2
+            sub  w0, w0, w2
+            cmp  w0, 100
+            blt  .ReturnTrue
 
-                sub  x26, x27, sizeof.RootMove
-Tablebase_RootProbe.Losing2:
-                add  x26, x26, sizeof.RootMove
-Tablebase_RootProbe.Losing2a:
-                ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
-                cmp  x26, x4
-                bhs  Tablebase_RootProbe.Losing2Done
-                ldr  w0, [x26, RootMove.score]
-                cmp  w0, w2
-                bne  Tablebase_RootProbe.Losing2
+            sub  x26, x27, sizeof.RootMove
+.Losing2:
+            add  x26, x26, sizeof.RootMove
+.Losing2a:
+            ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
+            cmp  x26, x4
+            bhs  .Losing2Done
+            ldr  w0, [x26, RootMove.score]
+            cmp  w0, w2
+            bne  .Losing2
 
 if VERBOSE = 2
 ldr w1, [x26, RootMove.pv + 4*0]
 Display 2,'DTZ filtered losing move %m1%n'
 end if
 
-                mov  w1, sizeof.RootMove
-        @@:
-               ldrb  w4, [x26], 1
-               strb  w4, [x27], 1
-               subs  w1, w1, 1
-                bne  @b
-                  b  Tablebase_RootProbe.Losing2a
+            mov  w1, sizeof.RootMove
+    @1:
+           ldrb  w4, [x26], 1
+           strb  w4, [x27], 1
+           subs  w1, w1, 1
+            bne  @1b
+              b  .Losing2a
 
-Tablebase_RootProbe.Losing2Done:
-                  b  Tablebase_RootProbe.Resize
+.Losing2Done:
+              b  .Resize
 
 
 
 Tablebase_RootProbeWDL:
-        ; in:  x20 address of position
-        ;      x21 address of state
-        ; out: w0  bool
-        ;          score is in Tablebase_Score
-                stp  x26, x27, [sp, -16]!
-                stp  x22, x23, [sp, -16]!
-                stp  x24, x25, [sp, -16]!
-                stp  xzr, x30, [sp, -16]!
+    ; in:  x20 address of position
+    ;      x21 address of state
+    ; out: w0  bool
+    ;          score is in Tablebase_Score
+            stp  x26, x27, [sp, -16]!
+            stp  x22, x23, [sp, -16]!
+            stp  x24, x25, [sp, -16]!
+            stp  xzr, x30, [sp, -16]!
 
-                mov  x25, sp
+            mov  x25, sp
 
-                 bl  Tablebase_Probe_WDL
-                ldr  w2, [x25]
-                tst  w2, w2
-               csel  w0, w2, w0, eq
-                beq  Tablebase_RootProbeWDL.Return
-                add  w0, w0, 2
-                lea  x6, wdl_to_Value5
-                ldr  w0, [x6, x0, lsl 2]
-                lea  x6, Tablebase_Score
-                str  w0, [x6]
+             bl  Tablebase_Probe_WDL
+            ldr  w2, [x25]
+            tst  w2, w2
+           csel  w0, w2, w0, eq
+            beq  .Return
+            add  w0, w0, 2
+           _lea  x6, wdl_to_Value5
+            ldr  w0, [x6, x0, lsl 2]
+           _lea  x6, Tablebase_Score
+            str  w0, [x6]
 
-                mov  w22, -2
-        ; w22 = best
+            mov  w22, -2
+    ; w22 = best
 
-                ldr  x26, [x20, Pos.rootMovesVec + RootMovesVec.table]
-Tablebase_RootProbeWDL.RootMoveLoop:
-                ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
-                cmp  x26, x4
-                bhs  Tablebase_RootProbeWDL.RootMovesDone
-                ldr  w1, [x26, RootMove.pv + 4*0]
-                 bl  Move_GivesCheck
-                ldr  w1, [x26, RootMove.pv + 4*0]
-               strb  w0, [x21, State.givesCheck]
-                 bl  Move_Do__Tablebase_RootProbeWDL
-                 bl  Tablebase_Probe_WDL
-                neg  w27, w0
-                ldr  w1, [x26, RootMove.pv + 4*0]
-                 bl  Move_Undo
-                ldr  w0, [x25]
-                cbz  w0, Tablebase_RootProbeWDL.Return
-                str  w27, [x26, RootMove.score]
-                cmp  w27, w22
-               csel  w22, w27, w22, gt
-                add  x26, x26, sizeof.RootMove
-                  b  Tablebase_RootProbeWDL.RootMoveLoop
+            ldr  x26, [x20, Pos.rootMovesVec + RootMovesVec.table]
+.RootMoveLoop:
+            ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
+            cmp  x26, x4
+            bhs  .RootMovesDone
+            ldr  w1, [x26, RootMove.pv + 4*0]
+             bl  Move_GivesCheck
+            ldr  w1, [x26, RootMove.pv + 4*0]
+           strb  w0, [x21, State.givesCheck]
+             bl  Move_Do__Tablebase_RootProbeWDL
+             bl  Tablebase_Probe_WDL
+            neg  w27, w0
+            ldr  w1, [x26, RootMove.pv + 4*0]
+             bl  Move_Undo
+            ldr  w0, [x25]
+            cbz  w0, .Return
+            str  w27, [x26, RootMove.score]
+            cmp  w27, w22
+           csel  w22, w27, w22, gt
+            add  x26, x26, sizeof.RootMove
+              b  .RootMoveLoop
 
-Tablebase_RootProbeWDL.RootMovesDone:
+.RootMovesDone:
 
-                ldr  x27, [x20, Pos.rootMovesVec + RootMovesVec.table]
-                sub  x26, x27, sizeof.RootMove
-Tablebase_RootProbeWDL.Copy:
-                add  x26, x26, sizeof.RootMove
-Tablebase_RootProbeWDL.Copya:
-                ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
-                cmp  x26, x4
-                bhs  Tablebase_RootProbeWDL.CopyDone
-                ldr  w0, [x26, RootMove.score]
-                cmp  w0, w22
-                bne  Tablebase_RootProbeWDL.Copy
+            ldr  x27, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            sub  x26, x27, sizeof.RootMove
+.Copy:
+            add  x26, x26, sizeof.RootMove
+.Copya:
+            ldr  x4, [x20, Pos.rootMovesVec + RootMovesVec.ender]
+            cmp  x26, x4
+            bhs  .CopyDone
+            ldr  w0, [x26, RootMove.score]
+            cmp  w0, w22
+            bne  .Copy
 
 if VERBOSE = 2
 ldr w1, [x26, RootMove.pv + 4*0]
 Display 2,"WLD filtered move %m1%n"
 end if
 
-                mov  w1, sizeof.RootMove
-        @@:
-               ldrb  w4, [x26], 1
-               strb  w4, [x27], 1
-               subs  w1, w1, 1
-                bne  @b
-                  b  Tablebase_RootProbeWDL.Copya
+            mov  w1, sizeof.RootMove
+    @1:
+           ldrb  w4, [x26], 1
+           strb  w4, [x27], 1
+           subs  w1, w1, 1
+            bne  @1b
+              b  .Copya
 
-Tablebase_RootProbeWDL.CopyDone:
-                str  x27, [x20, Pos.rootMovesVec + RootMovesVec.ender]
-                mov  w0, -1
+.CopyDone:
+            str  x27, [x20, Pos.rootMovesVec + RootMovesVec.ender]
+            mov  w0, -1
 
-Tablebase_RootProbeWDL.Return:
-                ldp  xzr, x30, [sp], 16
-                ldp  x24, x25, [sp], 16
-                ldp  x22, x23, [sp], 16
-                ldp  x26, x27, [sp], 16
-                ret
+.Return:
+            ldp  xzr, x30, [sp], 16
+            ldp  x24, x25, [sp], 16
+            ldp  x22, x23, [sp], 16
+            ldp  x26, x27, [sp], 16
+            ret

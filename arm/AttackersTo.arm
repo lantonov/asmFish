@@ -1,41 +1,41 @@
 
 AttackersTo:
-	; in: w1  square
-	;     x2  occlusion
-        lea  x16, PawnAttacks
-        add  x16, x16, x1, lsl 3
-        ldr  x0, [x16, KingAttacks-PawnAttacks]
-        ldr  x4, [x20, Pos.typeBB + 8*King]
-        and  x0, x0, x4
+    ; in: w1  square
+    ;     x2  occlusion
+           _lea  x16, PawnAttacks
+            add  x16, x16, x1, lsl 3
+            ldr  x0, [x16, KingAttacks-PawnAttacks]
+            ldr  x4, [x20, Pos.typeBB + 8*King]
+            and  x0, x0, x4
 
-        ldr  x8, [x16, KnightAttacks-PawnAttacks]
-        ldr  x4, [x20, Pos.typeBB + 8*Knight]
-        and  x8, x8, x4
-        orr  x0, x0, x8
+            ldr  x8, [x16, KnightAttacks-PawnAttacks]
+            ldr  x4, [x20, Pos.typeBB + 8*Knight]
+            and  x8, x8, x4
+            orr  x0, x0, x8
 
-        ldr  x8, [x16, WhitePawnAttacks-PawnAttacks]
-        ldr  x4, [x20, Pos.typeBB + 8*Black]
-        and  x8, x8, x4
-        ldr  x9, [x16, BlackPawnAttacks-PawnAttacks]
-        ldr  x4, [x20, Pos.typeBB + 8*White]
-        and  x9, x9, x4
-        orr  x8, x8, x9
-        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
-        and  x8, x8, x4
-        orr  x0, x0, x8
+            ldr  x8, [x16, WhitePawnAttacks-PawnAttacks]
+            ldr  x4, [x20, Pos.typeBB + 8*Black]
+            and  x8, x8, x4
+            ldr  x9, [x16, BlackPawnAttacks-PawnAttacks]
+            ldr  x4, [x20, Pos.typeBB + 8*White]
+            and  x9, x9, x4
+            orr  x8, x8, x9
+            ldr  x4, [x20, Pos.typeBB + 8*Pawn]
+            and  x8, x8, x4
+            orr  x0, x0, x8
 
-        ldr  x5, [x20, Pos.typeBB + 8*Queen]
-        RookAttacks  x8, x1, x2, x9, x10
-        ldr  x9, [x20, Pos.typeBB + 8*Rook]
-        orr  x9, x9, x5
-        and  x8, x8, x9
-        orr  x0, x0, x8
-        BishopAttacks  x8, x1, x2, x9, x10
-        ldr  x9, [x20, Pos.typeBB + 8*Bishop]
-        orr  x9, x9, x5
-        and  x8, x8, x9
-        orr  x0, x0, x8
-        ret
+            ldr  x5, [x20, Pos.typeBB + 8*Queen]
+    RookAttacks  x8, x1, x2, x9, x10
+            ldr  x9, [x20, Pos.typeBB + 8*Rook]
+            orr  x9, x9, x5
+            and  x8, x8, x9
+            orr  x0, x0, x8
+  BishopAttacks  x8, x1, x2, x9, x10
+            ldr  x9, [x20, Pos.typeBB + 8*Bishop]
+            orr  x9, x9, x5
+            and  x8, x8, x9
+            orr  x0, x0, x8
+            ret
 
 
 AttackersTo_Side:
@@ -43,42 +43,41 @@ AttackersTo_Side:
 	;     x2 square
 	; out: x0 pieces on side w1 xor 1 that attack square w2
 
-        add  x6, x20, Pos.typeBB
-        ldr  x10, [x6, x1, lsl 3]
-        eor  x4, x1, 1
-        ldr  x11, [x6, x4, lsl 3]
-        lsl  x1, x1, 6+3
-        orr  x10, x10, x11
-        
-        lea  x16, PawnAttacks
-        add  x16, x16, x2, lsl 3
-        ldr  x0, [x16, KingAttacks-PawnAttacks]
-        ldr  x4, [x20, Pos.typeBB + 8*King]
-        and  x0, x0, x4
+            add  x6, x20, Pos.typeBB
+            ldr  x10, [x6, x1, lsl 3]
+            eor  x4, x1, 1
+            ldr  x11, [x6, x4, lsl 3]
+            lsl  x1, x1, 6+3
+            orr  x10, x10, x11
+            
+           _lea  x16, PawnAttacks
+            add  x16, x16, x2, lsl 3
+            ldr  x0, [x16, KingAttacks-PawnAttacks]
+            ldr  x4, [x20, Pos.typeBB + 8*King]
+            and  x0, x0, x4
 
-        ldr  x8, [x16, KnightAttacks-PawnAttacks]
-        ldr  x4, [x20, Pos.typeBB + 8*Knight]
-        and  x8, x8, x4
-        orr  x0, x0, x8
-        
-        add  x16, x16, x1
-        ldr  x8, [x16, WhitePawnAttacks-PawnAttacks]
-        ldr  x4, [x20, Pos.typeBB + 8*Pawn]
-        and  x8, x8, x4
-        orr  x0, x0, x8
+            ldr  x8, [x16, KnightAttacks-PawnAttacks]
+            ldr  x4, [x20, Pos.typeBB + 8*Knight]
+            and  x8, x8, x4
+            orr  x0, x0, x8
+            
+            add  x16, x16, x1
+            ldr  x8, [x16, WhitePawnAttacks-PawnAttacks]
+            ldr  x4, [x20, Pos.typeBB + 8*Pawn]
+            and  x8, x8, x4
+            orr  x0, x0, x8
 
-        ldr  x5, [x20, Pos.typeBB + 8*Queen]
-        RookAttacks  x8, x2, x10, x9, x4
-        ldr  x9, [x20, Pos.typeBB + 8*Rook]
-        orr  x9, x9, x5
-        and  x8, x8, x9
-        orr  x0, x0, x8
+            ldr  x5, [x20, Pos.typeBB + 8*Queen]
+    RookAttacks  x8, x2, x10, x9, x4
+            ldr  x9, [x20, Pos.typeBB + 8*Rook]
+            orr  x9, x9, x5
+            and  x8, x8, x9
+            orr  x0, x0, x8
 
-        BishopAttacks  x8, x2, x10, x9, x4
-        ldr  x9, [x20, Pos.typeBB + 8*Bishop]
-        orr  x9, x9, x5
-        and  x8, x8, x9
-        orr  x0, x0, x8
-        and  x0, x0, x11
-        ret
-
+  BishopAttacks  x8, x2, x10, x9, x4
+            ldr  x9, [x20, Pos.typeBB + 8*Bishop]
+            orr  x9, x9, x5
+            and  x8, x8, x9
+            orr  x0, x0, x8
+            and  x0, x0, x11
+            ret

@@ -1,73 +1,69 @@
 
 EasyMoveMng_Clear:
-        lea  x1, easyMoveMng
-        str  xzr, [x1, EasyMoveMng.pv+4*0]
-        str  xzr, [x1, EasyMoveMng.pv+4*2]
-        str  xzr, [x1, EasyMoveMng.expectedPosKey]
-        str  wzr, [x1, EasyMoveMng.stableCnt]
-        ret
+           _lea  x1, easyMoveMng
+            str  xzr, [x1, EasyMoveMng.pv+4*0]
+            str  xzr, [x1, EasyMoveMng.pv+4*2]
+            str  xzr, [x1, EasyMoveMng.expectedPosKey]
+            str  wzr, [x1, EasyMoveMng.stableCnt]
+            ret
 
 
 EasyMoveMng_Get:
 	; in: x1 key
-        lea  x6, easyMoveMng
-        ldr  x4, [x6, EasyMoveMng.expectedPosKey]
-        ldr  w5, [x6, EasyMoveMng.pv + 4*2]
-        cmp  x1, x4
-       csel  w0, w5, wzr, eq
-        ret
+           _lea  x6, easyMoveMng
+            ldr  x4, [x6, EasyMoveMng.expectedPosKey]
+            ldr  w5, [x6, EasyMoveMng.pv + 4*2]
+            cmp  x1, x4
+           csel  w0, w5, wzr, eq
+            ret
 
 
 EasyMoveMng_Update:
 	; in: rbp position
 	;     rbx state
 	;     rcx address of RootMove struct
-        stp  x26, x30, [sp, -16]!
-        lea  x26, easyMoveMng
-        
-        ldr  w2, [x26, EasyMoveMng.stableCnt]
-        mov  w8, 0
-        add  w2, w2, 1
-        ldr  w0, [x1, RootMove.pv + 4*2]
-        ldr  w4, [x26, EasyMoveMng.pv + 4*2]
-        cmp  w0, w4
-       csel  w2, w8, w2, ne
-        str  w2, [x26, EasyMoveMng.stableCnt]
+            stp  x26, x30, [sp, -16]!
+           _lea  x26, easyMoveMng
+            
+            ldr  w2, [x26, EasyMoveMng.stableCnt]
+            mov  w8, 0
+            add  w2, w2, 1
+            ldr  w0, [x1, RootMove.pv + 4*2]
+            ldr  w4, [x26, EasyMoveMng.pv + 4*2]
+            cmp  w0, w4
+           csel  w2, w8, w2, ne
+            str  w2, [x26, EasyMoveMng.stableCnt]
 
-        ldr  x0, [x1, RootMove.pv + 4*0]
-        ldr  x4, [x26, EasyMoveMng.pv + 4*0]
-        cmp  x0, x4
-        bne  @f
-        ldr  w1, [x1, RootMove.pv + 4*2]
-        ldr  w4, [x26, EasyMoveMng.pv + 4*2]
-        cmp  w1, w4
-        beq  EasyMoveMng_Update.done
-@@:
+            ldr  x0, [x1, RootMove.pv + 4*0]
+            ldr  x4, [x26, EasyMoveMng.pv + 4*0]
+            cmp  x0, x4
+            bne  @1f
+            ldr  w1, [x1, RootMove.pv + 4*2]
+            ldr  w4, [x26, EasyMoveMng.pv + 4*2]
+            cmp  w1, w4
+            beq  .done
+    @1:
+            str  x0, [x26, EasyMoveMng.pv + 4*0]
+            str  w1, [x26, EasyMoveMng.pv + 4*2]
 
+            ldr  w1, [x26, EasyMoveMng.pv + 4*0]
+             bl  Move_GivesCheck
+            ldr  w1, [x26, EasyMoveMng.pv + 4*0]
+           strb  w0, [x21, State.givesCheck]
+             bl  Move_Do__EasyMoveMng
+            ldr  w1, [x26, EasyMoveMng.pv + 4*1]
+             bl  Move_GivesCheck
+            ldr  w1, [x26, EasyMoveMng.pv + 4*1]
+           strb  w0, [x21, State.givesCheck]
+             bl  Move_Do__EasyMoveMng
 
-        str  x0, [x26, EasyMoveMng.pv + 4*0]
-        str  w1, [x26, EasyMoveMng.pv + 4*2]
+            ldr  x0, [x21, State.key]
+            str  x0, [x26, EasyMoveMng.expectedPosKey]
+            ldr  w1, [x26, EasyMoveMng.pv + 4*1]
+             bl  Move_Undo
+            ldr  w1, [x26, EasyMoveMng.pv + 4*0]
+             bl  Move_Undo
 
-
-        ldr  w1, [x26, EasyMoveMng.pv + 4*0]
-         bl  Move_GivesCheck
-        ldr  w1, [x26, EasyMoveMng.pv + 4*0]
-       strb  w0, [x21, State.givesCheck]
-         bl  Move_Do__EasyMoveMng
-        ldr  w1, [x26, EasyMoveMng.pv + 4*1]
-         bl  Move_GivesCheck
-        ldr  w1, [x26, EasyMoveMng.pv + 4*1]
-       strb  w0, [x21, State.givesCheck]
-         bl  Move_Do__EasyMoveMng
-
-        ldr  x0, [x21, State.key]
-        str  x0, [x26, EasyMoveMng.expectedPosKey]
-        ldr  w1, [x26, EasyMoveMng.pv + 4*1]
-         bl  Move_Undo
-        ldr  w1, [x26, EasyMoveMng.pv + 4*0]
-         bl  Move_Undo
-
-EasyMoveMng_Update.done:
-        ldp  x26, x30, [sp], 16
-        ret
-
+.done:
+            ldp  x26, x30, [sp], 16
+            ret

@@ -2,163 +2,127 @@
 RootMovesVec_Create:
 	; in: rcx address of RootMovesVec struct
 	;     edx numa node
-        stp  x21, x30, [sp, -16]!
-        mov  x21, x1
-      mov32  w1, sizeof.RootMove*MAX_MOVES
-         bl  Os_VirtualAllocNuma
-        str  x0, [x21, RootMovesVec.table]
-        str  x0, [x21, RootMovesVec.ender]  
-        ldp  x21, x30, [sp], 16
-        ret
+            stp  x21, x30, [sp, -16]!
+            mov  x21, x1
+          mov32  w1, sizeof.RootMove*MAX_MOVES
+             bl  Os_VirtualAllocNuma
+            str  x0, [x21, RootMovesVec.table]
+            str  x0, [x21, RootMovesVec.ender]  
+            ldp  x21, x30, [sp], 16
+            ret
 
 RootMovesVec_Destroy:
-        stp  x29, x30, [sp, -16]!
-        mov  x29, x1
-        ldr  x1, [x21, RootMovesVec.table]
-      mov32  w2, sizeof.RootMove*MAX_MOVES
-         bl  Os_VirtualFree
-        str  xzr, [x21, RootMovesVec.table]
-        str  xzr, [x21, RootMovesVec.ender]  
-        ldp  x29, x30, [sp], 16
-        ret
+            stp  x29, x30, [sp, -16]!
+            mov  x29, x1
+            ldr  x1, [x21, RootMovesVec.table]
+          mov32  w2, sizeof.RootMove*MAX_MOVES
+             bl  Os_VirtualFree
+            str  xzr, [x21, RootMovesVec.table]
+            str  xzr, [x21, RootMovesVec.ender]  
+            ldp  x29, x30, [sp], 16
+            ret
 
 
 
 
 RootMovesVec_Clear:
 	; in: rcx address of RootMovesVec struct
-        ldr  x0, [x1, RootMovesVec.table]
-        str  x0, [x1, RootMovesVec.ender]
-        ret
+            ldr  x0, [x1, RootMovesVec.table]
+            str  x0, [x1, RootMovesVec.ender]
+            ret
 
 RootMovesVec_Empty:
 	; in: rcx address of RootMovesVec struct
 	; out: eax=0 if empty
 	;      eax=-1 if not
-        ldr  x0, [x1, RootMovesVec.table]
-        ldr  x1, [x1, RootMovesVec.ender]
-        sub  x0, x0, x1
-        ret
+            ldr  x0, [x1, RootMovesVec.table]
+            ldr  x1, [x1, RootMovesVec.ender]
+            sub  x0, x0, x1
+            ret
 
 RootMovesVec_Size:
 	; in: rcx address of RootMovesVec struct
 	; out: eax size
-        ldr  x0, [x1, RootMovesVec.ender]
-        ldr  x1, [x1, RootMovesVec.table]
-        sub  x0, x0, x1
-        mov  x1, sizeof.RootMove
-       udiv  x0, x0, x1
-        ret
+            ldr  x0, [x1, RootMovesVec.ender]
+            ldr  x1, [x1, RootMovesVec.table]
+            sub  x0, x0, x1
+            mov  x1, sizeof.RootMove
+           udiv  x0, x0, x1
+            ret
 
 RootMovesVec_PushBackMove:
-        ldr  x0, [x1, RootMovesVec.ender]
-        mov  w4, -VALUE_INFINITE
-        str  w4, [x0, RootMove.score]
-        str  w4, [x0, RootMove.prevScore]
-        mov  x4, 1
-        str  w4, [x0, RootMove.pvSize]
-        str  wzr, [x0, RootMove.selDepth]
-        str  w2, [x0, RootMove.pv]
-        add  x0, x0, sizeof.RootMove
-        str  x0, [x1, RootMovesVec.ender]
-        ret
+            ldr  x0, [x1, RootMovesVec.ender]
+            mov  w4, -VALUE_INFINITE
+            str  w4, [x0, RootMove.score]
+            str  w4, [x0, RootMove.prevScore]
+            mov  x4, 1
+            str  w4, [x0, RootMove.pvSize]
+            str  wzr, [x0, RootMove.selDepth]
+            str  w2, [x0, RootMove.pv]
+            add  x0, x0, sizeof.RootMove
+            str  x0, [x1, RootMovesVec.ender]
+            ret
 
 RootMovesVec_Copy:
 	; in: rcx address of destination RootMovesVec struct
 	;     rdx address of source      RootMovesVec struct
-        mov  x8, x1
-        ldr  x0, [x1, RootMovesVec.table]
-        mov  x1, x2
-        ldr  x3, [x2, RootMovesVec.table]
-        ldr  x4, [x2, RootMovesVec.ender]
-        sub  x2, x4, x3
-         bl  MemoryCopy
-        str  x0, [x8, RootMovesVec.ender]
-        ret
+            mov  x8, x1
+            ldr  x0, [x1, RootMovesVec.table]
+            mov  x1, x2
+            ldr  x3, [x2, RootMovesVec.table]
+            ldr  x4, [x2, RootMovesVec.ender]
+            sub  x2, x4, x3
+             bl  MemoryCopy
+            str  x0, [x8, RootMovesVec.ender]
+            ret
 
 RootMovesVec_StableSort:
-;	; in: rcx start RootMove
-;	;     rdx end RootMove
-;	       push   rsi rdi r12 r13 r14 r15
-;		sub   rsp, sizeof.RootMove
-        stp  x29, x30, [sp, -16]!
-        sub  sp, sp, (sizeof.RootMove + 15) and -16
-;		mov   r14, rcx
-        mov  x14, x1
-;		mov   r15, rdx
-        mov  x15, x2
-;		mov   r13, r14
-        mov  x13, x14
-;.l1:		add   r13, sizeof.RootMove
-RootMovesVec_StableSort.l1:
-        add  x13, x13, sizeof.RootMove
-;		cmp   r13, r15
-        cmp  x13, x15
-;		jae   .l1d
-        bhs  RootMovesVec_StableSort.l1d
-;		mov   rdi, rsp
-        mov  x17, sp
-;		mov   rsi, r13
-        mov  x16, x13
-;		mov   ecx, sizeof.RootMove/4
-        mov  w1, sizeof.RootMove/4
-;	  rep movsd
-         bl  RepMovsd
-;		mov   r12, r13
-        mov  x12, x13
-;.l2:		cmp   r12, r14
-RootMovesVec_StableSort.l2:
-        cmp  x12, x14
-;		jbe   .l2d
-        bls  RootMovesVec_StableSort.l2d
-;		mov   eax, dword[r12-1*sizeof.RootMove+RootMove.score]
-        add  x6, x12, -1*sizeof.RootMove
-        ldr  w0, [x6, RootMove.score]
-;		cmp   eax, dword[rsp+RootMove.score]
-        ldr  w4, [sp, RootMove.score]
-        cmp  w0, w4
-;		 jg   .l2d
-        bgt  RootMovesVec_StableSort.l2d
-;                 jl   .less
-        blt  RootMovesVec_StableSort.less
-;		mov   eax, dword[r12-1*sizeof.RootMove+RootMove.prevScore]
-        add  x6, x12, -1*sizeof.RootMove
-        ldr  w0, [x6, RootMove.prevScore]
-;		cmp   eax, dword[rsp+RootMove.prevScore]
-        ldr  w4, [sp, RootMove.prevScore]
-        cmp  w0, w4
-;                jge   .l2d
-        bge  RootMovesVec_StableSort.l2d
-;.less:          mov   rdi, r12
-RootMovesVec_StableSort.less:
-        mov  x17, x12
-;		sub   r12, sizeof.RootMove
-        sub  x12, x12, sizeof.RootMove
-;		mov   rsi, r12
-        mov  x16, x12
-;		mov   ecx, sizeof.RootMove/4
-        mov  w1, sizeof.RootMove/4
-;	  rep movsd
-         bl  RepMovsd
-;		jmp   .l2
-          b  RootMovesVec_StableSort.l2
-;.l2d:		mov   rdi, r12
-RootMovesVec_StableSort.l2d:
-        mov  x17, x12
-;		mov   rsi, rsp
-        mov  x16, sp
-;		mov   ecx, sizeof.RootMove/4
-        mov  w1, sizeof.RootMove/4
-;	  rep movsd
-         bl  RepMovsd
-;		jmp   .l1
-          b  RootMovesVec_StableSort.l1
-;.l1d:		add   rsp, sizeof.RootMove
-RootMovesVec_StableSort.l1d:
-        add  sp, sp, (sizeof.RootMove + 15) and -16
-;		pop   r15 r14 r13 r12 rdi rsi
-;		ret
-        ldp  x29, x30, [sp], 16
-        ret
+    ; in: x1 start RootMove
+    ;     x2 end RootMove
+            stp  x29, x30, [sp, -16]!
+            sub  sp, sp, (sizeof.RootMove + 15) and -16
+            mov  x14, x1
+            mov  x15, x2
+            mov  x13, x14
+.l1:
+            add  x13, x13, sizeof.RootMove
+            cmp  x13, x15
+            bhs  .l1d
+            mov  x17, sp
+            mov  x16, x13
+            mov  w1, sizeof.RootMove/4
+             bl  RepMovsd
+            mov  x12, x13
+.l2:
+            cmp  x12, x14
+            bls  .l2d
+            add  x6, x12, -1*sizeof.RootMove
+            ldr  w0, [x6, RootMove.score]
+            ldr  w4, [sp, RootMove.score]
+            cmp  w0, w4
+            bgt  .l2d
+            blt  .less
+            add  x6, x12, -1*sizeof.RootMove
+            ldr  w0, [x6, RootMove.prevScore]
+            ldr  w4, [sp, RootMove.prevScore]
+            cmp  w0, w4
+            bge  .l2d
+.less:
+            mov  x17, x12
+            sub  x12, x12, sizeof.RootMove
+            mov  x16, x12
+            mov  w1, sizeof.RootMove/4
+             bl  RepMovsd
+              b  .l2
+.l2d:
+            mov  x17, x12
+            mov  x16, sp
+            mov  w1, sizeof.RootMove/4
+             bl  RepMovsd
+              b  .l1
+.l1d:
+            add  sp, sp, (sizeof.RootMove + 15) and -16
+            ldp  x29, x30, [sp], 16
+            ret
 
 

@@ -1,51 +1,52 @@
 macro QSearch PvNode, InCheck
 
-.tte                     = 0
-.ltte                    = 1*sizeof.rq + .tte
-.searchFxn               = 1*sizeof.rq + .ltte
-.stage                   = 1*sizeof.rq + .searchFxn
-.ttMove                  = 1*sizeof.rq + .stage
-.ttValue                 = 1*sizeof.rd + .ttMove
-.ttDepth                 = 1*sizeof.rd + .ttValue
-.move                    = 1*sizeof.rd + .ttDepth
-.excludedMove            = 1*sizeof.rd + .move
-.bestMove                = 1*sizeof.rd + .excludedMove
-.ext                     = 1*sizeof.rd + .bestMove
-.newDepth                = 1*sizeof.rd + .ext
-.predictedDepth          = 1*sizeof.rd + .newDepth
-.moveCount               = 1*sizeof.rd + .predictedDepth
-.oldAlpha                = 1*sizeof.rd + .moveCount
-.alpha                   = 1*sizeof.rd + .oldAlpha
-.beta                    = 1*sizeof.rd + .alpha
-.depth                   = 1*sizeof.rd + .beta
-.bestValue               = 1*sizeof.rd + .depth
-.value	                 = 1*sizeof.rd + .bestValue
-.evalu	                 = 1*sizeof.rd + .value
-.nullValue               = 1*sizeof.rd + .evalu
-.futilityValue           = 1*sizeof.rd + .nullValue
-.futilityBase            = 1*sizeof.rd + .futilityValue
-.inCheck                 = 1*sizeof.rd + .futilityBase
-.singularExtensionNode   = 1*sizeof.rb + 1*sizeof.rb + .inCheck
-.improving               = 1*sizeof.rb + .singularExtensionNode
-.captureOrPromotion      = 1*sizeof.rb + .improving
-.dangerous               = 1*sizeof.rb + .captureOrPromotion
-.doFullDepthSearch       = 1*sizeof.rb + .dangerous
-.cutNode                 = 1*sizeof.rb + .doFullDepthSearch
-.ttHit                   = 1*sizeof.rb + .cutNode
-  if PvNode = 1
-.pv                      = 1*sizeof.rb + 7*sizeof.rb + .ttHit
-.lend                    = (MAX_PLY+1)*sizeof.rd + .pv
-  else
-.lend                    = 1*sizeof.rb + 7*sizeof.rb + .ttHit
-  end if
-.localsize = (.lend+15) and -16
+virtual at 0
+  .tte              rq 1
+  .ltte             rq 1
+  .searchFxn        rq 1
+  .stage            rq 1
+  .ttMove           rd 1
+  .ttValue          rd 1
+  .ttDepth          rd 1
+  .move             rd 1
+  .excludedMove     rd 1
+  .bestMove         rd 1
+  .ext              rd 1
+  .newDepth         rd 1
+  .predictedDepth   rd 1
+  .moveCount        rd 1
+  .oldAlpha         rd 1
+  .alpha            rd 1
+  .beta             rd 1
+  .depth            rd 1
+  .bestValue        rd 1
+  .value            rd 1
+  .evalu            rd 1
+  .nullValue        rd 1
+  .futilityValue    rd 1
+  .futilityBase     rd 1
+  .inCheck          rb 1
+                            rb 1
+  .singularExtensionNode    rb 1
+  .improving                rb 1
+  .captureOrPromotion       rb 1
+  .dangerous                rb 1
+  .doFullDepthSearch        rb 1
+  .cutNode                  rb 1
+  .ttHit                    rb 1
+                            rb 7
+if PvNode = 1
+  .pv		        rd MAX_PLY+1
+end if
+  .lend             rb 0
+end virtual
+.localsize = ((.lend+15) and (-16))
 
-                stp  x21, x30, [sp, -16]!
-                stp  x26, x27, [sp, -16]!
-                stp  x22, x23, [sp, -16]!
-                stp  x24, x25, [sp, -16]!
-                sub  sp, sp, .localsize
-
+            stp  x21, x30, [sp, -16]!
+            stp  x26, x27, [sp, -16]!
+            stp  x22, x23, [sp, -16]!
+            stp  x24, x25, [sp, -16]!
+            sub  sp, sp, .localsize
   if PvNode = 1
     if InCheck = 1
 Display 2, "QSearch<1,1>(alpha=%i1, beta=%i2, depth=%i8) called%n"
@@ -60,567 +61,565 @@ Display 2, "QSearch<0,0>(alpha=%i1, beta=%i2, depth=%i8) called%n"
     end if
   end if
 
-                str  w1, [sp, .alpha]
-                str  w2, [sp, .beta]
-                str  w8, [sp, .depth]
+            str  w1, [sp, .alpha]
+            str  w2, [sp, .beta]
+            str  w8, [sp, .depth]
 
-               ldrb  w0, [x21, -1*sizeof.State + State.ply]
-                add  w0, w0, 1
-                mov  w2, 0
+           ldrb  w0, [x21, -1*sizeof.State + State.ply]
+            add  w0, w0, 1
+            mov  w2, 0
   if PvNode = 1
-                add  x8, sp, .pv
-                ldr  x9, [x21, State.pv]
-                str  w1, [sp, .oldAlpha]
-                str  x8, [x21, 1*sizeof.State + State.pv]
-                str  w2, [x9]
+            add  x8, sp, .pv
+            ldr  x9, [x21, State.pv]
+            str  w1, [sp, .oldAlpha]
+            str  x8, [x21, 1*sizeof.State + State.pv]
+            str  w2, [x9]
   end if
-                mov  w4, 2
-                str  w4, [sp, .moveCount]
-                str  w2, [sp, .bestMove]
-                str  w2, [x21, State.currentMove]
-               strb  w0, [x21, State.ply]
+            mov  w4, 2
+            str  w4, [sp, .moveCount]
+            str  w2, [sp, .bestMove]
+            str  w2, [x21, State.currentMove]
+           strb  w0, [x21, State.ply]
 
-        ; check for instant draw or max ply
-               ldrh  w2, [x21, State.rule50]
-               ldrh  w1, [x21, State.pliesFromNull]
-                ldr  x8, [x21, State.key]
-                cmp  w0, MAX_PLY
-                bhs  .AbortSearch_PlyBigger
+    ; check for instant draw or max ply
+           ldrh  w2, [x21, State.rule50]
+           ldrh  w1, [x21, State.pliesFromNull]
+            ldr  x8, [x21, State.key]
+            cmp  w0, MAX_PLY
+            bhs  .AbortSearch_PlyBigger
 
-        ; ss->ply < MAX_PLY holds at this point, so if we should
-        ;   go to .AbortSearch_PlySmaller if a draw is detected
-          PosIsDraw  .AbortSearch_PlySmaller, .CheckDraw_Cold, .CheckDraw_ColdRet
+    ; ss->ply < MAX_PLY holds at this point, so if we should
+    ;   go to .AbortSearch_PlySmaller if a draw is detected
+      PosIsDraw  .AbortSearch_PlySmaller, .CheckDraw_Cold, .CheckDraw_ColdRet
 
   if InCheck = 1
-                mov  w22, DEPTH_QS_CHECKS
-                str  w22, [sp, .ttDepth]
+            mov  w22, DEPTH_QS_CHECKS
+            str  w22, [sp, .ttDepth]
   else
-                mov  w0, DEPTH_QS_CHECKS
-                mov  w22, DEPTH_QS_NO_CHECKS
-                ldr  w4, [sp, .depth]
-                cmp  w0, w4
-               csel  w22, w0, w22, le
-                str  w22, [sp, .ttDepth]
+            mov  w0, DEPTH_QS_CHECKS
+            mov  w22, DEPTH_QS_NO_CHECKS
+            ldr  w4, [sp, .depth]
+            cmp  w0, w4
+           csel  w22, w0, w22, le
+            str  w22, [sp, .ttDepth]
   end if
 
-        ; transposition table lookup
-                ldr  x1, [x21, State.key]
-                sub  w22, w22, 1
-                 bl  MainHash_Probe
+    ; transposition table lookup
+            ldr  x1, [x21, State.key]
+            sub  w22, w22, 1
+             bl  MainHash_Probe
 
-                str  x0, [sp, .tte]
-                str  x1, [sp, .ltte]
-               strb  w2, [sp, .ttHit]
-                asr  x27, x1, 48
-               sbfx  w0, w1, 8, 8
-                sub  w22, w22, w0
-                asr  w22, w22, 31
-        ; w22 = 0 if tte.depth <  ttDepth
-        ;     =-1 if tte.depth >= ttDepth
-                lsr  x1, x1, 16
-                mov  w23, w2
-               ubfx  w1, w1, 0, 16
-                str  w1, [sp, .ttMove]
-                str  w27, [sp, .ttValue]
+            str  x0, [sp, .tte]
+            str  x1, [sp, .ltte]
+           strb  w2, [sp, .ttHit]
+            asr  x27, x1, 48
+           sbfx  w0, w1, 8, 8
+            sub  w22, w22, w0
+            asr  w22, w22, 31
+    ; w22 = 0 if tte.depth <  ttDepth
+    ;     =-1 if tte.depth >= ttDepth
+            lsr  x1, x1, 16
+            mov  w23, w2
+           ubfx  w1, w1, 0, 16
+            str  w1, [sp, .ttMove]
+            str  w27, [sp, .ttValue]
 
-                mov  w4, VALUE_MATE_IN_MAX_PLY
-                add  w8, w27, w4
-                cbz  w2, .DontReturnTTValue
+            mov  w4, VALUE_MATE_IN_MAX_PLY
+            add  w8, w27, w4
+            cbz  w2, .DontReturnTTValue
 
-                mov  w0, w27
-                ldr  w4, [sp, .beta]
-                sub  w0, w0, w4
-                asr  w0, w0, 31
-        ; w0 = 0 if ttValue<beta
-        ;    =-1 if ttvalue>=beta
+            mov  w0, w27
+            ldr  w4, [sp, .beta]
+            sub  w0, w0, w4
+            asr  w0, w0, 31
+    ; w0 = 0 if ttValue<beta
+    ;    =-1 if ttvalue>=beta
 
-                mov  w4, VALUE_NONE
-                cmp  w27, w4
-                beq  .DontReturnTTValue
-                mov  w4, VALUE_MATE_IN_MAX_PLY
-                cmp  w8, w4, lsl 1
-                bhs  .ValueFromTT
+            mov  w4, VALUE_NONE
+            cmp  w27, w4
+            beq  .DontReturnTTValue
+            mov  w4, VALUE_MATE_IN_MAX_PLY
+            cmp  w8, w4, lsl 1
+            bhs  .ValueFromTT
 
 .ValueFromTTRet:
   if PvNode = 0
-                add  w0, w0, 2
-        ; w0 = 2 if ttValue<beta     ie BOUND_UPPER
-        ;    = 1 if ttvalue>=beta    ie BOUND_LOWER
-                and  w0, w0, w22
-               ldrb  w4, [sp, .ltte + MainHashEntry.genBound]
-                tst  w0, w4
-                mov  w0, w27
-                bne  .Return
+            add  w0, w0, 2
+    ; w0 = 2 if ttValue<beta     ie BOUND_UPPER
+    ;    = 1 if ttvalue>=beta    ie BOUND_LOWER
+            and  w0, w0, w22
+           ldrb  w4, [sp, .ltte + MainHashEntry.genBound]
+            tst  w0, w4
+            mov  w0, w27
+            bne  .Return
   end if
 
 .DontReturnTTValue:
 
-; Evaluate the position statically
-; w23 = ttHit
+    ; Evaluate the position statically
+    ; w23 = ttHit
   if InCheck = 1
-                mov  w0, -VALUE_INFINITE
-                mov  w4, VALUE_NONE
-                str  w4, [x21, State.staticEval]
-                str  w0, [sp, .bestValue]
-                str  w0, [sp, .futilityBase]
+            mov  w0, -VALUE_INFINITE
+            mov  w4, VALUE_NONE
+            str  w4, [x21, State.staticEval]
+            str  w0, [sp, .bestValue]
+            str  w0, [sp, .futilityBase]
   else
-                ldr  w2, [x21, -1*sizeof.State + State.currentMove]
-                cbz  w23, .StaticValueNoTTHit
+            ldr  w2, [x21, -1*sizeof.State + State.currentMove]
+            cbz  w23, .StaticValueNoTTHit
 
 .StaticValueYesTTHit:
-              ldrsh  w0, [sp, .ltte + MainHashEntry.eval_]
-                mov  w4, VALUE_NONE
-                cmp  w0, w4
-                bne  @f
-                 bl  Evaluate
-        @@:
-                mov  x1, 0
-                str  w0, [x21, State.staticEval]
-                cmp  w27, w0
-               cset  w1, gt
-                add  w1, w1, 1
-        ; w1 = 2 if ttValue > bestValue   ie BOUND_LOWER
-        ;    = 1 if ttValue <=bestValue   ie BOUND_UPPER
-                mov  w4, VALUE_NONE
-                cmp  w27, w4
-                beq  .StaticValueDone
-               ldrb  w4, [sp, .ltte + MainHashEntry.genBound]
-                tst  w1, w4
-               csel  w0, w27, w0, ne
-                  b  .StaticValueDone
+          ldrsh  w0, [sp, .ltte + MainHashEntry.eval_]
+            mov  w4, VALUE_NONE
+            cmp  w0, w4
+            bne  @f
+             bl  Evaluate
+    @@:
+            mov  x1, 0
+            str  w0, [x21, State.staticEval]
+            cmp  w27, w0
+           cset  w1, gt
+            add  w1, w1, 1
+    ; w1 = 2 if ttValue > bestValue   ie BOUND_LOWER
+    ;    = 1 if ttValue <=bestValue   ie BOUND_UPPER
+            mov  w4, VALUE_NONE
+            cmp  w27, w4
+            beq  .StaticValueDone
+           ldrb  w4, [sp, .ltte + MainHashEntry.genBound]
+            tst  w1, w4
+           csel  w0, w27, w0, ne
+              b  .StaticValueDone
         
 .StaticValueNoTTHit:
-                ldr  w0, [x21, -1*sizeof.State + State.staticEval]
-                neg  w0, w0
-                add  w0, w0, 2*Eval_Tempo
-                mov  w4, MOVE_NULL
-                cmp  w2, w4
-                beq  @f
-                 bl  Evaluate
-        @@:
-                str  w0, [x21, State.staticEval]
+            ldr  w0, [x21, -1*sizeof.State + State.staticEval]
+            neg  w0, w0
+            add  w0, w0, 2*Eval_Tempo
+            mov  w4, MOVE_NULL
+            cmp  w2, w4
+            beq  @f
+             bl  Evaluate
+    @@:
+            str  w0, [x21, State.staticEval]
 
 .StaticValueDone:
-                str  w0, [sp, .bestValue]
-        ; Return immediately if static value is at least beta
-                ldr  w4, [sp, .beta]
-                cmp  w0, w4
-                bge  .ReturnStaticValue
+            str  w0, [sp, .bestValue]
+    ; Return immediately if static value is at least beta
+            ldr  w4, [sp, .beta]
+            cmp  w0, w4
+            bge  .ReturnStaticValue
     if PvNode = 1
-                ldr  w1, [sp, .alpha]
-                cmp  w1, w0
-               csel  w1, w0, w1, lt
-                str  w1, [sp, .alpha]
+            ldr  w1, [sp, .alpha]
+            cmp  w1, w0
+           csel  w1, w0, w1, lt
+            str  w1, [sp, .alpha]
     end if
-                add  w0, w0, 128
-                str  w0, [sp, .futilityBase]
+            add  w0, w0, 128
+            str  w0, [sp, .futilityBase]
   end if
 
-        ; initialize move picker
-                ldr  w1, [sp, .ttMove]
+    ; initialize move picker
+            ldr  w1, [sp, .ttMove]
   if InCheck = 1
-                adr  x25, MovePick_ALL_EVASIONS
-                adr  x24, MovePick_EVASIONS
+            adr  x25, MovePick_ALL_EVASIONS
+            adr  x24, MovePick_EVASIONS
   else
-                ldr  w2, [sp, .depth]
-                adr  x25, MovePick_QCAPTURES_CHECKS_GEN
-                adr  x24, MovePick_QSEARCH_WITH_CHECKS
-                cmp  w2, DEPTH_QS_NO_CHECKS
-                bgt  .MovePickInitGo
-                adr  x25, MovePick_QCAPTURES_NO_CHECKS_GEN
-                adr  x24, MovePick_QSEARCH_WITHOUT_CHECKS
-                cmp  w2, DEPTH_QS_RECAPTURES
-                bgt  .MovePickInitGo
-                adr  x25, MovePick_RECAPTURES_GEN
-                ldr  w0, [x21, -1*sizeof.State + State.currentMove]
-                and  w0, w0, 63
-                str  w0, [x21, State.recaptureSquare]
-                mov  w27, 0
-                  b  .MovePickNoTTMove
+            ldr  w2, [sp, .depth]
+            adr  x25, MovePick_QCAPTURES_CHECKS_GEN
+            adr  x24, MovePick_QSEARCH_WITH_CHECKS
+            cmp  w2, DEPTH_QS_NO_CHECKS
+            bgt  .MovePickInitGo
+            adr  x25, MovePick_QCAPTURES_NO_CHECKS_GEN
+            adr  x24, MovePick_QSEARCH_WITHOUT_CHECKS
+            cmp  w2, DEPTH_QS_RECAPTURES
+            bgt  .MovePickInitGo
+            adr  x25, MovePick_RECAPTURES_GEN
+            ldr  w0, [x21, -1*sizeof.State + State.currentMove]
+            and  w0, w0, 63
+            str  w0, [x21, State.recaptureSquare]
+            mov  w27, 0
+              b  .MovePickNoTTMove
   end if
 .MovePickInitGo:
-                mov  w27, w1
-                cbz  w1, .MovePickNoTTMove
-                 bl  Move_IsPseudoLegal
-                tst  x0, x0
-               csel  w27, w0, w27, eq
-               csel  x25, x24, x25, ne
+            mov  w27, w1
+            cbz  w1, .MovePickNoTTMove
+             bl  Move_IsPseudoLegal
+            tst  x0, x0
+           csel  w27, w0, w27, eq
+           csel  x25, x24, x25, ne
 
 .MovePickNoTTMove:
-                str  w27, [x21, State.ttMove]
-                str  x25, [x21, State.stage]
+            str  w27, [x21, State.ttMove]
+            str  x25, [x21, State.stage]
 
 .MovePickLoop:
-                mov  w26, 0
-        GetNextMove
-                mov  w1, w0
-                str  w0, [sp, .move]
-                cbz  w0, .MovePickDone
+            mov  w26, 0
+    GetNextMove
+            mov  w1, w0
+            str  w0, [sp, .move]
+            cbz  w0, .MovePickDone
 
-                ldr  w4, [sp, .moveCount]
-                sub  w4, w4, 1
-                str  w4, [sp, .moveCount]
+            ldr  w4, [sp, .moveCount]
+            sub  w4, w4, 1
+            str  w4, [sp, .moveCount]
 
-        ; check for check and get address of search function
-                 bl  Move_GivesCheck
-               strb  w0, [x21, State.givesCheck]
-                mov  w23, w0
+    ; check for check and get address of search function
+             bl  Move_GivesCheck
+           strb  w0, [x21, State.givesCheck]
+            mov  w23, w0
   if PvNode = 1
-                adr  x2, QSearch_Pv_NoCheck
-                adr  x1, QSearch_Pv_InCheck
+            adr  x2, QSearch_Pv_NoCheck
+            adr  x1, QSearch_Pv_InCheck
   else
-                adr  x2, QSearch_NonPv_NoCheck
-                adr  x1, QSearch_NonPv_InCheck
+            adr  x2, QSearch_NonPv_NoCheck
+            adr  x1, QSearch_NonPv_InCheck
   end if
-                tst  w0, w0
-               csel  x2, x1, x2, ne
-                str  x2, [sp, .searchFxn]
+            tst  w0, w0
+           csel  x2, x1, x2, ne
+            str  x2, [sp, .searchFxn]
 
-                ldr  w1, [sp, .move]
-                ldr  w27, [sp, .bestValue]
-                lsr  w26, w1, 12
-               ubfx  w8, w1, 6, 6
-                add  x6, x20, Pos.board
-               ldrb  w0, [x6, x8]
-                mov  w24, w0
-                and  w9, w1, 63
-                add  x6, x20, Pos.board
-               ldrb  w25, [x6, x9]
+            ldr  w1, [sp, .move]
+            ldr  w27, [sp, .bestValue]
+            lsr  w26, w1, 12
+           ubfx  w8, w1, 6, 6
+            add  x6, x20, Pos.board
+           ldrb  w0, [x6, x8]
+            mov  w24, w0
+            and  w9, w1, 63
+            add  x6, x20, Pos.board
+           ldrb  w25, [x6, x9]
 
-        ; futility pruning
+    ; futility pruning
   if InCheck = 0
-                ldr  w22, [sp, .futilityBase]
-               cbnz  w23, .SkipFutilityPruning
-                and  w0, w0, 7
-                mov  w4, -VALUE_KNOWN_WIN
-                cmp  w22, w4
-                ble  .SkipFutilityPruning
-                ldr  w2, [x20, Pos.sideToMove]
-                neg  w2, w2
-                cmp  w0, Pawn
-                beq  .CheckAdvancedPawnPush
+            ldr  w22, [sp, .futilityBase]
+           cbnz  w23, .SkipFutilityPruning
+            and  w0, w0, 7
+            mov  w4, -VALUE_KNOWN_WIN
+            cmp  w22, w4
+            ble  .SkipFutilityPruning
+            ldr  w2, [x20, Pos.sideToMove]
+            neg  w2, w2
+            cmp  w0, Pawn
+            beq  .CheckAdvancedPawnPush
 
 .DoFutilityPruning:
-                lea  x6, PieceValue_EG
-                ldr  w2, [x6, x25, lsl 2]
-                add  w2, w2, w22
-                ldr  w4, [sp, .alpha]
-                cmp  w2, w4
-                ble  .ContinueFromFutilityValue
-                ldr  w4, [sp, .alpha]
-                cmp  w22, w4
-                ble  .ContinueFromFutilityBase
+           _lea  x6, PieceValue_EG
+            ldr  w2, [x6, x25, lsl 2]
+            add  w2, w2, w22
+            ldr  w4, [sp, .alpha]
+            cmp  w2, w4
+            ble  .ContinueFromFutilityValue
+            ldr  w4, [sp, .alpha]
+            cmp  w22, w4
+            ble  .ContinueFromFutilityBase
 
 .SkipFutilityPruning:
   end if
 
-        ; do not search moves with negative see value
+    ; do not search moves with negative see value
   if InCheck = 0
-                sub  w0, w26, MOVE_TYPE_PROM
-                lsl  w24, w24, 9
-                lsl  w25, w25, 9
-                cmp  w0, 4
-                blo  .DontContinue
+            sub  w0, w26, MOVE_TYPE_PROM
+            lsl  w24, w24, 9
+            lsl  w25, w25, 9
+            cmp  w0, 4
+            blo  .DontContinue
   else
-                mov  w0, VALUE_MATED_IN_MAX_PLY
-                sub  w0, w0, w27
-                lsl  w24, w24, 9
-                ldr  w2, [sp, .moveCount]
-                lsl  w25, w25, 9
-               cbnz  w25, .DontContinue
-                ldr  w4, [sp, .depth]
-                orr  w2, w2, w4
-                cmp  w26, MOVE_TYPE_PROM
-                bhs  .DontContinue
-                and  w4, w0, w2
-                tbz  w4, 31, .DontContinue
+            mov  w0, VALUE_MATED_IN_MAX_PLY
+            sub  w0, w0, w27
+            lsl  w24, w24, 9
+            ldr  w2, [sp, .moveCount]
+            lsl  w25, w25, 9
+           cbnz  w25, .DontContinue
+            ldr  w4, [sp, .depth]
+            orr  w2, w2, w4
+            cmp  w26, MOVE_TYPE_PROM
+            bhs  .DontContinue
+            and  w4, w0, w2
+            tbz  w4, 31, .DontContinue
   end if
-        SeeSignTest  .DontContinue
-                ldr  w2, [sp, .move]
-                cbz  w0, .MovePickLoop
+    SeeSignTest  .DontContinue
+            ldr  w2, [sp, .move]
+            cbz  w0, .MovePickLoop
 
 .DontContinue:
 
-        ; speculative prefetch
-                and  w2, w1, 63
-               ubfx  w1, w1, 6, 6
-                ldr  x0, [x21, State.key]
-                lea  x6, Zobrist_side
-                ldr  x4, [x6]
-                eor  x0, x0, x4
-                lea  x6, Zobrist_Pieces
-                add  x6, x6, x24
-                ldr  x4, [x6, x1, lsl 3]
-                eor  x0, x0, x4
-                lea  x6, Zobrist_Pieces
-                add  x6, x6, x24
-                ldr  x4, [x6, x2, lsl 3]
-                eor  x0, x0, x4
-                lea  x6, Zobrist_Pieces
-                add  x6, x6, x25
-                ldr  x4, [x6, x2, lsl 3]
-                eor  x0, x0, x4
-                lea  x6, mainHash + MainHash.mask
-                ldr  x4, [x6]
-                and  x0, x0, x4
-                lsl  x0, x0, 5
-                lea  x6, mainHash + MainHash.table
-                ldr  x4, [x6]
-                add  x0, x0, x4
-               prfm  PLDL1KEEP, [x0]
+    ; speculative prefetch
+            and  w2, w1, 63
+           ubfx  w1, w1, 6, 6
+            ldr  x0, [x21, State.key]
+           _lea  x6, Zobrist_side
+            ldr  x4, [x6]
+            eor  x0, x0, x4
+           _lea  x6, Zobrist_Pieces
+            add  x6, x6, x24
+            ldr  x4, [x6, x1, lsl 3]
+            eor  x0, x0, x4
+           _lea  x6, Zobrist_Pieces
+            add  x6, x6, x24
+            ldr  x4, [x6, x2, lsl 3]
+            eor  x0, x0, x4
+           _lea  x6, Zobrist_Pieces
+            add  x6, x6, x25
+            ldr  x4, [x6, x2, lsl 3]
+            eor  x0, x0, x4
+           _lea  x6, mainHash + MainHash.mask
+            ldr  x4, [x6]
+            and  x0, x0, x4
+            lsl  x0, x0, 5
+           _lea  x6, mainHash + MainHash.table
+            ldr  x4, [x6]
+            add  x0, x0, x4
+           prfm  PLDL1KEEP, [x0]
 
-        ; check for legality
-                ldr  w1, [sp, .move]
-                 bl  Move_IsLegal
-                ldr  w4, [sp, .moveCount]
-                add  w2, w0, 1
-                add  w4, w4, w2
-                str  w4, [sp, .moveCount]
-                cbz  w0, .MovePickLoop
-        
-        ; make the move
-                ldr  w1, [sp, .move]
-                str  w1, [x21, State.currentMove]
-                ldr  x26, [sp, .searchFxn]
-                 bl  Move_Do__QSearch
+    ; check for legality
+            ldr  w1, [sp, .move]
+             bl  Move_IsLegal
+            ldr  w4, [sp, .moveCount]
+            add  w2, w0, 1
+            add  w4, w4, w2
+            str  w4, [sp, .moveCount]
+            cbz  w0, .MovePickLoop
+    
+    ; make the move
+            ldr  w1, [sp, .move]
+            str  w1, [x21, State.currentMove]
+            ldr  x26, [sp, .searchFxn]
+             bl  Move_Do__QSearch
 
-        ; search the move
-                ldr  w1, [sp, .beta]
-                neg  w1, w1
-                ldr  w2, [sp, .alpha]
-                neg  w2, w2
-                ldr  w8, [sp, .depth]
-                sub  w8, w8, 1
-                blr  x26
-                neg  w0, w0
-                mov  w27, w0
-                str  w0, [sp, .value]
+    ; search the move
+            ldr  w1, [sp, .beta]
+            neg  w1, w1
+            ldr  w2, [sp, .alpha]
+            neg  w2, w2
+            ldr  w8, [sp, .depth]
+            sub  w8, w8, 1
+            blr  x26
+            neg  w0, w0
+            mov  w27, w0
+            str  w0, [sp, .value]
 
-        ; undo the move
-                ldr  w1, [sp, .move]
-                 bl  Move_Undo
+    ; undo the move
+            ldr  w1, [sp, .move]
+             bl  Move_Undo
 
-        ; check for new best move
-                ldr  w4, [sp, .bestValue]
-                cmp  w27, w4
-                ble  .MovePickLoop
-                str  w27, [sp, .bestValue]
-                ldr  w4, [sp, .alpha]
-                cmp  w27, w4
-                ble  .MovePickLoop
+    ; check for new best move
+            ldr  w4, [sp, .bestValue]
+            cmp  w27, w4
+            ble  .MovePickLoop
+            str  w27, [sp, .bestValue]
+            ldr  w4, [sp, .alpha]
+            cmp  w27, w4
+            ble  .MovePickLoop
 
   if PvNode = 1
-                ldr  w1, [sp, .move]
-                ldr  x8, [x21, 0*sizeof.State + State.pv]
-                ldr  x9, [x21, 1*sizeof.State + State.pv]
-                mov  w0, 0
-                str  w1, [x8]
-                add  x8, x8, 4
-                cbz  x9, .pv_copy_end
+            ldr  w1, [sp, .move]
+            ldr  x8, [x21, 0*sizeof.State + State.pv]
+            ldr  x9, [x21, 1*sizeof.State + State.pv]
+            mov  w0, 0
+            str  w1, [x8]
+            add  x8, x8, 4
+            cbz  x9, .pv_copy_end
 
 .pv_copy_loop:
-                ldr  w0, [x9]
-                add  x9, x9, 4
+            ldr  w0, [x9]
+            add  x9, x9, 4
 .pv_copy_end:
-                str  w0, [x8]
-                add  x8, x8, 4
-               cbnz  w0, .pv_copy_loop
+            str  w0, [x8]
+            add  x8, x8, 4
+           cbnz  w0, .pv_copy_loop
 
-                ldr  w4, [sp, .beta]
-                cmp  w27, w4
-                bge  .FailHigh
-                str  w27, [sp, .alpha]
-                str  w1, [sp, .bestMove]
-                  b  .MovePickLoop
+            ldr  w4, [sp, .beta]
+            cmp  w27, w4
+            bge  .FailHigh
+            str  w27, [sp, .alpha]
+            str  w1, [sp, .bestMove]
+              b  .MovePickLoop
   end if
 
 .FailHigh:
-                ldr  x9, [x21, State.key]
-                ldr  x8, [sp, .tte]
-                lsr  x9, x9, 48
-                mov  w2, w27
-                mov  w4, VALUE_MATE_IN_MAX_PLY
-                add  w1, w27, w4
-                cmp  w1, w4, lsl 1
-                bhs  .FailHighValueToTT
+            ldr  x9, [x21, State.key]
+            ldr  x8, [sp, .tte]
+            lsr  x9, x9, 48
+            mov  w2, w27
+            mov  w4, VALUE_MATE_IN_MAX_PLY
+            add  w1, w27, w4
+            cmp  w1, w4, lsl 1
+            bhs  .FailHighValueToTT
 
 .FailHighValueToTTRet:
-                ldr  w0, [sp, .move]
-                mov  w3, BOUND_LOWER
-               ldrb  w5, [sp, .ttDepth]
-               ldrh  w7, [x21, State.staticEval]
-      MainHash_Save  .ltte, x8, w9, w2, w3, w5, w0, w7
-                mov  w0, w27
-                  b  .Return
+            ldr  w0, [sp, .move]
+            mov  w3, BOUND_LOWER
+           ldrb  w5, [sp, .ttDepth]
+           ldrh  w7, [x21, State.staticEval]
+  MainHash_Save  .ltte, x8, w9, w2, w3, w5, w0, w7
+            mov  w0, w27
+              b  .Return
 
 .FailHighValueToTT:
-               ldrb  w2, [x21, State.ply]
-                asr  w0, w27, 31
-                eor  w2, w2, w0
-                sub  w2, w2, w0
-                add  w2, w2, w27
-                  b  .FailHighValueToTTRet
+           ldrb  w2, [x21, State.ply]
+            asr  w0, w27, 31
+            eor  w2, w2, w0
+            sub  w2, w2, w0
+            add  w2, w2, w27
+              b  .FailHighValueToTTRet
 
 .MovePickDone:
-                ldr  x9, [x21, State.key]
-                ldr  w27, [sp, .bestValue]
+            ldr  x9, [x21, State.key]
+            ldr  w27, [sp, .bestValue]
 
   if USE_VARIETY = 1
-                add  x7, x20, -Thread.rootPos
-                ldr  x0, [x7, Thread.randSeed]
-                mov  x2, 0xdd1d
-                eor  x0, x0, x0, lsr 12
-               movk  x2, 0x4f6c, lsl 16
-                eor  x0, x0, x0, lsl 25
-               _lea  x6, options
-                eor  x0, x0, x0, lsr 27
-                str  x0, [x7, Thread.randSeed]
-                mul  w0, w0, w2
-                ldr  w1, [x6, Options.varietyMod]
-               sdiv  w2, w0, w1
-               msub  w2, w2, w1, w0
-                add  w2, w2, w27
-                ldr  w4, [x6, Options.varietyBound]
-                cmp  w27, w4
-               csel  w27, w2, w27, ge
+            add  x7, x20, -Thread.rootPos
+            ldr  x0, [x7, Thread.randSeed]
+            mov  x2, 0xdd1d
+            eor  x0, x0, x0, lsr 12
+           movk  x2, 0x4f6c, lsl 16
+            eor  x0, x0, x0, lsl 25
+           _lea  x6, options
+            eor  x0, x0, x0, lsr 27
+            str  x0, [x7, Thread.randSeed]
+            mul  w0, w0, w2
+            ldr  w1, [x6, Options.varietyMod]
+           sdiv  w2, w0, w1
+           msub  w2, w2, w1, w0
+            add  w2, w2, w27
+            ldr  w4, [x6, Options.varietyBound]
+            cmp  w27, w4
+           csel  w27, w2, w27, ge
   end if
 
-
-
-                mov  w4, VALUE_MATE_IN_MAX_PLY
-                add  w1, w27, w4
+            mov  w4, VALUE_MATE_IN_MAX_PLY
+            add  w1, w27, w4
   if InCheck = 1
-               ldrb  w0, [x21, State.ply]
-                mov  w4, VALUE_MATE
-                sub  w0, w0, w4
-                mov  w4, -VALUE_INFINITE
-                cmp  w27, w4
-                beq  .Return
+           ldrb  w0, [x21, State.ply]
+            mov  w4, VALUE_MATE
+            sub  w0, w0, w4
+            mov  w4, -VALUE_INFINITE
+            cmp  w27, w4
+            beq  .Return
   end if
 
   if PvNode = 1
-                ldr  w26, [sp, .oldAlpha]
-                sub  w26, w26, w27
-                asr  w26, w26, 31
+            ldr  w26, [sp, .oldAlpha]
+            sub  w26, w26, w27
+            asr  w26, w26, 31
   end if
-                ldr  x8, [sp, .tte]
-                lsr  x9, x9, 48
-                mov  w2, w27
-                mov  w4, VALUE_MATE_IN_MAX_PLY
-                cmp  w1, w4, lsl 1
-                bhs  .ValueToTT
+            ldr  x8, [sp, .tte]
+            lsr  x9, x9, 48
+            mov  w2, w27
+            mov  w4, VALUE_MATE_IN_MAX_PLY
+            cmp  w1, w4, lsl 1
+            bhs  .ValueToTT
 
 .ValueToTTRet:
-                ldr  w0, [sp, .bestMove]
-               ldrb  w5, [sp, .ttDepth]
+            ldr  w0, [sp, .bestMove]
+           ldrb  w5, [sp, .ttDepth]
   if PvNode = 0
-                mov  w3, BOUND_UPPER
-               ldrh  w7, [x21, State.staticEval]
-      MainHash_Save  .ltte, x8, w9, w2, w3, w5, w0, w7
+            mov  w3, BOUND_UPPER
+           ldrh  w7, [x21, State.staticEval]
+  MainHash_Save  .ltte, x8, w9, w2, w3, w5, w0, w7
   else
-                and  w26, w26, BOUND_EXACT-BOUND_UPPER
-                add  w26, w26, BOUND_UPPER
-               ldrh  w7, [x21, State.staticEval]
-      MainHash_Save  .ltte, x8, w9, w2, w26, w5, w0, w7
+            and  w26, w26, BOUND_EXACT-BOUND_UPPER
+            add  w26, w26, BOUND_UPPER
+           ldrh  w7, [x21, State.staticEval]
+  MainHash_Save  .ltte, x8, w9, w2, w26, w5, w0, w7
   end if
-                mov  w0, w27
+            mov  w0, w27
 
 .Return:
 
 Display 2, "QSearch returning %i0n"
 
-                add  sp, sp, .localsize
-                ldp  x24, x25, [sp], 16
-                ldp  x22, x23, [sp], 16
-                ldp  x26, x27, [sp], 16
-                ldp  x21, x30, [sp], 16
-                ret
+            add  sp, sp, .localsize
+            ldp  x24, x25, [sp], 16
+            ldp  x22, x23, [sp], 16
+            ldp  x26, x27, [sp], 16
+            ldp  x21, x30, [sp], 16
+            ret
 
   if InCheck = 0
 .CheckAdvancedPawnPush:
-                and  w2, w2, 7
-                lsr  w8, w8, 3
-                eor  w2, w2, w8
-                cmp  w2, 4
-                blo  .DoFutilityPruning
-                  b  .SkipFutilityPruning
+            and  w2, w2, 7
+            lsr  w8, w8, 3
+            eor  w2, w2, w8
+            cmp  w2, 4
+            blo  .DoFutilityPruning
+              b  .SkipFutilityPruning
 
 .ContinueFromFutilityBase:
-                mov  w2, 1
-                 bl  SeeTestGe
-                ldr  w1, [sp, .move]
-                mov  w2, w22
-               cbnz  w0, .SkipFutilityPruning
+            mov  w2, 1
+             bl  SeeTestGe
+            ldr  w1, [sp, .move]
+            mov  w2, w22
+           cbnz  w0, .SkipFutilityPruning
 
 .ContinueFromFutilityValue:
-                cmp  w27, w2
-               csel  w27, w2, w27, lt
-                str  w27, [sp, .bestValue]
-                  b  .MovePickLoop
+            cmp  w27, w2
+           csel  w27, w2, w27, lt
+            str  w27, [sp, .bestValue]
+              b  .MovePickLoop
   end if
 
 .AbortSearch_PlyBigger:
-                mov  w0, 0
-                ldr  x4, [x21, State.checkersBB]
-               cbnz  x4, .Return
-                 bl  Evaluate
-                  b  .Return
+            mov  w0, 0
+            ldr  x4, [x21, State.checkersBB]
+           cbnz  x4, .Return
+             bl  Evaluate
+              b  .Return
 
 .AbortSearch_PlySmaller:
-                mov  w0, 0
-                  b  .Return
+            mov  w0, 0
+              b  .Return
 
 .ReturnStaticValue:
-                ldr  x8, [sp, .tte]
-                ldr  x9, [x21, State.key]
-                lsr  x9, x9, 48
-                mov  w2, w0
-               cbnz  w23, .Return
-                mov  w4, VALUE_MATE_IN_MAX_PLY
-                add  w0, w0, w4
-	        cmp  w0, w4, lsl 1
-                bhs  .ReturnStaticValue_ValueToTT
+            ldr  x8, [sp, .tte]
+            ldr  x9, [x21, State.key]
+            lsr  x9, x9, 48
+            mov  w2, w0
+           cbnz  w23, .Return
+            mov  w4, VALUE_MATE_IN_MAX_PLY
+            add  w0, w0, w4
+            cmp  w0, w4, lsl 1
+            bhs  .ReturnStaticValue_ValueToTT
 
 
 .ReturnStaticValue_ValueToTTRet:
-                mov  w3, BOUND_LOWER
-                mov  w5, DEPTH_NONE
-                mov  w0, 0
-               ldrh  w7, [x21, State.staticEval]
-      MainHash_Save  .ltte, x8, w9, w2, w3, w5, w0, w7
-                ldr  w0, [sp, .bestValue]
-                  b  .Return
+            mov  w3, BOUND_LOWER
+            mov  w5, DEPTH_NONE
+            mov  w0, 0
+           ldrh  w7, [x21, State.staticEval]
+  MainHash_Save  .ltte, x8, w9, w2, w3, w5, w0, w7
+            ldr  w0, [sp, .bestValue]
+              b  .Return
 
 .ReturnStaticValue_ValueToTT:
-               ldrb  w1, [x21, State.ply]
-                asr  w0, w2, 31
-                eor  w1, w1, w0
-                sub  w2, w2, w0
-                add  w2, w2, w1
-                  b  .ReturnStaticValue_ValueToTTRet
+           ldrb  w1, [x21, State.ply]
+            asr  w0, w2, 31
+            eor  w1, w1, w0
+            sub  w2, w2, w0
+            add  w2, w2, w1
+              b  .ReturnStaticValue_ValueToTTRet
 
 .ValueFromTT:
-        ; value in edi is not VALUE_NONE
-               ldrb  w8, [x21, State.ply]
-                asr  w9, w27, 31
-                eor  w8, w8, w9
-                add  w27, w27, w9
-                sub  w27, w27, w8
-                ldr  w4, [sp, .beta]
-                str  w27, [sp, .ttValue]
-                sub  w0, w27, w4
-                asr  w0, w0, 31
-                  b  .ValueFromTTRet
+    ; value in edi is not VALUE_NONE
+           ldrb  w8, [x21, State.ply]
+            asr  w9, w27, 31
+            eor  w8, w8, w9
+            add  w27, w27, w9
+            sub  w27, w27, w8
+            ldr  w4, [sp, .beta]
+            str  w27, [sp, .ttValue]
+            sub  w0, w27, w4
+            asr  w0, w0, 31
+              b  .ValueFromTTRet
 
 .ValueToTT:
-               ldrb  w2, [x21, State.ply]
-                asr  w0, w27, 31
-                eor  w2, w2, w0
-                sub  w2, w2, w0
-                add  w2, w2, w27
-                  b  .ValueToTTRet
+           ldrb  w2, [x21, State.ply]
+            asr  w0, w27, 31
+            eor  w2, w2, w0
+            sub  w2, w2, w0
+            add  w2, w2, w27
+              b  .ValueToTTRet
 
 .CheckDraw_Cold:
-     PosIsDraw_Cold  .AbortSearch_PlySmaller, .CheckDraw_ColdRet
+ PosIsDraw_Cold  .AbortSearch_PlySmaller, .CheckDraw_ColdRet
 
 end macro

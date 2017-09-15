@@ -2,6 +2,31 @@
 
 _start:
 
+
+Math_Lerp:
+            ld1  {v3.16b}, [x1], 16
+          fcmpe  d0, d3
+            bls  .Return_by
+.Next:
+            orr  v2.16b, v3.16b, v3.16b
+            ld1  {v3.16b}, [x1], 16
+          fcmpe  d0, d3
+            bls  .Lerp
+            cmp  x1, x2
+            blo  .Next
+.Return_by:
+            dup  d0, v3.2d[1]
+            ret
+.Lerp:
+           fsub  v3.2d, v3.2d, v2.2d
+            dup  d1, v3.2d[1]
+           fsub  d0, d0, d2
+           fdiv  d1, d1, d3
+           fmul  d0, d0, d1
+            dup  d1, v2.2d[1]
+           fadd  d0, d0, d1
+            ret
+
 mov  w4, 2*10000 - 1
 mov  w4, 3*10000 - 1
 mov  w4, 4*10000 - 1

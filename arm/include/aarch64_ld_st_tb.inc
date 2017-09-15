@@ -6,12 +6,11 @@
 ;  - Scaled or unscaled 64-bit register offset.
 ;  - Scaled or unscaled 32-bit extended register offset.
 ;  - label
-macro aarch64.parse_adr_f13 lit, size, x&
-    @adr.mask = (1 shl size) - 1
-    match [a=,b=,c], x
+
+macro aarch64.parse_adr_f13_abc a*, b*, c*, size*
         @adr.type = @atype_register
-        aarch64.parse_operand @opA, a
-        aarch64.parse_operand @opB, b        
+        aarch64.parse_register @opA, a
+        aarch64.parse_register @opB, b        
         if (@opA.type and @type_xn_xsp) & (@opB.type and @type_wn_wzr_xn_xzr)
             @adr.shift = -1
             match =lsl d, c
@@ -45,8 +44,11 @@ macro aarch64.parse_adr_f13 lit, size, x&
         else
             err 'invalid address'
         end if
-    else match [a=,b], x
-        aarch64.parse_operand @opA, a
+end macro
+
+
+macro aarch64.parse_adr_f13_ab a*, b*, size*
+        aarch64.parse_register @opA, a
         aarch64.parse_operand @opB, b
         if (@opA.type and @type_xn_xsp) & (@opB.type and @type_immc)
             @adr.type = @atype_simple
@@ -67,17 +69,19 @@ macro aarch64.parse_adr_f13 lit, size, x&
         else
             err 'invalid address'
         end if
-    else match [a], x
-        @adr.type = @atype_simple
-        aarch64.parse_operand @opA, a
-        if (@opA.type and @type_xn_xsp)
-            @adr.encode = 0x01000000 + (@opA.data shl 5)
-        else
-            err 'invalid address 3'
-        end if
+end macro
+
+
+
+macro aarch64.parse_adr_f13 lit, size, x&
+    @adr.mask = (1 shl size) - 1
+    match [a=,b=,c], x
+        aarch64.parse_adr_f13_abc a, b, c, size
+    else match [a=,b], x
+        aarch64.parse_adr_f13_ab a, b, size
     else match [a=,b]!, x
         @adr.type = @atype_preincr
-        aarch64.parse_operand @opA, a
+        aarch64.parse_register @opA, a
         aarch64.parse_operand @opB, b
         if (@opA.type and @type_xn_xsp) & (@opB.type and @type_immc)
             aarch64.restrict @opB.data, -256, 255
@@ -87,13 +91,21 @@ macro aarch64.parse_adr_f13 lit, size, x&
         end if
     else match [a]=,b, x
         @adr.type = @atype_postincr
-        aarch64.parse_operand @opA, a
+        aarch64.parse_register @opA, a
         aarch64.parse_operand @opB, b
         if (@opA.type and @type_xn_xsp) & (@opB.type and @type_immc)
             aarch64.restrict @opB.data, -256, 255
             @adr.encode = 0x00000400 + ((@opB.data and 0x1FF) shl 12) + (@opA.data shl 5)
         else
-            err 'invalid address 5'
+            err 'invalid address'
+        end if
+    else match [a], x
+        @adr.type = @atype_simple
+        aarch64.parse_register @opA, a
+        if (@opA.type and @type_xn_xsp)
+            @adr.encode = 0x01000000 + (@opA.data shl 5)
+        else
+            err 'invalid address'
         end if
     else
         @adr.type = @atype_literal

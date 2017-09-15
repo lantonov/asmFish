@@ -1,117 +1,117 @@
 Gen_QuietChecks:
-; in x20 address of position
-;    x21 address of state
-; io x27 address to write moves
+    ; in x20 address of position
+    ;    x21 address of state
+    ; io x27 address to write moves
 
-        ldr  x14, [x21, State.dcCandidates]
-        stp  x29, x30, [sp, -16]!
+            ldr  x14, [x21, State.dcCandidates]
+            stp  x29, x30, [sp, -16]!
 
-        ldr  x15, [x20, Pos.typeBB + 8*White]
-        ldr  x4, [x20, Pos.typeBB + 8*Black]
-        orr  x15, x15, x4
-        cbz  x14, Gen_QuietChecks.PopLoopDone
+            ldr  x15, [x20, Pos.typeBB + 8*White]
+            ldr  x4, [x20, Pos.typeBB + 8*Black]
+            orr  x15, x15, x4
+            cbz  x14, Gen_QuietChecks.PopLoopDone
 
 Gen_QuietChecks.PopLoop:
-       rbit  x13, x14
-        add  x3, x20, Pos.board
-        clz  x13, x13
-        adr  x6, Gen_QuietChecks.JmpTable
-       ldrb  w12, [x3, x13]
-        adr  x7, Gen_QuietChecks
-        and  w12, w12, 7
-        ldr  w4, [x6, x12, lsl 2]
-        sub  x0, x14, 1
-        add  x4, x4, x7
-        and  x14, x14, x0
-         br  x4
+           rbit  x13, x14
+            add  x3, x20, Pos.board
+            clz  x13, x13
+            adr  x6, Gen_QuietChecks.JmpTable
+           ldrb  w12, [x3, x13]
+            adr  x7, Gen_QuietChecks
+            and  w12, w12, 7
+            ldr  w4, [x6, x12, lsl 2]
+            sub  x0, x14, 1
+            add  x4, x4, x7
+            and  x14, x14, x0
+             br  x4
 Gen_QuietChecks.JmpTable:
         dd 1
         dd 1
         dd Gen_QuietChecks.PopSkip - Gen_QuietChecks
         dd Gen_QuietChecks_Jmp.AttacksFromKnight - Gen_QuietChecks
-	dd Gen_QuietChecks_Jmp.AttacksFromBishop - Gen_QuietChecks
-	dd Gen_QuietChecks_Jmp.AttacksFromRook - Gen_QuietChecks
-	dd Gen_QuietChecks_Jmp.AttacksFromQueen - Gen_QuietChecks
-	dd Gen_QuietChecks_Jmp.AttacksFromKing - Gen_QuietChecks
+        dd Gen_QuietChecks_Jmp.AttacksFromBishop - Gen_QuietChecks
+        dd Gen_QuietChecks_Jmp.AttacksFromRook - Gen_QuietChecks
+        dd Gen_QuietChecks_Jmp.AttacksFromQueen - Gen_QuietChecks
+        dd Gen_QuietChecks_Jmp.AttacksFromKing - Gen_QuietChecks
 
 Gen_QuietChecks.AttacksFromRet:
-        lsl  w13, w13, 6
-        cbz  x16, Gen_QuietChecks.MoveLoopDone
+            lsl  w13, w13, 6
+            cbz  x16, Gen_QuietChecks.MoveLoopDone
 
 Gen_QuietChecks.MoveLoop:
-       rbit  x0, x16
-        sub  x2, x16, 1
-        clz  x0, x0
-       ands  x16, x16, x2
-        orr  w0, w0, w13
-        str  w0, [x27], sizeof.ExtMove
-        bne  Gen_QuietChecks.MoveLoop
+           rbit  x0, x16
+            sub  x2, x16, 1
+            clz  x0, x0
+           ands  x16, x16, x2
+            orr  w0, w0, w13
+            str  w0, [x27], sizeof.ExtMove
+            bne  Gen_QuietChecks.MoveLoop
 
 Gen_QuietChecks.MoveLoopDone:
 
 
 Gen_QuietChecks.PopSkip:
-       cbnz  x14, Gen_QuietChecks.PopLoop
+           cbnz  x14, Gen_QuietChecks.PopLoop
 
 Gen_QuietChecks.PopLoopDone:
-        mvn  x15, x15
-        ldr  x14, [x20, Pos.typeBB + 8*White]
-        ldr  x4, [x20, Pos.typeBB + 8*Black]
-        orr  x14, x14, x4
-       ldrb  w4, [x20, Pos.sideToMove]
-       cbnz  w4, Gen_QuietChecks_Black
+            mvn  x15, x15
+            ldr  x14, [x20, Pos.typeBB + 8*White]
+            ldr  x4, [x20, Pos.typeBB + 8*Black]
+            orr  x14, x14, x4
+           ldrb  w4, [x20, Pos.sideToMove]
+           cbnz  w4, Gen_QuietChecks_Black
 
 Gen_QuietChecks_White:
-        GenAll  White, QUIET_CHECKS
-        ldp  x29, x30, [sp], 16
-        ret
-        GenPawnJmp  White, QUIET_CHECKS
-        GenCastlingJmp  White, QUIET_CHECKS
+         GenAll  White, QUIET_CHECKS
+            ldp  x29, x30, [sp], 16
+            ret
+     GenPawnJmp  White, QUIET_CHECKS
+ GenCastlingJmp  White, QUIET_CHECKS
 
 Gen_QuietChecks_Black:
-        GenAll  Black, QUIET_CHECKS
-        ldp  x29, x30, [sp], 16
-        ret
-        GenPawnJmp  Black, QUIET_CHECKS
-        GenCastlingJmp  Black, QUIET_CHECKS
+         GenAll  Black, QUIET_CHECKS
+            ldp  x29, x30, [sp], 16
+            ret
+     GenPawnJmp  Black, QUIET_CHECKS
+ GenCastlingJmp  Black, QUIET_CHECKS
 
 
 
 
 Gen_QuietChecks_Jmp:
 Gen_QuietChecks_Jmp.AttacksFromKnight:
-        lea  x6, KnightAttacks
-        ldr  x16, [x6, x13, lsl 3]
-        bic  x16, x16, x15
-          b  Gen_QuietChecks.AttacksFromRet
+           _lea  x6, KnightAttacks
+            ldr  x16, [x6, x13, lsl 3]
+            bic  x16, x16, x15
+              b  Gen_QuietChecks.AttacksFromRet
 
 Gen_QuietChecks_Jmp.AttacksFromKing:
-        lea  x6, KingAttacks
-        ldr  x16, [x6, x13, lsl 3]
-        bic  x16, x16, x15
-       ldrb  w1, [x21, State.ksq]
-        lea  x6, RookAttacksPDEP
-        ldr  x0, [x6, x1, lsl 3]
-        lea  x6, BishopAttacksPDEP
-        ldr  x4, [x6, x1, lsl 3]
-        orr  x0, x0, x4
-        bic  x16, x16, x0
-          b  Gen_QuietChecks.AttacksFromRet
+           _lea  x6, KingAttacks
+            ldr  x16, [x6, x13, lsl 3]
+            bic  x16, x16, x15
+           ldrb  w1, [x21, State.ksq]
+           _lea  x6, RookAttacksPDEP
+            ldr  x0, [x6, x1, lsl 3]
+           _lea  x6, BishopAttacksPDEP
+            ldr  x4, [x6, x1, lsl 3]
+            orr  x0, x0, x4
+            bic  x16, x16, x0
+              b  Gen_QuietChecks.AttacksFromRet
 
 Gen_QuietChecks_Jmp.AttacksFromBishop:
-        BishopAttacks  x16, x13, x15, x0, x4
-        bic  x16, x16, x15
-          b  Gen_QuietChecks.AttacksFromRet
+  BishopAttacks  x16, x13, x15, x0, x4
+            bic  x16, x16, x15
+              b  Gen_QuietChecks.AttacksFromRet
 
 Gen_QuietChecks_Jmp.AttacksFromRook:
-        RookAttacks  x16, x13, x15, x0, x4
-        bic  x16, x16, x15
-          b  Gen_QuietChecks.AttacksFromRet
+    RookAttacks  x16, x13, x15, x0, x4
+            bic  x16, x16, x15
+              b  Gen_QuietChecks.AttacksFromRet
 
 Gen_QuietChecks_Jmp.AttacksFromQueen:
-        BishopAttacks  x16, x13, x15, x0, x4
-        RookAttacks  x2, x13, x15, x0, x4
-        orr  x16, x16, x2
-        bic  x16, x16, x15
-          b  Gen_QuietChecks.AttacksFromRet
+  BishopAttacks  x16, x13, x15, x0, x4
+    RookAttacks  x2, x13, x15, x0, x4
+            orr  x16, x16, x2
+            bic  x16, x16, x15
+              b  Gen_QuietChecks.AttacksFromRet
 

@@ -1,323 +1,314 @@
 
 pos_material_key:
-        ; in: x0 position
-                add  x1, x0, Pos.board
-                mov  x0, 0
-                stp  xzr, xzr, [sp, -16]!
-                mov  w6, 0
-pos_material_key.NextSquare:
-               ldrb  w7, [x1, x6]
-                lsl  w8, w7, 9
-               ldrb  w2, [sp, x7]
-                lea  x4, Zobrist_Pieces
-                add  x4, x4, x8
-                ldr  x4, [x4, x2, lsl 3]
-                eor  x0, x0, x4
-                add  w2, w2, 1
-               strb  w2, [sp, x7]
-                add  w6, w6, 1
-                tbz  w6, 6, pos_material_key.NextSquare
-                add  sp, sp, 16
-                ret
+    ; in: x0 position
+            add  x1, x0, Pos.board
+            mov  x0, 0
+            stp  xzr, xzr, [sp, -16]!
+            mov  w6, 0
+.NextSquare:
+           ldrb  w7, [x1, x6]
+            lsl  w8, w7, 9
+           ldrb  w2, [sp, x7]
+           _lea  x4, Zobrist_Pieces
+            add  x4, x4, x8
+            ldr  x4, [x4, x2, lsl 3]
+            eor  x0, x0, x4
+            add  w2, w2, 1
+           strb  w2, [sp, x7]
+            add  w6, w6, 1
+            tbz  w6, 6, .NextSquare
+            add  sp, sp, 16
+            ret
 
 pos_KvK_key:
 	; in: x0 address of position  (not used)
 	; out: x0 material key of KvK configuration
-                lea   x1, Zobrist_Pieces
-                ldr   x0, [x1, 8*(64*(8*White+King)+0)]
-                ldr   x1, [x1, 8*(64*(8*Black+King)+0)]
-                eor   x0, x0, x1
-                ret
+           _lea   x1, Zobrist_Pieces
+            ldr   x0, [x1, 8*(64*(8*White+King)+0)]
+            ldr   x1, [x1, 8*(64*(8*Black+King)+0)]
+            eor   x0, x0, x1
+            ret
 
 pos_pieces:
 	; in: x0 address of position
 	;     x1 color
 	;     x2 piece type (1=pawn, 2=knight, ..., 6=king)
 	; out: x0 bitboard of pieces
-                add   x3, x0, Pos.typeBB
-                add   x4, x0, Pos.typeBB + 8*1
-                ldr   x1, [x3, x1, lsl 3]
-                ldr   x2, [x4, x2, lsl 3]
-                and   x0, x1, x2
-                ret
+            add   x3, x0, Pos.typeBB
+            add   x4, x0, Pos.typeBB + 8*1
+            ldr   x1, [x3, x1, lsl 3]
+            ldr   x2, [x4, x2, lsl 3]
+            and   x0, x1, x2
+            ret
 
 side_to_move:
 	; in: x0 address of position
 	; out: w0 side to move
-                ldr  w0, [x0, Pos.sideToMove]
-                ret
+            ldr  w0, [x0, Pos.sideToMove]
+            ret
 
 calc_key:
-                mov  x2, x1
-                mov  x1, x0
-        ; in: x1 address of pcs[16]
-        ;     w2 mirror
-        ; out: x0 material key
+            mov  x2, x1
+            mov  x1, x0
+    ; in: x1 address of pcs[16]
+    ;     w2 mirror
+    ; out: x0 material key
 
-                mov  x0, 0
-                tst  w2, w2
-              csetm  w2, ne
-                and  w2, w2, 8
-                mov  w6, 0
-calc_key._1:
-                mov  w7, Pawn
-calc_key._2:
-                lea  x8, Zobrist_Pieces
-                add  x4, x7, x6, lsl 3
-                add  x8, x8, x4, lsl 9
-                add  x9, x1, Pos.typeBB
-                ldr  x9, [x9, x7, lsl 3]
-                add  x4, x1, Pos.typeBB
-                ldr  x4, [x4, x2]
-                and  x9, x9, x4
-             Popcnt  x9, x9, x4
-               subs  x9, x9, 1
-                bmi  calc_key.Done
-calc_key.Next:
-                ldr  x4, [x8, x9, lsl 3]
-                eor  x0, x0, x4
-               subs  x9, x9, 1
-                bpl  calc_key.Next
-calc_key.Done:
-                add  w7, w7, 1
-                cmp  w7, King
-                bls  calc_key._2
-                eor  w2, w2, 8
-                add  w6, w6, 1
-                cmp  w6, 2
-                blo  calc_key._1
-                ret
+            mov  x0, 0
+            tst  w2, w2
+          csetm  w2, ne
+            and  w2, w2, 8
+            mov  w6, 0
+._1:
+            mov  w7, Pawn
+._2:
+           _lea  x8, Zobrist_Pieces
+            add  x4, x7, x6, lsl 3
+            add  x8, x8, x4, lsl 9
+            add  x9, x1, Pos.typeBB
+            ldr  x9, [x9, x7, lsl 3]
+            add  x4, x1, Pos.typeBB
+            ldr  x4, [x4, x2]
+            and  x9, x9, x4
+         Popcnt  x9, x9, x4
+           subs  x9, x9, 1
+            bmi  .Done
+.Next:
+            ldr  x4, [x8, x9, lsl 3]
+            eor  x0, x0, x4
+           subs  x9, x9, 1
+            bpl  .Next
+.Done:
+            add  w7, w7, 1
+            cmp  w7, King
+            bls  ._2
+            eor  w2, w2, 8
+            add  w6, w6, 1
+            cmp  w6, 2
+            blo  ._1
+            ret
 
 calc_key_from_pcs:
-                mov  x2, x1
-                mov  x1, x0
-        ; in: x1 address of pcs[16]
-        ;     w2 mirror
-        ; out: x0 material key
-                mov  x0, 0
-                tst  w2, w2
-              csetm  w2, ne
-                and  w2, w2, 8
-                mov  w6, 0
-calc_key_from_pcs._1:
-                mov  w7, Pawn
-calc_key_from_pcs._2:
-                lea  x8, Zobrist_Pieces
-                add  x4, x7, x6, lsl 3
-                add  x8, x8, x4, lsl 9
-                add  w9, w2, w7
-                sub  w9, w9, 1
-                ldr  w9, [x1, x9, lsl 2]
-               subs  w9, w9, 1
-                bmi  calc_key_from_pcs.Done
-calc_key_from_pcs.Next:
-                ldr  x4, [x8, x9, lsl 3]
-                eor  x0, x0, x4
-               subs  w9, w9, 1
-                bpl  calc_key_from_pcs.Next
-calc_key_from_pcs.Done:
-                add  w7, w7, 1
-                cmp  w7, King
-                bls  calc_key_from_pcs._2
-                eor  w2, w2, 8
-                add  w6, w6, 1
-                cmp  w6, 2
-                blo  calc_key_from_pcs._1
-                ret
+            mov  x2, x1
+            mov  x1, x0
+    ; in: x1 address of pcs[16]
+    ;     w2 mirror
+    ; out: x0 material key
+            mov  x0, 0
+            tst  w2, w2
+          csetm  w2, ne
+            and  w2, w2, 8
+            mov  w6, 0
+._1:
+            mov  w7, Pawn
+._2:
+           _lea  x8, Zobrist_Pieces
+            add  x4, x7, x6, lsl 3
+            add  x8, x8, x4, lsl 9
+            add  w9, w2, w7
+            sub  w9, w9, 1
+            ldr  w9, [x1, x9, lsl 2]
+           subs  w9, w9, 1
+            bmi  .Done
+.Next:
+            ldr  x4, [x8, x9, lsl 3]
+            eor  x0, x0, x4
+           subs  w9, w9, 1
+            bpl  .Next
+.Done:
+            add  w7, w7, 1
+            cmp  w7, King
+            bls  ._2
+            eor  w2, w2, 8
+            add  w6, w6, 1
+            cmp  w6, 2
+            blo  ._1
+            ret
+
 
 prt_str:
-                mov  x8, x2
-                mov  x2, x1
-                mov  x1, x0
-                stp  x2, x29, [sp, -16]!
-        ; in: x1 address of position
-        ;     w8 mirror
-        ; out: x2 address to write string
+            mov  x8, x2
+            mov  x2, x1
+            mov  x1, x0
+            stp  x2, x29, [sp, -16]!
+    ; in: x1 address of position
+    ;     w8 mirror
+    ; out: x2 address to write string
 
-                add  x3, x1, Pos.typeBB
-                mov  x7, x2
-                tst  w8, w8
-              csetm  w2, ne
-                and  w2, w2, 8
-                mov  w5, 0
-prt_str._1:
-                mov  w6, King
-prt_str._2:
-                ldr  x9, [x3, x6, lsl 3]
-                ldr  x4, [x3, x2]
-                and  x9, x9, x4
-                cbz  x9, prt_str.Done
-prt_str.Again:
-                lea  x0, pchr
-                add  x0, x0, King
-                sub  x0, x0, x6
-               ldrb  w0, [x0]
-               strb  w0, [x7], 1
-                sub  x1, x9, 1
-                and  x9, x9, x1
-               cbnz  x9, prt_str.Again
-prt_str.Done:
-                sub  w6, w6, 1
-                cmp  w6, Pawn
-                bhs  prt_str._2
-                mov  w0, 'v'
-               strb  w0, [x7], 1
-                eor  w2, w2, 8
-                add  w5, w5, 1
-                cmp  w5, 2
-                blo  prt_str._1
-               strb  wzr, [x7, -1]
-                ldp  x2, x29, [sp], 16
-                ret
-                
-
-
-
+            add  x3, x1, Pos.typeBB
+            mov  x7, x2
+            tst  w8, w8
+          csetm  w2, ne
+            and  w2, w2, 8
+            mov  w5, 0
+._1:
+            mov  w6, King
+._2:
+            ldr  x9, [x3, x6, lsl 3]
+            ldr  x4, [x3, x2]
+            and  x9, x9, x4
+            cbz  x9, .Done
+.Again:
+           _lea  x0, pchr
+            add  x0, x0, King
+            sub  x0, x0, x6
+           ldrb  w0, [x0]
+           strb  w0, [x7], 1
+            sub  x1, x9, 1
+            and  x9, x9, x1
+           cbnz  x9, .Again
+.Done:
+            sub  w6, w6, 1
+            cmp  w6, Pawn
+            bhs  ._2
+            mov  w0, 'v'
+           strb  w0, [x7], 1
+            eor  w2, w2, 8
+            add  w5, w5, 1
+            cmp  w5, 2
+            blo  ._1
+           strb  wzr, [x7, -1]
+            ldp  x2, x29, [sp], 16
+            ret
 
 
 
 puts:
 printf:
-        ; in: x0 string
-                stp  x27, x30, [sp, -16]!
-                lea  x27, Output
-                mov  x1, x0
-                 bl  PrintString
-       PrintNewLine
-                 bl  Os_WriteOut_Output
-                ldp  x27, x30, [sp], 16
-                ret
+    ; in: x0 string
+            stp  x27, x30, [sp, -16]!
+           _lea  x27, Output
+            mov  x1, x0
+             bl  PrintString
+   PrintNewLine
+             bl  Os_WriteOut_Output
+            ldp  x27, x30, [sp], 16
+            ret
         
 exit:
-                  b  Os_ExitProcess
+              b  Os_ExitProcess
 
 my_strcat:
 strcat:
-        ; in: x0 address of destination
-        ;     x1 address of source
-               ldrb  w4, [x0], 1
-               cbnz  w4, strcat
-                sub  x0, x0, 1
+    ; in: x0 address of destination
+    ;     x1 address of source
+           ldrb  w4, [x0], 1
+           cbnz  w4, strcat
+            sub  x0, x0, 1
 my_strcpy:
 strcpy:
-        ; in: x0 address of destination
-        ;     x1 address of source
-               ldrb  w4, [x1], 1
-               strb  w4, [x0], 1
-               cbnz  w4, my_strcpy
-                ret
+    ; in: x0 address of destination
+    ;     x1 address of source
+           ldrb  w4, [x1], 1
+           strb  w4, [x0], 1
+           cbnz  w4, my_strcpy
+            ret
 
 my_malloc:
 malloc:
-                add  x1, x0, 16
-                stp  x1, x30, [sp, -16]!
-                 bl  Os_VirtualAlloc
-                ldp  x1, x30, [sp], 16
-                str  x1, [x0]
-                add  x0, x0, 16
-                ret
+            add  x1, x0, 16
+            stp  x1, x30, [sp, -16]!
+             bl  Os_VirtualAlloc
+            ldp  x1, x30, [sp], 16
+            str  x1, [x0]
+            add  x0, x0, 16
+            ret
 
 my_free:
 free:
-               subs  x1, x0, 16
-                bmi  @f
-                ldr  x2, [x1]
-                  b  Os_VirtualFree
-        @@:
-                ret
-
-
+           subs  x1, x0, 16
+            bmi  @1f
+            ldr  x2, [x1]
+              b  Os_VirtualFree
+    @1:
+            ret
 
 
 
 open_tb:
-        ; in: x0 address of file string
-        ;     x1 addresss of suffix string
-        ; out: x0 fd (-1 for error)
-        stp     x29, x30, [sp, -320]!
-        add     x29, sp, 0
-        stp     x19, x20, [sp, 16]
-        adrp    x20, _LC0
-        stp     x21, x22, [sp, 32]
-        lea     x21, num_paths
-        stp     x23, x24, [sp, 48]
-        mov     x22, x1
-        mov     x23, x0
-        add     x20, x20, :lo12:_LC0
-        mov     x19, -1
-        lea     x6, tb_total_cnt
-        ldr     w4, [x6]
-        add     w4, w4, 1
-        str     w4, [x6]
-        lea     x24, paths
+    ; in: x0 address of file string
+    ;     x1 addresss of suffix string
+    ; out: x0 fd (-1 for error)
+            stp  x29, x30, [sp, -320]!
+            add  x29, sp, 0
+            stp  x19, x20, [sp, 16]
+           adrp  x20, _LC0
+            stp  x21, x22, [sp, 32]
+           _lea  x21, num_paths
+            stp  x23, x24, [sp, 48]
+            mov  x22, x1
+            mov  x23, x0
+            add  x20, x20, :lo12:_LC0
+            mov  x19, -1
+           _lea  x6, tb_total_cnt
+            ldr  w4, [x6]
+            add  w4, w4, 1
+            str  w4, [x6]
+           _lea  x24, paths
 .L3:
-        add     x19, x19, 1
-        ldr     w0, [x21]
-        cmp     w0, w19
-        ble     .L4
-        ldr     x0, [x24]
-        ldr     x1, [x0, x19, lsl 3]
-        add     x0, x29, 64
-        bl      strcpy
-        mov     x1, x20
-        add     x0, x29, 64
-        bl      strcat
-        mov     x1, x23
-        add     x0, x29, 64
-        bl      strcat
-        mov     x1, x22
-        add     x0, x29, 64
-        bl      strcat
-        add     x1, x29, 64
-        bl      Os_FileOpenRead
-        cmn     x0, 1
-        beq     .L3
+            add  x19, x19, 1
+            ldr  w0, [x21]
+            cmp  w0, w19
+            ble  .L4
+            ldr  x0, [x24]
+            ldr  x1, [x0, x19, lsl 3]
+            add  x0, x29, 64
+             bl  strcpy
+            mov  x1, x20
+            add  x0, x29, 64
+             bl  strcat
+            mov  x1, x23
+            add  x0, x29, 64
+             bl  strcat
+            mov  x1, x22
+            add  x0, x29, 64
+             bl  strcat
+            add  x1, x29, 64
+             bl  Os_FileOpenRead
+            cmn  x0, 1
+            beq  .L3
 
-        ldr     x1, [x24]
-        ldr     w2, [x21]
-        add     w2, w2, w19
-        add     x1, x1, x2, lsl 3
-        ldr     w4, [x1]
-        add     w4, w4, 1
-        str     w4, [x1]
-
+            ldr  x1, [x24]
+            ldr  w2, [x21]
+            add  w2, w2, w19
+            add  x1, x1, x2, lsl 3
+            ldr  w4, [x1]
+            add  w4, w4, 1
+            str  w4, [x1]
 .L1:
-        ldp     x19, x20, [sp, 16]
-        ldp     x21, x22, [sp, 32]
-        ldp     x23, x24, [sp, 48]
-        ldp     x29, x30, [sp], 320
-        ret
+            ldp  x19, x20, [sp, 16]
+            ldp  x21, x22, [sp, 32]
+            ldp  x23, x24, [sp, 48]
+            ldp  x29, x30, [sp], 320
+            ret
 .L4:
-        mov     x0, -1
-        b       .L1
+            mov  x0, -1
+              b  .L1
 
-;close_tb:
-;        mov     x1, x0
-;        b       Os_FileClose
 
 map_file:
-        stp     x29, x30, [sp, -32]!
-        add     x29, sp, 0
-        stp     x19, x20, [sp, 16]
-        mov     x19, x2
-        bl      open_tb
-        cmn     x0, 1
-        beq     .L11
-        mov     x20, x0
-        mov     x1, x0
-        bl      Os_FileMap
-        str     x2, [x19]
-        mov     x19, x0
-        mov     x1, x20
-        bl      Os_FileClose
+            stp  x29, x30, [sp, -32]!
+            add  x29, sp, 0
+            stp  x19, x20, [sp, 16]
+            mov  x19, x2
+             bl  open_tb
+            cmn  x0, 1
+            beq  .L11
+            mov  x20, x0
+            mov  x1, x0
+             bl  Os_FileMap
+            str  x2, [x19]
+            mov  x19, x0
+            mov  x1, x20
+             bl  Os_FileClose
 .L9:
-        mov     x0, x19
-        ldp     x19, x20, [sp, 16]
-        ldp     x29, x30, [sp], 32
-        ret
+            mov  x0, x19
+            ldp  x19, x20, [sp, 16]
+            ldp  x29, x30, [sp], 32
+            ret
 .L11:
-        mov     x19, 0
-        b       .L9
+            mov  x19, 0
+              b  .L9
 
 add_to_hash:
         lsr     x5, x1, 54
@@ -2480,10 +2471,10 @@ Tablebase_DisplayInfo:
 ;.PrintNext:
 Tablebase_DisplayInfo.PrintNext:
 ;		lea   rdi, [Output]
-                lea  x27, Output
+               _lea  x27, Output
 ;		cmp   esi, dword[_ZL9num_paths]
 ;		jae   .PrintDone
-                lea  x6, num_paths
+               _lea  x6, num_paths
                 ldr  w4, [x6]
                 cmp  w26, w4
                 bhs  Tablebase_DisplayInfo.PrintDone
@@ -2531,11 +2522,11 @@ Tablebase_DisplayInfo.PrintNext:
                strb  w0, [x27], 1
 ;		mov   eax, esi
 ;		add   eax, dword[_ZL9num_paths]
-                lea  x6, num_paths
+               _lea  x6, num_paths
                 ldr  w0, [x6]
                 add  w0, w0, w26
 ;		mov   rcx, qword[_ZL5paths]
-                lea  x6, paths
+               _lea  x6, paths
                 ldr  x1, [x6]
 ;		mov   eax, dword[rcx+8*rax]
                 ldr  x0, [x1, x0, lsl 3]
@@ -2578,7 +2569,7 @@ Tablebase_DisplayInfo.PrintNext:
                 mov  w0, '"'
                strb  w0, [x27], 1                
 ;		mov   rcx, qword[_ZL5paths]
-                lea  x6, paths
+               _lea  x6, paths
                 ldr  x1, [x6]
 ;		mov   rcx, [rcx+8*rsi]
                 ldr  x1, [x1, x26, lsl 3]
@@ -2599,7 +2590,7 @@ Tablebase_DisplayInfo.PrintNext:
 ;.PrintDone:
 Tablebase_DisplayInfo.PrintDone:
 ;		lea   rdi, [Output]
-                lea  x27, Output
+               _lea  x27, Output
 ;		mov   rax, 'info str'
 ;	      stosq
                 mov  w0, 'i'
@@ -2643,10 +2634,10 @@ Tablebase_DisplayInfo.PrintDone:
                 mov  w0, ' '
                strb  w0, [x27], 1
 ;		mov   eax, dword[_ZL10TBnum_pawn]
-                lea  x6, TBnum_pawn
+               _lea  x6, TBnum_pawn
                 ldr  w0, [x6]
 ;		add   eax, dword[_ZL11TBnum_piece]
-                lea  x6, TBnum_piece
+               _lea  x6, TBnum_piece
                 ldr  w4, [x6]
                 add  w0, w0, w4
 ;	       call   PrintUnsignedInteger
@@ -2662,7 +2653,7 @@ Tablebase_DisplayInfo.PrintDone:
                 mov  w0, ' '
                strb  w0, [x27], 1
 ;		mov   eax, dword[tb_total_cnt]
-                lea  x6, tb_total_cnt
+               _lea  x6, tb_total_cnt
                 ldr  w0, [x6]
 ;	       call   PrintUnsignedInteger
                  bl  PrintUInt32
@@ -2723,7 +2714,7 @@ Tablebase_HandlePathStrings:
 ;	call	my_malloc
                  bl  malloc
 ;	mov	qword[_ZL11path_string], rax
-                lea  x6, path_string
+               _lea  x6, path_string
                 str  x0, [x6]
 ;	mov	rdx, rbx
 ;	mov	rcx, rax
@@ -2732,7 +2723,7 @@ Tablebase_HandlePathStrings:
                  bl  strcpy
 ;	mov	rbp, rsp
 ;	mov	rsi, qword[_ZL11path_string]
-                lea  x6, path_string
+               _lea  x6, path_string
                 ldr  x26, [x6]
 ;	xor	ebx, ebx	; ebx num_paths
                 mov  w20, 0
@@ -2768,14 +2759,14 @@ Tablebase_HandlePathStrings.DoneGettingPaths:
 ;	mov	byte[rsi-1], 0
                strb  wzr, [x26, -1]
 ;	mov	dword[_ZL9num_paths], ebx
-                lea  x6, num_paths
+               _lea  x6, num_paths
                 str  w20, [x6]
 ;	imul	ecx, ebx, 16
                 lsl  w1, w20, 4
 ;	call	my_malloc                  ; 16 byte aligned
                  bl  malloc
 ;	mov	qword[_ZL5paths], rax
-                lea  x6, paths
+               _lea  x6, paths
                 str  x0, [x6]
 ;	mov	edx, ebx
                 mov  w2, w20
@@ -2826,15 +2817,15 @@ Tablebase_Init.DoInit:
 Tablebase_Init.InitDone:
 
 
-        lea      x0, path_string
+       _lea      x0, path_string
         ldr     x0, [x0]
         cbz     x0, Tablebase_Init.NothingToFree
-        lea     x1, TB_mutex
+       _lea     x1, TB_mutex
         bl      Os_MutexDestroy
-        lea      x0, path_string
+       _lea      x0, path_string
         ldr     x0, [x0]
         bl      my_free
-        lea      x0, paths
+       _lea      x0, paths
         ldr     x0, [x0]
         bl      my_free
 
@@ -2842,8 +2833,8 @@ Tablebase_Init.InitDone:
 Tablebase_Init.NothingToFree:
 
 
-        lea    x22, TBnum_piece
-        lea    x21, TB_piece
+       _lea    x22, TBnum_piece
+       _lea    x21, TB_piece
         mov     x19, 0
         mov     x23, 120
 .L401:
@@ -2862,8 +2853,8 @@ Tablebase_Init.NothingToFree:
 .L399:
 
 
-        lea    x22, TBnum_pawn
-        lea    x21, TB_pawn
+       _lea    x22, TBnum_pawn
+       _lea    x21, TB_pawn
         mov     x19, 0
         mov     x23, 384
 .L400:
@@ -2894,19 +2885,19 @@ Tablebase_Init.NothingToFree:
         bne     .L405
 
 
-        lea  x6, path_string
+       _lea  x6, path_string
         str  xzr, [x6]
-        lea  x6, paths
+       _lea  x6, paths
         str  xzr, [x6]
-        lea  x6, tb_total_cnt
+       _lea  x6, tb_total_cnt
         str  wzr, [x6]
-        lea  x6, num_paths
+       _lea  x6, num_paths
         str  wzr, [x6]
-        lea  x6, TBnum_pawn
+       _lea  x6, TBnum_pawn
         str  wzr, [x6]
-        lea  x6, TBnum_piece
+       _lea  x6, TBnum_piece
         str  wzr, [x6]
-        lea  x6, Tablebase_MaxCardinality
+       _lea  x6, Tablebase_MaxCardinality
         str  wzr, [x6]
         
 

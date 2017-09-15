@@ -71,6 +71,14 @@ define @3f?
 
 
 
+macro calign boundary
+    local size
+    size = (boundary-1)-($+boundary-1) mod boundary
+    if size mod 4 <> 0
+        err 'invalid calign'
+    end if
+    dd (size/4) dup 0xd503201f
+end macro
 
 macro balign boundary
     local size

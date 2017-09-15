@@ -1,258 +1,258 @@
 macro GetKeys Wp, Wn, Wb, Wr, Wq,  Bp, Bn, Bb, Br, Bq
-                ldr  x0, [x28, 8*(64*King + 0)]
-                ldr  x1, [x29, 8*(64*King + 0)]
-                eor  x1, x1, x0
-                mov  x2, x1
+            ldr  x0, [x28, 8*(64*King + 0)]
+            ldr  x1, [x29, 8*(64*King + 0)]
+            eor  x1, x1, x0
+            mov  x2, x1
         picnt = 0
   repeat Wp
-                ldr  x0, [x28, 8*(64*Pawn + picnt)]
-                eor  x1, x1, x0
-                ldr  x0, [x29, 8*(64*Pawn + picnt)]
-                eor  x2, x2, x0
+            ldr  x0, [x28, 8*(64*Pawn + picnt)]
+            eor  x1, x1, x0
+            ldr  x0, [x29, 8*(64*Pawn + picnt)]
+            eor  x2, x2, x0
         picnt = picnt + 1
   end repeat
         picnt = 0
   repeat Bp
-                ldr  x0, [x29, 8*(64*Pawn + picnt)]
-                eor  x1, x1, x0
-                ldr  x0, [x28, 8*(64*Pawn + picnt)]
-                eor  x2, x2, x0
+            ldr  x0, [x29, 8*(64*Pawn + picnt)]
+            eor  x1, x1, x0
+            ldr  x0, [x28, 8*(64*Pawn + picnt)]
+            eor  x2, x2, x0
         picnt = picnt + 1
   end repeat
 
         picnt = 0
   repeat Wn
-                ldr  x0, [x28, 8*(64*Knight + picnt)]
-                eor  x1, x1, x0
-                ldr  x0, [x29, 8*(64*Knight + picnt)]
-                eor  x2, x2, x0
+            ldr  x0, [x28, 8*(64*Knight + picnt)]
+            eor  x1, x1, x0
+            ldr  x0, [x29, 8*(64*Knight + picnt)]
+            eor  x2, x2, x0
         picnt = picnt + 1
   end repeat
         picnt = 0
   repeat Bn
-                ldr  x0, [x29, 8*(64*Knight + picnt)]
-                eor  x1, x1, x0
-                ldr  x0, [x28, 8*(64*Knight + picnt)]
-                eor  x2, x2, x0
+            ldr  x0, [x29, 8*(64*Knight + picnt)]
+            eor  x1, x1, x0
+            ldr  x0, [x28, 8*(64*Knight + picnt)]
+            eor  x2, x2, x0
         picnt = picnt + 1
   end repeat
 
         picnt = 0
   repeat Wb
-                ldr  x0, [x28, 8*(64*Bishop + picnt)]
-                eor  x1, x1, x0
-                ldr  x0, [x29, 8*(64*Bishop + picnt)]
-                eor  x2, x2, x0
+            ldr  x0, [x28, 8*(64*Bishop + picnt)]
+            eor  x1, x1, x0
+            ldr  x0, [x29, 8*(64*Bishop + picnt)]
+            eor  x2, x2, x0
         picnt = picnt + 1
   end repeat
         picnt = 0
   repeat Bb
-                ldr  x0, [x29, 8*(64*Bishop + picnt)]
-                eor  x1, x1, x0
-                ldr  x0, [x28, 8*(64*Bishop + picnt)]
-                eor  x2, x2, x0
+            ldr  x0, [x29, 8*(64*Bishop + picnt)]
+            eor  x1, x1, x0
+            ldr  x0, [x28, 8*(64*Bishop + picnt)]
+            eor  x2, x2, x0
         picnt = picnt + 1
   end repeat
 
         picnt = 0
   repeat Wr
-                ldr  x0, [x28, 8*(64*Rook + picnt)]
-                eor  x1, x1, x0
-                ldr  x0, [x29, 8*(64*Rook + picnt)]
-                eor  x2, x2, x0
+            ldr  x0, [x28, 8*(64*Rook + picnt)]
+            eor  x1, x1, x0
+            ldr  x0, [x29, 8*(64*Rook + picnt)]
+            eor  x2, x2, x0
         picnt = picnt + 1
   end repeat
         picnt = 0
   repeat Br
-                ldr  x0, [x29, 8*(64*Rook + picnt)]
-                eor  x1, x1, x0
-                ldr  x0, [x28, 8*(64*Rook + picnt)]
-                eor  x2, x2, x0
+            ldr  x0, [x29, 8*(64*Rook + picnt)]
+            eor  x1, x1, x0
+            ldr  x0, [x28, 8*(64*Rook + picnt)]
+            eor  x2, x2, x0
         picnt = picnt + 1
   end repeat
 
         picnt = 0
   repeat Wq
-                ldr  x0, [x28, 8*(64*Queen + picnt)]
-                eor  x1, x1, x0
-                ldr  x0, [x29, 8*(64*Queen + picnt)]
-                eor  x2, x2, x0
+            ldr  x0, [x28, 8*(64*Queen + picnt)]
+            eor  x1, x1, x0
+            ldr  x0, [x29, 8*(64*Queen + picnt)]
+            eor  x2, x2, x0
         picnt = picnt + 1
   end repeat
         picnt = 0
   repeat Bq
-                ldr  x0, [x29, 8*(64*Queen + picnt)]
-                eor  x1, x1, x0
-                ldr  x0, [x28, 8*(64*Queen + picnt)]
-                eor  x2, x2, x0
+            ldr  x0, [x29, 8*(64*Queen + picnt)]
+            eor  x1, x1, x0
+            ldr  x0, [x28, 8*(64*Queen + picnt)]
+            eor  x2, x2, x0
         picnt = picnt + 1
   end repeat
 end macro
 
 
 Endgame_Init:
-        ; make sure all of our functions are registered with
-        ;  EndgameEval_Map
-        ;  EndgameScale_Map
-        ;  EndgameEval_FxnTable
-        ;  EndgameScale_FxnTable
+    ; make sure all of our functions are registered with
+    ;  EndgameEval_Map
+    ;  EndgameScale_Map
+    ;  EndgameEval_FxnTable
+    ;  EndgameScale_FxnTable
 
-                stp  x29, x30, [sp, -16]!
-                lea  x28, Zobrist_Pieces
-                add  x29, x28, 8*64*8
+            stp  x29, x30, [sp, -16]!
+            lea  x28, Zobrist_Pieces
+            add  x29, x28, 8*64*8
 
-        ; eval
-                lea  x21, EndgameEval_FxnTable
-                lea  x15, EndgameEval_Map
+    ; eval
+            lea  x21, EndgameEval_FxnTable
+            lea  x15, EndgameEval_Map
 
-        ; these endgame fxns correspond to a specific material config
-        ;  and are added to the map
-            GetKeys  1,0,0,0,0, 0,0,0,0,0
-                adr  x0, EndgameEval_KPK
-                mov  x14, EndgameEval_KPK_index
-                str  x0, [x21, x14, lsl 3]
-                 bl  Endgame_Init.Map_Insert
+    ; these endgame fxns correspond to a specific material config
+    ;  and are added to the map
+        GetKeys  1,0,0,0,0, 0,0,0,0,0
+            adr  x0, EndgameEval_KPK
+            mov  x14, EndgameEval_KPK_index
+            str  x0, [x21, x14, lsl 3]
+             bl  .Map_Insert
 
-            GetKeys  0,2,0,0,0, 0,0,0,0,0
-                adr  x0, EndgameEval_KNNK
-                mov  x14, EndgameEval_KNNK_index
-                str  x0, [x21, x14, lsl 3]
-                 bl  Endgame_Init.Map_Insert
+        GetKeys  0,2,0,0,0, 0,0,0,0,0
+            adr  x0, EndgameEval_KNNK
+            mov  x14, EndgameEval_KNNK_index
+            str  x0, [x21, x14, lsl 3]
+             bl  .Map_Insert
 
-            GetKeys  0,1,1,0,0, 0,0,0,0,0
-                adr  x0, EndgameEval_KBNK
-                mov  x14, EndgameEval_KBNK_index
-                str  x0, [x21, x14, lsl 3]
-                 bl  Endgame_Init.Map_Insert
+        GetKeys  0,1,1,0,0, 0,0,0,0,0
+            adr  x0, EndgameEval_KBNK
+            mov  x14, EndgameEval_KBNK_index
+            str  x0, [x21, x14, lsl 3]
+             bl  .Map_Insert
 
-            GetKeys  0,0,0,1,0, 1,0,0,0,0
-                adr  x0, EndgameEval_KRKP
-                mov  x14, EndgameEval_KRKP_index
-                str  x0, [x21, x14, lsl 3]
-                 bl  Endgame_Init.Map_Insert
+        GetKeys  0,0,0,1,0, 1,0,0,0,0
+            adr  x0, EndgameEval_KRKP
+            mov  x14, EndgameEval_KRKP_index
+            str  x0, [x21, x14, lsl 3]
+             bl  .Map_Insert
 
-            GetKeys  0,0,0,1,0, 0,0,1,0,0
-                adr  x0, EndgameEval_KRKB
-                mov  x14, EndgameEval_KRKB_index
-                str  x0, [x21, x14, lsl 3]
-                 bl  Endgame_Init.Map_Insert
+        GetKeys  0,0,0,1,0, 0,0,1,0,0
+            adr  x0, EndgameEval_KRKB
+            mov  x14, EndgameEval_KRKB_index
+            str  x0, [x21, x14, lsl 3]
+             bl  .Map_Insert
 
-            GetKeys  0,0,0,1,0, 0,1,0,0,0
-                adr  x0, EndgameEval_KRKN
-                mov  x14, EndgameEval_KRKN_index
-                str  x0, [x21, x14, lsl 3]
-                 bl  Endgame_Init.Map_Insert
+        GetKeys  0,0,0,1,0, 0,1,0,0,0
+            adr  x0, EndgameEval_KRKN
+            mov  x14, EndgameEval_KRKN_index
+            str  x0, [x21, x14, lsl 3]
+             bl  .Map_Insert
 
-            GetKeys  0,0,0,0,1, 1,0,0,0,0
-                adr  x0, EndgameEval_KQKP
-                mov  x14, EndgameEval_KQKP_index
-                str  x0, [x21, x14, lsl 3]
-                 bl  Endgame_Init.Map_Insert
+        GetKeys  0,0,0,0,1, 1,0,0,0,0
+            adr  x0, EndgameEval_KQKP
+            mov  x14, EndgameEval_KQKP_index
+            str  x0, [x21, x14, lsl 3]
+             bl  .Map_Insert
 
-            GetKeys  0,0,0,0,1, 0,0,0,1,0
-                adr  x0, EndgameEval_KQKR
-                mov  x14, EndgameEval_KQKR_index
-                str  x0, [x21, x14, lsl 3]
-                 bl  Endgame_Init.Map_Insert
+        GetKeys  0,0,0,0,1, 0,0,0,1,0
+            adr  x0, EndgameEval_KQKR
+            mov  x14, EndgameEval_KQKR_index
+            str  x0, [x21, x14, lsl 3]
+             bl  .Map_Insert
 
-        ; these endgame fxns correspond to many material config
-        ;  and are not added to the map
+    ; these endgame fxns correspond to many material config
+    ;  and are not added to the map
 
-                adr  x0, EndgameEval_KXK
-                mov  x14, EndgameEval_KXK_index
-                str  x0, [x21, x14, lsl 3]
+            adr  x0, EndgameEval_KXK
+            mov  x14, EndgameEval_KXK_index
+            str  x0, [x21, x14, lsl 3]
 
-        ; scale
-                lea  x21, EndgameScale_FxnTable
-                lea  x15, EndgameScale_Map
-        ; these endgame fxns correspond to a specific material config
-        ;  and are added to the map
+    ; scale
+            lea  x21, EndgameScale_FxnTable
+            lea  x15, EndgameScale_Map
+    ; these endgame fxns correspond to a specific material config
+    ;  and are added to the map
 
-            GetKeys  1,1,0,0,0, 0,0,0,0,0
-                adr  x0, EndgameScale_KNPK
-                mov  x14, EndgameScale_KNPK_index
-                str  x0, [x21, x14, lsl 3]
-                 bl  Endgame_Init.Map_Insert
+        GetKeys  1,1,0,0,0, 0,0,0,0,0
+            adr  x0, EndgameScale_KNPK
+            mov  x14, EndgameScale_KNPK_index
+            str  x0, [x21, x14, lsl 3]
+             bl  .Map_Insert
 
-            GetKeys  1,1,0,0,0, 0,0,1,0,0
-                adr  x0, EndgameScale_KNPKB
-                mov  x14, EndgameScale_KNPKB_index
-                str  x0, [x21, x14, lsl 3]
-                 bl  Endgame_Init.Map_Insert
+        GetKeys  1,1,0,0,0, 0,0,1,0,0
+            adr  x0, EndgameScale_KNPKB
+            mov  x14, EndgameScale_KNPKB_index
+            str  x0, [x21, x14, lsl 3]
+             bl  .Map_Insert
 
-            GetKeys  1,0,0,1,0, 0,0,0,1,0
-                adr  x0, EndgameScale_KRPKR
-                mov  x14, EndgameScale_KRPKR_index
-                str  x0, [x21, x14, lsl 3]
-                 bl  Endgame_Init.Map_Insert
+        GetKeys  1,0,0,1,0, 0,0,0,1,0
+            adr  x0, EndgameScale_KRPKR
+            mov  x14, EndgameScale_KRPKR_index
+            str  x0, [x21, x14, lsl 3]
+             bl  .Map_Insert
 
-            GetKeys  1,0,0,1,0, 0,0,1,0,0
-                adr  x0, EndgameScale_KRPKB
-                mov  x14, EndgameScale_KRPKB_index
-                str  x0, [x21, x14, lsl 3]
-                 bl  Endgame_Init.Map_Insert
+        GetKeys  1,0,0,1,0, 0,0,1,0,0
+            adr  x0, EndgameScale_KRPKB
+            mov  x14, EndgameScale_KRPKB_index
+            str  x0, [x21, x14, lsl 3]
+             bl  .Map_Insert
 
-            GetKeys  1,0,1,0,0, 0,0,1,0,0
-                adr  x0, EndgameScale_KBPKB
-                mov  x14, EndgameScale_KBPKB_index
-                str  x0, [x21, x14, lsl 3]
-                 bl  Endgame_Init.Map_Insert
+        GetKeys  1,0,1,0,0, 0,0,1,0,0
+            adr  x0, EndgameScale_KBPKB
+            mov  x14, EndgameScale_KBPKB_index
+            str  x0, [x21, x14, lsl 3]
+             bl  .Map_Insert
 
-            GetKeys  1,0,1,0,0, 0,1,0,0,0
-                adr  x0, EndgameScale_KBPKN
-                mov  x14, EndgameScale_KBPKN_index
-                str  x0, [x21, x14, lsl 3]
-                 bl  Endgame_Init.Map_Insert
+        GetKeys  1,0,1,0,0, 0,1,0,0,0
+            adr  x0, EndgameScale_KBPKN
+            mov  x14, EndgameScale_KBPKN_index
+            str  x0, [x21, x14, lsl 3]
+             bl  .Map_Insert
 
-            GetKeys  2,0,1,0,0, 0,0,1,0,0
-                adr  x0, EndgameScale_KBPPKB
-                mov  x14, EndgameScale_KBPPKB_index
-                str  x0, [x21, x14, lsl 3]
-                 bl  Endgame_Init.Map_Insert
+        GetKeys  2,0,1,0,0, 0,0,1,0,0
+            adr  x0, EndgameScale_KBPPKB
+            mov  x14, EndgameScale_KBPPKB_index
+            str  x0, [x21, x14, lsl 3]
+             bl  .Map_Insert
 
-            GetKeys  2,0,0,1,0, 1,0,0,1,0
-                adr  x0, EndgameScale_KRPPKRP
-                mov  x14, EndgameScale_KRPPKRP_index
-                str  x0, [x21, x14, lsl 3]
-                 bl  Endgame_Init.Map_Insert
+        GetKeys  2,0,0,1,0, 1,0,0,1,0
+            adr  x0, EndgameScale_KRPPKRP
+            mov  x14, EndgameScale_KRPPKRP_index
+            str  x0, [x21, x14, lsl 3]
+             bl  .Map_Insert
 
-        ; these endgame fxns correspond to many material config   except KPKP
-        ;  and are not added to the map
+    ; these endgame fxns correspond to many material config   except KPKP
+    ;  and are not added to the map
 
-                adr  x0, EndgameScale_KBPsK
-                mov  x14, EndgameScale_KBPsK_index
-                str  x0, [x21, x14, lsl 3]
-                adr  x0, EndgameScale_KQKRPs
-                mov  x14, EndgameScale_KQKRPs_index
-                str  x0, [x21, x14, lsl 3]
-                adr  x0, EndgameScale_KPsK
-                mov  x14, EndgameScale_KPsK_index
-                str  x0, [x21, x14, lsl 3]
-                adr  x0, EndgameScale_KPKP
-                mov  x14, EndgameScale_KPKP_index
-                str  x0, [x21, x14, lsl 3]
+            adr  x0, EndgameScale_KBPsK
+            mov  x14, EndgameScale_KBPsK_index
+            str  x0, [x21, x14, lsl 3]
+            adr  x0, EndgameScale_KQKRPs
+            mov  x14, EndgameScale_KQKRPs_index
+            str  x0, [x21, x14, lsl 3]
+            adr  x0, EndgameScale_KPsK
+            mov  x14, EndgameScale_KPsK_index
+            str  x0, [x21, x14, lsl 3]
+            adr  x0, EndgameScale_KPKP
+            mov  x14, EndgameScale_KPKP_index
+            str  x0, [x21, x14, lsl 3]
 
-                lea  x0, PushToEdges
-                adr  x1, Endgame_Init.PushToEdges
-                mov  x2, 64
-                 bl  MemoryCopy
-                lea  x0, PushToCorners
-                adr  x1, Endgame_Init.PushToCorners
-                mov  x2, 64
-                 bl  MemoryCopy
-                lea  x0, PushClose
-                adr  x1, Endgame_Init.PushClose
-                mov  x2, 8
-                 bl  MemoryCopy
-                lea  x0, PushAway
-                adr  x1, Endgame_Init.PushAway
-                mov  x2, 8
-                 bl  MemoryCopy
+            lea  x0, PushToEdges
+            adr  x1, .PushToEdges
+            mov  x2, 64
+             bl  MemoryCopy
+            lea  x0, PushToCorners
+            adr  x1, .PushToCorners
+            mov  x2, 64
+             bl  MemoryCopy
+            lea  x0, PushClose
+            adr  x1, .PushClose
+            mov  x2, 8
+             bl  MemoryCopy
+            lea  x0, PushAway
+            adr  x1, .PushAway
+            mov  x2, 8
+             bl  MemoryCopy
 
-                ldp  x29, x30, [sp], 16
-                ret
+            ldp  x29, x30, [sp], 16
+            ret
 
-Endgame_Init.PushToEdges:
+.PushToEdges:
         db  100, 90, 80, 70, 70, 80, 90, 100
         db   90, 70, 60, 50, 50, 60, 70,  90
         db   80, 60, 40, 30, 30, 40, 60,  80
@@ -262,7 +262,7 @@ Endgame_Init.PushToEdges:
         db   90, 70, 60, 50, 50, 60, 70,  90
         db  100, 90, 80, 70, 70, 80, 90, 100
 
-Endgame_Init.PushToCorners:
+.PushToCorners:
         db    200, 190, 180, 170, 160, 150, 140, 130
         db    190, 180, 170, 160, 150, 140, 130, 140
         db    180, 170, 155, 140, 140, 125, 140, 150
@@ -272,44 +272,44 @@ Endgame_Init.PushToCorners:
         db    140, 130, 140, 150, 160, 170, 180, 190
         db    130, 140, 150, 160, 170, 180, 190, 200
 
-Endgame_Init.PushClose:
+.PushClose:
         db  0, 0, 100, 80, 60, 40, 20, 10
 
-Endgame_Init.PushAway:
+.PushAway:
         db  0, 5, 20, 40, 60, 80, 90, 100
 
 
-Endgame_Init.Map_Insert:
-        ; in: x1 hash with strongside=0
-        ;     x2 hash with strongside=1 (material flipped)
-        ;     x14  index of fxn
-        ;     x15  address EndgameEval_Map or EndgameScale_Map
-        ; we simply insert the two entries x1 and x2 into the assumed
-        ; sorted array of EndgameMapEntry structs, sorted by key
-                stp  x29, x30, [sp, -16]!
-                add  x14, x14, x14
-                stp  x2, x14, [sp, -16]!
-                 bl  Endgame_Init.Insert
-                ldp  x1, x14, [sp], 16
-                add  x14, x14, 1
-                 bl  Endgame_Init.Insert
-                ldp  x29, x30, [sp], 16
-                ret
-Endgame_Init.Insert:
-        ; in: x1 key to insert
-        ;     x14 entry
-                sub  x4, x15, sizeof.EndgameMapEntry
-Endgame_Init.Next:
-                ldp  x0, x2, [x4, sizeof.EndgameMapEntry]!
-                cbz  x2, Endgame_Init.AtEnd
-                cmp  x1, x0
-                bhi  Endgame_Init.Next
-Endgame_Init.Found:
-                ldp  x0, x2, [x4]
-Endgame_Init.AtEnd:
-                stp  x1, x14, [x4], sizeof.EndgameMapEntry
-                mov  x1, x0
-                mov  x14, x2
-               cbnz  x2, Endgame_Init.Found
-                ret
+.Map_Insert:
+    ; in: x1 hash with strongside=0
+    ;     x2 hash with strongside=1 (material flipped)
+    ;     x14  index of fxn
+    ;     x15  address EndgameEval_Map or EndgameScale_Map
+    ; we simply insert the two entries x1 and x2 into the assumed
+    ; sorted array of EndgameMapEntry structs, sorted by key
+            stp  x29, x30, [sp, -16]!
+            add  x14, x14, x14
+            stp  x2, x14, [sp, -16]!
+             bl  .Insert
+            ldp  x1, x14, [sp], 16
+            add  x14, x14, 1
+             bl  .Insert
+            ldp  x29, x30, [sp], 16
+            ret
+.Insert:
+    ; in: x1 key to insert
+    ;     x14 entry
+            sub  x4, x15, sizeof.EndgameMapEntry
+.Next:
+            ldp  x0, x2, [x4, sizeof.EndgameMapEntry]!
+            cbz  x2, .AtEnd
+            cmp  x1, x0
+            bhi  .Next
+.Found:
+            ldp  x0, x2, [x4]
+.AtEnd:
+            stp  x1, x14, [x4], sizeof.EndgameMapEntry
+            mov  x1, x0
+            mov  x14, x2
+           cbnz  x2, .Found
+            ret
 

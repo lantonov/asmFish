@@ -1,95 +1,90 @@
 
-MinorBehindPawn 	= (( 16 shl 16) + (  0))
-BishopPawns		= ((  8 shl 16) + ( 12))
-RookOnPawn		= ((  8 shl 16) + ( 24))
-TrappedRook		= (( 92 shl 16) + (  0))
-WeakQueen		= (( 50 shl 16) + ( 10))
-OtherCheck		= (( 10 shl 16) + ( 10))
-CloseEnemies		= ((  7 shl 16) + (  0))
-PawnlessFlank		= (( 20 shl 16) + ( 80))
-ThreatByHangingPawn	= (( 71 shl 16) + ( 61))
-ThreatBySafePawn        = ((182 shl 16) + (175))
-ThreatByRank		= (( 16 shl 16) + (  3))
-Hanging 		= (( 48 shl 16) + ( 27))
-ThreatByPawnPush	= (( 38 shl 16) + ( 22))
-HinderPassedPawn	= ((  7 shl 16) + (  0))
+MinorBehindPawn     = (( 16 shl 16) + (  0))
+BishopPawns         = ((  8 shl 16) + ( 12))
+RookOnPawn          = ((  8 shl 16) + ( 24))
+TrappedRook         = (( 92 shl 16) + (  0))
+WeakQueen           = (( 50 shl 16) + ( 10))
+OtherCheck          = (( 10 shl 16) + ( 10))
+CloseEnemies        = ((  7 shl 16) + (  0))
+PawnlessFlank       = (( 20 shl 16) + ( 80))
+ThreatByHangingPawn = (( 71 shl 16) + ( 61))
+ThreatBySafePawn    = ((182 shl 16) + (175))
+ThreatByRank        = (( 16 shl 16) + (  3))
+Hanging             = (( 48 shl 16) + ( 27))
+ThreatByPawnPush    = (( 38 shl 16) + ( 22))
+HinderPassedPawn    = ((  7 shl 16) + (  0))
 
 LazyThreshold = 1500
 
 
 macro EvalInit Us
-; in:  r13 rook + queen
-;      r12 bishop+queen
-;      r14 all pieces
-
+    ; in:  r13 rook + queen
+    ;      r12 bishop+queen
+    ;      r14 all pieces
   local Them, Down
   local NotUsed, PinnedLoop, NoPinned, YesPinned
 
-
- if Us = White
+  if Us = White
         Them = Black
         Down = DELTA_S
- else
+  else
         Them = White
         Down = DELTA_N
- end if
+  end if
+           ldrh  w1, [x21, State.npMaterial + 2*Us]
+            ldr  w0, [sp, EvalInfo.ksq + 4*Them]
+  if Them = White
+            cmp  w0, SQ_A2
+           cset  w0, lo
+  else
+            cmp  w0, SQ_A8
+           cset  w0, hs
+  end if
+            ldr  x9, [sp, EvalInfo.attackedBy + 8*(8*Them + King)]
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + 0)]
+            orr  x4, x4, x9
+            str  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + 0)]
+            ldr  x10, [x27, PawnEntry.pawnAttacks + 8*Us]
+            str  x10, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + 0)]
+            orr  x4, x4, x10
+            str  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + 0)]
 
-               ldrh  w1, [x21, State.npMaterial + 2*Us]
-
-                ldr  w0, [sp, EvalInfo.ksq + 4*Them]
- if Them = White
-                cmp  w0, SQ_A2
-               cset  w0, lo
- else
-                cmp  w0, SQ_A8
-               cset  w0, hs
- end if
-
-                ldr  x9, [sp, EvalInfo.attackedBy + 8*(8*Them + King)]
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + 0)]
-                orr  x4, x4, x9
-                str  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + 0)]
-                ldr  x10, [x27, PawnEntry.pawnAttacks + 8*Us]
-                str  x10, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + 0)]
-                orr  x4, x4, x10
-                str  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + 0)]
-
-                mov  x8, 0
-                mov  w2, 0
-                cmp  w1,  RookValueMg + KnightValueMg
-                blo  NotUsed
-                mov  x8, x9
-                neg  x0, x0
-            ShiftBB  Down, x8, x8
-                and  x8, x8, x0
-                orr  x8, x8, x9
-                and  x9, x9, x10
-             Popcnt  x2, x9, x1
-                mov  w0, 0
-                str  w0, [sp, EvalInfo.kingAttackersWeight + 4*Us]
-                str  w0, [sp, EvalInfo.kingAdjacentZoneAttacksCount + 4*Us]
+            mov  x8, 0
+            mov  w2, 0
+            cmp  w1,  RookValueMg + KnightValueMg
+            blo  NotUsed
+            mov  x8, x9
+            neg  x0, x0
+        ShiftBB  Down, x8, x8
+            and  x8, x8, x0
+            orr  x8, x8, x9
+            and  x9, x9, x10
+         Popcnt  x2, x9, x1
+            mov  w0, 0
+            str  w0, [sp, EvalInfo.kingAttackersWeight + 4*Us]
+            str  w0, [sp, EvalInfo.kingAdjacentZoneAttacksCount + 4*Us]
 NotUsed:
-                str  x8, [sp, EvalInfo.kingRing + 8*Them]
-                str  w2, [sp, EvalInfo.kingAttackersCount + 4*Us]
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + King)]
-                and  x10, x10, x4
-                str  x10, [sp, EvalInfo.attackedBy2 + 8*Us]
+            str  x8, [sp, EvalInfo.kingRing + 8*Them]
+            str  w2, [sp, EvalInfo.kingAttackersCount + 4*Us]
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + King)]
+            and  x10, x10, x4
+            str  x10, [sp, EvalInfo.attackedBy2 + 8*Us]
 end macro
 
 
 
 
 macro EvalPieces Us, Pt
-        ; in:  x20 address of Pos struct
-        ;      x21 address of State struct
-        ;      sp  address of evaluation info
-        ;      x27 address of PawnEntry struct
-        ; io:  w26 score accumulated
-        ;
-        ; in: x23 all pieces
-        ;     x22 pieces of type Pt ( qword[rbp+Pos.typeBB+8*Pt])
-        ;     x25 should be zero  for dirty trick
+    ; in:  x20 address of Pos struct
+    ;      x21 address of State struct
+    ;      sp  address of evaluation info
+    ;      x27 address of PawnEntry struct
+    ; io:  w26 score accumulated
+    ;
+    ; in: x23 all pieces
+    ;     x22 pieces of type Pt ( qword[rbp+Pos.typeBB+8*Pt])
+    ;     x25 should be zero  for dirty trick
 
   local addsub, subadd
   local Them, OutpostRanks
@@ -138,293 +133,291 @@ macro EvalPieces Us, Pt
         err "bad Pt in EvalPieces"
   end if
 
-                mov  w0, 0
-                str  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + Pt)]
+            mov  w0, 0
+            str  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + Pt)]
 
-                ldr  x11, [x20, Pos.typeBB + 8*Us]
-        ; w11 = our pieces
-                add  x25, x20, Pos.pieceList + 16*(8*Us + Pt)
-               ldrb  w24, [x20, Pos.pieceList + 16*(8*Us + Pt)]
-                cmp  w24, 64
-                bhs  AllDone
+            ldr  x11, [x20, Pos.typeBB + 8*Us]
+    ; w11 = our pieces
+            add  x25, x20, Pos.pieceList + 16*(8*Us + Pt)
+           ldrb  w24, [x20, Pos.pieceList + 16*(8*Us + Pt)]
+            cmp  w24, 64
+            bhs  AllDone
 NextPiece:
-                add  x25, x25, 1
-        ; w24 = square s
-        ; Find attacked squares, including x-ray attacks for bishops and rooks
+            add  x25, x25, 1
+    ; w24 = square s
+    ; Find attacked squares, including x-ray attacks for bishops and rooks
   if Pt = Knight
-                lea  x6, KnightAttacks
-                ldr  x9, [x6, x24, lsl 3]
+           _lea  x6, KnightAttacks
+            ldr  x9, [x6, x24, lsl 3]
   else if Pt = Bishop
-                ldr  x0, [x20, Pos.typeBB + 8*Queen]
-                and  x0, x0, x11
-                eor  x0, x0, x23
-      BishopAttacks  x9, x24, x0, x2, x4
+            ldr  x0, [x20, Pos.typeBB + 8*Queen]
+            and  x0, x0, x11
+            eor  x0, x0, x23
+  BishopAttacks  x9, x24, x0, x2, x4
   else if Pt = Rook
-                ldr  x0, [x20, Pos.typeBB + 8*Queen]
-                orr  x0, x0, x22
-                and  x0, x0, x11
-                eor  x0, x0, x23
-        RookAttacks  x9, x24, x0, x2, x4
+            ldr  x0, [x20, Pos.typeBB + 8*Queen]
+            orr  x0, x0, x22
+            and  x0, x0, x11
+            eor  x0, x0, x23
+    RookAttacks  x9, x24, x0, x2, x4
   else if Pt = Queen
-        RookAttacks  x9, x24, x23, x0, x4
-      BishopAttacks  x2, x24, x23, x0, x4
-                orr  x9, x9, x2
+    RookAttacks  x9, x24, x23, x0, x4
+  BishopAttacks  x2, x24, x23, x0, x4
+            orr  x9, x9, x2
   else
         err "bad Pt in EvalPieces"
   end if
 
-        ; x9 = b
-                ldr  w8, [sp, EvalInfo.ksq + 4*Us]
-        ; w8 = our ksq
+    ; x9 = b
+            ldr  w8, [sp, EvalInfo.ksq + 4*Us]
+    ; w8 = our ksq
 
-                ldr  x0, [sp, EvalInfo.pinnedPieces + 8*Us]
-                lsr  x4, x0, x24
-                tbz  x4, 0, NoPinned
-                lsl  w0, w8, 9
-                lea  x6, LineBB
-                add  x6, x6, x0
-                ldr  x4, [x6, x24, lsl 3]
-                and  x9, x9, x4
+            ldr  x0, [sp, EvalInfo.pinnedPieces + 8*Us]
+            lsr  x4, x0, x24
+            tbz  x4, 0, NoPinned
+            lsl  w0, w8, 9
+           _lea  x6, LineBB
+            add  x6, x6, x0
+            ldr  x4, [x6, x24, lsl 3]
+            and  x9, x9, x4
 NoPinned:
-                ldr  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + Pt)]
-                ldr  x2, [sp, EvalInfo.attackedBy + 8*(8*Us + 0)]
-                and  x1, x9, x2
-                orr  x0, x0, x9
-                orr  x2, x2, x0
-                ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Us]
-                orr  x4, x4, x1
-                str  x4, [sp, EvalInfo.attackedBy2 + 8*Us]
-                str  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + Pt)]
-                str  x2, [sp, EvalInfo.attackedBy + 8*(8*Us + 0)]
+            ldr  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + Pt)]
+            ldr  x2, [sp, EvalInfo.attackedBy + 8*(8*Us + 0)]
+            and  x1, x9, x2
+            orr  x0, x0, x9
+            orr  x2, x2, x0
+            ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Us]
+            orr  x4, x4, x1
+            str  x4, [sp, EvalInfo.attackedBy2 + 8*Us]
+            str  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + Pt)]
+            str  x2, [sp, EvalInfo.attackedBy + 8*(8*Us + 0)]
 
-                ldr  x4, [sp, EvalInfo.kingRing + 8*Them]
-                tst  x9, x4
-                beq  NoKingRing
+            ldr  x4, [sp, EvalInfo.kingRing + 8*Them]
+            tst  x9, x4
+            beq  NoKingRing
 
-                ldr  w4, [sp, EvalInfo.kingAttackersCount + 4*Us]
-                add  w4, w4, 1
-                str  w4, [sp, EvalInfo.kingAttackersCount + 4*Us]
+            ldr  w4, [sp, EvalInfo.kingAttackersCount + 4*Us]
+            add  w4, w4, 1
+            str  w4, [sp, EvalInfo.kingAttackersCount + 4*Us]
 
-                ldr  w4, [sp, EvalInfo.kingAttackersWeight + 4*Us]
-                add  w4, w4, KingAttackWeight
-                str  w4, [sp, EvalInfo.kingAttackersWeight + 4*Us]
+            ldr  w4, [sp, EvalInfo.kingAttackersWeight + 4*Us]
+            add  w4, w4, KingAttackWeight
+            str  w4, [sp, EvalInfo.kingAttackersWeight + 4*Us]
 
-                ldr  x0, [sp, EvalInfo.attackedBy + 8*(8*Them + King)]
-                and  x0, x0, x9
-             Popcnt  x0, x0, x1
+            ldr  x0, [sp, EvalInfo.attackedBy + 8*(8*Them + King)]
+            and  x0, x0, x9
+         Popcnt  x0, x0, x1
 
-                ldr  w4, [sp, EvalInfo.kingAdjacentZoneAttacksCount + 4*Us]
-                add  w4, w4, w0
-                str  w4, [sp, EvalInfo.kingAdjacentZoneAttacksCount + 4*Us]
+            ldr  w4, [sp, EvalInfo.kingAdjacentZoneAttacksCount + 4*Us]
+            add  w4, w4, w0
+            str  w4, [sp, EvalInfo.kingAdjacentZoneAttacksCount + 4*Us]
 NoKingRing:
 
-                ldr  x0, [sp, EvalInfo.mobilityArea + 8*Us]
-                and  x0, x0, x9
-             Popcnt  x10, x0, x1
-                lea  x6, MobilityBonus
-                ldr  w4, [x6, x10, lsl 2]
-             AddSub  Us, w26, w26, w4
+            ldr  x0, [sp, EvalInfo.mobilityArea + 8*Us]
+            and  x0, x0, x9
+         Popcnt  x10, x0, x1
+           _lea  x6, MobilityBonus
+            ldr  w4, [x6, x10, lsl 2]
+         AddSub  Us, w26, w26, w4
 
-                lea  x6, SquareDistance
-                add  x4, x24, x8, lsl 6
-               ldrb  w0, [x6, x4]
-              mov32  w4, KingProtector_Pt
-                mul  w0, w0, w4
-             AddSub  Us, w26, w26, w0
+           _lea  x6, SquareDistance
+            add  x4, x24, x8, lsl 6
+           ldrb  w0, [x6, x4]
+          mov32  w4, KingProtector_Pt
+            mul  w0, w0, w4
+         AddSub  Us, w26, w26, w0
 
   if Pt = Knight | Pt = Bishop
 
-        ; Bonus when behind a pawn
+    ; Bonus when behind a pawn
     if Us = White
-                cmp  w24, SQ_A5
-                bhs  NoBehindPawnBonus
+            cmp  w24, SQ_A5
+            bhs  NoBehindPawnBonus
     else
-                cmp  w24, SQ_A5
-                blo  NoBehindPawnBonus
+            cmp  w24, SQ_A5
+            blo  NoBehindPawnBonus
     end if
 
-                ldr  x0, [x20, Pos.typeBB + 8*Pawn]
-                add  w1, w24, 8*(Them - Us)
-                mov  x4, 1
-                lsl  x4, x4, x1
-                tst  x0, x4
-              mov32  w4, MinorBehindPawn
-                AddSub  Us, w4, w26, w4
-               csel  w26, w4, w26, ne
+            ldr  x0, [x20, Pos.typeBB + 8*Pawn]
+            add  w1, w24, 8*(Them - Us)
+            mov  x4, 1
+            lsl  x4, x4, x1
+            tst  x0, x4
+          mov32  w4, MinorBehindPawn
+         AddSub  Us, w4, w26, w4
+           csel  w26, w4, w26, ne
 NoBehindPawnBonus:
-        ; Bonus for outpost squares
-              mov64  x0, OutpostRanks
-                ldr  x1, [x27, PawnEntry.pawnAttacksSpan + 8*Them]
-                mov  x2, x11
-                bic  x1, x0, x1
-                ldr  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
-                mov  x4, 1
-                lsl  x4, x4, x24
-                tst  x1, x4
-                beq  OutpostElse
-              mov32  w5, Outpost1
-              mov32  w4, Outpost0
-             AddSub  Us, w1, w26, w5, 1
-             AddSub  Us, w26, w26, w4, 1
-                mov  x4, 1
-                lsl  x4, x4, x24
-                tst  x0, x4
-               csel  w26, w1, w26, ne
-                  b  OutpostDone
+    ; Bonus for outpost squares
+          mov64  x0, OutpostRanks
+            ldr  x1, [x27, PawnEntry.pawnAttacksSpan + 8*Them]
+            mov  x2, x11
+            bic  x1, x0, x1
+            ldr  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
+            mov  x4, 1
+            lsl  x4, x4, x24
+            tst  x1, x4
+            beq  OutpostElse
+          mov32  w5, Outpost1
+          mov32  w4, Outpost0
+         AddSub  Us, w1, w26, w5, 1
+         AddSub  Us, w26, w26, w4, 1
+            mov  x4, 1
+            lsl  x4, x4, x24
+            tst  x0, x4
+           csel  w26, w1, w26, ne
+              b  OutpostDone
 OutpostElse:
-                bic  x2, x1, x2
-               ands  x2, x2, x9
-                beq  OutpostDone
-              mov32  w5, Outpost1
-              mov32  w4, Outpost0
-             AddSub  Us, w1, w26, w5
-             AddSub  Us, w26, w26, w4
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
-                tst  x2, x4
-               csel  w26, w1, w26, ne
+            bic  x2, x1, x2
+           ands  x2, x2, x9
+            beq  OutpostDone
+          mov32  w5, Outpost1
+          mov32  w4, Outpost0
+         AddSub  Us, w1, w26, w5
+         AddSub  Us, w26, w26, w4
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
+            tst  x2, x4
+           csel  w26, w1, w26, ne
 OutpostDone:
 
 
         ; Penalty for pawns on the same color square as the bishop
     if Pt = Bishop
-              mov64  x0, DarkSquares
-                mov  x4, 1
-                lsl  x4, x4, x24
-                tst  x0, x4
-               cinc  x1, x27, ne
-               ldrb  w0, [x1, PawnEntry.pawnsOnSquares + 2*Us]
-              mov32  w4, BishopPawns
-                mul  w0, w0, w4
-             AddSub  Them, w26, w26, w0
+          mov64  x0, DarkSquares
+            mov  x4, 1
+            lsl  x4, x4, x24
+            tst  x0, x4
+           cinc  x1, x27, ne
+           ldrb  w0, [x1, PawnEntry.pawnsOnSquares + 2*Us]
+          mov32  w4, BishopPawns
+            mul  w0, w0, w4
+         AddSub  Them, w26, w26, w0
     end if
 
  else if Pt = Rook
 
     if Us = White
-                cmp  w24, SQ_A5
-                blo  NoEnemyPawnBonus
+            cmp  w24, SQ_A5
+            blo  NoEnemyPawnBonus
     else
-                cmp  w24, SQ_A5
-                bhs  NoEnemyPawnBonus
+            cmp  w24, SQ_A5
+            bhs  NoEnemyPawnBonus
     end if
-                ldr  x0, [x20, Pos.typeBB + 8*Them]
-                ldr  x4, [x20, Pos.typeBB + 8*Pawn]
-                and  x0, x0, x4
-                lea  x6, RookAttacksPDEP
-                ldr  x4, [x6, x24, lsl 3]
-                and  x0, x0, x4
-             Popcnt  x0, x0, x1
-              mov32  w4, RookOnPawn
-                mul  w0, w0, w4
-             AddSub  Us, w26, w26, w0
+            ldr  x0, [x20, Pos.typeBB + 8*Them]
+            ldr  x4, [x20, Pos.typeBB + 8*Pawn]
+            and  x0, x0, x4
+           _lea  x6, RookAttacksPDEP
+            ldr  x4, [x6, x24, lsl 3]
+            and  x0, x0, x4
+         Popcnt  x0, x0, x1
+          mov32  w4, RookOnPawn
+            mul  w0, w0, w4
+         AddSub  Us, w26, w26, w0
 NoEnemyPawnBonus:
 
-                and  w1, w24, 7
-               ldrb  w0, [x27, PawnEntry.semiopenFiles + 1*Us]
-               ldrb  w2, [x27, PawnEntry.semiopenFiles + 1*Them]
-                mov  w4, 1
-                lsl  w4, w4, w1
-                tst  w0, w4
-                beq  NoOpenFileBonus
-                mov  w4, 1
-                lsl  w4, w4, w1
-                tst  w2, w4
-              mov32  w5, RookOnFile1
-              mov32  w4, RookOnFile0
-             AddSub  Us, w0, w26, w5
-             AddSub  Us, w26, w26, w4
-               csel  w26, w0, w26, ne
-                  b  NoTrappedByKing
+            and  w1, w24, 7
+           ldrb  w0, [x27, PawnEntry.semiopenFiles + 1*Us]
+           ldrb  w2, [x27, PawnEntry.semiopenFiles + 1*Them]
+            mov  w4, 1
+            lsl  w4, w4, w1
+            tst  w0, w4
+            beq  NoOpenFileBonus
+            mov  w4, 1
+            lsl  w4, w4, w1
+            tst  w2, w4
+          mov32  w5, RookOnFile1
+          mov32  w4, RookOnFile0
+         AddSub  Us, w0, w26, w5
+         AddSub  Us, w26, w26, w4
+           csel  w26, w0, w26, ne
+              b  NoTrappedByKing
 NoOpenFileBonus:
 
-                and  w1, w24, 7
-                mov  w0, w8
-                cmp  w10, 4
-                bhs  NoTrappedByKing
-                mov  w2, w0
-                and  w0, w0, 7
-                sub  w1, w1, w0
-                sub  w0, w0, 4
-                eor  w1, w1, w0
-               tbnz  w1, 31, NoTrappedByKing
-                and  w1, w8, 7
-                mov  w2, w1
-                and  w0, w24, 7
-                sub  w1, w1, w0
-                sub  w1, w1, 1
-                asr  w1, w1, 31
-                sub  w2, w2, w1
-                mov  w0, 1
-                lsl  w0, w0, w2
-                sub  w0, w0, 1
-                eor  w0, w0, w1
-               ldrb  w4, [x27, PawnEntry.semiopenFiles + 1*Us]
-                tst  w0, w4
-                bne  NoTrappedByKing
-               ldrb  w0, [x21, State.castlingRights]
-                tst  w0, 3 shl (2*Us)
-                mov  w4, 1
-               cinc  w0, w4, eq
-                mov  w4, 22*65536
-                mul  w10, w10, w4
-              mov32  w4, TrappedRook
-                sub  w10, w10, w4
-                mul  w10, w10, w0
-             AddSub  Us, w26, w26, w10
+            and  w1, w24, 7
+            mov  w0, w8
+            cmp  w10, 4
+            bhs  NoTrappedByKing
+            mov  w2, w0
+            and  w0, w0, 7
+            sub  w1, w1, w0
+            sub  w0, w0, 4
+            eor  w1, w1, w0
+           tbnz  w1, 31, NoTrappedByKing
+            and  w1, w8, 7
+            mov  w2, w1
+            and  w0, w24, 7
+            sub  w1, w1, w0
+            sub  w1, w1, 1
+            asr  w1, w1, 31
+            sub  w2, w2, w1
+            mov  w0, 1
+            lsl  w0, w0, w2
+            sub  w0, w0, 1
+            eor  w0, w0, w1
+           ldrb  w4, [x27, PawnEntry.semiopenFiles + 1*Us]
+            tst  w0, w4
+            bne  NoTrappedByKing
+           ldrb  w0, [x21, State.castlingRights]
+            tst  w0, 3 shl (2*Us)
+            mov  w4, 1
+           cinc  w0, w4, eq
+            mov  w4, 22*65536
+            mul  w10, w10, w4
+          mov32  w4, TrappedRook
+            sub  w10, w10, w4
+            mul  w10, w10, w0
+         AddSub  Us, w26, w26, w10
 NoTrappedByKing:
 
  else if Pt = Queen
 
-                mov  w2, 0
-                mov  x0, x22
-                ldr  x4, [x20, Pos.typeBB + 8*Rook]
-                orr  x0, x0, x4
-                lea  x6, RookAttacksPDEP
-                ldr  x4, [x6, x24, lsl 3]
-                and  x0, x0, x4
-                mov  x1, x22
-                ldr  x4, [x20, Pos.typeBB + 8*Bishop]
-                orr  x1, x1, x4
-                lea  x6, BishopAttacksPDEP
-                ldr  x4, [x6, x24, lsl 3]
-                and  x1, x1, x4
-                orr  x0, x0, x1
-                ldr  x9, [x20, Pos.typeBB + 8*Rook]
-                ldr  x4, [x20, Pos.typeBB + 8*Bishop]
-                orr  x9, x9, x4
-                ldr  x4, [x20, Pos.typeBB + 8*Them]
-                and  x9, x9, x4
-               ands  x0, x0, x9
-                beq  SkipQueenPin
-                lsl  w24, w24, 9
-               rbit  x1, x0
-                clz  x1, x1
+            mov  w2, 0
+            mov  x0, x22
+            ldr  x4, [x20, Pos.typeBB + 8*Rook]
+            orr  x0, x0, x4
+           _lea  x6, RookAttacksPDEP
+            ldr  x4, [x6, x24, lsl 3]
+            and  x0, x0, x4
+            mov  x1, x22
+            ldr  x4, [x20, Pos.typeBB + 8*Bishop]
+            orr  x1, x1, x4
+           _lea  x6, BishopAttacksPDEP
+            ldr  x4, [x6, x24, lsl 3]
+            and  x1, x1, x4
+            orr  x0, x0, x1
+            ldr  x9, [x20, Pos.typeBB + 8*Rook]
+            ldr  x4, [x20, Pos.typeBB + 8*Bishop]
+            orr  x9, x9, x4
+            ldr  x4, [x20, Pos.typeBB + 8*Them]
+            and  x9, x9, x4
+           ands  x0, x0, x9
+            beq  SkipQueenPin
+            lsl  w24, w24, 9
+           rbit  x1, x0
+            clz  x1, x1
 QueenPinLoop:
-                lea  x6, BetweenBB
-                add  x6, x6, x24
-                ldr  x1, [x6, x1, lsl 3]
-                sub  x9, x0, 1
-                and  x0, x0, x9
-                and  x1, x1, x23
-                sub  x8, x1, 1
-               ands  x8, x8, x1
-              csetm  x8, ne
-                bic  x1, x1, x8
-                orr  x2, x2, x1
-               rbit  x1, x0
-                clz  x1, x1
-               cbnz  x0, QueenPinLoop     
-                tst  x2, x23
-              mov32  w4, WeakQueen
-             AddSub  Them, w0, w26, w4
-               csel  w26, w0, w26, ne
+           _lea  x6, BetweenBB
+            add  x6, x6, x24
+            ldr  x1, [x6, x1, lsl 3]
+            sub  x9, x0, 1
+            and  x0, x0, x9
+            and  x1, x1, x23
+            sub  x8, x1, 1
+           ands  x8, x8, x1
+          csetm  x8, ne
+            bic  x1, x1, x8
+            orr  x2, x2, x1
+           rbit  x1, x0
+            clz  x1, x1
+           cbnz  x0, QueenPinLoop     
+            tst  x2, x23
+          mov32  w4, WeakQueen
+         AddSub  Them, w0, w26, w4
+           csel  w26, w0, w26, ne
 SkipQueenPin:
-
  end if
-
-               ldrb  w24, [x25]
-                cmp  w24, 64
-                blo  NextPiece
+           ldrb  w24, [x25]
+            cmp  w24, 64
+            blo  NextPiece
 AllDone:
 
 end macro
@@ -469,289 +462,284 @@ macro EvalKing Us
 	KnightCheck	  = 790
 
 
-                ldr  w1, [sp, EvalInfo.ksq + 4*Us]
-                mov  w11, w1
-        ; w11 = our king square
-               ldrb  w0, [x21, State.castlingRights]
-               ldrb  w2, [x27, PawnEntry.castlingRights]
-                ldr  w26, [x27, PawnEntry.kingSafety + 4*Us]
-               ldrb  w4, [x27, PawnEntry.kingSquares + 1*Us]
-                cmp  w1, w4
-                bne  DoKingSafety
-                eor  w0, w0, w2
-                tst  w0, 3 shl (2*Us)
-                bne  DoKingSafety
+            ldr  w1, [sp, EvalInfo.ksq + 4*Us]
+            mov  w11, w1
+    ; w11 = our king square
+           ldrb  w0, [x21, State.castlingRights]
+           ldrb  w2, [x27, PawnEntry.castlingRights]
+            ldr  w26, [x27, PawnEntry.kingSafety + 4*Us]
+           ldrb  w4, [x27, PawnEntry.kingSquares + 1*Us]
+            cmp  w1, w4
+            bne  DoKingSafety
+            eor  w0, w0, w2
+            tst  w0, 3 shl (2*Us)
+            bne  DoKingSafety
 KingSafetyDoneRet:
 
-                ldr  w27, [sp, EvalInfo.kingAttackersCount + 4*Them]
-               ldrb  w1, [x20, Pos.pieceEnd + (8*Them + Queen)]
-                and  w1, w1, 15
-                add  w1, w1, w27
+            ldr  w27, [sp, EvalInfo.kingAttackersCount + 4*Them]
+           ldrb  w1, [x20, Pos.pieceEnd + (8*Them + Queen)]
+            and  w1, w1, 15
+            add  w1, w1, w27
 
-                ldr  x8, [sp, EvalInfo.attackedBy2 + 8*Us]
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + King)]
-                bic  x8, x4, x8
-                and  x8, x8, AttackedByThem
-        ; x8=undefended
+            ldr  x8, [sp, EvalInfo.attackedBy2 + 8*Us]
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + King)]
+            bic  x8, x4, x8
+            and  x8, x8, AttackedByThem
+    ; x8=undefended
 
-                orr  x9, PiecesThem, AttackedByUs
-                ldr  x4, [sp, EvalInfo.kingRing + 8*Us]
-                bic  x9, x4, x9
-                and  x9, x9, AttackedByThem
-        ; x9=b
+            orr  x9, PiecesThem, AttackedByUs
+            ldr  x4, [sp, EvalInfo.kingRing + 8*Us]
+            bic  x9, x4, x9
+            and  x9, x9, AttackedByThem
+    ; x9=b
 
-                cmp  w1, 2
-                blo  AllDone
+            cmp  w1, 2
+            blo  AllDone
 
-                ldr  w4, [sp, EvalInfo.kingAttackersWeight + 4*Them]
-                mul  w27, w27, w4
-                mov  w0, 102
-                ldr  w4, [sp, EvalInfo.kingAdjacentZoneAttacksCount+4*Them]
-                mul  w0, w0, w4
-                add  w27, w27, w0
-                Popcnt  x0, x8, x1
-                mov  w4, 201
-                mul  w0, w0, w4
-                add  w27, w27, w0
-                Popcnt  x0, x9, x1
-                ldr  x2, [sp, EvalInfo.pinnedPieces + 8*Us]
-                tst  x2, x2
-               cinc  w0, w0, ne
-                mov  w4, 143
-                mul  w0, w0, w4
-                add  w27, w27, w0
-                ldr  x4, [x20, Pos.typeBB + 8*Queen]
-                tst  PiecesThem, x4
-                sub  w0, w27, 848
-               csel  w27, w0, w27, eq
-        ; the following does w27 += - 9*mg_value(score)/8 + 40
-               adds  w1, w26, 0x08000
-                asr  w1, w1, 16
-                add  w0, w1, w1, lsl 3
-                add  w27, w27, 40
-                add  w2, w0, 7
-               csel  w0, w2, w0, mi
-                sub  w27, w27, w0, asr 3
-        ; w27 = kingDanger
-                ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Them]
-                and  x8, x8, x4
-                bic  x8, AttackedByUs, x8
-                orr  x8, x8, PiecesThem
-                mvn  x8, x8
-        ; x8 = safe
+            ldr  w4, [sp, EvalInfo.kingAttackersWeight + 4*Them]
+            mul  w27, w27, w4
+            mov  w0, 102
+            ldr  w4, [sp, EvalInfo.kingAdjacentZoneAttacksCount+4*Them]
+            mul  w0, w0, w4
+            add  w27, w27, w0
+            Popcnt  x0, x8, x1
+            mov  w4, 201
+            mul  w0, w0, w4
+            add  w27, w27, w0
+            Popcnt  x0, x9, x1
+            ldr  x2, [sp, EvalInfo.pinnedPieces + 8*Us]
+            tst  x2, x2
+           cinc  w0, w0, ne
+            mov  w4, 143
+            mul  w0, w0, w4
+            add  w27, w27, w0
+            ldr  x4, [x20, Pos.typeBB + 8*Queen]
+            tst  PiecesThem, x4
+            sub  w0, w27, 848
+           csel  w27, w0, w27, eq
+    ; the following does w27 += - 9*mg_value(score)/8 + 40
+           adds  w1, w26, 0x08000
+            asr  w1, w1, 16
+            add  w0, w1, w1, lsl 3
+            add  w27, w27, 40
+            add  w2, w0, 7
+           csel  w0, w2, w0, mi
+            sub  w27, w27, w0, asr 3
+    ; w27 = kingDanger
+            ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Them]
+            and  x8, x8, x4
+            bic  x8, AttackedByUs, x8
+            orr  x8, x8, PiecesThem
+            mvn  x8, x8
+    ; x8 = safe
 
-                ldr  x9, [x20, Pos.typeBB + 8*Pawn]
-                and  x0, PiecesThem, x9
-            ShiftBB  Up, x9, x9
-                and  x9, x9, x0
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
-                orr  x9, x9, x4
-                mvn  x9, x9
-        ; x9 = other
+            ldr  x9, [x20, Pos.typeBB + 8*Pawn]
+            and  x0, PiecesThem, x9
+        ShiftBB  Up, x9, x9
+            and  x9, x9, x0
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
+            orr  x9, x9, x4
+            mvn  x9, x9
+    ; x9 = other
 
-                eor  PiecesUs, PiecesUs, PiecesThem
-                RookAttacks  x10, x11, PiecesUs, x0, x4
-        ; x10 = b1 = pos.attacks_from<ROOK  >(ksq)
-                BishopAttacks  x2, x11, PiecesUs, x0, x4
-        ; r2 = b1 = pos.attacks_from<BISHOP>(ksq)
-                eor  PiecesUs, PiecesUs, PiecesThem
+            eor  PiecesUs, PiecesUs, PiecesThem
+            RookAttacks  x10, x11, PiecesUs, x0, x4
+    ; x10 = b1 = pos.attacks_from<ROOK  >(ksq)
+            BishopAttacks  x2, x11, PiecesUs, x0, x4
+    ; r2 = b1 = pos.attacks_from<BISHOP>(ksq)
+            eor  PiecesUs, PiecesUs, PiecesThem
 
-        ; Enemy queen safe checks
-                orr  x0, x10, x2
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + Queen)]
-                and  x0, x0, x4
-               ands  x0, x0, x8
-              mov32  w4, QueenCheck
-                add  w1, w27, w4
-               csel  w27, w1, w27, ne
+    ; Enemy queen safe checks
+            orr  x0, x10, x2
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + Queen)]
+            and  x0, x0, x4
+           ands  x0, x0, x8
+          mov32  w4, QueenCheck
+            add  w1, w27, w4
+           csel  w27, w1, w27, ne
 
-        ; For other pieces, also consider the square safe if attacked twice,
-        ; and only defended by a queen.
-                mov  x0, PiecesThem
-                ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Us]
-                orr  x0, x0, x4
-                mvn  x0, x0
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Queen)]
-                and  x0, x0, x4
-                ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Them]
-                and  x0, x0, x4
-        ; x8 = safe
-                orr  x8, x8, x0
+    ; For other pieces, also consider the square safe if attacked twice,
+    ; and only defended by a queen.
+            mov  x0, PiecesThem
+            ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Us]
+            orr  x0, x0, x4
+            mvn  x0, x0
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Queen)]
+            and  x0, x0, x4
+            ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Them]
+            and  x0, x0, x4
+    ; x8 = safe
+            orr  x8, x8, x0
 
-        ; x10 = b1 & ei.attackedBy[Them][ROOK]
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + Rook)]
-                and  x10, x10, x4
-        ; x2 = b1 & ei.attackedBy[Them][BISHOP]
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + Bishop)]
-                and  x2, x2, x4
-                lea  x6, KnightAttacks
-                ldr  x1, [x6, x11, lsl 3]
-        ; x1 = b
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + Knight)]
-                and  x1, x1, x4
+    ; x10 = b1 & ei.attackedBy[Them][ROOK]
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + Rook)]
+            and  x10, x10, x4
+    ; x2 = b1 & ei.attackedBy[Them][BISHOP]
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + Bishop)]
+            and  x2, x2, x4
+           _lea  x6, KnightAttacks
+            ldr  x1, [x6, x11, lsl 3]
+    ; x1 = b
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + Knight)]
+            and  x1, x1, x4
 
-        ; Enemy rooks safe and other checks
-                tst  x10, x8
-              mov32  w4, RookCheck
-                add  w0, w27, w4
-               csel  w27, w0, w27, ne
-                bne  RookDone
-                tst  x10, x9
-              mov32  w4, OtherCheck
-                sub  w0, w26, w4
-               csel  w26, w0, w26, ne
+    ; Enemy rooks safe and other checks
+            tst  x10, x8
+          mov32  w4, RookCheck
+            add  w0, w27, w4
+           csel  w27, w0, w27, ne
+            bne  RookDone
+            tst  x10, x9
+          mov32  w4, OtherCheck
+            sub  w0, w26, w4
+           csel  w26, w0, w26, ne
 RookDone:
-        ; Enemy bishops safe and other checks
-                tst  x2, x8
-              mov32  w4, BishopCheck
-                add  w0, w27, w4
-               csel  w27, w0, w27, ne
-                bne  BishopDone
-                tst  x2, x9
-              mov32  w4, OtherCheck
-                sub  w0, w26, w4
-               csel  w26, w0, w26, ne
+    ; Enemy bishops safe and other checks
+            tst  x2, x8
+          mov32  w4, BishopCheck
+            add  w0, w27, w4
+           csel  w27, w0, w27, ne
+            bne  BishopDone
+            tst  x2, x9
+          mov32  w4, OtherCheck
+            sub  w0, w26, w4
+           csel  w26, w0, w26, ne
 BishopDone:
-
-        ; Enemy knights safe and other checks
-                tst  x1, x8
-              mov32  w4, KnightCheck
-                add  w0, w27, w4
-               csel  w27, w0, w27, ne
-                bne  KnightDone
-                tst  x1, x9
-              mov32  w4, OtherCheck
-                sub  w0, w26, w4
-               csel  w26, w0, w26, ne
+    ; Enemy knights safe and other checks
+            tst  x1, x8
+          mov32  w4, KnightCheck
+            add  w0, w27, w4
+           csel  w27, w0, w27, ne
+            bne  KnightDone
+            tst  x1, x9
+          mov32  w4, OtherCheck
+            sub  w0, w26, w4
+           csel  w26, w0, w26, ne
 KnightDone:
-
-        ; Compute the king danger score and subtract it from the evaluation
-               tbnz  w27, 31, AllDone
-                sub  w26, w26, w27, lsr 4
-                mul  w27, w27, w27
-                lsr  w27, w27, 12
-                sub  w26, w26, w27, lsl 16
-                  b  AllDone
+    ; Compute the king danger score and subtract it from the evaluation
+           tbnz  w27, 31, AllDone
+            sub  w26, w26, w27, lsr 4
+            mul  w27, w27, w27
+            lsr  w27, w27, 12
+            sub  w26, w26, w27, lsl 16
+              b  AllDone
 
 DoKingSafety:
-        ; rdi = address of PawnEntry
-                ldr  w1, [sp, EvalInfo.ksq + 4*Us]
-               ldrb  w0, [x21, State.castlingRights]
-               ldrb  w2, [x27, PawnEntry.castlingRights]
-                and  w0, w0, 3 shl (2*Us)
-                and  w2, w2, 3 shl (2*Them)
-                add  w2, w2, w0
-               strb  w1, [x27, PawnEntry.kingSquares + 1*Us]
-               strb  w2, [x27, PawnEntry.castlingRights]
+    ; rdi = address of PawnEntry
+            ldr  w1, [sp, EvalInfo.ksq + 4*Us]
+           ldrb  w0, [x21, State.castlingRights]
+           ldrb  w2, [x27, PawnEntry.castlingRights]
+            and  w0, w0, 3 shl (2*Us)
+            and  w2, w2, 3 shl (2*Them)
+            add  w2, w2, w0
+           strb  w1, [x27, PawnEntry.kingSquares + 1*Us]
+           strb  w2, [x27, PawnEntry.castlingRights]
 
-                 bl  ShelterStorm#Us
-                mov  w26, w0
-                mov  w1, SQ_G1 + Us*(SQ_G8 - SQ_G1)
-                ldr  w4, [x21, State.castlingRights]
-                tst  w4, 1 shl (2*Us + 0)
-                beq  NoKingSide
-                 bl  ShelterStorm#Us
+             bl  ShelterStorm#Us
+            mov  w26, w0
+            mov  w1, SQ_G1 + Us*(SQ_G8 - SQ_G1)
+            ldr  w4, [x21, State.castlingRights]
+            tst  w4, 1 shl (2*Us + 0)
+            beq  NoKingSide
+             bl  ShelterStorm#Us
 
-                cmp  w26, w0
-               csel  w26, w0, w26, lt
+            cmp  w26, w0
+           csel  w26, w0, w26, lt
 NoKingSide:
-                mov  w1, SQ_C1 + Us*(SQ_C8 - SQ_C1)
-                ldr  w4, [x21, State.castlingRights]
-                tst  w4, 1 shl (2*Us + 1)
-                beq  NoQueenSide
-                 bl  ShelterStorm#Us
-                cmp  w26, w0
-               csel  w26, w0, w26, lt
+            mov  w1, SQ_C1 + Us*(SQ_C8 - SQ_C1)
+            ldr  w4, [x21, State.castlingRights]
+            tst  w4, 1 shl (2*Us + 1)
+            beq  NoQueenSide
+             bl  ShelterStorm#Us
+            cmp  w26, w0
+           csel  w26, w0, w26, lt
 NoQueenSide:
-        ; esi = score
-                lsl  w26, w26, 16
-                lea  x1, DistanceRingBB
-                add  x1, x1, x11, lsl 6
-                ldr  x27, [sp, EvalInfo.pi]
-                ldr  x2, [x20, Pos.typeBB + 8*Pawn]
-               ands  x2, x2, PiecesUs
-                str  w26, [x27, PawnEntry.kingSafety + 4*Us]
-                beq  KingSafetyDoneRet
-                sub  w26, w26, 16
-                str  w26, [x27, PawnEntry.kingSafety + 4*Us]
-                ldr  x4, [x1, 8*0]
-                tst  x2, x4
-                bne  KingSafetyDoneRet
-                sub  w26, w26, 16
-                str  w26, [x27, PawnEntry.kingSafety + 4*Us]
-                ldr  x4, [x1, 8*1]
-                tst  x2, x4
-                bne  KingSafetyDoneRet
-                sub  w26, w26, 16
-                str  w26, [x27, PawnEntry.kingSafety + 4*Us]
-                ldr  x4, [x1, 8*2]
-                tst  x2, x4
-                bne  KingSafetyDoneRet
-                sub  w26, w26, 16
-                str  w26, [x27, PawnEntry.kingSafety + 4*Us]
-                ldr  x4, [x1, 8*3]
-                tst  x2, x4
-                bne  KingSafetyDoneRet
-                sub  w26, w26, 16
-                str  w26, [x27, PawnEntry.kingSafety + 4*Us]
-                ldr  x4, [x1, 8*4]
-                tst  x2, x4
-                bne  KingSafetyDoneRet
-                sub  w26, w26, 16
-                str  w26, [x27, PawnEntry.kingSafety + 4*Us]
-                ldr  x4, [x1, 8*5]
-                tst  x2, x4
-                bne  KingSafetyDoneRet
-                sub  w26, w26, 16
-                str  w26, [x27, PawnEntry.kingSafety + 4*Us]
-                ldr  x4, [x1, 8*6]
-                tst  x2, x4
-                bne  KingSafetyDoneRet
-                sub  w26, w26, 16
-                str  w26, [x27, PawnEntry.kingSafety + 4*Us]
-                  b  KingSafetyDoneRet
-
+    ; esi = score
+            lsl  w26, w26, 16
+           _lea  x1, DistanceRingBB
+            add  x1, x1, x11, lsl 6
+            ldr  x27, [sp, EvalInfo.pi]
+            ldr  x2, [x20, Pos.typeBB + 8*Pawn]
+           ands  x2, x2, PiecesUs
+            str  w26, [x27, PawnEntry.kingSafety + 4*Us]
+            beq  KingSafetyDoneRet
+            sub  w26, w26, 16
+            str  w26, [x27, PawnEntry.kingSafety + 4*Us]
+            ldr  x4, [x1, 8*0]
+            tst  x2, x4
+            bne  KingSafetyDoneRet
+            sub  w26, w26, 16
+            str  w26, [x27, PawnEntry.kingSafety + 4*Us]
+            ldr  x4, [x1, 8*1]
+            tst  x2, x4
+            bne  KingSafetyDoneRet
+            sub  w26, w26, 16
+            str  w26, [x27, PawnEntry.kingSafety + 4*Us]
+            ldr  x4, [x1, 8*2]
+            tst  x2, x4
+            bne  KingSafetyDoneRet
+            sub  w26, w26, 16
+            str  w26, [x27, PawnEntry.kingSafety + 4*Us]
+            ldr  x4, [x1, 8*3]
+            tst  x2, x4
+            bne  KingSafetyDoneRet
+            sub  w26, w26, 16
+            str  w26, [x27, PawnEntry.kingSafety + 4*Us]
+            ldr  x4, [x1, 8*4]
+            tst  x2, x4
+            bne  KingSafetyDoneRet
+            sub  w26, w26, 16
+            str  w26, [x27, PawnEntry.kingSafety + 4*Us]
+            ldr  x4, [x1, 8*5]
+            tst  x2, x4
+            bne  KingSafetyDoneRet
+            sub  w26, w26, 16
+            str  w26, [x27, PawnEntry.kingSafety + 4*Us]
+            ldr  x4, [x1, 8*6]
+            tst  x2, x4
+            bne  KingSafetyDoneRet
+            sub  w26, w26, 16
+            str  w26, [x27, PawnEntry.kingSafety + 4*Us]
+              b  KingSafetyDoneRet
 AllDone:
+            and  w11, w11, 7
+    ; w11 = KingFlank[kf]   ksq is not used anymore
+           _lea  x6, KingFlank
+            ldr  x11, [x6, x11, lsl 3]
 
-                and  w11, w11, 7
-        ; w11 = KingFlank[kf]   ksq is not used anymore
-                lea  x6, KingFlank
-                ldr  x11, [x6, x11, lsl 3]
+          mov64  x0, Camp
+            and  x0, x0, x11
+            and  x0, x0, AttackedByThem
 
-              mov64  x0, Camp
-                and  x0, x0, x11
-                and  x0, x0, AttackedByThem
+            ldr  x27, [sp, EvalInfo.pi]
 
-                ldr  x27, [sp, EvalInfo.pi]
+            ldr  x4, [x20, Pos.typeBB + 8*Pawn]
+            tst  x11, x4
+          mov32  w4, PawnlessFlank
+            sub  w1, w26, w4
+           csel  w26, w1, w26, eq
 
-                ldr  x4, [x20, Pos.typeBB + 8*Pawn]
-                tst  x11, x4
-              mov32  w4, PawnlessFlank
-                sub  w1, w26, w4
-               csel  w26, w1, w26, eq
-
-                ldr  x2, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
-                mvn  x2, x2
-                ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Them]
-                and  x2, x2, x4
-                and  x2, x2, x0
+            ldr  x2, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
+            mvn  x2, x2
+            ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Them]
+            and  x2, x2, x4
+            and  x2, x2, x0
   if Us = White
-                lsl  x0, x0, 4
+            lsl  x0, x0, 4
   else if  Us = Black
-                lsr  x0, x0, 4
+            lsr  x0, x0, 4
   else
         err "bad color in EvalKing"
   end if
-                orr  x0, x0, x2
-                Popcnt  x0, x0, x9
-              mov32  w4, CloseEnemies
-                mul  w0, w0, w4
-                sub  w26, w26, w0
+            orr  x0, x0, x2
+        _popcnt  x0, x0, x9
+          mov32  w4, CloseEnemies
+            mul  w0, w0, w4
+            sub  w26, w26, w0
 
-                ldr  w4, [sp, EvalInfo.score]
-             AddSub  Us, w4, w4, w26
-                str  w4, [sp, EvalInfo.score]
-
+            ldr  w4, [sp, EvalInfo.score]
+         AddSub  Us, w4, w4, w26
+            str  w4, [sp, EvalInfo.score]
 end macro
 
 
@@ -763,145 +751,136 @@ macro ShelterStorm Us
 ;
 
  if Us = White
-        Them = Black
-        Up = DELTA_N
+    Them = Black
+    Up = DELTA_N
 	PiecesUs   = x24
 	PiecesThem = x25
  else
-        Them = White
-        Up = DELTA_S
+    Them = White
+    Up = DELTA_S
 	PiecesUs   = x25
 	PiecesThem = x24
  end if
 
 	MaxSafetyBonus = 258
 
-                stp  x26, x27, [sp, -16]!
-                stp  x11, x22, [sp, -16]!
-                stp  x23, x30, [sp, -16]!
+            stp  x26, x27, [sp, -16]!
+            stp  x11, x22, [sp, -16]!
+            stp  x23, x30, [sp, -16]!
 
-        ; ecx = ksq
-                lsr  w23, w1, 3
-                lea  x6, InFrontBB + 8*(8*Us)
-                ldr  x8, [x6, x23, lsl 3]
-                lea  x6, RankBB
-                ldr  x4, [x6, x23, lsl 3]
-                orr  x8, x8, x4
-                ldr  x4, [x20, Pos.typeBB + 8*Pawn]
-                and  x8, x8, x4
+    ; ecx = ksq
+            lsr  w23, w1, 3
+           _lea  x6, InFrontBB + 8*(8*Us)
+            ldr  x8, [x6, x23, lsl 3]
+           _lea  x6, RankBB
+            ldr  x4, [x6, x23, lsl 3]
+            orr  x8, x8, x4
+            ldr  x4, [x20, Pos.typeBB + 8*Pawn]
+            and  x8, x8, x4
 
-        ; r8 = b
-                and  x9, PiecesUs, x8
-        ; r9 = ourPawns
-                and  x10, PiecesThem, x8
-        ; r10 = theirPawns
-        ; w0 = saftey
-                mov  w0, MaxSafetyBonus
+    ; r8 = b
+            and  x9, PiecesUs, x8
+    ; r9 = ourPawns
+            and  x10, PiecesThem, x8
+    ; r10 = theirPawns
+    ; w0 = saftey
+            mov  w0, MaxSafetyBonus
   if Us = Black
-                eor  w23, w23, 7
+            eor  w23, w23, 7
   end if
-        ; w23 = relative_rank(Us, ksq)+1
-                add  w23, w23, 1
-        ; w1 = file of ksq
-                and  w1, w1, 7
-                mov  w4, 13
-                mov  w5, 2
-               madd  w22, w1, w4, w5
-        ; w22 = max(FILE_B, min(FILE_G, ecx))-1
-                lsr  w22, w22, 4
+    ; w23 = relative_rank(Us, ksq)+1
+            add  w23, w23, 1
+    ; w1 = file of ksq
+            and  w1, w1, 7
+            mov  w4, 13
+            mov  w5, 2
+           madd  w22, w1, w4, w5
+    ; w22 = max(FILE_B, min(FILE_G, ecx))-1
+            lsr  w22, w22, 4
 
-  macro ShelterStormAcc
-    local AddStormDanger, TryNext
+  repeat 3
+    if Us = White
+            mov  w2, 0
+           _lea  x6, FileBB
+            ldr  x8, [x6, x22, lsl 3]
+           ands  x8, x8, x10
+           rbit  x27, x8
+            clz  x27, x27
+           csel  w27, w2, w27, eq
+            lsr  w27, w27, 3
+    else
+            mov  w2, 7 shl 3
+           _lea  x6, FileBB
+            ldr  x8, [x6, x22, lsl 3]
+           ands  x8, x8, x10
+            clz  x27, x8
+            eor  w27, w27, 63
+           csel  w27, w2, w27, eq
+            lsr  w27, w27, 3
+            eor  w27, w27, 7
+    end if
+    ; w27 = rkThem
 
     if Us = White
-                mov  w2, 0
+           _lea  x6, FileBB
+            ldr  x8, [x6, x22, lsl 3]
+           ands  x8, x8, x9
+           rbit  x26, x8
+            clz  x26, x26
+           csel  w26, w2, w26, eq
+            lsr  w26, w26, 3
     else
-                mov  w2, 7 shl 3
-    end if
-    if Us = White
-                lea  x6, FileBB
-                ldr  x8, [x6, x22, lsl 3]
-               ands  x8, x8, x10
-               rbit  x27, x8
-                clz  x27, x27
-               csel  w27, w2, w27, eq
-                lsr  w27, w27, 3
-    else
-                lea  x6, FileBB
-                ldr  x8, [x6, x22, lsl 3]
-               ands  x8, x8, x10
-                clz  x27, x8
-                eor  w27, w27, 63
-               csel  w27, w2, w27, eq
-                lsr  w27, w27, 3
-                eor  w27, w27, 7
-    end if
-        ; w27 = rkThem
-
-    if Us = White
-                lea  x6, FileBB
-                ldr  x8, [x6, x22, lsl 3]
-               ands  x8, x8, x9
-               rbit  x26, x8
-                clz  x26, x26
-               csel  w26, w2, w26, eq
-                lsr  w26, w26, 3
-    else
-                lea  x6, FileBB
-                ldr  x8, [x6, x22, lsl 3]
-               ands  x8, x8, x9
-                clz  x26, x8
-                eor  w26, w26, 63
-               csel  w26, w2, w26, eq
-                lsr  w26, w26, 3
-                eor  w26, w26, 7
+           _lea  x6, FileBB
+            ldr  x8, [x6, x22, lsl 3]
+           ands  x8, x8, x9
+            clz  x26, x8
+            eor  w26, w26, 63
+           csel  w26, w2, w26, eq
+            lsr  w26, w26, 3
+            eor  w26, w26, 7
     end if
 
-        ; w26 = rkUs
+    ; w26 = rkUs
 
-                lsl  w2, w22, 5
-        ; ShelterWeakness and StormDanger are twice as big
-        ; to avoid an anoying min(f,FILE_H-f) in ShelterStorm
+            lsl  w2, w22, 5
+    ; ShelterWeakness and StormDanger are twice as big
+    ; to avoid an anoying min(f,FILE_H-f) in ShelterStorm
 
-                lea  x6, ShelterWeakness
-                add  x6, x6, x2
-                ldr  w4, [x6, x26, lsl 2]
-                sub  w0, w0, w4
+           _lea  x6, ShelterWeakness
+            add  x6, x6, x2
+            ldr  w4, [x6, x26, lsl 2]
+            sub  w0, w0, w4
 
-        ; esi = rkUs+1
-                add  w26, w26, 1
+    ; esi = rkUs+1
+            add  w26, w26, 1
 
-                lea  x11, StormDanger_BlockedByKing
-                add  x11, x11, x2
-                cmp  w1, w22
-                add  w22, w22, 1
-                bne  TryNext
-                cmp  w27, w23
-                beq  AddStormDanger
-        TryNext:
-                lea  x11, StormDanger_NoFriendlyPawn
-                add  x11, x11, x2
-                cmp  w26, 1
-                beq  AddStormDanger
-                lea  x11, StormDanger_BlockedByPawn
-                add  x11, x11, x2
-                cmp  w26, w27
-                beq  AddStormDanger
-                lea  x11, StormDanger_Unblocked
-                add  x11, x11, x2
-        AddStormDanger:
-                ldr  w4, [x11, x27, lsl 2]
-                sub  w0, w0, w4
-  end macro
+           _lea  x11, StormDanger_BlockedByKing
+            add  x11, x11, x2
+            cmp  w1, w22
+            add  w22, w22, 1
+            bne  @1f
+            cmp  w27, w23
+            beq  @2f
+    @1:
+           _lea  x11, StormDanger_NoFriendlyPawn
+            add  x11, x11, x2
+            cmp  w26, 1
+            beq  @2f
+           _lea  x11, StormDanger_BlockedByPawn
+            add  x11, x11, x2
+            cmp  w26, w27
+            beq  @2f
+           _lea  x11, StormDanger_Unblocked
+            add  x11, x11, x2
+    @2:
+            ldr  w4, [x11, x27, lsl 2]
+            sub  w0, w0, w4
+  end repeat
 
-    ShelterStormAcc
-    ShelterStormAcc
-    ShelterStormAcc
-
-                ldp  x23, x30, [sp], 16
-                ldp  x11, x22, [sp], 16
-                ldp  x26, x27, [sp], 16
-                ret
+            ldp  x23, x30, [sp], 16
+            ldp  x11, x22, [sp], 16
+            ldp  x26, x27, [sp], 16
+            ret
 
 end macro
 
@@ -954,184 +933,183 @@ macro EvalThreats Us
 	TRank7BB	= Rank2BB
   end if
 
-                mov  x8, PiecesThem
-                and  x9, PiecesPawn, PiecesThem
-                eor  x8, x8, x9
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
-               ands  x8, x8, x4
-        ; x8 = weak
-                beq  SafeThreatsDone
+            mov  x8, PiecesThem
+            and  x9, PiecesPawn, PiecesThem
+            eor  x8, x8, x9
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
+           ands  x8, x8, x4
+    ; x8 = weak
+            beq  SafeThreatsDone
 
-                mvn  x9, AttackedByThem
-                orr  x9, x9, AttackedByUs
-                and  x9, x9, PiecesUs
-                and  x9, x9, PiecesPawn
-                mov  x2, x9
-            ShiftBB  Right, x9, x9
-            ShiftBB  Left, x2, x2
-                orr  x9, x9, x2
-                and  x9, x9, x8
-        ; x9 = safeThreats
-                eor  x8, x8, x9
-                cmp  x8, 0
-              csetm  w0, ne
-              mov32  w4, ThreatByHangingPawn
-                and  w0, w0, w4
-             AddSub  Us, w26, w26, w0
+            mvn  x9, AttackedByThem
+            orr  x9, x9, AttackedByUs
+            and  x9, x9, PiecesUs
+            and  x9, x9, PiecesPawn
+            mov  x2, x9
+        ShiftBB  Right, x9, x9
+        ShiftBB  Left, x2, x2
+            orr  x9, x9, x2
+            and  x9, x9, x8
+    ; x9 = safeThreats
+            eor  x8, x8, x9
+            cmp  x8, 0
+          csetm  w0, ne
+          mov32  w4, ThreatByHangingPawn
+            and  w0, w0, w4
+         AddSub  Us, w26, w26, w0
 
-             Popcnt  x1, x9, x0
-              mov32  w4, ThreatBySafePawn
-                mul  w1, w1, w4
-             AddSub  Us, w26, w26, w1
+         Popcnt  x1, x9, x0
+          mov32  w4, ThreatBySafePawn
+            mul  w1, w1, w4
+         AddSub  Us, w26, w26, w1
 
 SafeThreatsDone:
 
-                ldr  x9, [sp, EvalInfo.attackedBy2 + 8*Us]
-                ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Them]
-                bic  x9, x4, x9
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + Pawn)]
-                orr  x9, x9, x4
-        ; x9 = stronglyProtected
-                bic  x8, PiecesThem, PiecesPawn
-                and  x8, x8, x9
-        ; x8 = defended (= pos.pieces(Them) & ~pos.pieces(PAWN) & stronglyProtected)
-                bic  x9, PiecesThem, x9
-                and  x9, x9, AttackedByUs
-        ; x9 = weak  (stronglyProtected variable is not used anymore)
-                orr  x8, x8, x9
-        ; x8 = defended or weak
-                cbz  x8, WeakDone
+            ldr  x9, [sp, EvalInfo.attackedBy2 + 8*Us]
+            ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Them]
+            bic  x9, x4, x9
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + Pawn)]
+            orr  x9, x9, x4
+    ; x9 = stronglyProtected
+            bic  x8, PiecesThem, PiecesPawn
+            and  x8, x8, x9
+    ; x8 = defended (= pos.pieces(Them) & ~pos.pieces(PAWN) & stronglyProtected)
+            bic  x9, PiecesThem, x9
+            and  x9, x9, AttackedByUs
+    ; x9 = weak  (stronglyProtected variable is not used anymore)
+            orr  x8, x8, x9
+    ; x8 = defended or weak
+            cbz  x8, WeakDone
 
-                ldr  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + Knight)]
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Bishop)]
-                orr  x0, x0, x4
+            ldr  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + Knight)]
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Bishop)]
+            orr  x0, x0, x4
 
-               ands  x8, x8, x0
-                beq  ThreatMinorDone
+           ands  x8, x8, x0
+            beq  ThreatMinorDone
 ThreatMinorLoop:
-               rbit  x0, x8
-                clz  x0, x0
-                add  x6, x20, Pos.board
-               ldrb  w1, [x6, x0]
-                lea  x6, Threat_Minor
-                ldr  w4, [x6, x1, lsl 2]
-             Addsub  Us, w26, w26, w4
-                lsr  w0, w0, 3
+           rbit  x0, x8
+            clz  x0, x0
+            add  x6, x20, Pos.board
+           ldrb  w1, [x6, x0]
+           _lea  x6, Threat_Minor
+            ldr  w4, [x6, x1, lsl 2]
+         Addsub  Us, w26, w26, w4
+            lsr  w0, w0, 3
   if Us = White
-                eor  w0, w0, Them*7
+            eor  w0, w0, Them*7
   end if
-        ; tricky: we want only the lower byte of the memory here,
-        ;  but the upper 3 bytes of eax are zero anyways
-                lea  x6, IsNotPawnMasks
-               ldrb  w4, [x6, x1]
-                and  w0, w0, w4
-              mov32  w4, ThreatByRank
-                mul  w0, w0, w4
-             Addsub  Us, w26, w26, w0
-                sub  x1, x8, 1
-               ands  x8, x8, x1
-                bne  ThreatMinorLoop
+    ; tricky: we want only the lower byte of the memory here,
+    ;  but the upper 3 bytes of eax are zero anyways
+           _lea  x6, IsNotPawnMasks
+           ldrb  w4, [x6, x1]
+            and  w0, w0, w4
+          mov32  w4, ThreatByRank
+            mul  w0, w0, w4
+         Addsub  Us, w26, w26, w0
+            sub  x1, x8, 1
+           ands  x8, x8, x1
+            bne  ThreatMinorLoop
 ThreatMinorDone:
 
-                mov  x2, PiecesThem
-                ldr  x4, [x20, Pos.typeBB + 8*Queen]
-                and  x2, x2, x4
-                orr  x2, x2, x9
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Rook)]
-               ands  x2, x2, x4
-                beq  ThreatRookDone
+            mov  x2, PiecesThem
+            ldr  x4, [x20, Pos.typeBB + 8*Queen]
+            and  x2, x2, x4
+            orr  x2, x2, x9
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Rook)]
+           ands  x2, x2, x4
+            beq  ThreatRookDone
 ThreatRookLoop:
-               rbit  x0, x2
-                clz  x0, x0
-                add  x6, x20, Pos.board
-               ldrb  w1, [x6, x0]
-                lea  x6, Threat_Rook
-                ldr  w4, [x6, x1, lsl 2]
-             Addsub  Us, w26, w26, w4
+           rbit  x0, x2
+            clz  x0, x0
+            add  x6, x20, Pos.board
+           ldrb  w1, [x6, x0]
+           _lea  x6, Threat_Rook
+            ldr  w4, [x6, x1, lsl 2]
+         Addsub  Us, w26, w26, w4
 
-                lsr  w0, w0, 3
+            lsr  w0, w0, 3
   if Us = White
-                eor  w0, w0, Them*7
+            eor  w0, w0, Them*7
   end if
-                lea  x6, IsNotPawnMasks
-               ldrb  w4, [x6, x1]
-                and  w0, w0, w4
-              mov32  w4, ThreatByRank
-                mul  w0, w0, w4
-             Addsub  Us, w26, w26, w0
+           _lea  x6, IsNotPawnMasks
+           ldrb  w4, [x6, x1]
+            and  w0, w0, w4
+          mov32  w4, ThreatByRank
+            mul  w0, w0, w4
+         Addsub  Us, w26, w26, w0
 
-                sub  x1, x2, 1
-               ands  x2, x2, x1
-                bne  ThreatRookLoop
+            sub  x1, x2, 1
+           ands  x2, x2, x1
+            bne  ThreatRookLoop
 ThreatRookDone:
 
-                bic  x0, x9, AttackedByThem
-             Popcnt  x0, x0, x1
-              mov32  w4, Hanging
-                mul  w0, w0, w4
-             Addsub  Us, w26, w26, w0
+            bic  x0, x9, AttackedByThem
+         Popcnt  x0, x0, x1
+          mov32  w4, Hanging
+            mul  w0, w0, w4
+         Addsub  Us, w26, w26, w0
 
-                ldr  x1, [sp, EvalInfo.attackedBy + 8*(8*Us + King)]
-                and  x1, x1, x9
-                cmp  x1, 0
-              csetm  w2, ne
-                sub  x0, x1, 1
-               ands  x1, x1, x0
-              csetm  w0, ne
-              mov32  w4, ThreatByKing1 - ThreatByKing0
-                and  w0, w0, w4
-              mov32  w4, ThreatByKing0
-                add  w0, w0, w4
-                and  w0, w0, w2
-             Addsub  Us, w26, w26, w0
+            ldr  x1, [sp, EvalInfo.attackedBy + 8*(8*Us + King)]
+            and  x1, x1, x9
+            cmp  x1, 0
+          csetm  w2, ne
+            sub  x0, x1, 1
+           ands  x1, x1, x0
+          csetm  w0, ne
+          mov32  w4, ThreatByKing1 - ThreatByKing0
+            and  w0, w0, w4
+          mov32  w4, ThreatByKing0
+            add  w0, w0, w4
+            and  w0, w0, w2
+         Addsub  Us, w26, w26, w0
 
 WeakDone:
-              mov64  x0, AllSquares xor TRank7BB
-                and  x0, x0, PiecesUs
-                and  x0, x0, PiecesPawn
+          mov64  x0, AllSquares xor TRank7BB
+            and  x0, x0, PiecesUs
+            and  x0, x0, PiecesPawn
 
-                orr  x8, PiecesUs, PiecesThem
+            orr  x8, PiecesUs, PiecesThem
 
-              mov64  x1, TRank2BB
-                and  x1, x1, x0
-            ShiftBB  Up, x1, x1
-                bic  x2, x1, x8
-                orr  x0, x0, x2
-            ShiftBB  Up, x0, x0
+          mov64  x1, TRank2BB
+            and  x1, x1, x0
+        ShiftBB  Up, x1, x1
+            bic  x2, x1, x8
+            orr  x0, x0, x2
+        ShiftBB  Up, x0, x0
 
-                mvn  x2, x8
-                and  x0, x0, x2
-                ldr  x1, [sp, EvalInfo.attackedBy + 8*(8*Them + Pawn)]
-                mvn  x1, x1
-                and  x0, x0, x1
-                mvn  x2, AttackedByThem
-                orr  x2, x2, AttackedByUs
-                and  x0, x0, x2
+            mvn  x2, x8
+            and  x0, x0, x2
+            ldr  x1, [sp, EvalInfo.attackedBy + 8*(8*Them + Pawn)]
+            mvn  x1, x1
+            and  x0, x0, x1
+            mvn  x2, AttackedByThem
+            orr  x2, x2, AttackedByUs
+            and  x0, x0, x2
 
-                mov  x2, x0
-            ShiftBB  Left, x0, x0
-            ShiftBB  Right, x2, x2
-                orr  x0, x0, x2
-                and  x0, x0, PiecesThem
-                ldr  x1, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
-                mvn  x1, x1
-                and  x0, x0, x1
-             Popcnt  x0, x0, x2
-              mov32  w4, ThreatByPawnPush
-                mul  w0, w0, w4
-             Addsub  Us, w26, w26, w0
-
+            mov  x2, x0
+        ShiftBB  Left, x0, x0
+        ShiftBB  Right, x2, x2
+            orr  x0, x0, x2
+            and  x0, x0, PiecesThem
+            ldr  x1, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
+            mvn  x1, x1
+            and  x0, x0, x1
+         Popcnt  x0, x0, x2
+          mov32  w4, ThreatByPawnPush
+            mul  w0, w0, w4
+         Addsub  Us, w26, w26, w0
 end macro
 
 
 
 
 macro EvalPassedPawns Us
-        ; in: rbp position
-        ;     rbx state
-        ;     rsp evaluation info
-        ;     r15 qword[rdi+PawnEntry.passedPawns+8*Us]
-        ; add to dword[.ei.score]
+    ; in: rbp position
+    ;     rbx state
+    ;     rsp evaluation info
+    ;     r15 qword[rdi+PawnEntry.passedPawns+8*Us]
+    ; add to dword[.ei.score]
 
   local addsub, subadd, Them, Up, s, PiecesUs, PiecesThem
   local NextPawn, AllDone, AddToBonus, Continue
@@ -1154,189 +1132,183 @@ macro EvalPassedPawns Us
  end if
 
 NextPawn:
-               rbit  x8, x9
-                clz  x8, x8
-                sub  x0, x9, 1
-                and  x9, x9, x0
+           rbit  x8, x9
+            clz  x8, x8
+            sub  x0, x9, 1
+            and  x9, x9, x0
 
-                lsr  w1, w8, 3
+            lsr  w1, w8, 3
  if Us = Black
-                eor  w1, w1, 7
+            eor  w1, w1, 7
  end if
-        ; w1 = r+1
-        ;		mov   esi, dword[PassedRank+4*rcx]
-        ; w26 = (mbonus, ebonus)
-                lea  x6, PassedRank
-                ldr  w26, [x6, x1, lsl 2]
+    ; w1 = r+1
+    ;		mov   esi, dword[PassedRank+4*rcx]
+    ; w26 = (mbonus, ebonus)
+           _lea  x6, PassedRank
+            ldr  w26, [x6, x1, lsl 2]
 
-                lea  x6, ForwardBB + 8*(64*Us)
-                ldr  x0, [x6, x8, lsl 3]
+           _lea  x6, ForwardBB + 8*(64*Us)
+            ldr  x0, [x6, x8, lsl 3]
 
-        ; w8 = blockSq
-                add  w8, w8, Up
-                orr  x2, AttackedByThem, PiecesThem
-                and  x0, x0, x2
-             Popcnt  x0, x0, x10
-              mov32  w4, HinderPassedPawn
-                mul  w0, w0, w4
-                ldr  w4, [sp, EvalInfo.score]
-             AddSub  Them, w4, w4, w0
-                str  w4, [sp, EvalInfo.score]
+    ; w8 = blockSq
+            add  w8, w8, Up
+            orr  x2, AttackedByThem, PiecesThem
+            and  x0, x0, x2
+         Popcnt  x0, x0, x10
+          mov32  w4, HinderPassedPawn
+            mul  w0, w0, w4
+            ldr  w4, [sp, EvalInfo.score]
+         AddSub  Them, w4, w4, w0
+            str  w4, [sp, EvalInfo.score]
 
-                sub  w27, w1, 2
-                sub  w1, w1, 1
-        ; w1 = r
-        ; w27 = rr = r*(r-1)
-                mul  w27, w27, w1
-
+            sub  w27, w1, 2
+            sub  w1, w1, 1
+    ; w1 = r
+    ; w27 = rr = r*(r-1)
+            mul  w27, w27, w1
  if Us = White
-                cmp  w8, SQ_A4 + Up
-                blo  Continue
+            cmp  w8, SQ_A4 + Up
+            blo  Continue
  else
-                cmp  w8, SQ_A6 + Up
-                bhs  Continue
+            cmp  w8, SQ_A6 + Up
+            bhs  Continue
  end if
-        ; at this point rr!=0
+    ; at this point rr!=0
 
-        ; w1 is free because s = r8-Up
-                ldr  w0, [sp, EvalInfo.ksq + 4*Them]
-                ldr  w2, [sp, EvalInfo.ksq + 4*Us]
-                lsl  w0, w0, 6
-                lsl  w2, w2, 6
-                mov  w10, 0
-                lea  x6, SquareDistance
-                add  x6, x6, x8
-                add  x6, x6, x2
-                add  x6, x6, Up
-               ldrb  w11, [x6]
-                lea  x6, SquareDistance
-                add  x6, x6, x8
-                add  x6, x6, x0
-               ldrb  w0, [x6]
-                lea  x6, SquareDistance
-                add  x6, x6, x8
-                add  x6, x6, x2
-               ldrb  w2, [x6]
-                add  w0, w0, w0, lsl 2
+    ; w1 is free because s = r8-Up
+            ldr  w0, [sp, EvalInfo.ksq + 4*Them]
+            ldr  w2, [sp, EvalInfo.ksq + 4*Us]
+            lsl  w0, w0, 6
+            lsl  w2, w2, 6
+            mov  w10, 0
+           _lea  x6, SquareDistance
+            add  x6, x6, x8
+            add  x6, x6, x2
+            add  x6, x6, Up
+           ldrb  w11, [x6]
+           _lea  x6, SquareDistance
+            add  x6, x6, x8
+            add  x6, x6, x0
+           ldrb  w0, [x6]
+           _lea  x6, SquareDistance
+            add  x6, x6, x8
+            add  x6, x6, x2
+           ldrb  w2, [x6]
+            add  w0, w0, w0, lsl 2
  if Us = White
-                cmp  w8, SQ_A7 + Up
-               csel  w10, w11, w10, lo
+            cmp  w8, SQ_A7 + Up
+           csel  w10, w11, w10, lo
  else
-                cmp  w8, SQ_A3 + Up
-               csel  w10, w11, w10, hs
+            cmp  w8, SQ_A3 + Up
+           csel  w10, w11, w10, hs
  end if
-                add  w2, w10, w2, lsl 1
-                sub  w0, w0, w2
-                mul  w0, w0, w27
-                add  w26, w26, w0
+            add  w2, w10, w2, lsl 1
+            sub  w0, w0, w2
+            mul  w0, w0, w27
+            add  w26, w26, w0
 
-                lea  x6, ForwardBB + 8*(64*Us - Up)
-                ldr  x10, [x6, x8, lsl 3]
-                add  w0, w27, w1, lsl 1
-                mov  x4, 1
-                lsl  x4, x4, x8
-                tst  PiecesUs, x4
-                bne  AddToBonus
-                mov  x11, x10
-                mov  x4, 1
-                lsl  x4, x4, x8
-                tst  PiecesThem, x4
-                bne  Continue
+           _lea  x6, ForwardBB + 8*(64*Us - Up)
+            ldr  x10, [x6, x8, lsl 3]
+            add  w0, w27, w1, lsl 1
+            mov  x4, 1
+            lsl  x4, x4, x8
+            tst  PiecesUs, x4
+            bne  AddToBonus
+            mov  x11, x10
+            mov  x4, 1
+            lsl  x4, x4, x8
+            tst  PiecesThem, x4
+            bne  Continue
 
-                eor  PiecesThem, PiecesThem, PiecesUs
-                sub  x5, x8, Up
-        RookAttacks  x0, x5, PiecesThem, x2, x4 
-                eor  PiecesThem, PiecesThem, PiecesUs
-                ldr  x1, [x20, Pos.typeBB + 8*Rook]
-                ldr  x4, [x20, Pos.typeBB + 8*Queen]
-                orr  x1, x1, x4
-                lea  x6, ForwardBB + 8*(64*Them - Up)
-                ldr  x4, [x6, x8, lsl 3]
-                and  x1, x1, x4
-                and  x0, x0, x1
+            eor  PiecesThem, PiecesThem, PiecesUs
+            sub  x5, x8, Up
+    RookAttacks  x0, x5, PiecesThem, x2, x4 
+            eor  PiecesThem, PiecesThem, PiecesUs
+            ldr  x1, [x20, Pos.typeBB + 8*Rook]
+            ldr  x4, [x20, Pos.typeBB + 8*Queen]
+            orr  x1, x1, x4
+           _lea  x6, ForwardBB + 8*(64*Them - Up)
+            ldr  x4, [x6, x8, lsl 3]
+            and  x1, x1, x4
+            and  x0, x0, x1
 
-                mov  x1, -1
-                tst  PiecesUs, x0
-               csel  x1, AttackedByUs, x1, eq
-                and  x10, x10, x1
+            mov  x1, -1
+            tst  PiecesUs, x0
+           csel  x1, AttackedByUs, x1, eq
+            and  x10, x10, x1
 
-                mov  x1, -1
-                tst  PiecesThem, x0
-               csel  x1, AttackedByThem, x1, eq
-                orr  x1, x1, PiecesThem
-                and  x11, x11, x1
+            mov  x1, -1
+            tst  PiecesThem, x0
+           csel  x1, AttackedByThem, x1, eq
+            orr  x1, x1, PiecesThem
+            and  x11, x11, x1
 
-                mov  x4, 1
-                lsl  x4, x4, x8
-                tst  x11, x4
-              csetm  w0, ne
-                cmp  x11, 0
-              csetm  w2, ne
-                add  w2, w2, w2, lsl 2
-                add  w0, w2, w0, lsl 2
-                add  w0, w0, 9
-        ; w0 = k/2
-                mov  x4, 1
-                lsl  x4, x4, x8
-                tst  x10, x4
-               cset  w2, ne
-                lea  x6, ForwardBB + 8*(64*Us - Up)
-                ldr  x4, [x6, x8, lsl 3]
-                eor  x10, x10, x4
-                cmp  x10, 0
-               cinc  w4, w2, eq
-                add  w2, w2, w4
-                add  w0, w0, w2
-        ; w0 = k/2
-                add  w27, w27, w27
-                mul  w0, w0, w27
+            mov  x4, 1
+            lsl  x4, x4, x8
+            tst  x11, x4
+          csetm  w0, ne
+            cmp  x11, 0
+          csetm  w2, ne
+            add  w2, w2, w2, lsl 2
+            add  w0, w2, w0, lsl 2
+            add  w0, w0, 9
+    ; w0 = k/2
+            mov  x4, 1
+            lsl  x4, x4, x8
+            tst  x10, x4
+           cset  w2, ne
+           _lea  x6, ForwardBB + 8*(64*Us - Up)
+            ldr  x4, [x6, x8, lsl 3]
+            eor  x10, x10, x4
+            cmp  x10, 0
+           cinc  w4, w2, eq
+            add  w2, w2, w4
+            add  w0, w0, w2
+    ; w0 = k/2
+            add  w27, w27, w27
+            mul  w0, w0, w27
 AddToBonus:
-                add  w0, w0, w0, lsl 16
-                add  w26, w26, w0
-
+            add  w0, w0, w0, lsl 16
+            add  w26, w26, w0
 Continue:
-        ; w8 = blockSq
-        ;
-        ; scale down bonus for candidate passers which need more than one pawn
-        ; push to become passed
-
-                add  w1, w26, 0x08000
-                asr  w1, w1, 16
-               sbfx  w0, w26, 0, 16
-                ldr  x10, [x20, Pos.typeBB + 8*Pawn]
-                lea  x6, ForwardBB + 8*(64*Us - Up)
-                ldr  x4, [x6, x8, lsl 3]
-                tst  x10, x4
-                bne  DoScaleDown
-                and  x10, x10, PiecesThem
-                lea  x6, PassedPawnMask + 8*(64*Us)
-                ldr  x4, [x6, x8, lsl 3]
-                tst  x10, x4
-                beq  DontScaleDown
+    ; w8 = blockSq
+    ; scale down bonus for candidate passers which need more than one pawn
+    ; push to become passed
+            add  w1, w26, 0x08000
+            asr  w1, w1, 16
+           sbfx  w0, w26, 0, 16
+            ldr  x10, [x20, Pos.typeBB + 8*Pawn]
+           _lea  x6, ForwardBB + 8*(64*Us - Up)
+            ldr  x4, [x6, x8, lsl 3]
+            tst  x10, x4
+            bne  DoScaleDown
+            and  x10, x10, PiecesThem
+           _lea  x6, PassedPawnMask + 8*(64*Us)
+            ldr  x4, [x6, x8, lsl 3]
+            tst  x10, x4
+            beq  DontScaleDown
 DoScaleDown:
-                asr  w2, w0, 31
-                sub  w0, w0, w2
-                asr  w0, w0, 1
-                mov  w4, w0
-                mov  w0, w1
-                mov  w1, w4
-                asr  w2, w0, 31
-                sub  w0, w0, w2
-                asr  w0, w0, 1
-                add  w26, w1, w0, lsl 16
+            asr  w2, w0, 31
+            sub  w0, w0, w2
+            asr  w0, w0, 1
+            mov  w4, w0
+            mov  w0, w1
+            mov  w1, w4
+            asr  w2, w0, 31
+            sub  w0, w0, w2
+            asr  w0, w0, 1
+            add  w26, w1, w0, lsl 16
 DontScaleDown:
-                and  w8, w8, 7
-                lea  x6, PassedFile
-                ldr  w4, [x6, x8, lsl 2]
-                add  w26, w26, w4
-                ldr  w4, [sp, EvalInfo.score]
-             AddSub  Us, w4, w4, w26
-                str  w4, [sp, EvalInfo.score]
-               cbnz  x9, NextPawn
-
+            and  w8, w8, 7
+           _lea  x6, PassedFile
+            ldr  w4, [x6, x8, lsl 2]
+            add  w26, w26, w4
+            ldr  w4, [sp, EvalInfo.score]
+         AddSub  Us, w4, w4, w26
+            str  w4, [sp, EvalInfo.score]
+           cbnz  x9, NextPawn
 AllDone:
-                ldr  x27, [sp, EvalInfo.pi]
-
+            ldr  x27, [sp, EvalInfo.pi]
 end macro
 
 
@@ -1373,53 +1345,53 @@ macro EvalSpace Us
         SpaceMask      = SpaceMask and (Rank7BB or Rank6BB or Rank5BB)
   end if
 
-        ; rdx = pos.pieces(Us, PAWN)
-                and  x2, PiecesUs, PiecesPawn
+    ; rdx = pos.pieces(Us, PAWN)
+            and  x2, PiecesUs, PiecesPawn
 
-                bic  x0, AttackedByThem, AttackedByUs
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + Pawn)]
-                orr  x0, x0, x4
-                orr  x0, x0, x2
-              mov64  x1, SpaceMask
-        ; rax = safe
-                bic  x0, x1, x0
+            bic  x0, AttackedByThem, AttackedByUs
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + Pawn)]
+            orr  x0, x0, x4
+            orr  x0, x0, x2
+          mov64  x1, SpaceMask
+    ; rax = safe
+            bic  x0, x1, x0
 
-                mov  x1, x2
+            mov  x1, x2
   if Us = White
-                lsr  x2, x2, 8
-                orr  x1, x1, x2
-                mov  x2, x1
-                lsr  x2, x2, 16
-                orr  x1, x1, x2
+            lsr  x2, x2, 8
+            orr  x1, x1, x2
+            mov  x2, x1
+            lsr  x2, x2, 16
+            orr  x1, x1, x2
   else
-                lsl  x2, x2, 8
-                orr  x1, x1, x2
-                mov  x2, x1
-                lsl  x2, x2, 16
-                orr  x1, x1, x2
+            lsl  x2, x2, 8
+            orr  x1, x1, x2
+            mov  x2, x1
+            lsl  x2, x2, 16
+            orr  x1, x1, x2
   end if
-        ; rcx = behind
+    ; rcx = behind
 
-                and  x1, x1, x0
+            and  x1, x1, x0
   if Us = White
-                lsl  x0, x0, 32
+            lsl  x0, x0, 32
   else
-                lsr  x0, x0, 32
+            lsr  x0, x0, 32
   end if
-                orr  x0, x0, x1
-             Popcnt  x0, x0, x2
+            orr  x0, x0, x1
+         Popcnt  x0, x0, x2
 
-               ldrb  w1, [x27, PawnEntry.openFiles]
-                add  w1, w1, w1
-                ldr  x4, [x20, Pos.typeBB + 8*Us]
-             Popcnt  x2, x4, x8
-                sub  w2, w2, w1
-                mul  w2, w2, w2
+           ldrb  w1, [x27, PawnEntry.openFiles]
+            add  w1, w1, w1
+            ldr  x4, [x20, Pos.typeBB + 8*Us]
+         Popcnt  x2, x4, x8
+            sub  w2, w2, w1
+            mul  w2, w2, w2
 
-                mul  w0, w0, w2
-                lsr  w0, w0, 4
-                lsl  w0, w0, 16
-             Addsub  Us, w26, w26, w0
+            mul  w0, w0, w2
+            lsr  w0, w0, 4
+            lsl  w0, w0, 16
+         Addsub  Us, w26, w26, w0
 
 end macro
 
@@ -1427,651 +1399,649 @@ end macro
 Evaluate_Cold:
 
 .DoPawnEval:
-          EvalPawns  White
-                str  w26, [x27, PawnEntry.score]
-          EvalPawns  Black
-               ldrb  w1, [x27, PawnEntry.semiopenFiles + 0]
-               ldrb  w0, [x27, PawnEntry.semiopenFiles + 1]
-                ldr  x8, [x21, State.pawnKey]
-                mov  w2, w1
-                eor  w1, w1, w0
-                and  w2, w2, w0
-                ldr  w0, [x27, PawnEntry.score]
-                sub  w0, w0, w26
-             Popcnt  x1, x1, x9
-             Popcnt  x2, x2, x9
-                str  x8, [x27, PawnEntry.key]
-                str  w0, [x27, PawnEntry.score]
-               strb  w1, [x27, PawnEntry.asymmetry]
-               strb  w2, [x27, PawnEntry.openFiles]
-                  b  Evaluate.DoPawnEvalReturn
+      EvalPawns  White
+            str  w26, [x27, PawnEntry.score]
+      EvalPawns  Black
+           ldrb  w1, [x27, PawnEntry.semiopenFiles + 0]
+           ldrb  w0, [x27, PawnEntry.semiopenFiles + 1]
+            ldr  x8, [x21, State.pawnKey]
+            mov  w2, w1
+            eor  w1, w1, w0
+            and  w2, w2, w0
+            ldr  w0, [x27, PawnEntry.score]
+            sub  w0, w0, w26
+         Popcnt  x1, x1, x9
+         Popcnt  x2, x2, x9
+            str  x8, [x27, PawnEntry.key]
+            str  w0, [x27, PawnEntry.score]
+           strb  w1, [x27, PawnEntry.asymmetry]
+           strb  w2, [x27, PawnEntry.openFiles]
+              b  Evaluate.DoPawnEvalReturn
 
 
 
 .ReturnLazyEval:
-
-                mov  w4, -2*(LazyThreshold + 1)
-                sub  w0, w0, w4
-                ldr  w1, [x20, Pos.sideToMove]
-                neg  w1, w1
-                asr  w2, w0, 31
-                sub  w0, w0, w2
-                asr  w0, w0, 1
-                eor  w0, w0, w1
-                sub  w0, w0, w1
+            mov  w4, -2*(LazyThreshold + 1)
+            sub  w0, w0, w4
+            ldr  w1, [x20, Pos.sideToMove]
+            neg  w1, w1
+            asr  w2, w0, 31
+            sub  w0, w0, w2
+            asr  w0, w0, 1
+            eor  w0, w0, w1
+            sub  w0, w0, w1
 Display 2, "Lazy Eval returning %i0%n"
-                add  sp, sp, sizeof.EvalInfo
-                ldp  x24, x25, [sp], 16
-                ldp  x22, x23, [sp], 16
-                ldp  x26, x27, [sp], 16
-                ldp  x21, x30, [sp], 16
-                ret
+            add  sp, sp, sizeof.EvalInfo
+            ldp  x24, x25, [sp], 16
+            ldp  x22, x23, [sp], 16
+            ldp  x26, x27, [sp], 16
+            ldp  x21, x30, [sp], 16
+            ret
 
 
 ShelterStormWhite:
 ShelterStorm0:
-       ShelterStorm  White
+   ShelterStorm  White
 
 ShelterStormBlack:
 ShelterStorm1:
-       ShelterStorm  Black
+   ShelterStorm  Black
 
 
 
 
 Evaluate:
-        ; in  x20 address of Pos struct
-        ;     x21 address of State struct
-        ; out w0 evaluation
+    ; in  x20 address of Pos struct
+    ;     x21 address of State struct
+    ; out w0 evaluation
 
-                stp  x21, x30, [sp, -16]!
-                stp  x26, x27, [sp, -16]!
-                stp  x22, x23, [sp, -16]!
-                stp  x24, x25, [sp, -16]!
-                sub  sp, sp, sizeof.EvalInfo
+            stp  x21, x30, [sp, -16]!
+            stp  x26, x27, [sp, -16]!
+            stp  x22, x23, [sp, -16]!
+            stp  x24, x25, [sp, -16]!
+            sub  sp, sp, sizeof.EvalInfo
 
-                ldr  x27, [x21, State.pawnKey]
-                and  w27, w27, PAWN_HASH_ENTRY_COUNT-1
-                mov  w4, sizeof.PawnEntry
-                mul  w27, w27, w4
-                ldr  x4, [x20, Pos.pawnTable]
-                add  x27, x27, x4
-                ldr  x25, [x27, PawnEntry.key]
-                str  x27, [sp, EvalInfo.pi]
+            ldr  x27, [x21, State.pawnKey]
+            and  w27, w27, PAWN_HASH_ENTRY_COUNT-1
+            mov  w4, sizeof.PawnEntry
+            mul  w27, w27, w4
+            ldr  x4, [x20, Pos.pawnTable]
+            add  x27, x27, x4
+            ldr  x25, [x27, PawnEntry.key]
+            str  x27, [sp, EvalInfo.pi]
 
-                ldr  w0, [x21, State.psq]
-                str  w0, [sp, EvalInfo.score]
+            ldr  w0, [x21, State.psq]
+            str  w0, [sp, EvalInfo.score]
 
-                ldr  x22, [x20, Pos.typeBB + 8*Queen]
-                ldr  x23, [x20, Pos.typeBB + 8*Rook]
-                orr  x23, x23, x22
-                ldr  x24, [x20, Pos.typeBB + 8*White]
-                ldr  x4, [x20, Pos.typeBB + 8*Black]
-                orr  x24, x24, x4
-                ldr  x4, [x20, Pos.typeBB + 8*Bishop]
-                orr  x22, x22, x4
-                ldr  w26, [x20, Pos.sideToMove]
+            ldr  x22, [x20, Pos.typeBB + 8*Queen]
+            ldr  x23, [x20, Pos.typeBB + 8*Rook]
+            orr  x23, x23, x22
+            ldr  x24, [x20, Pos.typeBB + 8*White]
+            ldr  x4, [x20, Pos.typeBB + 8*Black]
+            orr  x24, x24, x4
+            ldr  x4, [x20, Pos.typeBB + 8*Bishop]
+            orr  x22, x22, x4
+            ldr  w26, [x20, Pos.sideToMove]
 
-               ldrb  w0, [x20, Pos.pieceList + 16*(8*White + King)]
-               ldrb  w2, [x20, Pos.pieceList + 16*(8*Black + King)]
+           ldrb  w0, [x20, Pos.pieceList + 16*(8*White + King)]
+           ldrb  w2, [x20, Pos.pieceList + 16*(8*Black + King)]
 
-                str  w0, [sp, EvalInfo.ksq + 4*White]
-                str  w2, [sp, EvalInfo.ksq + 4*Black]
-                lea  x6, KingAttacks
-                ldr  x0, [x6, x0, lsl 3]
-                lea  x6, KingAttacks
-                ldr  x2, [x6, x2, lsl 3]
-                mov  x1, 0
-                str  x1, [sp, EvalInfo.attackedBy + 8*(8*White + 0   )]
-                str  x0, [sp, EvalInfo.attackedBy + 8*(8*White + King)]
-                str  x1, [sp, EvalInfo.attackedBy + 8*(8*Black + 0   )]
-                str  x2, [sp, EvalInfo.attackedBy + 8*(8*Black + King)]
+            str  w0, [sp, EvalInfo.ksq + 4*White]
+            str  w2, [sp, EvalInfo.ksq + 4*Black]
+           _lea  x6, KingAttacks
+            ldr  x0, [x6, x0, lsl 3]
+           _lea  x6, KingAttacks
+            ldr  x2, [x6, x2, lsl 3]
+            mov  x1, 0
+            str  x1, [sp, EvalInfo.attackedBy + 8*(8*White + 0   )]
+            str  x0, [sp, EvalInfo.attackedBy + 8*(8*White + King)]
+            str  x1, [sp, EvalInfo.attackedBy + 8*(8*Black + 0   )]
+            str  x2, [sp, EvalInfo.attackedBy + 8*(8*Black + King)]
 
-                ldr  x0, [x20, Pos.typeBB + 8*White]
-                ldr  x2, [x20, Pos.typeBB + 8*Black]
-                ldr  x4, [x21, State.blockersForKing + 8*White]
-                and  x0, x0, x4
-                ldr  x4, [x21, State.blockersForKing + 8*Black]
-                and  x2, x2, x4
-                str  x0, [sp, EvalInfo.pinnedPieces + 8*White]
-                str  x2, [sp, EvalInfo.pinnedPieces + 8*Black]
+            ldr  x0, [x20, Pos.typeBB + 8*White]
+            ldr  x2, [x20, Pos.typeBB + 8*Black]
+            ldr  x4, [x21, State.blockersForKing + 8*White]
+            and  x0, x0, x4
+            ldr  x4, [x21, State.blockersForKing + 8*Black]
+            and  x2, x2, x4
+            str  x0, [sp, EvalInfo.pinnedPieces + 8*White]
+            str  x2, [sp, EvalInfo.pinnedPieces + 8*Black]
 
-                ldr  x26, [x21, State.materialKey]
-                and  w26, w26, MATERIAL_HASH_ENTRY_COUNT-1
-                mov  w4, sizeof.MaterialEntry
-                mul  w26, w26, w4
-                ldr  x4, [x20, Pos.materialTable]
-                add  x26, x26, x4
-                ldr  x2, [x26, MaterialEntry.key]
+            ldr  x26, [x21, State.materialKey]
+            and  w26, w26, MATERIAL_HASH_ENTRY_COUNT-1
+            mov  w4, sizeof.MaterialEntry
+            mul  w26, w26, w4
+            ldr  x4, [x20, Pos.materialTable]
+            add  x26, x26, x4
+            ldr  x2, [x26, MaterialEntry.key]
 
-              ldrsh  w0, [x26, MaterialEntry.value]
-               ldrb  w1, [x26, MaterialEntry.evaluationFunction]
-                str  x26, [sp, EvalInfo.me]
+          ldrsh  w0, [x26, MaterialEntry.value]
+           ldrb  w1, [x26, MaterialEntry.evaluationFunction]
+            str  x26, [sp, EvalInfo.me]
 
-                ldr  x4, [x21, State.materialKey]
-                cmp  x2, x4
-                bne  DoMaterialEval
+            ldr  x4, [x21, State.materialKey]
+            cmp  x2, x4
+            bne  DoMaterialEval
 
 Evaluate.DoMaterialEvalReturn:
 
-                add  w0, w0, w0, lsl 16
-                ldr  w4, [sp, EvalInfo.score]
-                add  w4, w4, w0
-                str  w4, [sp, EvalInfo.score]
-               cbnz  w1, HaveSpecializedEval
+            add  w0, w0, w0, lsl 16
+            ldr  w4, [sp, EvalInfo.score]
+            add  w4, w4, w0
+            str  w4, [sp, EvalInfo.score]
+           cbnz  w1, HaveSpecializedEval
 
-                ldr  w0, [x27, PawnEntry.score]
-                ldr  x4, [x21, State.pawnKey]
-                cmp  x25, x4
-                bne  Evaluate_Cold.DoPawnEval
+            ldr  w0, [x27, PawnEntry.score]
+            ldr  x4, [x21, State.pawnKey]
+            cmp  x25, x4
+            bne  Evaluate_Cold.DoPawnEval
 
 Evaluate.DoPawnEvalReturn:
-                ldr  w4, [sp, EvalInfo.score]
-                add  w0, w0, w4
-                str  w0, [sp, EvalInfo.score]
+            ldr  w4, [sp, EvalInfo.score]
+            add  w0, w0, w4
+            str  w0, [sp, EvalInfo.score]
 
-        ; We have taken into account all cheap evaluation terms.
-        ; If score exceeds a threshold return a lazy evaluation.
-        ;  lazy eval is called about 5% of the time
-        ;
-        ; checking if abs(a/2) > LazyThreshold
-        ; is the same as checking if a-2*(LazyThreshold+1)
-        ; is in the unsigned range [0,-4*(LazyThreshold+1)]
+    ; We have taken into account all cheap evaluation terms.
+    ; If score exceeds a threshold return a lazy evaluation.
+    ;  lazy eval is called about 5% of the time
+    ;
+    ; checking if abs(a/2) > LazyThreshold
+    ; is the same as checking if a-2*(LazyThreshold+1)
+    ; is in the unsigned range [0,-4*(LazyThreshold+1)]
 
-                add  w2, w0, 0x08000
-                asr  w2, w2, 16
-               sbfx  w0, w0, 0, 16
-                mov  w4, -2*(LazyThreshold + 1)
-                add  w0, w0, w2
-                add  w0, w0, w4
-                mov  w4, -2*(LazyThreshold + 1)
-                cmp  w0, w4, lsl 1
-                bls  Evaluate_Cold.ReturnLazyEval
+            add  w2, w0, 0x08000
+            asr  w2, w2, 16
+           sbfx  w0, w0, 0, 16
+            mov  w4, -2*(LazyThreshold + 1)
+            add  w0, w0, w2
+            add  w0, w0, w4
+            mov  w4, -2*(LazyThreshold + 1)
+            cmp  w0, w4, lsl 1
+            bls  Evaluate_Cold.ReturnLazyEval
 
-           EvalInit  White
-           EvalInit  Black
+       EvalInit  White
+       EvalInit  Black
 
-                ldr  x8, [x20, Pos.typeBB + 8*White]
-                ldr  x9, [x20, Pos.typeBB + 8*Black]
-                mov  x1, Rank2BB + Rank3BB
-                mov  x26, Rank7BB + Rank6BB
-                orr  x0, x8, x9
-                mov  x2, x0
-                mov  x23, x0
-        ; x23 = all pieces
-            ShiftBB  DELTA_S, x0, x0
-            ShiftBB  DELTA_N, x2, x2
-                ldr  x4, [x20, Pos.typeBB + 8*Pawn]
-                and  x8, x8, x4
-                ldr  x4, [x20, Pos.typeBB + 8*Pawn]
-                and  x9, x9, x4
-                orr  x0, x0, x1
-                orr  x2, x2, x26
-                and  x0, x0, x8
-                and  x2, x2, x9
-                ldr  w1, [sp, EvalInfo.ksq + 4*White]
-                ldr  w26, [sp, EvalInfo.ksq + 4*Black]
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Black + Pawn)]
-                orr  x0, x0, x4
-                ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*White + Pawn)]
-                orr  x2, x2, x4
-                mov  x4, 1
-                lsl  x4, x4, x1
-                orr  x0, x0, x4
-                mov  x4, 1
-                lsl  x4, x4, x26
-                orr  x2, x2, x4
-                mvn  x0, x0
-                mvn  x2, x2
-                str  x0, [sp, EvalInfo.mobilityArea + 8*White]
-                str  x2, [sp, EvalInfo.mobilityArea + 8*Black]
+            ldr  x8, [x20, Pos.typeBB + 8*White]
+            ldr  x9, [x20, Pos.typeBB + 8*Black]
+            mov  x1, Rank2BB + Rank3BB
+            mov  x26, Rank7BB + Rank6BB
+            orr  x0, x8, x9
+            mov  x2, x0
+            mov  x23, x0
+    ; x23 = all pieces
+        ShiftBB  DELTA_S, x0, x0
+        ShiftBB  DELTA_N, x2, x2
+            ldr  x4, [x20, Pos.typeBB + 8*Pawn]
+            and  x8, x8, x4
+            ldr  x4, [x20, Pos.typeBB + 8*Pawn]
+            and  x9, x9, x4
+            orr  x0, x0, x1
+            orr  x2, x2, x26
+            and  x0, x0, x8
+            and  x2, x2, x9
+            ldr  w1, [sp, EvalInfo.ksq + 4*White]
+            ldr  w26, [sp, EvalInfo.ksq + 4*Black]
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Black + Pawn)]
+            orr  x0, x0, x4
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*White + Pawn)]
+            orr  x2, x2, x4
+            mov  x4, 1
+            lsl  x4, x4, x1
+            orr  x0, x0, x4
+            mov  x4, 1
+            lsl  x4, x4, x26
+            orr  x2, x2, x4
+            mvn  x0, x0
+            mvn  x2, x2
+            str  x0, [sp, EvalInfo.mobilityArea + 8*White]
+            str  x2, [sp, EvalInfo.mobilityArea + 8*Black]
 
-        ; EvalPieces adds to esi
-                ldr  w26, [sp, EvalInfo.score]
-                mov  x25, 0
-                ldr  x22, [x20, Pos.typeBB + 8*Knight]
-         EvalPieces  White, Knight
-         EvalPieces  Black, Knight
-                ldr  x22, [x20, Pos.typeBB + 8*Bishop]
-         EvalPieces  White, Bishop
-         EvalPieces  Black, Bishop
-                ldr  x22, [x20, Pos.typeBB + 8*Rook]
-         EvalPieces  White, Rook
-         EvalPieces  Black, Rook
-                ldr  x22, [x20, Pos.typeBB + 8*Queen]
-         EvalPieces  White, Queen
-         EvalPieces  Black, Queen
+    ; EvalPieces adds to esi
+            ldr  w26, [sp, EvalInfo.score]
+            mov  x25, 0
+            ldr  x22, [x20, Pos.typeBB + 8*Knight]
+     EvalPieces  White, Knight
+     EvalPieces  Black, Knight
+            ldr  x22, [x20, Pos.typeBB + 8*Bishop]
+     EvalPieces  White, Bishop
+     EvalPieces  Black, Bishop
+            ldr  x22, [x20, Pos.typeBB + 8*Rook]
+     EvalPieces  White, Rook
+     EvalPieces  Black, Rook
+            ldr  x22, [x20, Pos.typeBB + 8*Queen]
+     EvalPieces  White, Queen
+     EvalPieces  Black, Queen
 
-                ldr  x24, [x20, Pos.typeBB + 8*White]
-                ldr  x25, [x20, Pos.typeBB + 8*Black]
-                ldr  x22, [sp, EvalInfo.attackedBy + 8*(8*White + 0)]
-                ldr  x23, [sp, EvalInfo.attackedBy + 8*(8*Black + 0)]
+            ldr  x24, [x20, Pos.typeBB + 8*White]
+            ldr  x25, [x20, Pos.typeBB + 8*Black]
+            ldr  x22, [sp, EvalInfo.attackedBy + 8*(8*White + 0)]
+            ldr  x23, [sp, EvalInfo.attackedBy + 8*(8*Black + 0)]
 
-        ; EvalKing adds to dword[.ei.score]
-                str  w26, [sp, EvalInfo.score]
-           EvalKing  Black
-           EvalKing  White
+    ; EvalKing adds to dword[.ei.score]
+            str  w26, [sp, EvalInfo.score]
+       EvalKing  Black
+       EvalKing  White
 
-        ; EvalPassedPawns adds to dword[.ei.score]
-                ldr  x9, [x27, PawnEntry.passedPawns + 8*White]
-               cbnz  x9, Evaluate_Cold2.EvalPassedPawnsWhite
-                ldr  x9, [x27, PawnEntry.passedPawns + 8*Black]
-               cbnz  x9, Evaluate_Cold2.EvalPassedPawnsBlack
+    ; EvalPassedPawns adds to dword[.ei.score]
+            ldr  x9, [x27, PawnEntry.passedPawns + 8*White]
+           cbnz  x9, Evaluate_Cold2.EvalPassedPawnsWhite
+            ldr  x9, [x27, PawnEntry.passedPawns + 8*Black]
+           cbnz  x9, Evaluate_Cold2.EvalPassedPawnsBlack
 
 Evaluate.EvalPassedPawnsRet:
-                ldr  w26, [sp, EvalInfo.score]
-        ; EvalThreats, EvalSpace add to esi
-        ; EvalPassedPawns and EvalThreats are switched because
-        ;    EvalThreats and EvalSpace share r10-r15
+            ldr  w26, [sp, EvalInfo.score]
+    ; EvalThreats, EvalSpace add to esi
+    ; EvalPassedPawns and EvalThreats are switched because
+    ;    EvalThreats and EvalSpace share r10-r15
 
-                ldr  x11, [x20, Pos.typeBB + 8*Pawn]
-        EvalThreats  Black
-        EvalThreats  White
+            ldr  x11, [x20, Pos.typeBB + 8*Pawn]
+    EvalThreats  Black
+    EvalThreats  White
 
-               ldrh  w0, [x21, State.npMaterial + 2*0]
-               ldrh  w1, [x21, State.npMaterial + 2*1]
-                add  w0, w0, w1
-                mov  w4, 12222
-                cmp  w0, w4
-                blo  Evaluate.SkipSpace
-          EvalSpace  Black
-          EvalSpace  White
+           ldrh  w0, [x21, State.npMaterial + 2*0]
+           ldrh  w1, [x21, State.npMaterial + 2*1]
+            add  w0, w0, w1
+            mov  w4, 12222
+            cmp  w0, w4
+            blo  Evaluate.SkipSpace
+      EvalSpace  Black
+      EvalSpace  White
 
 Evaluate.SkipSpace:
-                mov  x24, x27
-                ldr  x25, [sp, EvalInfo.me]
+            mov  x24, x27
+            ldr  x25, [sp, EvalInfo.me]
 
-        ; Evaluate position potential for the winning side
+    ; Evaluate position potential for the winning side
 
-                and  x8, x11, FileABB or FileBBB or FileCBB or FileDBB
-                and  x1, x11, FileEBB or FileFBB or FileGBB or FileHBB
-                mov  w0, 16
-                tst  x8, x8
-              csetm  x8, ne
-               ands  x8, x8, x1
-               csel  w8, w0, w8, ne
+            and  x8, x11, FileABB or FileBBB or FileCBB or FileDBB
+            and  x1, x11, FileEBB or FileFBB or FileGBB or FileHBB
+            mov  w0, 16
+            tst  x8, x8
+          csetm  x8, ne
+           ands  x8, x8, x1
+           csel  w8, w0, w8, ne
 
-             Popcnt  x0, x11, x1
-               ldrb  w2, [x27, PawnEntry.asymmetry]
-                add  w2, w2, w0
-                sub  w2, w2, 17
-                add  w8, w8, w0, lsl 2
-                add  w8, w8, w2, lsl 3
+         Popcnt  x0, x11, x1
+           ldrb  w2, [x27, PawnEntry.asymmetry]
+            add  w2, w2, w0
+            sub  w2, w2, 17
+            add  w8, w8, w0, lsl 2
+            add  w8, w8, w2, lsl 3
 
-               sbfx  w9, w26, 0, 16
-                asr  w9, w9, 31
-               sbfx  w27, w26, 0, 16
-                sub  w26, w26, w9
-                eor  w27, w27, w9
-                sub  w27, w27, w9
-                neg  w27, w27
+           sbfx  w9, w26, 0, 16
+            asr  w9, w9, 31
+           sbfx  w27, w26, 0, 16
+            sub  w26, w26, w9
+            eor  w27, w27, w9
+            sub  w27, w27, w9
+            neg  w27, w27
 
-                ldr  w0, [sp, EvalInfo.ksq + 4*White]
-                ldr  w1, [sp, EvalInfo.ksq + 4*Black]
-                and  w0, w0, 56
-                and  w1, w1, 56
-                sub  w0, w0, w1
-                asr  w2, w0, 31
-                eor  w0, w0, w2
-                sub  w0, w0, w2
-                sub  w8, w8, w0
+            ldr  w0, [sp, EvalInfo.ksq + 4*White]
+            ldr  w1, [sp, EvalInfo.ksq + 4*Black]
+            and  w0, w0, 56
+            and  w1, w1, 56
+            sub  w0, w0, w1
+            asr  w2, w0, 31
+            eor  w0, w0, w2
+            sub  w0, w0, w2
+            sub  w8, w8, w0
 
-                ldr  w0, [sp, EvalInfo.ksq + 4*White]
-                ldr  w1, [sp, EvalInfo.ksq + 4*Black]
-                and  w0, w0, 7
-                and  w1, w1, 7
-                sub  w0, w0, w1
-                asr  w2, w0, 31
-                eor  w0, w0, w2
-                sub  w0, w0, w2
-                add  w0, w8, w0, lsl 3
-        ; eax = initiative
+            ldr  w0, [sp, EvalInfo.ksq + 4*White]
+            ldr  w1, [sp, EvalInfo.ksq + 4*Black]
+            and  w0, w0, 7
+            and  w1, w1, 7
+            sub  w0, w0, w1
+            asr  w2, w0, 31
+            eor  w0, w0, w2
+            sub  w0, w0, w2
+            add  w0, w8, w0, lsl 3
+    ; eax = initiative
 
-                cmp  w0, w27
-               csel  w0, w27, w0, lt
-                tst  w27, w27
-               csel  w9, w0, w9, eq
-                eor  w0, w0, w9
-                add  w26, w26, w0
+            cmp  w0, w27
+           csel  w0, w27, w0, lt
+            tst  w27, w27
+           csel  w9, w0, w9, eq
+            eor  w0, w0, w9
+            add  w26, w26, w0
 
-        ; esi = score
-        ; r14 = ei.pi
-        ; Evaluate scale factor for the winning side
+    ; esi = score
+    ; r14 = ei.pi
+    ; Evaluate scale factor for the winning side
 
-               sbfx  w22, w26, 0, 16
-                cmp  w22, 0
-               cset  w23, le
+           sbfx  w22, w26, 0, 16
+            cmp  w22, 0
+           cset  w23, le
 
-                add  x4, x25, x23
-               ldrb  w1, [x4, MaterialEntry.scalingFunction]
-               ldrb  w0, [x4, MaterialEntry.factor]
-               ldrb  w2, [x25, MaterialEntry.gamePhase]
+            add  x4, x25, x23
+           ldrb  w1, [x4, MaterialEntry.scalingFunction]
+           ldrb  w0, [x4, MaterialEntry.factor]
+           ldrb  w2, [x25, MaterialEntry.gamePhase]
 
-                add  w26, w26, 0x08000
-                asr  w26, w26, 16
-               cbnz  w1, Evaluate_Cold2.HaveScaleFunction
+            add  w26, w26, 0x08000
+            asr  w26, w26, 16
+           cbnz  w1, Evaluate_Cold2.HaveScaleFunction
 Evaluate.HaveScaleFunctionReturn:
 
-                sub  w1, w0, 48
-                ldr  x10, [x20, Pos.typeBB + 8*Bishop]
-                ldr  x8, [x20, Pos.typeBB + 8*White]
-                ldr  x9, [x20, Pos.typeBB + 8*Black]
-                ldr  w27, [x21, State.npMaterial]
-                and  x8, x8, x10
-                and  x9, x9, x10
-                tst  w1, not 16
-                bne  Evaluate.ScaleFactorDone
-                sub  x1, x8, 1
-                and  x8, x8, x1
-                sub  x1, x9, 1
-                and  x9, x9, x1
-                ldr  x11, [x20, Pos.typeBB + 8*Pawn]
-              mov64  x1, DarkSquares
-                tst  x1, x10
-                beq  Evaluate.NotOppBishop
-              mov64  x1, LightSquares
-                tst  x1, x10
-                beq  Evaluate.NotOppBishop
-                orr  x8, x8, x9
-               cbnz  x8, Evaluate.NotOppBishop
-                sub  x1, x11, 1
-                and  x1, x1, x11
-                mov  w0, 46
-                tst  x1, x1
-              csetm  w1, ne
-                mov  w4, 31 - 9
-                and  w1, w1, w4
-                add  w1, w1, 9
-              mov32  w4, (BishopValueMg shl 16) + BishopValueMg
-                cmp  w27, w4
-               csel  w0, w1, w0, eq
-                  b  Evaluate.ScaleFactorDone
+            sub  w1, w0, 48
+            ldr  x10, [x20, Pos.typeBB + 8*Bishop]
+            ldr  x8, [x20, Pos.typeBB + 8*White]
+            ldr  x9, [x20, Pos.typeBB + 8*Black]
+            ldr  w27, [x21, State.npMaterial]
+            and  x8, x8, x10
+            and  x9, x9, x10
+            tst  w1, not 16
+            bne  Evaluate.ScaleFactorDone
+            sub  x1, x8, 1
+            and  x8, x8, x1
+            sub  x1, x9, 1
+            and  x9, x9, x1
+            ldr  x11, [x20, Pos.typeBB + 8*Pawn]
+          mov64  x1, DarkSquares
+            tst  x1, x10
+            beq  Evaluate.NotOppBishop
+          mov64  x1, LightSquares
+            tst  x1, x10
+            beq  Evaluate.NotOppBishop
+            orr  x8, x8, x9
+           cbnz  x8, Evaluate.NotOppBishop
+            sub  x1, x11, 1
+            and  x1, x1, x11
+            mov  w0, 46
+            tst  x1, x1
+          csetm  w1, ne
+            mov  w4, 31 - 9
+            and  w1, w1, w4
+            add  w1, w1, 9
+          mov32  w4, (BishopValueMg shl 16) + BishopValueMg
+            cmp  w27, w4
+           csel  w0, w1, w0, eq
+              b  Evaluate.ScaleFactorDone
 Evaluate.NotOppBishop:
-                add  w9, w22, BishopValueEg
-                add  x6, x20, Pos.typeBB
-                ldr  x4, [x6, x23, lsl 3]
-                and  x11, x11, x4
-                eor  w23, w23, 1
-                cmp  w9, 2*BishopValueEg + 1
-                bhs  Evaluate.ScaleFactorDone
-                add  x6, sp, EvalInfo.ksq
-                ldr  w9, [x6, x23, lsl 2]
-                lsl  w23, w23, 9
-                lea  x6, PassedPawnMask
-                add  x6, x6, x23
-                ldr  x4, [x6, x9, lsl 3]
-                tst  x11, x4
-                beq  Evaluate.ScaleFactorDone
-              Popcnt  x1, x11, x9
-                cmp  w1, 3
-                bhs  Evaluate.ScaleFactorDone        
-                mov  w4, 7
-                mov  w5, 37
-               madd  w0, w1, w4, w5
+            add  w9, w22, BishopValueEg
+            add  x6, x20, Pos.typeBB
+            ldr  x4, [x6, x23, lsl 3]
+            and  x11, x11, x4
+            eor  w23, w23, 1
+            cmp  w9, 2*BishopValueEg + 1
+            bhs  Evaluate.ScaleFactorDone
+            add  x6, sp, EvalInfo.ksq
+            ldr  w9, [x6, x23, lsl 2]
+            lsl  w23, w23, 9
+           _lea  x6, PassedPawnMask
+            add  x6, x6, x23
+            ldr  x4, [x6, x9, lsl 3]
+            tst  x11, x4
+            beq  Evaluate.ScaleFactorDone
+         Popcnt  x1, x11, x9
+            cmp  w1, 3
+            bhs  Evaluate.ScaleFactorDone        
+            mov  w4, 7
+            mov  w5, 37
+           madd  w0, w1, w4, w5
 Evaluate.ScaleFactorDone:
 
-        ; eax = scale factor
-        ; edx = phase
-        ; esi = mg_score(score)
-        ; r12d = eg_value(score)
-        ; adjust score for side to move
-        ;
-        ; ; Interpolate between a middlegame and a (scaled by 'sf') endgame score
-        ; Value v =  mg_value(score) * int(ei.me->game_phase())
-        ;         + eg_value(score) * int(PHASE_MIDGAME - ei.me->game_phase()) * sf / SCALE_FACTOR_NORMAL;
-        ; v /= int(PHASE_MIDGAME);
+    ; eax = scale factor
+    ; edx = phase
+    ; esi = mg_score(score)
+    ; r12d = eg_value(score)
+    ; adjust score for side to move
+    ;
+    ; ; Interpolate between a middlegame and a (scaled by 'sf') endgame score
+    ; Value v =  mg_value(score) * int(ei.me->game_phase())
+    ;         + eg_value(score) * int(PHASE_MIDGAME - ei.me->game_phase()) * sf / SCALE_FACTOR_NORMAL;
+    ; v /= int(PHASE_MIDGAME);
 
-                ldr  w1, [x20, Pos.sideToMove]
-                mov  w27, 128
-                sub  w27, w27, w2
-                mul  w27, w27, w22
-                mov  w11, w1
-                mul  w27, w27, w0
-                add  w24, w27, 0x03F
-                tst  w27, w27
-               csel  w27, w24, w27, mi
-                mul  w26, w26, w2
-                asr  w27, w27, 6
-                add  w2, w27, w26
-                add  w0, w2, 0x07F
-                tst  w2, w2
-               csel  w2, w0, w2, mi
-                neg  w11, w11
-                asr  w2, w2, 7
-                eor  w2, w2, w11
-                add  w0, w1, Eval_Tempo
-                add  w0, w0, w2
+            ldr  w1, [x20, Pos.sideToMove]
+            mov  w27, 128
+            sub  w27, w27, w2
+            mul  w27, w27, w22
+            mov  w11, w1
+            mul  w27, w27, w0
+            add  w24, w27, 0x03F
+            tst  w27, w27
+           csel  w27, w24, w27, mi
+            mul  w26, w26, w2
+            asr  w27, w27, 6
+            add  w2, w27, w26
+            add  w0, w2, 0x07F
+            tst  w2, w2
+           csel  w2, w0, w2, mi
+            neg  w11, w11
+            asr  w2, w2, 7
+            eor  w2, w2, w11
+            add  w0, w1, Eval_Tempo
+            add  w0, w0, w2
 Display 2, "Evaluate returning %i0%n"
-                add  sp, sp, sizeof.EvalInfo
-                ldp  x24, x25, [sp], 16
-                ldp  x22, x23, [sp], 16
-                ldp  x26, x27, [sp], 16
-                ldp  x21, x30, [sp], 16
-                ret
+            add  sp, sp, sizeof.EvalInfo
+            ldp  x24, x25, [sp], 16
+            ldp  x22, x23, [sp], 16
+            ldp  x26, x27, [sp], 16
+            ldp  x21, x30, [sp], 16
+            ret
 
 
 
 Evaluate_Cold2:
 
 Evaluate_Cold2.HaveScaleFunction:
-                lsr  w0, w1, 1
-                lea  x6, EndgameScale_FxnTable
-                ldr  x0, [x6, x0, lsl 3]
-                and  w1, w1, 1
-                blr  x0
+            lsr  w0, w1, 1
+           _lea  x6, EndgameScale_FxnTable
+            ldr  x0, [x6, x0, lsl 3]
+            and  w1, w1, 1
+            blr  x0
 Display 2, "Scale returned %i0%n"
-                cmp  w0, SCALE_FACTOR_NONE
-               ldrb  w2, [x25, MaterialEntry.gamePhase]
-                add  x6, x25, x23
-               ldrb  w1, [x6, MaterialEntry.factor]
-               csel  w0, w1, w0, eq
-                  b  Evaluate.HaveScaleFunctionReturn
+            cmp  w0, SCALE_FACTOR_NONE
+           ldrb  w2, [x25, MaterialEntry.gamePhase]
+            add  x6, x25, x23
+           ldrb  w1, [x6, MaterialEntry.factor]
+           csel  w0, w1, w0, eq
+              b  Evaluate.HaveScaleFunctionReturn
 
 Evaluate_Cold2.EvalPassedPawnsWhite:
-    EvalPassedPawns  White
-                ldr  x9, [x27, PawnEntry.passedPawns + 8*Black]
-                cbz  x9, Evaluate.EvalPassedPawnsRet
+EvalPassedPawns  White
+            ldr  x9, [x27, PawnEntry.passedPawns + 8*Black]
+            cbz  x9, Evaluate.EvalPassedPawnsRet
 Evaluate_Cold2.EvalPassedPawnsBlack:
-    EvalPassedPawns  Black
-                  b  Evaluate.EvalPassedPawnsRet
+EvalPassedPawns  Black
+              b  Evaluate.EvalPassedPawnsRet
 
 HaveSpecializedEval:
-                lsr  w0, w1, 1
-                lea  x6, EndgameEval_FxnTable
-                ldr  x0, [x6, x0, lsl 3]
-                and  w1, w1, 1
-                blr  x0
+            lsr  w0, w1, 1
+           _lea  x6, EndgameEval_FxnTable
+            ldr  x0, [x6, x0, lsl 3]
+            and  w1, w1, 1
+            blr  x0
 Display 2, "Special Eval returned %i0%n"
-                add  sp, sp, sizeof.EvalInfo
-                ldp  x24, x25, [sp], 16
-                ldp  x22, x23, [sp], 16
-                ldp  x26, x27, [sp], 16
-                ldp  x21, x30, [sp], 16
-                ret
+            add  sp, sp, sizeof.EvalInfo
+            ldp  x24, x25, [sp], 16
+            ldp  x22, x23, [sp], 16
+            ldp  x26, x27, [sp], 16
+            ldp  x21, x30, [sp], 16
+            ret
 
 ; this is rarely called and should preserve rdi,r12,r13,r14,r15 (as well as rbx and rbp)
 DoMaterialEval:
-        ; in: rsi address of MaterialEntry
-        ;     rbp address of position
-        ;     rbx address of state
-        ;     rsp address of EvalInfo
-        ; out:       return is .DoMaterialEvalReturn
-        ;     eax  sign_ext(word[rsi+MaterialEntry.value])
-        ;     ecx  zero_ext(byte[rsi+MaterialEntry.evaluationFunction])
-        ;	       push   r12 r13 r14 r15
-                stp  x22, x23, [sp, -16]!
-                stp  x24, x25, [sp, -16]!
+    ; in: rsi address of MaterialEntry
+    ;     rbp address of position
+    ;     rbx address of state
+    ;     rsp address of EvalInfo
+    ; out:       return is .DoMaterialEvalReturn
+    ;     eax  sign_ext(word[rsi+MaterialEntry.value])
+    ;     ecx  zero_ext(byte[rsi+MaterialEntry.evaluationFunction])
+    ;	       push   r12 r13 r14 r15
+            stp  x22, x23, [sp, -16]!
+            stp  x24, x25, [sp, -16]!
 
-                ldr  x22, [x21, State.materialKey]
-               ldrh  w24, [x21, State.npMaterial + 2*0]
-               ldrh  w25, [x21, State.npMaterial + 2*1]
-                add  w0, w24, w25
-                mov  w2, 0
-                mov  w1, MidgameLimit - EndgameLimit
-               subs  w0, w0, EndgameLimit
-               csel  w0, w2, w0, mi
-                cmp  w0, w1
-               csel  w0, w1, w0, hs
-                lsl  w0, w0, 7
-               udiv  w0, w0, w1
+            ldr  x22, [x21, State.materialKey]
+           ldrh  w24, [x21, State.npMaterial + 2*0]
+           ldrh  w25, [x21, State.npMaterial + 2*1]
+            add  w0, w24, w25
+            mov  w2, 0
+            mov  w1, MidgameLimit - EndgameLimit
+           subs  w0, w0, EndgameLimit
+           csel  w0, w2, w0, mi
+            cmp  w0, w1
+           csel  w0, w1, w0, hs
+            lsl  w0, w0, 7
+           udiv  w0, w0, w1
 
-                mov  w2, 0
-                str  x22, [x26, MaterialEntry.key]
-               strb  w2, [x26, MaterialEntry.scalingFunction + 0]
-               strb  w2, [x26, MaterialEntry.scalingFunction + 1]
-               strb  w2, [x26, MaterialEntry.evaluationFunction]
-               strb  w0, [x26, MaterialEntry.gamePhase]
-                mov  w4, SCALE_FACTOR_NORMAL
-               strb  w4, [x26, MaterialEntry.factor + 1*White]
-                mov  w4, SCALE_FACTOR_NORMAL
-               strb  w4, [x26, MaterialEntry.factor + 1*Black]
-               strh  w2, [x26, MaterialEntry.value]
+            mov  w2, 0
+            str  x22, [x26, MaterialEntry.key]
+           strb  w2, [x26, MaterialEntry.scalingFunction + 0]
+           strb  w2, [x26, MaterialEntry.scalingFunction + 1]
+           strb  w2, [x26, MaterialEntry.evaluationFunction]
+           strb  w0, [x26, MaterialEntry.gamePhase]
+            mov  w4, SCALE_FACTOR_NORMAL
+           strb  w4, [x26, MaterialEntry.factor + 1*White]
+            mov  w4, SCALE_FACTOR_NORMAL
+           strb  w4, [x26, MaterialEntry.factor + 1*Black]
+           strh  w2, [x26, MaterialEntry.value]
 
-        ; Let's look if we have a specialized evaluation function for this particular
-        ; material configuration. Firstly we look for a fixed configuration one, then
-        ; for a generic one if the previous search failed.
+    ; Let's look if we have a specialized evaluation function for this particular
+    ; material configuration. Firstly we look for a fixed configuration one, then
+    ; for a generic one if the previous search failed.
 
-                lea  x10, EndgameEval_Map
-                add  x11, x10, 2*ENDGAME_EVAL_MAP_SIZE*sizeof.EndgameMapEntry
-                add  x23, x26, MaterialEntry.evaluationFunction
+           _lea  x10, EndgameEval_Map
+            add  x11, x10, 2*ENDGAME_EVAL_MAP_SIZE*sizeof.EndgameMapEntry
+            add  x23, x26, MaterialEntry.evaluationFunction
 
-DoMaterialEval.NextEvalKey:
-                ldr  x2, [x10, EndgameMapEntry.key]
-                ldr  w1, [x10, EndgameMapEntry.entri]
-                add  x10, x10, sizeof.EndgameMapEntry
-                ldr  x4, [x26, MaterialEntry.key]
-                cmp  x2, x4
-                beq  DoMaterialEval.FoundEvalFxn
-                cmp  x10, x11
-                blo  DoMaterialEval.NextEvalKey
-                ldr  x8, [x20, Pos.typeBB + 8*Black]
-                ldr  x9, [x20, Pos.typeBB + 8*White]
-DoMaterialEval.Try_KXK_White:
-                mov  w1, 2*EndgameEval_KXK_index
-                sub  x2, x8, 1
-               ands  x2, x2, x8
-                bne  DoMaterialEval.Try_KXK_Black
-                cmp  w24, RookValueMg
-                bge  DoMaterialEval.FoundEvalFxn
-DoMaterialEval.Try_KXK_Black:
-                add  w1, w1, 1
-                sub  x2, x9, 1
-               ands  x2, x2, x9
-                bne  DoMaterialEval.Try_KXK_Done
+.NextEvalKey:
+            ldr  x2, [x10, EndgameMapEntry.key]
+            ldr  w1, [x10, EndgameMapEntry.entri]
+            add  x10, x10, sizeof.EndgameMapEntry
+            ldr  x4, [x26, MaterialEntry.key]
+            cmp  x2, x4
+            beq  .FoundEvalFxn
+            cmp  x10, x11
+            blo  .NextEvalKey
+            ldr  x8, [x20, Pos.typeBB + 8*Black]
+            ldr  x9, [x20, Pos.typeBB + 8*White]
+.Try_KXK_White:
+            mov  w1, 2*EndgameEval_KXK_index
+            sub  x2, x8, 1
+           ands  x2, x2, x8
+            bne  .Try_KXK_Black
+            cmp  w24, RookValueMg
+            bge  .FoundEvalFxn
+.Try_KXK_Black:
+            add  w1, w1, 1
+            sub  x2, x9, 1
+           ands  x2, x2, x9
+            bne  .Try_KXK_Done
 
-                cmp  w25, RookValueMg
-                bge  DoMaterialEval.FoundEvalFxn
-DoMaterialEval.Try_KXK_Done:
+            cmp  w25, RookValueMg
+            bge  .FoundEvalFxn
+.Try_KXK_Done:
 
-        ; OK, we didn't find any special evaluation function for the current material
-        ; configuration. Is there a suitable specialized scaling function?
+    ; OK, we didn't find any special evaluation function for the current material
+    ; configuration. Is there a suitable specialized scaling function?
 
-                lea  x10, EndgameScale_Map
-                add  x11, x10, 2*ENDGAME_SCALE_MAP_SIZE*sizeof.EndgameMapEntry
-        DoMaterialEval.NextScaleKey:
-                ldr  x2, [x10, EndgameMapEntry.key]
-                ldr  w1, [x10, EndgameMapEntry.entri]
-                add  x10, x10, sizeof.EndgameMapEntry
-                ldr  x4, [x26, MaterialEntry.key]
-                cmp  x2, x4
-                beq  DoMaterialEval.FoundScaleFxn
-                cmp  x10, x11
-                blo  DoMaterialEval.NextScaleKey
+           _lea  x10, EndgameScale_Map
+            add  x11, x10, 2*ENDGAME_SCALE_MAP_SIZE*sizeof.EndgameMapEntry
+.NextScaleKey:
+            ldr  x2, [x10, EndgameMapEntry.key]
+            ldr  w1, [x10, EndgameMapEntry.entri]
+            add  x10, x10, sizeof.EndgameMapEntry
+            ldr  x4, [x26, MaterialEntry.key]
+            cmp  x2, x4
+            beq  .FoundScaleFxn
+            cmp  x10, x11
+            blo  .NextScaleKey
 
-                sub  sp, sp, 8*16
-                  b  DoMaterialEval.Continue
+            sub  sp, sp, 8*16
+              b  .Continue
 
-        DoMaterialEval.FoundScaleFxn:
-                and  w23, w1, 1
-                add  x23, x23, x26
-                add  x23, x23, MaterialEntry.scalingFunction
-                mov  w0, 0
-               strb  w1, [x23]
-                mov  w1, 0
+.FoundScaleFxn:
+            and  w23, w1, 1
+            add  x23, x23, x26
+            add  x23, x23, MaterialEntry.scalingFunction
+            mov  w0, 0
+           strb  w1, [x23]
+            mov  w1, 0
 
-                ldp  x24, x25, [sp], 16
-                ldp  x22, x23, [sp], 16
-                  b  Evaluate.DoMaterialEvalReturn
+            ldp  x24, x25, [sp], 16
+            ldp  x22, x23, [sp], 16
+              b  Evaluate.DoMaterialEvalReturn
 
-        DoMaterialEval.FoundEvalFxn:
-                mov  w0, 0
-               strb  w1, [x23]
-                ldp  x24, x25, [sp], 16
-                ldp  x22, x23, [sp], 16
-                  b  Evaluate.DoMaterialEvalReturn
+.FoundEvalFxn:
+            mov  w0, 0
+           strb  w1, [x23]
+            ldp  x24, x25, [sp], 16
+            ldp  x22, x23, [sp], 16
+              b  Evaluate.DoMaterialEvalReturn
 
-DoMaterialEval.Continue:
-        ; We didn't find any specialized scaling function, so fall back on generic
-        ; ones that refer to more than one material distribution. Note that in this
-        ; case we don't return after setting the function.
+.Continue:
+    ; We didn't find any specialized scaling function, so fall back on generic
+    ; ones that refer to more than one material distribution. Note that in this
+    ; case we don't return after setting the function.
+            mov  w8, 0
+.CountLoop:
+            add  x6, x20, Pos.typeBB
+            ldr  x2, [x6, x8]
+            ldr  x0, [x20, Pos.typeBB + 8*Pawn]
+            and  x0, x0, x2
+         Popcnt  x0, x0, x1
+            add  x7, sp, x8, lsl 2
+            str  w0, [x7, 4*Pawn]
+            ldr  x0, [x20, Pos.typeBB + 8*Knight]
+            and  x0, x0, x2
+         Popcnt  x0, x0, x1
+            add  x7, sp, x8, lsl 2
+            str  w0, [x7, 4*Knight]
+            ldr  x0, [x20, Pos.typeBB + 8*Bishop]
+            and  x0, x0, x2
+         Popcnt  x0, x0, x1
+            add  x7, sp, x8, lsl 2
+            str  w0, [x7, 4*Bishop]
+            cmp  w0, 2
+           cset  w0, hs
+            add  x7, sp, x8, lsl 2
+            str  w0, [x7, 4*1]
+            ldr  x0, [x20, Pos.typeBB + 8*Rook]
+            and  x0, x0, x2
+         Popcnt  x0, x0, x1
+            add  x7, sp, x8, lsl 2
+            str  w0, [x7, 4*Rook]
+            ldr  x0, [x20, Pos.typeBB + 8*Queen]
+            and  x0, x0, x2
+         Popcnt  x0, x0, x1
+            add  x7, sp, x8, lsl 2
+            str  w0, [x7, 4*Queen]
 
-                mov  w8, 0
-        DoMaterialEval.CountLoop:
-                add  x6, x20, Pos.typeBB
-                ldr  x2, [x6, x8]
-                ldr  x0, [x20, Pos.typeBB + 8*Pawn]
-                and  x0, x0, x2
-             Popcnt  x0, x0, x1
-                add  x7, sp, x8, lsl 2
-                str  w0, [x7, 4*Pawn]
-                ldr  x0, [x20, Pos.typeBB + 8*Knight]
-                and  x0, x0, x2
-             Popcnt  x0, x0, x1
-                add  x7, sp, x8, lsl 2
-                str  w0, [x7, 4*Knight]
-                ldr  x0, [x20, Pos.typeBB + 8*Bishop]
-                and  x0, x0, x2
-             Popcnt  x0, x0, x1
-                add  x7, sp, x8, lsl 2
-                str  w0, [x7, 4*Bishop]
-                cmp  w0, 2
-               cset  w0, hs
-                add  x7, sp, x8, lsl 2
-                str  w0, [x7, 4*1]
-                ldr  x0, [x20, Pos.typeBB + 8*Rook]
-                and  x0, x0, x2
-             Popcnt  x0, x0, x1
-                add  x7, sp, x8, lsl 2
-                str  w0, [x7, 4*Rook]
-                ldr  x0, [x20, Pos.typeBB + 8*Queen]
-                and  x0, x0, x2
-             Popcnt  x0, x0, x1
-                add  x7, sp, x8, lsl 2
-                str  w0, [x7, 4*Queen]
-
-                add  w8, w8, 8
-                cmp  w8, 16
-                blo  DoMaterialEval.CountLoop
+            add  w8, w8, 8
+            cmp  w8, 16
+            blo  .CountLoop
 
 
 macro CheckOtherEndgames Us, npMat
-    local Check_KBPsKs, Check_KQKRPs, Check_sDone
+  local Check_KBPsKs, Check_KQKRPs, Check_sDone
 Check_KBPsKs:
-                cmp  npMat, BishopValueMg
-                bne  Check_KQKRPs
-                ldr  w0, [sp, 4*(8*Us + Bishop)]
-                cmp  w0, 1
-                bne  Check_KQKRPs
-                ldr  w0, [sp, 4*(8*Us + Pawn)]
-                cbz  w0, Check_KQKRPs
-                mov  w4, 2*EndgameScale_KBPsK_index + Us
-               strb  w4, [x26, MaterialEntry.scalingFunction + 1*Us]
-                  b  Check_sDone
+            cmp  npMat, BishopValueMg
+            bne  Check_KQKRPs
+            ldr  w0, [sp, 4*(8*Us + Bishop)]
+            cmp  w0, 1
+            bne  Check_KQKRPs
+            ldr  w0, [sp, 4*(8*Us + Pawn)]
+            cbz  w0, Check_KQKRPs
+            mov  w4, 2*EndgameScale_KBPsK_index + Us
+           strb  w4, [x26, MaterialEntry.scalingFunction + 1*Us]
+              b  Check_sDone
 Check_KQKRPs:
-                cmp  npMat, QueenValueMg
-                bne  Check_sDone
-                ldr  w0, [sp, 4*(8*Us + Pawn)]
-               cbnz  w0, Check_sDone
-                ldr  w0, [sp, 4*(8*Us + Queen)]
-                cmp  w0, 1
-                bne  Check_sDone
-                ldr  w0, [sp, 4*(8*(Us xor 1) + Rook)]
-                cmp  w0, 1
-                bne  Check_sDone
-                ldr  w0, [sp, 4*(8*(Us xor 1) + Pawn)]
-                cbz  w0, Check_sDone
-                mov  w4, 2*EndgameScale_KQKRPs_index + Us
-               strb  w4, [x26, MaterialEntry.scalingFunction + 1*Us]
+            cmp  npMat, QueenValueMg
+            bne  Check_sDone
+            ldr  w0, [sp, 4*(8*Us + Pawn)]
+           cbnz  w0, Check_sDone
+            ldr  w0, [sp, 4*(8*Us + Queen)]
+            cmp  w0, 1
+            bne  Check_sDone
+            ldr  w0, [sp, 4*(8*(Us xor 1) + Rook)]
+            cmp  w0, 1
+            bne  Check_sDone
+            ldr  w0, [sp, 4*(8*(Us xor 1) + Pawn)]
+            cbz  w0, Check_sDone
+            mov  w4, 2*EndgameScale_KQKRPs_index + Us
+           strb  w4, [x26, MaterialEntry.scalingFunction + 1*Us]
 Check_sDone:
 
 end macro
@@ -2080,151 +2050,151 @@ end macro
  CheckOtherEndgames  Black, w25
 
 
-                ldr  x0, [x20, Pos.typeBB + 8*Pawn]
-               cbnz  w24, DoMaterialEval.NotOnlyPawns
-               cbnz  w25, DoMaterialEval.NotOnlyPawns
-                cbz  x0, DoMaterialEval.NotOnlyPawns
-DoMaterialEval.OnlyPawns:
-                ldr  w1, [sp, 4*(8*Black + Pawn)]
-                mov  w0, ((0) shl 8) + ((2*EndgameScale_KPsK_index + White) shl 0)
-                cbz  w1, DoMaterialEval.OnlyPawnsWrite
-                ldr  w2, [sp, 4*(8*White + Pawn)]
-                mov  w0, ((2*EndgameScale_KPsK_index + Black) shl 8) + ((0) shl 0)
-                cbz  w2, DoMaterialEval.OnlyPawnsWrite
-                mov  w0, 0
-                cmp  w1, 1
-                bne  DoMaterialEval.OnlyPawnsWrite
-                cmp  w2, 1
-                bne  DoMaterialEval.OnlyPawnsWrite
-                mov  w0, ((2*EndgameScale_KPKP_index + Black) shl 8) + ((2*EndgameScale_KPKP_index + White) shl 0)
-DoMaterialEval.OnlyPawnsWrite:
-               strh  w0, [x26, MaterialEntry.scalingFunction]
-DoMaterialEval.NotOnlyPawns:
+            ldr  x0, [x20, Pos.typeBB + 8*Pawn]
+           cbnz  w24, .NotOnlyPawns
+           cbnz  w25, .NotOnlyPawns
+            cbz  x0, .NotOnlyPawns
+.OnlyPawns:
+            ldr  w1, [sp, 4*(8*Black + Pawn)]
+            mov  w0, ((0) shl 8) + ((2*EndgameScale_KPsK_index + White) shl 0)
+            cbz  w1, .OnlyPawnsWrite
+            ldr  w2, [sp, 4*(8*White + Pawn)]
+            mov  w0, ((2*EndgameScale_KPsK_index + Black) shl 8) + ((0) shl 0)
+            cbz  w2, .OnlyPawnsWrite
+            mov  w0, 0
+            cmp  w1, 1
+            bne  .OnlyPawnsWrite
+            cmp  w2, 1
+            bne  .OnlyPawnsWrite
+            mov  w0, ((2*EndgameScale_KPKP_index + Black) shl 8) + ((2*EndgameScale_KPKP_index + White) shl 0)
+.OnlyPawnsWrite:
+           strh  w0, [x26, MaterialEntry.scalingFunction]
+.NotOnlyPawns:
 
-                ldr  w0, [sp, 4*(8*White + Pawn)]
-               cbnz  w0, DoMaterialEval.P1
-                sub  w1, w24, w25
-                cmp  w1, BishopValueMg
-                bgt  DoMaterialEval.P1
-                mov  w0, 14
-                mov  w1, 4
-                cmp  w25, BishopValueMg
-               csel  w0, w1, w0, le
-                mov  w1, SCALE_FACTOR_DRAW
-                cmp  w24, RookValueMg
-               csel  w0, w1, w0, lt
-               strb  w0, [x26, MaterialEntry.factor + 1*White]
-DoMaterialEval.P1:
-                ldr  w0, [sp, 4*(8*Black + Pawn)]
-               cbnz  w0, DoMaterialEval.P2
-                sub  w1, w25, w24
-                cmp  w1, BishopValueMg
-                bgt  DoMaterialEval.P2
-                mov  w0, 14
-                mov  w1, 4
-                cmp  w24, BishopValueMg
-               csel  w0, w1, w0, le
-                mov  w1, SCALE_FACTOR_DRAW
-                cmp  w25, RookValueMg
-               csel  w0, w1, w0, lt
-               strb  w0, [x26, MaterialEntry.factor + 1*Black]
-DoMaterialEval.P2:
-                ldr  w0, [sp, 4*(8*White + Pawn)]
-                cmp  w0, 1
-                bne  DoMaterialEval.P3
-                sub  w1, w24, w25
-                cmp  w1, BishopValueMg
-                bgt  DoMaterialEval.P3
-                mov  w4, SCALE_FACTOR_ONEPAWN
-               strb  w4, [x26, MaterialEntry.factor + 1*White]
-DoMaterialEval.P3:
-                ldr  w0, [sp, 4*(8*Black + Pawn)]
-                cmp  w0, 1
-                bne  DoMaterialEval.P4
-                sub  w1, w25, w24
-                cmp  w1, BishopValueMg
-                bgt  DoMaterialEval.P4
-                mov  w4, SCALE_FACTOR_ONEPAWN
-               strb  w4, [x26, MaterialEntry.factor + 1*Black]
-DoMaterialEval.P4:
+            ldr  w0, [sp, 4*(8*White + Pawn)]
+           cbnz  w0, .P1
+            sub  w1, w24, w25
+            cmp  w1, BishopValueMg
+            bgt  .P1
+            mov  w0, 14
+            mov  w1, 4
+            cmp  w25, BishopValueMg
+           csel  w0, w1, w0, le
+            mov  w1, SCALE_FACTOR_DRAW
+            cmp  w24, RookValueMg
+           csel  w0, w1, w0, lt
+           strb  w0, [x26, MaterialEntry.factor + 1*White]
+.P1:
+            ldr  w0, [sp, 4*(8*Black + Pawn)]
+           cbnz  w0, .P2
+            sub  w1, w25, w24
+            cmp  w1, BishopValueMg
+            bgt  .P2
+            mov  w0, 14
+            mov  w1, 4
+            cmp  w24, BishopValueMg
+           csel  w0, w1, w0, le
+            mov  w1, SCALE_FACTOR_DRAW
+            cmp  w25, RookValueMg
+           csel  w0, w1, w0, lt
+           strb  w0, [x26, MaterialEntry.factor + 1*Black]
+.P2:
+            ldr  w0, [sp, 4*(8*White + Pawn)]
+            cmp  w0, 1
+            bne  .P3
+            sub  w1, w24, w25
+            cmp  w1, BishopValueMg
+            bgt  .P3
+            mov  w4, SCALE_FACTOR_ONEPAWN
+           strb  w4, [x26, MaterialEntry.factor + 1*White]
+.P3:
+            ldr  w0, [sp, 4*(8*Black + Pawn)]
+            cmp  w0, 1
+            bne  .P4
+            sub  w1, w25, w24
+            cmp  w1, BishopValueMg
+            bgt  .P4
+            mov  w4, SCALE_FACTOR_ONEPAWN
+           strb  w4, [x26, MaterialEntry.factor + 1*Black]
+.P4:
 
-                add  x8, sp, 4*0
-                add  x9, sp, 4*8
-                ldr  w0, [x8, 4*Pawn]
-                lea  x6, PawnsSet
-                ldr  w0, [x6, x0, lsl 2]
-                ldr  w1, [x9, 4*Pawn]
-                lea  x6, PawnsSet
-                ldr  w1, [x6, x1, lsl 2]
-                sub  w0, w0, w1
-                mov  w25, 0
-DoMaterialEval.ColorLoop:
-                mov  w3, -1
-                add  w3, w3, w25, lsl 1 ; w3 = 2*w25 - 1
+            add  x8, sp, 4*0
+            add  x9, sp, 4*8
+            ldr  w0, [x8, 4*Pawn]
+           _lea  x6, PawnsSet
+            ldr  w0, [x6, x0, lsl 2]
+            ldr  w1, [x9, 4*Pawn]
+           _lea  x6, PawnsSet
+            ldr  w1, [x6, x1, lsl 2]
+            sub  w0, w0, w1
+            mov  w25, 0
+.ColorLoop:
+            mov  w3, -1
+            add  w3, w3, w25, lsl 1 ; w3 = 2*w25 - 1
 
-                mov  w10, 0
-                mov  w24, 1
-DoMaterialEval.Piece1Loop:
-                mov  w11, 0
-                mov  w23, 1
-                ldr  w4, [x8, x24, lsl 2]
-                cbz  w4, DoMaterialEval.SkipPiece
-DoMaterialEval.Piece2Loop:
-                lea  x6, DoMaterialEval_Data.QuadraticOurs
-                add  x6, x6, x10
-                ldr  w1, [x6, x23, lsl 2]
-                ldr  w4, [x8, x23, lsl 2]
-                mul  w1, w1, w4
-                add  w11, w11, w1
-                lea  x6, DoMaterialEval_Data.QuadraticTheirs
-                add  x6, x6, x10
-                ldr  w1, [x6, x23, lsl 2]
-                ldr  w4, [x9, x23, lsl 2]
-                mul  w1, w1, w4
-                add  w11, w11, w1
-                add  w23, w23, 1
-                cmp  w23, w24
-                bls  DoMaterialEval.Piece2Loop
-                ldr  w4, [x8, x24, lsl 2]
-                mul  w2, w3, w4
-                mul  w11, w11, w2
-                sub  w0, w0, w11
-DoMaterialEval.SkipPiece:
-                add  w24, w24, 1
-                add  w10, w10, 8*4
-                cmp  w24, Queen
-                bls  DoMaterialEval.Piece1Loop
-        ; Special handling of Queen vs. Minors
-                ldr  w2, [x8, 4*Queen]
-                ldr  w4, [x9, 4*Queen]
-                lea  x6, QueenMinorsImbalance
-                ldr  w1, [x9, 4*Knight]
-                cmp  w2, 1
-               ccmp  w4, wzr, 0, eq
-                bne  DoMaterialEval.NoQueenImbalance
-                ldr  w4, [x9, 4*Bishop]
-                add  w1, w1, w4
-                ldr  w2, [x6, x1, lsl 2]
-               msub  w0, w3, w2, w0
-DoMaterialEval.NoQueenImbalance:
-                mov  x4, x8
-                mov  x8, x9
-                mov  x9, x4
-                add  w25, w25, 1
-                cmp  w25, 2
-                blo  DoMaterialEval.ColorLoop
+            mov  w10, 0
+            mov  w24, 1
+.Piece1Loop:
+            mov  w11, 0
+            mov  w23, 1
+            ldr  w4, [x8, x24, lsl 2]
+            cbz  w4, .SkipPiece
+.Piece2Loop:
+           _lea  x6, DoMaterialEval_Data.QuadraticOurs
+            add  x6, x6, x10
+            ldr  w1, [x6, x23, lsl 2]
+            ldr  w4, [x8, x23, lsl 2]
+            mul  w1, w1, w4
+            add  w11, w11, w1
+           _lea  x6, DoMaterialEval_Data.QuadraticTheirs
+            add  x6, x6, x10
+            ldr  w1, [x6, x23, lsl 2]
+            ldr  w4, [x9, x23, lsl 2]
+            mul  w1, w1, w4
+            add  w11, w11, w1
+            add  w23, w23, 1
+            cmp  w23, w24
+            bls  .Piece2Loop
+            ldr  w4, [x8, x24, lsl 2]
+            mul  w2, w3, w4
+            mul  w11, w11, w2
+            sub  w0, w0, w11
+.SkipPiece:
+            add  w24, w24, 1
+            add  w10, w10, 8*4
+            cmp  w24, Queen
+            bls  .Piece1Loop
+    ; Special handling of Queen vs. Minors
+            ldr  w2, [x8, 4*Queen]
+            ldr  w4, [x9, 4*Queen]
+           _lea  x6, QueenMinorsImbalance
+            ldr  w1, [x9, 4*Knight]
+            cmp  w2, 1
+           ccmp  w4, wzr, 0, eq
+            bne  .NoQueenImbalance
+            ldr  w4, [x9, 4*Bishop]
+            add  w1, w1, w4
+            ldr  w2, [x6, x1, lsl 2]
+           msub  w0, w3, w2, w0
+.NoQueenImbalance:
+            mov  x4, x8
+            mov  x8, x9
+            mov  x9, x4
+            add  w25, w25, 1
+            cmp  w25, 2
+            blo  .ColorLoop
 
-        ; divide by 16, round towards zero
-                asr  w2, w0, 31
-                and  w2, w2, 15
-                add  w0, w0, w2
-                asr  w0, w0, 4
+    ; divide by 16, round towards zero
+            asr  w2, w0, 31
+            and  w2, w2, 15
+            add  w0, w0, w2
+            asr  w0, w0, 4
 
-               strh  w0, [x26, MaterialEntry.value]
-               ldrb  w1, [x26, MaterialEntry.evaluationFunction]
+           strh  w0, [x26, MaterialEntry.value]
+           ldrb  w1, [x26, MaterialEntry.evaluationFunction]
 
-                add  sp, sp, 8*16
-                ldp  x24, x25, [sp], 16
-                ldp  x22, x23, [sp], 16
-                  b  Evaluate.DoMaterialEvalReturn
+            add  sp, sp, 8*16
+            ldp  x24, x25, [sp], 16
+            ldp  x22, x23, [sp], 16
+              b  Evaluate.DoMaterialEvalReturn
 

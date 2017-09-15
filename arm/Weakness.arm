@@ -1,0 +1,389 @@
+
+Weakness_AdjustTime:
+        ; bring maximum time closer to optimumtime
+;         _vcvtsi2sd   xmm0, xmm0, dword[time.optimumTime]
+           _lea  x6, time
+            ldr  w4, [x6, Time.optimumTime]
+          scvtf  d0, w4
+;         _vcvtsi2sd   xmm1, xmm1, dword[time.maximumTime]
+            ldr  w4, [x6, Time.maximumTime]
+          scvtf  d0, w4
+;            _vmovsd   xmm2, qword[weakness.targetLoss]
+           _lea  x7, weakness
+            ldr  d2, [x7, Weakness.targetLoss]
+;            _vmovsd   xmm3, qword[.a]
+            ldr  d3, .a
+;            _vmulsd   xmm0, xmm0, xmm2
+           fmul  d0, d0, d2
+;            _vmulsd   xmm1, xmm1, xmm3
+           fmul  d1, d1, d3
+;            _vaddsd   xmm0, xmm0, xmm1
+           fadd  d0, d0, d1
+;            _vaddsd   xmm2, xmm2, xmm3
+           fadd  d2, d2, d3
+;            _vdivsd   xmm0, xmm0, xmm2
+           fdiv  d0, d0, d2
+;         _vcvtsd2si   eax, xmm0
+         fcvtzu  w0, d0
+;                mov   dword[time.maximumTime], eax
+            str  w0, [x6, Time.maximumTime]
+;                ret
+            ret
+
+         calign  8
+.a dq 12.0
+
+
+Weakness_SetMultiPV:
+    ; in: rbp address of position  root moves vector is assumed to be sorted
+    ; out: set weakness.multipv
+
+;virtual at rsp
+;  .bestscore   rq 1
+;  .worstscore  rq 1
+;  .localend rb 0
+;end virtual
+;.localsize = ((.localend-rsp+15) and (-16))
+
+
+virtual at 0
+  .bestscore   rq 1
+  .worstscore  rq 1
+  .localend rb 0
+end virtual
+.localsize = ((.localend+15) and (-16))
+
+;               push   rbx rsi rdi
+;                sub   rsp, .localsize
+            stp  x21, x30, [sp, -16]!
+            stp  x26, x27, [sp, -16]!
+            sub  sp, sp, .localsize
+;
+;                mov   edi, dword[weakness.multiPV]
+           _lea  x6, weakness
+            ldr  w27, [x6, Weakness.multiPV]
+;                mov   rsi, qword[rbp+Pos.rootMovesVec.table]
+            ldr  x26, [x20, Pos.rootMovesVec + RootMovesVec.table]
+;               imul   ebx, edi, sizeof.RootMove
+;                add   rbx, rsi
+            mov  x4, sizeof.RootMove
+           madd  x21, x27, x4, x26
+;             Assert   be, rbx, qword[rbp+Pos.rootMovesVec.ender], 'grave error in Weakness_SetMultiPV'
+;        ; rbx = end of moves to consider
+;
+;                mov   ecx, dword[rsi+RootMove.score]
+            ldr  w1, [x26, RootMove.score]
+;               call   Weakness_ScoreToDouble
+             bl  Weakness_ScoreToDouble
+;            _vmovsd   qword[.bestscore], xmm0
+            str  d0, [sp, .bestscore]
+.Looper:
+;                add   rsi, sizeof.RootMove
+            add  x26, x26, sizeof.RootMove
+;                cmp   rsi, rbx
+;                jae   .LoopDone
+            cmp  x26, x21
+            bhs  .LoopDone
+;                mov   ecx, dword[rsi+RootMove.score]
+            str  w1, [x26, RootMove.score]
+;                cmp   ecx, -VALUE_INFINITE
+;                jne   .Loop
+            mov  w4, -VALUE_INFINITE
+            cmp  w1, w4
+            bne  .Looper
+.Return:
+;                add   rsp, .localsize
+;                pop   rdi rsi rbx
+            add  sp, sp, .localsize
+            ldp  x26, x27, [sp], 16
+            ldp  x21, x30, [sp], 16
+;                ret
+            ret
+;
+.LoopDone:
+;               call   Weakness_ScoreToDouble
+             bl  Weakness_ScoreToDouble
+;            _vmovsd   qword[.worstscore], xmm0
+            str  d0, [sp, .worstscore]
+;
+;    ; if difference falls out side of (1.8*target, 2.2*target), adjust
+;                lea   rcx, [rbp+Pos.rootMovesVec]
+            add  x1, x20, Pos.rootMovesVec
+;               call   RootMovesVec_Size
+             bl  RootMovesVec_Size
+;                xor   edx, edx
+            mov  w2, 0
+;            _vmovsd   xmm0, qword[.bestscore]
+            ldr  d0, [sp, .bestscore]
+;            _vmovsd   xmm2, qword[weakness.targetLoss]
+           _lea  x6, weakness            
+            ldr  d2, [x6, Weakness.targetLoss]
+;            _vsubsd   xmm0, xmm0, qword[.worstscore]
+            ldr  d16, [sp, .worstscore]
+           fsub  d0, d0, d16
+;            _vmulsd   xmm1, xmm2, qword[.lower]
+            ldr  d16, .lower
+           fmul  d1, d2, d16
+;            _vmulsd   xmm2, xmm2, qword[.upper]
+            ldr  d16, .upper
+           fmul  d2, d2, d16
+;           _vcomisd   xmm2, xmm0
+           fcmp  d2, d0
+;                sbb   edi, edx
+            sub  w4, w27, 1
+           csel  w27, w4, w27, lt
+;              cmovs   edi, edx
+            tst  w27, w27
+           csel  w27, w4, w27, mi    
+;           _vcomisd   xmm0, xmm1
+           fcmp  d0, d1
+;                adc   edi, edx
+           cinc  w27, w27, lt
+;                cmp   edi, eax
+;              cmova   edi, eax
+            cmp  w27, w0
+           csel  w27, w0, w27, hi
+;                mov   dword[weakness.multiPV], edi
+           _lea  x6, weakness
+            str  w27, [x6, Weakness.multiPV]
+;                jmp   .Return
+              b  .Return
+;
+         calign  8
+.lower dq 1.8
+.upper dq 2.2
+;
+;
+Weakness_ScoreToDouble:
+;    ; convert from internal score ecx to something reasonable
+;    ;   mate scores have bigger distance between them
+;    ;             x
+;    ;  xmm0 = ---------
+;    ;         a*x^2 + 1
+;         _vcvtsi2sd   xmm0, xmm0, ecx
+          scvtf  d0, w1            
+;            _vmulsd   xmm1, xmm0, xmm0
+           fmul  d1, d0, d0
+;            _vmulsd   xmm1, xmm1, qword[.a]
+            ldr  d16, .a
+           fmul  d1, d1, d16
+;            _vaddsd   xmm1, xmm1, qword[constd._1p0]
+           fmov  d16, 1.0
+           fadd  d1, d1, d16
+;            _vdivsd   xmm0, xmm0, xmm1
+           fdiv  d0, d0, d1
+;                ret
+            ret
+;
+         calign  8
+.a: dq -8.65052e-10
+;
+;
+;
+;
+Weakness_PickMove:
+        ; in: rbp address of position  root moves vector is assumed to be sorted
+        ;     weakness.averageCpLoss  is weakness level
+        ;     weakness.multiPv         is max moves to consider
+        ; out: the root moves vector will have the top move swapped with a lower one
+
+;
+;virtual at rsp
+;  .weights  rq MAX_MOVES
+;  .rootMove rb sizeof.RootMove
+;  .localend rb 0
+;end virtual
+;.localsize = ((.localend-rsp+15) and (-16))
+virtual at 0
+  .weights  rq MAX_MOVES
+  .rootMove rb sizeof.RootMove
+  .localend rb 0
+end virtual
+.localsize = ((.localend+15) and (-16))
+;
+;               push   rbx rsi rdi r14 r15
+;         _chkstk_ms   rsp, .localsize
+;                sub   rsp, .localsize
+            stp  x21, x30, [sp, -16]!
+            stp  x26, x27, [sp, -16]!
+            stp  x24, x25, [sp, -16]!
+            sub  sp, sp, .localsize
+;
+;        ; assign weights based on target and accumulate them into xmm5
+;                mov   rsi, qword[rbp+Pos.rootMovesVec.table]
+            ldr  x26, [x20, Pos.rootMovesVec + RootMovesVec.table]
+;                mov   ecx, dword[rsi+RootMove.score]
+            ldr  w1, [x26, RootMove.score]
+;               call   Weakness_ScoreToDouble
+             bl  Weakness_ScoreToDouble
+;                lea   rdx, [.weights]
+            add  x2, sp, .weights
+;            _vmovsd   xmm5, qword[weakness.targetLoss]
+           _lea  x6, weakness
+            ldr  d5, [x6, Weakness.targetLoss]
+;            _vsubsd   xmm4, xmm0, xmm5	; xmm4 = target score d
+           fsub  d4, d0, d5
+;            _vxorps   xmm8, xmm8, xmm8
+           fmov  d8, xzr
+;            _vmulsd   xmm7, xmm5, xmm5	; xmm7 = d^2
+           fmul  d7, d5, d5
+;           _vsqrtsd   xmm5, xmm5, xmm5
+          fsqrt  d5, d5
+;            _vaddsd   xmm5, xmm5, xmm5	; xmm5 = 2*Sqrt[d]
+           fadd  d5, d5, d5
+;            _vaddsd   xmm6, xmm7, qword[.mind]  ; xmm6 = d^2+e
+            ldr  d16, .mind
+           fadd  d6, d7, d16
+;               imul   ebx, dword[weakness.multiPV], sizeof.RootMove
+;                add   rbx, qword[rbp+Pos.rootMovesVec.table]	     ; rbx = end of moves to consider
+            ldr  x21, [x20, Pos.rootMovesVec + RootMovesVec.table]
+           _lea  x6, weakness
+            ldr  w4, [x6, Weakness.multiPV]
+            mov  x5, sizeof.RootMove
+           madd  x21, x4, x5, x21
+    @1:
+;                mov   ecx, dword[rsi+RootMove.score]
+            ldr  w1, [x26, RootMove.score]
+;                cmp   ecx, -VALUE_INFINITE
+            mov  w4, -VALUE_INFINITE
+            cmp  w1, w4
+;              cmove   ecx, dword[rsi+RootMove.prevScore]
+            ldr  w4, [x26, RootMove.prevScore]
+           csel  w1, w4, w1, eq
+;               call   Weakness_ScoreToDouble
+             bl  Weakness_ScoreToDouble
+;            _vsubsd   xmm0, xmm0, xmm4
+           fsub  d0, d0, d4
+;            _vmulsd   xmm0, xmm0, xmm0
+           fmul  d0, d0, d0
+;            _vmulsd   xmm0, xmm0, xmm5
+           fmul  d0, d0, d5
+;            _vaddsd   xmm0, xmm0, xmm6
+           fadd  d0, d0, d6
+;            _vdivsd   xmm1, xmm7, xmm0
+           fdiv  d1, d7, d0
+;            _vaddsd   xmm8, xmm8, xmm1
+           fadd  d8, d8, d1
+;            _vmovsd   qword[rdx], xmm8
+            str  d8, [x2]
+;                add   rsi, sizeof.RootMove
+            add  x26, x26, sizeof.RootMove
+;                add   rdx, 8
+            add  x2, x2, 8
+;                cmp   rsi, rbx
+;                 jb   @1b
+            cmp  x26, x21
+            blo  @1b
+;
+;        ; get a random number in [0,xmm8)
+;               call   Os_GetTime
+             bl  Os_GetTime
+;                xor   rax, rdx
+            eor  x0, x0, x2
+            orr  x0, x0, 1
+;                lea   rcx, [weakness.prng]
+           _lea  x1, weakness + Weakness.prng
+;                xor   qword[rcx], rax
+            ldr  x4, [x1]
+            eor  x4, x4, x0
+            str  x4, [x1]
+;               call   Math_Rand_d
+             bl  Math_Rand_d
+;            _vmulsd   xmm0, xmm0, xmm8
+           fmul  d0, d0, d8
+;
+;        ; find the move corresponding to xmm0
+;                lea   rdx, [.weights]
+            add  x2, sp, .weights
+;                mov   rsi, qword[rbp+Pos.rootMovesVec.table]
+            ldr  x26, [x20, Pos.rootMovesVec + RootMovesVec.table]
+.FindMoveLoop:
+;           _vcomisd   xmm0, qword[rdx]
+;                jbe   .Found
+            ldr  d16, [x2]
+           fcmp  d0, d16
+            ble  .Found
+;                add   rsi, sizeof.RootMove
+            add  x26, x26, sizeof.RootMove
+;                add   rdx, 8
+            add  x2, x2, 8
+;                cmp   rsi, rbx
+;                 jb   .FindMoveLoop
+            cmp  x26, x21
+            blo  .FindMoveLoop
+;        ; if we get here, something bad happened so don't swap any lines
+;                jmp   .Return
+              b  .Return
+;
+.Found:
+;        ; swap that move with the top move
+;                mov   ecx, (sizeof.RootMove/4) - 1
+            mov  w1, (sizeof.RootMove/4) - 1
+;                mov   rdi, qword[rbp+Pos.rootMovesVec.table]
+            ldr  x27, [x20, Pos.rootMovesVec + RootMovesVec.table]
+	@1:
+;                mov   eax, dword[rsi+4*rcx]
+            ldr  w0, [x26, x1, lsl 2]
+;                mov   edx, dword[rdi+4*rcx]
+            ldr  w0, [x27, x1, lsl 2]
+;                mov   dword[rdi+4*rcx], eax
+            str  w0, [x27, x1, lsl 2]
+;                mov   dword[rsi+4*rcx], edx
+            str  w0, [x26, x1, lsl 2]
+;                sub   ecx, 1
+;                jns   @1b
+           subs  w1, w1, 1
+            bpl  @1b
+.Return:
+;                add   rsp, .localsize
+;                pop   r15 r14 rdi rsi rbx
+;                ret
+            add  sp, sp, .localsize
+            ldp  x24, x25, [sp], 16
+            ldp  x26, x27, [sp], 16
+            ldp  x21, x30, [sp], 16
+            ret
+
+;
+         calign  8
+.mind: dq 0.00000001
+;
+;
+Weakness_Create:
+;                mov   byte[weakness.enabled], 0
+           _lea  x6, weakness
+            str  wzr, [x6, Weakness.enabled]
+;                mov   ecx, 1000
+            mov  w1, 1000
+;
+Weakness_SetElo:
+;        ; in: ecx target Elo
+;        ;  should set targetLoss
+            stp  x29, x30, [sp, -16]!
+;         _vcvtsi2sd   xmm0, xmm0, ecx
+          ucvtf  d0, w1
+;                lea   rcx, [.Table]
+            adr  x1, .Table
+;                lea   rdx, [.TableEnd]
+            adr  x2, .TableEnd
+;               call   Math_Lerp
+             bl  Math_Lerp
+;            _vmovsd   qword[weakness.targetLoss], xmm0
+           _lea  x6, weakness
+            str  d0, [x6, Weakness.targetLoss]
+;                ret
+
+         fcvtzu  w0, d0
+
+            ldp  x29, x30, [sp], 16
+            ret
+;
+         calign  16
+.Table: 		; tunings at 120 + 0.4 tc
+ dq    0.0, 200.0
+ dq 1473.0, 100.0	; tarrasch toy engine
+ dq 2312.0,  64.0	; sungorus
+ dq 3125.0,  13.0	; houdini 1.5a
+ dq 3300.0,   0.1
+.TableEnd:
+

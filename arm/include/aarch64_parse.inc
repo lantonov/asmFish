@@ -326,6 +326,20 @@ macro aarch64.parse_operand ns, x
     end match
 end macro
 
+;err if x is not a register
+macro aarch64.parse_register ns, x
+    ns.data = +x
+    if (elementsof ns.data = 1 & ns.data eq ns.data element 1) & (ns.data metadata 1 relativeto aarch64.reg)
+        ns.data = ns.data metadata 1 - aarch64.reg
+        ns.vfull = (ns.data shr 24) and 255
+        ns.vsize = (ns.data shr 16) and 255
+        ns.type  = 1 shl ((ns.data shr 8) and 255)
+        ns.data = ns.data and 255
+    else
+        err 'invalid operand'
+    end if
+end macro
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; parsing extensions, shifts, and conditions
