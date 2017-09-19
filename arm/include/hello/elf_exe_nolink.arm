@@ -1,0 +1,25 @@
+include 'format/format.inc'
+format ELF64 executable 0
+entry Start
+
+sys_write = 64
+sys_exit  = 93
+
+segment readable executable
+
+Start:
+            mov  x0, 1
+            adr  x1, Message
+            mov  x2, MessageEnd - Message
+            mov  x8, sys_write
+            svc  0
+
+            mov  x0, 0
+            mov  x8, sys_exit
+            svc  0
+
+;segment readable writeable
+
+Message:
+        db 'Hello World!', 10
+MessageEnd:

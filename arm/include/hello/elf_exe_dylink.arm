@@ -1,0 +1,143 @@
+include 'format/format.inc'
+format ELF64 executable 0
+entry Start
+
+
+macro balign boundary
+    local size
+    size = (boundary-1)-($+boundary-1) mod boundary
+    ;db size dup ?
+	db (size mod 4) dup 0
+        dd (size/4) dup 0xd503201f
+end macro
+
+
+
+
+; after assembling this, change the offset, virtualaddr, file size, and memsiz
+; for the first load so that is starts at the very beginning of the binary
+;
+;Program Headers:
+;  Type           Offset             VirtAddr           PhysAddr
+;                 FileSiz            MemSiz              Flags  Align
+;  LOAD           0x0000000000000120 0x0000000000400120 0x0000000000400120
+;                 0x0000000000000054 0x0000000000000054  R E    1000
+;  INTERP         0x0000000000000120 0x0000000000400120 0x0000000000400120
+;                 0x000000000000001b 0x000000000000001b  R      1
+;      [Requesting program interpreter: /lib/ld-linux-aarch64.so.1]
+;  LOAD           0x0000000000000174 0x0000000000401174 0x0000000000401174
+;                 0x00000000000001e0 0x00000000000001e0  RW     1000
+;  DYNAMIC        0x0000000000000174 0x0000000000401174 0x0000000000401174
+;                 0x00000000000000d0 0x00000000000000d0  RW     1
+;
+;
+; change to:
+;
+;Program Headers:
+;  Type           Offset             VirtAddr           PhysAddr
+;                 FileSiz            MemSiz              Flags  Align
+;  LOAD           0x0000000000000000 0x0000000000400000 0x0000000000400000
+;                 0x0000000000000174 0x0000000000000174  R E    1000
+;  INTERP         0x0000000000000120 0x0000000000400120 0x0000000000400120
+;                 0x000000000000001b 0x000000000000001b  R      1
+;      [Requesting program interpreter: /lib/ld-linux-aarch64.so.1]
+;  LOAD           0x0000000000000174 0x0000000000401174 0x0000000000401174
+;                 0x00000000000001e0 0x00000000000001e0  RW     1000
+;  DYNAMIC        0x0000000000000174 0x0000000000401174 0x0000000000401174
+;                 0x00000000000000d0 0x00000000000000d0  RW     1
+;
+; otherwise the loader
+;
+;   /lib/ld-linux-aarch64.so.1
+;
+; throws a fit
+
+segment readable executable 
+
+segment { interpreter readable 
+    db '/lib/ld-linux-aarch64.so.1',0
+segment }
+
+          align  64
+Start:
+            mov  x0, 1
+            adr  x1, Test
+            mov  x2, TestEnd - Test
+            mov  x8, 64
+            svc  0
+
+            mov  x0, 1
+            adr  x1, Message
+            mov  x2, MessageEnd - Message
+            ldr  x8, write
+            blr  x8
+
+            mov  x0, 0
+            ldr  x8, exit
+            blr  x8
+
+
+
+    ;align 64
+segment readable writeable
+segment { dynamic readable writeable
+
+    dq DT_NEEDED,  _libc-strtab 
+    dq DT_STRTAB,  strtab 
+    dq DT_STRSZ,   strsz 
+    dq DT_SYMTAB,  symtab 
+    dq DT_SYMENT,  sizeof.Elf64_Sym 
+    dq DT_RELA,    rela 
+    dq DT_RELASZ,  relasz 
+    dq DT_RELAENT, sizeof.Elf64_Rela 
+    dq DT_REL,     rel 
+    dq DT_RELSZ,   relsz 
+    dq DT_RELENT,  sizeof.Elf64_Rela
+    dq DT_HASH,    hash 
+    dq DT_NULL,    0 
+
+segment }
+
+align 64
+write:  dq 0
+exit:   dq 0
+
+
+symtab: 
+    Elf64_Sym 0,               0, 0, 0,          0,        0, 0
+    Elf64_Sym _write - strtab, 0, 0, STB_GLOBAL, STT_FUNC, 0, 0
+    Elf64_Sym _exit  - strtab, 0, 0, STB_GLOBAL, STT_FUNC, 0, 0
+
+rela:
+    Elf64_Rela write, 1, R_AARCH64_ABS64, 0
+    Elf64_Rela exit,  2, R_AARCH64_ABS64, 0
+relasz = $ - rela 
+
+rel:
+relsz = $ - rel
+
+
+
+hash: 
+    dd 1, 3     ; size of bucket and size of chain 
+    dd 0        ; fake bucket, just one hash value 
+    repeat 3
+        dd %    ; chain for all symbol table entries 
+    end repeat
+
+Test:
+    db '1 Hello World!', 10
+TestEnd:
+Message:
+    db '2 Hello World!', 10
+MessageEnd:
+
+strtab: 
+    _null   db 0 
+    _libc   db 'libc.so.6',0 
+    _write  db 'write',0 
+    _exit   db 'exit',0 
+strsz = $ - strtab 
+
+
+

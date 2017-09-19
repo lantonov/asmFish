@@ -98,6 +98,7 @@ ET_HIPROC = 0xffff
 EM_NONE   = 0
 EM_IA_64  = 50
 EM_X86_64 = 62
+EM_AARCH64 = 183
 
 EV_NONE    = 0
 EV_CURRENT = 1
@@ -146,33 +147,46 @@ STB_WEAK	= 2
 STB_LOPROC	= 13
 STB_HIPROC	= 15
 
-R_X86_64_NONE	   = 0
-R_X86_64_64	   = 1
-R_X86_64_PC32	   = 2
-R_X86_64_GOT32	   = 3
-R_X86_64_PLT32	   = 4
-R_X86_64_COPY	   = 5
-R_X86_64_GLOB_DAT  = 6
-R_X86_64_JUMP_SLOT = 7
-R_X86_64_RELATIVE  = 8
-R_X86_64_GOTPCREL  = 9
-R_X86_64_32	   = 10
-R_X86_64_32S	   = 11
-R_X86_64_16	   = 12
-R_X86_64_PC16	   = 13
-R_X86_64_8	   = 14
-R_X86_64_PC8	   = 15
-R_X86_64_DPTMOD64  = 16
-R_X86_64_DTPOFF64  = 17
-R_X86_64_TPOFF64   = 18
-R_X86_64_TLSGD	   = 19
-R_X86_64_TLSLD	   = 20
-R_X86_64_DTPOFF32  = 21
-R_X86_64_GOTTPOFF  = 22
-R_X86_64_TPOFF32   = 23
-R_X86_64_PC64	   = 24
-R_X86_64_GOTOFF64  = 25
-R_X86_64_GOTPC32   = 26
+R_AARCH64_NONE  = 0
+R_AARCH64_ABS64     = 257               ; S + A None
+R_AARCH64_ABS32     = 258               ; S + A     -2^31 <= X < 2^32
+R_AARCH64_ABS16     = 259               ; S + A     -2^15 <= X < 2^16
+R_AARCH64_PREL64    = 260               ; S + A - P None
+R_AARCH64_PREL32    = 261               ; S + A - P -2^31 <= X < 232
+R_AARCH64_PREL16    = 262               ; S + A - P -2^15 <= X < 216
+R_AARCH64_MOVW_UABS_G0      = 263       ; S + A Set a MOVZ immediate field to bits [15:0] of X; check that 0 <= X < 2^16
+R_AARCH64_MOVW_UABS_G0_NC   = 264       ; S + A Set a MOVK immediate field to bits [15:0] of X. No overflow check
+R_AARCH64_MOVW_UABS_G1      = 265       ; S + A Set a MOVZ immediate field to bits [31:16] of X; check that 0 <= X < 2^32
+R_AARCH64_MOVW_UABS_G1_NC   = 266       ; S + A Set a MOVK immediate field to bits [31:16] of X. No overflow check
+R_AARCH64_MOVW_UABS_G2      = 267       ; S + A Set a MOVZ immediate field to bits [47:32] of X; check that 0 <= X < 2^48
+R_AARCH64_MOVW_UABS_G2_NC   = 268       ; S + A Set a MOVK immediate field to bits [47:32] of X. No overflow check
+R_AARCH64_MOVW_UABS_G3      = 269       ; S + A Set a MOV[KZ] immediate field to bits [63:48] of X (no overflow check needed)
+R_AARCH64_MOVW_SABS_G0  = 270           ; S + A Set a MOV[NZ] immediate field using bits [15:0] of X (see notes below); check -2^16 <= X < 2^16
+R_AARCH64_MOVW_SABS_G1  = 271           ; S + A Set a MOV[NZ] immediate field using bits [31:16] of X (see notes below); check -2^32 <= X < 2^32   Note X >= 0: Set the instruction to MOVZ and its immediate field to the selected bits of X.
+R_AARCH64_MOVW_SABS_G2  = 272           ; S + A Set a MOV[NZ] immediate field using bits [47:32] of X (see notes below); check -2^48 <= X < 2^48   Note X < 0: Set the instruction to MOVN and its immediate field to NOT (selected bits of X).
+R_AARCH64_LD_PREL_LO19          = 273   ; S + A - P Set a load-literal immediate value to bits [20:2] of X; check that -2^20 <= X < 2^20
+R_AARCH64_ADR_PREL_LO21         = 274   ; S + A - P Set an ADR immediate value to bits [20:0] of X; check that - 2^20 <= X < 2^20
+R_AARCH64_ADR_PREL_PG_HI21      = 275   ; Page(S+A)-Page(P) Set an ADRP immediate value to bits [32:12] of the X; check that -2^32 <= X < 2^32
+R_AARCH64_ADR_PREL_PG_HI21_NC   = 276   ; Page(S+A)-Page(P) Set an ADRP immediate value to bits [32:12] of the X. No overflow check
+R_AARCH64_ADD_ABS_LO12_NC       = 277   ; S + A Set an ADD immediate value to bits [11:0] of X. No overflow check. Used with relocations ADR_PREL_PG_HI21 and ADR_PREL_PG_HI21_NC
+R_AARCH64_LDST8_ABS_LO12_NC     = 278   ; S + A Set an LD/ST immediate value to bits [11:0] of X. No overflow check. Used with relocations ADR_PREL_PG_HI21 and ADR_PREL_PG_HI21_NC
+R_AARCH64_LDST16_ABS_LO12_NC    = 284   ; S + A Set an LD/ST immediate value to bits [11:1] of X. No overflow check
+R_AARCH64_LDST32_ABS_LO12_NC    = 285   ; S + A Set the LD/ST immediate value to bits [11:2] of X. No overflow check
+R_AARCH64_LDST64_ABS_LO12_NC    = 286   ; S + A Set the LD/ST immediate value to bits [11:3] of X. No overflow check
+R_AARCH64_LDST128_ABS_LO12_NC   = 299   ; S + A Set the LD/ST immediate value to bits [11:4] of X. No overflow check
+R_AARCH64_TSTBR14       = 279           ; S+A-P Set the immediate field of a TBZ/TBNZ instruction to bits [15:2] of X; check -2^15 <= X < 2^15
+R_AARCH64_CONDBR19      = 280           ; S+A-P Set the immediate field of a conditional branch instruction to bits [20:2] of X; check -2^20 <= X < 2^20
+R_AARCH64_JUMP26        = 282           ; S+A-P Set a B immediate field to bits [27:2] of X; check that -2^27 <= X < 2^27
+R_AARCH64_CALL26        = 283           ; S+A-P Set a CALL immediate field to bits [27:2] of X; check that -2^27 <= X < 2^27
+R_AARCH64_MOVW_PREL_G0      = 287       ; S+A-P Set a MOV[NZ]immediate field to bits [15:0] of X (see notes below)
+R_AARCH64_MOVW_PREL_G0_NC   = 288       ; S+A-P Set a MOVK immediate field to bits [15:0] of X. No overflow check
+R_AARCH64_MOVW_PREL_G1      = 289       ; S+A-P Set a MOV[NZ]immediate field to bits [31:16] of X (see notes below)
+R_AARCH64_MOVW_PREL_G1_NC   = 290       ; S+A-P Set a MOVK immediate field to bits [31:16] of X. No overflow check
+R_AARCH64_MOVW_PREL_G2      = 291       ; S+A-P Set a MOV[NZ]immediate value to bits [47:32] of X (see notes below)
+R_AARCH64_MOVW_PREL_G2_NC   = 292       ; S+A-P Set a MOVK immediate field to bits [47:32] of X. No overflow check
+R_AARCH64_MOVW_PREL_G3      = 293       ; S+A-P Set a MOV[NZ]immediate value to bits [63:48] of X (see notes below)
+
+
 
 ELF::
 
@@ -188,7 +202,7 @@ namespace ELF
 
 	e_ident 	db 0x7F,'ELF',ELFCLASS64,ELFDATA2LSB,EV_CURRENT,ABI,(16-$) dup 0
 	e_type		dw ET_REL
-	e_machine	dw EM_X86_64
+	e_machine	dw EM_AARCH64
 	e_version	dd EV_CURRENT
 	e_entry 	dq 0
 	e_phoff 	dq 0
@@ -445,6 +459,56 @@ end macro
 
 element PLT?
 
+
+macro aarch64.store_reloc value, absolute, pcrel
+	local v
+	v = value
+	if ~ v relativeto 0 & v relativeto v element 1 & v metadata 1 element 1 relativeto ELF.relocatable
+		namespace ELF
+			store $% - SECTION_OFFSET at relocations : Elf64_Rela.r_offset + RELOCATION_INDEX * sizeof Elf64_Rela
+			store v scale 0 at relocations : Elf64_Rela.r_addend + RELOCATION_INDEX * sizeof Elf64_Rela
+;			store R_X86_64_32S + (v metadata 1 scale 0) shl 32 at relocations : Elf64_Rela.r_info + RELOCATION_INDEX * sizeof Elf64_Rela
+            if absolute = -1
+                err 'absolute relocation could not be made'
+            end if
+			store absolute + (v metadata 1 scale 0) shl 32 at relocations : Elf64_Rela.r_info + RELOCATION_INDEX * sizeof Elf64_Rela
+			RELOCATION_INDEX = RELOCATION_INDEX + 1
+		end namespace
+;		dd ?
+	else if ~ v relativeto 0 & (v + ELF.SECTION_BASE) relativeto (v + ELF.SECTION_BASE) element 1
+		if (v + ELF.SECTION_BASE) metadata 1 element 1 relativeto ELF.relocatable
+			namespace ELF
+				v = v + (SECTION_BASE + $% - SECTION_OFFSET)
+				store $% - SECTION_OFFSET at relocations : Elf64_Rela.r_offset + RELOCATION_INDEX * sizeof Elf64_Rela
+				store v scale 0 at relocations : Elf64_Rela.r_addend + RELOCATION_INDEX * sizeof Elf64_Rela
+;				store R_X86_64_PC32 + (v metadata 1 scale 0) shl 32 at relocations : Elf64_Rela.r_info + RELOCATION_INDEX * sizeof Elf64_Rela
+                if pcrel = -1
+                    err 'pc relative relocation could not be made'
+                end if
+				store pcrel + (v metadata 1 scale 0) shl 32 at relocations : Elf64_Rela.r_info + RELOCATION_INDEX * sizeof Elf64_Rela
+				RELOCATION_INDEX = RELOCATION_INDEX + 1
+			end namespace
+;			dd ?
+		else if (v + ELF.SECTION_BASE) metadata 1 element 1 relativeto PLT
+            err '1 unknown type in aarch64.store_reloc'
+;			namespace ELF
+;				v = v + (SECTION_BASE + $% - SECTION_OFFSET)
+;				store $% - SECTION_OFFSET at relocations : Elf64_Rela.r_offset + RELOCATION_INDEX * sizeof Elf64_Rela
+;				store v scale 0 at relocations : Elf64_Rela.r_addend + RELOCATION_INDEX * sizeof Elf64_Rela
+;				store R_X86_64_PLT32 + (v metadata 1 scale 0) shl 32 at relocations : Elf64_Rela.r_info + RELOCATION_INDEX * sizeof Elf64_Rela
+;				RELOCATION_INDEX = RELOCATION_INDEX + 1
+;			end namespace
+;			dd ?
+		else
+            err '2 unknown type in aarch.store_reloc'
+;			dd v
+		end if
+	else
+        err '3 unknown type in aarch.store_reloc'
+;		dd v
+	end if
+end macro
+
 macro dword? value
 	local v
 	v = value
@@ -452,7 +516,8 @@ macro dword? value
 		namespace ELF
 			store $% - SECTION_OFFSET at relocations : Elf64_Rela.r_offset + RELOCATION_INDEX * sizeof Elf64_Rela
 			store v scale 0 at relocations : Elf64_Rela.r_addend + RELOCATION_INDEX * sizeof Elf64_Rela
-			store R_X86_64_32S + (v metadata 1 scale 0) shl 32 at relocations : Elf64_Rela.r_info + RELOCATION_INDEX * sizeof Elf64_Rela
+;			store R_X86_64_32S + (v metadata 1 scale 0) shl 32 at relocations : Elf64_Rela.r_info + RELOCATION_INDEX * sizeof Elf64_Rela
+			store R_AARCH64_ABS32 + (v metadata 1 scale 0) shl 32 at relocations : Elf64_Rela.r_info + RELOCATION_INDEX * sizeof Elf64_Rela
 			RELOCATION_INDEX = RELOCATION_INDEX + 1
 		end namespace
 		dd ?
@@ -462,19 +527,21 @@ macro dword? value
 				v = v + (SECTION_BASE + $% - SECTION_OFFSET)
 				store $% - SECTION_OFFSET at relocations : Elf64_Rela.r_offset + RELOCATION_INDEX * sizeof Elf64_Rela
 				store v scale 0 at relocations : Elf64_Rela.r_addend + RELOCATION_INDEX * sizeof Elf64_Rela
-				store R_X86_64_PC32 + (v metadata 1 scale 0) shl 32 at relocations : Elf64_Rela.r_info + RELOCATION_INDEX * sizeof Elf64_Rela
+;				store R_X86_64_PC32 + (v metadata 1 scale 0) shl 32 at relocations : Elf64_Rela.r_info + RELOCATION_INDEX * sizeof Elf64_Rela
+				store R_AARCH64_PREL32 + (v metadata 1 scale 0) shl 32 at relocations : Elf64_Rela.r_info + RELOCATION_INDEX * sizeof Elf64_Rela
 				RELOCATION_INDEX = RELOCATION_INDEX + 1
 			end namespace
 			dd ?
 		else if (v + ELF.SECTION_BASE) metadata 1 element 1 relativeto PLT
-			namespace ELF
-				v = v + (SECTION_BASE + $% - SECTION_OFFSET)
-				store $% - SECTION_OFFSET at relocations : Elf64_Rela.r_offset + RELOCATION_INDEX * sizeof Elf64_Rela
-				store v scale 0 at relocations : Elf64_Rela.r_addend + RELOCATION_INDEX * sizeof Elf64_Rela
-				store R_X86_64_PLT32 + (v metadata 1 scale 0) shl 32 at relocations : Elf64_Rela.r_info + RELOCATION_INDEX * sizeof Elf64_Rela
-				RELOCATION_INDEX = RELOCATION_INDEX + 1
-			end namespace
-			dd ?
+            err 'unknown type in dword'
+;			namespace ELF
+;				v = v + (SECTION_BASE + $% - SECTION_OFFSET)
+;				store $% - SECTION_OFFSET at relocations : Elf64_Rela.r_offset + RELOCATION_INDEX * sizeof Elf64_Rela
+;				store v scale 0 at relocations : Elf64_Rela.r_addend + RELOCATION_INDEX * sizeof Elf64_Rela
+;				store R_X86_64_PLT32 + (v metadata 1 scale 0) shl 32 at relocations : Elf64_Rela.r_info + RELOCATION_INDEX * sizeof Elf64_Rela
+;				RELOCATION_INDEX = RELOCATION_INDEX + 1
+;			end namespace
+;			dd ?
 		else
 			dd v
 		end if
@@ -490,7 +557,8 @@ macro qword? value
 		namespace ELF
 			store $% - SECTION_OFFSET at relocations : Elf64_Rela.r_offset + RELOCATION_INDEX * sizeof Elf64_Rela
 			store v scale 0 at relocations : Elf64_Rela.r_addend + RELOCATION_INDEX * sizeof Elf64_Rela
-			store R_X86_64_64 + (v metadata 1 scale 0) shl 32 at relocations : Elf64_Rela.r_info + RELOCATION_INDEX * sizeof Elf64_Rela
+;			store R_X86_64_64 + (v metadata 1 scale 0) shl 32 at relocations : Elf64_Rela.r_info + RELOCATION_INDEX * sizeof Elf64_Rela
+			store R_AARCH64_ABS64 + (v metadata 1 scale 0) shl 32 at relocations : Elf64_Rela.r_info + RELOCATION_INDEX * sizeof Elf64_Rela
 			RELOCATION_INDEX = RELOCATION_INDEX + 1
 		end namespace
 		dq ?
@@ -499,7 +567,7 @@ macro qword? value
 	end if
 end macro
 
-macro dd? definitions&
+macro _dd? definitions&
 	iterate value,definitions
 		match ?, value
 			dd ?
@@ -517,7 +585,7 @@ macro dd? definitions&
 	end iterate
 end macro
 
-struc dd? definitions&
+struc _dd? definitions&
 	label . : dword
 	iterate value,definitions
 		match ?, value
@@ -536,7 +604,7 @@ struc dd? definitions&
 	end iterate
 end struc
 
-macro dq? definitions&
+macro _dq? definitions&
 	iterate value,definitions
 		match ?, value
 			dq ?
@@ -554,7 +622,7 @@ macro dq? definitions&
 	end iterate
 end macro
 
-struc dq? definitions&
+struc _dq? definitions&
 	label . : qword
 	iterate value,definitions
 		match ?, value

@@ -1,16 +1,23 @@
 macro adrp a*, b*
+display 'in adrp a',10
     aarch64.parse_operand @op0, a
+display 'in adrp b',10
     aarch64.parse_operand @op1, b
+
+    display 'op1type: '
+    display '0' + (bsf @op1.type),10
+
     if (@op0.type and @type_xn_xzr) & (@op1.type and @type_immc) & ($ relativeto 0)
         @imm.number = (@op1.data shr 12) - ($ shr 12)
         aarch64.restrict @imm.number, -0x100000, 0xFFFFF 
         dd 0x90000000 + ((@imm.number and 0x3) shl 29) + (((@imm.number and 0x1FFFFC) shr 2) shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_immr)
-        aarch64.reloc_adrp_pghi21 @op1.data
+        aarch64.store_reloc @op1.data - $, -1, R_AARCH64_ADR_PREL_PG_HI21
         dd 0x90000000 + (@op0.data shl 0)
     else
-        err 'invalid operand'
+        err '1 invalid operand 1'
     end if
+display 'leaving adrp',10
 end macro
 
 macro adr a*, b*
@@ -21,7 +28,7 @@ macro adr a*, b*
         aarch64.restrict @imm.number, -0x100000, 0xFFFFF
         dd 0x10000000 + (@imm.number and 0x3) shl 29 + (((@imm.number shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_immr)
-        aarch64.reloc_adr_lo21 @op1.data
+        aarch64.store_reloc @op1.data - $, -1, R_AARCH64_ADR_PREL_LO21
         dd 0x10000000 + (@op0.data shl 0)
     else
         err 'invalid operand'
@@ -36,11 +43,11 @@ macro bl a*
             aarch64.restrict @imm.number, -0x8000000, 0x7FFFFFF, 0x3
             dd 0x94000000 + (((@imm.number shr 2) and 0x3FFFFFF) shl 0)
         else
-            aarch64.aarch64.reloc_call26 @op0.data
-            dd 0x94000000 + (((@imm.number shr 2) and 0x3FFFFFF) shl 0)
+            aarch64.store_reloc @op0.data - $, -1, R_AARCH64_CALL26
+            dd 0x94000000 + ((                  0 and 0x3FFFFFF) shl 0)
         end if
     else
-        err 'invalid operand
+        err 'invalid operand'
     end if
 end macro
 
@@ -52,10 +59,11 @@ macro b a*
             aarch64.restrict @imm.number, -0x8000000, 0x7FFFFFF, 0x3
             dd 0x14000000 + (((@imm.number shr 2) and 0x3FFFFFF) shl 0)
         else
-            err 'invalid target'
+            aarch64.store_reloc @op1.data - $, -1, R_AARCH64_JUMP26
+            dd 0x94000000 + ((                  0 and 0x3FFFFFF) shl 0)
         end if
     else
-        err 'invalid operand
+        err 'invalid operand'
     end if
 end macro
 
@@ -72,7 +80,8 @@ iterate <instr,code>, beq,0x54000000, bne,0x54000001, bhs,0x54000002, blo,0x5400
                 aarch64.restrict @imm.number, -0x800000, 0x7FFFFF, 0x3
                 dd code + (((@imm.number shr 2) and 0x7FFFF) shl 5)
             else
-                err 'invalid target'
+                aarch64.store_reloc @op1.data - $, -1, R_AARCH64_CONDBR19
+                dd code + (((          0 shr 2) and 0x7FFFF) shl 5)
             end if
         else
             err 'invalid operand'
@@ -83,21 +92,14 @@ end iterate
 macro cbnz a*, b*
     aarch64.parse_operand @op0, a
     aarch64.parse_operand @op1, b
-    if (@op0.type and @type_wn_wzr) & (@op1.type and @type_immr_immc)
+    if (@op0.type and @type_wn_wzr_xn_xzr) & (@op1.type and @type_immr_immc)
         if @op1.data relativeto $
             @imm.number = @op1.data - $
             aarch64.restrict @imm.number, -0x800000, 0x7FFFFF, 0x3
-            dd 0x35000000 + (((@imm.number shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
+            dd 0x35000000 + (@op0.vfull + shl 31) + (((@imm.number shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
         else
-            err 'invalid target'
-        end if
-    else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_immr_immc)
-        if @op1.data relativeto $
-            @imm.number = @op1.data - $
-            aarch64.restrict @imm.number, -0x800000, 0x7FFFFF, 0x3
-            dd 0xb5000000 + (((@imm.number shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
-        else
-            err 'invalid target'
+            aarch64.store_reloc @op1.data - $, -1, R_AARCH64_CONDBR19
+            dd 0x35000000 + (@op0.vfull + shl 31) + (((          0 shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
         end if
     else
         err 'invalid operand'
@@ -111,17 +113,10 @@ macro cbz a*, b*
         if @op1.data relativeto $
             @imm.number = @op1.data - $
             aarch64.restrict @imm.number, -0x100000, 0x7FFFFF, 0x3
-            dd 0x34000000 + (((@imm.number shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
+            dd 0x34000000 + (@op0.vfull + shl 31) + (((@imm.number shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
         else
-            err 'invalid target'
-        end if
-    else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_immr_immc)
-        if @op1.data relativeto $
-            @imm.number = @op1.data - $
-            aarch64.restrict @imm.number, -0x100000, 0x7FFFFF, 0x3
-            dd 0xb4000000 + (((@imm.number shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
-        else
-            err 'invalid target'
+            aarch64.store_reloc @op1.data - $, -1, R_AARCH64_CONDBR19
+            dd 0x34000000 + (@op0.vfull + shl 31) + (((          0 shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
         end if
     else
         err 'invalid operand'
@@ -161,6 +156,159 @@ macro tbz a*, b*, c*
         err 'invalid operand
     end if
 end macro
+
+macro movk a*, b*, c
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    aarch64.parse_shf           c
+    if (@op0.type and @type_wn_wzr_xn_xzr)
+        @adr.encode = 0x72800000 + (@op0.vfull shl 31) + (@op0.data shl 0)
+        if (@op1.type and @type_immc) & (@shf.success) & (@shf.kind = 0)
+            aarch64.restrict @shf.shift 0, 48, 0x0f
+            aarch64.restrict @op1.data, 0, 0xFFFF
+            dd @adr.encode + (@shf.shift shl 17) + (@op1.data shl 5)
+        else if @shf.empty = 0
+            err 'invalid operand'
+        else if @op1.type = @type_immc_g0_nc
+            dd @adr.encode + (         0 shl 17) + (((@op1.data shr  0) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immc_g1_nc
+            dd @adr.encode + (        16 shl 17) + (((@op1.data shr 16) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immc_g2_nc
+            dd @adr.encode + (        32 shl 17) + (((@op1.data shr 32) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immc_g3
+            dd @adr.encode + (        48 shl 17) + (((@op1.data shr 48) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immr_g0_nc
+            aarch64.store_reloc @op1.data, R_AARCH64_MOVW_UABS_G0_NC, R_AARCH64_MOVW_PREL_G0_NC
+            dd @adr.encode + (         0 shl 17) + (((        0 shr  0) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immr_g1_nc
+            aarch64.store_reloc @op1.data, R_AARCH64_MOVW_UABS_G1_NC, R_AARCH64_MOVW_PREL_G1_NC
+            dd @adr.encode + (         0 shl 17) + (((        0 shr 16) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immr_g2_nc
+            aarch64.store_reloc @op1.data, R_AARCH64_MOVW_UABS_G2_NC, R_AARCH64_MOVW_PREL_G1_NC
+            dd @adr.encode + (         0 shl 17) + (((        0 shr 32) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immr_g3
+            aarch64.store_reloc @op1.data, R_AARCH64_MOVW_UABS_G3,    -1
+            dd @adr.encode + (         0 shl 17) + (((        0 shr 48) and 0xFFFF) shl 5)
+        else
+            err 'invalid operand'
+        end if
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+macro movz a*, b*, c
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    aarch64.parse_shf           c
+    if (@op0.type and @type_wn_wzr_xn_xzr)
+        @adr.encode = 0x72800000 + (@op0.vfull shl 31) + (@op0.data shl 0)
+        if (@op1.type and @type_immc) & (@shf.success) & (@shf.kind = 0)
+            aarch64.restrict @shf.shift 0, 48, 0x0f
+            aarch64.restrict @op1.data, 0, 0xFFFF
+            dd @adr.encode + (@shf.shift shl 17) + (@op1.data shl 5)
+        else if @shf.empty = 0
+            err 'invalid operand'
+        else if @op1.type = @type_immc_g0
+            aarch64.restrict @op1.data, 0, 0xFFFF
+            dd @adr.encode + (         0 shl 17) + (((@op1.data shr ( 0)) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immc_g1
+            aarch64.restrict @op1.data, 0, 0xFFFFFFFF
+            dd @adr.encode + (        16 shl 17) + (((@op1.data shr (16)) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immc_g2
+            aarch64.restrict @op1.data, 0, 0xFFFFFFFFFFFF
+            dd @adr.encode + (        32 shl 17) + (((@op1.data shr (32)) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immc_g3
+            dd @adr.encode + (        48 shl 17) + (((@op1.data shr (48)) and 0xFFFF) shl 5)
+
+        else if @op1.type = @type_immr_g0
+            aarch64.store_reloc @op1.data, R_AARCH64_MOVW_SABS_G0, R_AARCH64_MOVW_PREL_G0
+            dd @adr.encode + (         0 shl 17) + (((        0 shr ( 0)) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immr_g1
+            aarch64.store_reloc @op1.data, R_AARCH64_MOVW_SABS_G1, R_AARCH64_MOVW_PREL_G1
+            dd @adr.encode + (         0 shl 17) + (((        0 shr (16)) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immr_g2
+            aarch64.store_reloc @op1.data, R_AARCH64_MOVW_SABS_G2, R_AARCH64_MOVW_PREL_G2
+            dd @adr.encode + (         0 shl 17) + (((        0 shr (32)) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immr_g3
+            aarch64.store_reloc @op1.data, R_AARCH64_MOVW_UABS_G3, R_AARCH64_MOVW_PREL_G3
+            dd @adr.encode + (         0 shl 17) + (((        0 shr (48)) and 0xFFFF) shl 5)
+
+        else
+            err 'invalid operand'
+        end if
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+macro movn a*, b*, c
+    aarch64.parse_operand @op0, a
+    aarch64.parse_operand @op1, b
+    aarch64.parse_shf           c
+    if (@op0.type and @type_wn_wzr_xn_xzr)
+        @adr.encode = 0x12800000 + (@op0.vfull shl 31) + (@op0.data shl 0)
+        if (@op1.type and @type_immc) & (@shf.success) & (@shf.kind = 0)
+            aarch64.restrict @shf.shift 0, 48, 0x0f
+            aarch64.restrict @op1.data, 0, 0xFFFF
+            dd @adr.encode + (@shf.shift shl 17) + (@op1.data shl 5)
+        else if @shf.empty = 0
+            err 'invalid operand'
+        else if @op1.type = @type_immc_g0
+            aarch64.restrict @op1.data, 0, 0xFFFF
+            dd @adr.encode + (         0 shl 17) + (((@op1.data shr ( 0)) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immc_g1
+            aarch64.restrict @op1.data, 0, 0xFFFFFFFF
+            dd @adr.encode + (        16 shl 17) + (((@op1.data shr (16)) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immc_g2
+            aarch64.restrict @op1.data, 0, 0xFFFFFFFFFFFF
+            dd @adr.encode + (        32 shl 17) + (((@op1.data shr (32)) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immc_g3
+            dd @adr.encode + (        48 shl 17) + (((@op1.data shr (48)) and 0xFFFF) shl 5)
+
+        else if @op1.type = @type_immr_g0
+            aarch64.store_reloc @op1.data, R_AARCH64_MOVW_SABS_G0, R_AARCH64_MOVW_PREL_G0
+            dd @adr.encode + (         0 shl 17) + (((        0 shr ( 0)) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immr_g1
+            aarch64.store_reloc @op1.data, R_AARCH64_MOVW_SABS_G1, R_AARCH64_MOVW_PREL_G1
+            dd @adr.encode + (         0 shl 17) + (((        0 shr (16)) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immr_g2
+            aarch64.store_reloc @op1.data, R_AARCH64_MOVW_SABS_G2, R_AARCH64_MOVW_PREL_G2
+            dd @adr.encode + (         0 shl 17) + (((        0 shr (32)) and 0xFFFF) shl 5)
+        else if @op1.type = @type_immr_g3
+            aarch64.store_reloc @op1.data, R_AARCH64_MOVW_UABS_G3, R_AARCH64_MOVW_PREL_G3
+            dd @adr.encode + (         0 shl 17) + (((        0 shr (48)) and 0xFFFF) shl 5)
+
+        else
+            err 'invalid operand'
+        end if
+    else
+        err 'invalid operand'
+    end if
+end macro
+
+
+;iterate <instr, code1, code2>, movk, 0x72800000,\
+;                               movn, 0x12800000,\
+;                               movz, 0x52800000
+;    macro instr a*, b*, c
+;        aarch64.parse_operand @op0, a
+;        aarch64.parse_operand @op1, b
+;        aarch64.parse_shf           c
+;        if (@op0.type and @type_wn_wzr_xn_xzr) & (@op1.type and @type_immc) & (@shf.success) & (@shf.kind = 0)
+;            aarch64.restrict @shf.shift 0, 48, 0x0f
+;            aarch64.restrict @op1.data, 0, 0xFFFF
+;            dd code1 + (@op0.vtype shl 31) + (@shf.shift shl 17) + (@op1.data shl 5) + (@op0.data shl 0)
+;        else if (@op0.type and @type_wn_wzr_xn_xzr) & (@op1.type and @type_immr) & (@shf.empty)
+;
+;            dd code1 + (@op0.vtype shl 31) + (@shf.shift shl 17) + (@op1.data shl 5) + (@op0.data shl 0)
+;        else
+;            err 'invalid operand'
+;        end if
+;    end macro
+;end iterate
+
+
 
 iterate <instr, code1, code2>, adc, 0x1a000000, 0x9a000000,\
                                sbc, 0x5a000000, 0xda000000,\
@@ -291,12 +439,12 @@ macro add a*, b*, c*, d
         dd 0x91000000 + (        0 shl 30) + (         0 shl 22) + ((@op2.data and 0xFFF) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_wn_wsp) & (@op1.type and @type_wn_wsp) & (@op2.type and @type_immc_lo12)
         dd 0x11000000 + (        0 shl 30) + (         0 shl 22) + ((@op2.data and 0xFFF) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_immr_lo12)
-        aarch64.reloc_add_lo12_nc @op2.data
-        dd 0x91000000 + (        0 shl 30) + (         0 shl 22) + ((@op2.data and 0xFFF) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
-    else if (@op0.type and @type_wn_wsp) & (@op1.type and @type_wn_wsp) & (@op2.type and @type_immr_lo12)
-        aarch64.reloc_add_lo12_nc @op2.data
-        dd 0x11000000 + (        0 shl 30) + (         0 shl 22) + ((@op2.data and 0xFFF) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_xn_xsp) & (@op1.type and @type_xn_xsp) & (@op2.type and @type_immr_lo12) & (@ext.empty)
+        aarch64.store_reloc @op2.data, R_AARCH64_ADD_ABS_LO12_NC, -1
+        dd 0x91000000 + (        0 shl 30) + (         0 shl 22) + ((        0 and 0xFFF) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
+    else if (@op0.type and @type_wn_wsp) & (@op1.type and @type_wn_wsp) & (@op2.type and @type_immr_lo12) & (@ext.empty)
+        aarch64.store_reloc @op2.data, R_AARCH64_ADD_ABS_LO12_NC, -1
+        dd 0x11000000 + (        0 shl 30) + (         0 shl 22) + ((        0 and 0xFFF) shl 10) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type and @type_vn_16b_etc_no_1d) & (@op0.type = @op1.type) & (@op0.type = @op2.type) & (@ext.empty)
         dd 0x0e208400 + (@op2.data shl 16) + (@op0.vfull shl 30) + (@op0.vsize shl 22) + (@op1.data shl 5) + (@op0.data shl 0)
     else if (@op0.type = @type_dn) & (@op0.type = @op1.type) & (@op0.type = @op2.type) & (@ext.empty)

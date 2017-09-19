@@ -1,0 +1,47 @@
+include 'format/format.inc'
+format ELF64
+
+public main
+extrn write
+extrn exit
+
+section '.code' executable align 64
+
+main:
+    ; these demonstrate three ways to get the address of the symbol 'Message' into
+    ; the register 'x1' (with increasing chances of success with the linker)
+
+            mov  x0, 1
+            adr  x1, Message            ; offset from pc: check +-1MiB from pc
+            mov  x2, MessageEnd - Message
+             bl  write
+
+            mov  x0, 1
+           adrp  x1, Message            ; get the 4KiB page: check +-2GiB from pc
+            add  x1, x1, :lo12:Message  ; get offset on this 4 KiB page
+            mov  x2, MessageEnd - Message
+             bl  write
+
+            mov  x0, 1
+           movz  x1,:g2:Message         ; moved (signed) bits [32,48): check for overflow
+           movk  x1,:g1_nc:Message      ; insert bits [16, 32)
+           movk  x1,:g0_nc:Message      ; insert bits [ 0, 16)
+            mov  x2, MessageEnd - Message
+             bl  write
+
+            mov  x0, 1
+           movz  x1,:g3:Message         ; moved (signed) bits [48,64): no check needed
+           movk  x1,:g2_nc:Message      ; insert bits [32, 48)
+           movk  x1,:g1_nc:Message      ; insert bits [16, 32)
+           movk  x1,:g0_nc:Message      ; insert bits [ 0, 16)
+            mov  x2, MessageEnd - Message
+             bl  write
+
+            mov  x0, 17
+             bl  exit
+
+section '.data' writeable align 64
+
+Message:
+    db 'Hello World!', 10
+MessageEnd:

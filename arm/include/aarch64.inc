@@ -71,22 +71,35 @@ repeat 32, i:0
     element v#i#.1q  : aarch64.reg + (i shl 0) + (62 shl 8) + (4 shl 16) + (0 shl 24)
 end repeat
 
+@type_immf          = 1 shl 28
+
+@type_immc          = 1 shl 29
+@type_immc_lo12     = 1 shl 31
+@type_immc_gp_hi21  = 1 shl 33
+@type_immc_g3       = 1 shl 35
+@type_immc_g2_nc    = 1 shl 37
+@type_immc_g2       = 1 shl 39
+@type_immc_g1_nc    = 1 shl 41
+@type_immc_g1       = 1 shl 43
+@type_immc_g0_nc    = 1 shl 45
+@type_immc_g0       = 1 shl 47
+
+@type_immr          = @type_immc            shl 1
+@type_immr_lo12     = @type_immc_lo12       shl 1
+@type_immr_gp_hi21  = @type_immc_gp_hi21    shl 1
+@type_immr_g3       = @type_immc_g3         shl 1
+@type_immr_g2_nc    = @type_immc_g2_nc      shl 1
+@type_immr_g2       = @type_immc_g2         shl 1
+@type_immr_g1_nc    = @type_immc_g1_nc      shl 1
+@type_immr_g1       = @type_immc_g1         shl 1
+@type_immr_g0_nc    = @type_immc_g0_nc      shl 1
+@type_immr_g0       = @type_immc_g0         shl 1
+
+@type_immr_immc     = @type_immr or @type_immc
+
+
 @type_empty = 1 shl 61
 
-@type_immf           = 1 shl 28
-@type_immc           = 1 shl 29
-@type_immc_lo12      = 1 shl 31
-@type_immc_gp_hi21   = 1 shl 33
-@type_immc_abs_g2    = 1 shl 35
-@type_immc_abs_g1_nc = 1 shl 37
-@type_immc_abs_g0_nc = 1 shl 39
-@type_immr           = @type_immr shl 1
-@type_immr_lo12      = @type_immr_lo12 shl 1
-@type_immr_abs_g2    = @type_immr_abs_g2 shl 1
-@type_immr_abs_g1_nc = @type_immr_abs_g1_nc shl 1
-@type_immr_abs_g0_nc = @type_immr_abs_g0_nc shl 1
-@type_immr_gp_hi21   = @type_immr_gp_hi21 shl 1
-@type_immr_immc      = @type_immr or @type_immc
 
 
 
@@ -160,57 +173,6 @@ define @con
 define @adr
 
 
-macro aarch64.reloc_movk_g0 x
-    err 'relocation macro not implemented'
-end macro
-
-macro aarch64.reloc_movk_g1 x
-    err 'relocation macro not implemented'
-end macro
-
-macro aarch64.reloc_movk_g2 x
-    err 'relocation macro not implemented'
-end macro
-
-macro aarch64.reloc_movk_g3 x
-    err 'relocation macro not implemented'
-end macro
-
-macro aarch64.reloc_ld_lo19 x
-    err 'relocation macro not implemented'
-end macro
-
-macro aarch64.reloc_adr_lo21 x
-    err 'relocation macro not implemented'
-end macro
-
-macro aarch64.reloc_adrp_pghi21 x
-    err 'relocation macro not implemented'
-end macro
-
-macro aarch64.reloc_add_lo12 x
-    err 'relocation macro not implemented'
-end macro
-
-macro aarch64.reloc_ldst_lo12 size, x
-    err 'relocation macro not implemented'
-end macro
-
-macro aarch64.reloc_tstbr14 x
-    err 'relocation macro not implemented'
-end macro
-
-macro aarch64.reloc_condbr19 x
-    err 'relocation macro not implemented'
-end macro
-
-macro aarch64.reloc_jump26 x
-    err 'relocation macro not implemented'
-end macro
-
-macro aarch64.reloc_call26 x
-    err 'relocation macro not implemented'
-end macro
 
 macro aarch64.restrict x, lower, upper, mask:0
     if ((x) and (mask)) <> 0 | (x) < (lower) | (x) > (upper)
@@ -785,24 +747,7 @@ macro mov a*, b*
     end if
 end macro
 
-iterate <instr, code1, code2>, movk, 0x72800000, 0xf2800000,\
-                               movn, 0x12800000, 0x92800000,\
-                               movz, 0x52800000, 0xd2800000
-    macro instr a*, b*, c
-        aarch64.parse_operand @op0, a
-        aarch64.parse_operand @op1, b
-        aarch64.parse_shf           c
-        if (@op0.type and @type_wn_wzr) & (@op1.type and @type_immc) & (@shf.success) & (@shf.kind = 0) & ((@shf.shift and 0x10) = @shf.shift)
-            aarch64.restrict @op1.data, 0, 0xFFFF
-            dd code1 + (@shf.shift shl 17) + (@op1.data shl 5) + (@op0.data shl 0)
-        else if (@op0.type and @type_xn_xzr) & (@op1.type and @type_immc) & (@shf.success) & (@shf.kind = 0) & ((@shf.shift and 0x30) = @shf.shift)
-            aarch64.restrict @op1.data, 0, 0xFFFF
-            dd code2 + (@shf.shift shl 17) + (@op1.data shl 5) + (@op0.data shl 0)
-        else
-            err 'invalid operand'
-        end if
-    end macro
-end iterate
+
 
 
 iterate <instr, code>, smnegl, 0x9b20fc00,\

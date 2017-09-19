@@ -259,12 +259,20 @@ macro aarch64.parse_colon ns, y, z
     ns.data = +z
     match =lo12, y
         ns.type = @type_immc_lo12
-    else match =abs_g0_nc, y
-        ns.type = @type_immc_abs_g0_nc
-    else match =abs_g1_nc, y
-        ns.type = @type_immc_abs_g1_nc
-    else match =abs_g2, y
-        ns.type = @type_immc_abs_g2
+    else match =g0_nc, y
+        ns.type = @type_immc_g0_nc
+    else match =g1_nc, y
+        ns.type = @type_immc_g1_nc
+    else match =g2_nc, y
+        ns.type = @type_immc_g2_nc
+    else match =g0, y
+        ns.type = @type_immc_g0
+    else match =g1, y
+        ns.type = @type_immc_g1
+    else match =g2, y
+        ns.type = @type_immc_g2
+    else match =g3, y
+        ns.type = @type_immc_g3
     else match =pg_hi21, y
         ns.type = @type_immc_pg_hi21
     end match
@@ -320,6 +328,7 @@ macro aarch64.parse_operand ns, x
             else if ns.data relativeto 0
                 ns.type = @type_immc
             else
+display 'setting immr',10
                 ns.type = @type_immr
             end if
         end if

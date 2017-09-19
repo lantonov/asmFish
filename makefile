@@ -25,3 +25,5 @@ test:
 	export INCLUDE="arm/include/";./fasmg "arm/include/slave.arm" "slave" -e 1000
 	aarch64-linux-gnu-objdump -D -maarch64 -b binary slave > slave.txt
 	diff -U9 slave.txt master.txt | less
+hello:
+	export INCLUDE="arm/include/"; ./fasmg "arm/include/hello/syscall.arm" "hello_syscall"; chmod 755 ./hello_syscall
