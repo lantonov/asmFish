@@ -4,6 +4,7 @@ macro format? clause
 		ELF.Settings.Class = ELFCLASS64
 		ELF.Settings.Machine = EM_AARCH64
 		ELF.Settings.BaseAddress = 400000h
+        ELF.Settings.LoadHeaders = 1
 		match brand =at? base:, settings
 			ELF.Settings.ABI = brand
 			ELF.Settings.BaseAddress = base

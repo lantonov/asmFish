@@ -96,10 +96,10 @@ macro cbnz a*, b*
         if @op1.data relativeto $
             @imm.number = @op1.data - $
             aarch64.restrict @imm.number, -0x800000, 0x7FFFFF, 0x3
-            dd 0x35000000 + (@op0.vfull + shl 31) + (((@imm.number shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
+            dd 0x35000000 + (@op0.vfull shl 31) + (((@imm.number shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
         else
             aarch64.store_reloc @op1.data - $, -1, R_AARCH64_CONDBR19
-            dd 0x35000000 + (@op0.vfull + shl 31) + (((          0 shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
+            dd 0x35000000 + (@op0.vfull shl 31) + (((          0 shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
         end if
     else
         err 'invalid operand'
@@ -109,14 +109,14 @@ end macro
 macro cbz a*, b*
     aarch64.parse_operand @op0, a
     aarch64.parse_operand @op1, b
-    if (@op0.type and @type_wn_wzr) & (@op1.type and @type_immr_immc)
+    if (@op0.type and @type_wn_wzr_xn_xzr) & (@op1.type and @type_immr_immc)
         if @op1.data relativeto $
             @imm.number = @op1.data - $
             aarch64.restrict @imm.number, -0x100000, 0x7FFFFF, 0x3
-            dd 0x34000000 + (@op0.vfull + shl 31) + (((@imm.number shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
+            dd 0x34000000 + (@op0.vfull shl 31) + (((@imm.number shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
         else
             aarch64.store_reloc @op1.data - $, -1, R_AARCH64_CONDBR19
-            dd 0x34000000 + (@op0.vfull + shl 31) + (((          0 shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
+            dd 0x34000000 + (@op0.vfull shl 31) + (((          0 shr 2) and 0x7FFFF) shl 5) + (@op0.data shl 0)
         end if
     else
         err 'invalid operand'
@@ -164,7 +164,7 @@ macro movk a*, b*, c
     if (@op0.type and @type_wn_wzr_xn_xzr)
         @adr.encode = 0x72800000 + (@op0.vfull shl 31) + (@op0.data shl 0)
         if (@op1.type and @type_immc) & (@shf.success) & (@shf.kind = 0)
-            aarch64.restrict @shf.shift 0, 48, 0x0f
+            aarch64.restrict @shf.shift, 0, 48, 0x0f
             aarch64.restrict @op1.data, 0, 0xFFFF
             dd @adr.encode + (@shf.shift shl 17) + (@op1.data shl 5)
         else if @shf.empty = 0
@@ -204,7 +204,7 @@ macro movz a*, b*, c
     if (@op0.type and @type_wn_wzr_xn_xzr)
         @adr.encode = 0x72800000 + (@op0.vfull shl 31) + (@op0.data shl 0)
         if (@op1.type and @type_immc) & (@shf.success) & (@shf.kind = 0)
-            aarch64.restrict @shf.shift 0, 48, 0x0f
+            aarch64.restrict @shf.shift, 0, 48, 0x0f
             aarch64.restrict @op1.data, 0, 0xFFFF
             dd @adr.encode + (@shf.shift shl 17) + (@op1.data shl 5)
         else if @shf.empty = 0
@@ -249,7 +249,7 @@ macro movn a*, b*, c
     if (@op0.type and @type_wn_wzr_xn_xzr)
         @adr.encode = 0x12800000 + (@op0.vfull shl 31) + (@op0.data shl 0)
         if (@op1.type and @type_immc) & (@shf.success) & (@shf.kind = 0)
-            aarch64.restrict @shf.shift 0, 48, 0x0f
+            aarch64.restrict @shf.shift, 0, 48, 0x0f
             aarch64.restrict @op1.data, 0, 0xFFFF
             dd @adr.encode + (@shf.shift shl 17) + (@op1.data shl 5)
         else if @shf.empty = 0

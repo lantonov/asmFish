@@ -6,7 +6,7 @@ sys_write = 64
 sys_exit  = 93
 
 segment readable executable
-
+          align  4
 Start:
             mov  x0, 1
             adr  x1, Message
@@ -18,7 +18,7 @@ Start:
             mov  x8, sys_exit
             svc  0
 
-;segment readable writeable
+segment readable writeable
 
 Message:
         db 'Hello World!', 10

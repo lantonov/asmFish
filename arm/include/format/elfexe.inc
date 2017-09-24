@@ -158,6 +158,12 @@ namespace ELF
                 BASE_ADDRESS := 8048000h 
         end if 
 
+        if defined Settings.LoadHeaders 
+                LOAD_HEADERS := Settings.LoadHeaders 
+        else  
+                LOAD_HEADERS := 0 
+        end if  
+
         Header: 
 
         e_ident         db 0x7F,'ELF',CLASS,ELFDATA2LSB,EV_CURRENT,ABI,(16-$) dup 0 
@@ -188,175 +194,182 @@ namespace ELF
          e_shstrndx     dw 0 
         end if 
 
-        ProgramHeader: 
-        if CLASS <> ELFCLASS64 
-         p_type         dd PT_LOAD 
-         p_offset       dd 0 
-         p_vaddr        dd 0 
-         p_paddr        dd 0 
-         p_filesz       dd 0 
-         p_memsz        dd 0 
-         p_flags        dd PF_R+PF_W+PF_X 
-         p_align        dd 1000h 
-        else 
-         p_type         dd PT_LOAD 
-         p_flags        dd PF_R+PF_W+PF_X 
-         p_offset       dq 0 
-         p_vaddr        dq 0 
-         p_paddr        dq 0 
-         p_filesz       dq 0 
-         p_memsz        dq 0 
-         p_align        dq 1000h 
-        end if 
+        ProgramHeader:  
+        if CLASS <> ELFCLASS64  
+         p_type         dd PT_LOAD  
+         p_offset       dd 0  
+         p_vaddr        dd BASE_ADDRESS  
+         p_paddr        dd BASE_ADDRESS  
+         p_filesz       dd 0  
+         p_memsz        dd 0  
+         p_flags        dd PF_R+PF_W+PF_X  
+         p_align        dd 1000h  
+        else  
+         p_type         dd PT_LOAD  
+         p_flags        dd PF_R+PF_W+PF_X  
+         p_offset       dq 0  
+         p_vaddr        dq BASE_ADDRESS  
+         p_paddr        dq BASE_ADDRESS  
+         p_filesz       dq 0  
+         p_memsz        dq 0  
+         p_align        dq 1000h  
+        end if  
 
         SEGMENT_HEADER_LENGTH = $ - ProgramHeader 
 
         db (NUMBER_OF_SEGMENTS-1)*SEGMENT_HEADER_LENGTH dup 0 
 
-
         SEGMENT_INDEX = 0 
-        NEXT_SEGMENT_INDEX = 0 
-        SEGMENT_TYPE = PT_LOAD 
-        FILE_OFFSET = $% 
-        SEGMENT_BASE = BASE_ADDRESS + FILE_OFFSET and 0FFFh 
-        org SEGMENT_BASE 
-        start: 
-
-        store SEGMENT_BASE at ELF:p_vaddr 
-        store SEGMENT_BASE at ELF:p_paddr 
-        store FILE_OFFSET at ELF:p_offset 
+        NEXT_SEGMENT_INDEX = 0  
+        SEGMENT_TYPE = PT_LOAD  
+        if LOAD_HEADERS 
+                FILE_OFFSET = 0 
+                SEGMENT_BASE = BASE_ADDRESS 
+                org SEGMENT_BASE + $% 
+        else 
+                FILE_OFFSET = $% 
+                SEGMENT_BASE = BASE_ADDRESS + FILE_OFFSET and 0FFFh 
+                org SEGMENT_BASE 
+                store SEGMENT_BASE at ELF:p_vaddr 
+                store SEGMENT_BASE at ELF:p_paddr 
+                store FILE_OFFSET at ELF:p_offset 
+        end if 
+        start:  
 
 end namespace 
 
-macro segment? 
-        namespace ELF 
+macro segment?  
+        namespace ELF  
 
-                if SEGMENT_TYPE = PT_LOAD 
+                if NEXT_SEGMENT_INDEX = 0 & $ > start 
+                        NEXT_SEGMENT_INDEX = 1 
+                end if 
 
-                        RAW_DATA_SIZE = $%% - FILE_OFFSET 
-                        FILE_OFFSET = $%% 
-                        SEGMENT_SIZE = $ - SEGMENT_BASE 
+                if SEGMENT_TYPE = PT_LOAD  
+
+                        RAW_DATA_SIZE = $%% - FILE_OFFSET  
+                        SEGMENT_SIZE = $ - SEGMENT_BASE  
                         store RAW_DATA_SIZE at ELF:p_filesz+SEGMENT_INDEX*SEGMENT_HEADER_LENGTH 
                         store SEGMENT_SIZE at ELF:p_memsz+SEGMENT_INDEX*SEGMENT_HEADER_LENGTH 
 
-                        if NEXT_SEGMENT_INDEX > 0 
-                                align 1000h 
-                                SEGMENT_BASE = $ + FILE_OFFSET and 0FFFh 
-                        end if 
+                        if NEXT_SEGMENT_INDEX > 0  
+                                FILE_OFFSET = $%%  
+                                align 1000h  
+                                SEGMENT_BASE = $ + FILE_OFFSET and 0FFFh  
+                                section SEGMENT_BASE  
+                        end if  
 
-                        section SEGMENT_BASE 
+                else  
 
-                else 
-
-                        FILE_OFFSET = $% 
-                        SEGMENT_SIZE = $ - SEGMENT_BASE 
+                        FILE_OFFSET = $%  
+                        SEGMENT_SIZE = $ - SEGMENT_BASE  
                         store SEGMENT_SIZE at ELF:p_filesz+SEGMENT_INDEX*SEGMENT_HEADER_LENGTH 
                         store SEGMENT_SIZE at ELF:p_memsz+SEGMENT_INDEX*SEGMENT_HEADER_LENGTH 
 
                         SEGMENT_BASE = SEGMENT_BASE and not 0FFFh + FILE_OFFSET and 0FFFh 
 
-                        if $% > $%% 
-                                store 0:byte at $-1 
-                        end if 
-                        org SEGMENT_BASE 
+                        if $% > $%%  
+                                store 0:byte at $-1  
+                        end if  
+                        org SEGMENT_BASE  
 
-                end if 
-
-                if SEGMENT_SIZE > 0 & NEXT_SEGMENT_INDEX = 0 
-                        NEXT_SEGMENT_INDEX = 1 
-                end if 
+                end if  
 
         end namespace 
-end macro 
+end macro  
 
-macro segment? attributes* 
-        namespace ELF 
-                match }, attributes 
-                        segment 
+macro segment? attributes*  
+        namespace ELF  
+                match }, attributes  
+                        segment  
                         restore SEGMENT_TYPE,SEGMENT_FLAGS,SEGMENT_INDEX,SEGMENT_BASE,FILE_OFFSET 
-                        org SEGMENT_BASE + $% - FILE_OFFSET 
-                else 
+                        org SEGMENT_BASE + $% - FILE_OFFSET  
+                else  
 
-                        local seq,list 
-                        match { _attributes, attributes 
+                        local seq,list  
+                        match { _attributes, attributes  
                                 define seq _attributes 
                                 SEGMENT_TYPE =: PT_NULL 
-                                SEGMENT_FLAGS =: 0 
-                                SEGMENT_INDEX =: SEGMENT_INDEX 
-                                SEGMENT_BASE =: SEGMENT_BASE 
-                                FILE_OFFSET =: FILE_OFFSET 
-                                if NEXT_SEGMENT_INDEX = 0 
-                                        NEXT_SEGMENT_INDEX = 1 
-                                end if 
+                                SEGMENT_FLAGS =: 0  
+                                SEGMENT_INDEX =: SEGMENT_INDEX  
+                                SEGMENT_BASE =: $ 
+                                FILE_OFFSET =: $% 
+                                CLOSE_PREVIOUS_SEGMENT = 0 
                         else 
                                 segment 
                                 define seq attributes 
-                                SEGMENT_TYPE = PT_LOAD 
+                                SEGMENT_TYPE = PT_LOAD  
                                 SEGMENT_FLAGS = 0 
+                                CLOSE_PREVIOUS_SEGMENT = 1 
                         end match 
+                        while 1 
+                                match car cdr, seq  
+                                        define list car  
+                                        define seq cdr  
+                                else  
+                                        match any, seq  
+                                                define list any  
+                                        end match  
+                                        break  
+                                end match  
+                        end while  
+                        irpv attribute, list  
+                                match =readable?, attribute  
+                                        SEGMENT_FLAGS = SEGMENT_FLAGS or PF_R  
+                                else match =writeable?, attribute  
+                                        SEGMENT_FLAGS = SEGMENT_FLAGS or PF_W  
+                                else match =executable?, attribute  
+                                        SEGMENT_FLAGS = SEGMENT_FLAGS or PF_X  
+                                else match =interpreter?, attribute  
+                                        SEGMENT_TYPE = PT_INTERP  
+                                else match =dynamic?, attribute  
+                                        SEGMENT_TYPE = PT_DYNAMIC  
+                                else match =note?, attribute  
+                                        SEGMENT_TYPE = PT_NOTE  
+                                else match =gnustack?, attribute  
+                                        SEGMENT_TYPE = PT_GNU_STACK  
+                                else match =gnuehframe?, attribute  
+                                        SEGMENT_TYPE = PT_GNU_EH_FRAME  
+                                else  
+                                        err 'invalid argument'  
+                                end match  
+                        end irpv  
 
+                        if NEXT_SEGMENT_INDEX = 0 & ( LOAD_HEADERS & SEGMENT_TYPE <> PT_LOAD )
+                                NEXT_SEGMENT_INDEX = 1 
+                                FILE_OFFSET = $%% 
+                                align 1000h  
+                                SEGMENT_BASE = $ + FILE_OFFSET and 0FFFh  
+                                section SEGMENT_BASE 
+                        end if 
                         SEGMENT_INDEX = NEXT_SEGMENT_INDEX 
-                        NEXT_SEGMENT_INDEX = NEXT_SEGMENT_INDEX + 1 
+                        NEXT_SEGMENT_INDEX = NEXT_SEGMENT_INDEX + 1  
 
                         store SEGMENT_BASE at ELF:p_vaddr+SEGMENT_INDEX*SEGMENT_HEADER_LENGTH 
                         store SEGMENT_BASE at ELF:p_paddr+SEGMENT_INDEX*SEGMENT_HEADER_LENGTH 
-                        store FILE_OFFSET at ELF:p_offset+SEGMENT_INDEX*SEGMENT_HEADER_LENGTH 
-
-                        while 1 
-                                match car cdr, seq 
-                                        define list car 
-                                        define seq cdr 
-                                else 
-                                        match any, seq 
-                                                define list any 
-                                        end match 
-                                        break 
-                                end match 
-                        end while 
-                        irpv attribute, list 
-                                match =readable?, attribute 
-                                        SEGMENT_FLAGS = SEGMENT_FLAGS or PF_R 
-                                else match =writeable?, attribute 
-                                        SEGMENT_FLAGS = SEGMENT_FLAGS or PF_W 
-                                else match =executable?, attribute 
-                                        SEGMENT_FLAGS = SEGMENT_FLAGS or PF_X 
-                                else match =interpreter?, attribute 
-                                        SEGMENT_TYPE = PT_INTERP 
-                                else match =dynamic?, attribute 
-                                        SEGMENT_TYPE = PT_DYNAMIC 
-                                else match =note?, attribute 
-                                        SEGMENT_TYPE = PT_NOTE 
-                                else match =gnustack?, attribute 
-                                        SEGMENT_TYPE = PT_GNU_STACK 
-                                else match =gnuehframe?, attribute 
-                                        SEGMENT_TYPE = PT_GNU_EH_FRAME 
-                                else 
-                                        err 'invalid argument' 
-                                end match 
-                        end irpv 
-
+                        store FILE_OFFSET at ELF:p_offset+SEGMENT_INDEX*SEGMENT_HEADER_LENGTH
                         store SEGMENT_TYPE at ELF:p_type+SEGMENT_INDEX*SEGMENT_HEADER_LENGTH 
                         store SEGMENT_FLAGS at ELF:p_flags+SEGMENT_INDEX*SEGMENT_HEADER_LENGTH 
 
-                        if SEGMENT_TYPE = PT_LOAD 
+                        if SEGMENT_TYPE = PT_LOAD  
                                 store 1000h at ELF:p_align+SEGMENT_INDEX*SEGMENT_HEADER_LENGTH 
-                        else 
+                        else  
                                 store 1 at ELF:p_align+SEGMENT_INDEX*SEGMENT_HEADER_LENGTH 
-                        end if 
-                end match 
-        end namespace 
-end macro 
+                        end if  
+                end match  
+        end namespace  
+end macro  
 
-macro entry? address* 
-        namespace ELF 
-                store address at ELF:e_entry 
-        end namespace 
-end macro 
+macro entry? address*  
+        namespace ELF  
+                store address at ELF:e_entry  
+        end namespace  
+end macro  
 
-postpone 
-        purge segment? 
-        segment 
-        namespace ELF 
-                NUMBER_OF_SEGMENTS := NEXT_SEGMENT_INDEX 
-        end namespace 
+postpone  
+        purge segment?  
+        segment  
+        namespace ELF  
+                NUMBER_OF_SEGMENTS := NEXT_SEGMENT_INDEX  
+        end namespace  
 end postpone

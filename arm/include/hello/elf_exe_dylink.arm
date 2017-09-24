@@ -6,51 +6,24 @@ entry Start
 macro balign boundary
     local size
     size = (boundary-1)-($+boundary-1) mod boundary
-    ;db size dup ?
 	db (size mod 4) dup 0
-        dd (size/4) dup 0xd503201f
+    dd (size  /  4) dup 0xd503201f
 end macro
 
 
+; some comments on ld-linux-aarch64.so.1:
+;
+; - Does require the program headers to be contained in a load command.
+;       Throws a failed assert if not:
+;           Inconsistency detected by ld.so: rtld.c: 1290: dl_main: Assertion `_rtld_local._dl_rtld_map.l_libname' failed!
+;       This seems to be a bug. For this reason format.inc now has
+;           ELF.Settings.LoadHeaders = 1
+; - Does require the dynamic segment to be contained in another load segment.
+;       Throws a segmentation fault if not. This seems to be another bug.
+;       For this reason, the "segment" macro in elfexe.inc has been extended
+; - Does not require the interpreter segment to be contained in another load segment.
+;       It is in this example, but the commented out segment works fine too.
 
-
-; after assembling this, change the offset, virtualaddr, file size, and memsiz
-; for the first load so that is starts at the very beginning of the binary
-;
-;Program Headers:
-;  Type           Offset             VirtAddr           PhysAddr
-;                 FileSiz            MemSiz              Flags  Align
-;  LOAD           0x0000000000000120 0x0000000000400120 0x0000000000400120
-;                 0x0000000000000054 0x0000000000000054  R E    1000
-;  INTERP         0x0000000000000120 0x0000000000400120 0x0000000000400120
-;                 0x000000000000001b 0x000000000000001b  R      1
-;      [Requesting program interpreter: /lib/ld-linux-aarch64.so.1]
-;  LOAD           0x0000000000000174 0x0000000000401174 0x0000000000401174
-;                 0x00000000000001e0 0x00000000000001e0  RW     1000
-;  DYNAMIC        0x0000000000000174 0x0000000000401174 0x0000000000401174
-;                 0x00000000000000d0 0x00000000000000d0  RW     1
-;
-;
-; change to:
-;
-;Program Headers:
-;  Type           Offset             VirtAddr           PhysAddr
-;                 FileSiz            MemSiz              Flags  Align
-;  LOAD           0x0000000000000000 0x0000000000400000 0x0000000000400000
-;                 0x0000000000000174 0x0000000000000174  R E    1000
-;  INTERP         0x0000000000000120 0x0000000000400120 0x0000000000400120
-;                 0x000000000000001b 0x000000000000001b  R      1
-;      [Requesting program interpreter: /lib/ld-linux-aarch64.so.1]
-;  LOAD           0x0000000000000174 0x0000000000401174 0x0000000000401174
-;                 0x00000000000001e0 0x00000000000001e0  RW     1000
-;  DYNAMIC        0x0000000000000174 0x0000000000401174 0x0000000000401174
-;                 0x00000000000000d0 0x00000000000000d0  RW     1
-;
-; otherwise the loader
-;
-;   /lib/ld-linux-aarch64.so.1
-;
-; throws a fit
 
 segment readable executable 
 
@@ -58,7 +31,7 @@ segment { interpreter readable
     db '/lib/ld-linux-aarch64.so.1',0
 segment }
 
-          align  64
+         balign  4      ; instruction addresses should be divisible by 4
 Start:
             mov  x0, 1
             adr  x1, Test
@@ -69,17 +42,21 @@ Start:
             mov  x0, 1
             adr  x1, Message
             mov  x2, MessageEnd - Message
-            ldr  x8, write
+            ldr  x8, write      ; if the address of write is too far away, another method of loading it is required
             blr  x8
 
             mov  x0, 0
-            ldr  x8, exit
+            ldr  x8, exit       ; ditto for exit
             blr  x8
 
 
+;segment interpreter readable 
+;    db '/lib/ld-linux-aarch64.so.1',0
 
-    ;align 64
+
 segment readable writeable
+
+          align  8      ; alignment not necessary
 segment { dynamic readable writeable
 
     dq DT_NEEDED,  _libc-strtab 
@@ -90,15 +67,14 @@ segment { dynamic readable writeable
     dq DT_RELA,    rela 
     dq DT_RELASZ,  relasz 
     dq DT_RELAENT, sizeof.Elf64_Rela 
-    dq DT_REL,     rel 
-    dq DT_RELSZ,   relsz 
-    dq DT_RELENT,  sizeof.Elf64_Rela
+    ;dq DT_REL,     rel                 ; Not necessary if empty.
+    ;dq DT_RELSZ,   relsz               ; (eventhough "rel" is claimed to be
+    ;dq DT_RELENT,  sizeof.Elf64_Rela   ; manditory by the standard)
     dq DT_HASH,    hash 
     dq DT_NULL,    0 
-
 segment }
 
-align 64
+          align  64
 write:  dq 0
 exit:   dq 0
 
