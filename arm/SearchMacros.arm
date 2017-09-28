@@ -1641,7 +1641,7 @@ Display 2,"Tablebase_Probe_WDL returned %i0%n"
               b  .Return
     end if
   end if
-  if USE_CURRMOVE & VERBOSE < 2 & RootNode = 1
+  if USE_CURRMOVE = 1 & VERBOSE < 2 & RootNode = 1
 .PrintCurrentMove:
            _lea  x6, options
            ldrb  w4, [x6, Options.displayInfoMove]
@@ -1660,7 +1660,7 @@ Display 2,"Tablebase_Probe_WDL returned %i0%n"
             mov  x3, 0
              bl  PrintFancy
             add  sp, sp, 8*4
-             bl  Os_WriteOut_Output
+             bl  WriteLine_Output
               b  .PrintCurrentMoveRet
   end if
 end macro

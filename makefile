@@ -16,6 +16,10 @@ bincheck:
 	export INCLUDE="x86/include/"; ./fasmg "x86/fish.asm" "NEWasmfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'"
 	diff "NEWarmfish" "armfish"
 	diff "NEWasmfish" "asmfish"
+asmquick:
+	export INCLUDE="x86/include/"; ./fasmg "x86/fish.asm" "asmfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'"; chmod 755 ./asmfish
+armquick:
+	export INCLUDE="arm/include/"; ./fasmg "arm/fish.arm" "armfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'v8'";     chmod 755 ./armfish
 test:
 	aarch64-linux-gnu-as -o master.o -march=armv8-a+crc+crypto "arm/include/master.arm"
 	aarch64-linux-gnu-ld -o master master.o

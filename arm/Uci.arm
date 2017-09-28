@@ -592,7 +592,7 @@ UciSetOption.Read:
             adr  x21, UciSetOption.Chess960
            cbnz  w0, UciSetOption.CheckValue
 
-           _lea  x1, sz_log
+           _lea  x1, sz_logfile
              bl  CmpStringCaseless
             adr  x21, UciSetOption.Log
            cbnz  w0, UciSetOption.CheckValue
@@ -765,7 +765,7 @@ UciSetOption.MultiPv:
              bl  ParseInteger
             mov  w4, 1
             mov  w5, MAX_MOVES
-            ClampUnsigned w0, w4, w5
+  ClampUnsigned  w0, w4, w5
            _lea  x16, options
             str  w0, [x16, Options.multiPV]
               b  UciGetInput

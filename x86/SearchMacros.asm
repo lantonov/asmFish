@@ -1580,23 +1580,23 @@ Display 2,"Tablebase_Probe_WDL returned %i0%n"
             jmp   .Return
     end if
   end if
-  if USE_CURRMOVE & VERBOSE < 2 & RootNode = 1
+  if USE_CURRMOVE = 1 & VERBOSE < 2 & RootNode = 1
          calign   8
 .PrintCurrentMove:
-            cmp   byte[options.displayInfoMove], 0
-             je   .PrintCurrentMoveRet
-            lea   rdi, [Output]
-            mov   eax, dword[.depth]
-            mov   ecx, dword[.move]
-            mov   edx, dword[.moveCount]
-            add   edx, dword[rbp-Thread.rootPos+Thread.PVIdx]
-           push   rdx rdx rcx rax
-            lea   rcx, [sz_format_currmove]
-            mov   rdx, rsp
-            xor   r8, r8
-           call   PrintFancy
-            pop   rax rax rax rax
-           call   Os_WriteOut_Output
-            jmp   .PrintCurrentMoveRet
+            cmp  byte[options.displayInfoMove], 0
+             je  .PrintCurrentMoveRet
+            lea  rdi, [Output]
+            mov  eax, dword[.depth]
+            mov  ecx, dword[.move]
+            mov  edx, dword[.moveCount]
+            add  edx, dword[rbp-Thread.rootPos+Thread.PVIdx]
+           push  rdx rdx rcx rax
+            lea  rcx, [sz_format_currmove]
+            mov  rdx, rsp
+            xor  r8, r8
+           call  PrintFancy
+            pop  rax rax rax rax
+           call  WriteLine_Output
+            jmp  .PrintCurrentMoveRet
   end if
 end macro

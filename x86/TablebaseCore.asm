@@ -212,30 +212,30 @@ my_free:	sub   rcx, 16
 
 
 
-my_exit:	jmp   Os_ExitProcess
+my_exit:	jmp  Os_ExitProcess
 my_printf: 	;  don't care about printf's arguments
 my_puts:
-	       push   rdi
-		lea   rdi, [Output]
-	       call   PrintString
-       PrintNewLine
-	       call   Os_WriteOut_Output
-		pop   rdi
-		ret
+           push  rdi
+            lea  rdi, [Output]
+           call  PrintString
+        PrintNL
+           call  WriteLine_Output
+            pop  rdi
+            ret
 my_strcat:
-		mov   al, byte[rcx]
-		inc   rcx
-	       test   al, al
-		jne   my_strcat
-		dec   rcx
+            mov  al, byte[rcx]
+            inc  rcx
+           test  al, al
+            jne  my_strcat
+            dec  rcx
 my_strcpy:
-		mov   al, byte[rdx]
-		inc   rdx
-		mov   byte[rcx], al
-		inc   rcx
-	       test   al, al
-		jne   my_strcpy
-		ret
+            mov  al, byte[rdx]
+            inc  rdx
+            mov  byte[rcx], al
+            inc  rcx
+           test  al, al
+            jne  my_strcpy
+            ret
 
 
 
@@ -2262,60 +2262,60 @@ Tablebase_HandlePathStrings:
 
 
 Tablebase_DisplayInfo:
-               push   rbx rsi rdi
-		xor   esi, esi
+           push  rbx rsi rdi
+            xor  esi, esi
 .PrintNext:
-		lea   rdi, [Output]
-		cmp   esi, dword[_ZL9num_paths]
-		jae   .PrintDone
-		mov   rax, 'info str'
-	      stosq
-		mov   rax, 'ing foun'
-	      stosq
-		mov   eax, 'd '
-	      stosw
-		mov   eax, esi
-		add   eax, dword[_ZL9num_paths]
-		mov   rcx, qword[_ZL5paths]
-		mov   eax, dword[rcx+8*rax]
-	       call   PrintUnsignedInteger
-		mov   rax, ' tableba'
-	      stosq
-		mov   rax, 'ses in "'
-	      stosq
-		mov   rcx, qword[_ZL5paths]
-		mov   rcx, [rcx+8*rsi]
-	       call   PrintString
-                mov   al, '"'
-              stosb
-       PrintNewLine
-	       call   Os_WriteOut_Output
-		add   esi, 1
-		jmp   .PrintNext
+            lea  rdi, [Output]
+            cmp  esi, dword[_ZL9num_paths]
+            jae  .PrintDone
+            mov  rax, 'info str'
+          stosq
+            mov  rax, 'ing foun'
+          stosq
+            mov  eax, 'd '
+          stosw
+            mov  eax, esi
+            add  eax, dword[_ZL9num_paths]
+            mov  rcx, qword[_ZL5paths]
+            mov  eax, dword[rcx+8*rax]
+           call  PrintUnsignedInteger
+            mov  rax, ' tableba'
+          stosq
+            mov  rax, 'ses in "'
+          stosq
+            mov  rcx, qword[_ZL5paths]
+            mov  rcx, [rcx+8*rsi]
+           call  PrintString
+            mov  al, '"'
+          stosb
+        PrintNL
+           call  WriteLine_Output
+            add  esi, 1
+            jmp  .PrintNext
 .PrintDone:
-		lea   rdi, [Output]
-		mov   rax, 'info str'
-	      stosq
-		mov   rax, 'ing foun'
-	      stosq
-		mov   eax, 'd '
-	      stosw
-		mov   eax, dword[_ZL10TBnum_pawn]
-		add   eax, dword[_ZL11TBnum_piece]
-	       call   PrintUnsignedInteger
-		mov   eax, ' of '
-	      stosd
-		mov   eax, dword[tb_total_cnt]
-	       call   PrintUnsignedInteger
-		mov   rax, ' tableba'
-	      stosq
-		mov   eax, 'ses'
-	      stosd
-		sub   rdi, 1
-       PrintNewLine
-	       call   Os_WriteOut_Output
-                pop   rdi rsi rbx
-                ret
+            lea  rdi, [Output]
+            mov  rax, 'info str'
+          stosq
+            mov  rax, 'ing foun'
+          stosq
+            mov  eax, 'd '
+          stosw
+            mov  eax, dword[_ZL10TBnum_pawn]
+            add  eax, dword[_ZL11TBnum_piece]
+           call  PrintUnsignedInteger
+            mov  eax, ' of '
+          stosd
+            mov  eax, dword[tb_total_cnt]
+           call  PrintUnsignedInteger
+            mov  rax, ' tableba'
+          stosq
+            mov  eax, 'ses'
+          stosd
+            sub  rdi, 1
+        PrintNL
+           call  WriteLine_Output
+            pop  rdi rsi rbx
+            ret
 
 
 

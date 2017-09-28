@@ -100,7 +100,7 @@ macro Display vLevel, Mes
                 mov  rdx, rsp
                 lea  r8, [rsp + 16*8]
                call  PrintFancy
-               call  Os_WriteOut_Output
+               call  _Os_WriteOut_Output
              PopAll
   end if
 end macro

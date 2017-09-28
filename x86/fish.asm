@@ -29,6 +29,9 @@ else if VERSION_POST = 'bmi2'
   CPU_HAS_BMI2 = 1
 end if
 
+; use something other than <empty> to hardcode a starting log file into the engine
+LOG_FILE = '<empty>'
+
 
 ; instruction and format macros
 if VERSION_OS = 'L'

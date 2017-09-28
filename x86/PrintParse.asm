@@ -522,79 +522,159 @@ ParseBoole:
 		ret
 
 
-GetLine:
-	; out: eax =  0 if success
-	;      eax = -1 if failed (file end or error)
-	;      rsi address of string start 
-	;      ecx length of string
-	; 
-	; uses global ioBuffer struct
-	; reads one line and then returns 
-	; a line is a string of characters where the last
-	;  and only the last character is below 0x20 (the space char)
-	       push   rbp rbx rdi r12 r13 r14 r15
-                lea   rbp, [ioBuffer]
-		xor   ebx, ebx				; ebx = length of return string
-		mov   r12d, dword[rbp+IOBuffer.tmp_i]
-		mov   r13d, dword[rbp+IOBuffer.tmp_j]
-		mov   r14, qword[rbp+IOBuffer.inputBufferSizeB]
-		mov   r15, qword[rbp+IOBuffer.inputBuffer]
+ReadLine:
+    ; out: eax =  0 if success
+    ;      eax = -1 if failed (file end or error)
+    ;      rsi address of string start 
+    ;      rcx address of string end (including new line char(s))
+    ; 
+    ; uses global ioBuffer struct
+    ; reads one line and then returns 
+    ; a line is a string of characters where the last
+    ;  and only the last character is below 0x20 (the space char)
+           push  rbp rbx rdi r12 r13 r14 r15
+            lea  rbp, [ioBuffer]
+            xor  ebx, ebx				; ebx = length of return string
+            mov  r12d, dword[rbp + IOBuffer.tmp_i]
+            mov  r13d, dword[rbp + IOBuffer.tmp_j]
+            mov  r14, qword[rbp + IOBuffer.inputBufferSizeB]
+            mov  r15, qword[rbp + IOBuffer.inputBuffer]
 .ReadLoop:
-		cmp   rbx, r14
-		jae   .ReAlloc
+            cmp  rbx, r14
+            jae  .ReAlloc
 .ReAllocRet:
-		cmp   r12d, r13d
-		jae   .GetMoreData
+            cmp  r12d, r13d
+            jae  .GetMoreData
 .GetMoreDataRet:
-		mov   al, byte[rbp+IOBuffer.tmpBuffer+r12]
-		add   r12d, 1
-		mov   byte[r15+rbx], al
-		add   ebx, 1
-		cmp   al, ' '
-		jae   .ReadLoop
-		xor   eax, eax
+            mov  al, byte[rbp + IOBuffer.tmpBuffer + r12]
+            add  r12d, 1
+            mov  byte[r15 + rbx], al
+            add  ebx, 1
+            cmp  al, ' '
+            jae  .ReadLoop
+            mov  byte[r15 + rbx - 1], 10
+            xor  eax, eax
 .Return:
-		mov   dword[rbp+IOBuffer.tmp_i], r12d
-		mov   dword[rbp+IOBuffer.tmp_j], r13d
-		mov   qword[rbp+IOBuffer.inputBufferSizeB], r14
-		mov   qword[rbp+IOBuffer.inputBuffer], r15
-		mov   rsi, r15
-		mov   ecx, ebx
-		pop   r15 r14 r13 r12 rdi rbx rbp
-		ret
+            mov  dword[rbp + IOBuffer.tmp_i], r12d
+            mov  dword[rbp + IOBuffer.tmp_j], r13d
+            mov  qword[rbp + IOBuffer.inputBufferSizeB], r14
+            mov  qword[rbp + IOBuffer.inputBuffer], r15
+            cmp  qword[rbp + IOBuffer.log], 0
+            jge  .logger
+.loggerRet:
+            mov  rsi, r15
+            mov  ecx, ebx
+            pop  r15 r14 r13 r12 rdi rbx rbp
+            ret
 .GetMoreData:
-		xor   r12d, r12d
-		lea   rcx, [rbp+IOBuffer.tmpBuffer]
-		mov   edx, sizeof.IOBuffer.tmpBuffer
-	       call   Os_ReadStdIn
-		mov   r13d, eax
-		cmp   rax, 1
-		jge   .GetMoreDataRet
+            xor  r12d, r12d
+            lea  rcx, [rbp + IOBuffer.tmpBuffer]
+            mov  edx, sizeof.IOBuffer.tmpBuffer
+           call  Os_ReadStdIn
+            mov  r13d, eax
+            cmp  rax, 1
+            jge  .GetMoreDataRet
 .Failed:
-		 or   eax, -1
-		xor   r13d, r13d
-		jmp  .Return
+             or  eax, -1
+            xor  r13d, r13d
+            jmp .Return
 .ReAlloc:
-	; get new buffer
-		lea   rcx, [r14+4096]
-	       call   Os_VirtualAlloc
-		mov   r13, rax
-		mov   rdi, rax
-	; copy data
-		mov   rsi, r15
-		mov   rcx, r14
-	  rep movsb
-	; free old buffer
-		mov   rcx, r15
-		mov   rdx, r14
-	       call   Os_VirtualFree
-	; set new data
-		mov   r15, r13
-		add   r14, 4096
-		jmp   .ReAllocRet
+    ; get new buffer
+            lea  rcx, [r14 + 4096]
+           call  Os_VirtualAlloc
+            mov  r13, rax
+            mov  rdi, rax
+    ; copy data
+            mov  rsi, r15
+            mov  rcx, r14
+      rep movsb
+    ; free old buffer
+            mov  rcx, r15
+            mov  rdx, r14
+           call  Os_VirtualFree
+    ; set new data
+            mov  r15, r13
+            add  r14, 4096
+            jmp  .ReAllocRet
+.logger:
+           push  rax rdi
+            sub  rsp, 64
+            mov  rdi, rsp
+            mov  eax, '<<'
+          stosw
+           call  Os_GetTime
+           call  PrintUInt
+            mov  eax, ': '
+          stosw
+            mov  rcx, qword[rbp + IOBuffer.log]
+            mov  rdx, rsp
+            mov  r8, rdi
+            sub  r8, rdx
+           call  Os_FileWrite
+            add  rsp, 64
+            mov  rcx, qword[rbp + IOBuffer.log]
+            mov  rdx, r15
+            mov  r8, rbx
+           call  Os_FileWrite
+            pop  rdi rax
+            jmp  .loggerRet
 
 
+WriteLine_Output:
+            lea  rcx, [Output]
+WriteLine:
+    ; in: rcx address of string start
+    ;     rdi address of string end (supposed to include new line char(s))
+            mov  rdx, qword[ioBuffer + IOBuffer.log]
+           test  rdx, rdx
+            jns  .logger
+            jmp  _Os_WriteOut
+.logger:
+           push  rbx rcx rdi
+            sub  rsp, 64
+            mov  rbx, rdx
+            mov  rdi, rsp
+            mov  eax, '>>'
+          stosw
+           call  Os_GetTime
+           call  PrintUInt
+            mov  eax, ': '
+          stosw
+            mov  rcx, rbx
+            mov  rdx, rsp
+            mov  r8, rdi
+            sub  r8, rdx
+           call  Os_FileWrite
+            add  rsp, 64
+            mov  rdx, qword[rsp + 8*1]
+            mov  r8, qword[rsp + 8*0]
+            mov  rcx, rbx
+            sub  r8, rdx
+           call  Os_FileWrite
+            pop  rdi rcx rbx
+            jmp  _Os_WriteOut
 
+
+Log_Init:            
+    ; in: rcx address of file string
+    ;     0 for no string
+           push  rbx rsi rdi
+            lea  rbx, [ioBuffer]
+            mov  rsi, rcx
+            mov  rcx, qword[rbx + IOBuffer.log]
+           test  rcx, rcx
+             js  .no_close
+           call  Os_FileClose
+.no_close:
+            mov  rax, -1
+            mov  rcx, rsi
+           test  rsi, rsi
+             jz  .no_new
+           call  Os_FileOpenWrite
+.no_new:
+            mov  qword[rbx + IOBuffer.log], rax            
+            pop  rdi rsi rbx
+            ret
 
 QueryNodeAffinity:
 	; in: ecx node self
@@ -701,8 +781,8 @@ QueryNodeAffinity:
 	  rep movsb
 		lea   rcx, [sz_error_affinity2]
 	       call   PrintString
-       PrintNewLine
-	       call   Os_WriteOut_Output
+       PrintNL
+	       call   WriteLine_Output
 		jmp   .All
 
 

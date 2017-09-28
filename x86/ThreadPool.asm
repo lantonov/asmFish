@@ -87,56 +87,56 @@ ThreadPool_ReadOptions:
 
 
 ThreadPool_NodesSearched_TbHits:
-		xor   ecx, ecx
-		xor   eax, eax
-		xor   edx, edx
-	.next_thread:
-		mov   r8, qword[threadPool.threadTable+8*rcx]
-		add   rax, qword[r8+Thread.nodes]
-		add   rdx, qword[r8+Thread.tbHits]
-		add   ecx, 1
-		cmp   ecx, dword[threadPool.threadCnt]
-		 jb   .next_thread
-		ret
+            xor  ecx, ecx
+            xor  eax, eax
+            xor  edx, edx
+.next_thread:
+            mov  r8, qword[threadPool.threadTable+8*rcx]
+            add  rax, qword[r8+Thread.nodes]
+            add  rdx, qword[r8+Thread.tbHits]
+            add  ecx, 1
+            cmp  ecx, dword[threadPool.threadCnt]
+             jb  .next_thread
+            ret
 
 ThreadPool_DisplayThreadDistribution:
-	       push   rbx rsi rdi r14 r15
-		lea   rdi, [Output]
-		lea   rsi, [threadPool.nodeTable]
-	       imul   r15d, dword[threadPool.nodeCnt], sizeof.NumaNode
-		add   r15, rsi
+	       push  rbx rsi rdi r14 r15
+            lea  rdi, [Output]
+            lea  rsi, [threadPool.nodeTable]
+           imul  r15d, dword[threadPool.nodeCnt], sizeof.NumaNode
+            add  r15, rsi
 .NextNode:
-                lea   rcx, [sz_info_node_threads]
-                xor   r8, r8
-	        mov   eax, dword[rsi+NumaNode.nodeNumber]
-               push   rax rax
-                mov   rdx, rsp
-               call   PrintFancy
-                pop   rax rax
+            lea  rcx, [sz_info_node_threads]
+            xor  r8, r8
+            mov  eax, dword[rsi+NumaNode.nodeNumber]
+           push  rax rax
+            mov  rdx, rsp
+           call  PrintFancy
+            pop  rax rax
 
-		 or   ebx, -1
-	.ThreadLoop:
-		add   ebx, 1
-		cmp   ebx, dword[threadPool.threadCnt]
-		jae   .ThreadLoopDone
-		mov   rax, qword[threadPool.threadTable+8*rbx]
-		cmp   rsi, qword[rax+Thread.numaNode]
-		jne   .ThreadLoop
-		mov   al, ' '
-	      stosb
-		mov   eax, ebx
-	       call   PrintUnsignedInteger
-		jmp   .ThreadLoop
-	.ThreadLoopDone:
+             or  ebx, -1
+.ThreadLoop:
+            add  ebx, 1
+            cmp  ebx, dword[threadPool.threadCnt]
+            jae  .ThreadLoopDone
+            mov  rax, qword[threadPool.threadTable+8*rbx]
+            cmp  rsi, qword[rax+Thread.numaNode]
+            jne  .ThreadLoop
+            mov  al, ' '
+          stosb
+            mov  eax, ebx
+           call  PrintUnsignedInteger
+            jmp  .ThreadLoop
+.ThreadLoopDone:
 
-       PrintNewLine
-		add   rsi, sizeof.NumaNode
-		cmp   rsi, r15
-		 jb   .NextNode
-	       call   Os_WriteOut_Output
+        PrintNL
+            add  rsi, sizeof.NumaNode
+            cmp  rsi, r15
+             jb  .NextNode
+           call  WriteLine_Output
 .Return:
-		pop   r15 r14 rdi rsi rbx
-		ret
+            pop  r15 r14 rdi rsi rbx
+            ret
 
 
 

@@ -11,6 +11,26 @@ rsid equ esi
 rdid equ edi
 
 
+; lazy way to put an address of a string into a register
+macro lstring reg, target, Mes
+  local m
+            lea  reg, [m]
+            jmp  target
+    m:
+        db Mes
+        db 0
+end macro
+
+
+macro PrintNL
+  if VERSION_OS = 'W'
+            mov  al, 13
+          stosb
+  end if
+            mov  al, 10
+          stosb
+end macro
+
 
 macro PrintNewLine
   if VERSION_OS = 'W'

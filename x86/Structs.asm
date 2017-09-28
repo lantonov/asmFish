@@ -476,15 +476,16 @@ ends
 
 ; structure for buffer input and output (input only for now)
 struct IOBuffer
- cmdLineStart	  dq ?	; address of string from cmd line to parse
- inputBuffer	  dq ?	; address of string from stdin to parse
- inputBufferSizeB dq ?	; byte capacity of inputBuffer
- tmp_i		dd ?
- tmp_j		dd ?
- tmpBuffer	rb 512
+ cmdLineStart	  rq 1	; address of string from cmd line to parse
+ inputBuffer	  rq 1	; address of string from stdin to parse
+ inputBufferSizeB rq 1	; byte capacity of inputBuffer
+ log              rq 1
+ tmp_i		rd 1
+ tmp_j		rd 1
+            rq 1
+ tmpBuffer	    rb 512
  tmpBufferEnd	rb 0
 ends
-
 sizeof.IOBuffer.tmpBuffer = 512
 
 ; structures for books

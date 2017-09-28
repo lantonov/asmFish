@@ -42,6 +42,8 @@ szGreetingEnd:
 	db 'option name Priority type combo default none var none var normal var low var idle'
 	NewLineData
 
+	db 'option name LogFile type string default <empty>'
+	NewLineData
 	db 'option name TTFile type string default <empty>'
 	NewLineData
 	db 'option name TTSave type button'
@@ -160,7 +162,6 @@ sz_all:         db "all", 0
 sz_low:         db "low", 0
 sz_uci:         db "uci", 0
 sz_fen:         db "fen", 0
-sz_log:         db "log", 0
 sz_wait:        db "wait", 0
 sz_quit:        db "quit", 0
 sz_none:        db "none", 0
@@ -190,6 +191,7 @@ sz_threads:     db "threads", 0
 sz_isready:     db "isready", 0
 sz_readyok:     db "readyok", 0
 sz_multipv:     db "multipv", 0
+sz_logfile:     db "logfile", 0
 sz_realtime:    db "realtime", 0
 sz_startpos:    db "startpos", 0
 sz_infinite:    db "infinite", 0

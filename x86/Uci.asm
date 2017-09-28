@@ -1,41 +1,42 @@
 
 Options_Init:
-		lea   rdx, [options]
-		mov   byte[rdx+Options.displayInfoMove], -1
-		mov   dword[rdx+Options.contempt], 0
-		mov   dword[rdx+Options.threads], 1
-		mov   dword[rdx+Options.hash], 16
-		mov   byte[rdx+Options.ponder], 0
-		mov   dword[rdx+Options.multiPV], 1
-		mov   dword[rdx+Options.moveOverhead], 30
-		mov   byte[rdx+Options.chess960], 0
-		mov   dword[rdx+Options.syzygyProbeDepth], 1
-		mov   byte[rdx+Options.syzygy50MoveRule], -1
-		mov   dword[rdx+Options.syzygyProbeLimit], 6
-		mov   byte[rdx+Options.largePages], 0
+            lea  rdx, [options]
+            mov   byte[rdx + Options.displayInfoMove], -1
+            mov  dword[rdx + Options.contempt], 0
+            mov  dword[rdx + Options.threads], 1
+            mov  dword[rdx + Options.hash], 16
+            mov   byte[rdx + Options.ponder], 0
+            mov  dword[rdx + Options.multiPV], 1
+            mov  dword[rdx + Options.moveOverhead], 30
+            mov   byte[rdx + Options.chess960], 0
+            mov  dword[rdx + Options.syzygyProbeDepth], 1
+            mov   byte[rdx + Options.syzygy50MoveRule], -1
+            mov  dword[rdx + Options.syzygyProbeLimit], 6
+            mov   byte[rdx + Options.largePages], 0
 
-		lea   rcx, [rdx+Options.hashPathBuffer]
-		mov   rax, '<empty>'
-		mov   qword[rdx+Options.hashPath], rcx
-		mov   qword[rcx], rax
+            lea  rcx, [rdx + Options.hashPathBuffer]
+            mov  rax, '<empty>'
+            mov  qword[rdx + Options.hashPath], rcx
+            mov  qword[rcx], rax
 if USE_VARIETY
-                mov   dword[rdx+Options.varietyMod], 1
-                mov   dword[rdx+Options.varietyBound], 0
+            mov  dword[rdx + Options.varietyMod], 1
+            mov  dword[rdx + Options.varietyBound], 0
 end if
-		ret
+            mov  qword[ioBuffer + IOBuffer.log], -1
+            ret
 
 
 Options_Destroy:
-               push   rbx
-                mov   rcx, qword[options.hashPath]
-                mov   rdx, qword[options.hashPathSizeB]
-                lea   rax, [options.hashPathBuffer]
-                cmp   rcx, rax
-                 je   @f
-	       call   Os_VirtualFree
-        @@:     
-                pop   rbx
-		ret
+           push  rbx
+            mov  rcx, qword[options.hashPath]
+            mov  rdx, qword[options.hashPathSizeB]
+            lea  rax, [options.hashPathBuffer]
+            cmp  rcx, rax
+             je  @1f
+           call  Os_VirtualFree
+    @1:     
+            pop  rbx
+            ret
 
 
 UciLoop:
@@ -131,18 +132,16 @@ Display 1, 'processing cmd line command: %S6%n'
 
 ; we usually display something before getting new input or even need to put a newline on the end of it
 UciWriteOut_NewLine:
-       PrintNewLine
+        PrintNL
 UciWriteOut:
-	       call   Os_WriteOut_Output
+           call  WriteLine_Output
 UciGetInput:
-
-		mov   rsi, qword[ioBuffer.cmdLineStart]
-	       test   rsi, rsi
-		jnz   UciNextCmdFromCmdLine
-
-	       call   GetLine
-	       test   eax, eax
-		jnz   UciQuit
+            mov  rsi, qword[ioBuffer.cmdLineStart]
+           test  rsi, rsi
+            jnz  UciNextCmdFromCmdLine
+           call  ReadLine
+           test  eax, eax
+            jnz  UciQuit
 
 UciChoose:
 	; rsi is the address of the string to process
@@ -284,10 +283,10 @@ UciQuit:
 
 
 UciUci:
-		lea   rcx, [szUciResponse]
-		lea   rdi, [szUciResponseEnd]
-	       call   Os_WriteOut
-		jmp   UciGetInput
+            lea  rcx, [szUciResponse]
+            lea  rdi, [szUciResponseEnd]
+           call  WriteLine
+            jmp  UciGetInput
 
 
 ;;;;;;;;;;;;
@@ -608,84 +607,90 @@ UciParseMoves:
 
 
 UciSetOption:
-		mov   rax, qword[threadPool.threadTable+8*0]
-		mov   al, byte[rax+Thread.searching]
-		lea   rcx, [sz_error_think]
-	       test   al, al
-		jnz   .Error
+            mov  rax, qword[threadPool.threadTable+8*0]
+            mov  al, byte[rax+Thread.searching]
+            lea  rcx, [sz_error_think]
+           test  al, al
+            jnz  .Error
 .Read:
-	       call   SkipSpaces
-		lea   rcx, [sz_name]
-	       call   CmpString
-		lea   rcx, [sz_error_name]
-	       test   eax, eax
-		 jz   .Error
-	       call   SkipSpaces
+           call  SkipSpaces
+            lea  rcx, [sz_name]
+           call  CmpString
+            lea  rcx, [sz_error_name]
+           test  eax, eax
+             jz  .Error
+           call  SkipSpaces
 
-		lea   rcx, [sz_threads]
-	       call   CmpStringCaseless
-		lea   rbx, [.Threads]
-	       test   eax, eax
-		jnz   .CheckValue
+            lea  rcx, [sz_threads]
+           call  CmpStringCaseless
+            lea  rbx, [.Threads]
+           test  eax, eax
+            jnz  .CheckValue
 
-		lea   rcx, [sz_hash]
-	       call   CmpStringCaseless
-		lea   rbx, [.Hash]
-	       test   eax, eax
-		jnz   .CheckValue
+            lea  rcx, [sz_hash]
+           call  CmpStringCaseless
+            lea  rbx, [.Hash]
+           test  eax, eax
+            jnz  .CheckValue
 
-		lea   rcx, [sz_largepages]
-	       call   CmpStringCaseless
-		lea   rbx, [.LargePages]
-	       test   eax, eax
-		jnz   .CheckValue
+            lea  rcx, [sz_largepages]
+           call  CmpStringCaseless
+            lea  rbx, [.LargePages]
+           test  eax, eax
+            jnz  .CheckValue
 
-		lea   rcx, [sz_nodeaffinity]
-	       call   CmpStringCaseless
-		lea   rbx, [.NodeAffinity]
-	       test   eax, eax
-		jnz   .CheckValue
+            lea  rcx, [sz_nodeaffinity]
+           call  CmpStringCaseless
+            lea  rbx, [.NodeAffinity]
+           test  eax, eax
+            jnz  .CheckValue
 
-		lea   rcx, [sz_priority]
-	       call   CmpStringCaseless
-		lea   rbx, [.Priority]
-	       test   eax, eax
-		jnz   .CheckValue
+            lea  rcx, [sz_priority]
+           call  CmpStringCaseless
+            lea  rbx, [.Priority]
+           test  eax, eax
+            jnz  .CheckValue
 
-		lea   rcx, [sz_clear_hash]  ; arena may send Clear Hash
-	       call   CmpStringCaseless     ;  instead of ClearHash
-	       test   eax, eax		    ;
-		jnz   .ClearHash	    ;
+            lea  rcx, [sz_clear_hash]  ; arena may send Clear Hash
+           call  CmpStringCaseless     ;  instead of ClearHash
+           test  eax, eax		    ;
+            jnz  .ClearHash	    ;
 
-		lea   rcx, [sz_ponder]
-	       call   CmpStringCaseless
-		lea   rbx, [.Ponder]
-	       test   eax, eax
-		jnz   .CheckValue
+            lea  rcx, [sz_ponder]
+           call  CmpStringCaseless
+            lea  rbx, [.Ponder]
+           test  eax, eax
+            jnz  .CheckValue
 
-		lea   rcx, [sz_contempt]
-	       call   CmpStringCaseless
-		lea   rbx, [.Contempt]
-	       test   eax, eax
-		jnz   .CheckValue
+            lea  rcx, [sz_contempt]
+           call  CmpStringCaseless
+            lea  rbx, [.Contempt]
+           test  eax, eax
+            jnz  .CheckValue
 
-		lea   rcx, [sz_multipv]
-	       call   CmpStringCaseless
-		lea   rbx, [.MultiPv]
-	       test   eax, eax
-		jnz   .CheckValue
+            lea  rcx, [sz_multipv]
+           call  CmpStringCaseless
+            lea  rbx, [.MultiPv]
+           test  eax, eax
+            jnz  .CheckValue
 
-		lea   rcx, [sz_moveoverhead]
-	       call   CmpStringCaseless
-		lea   rbx, [.MoveOverhead]
-	       test   eax, eax
-		jnz   .CheckValue
+            lea  rcx, [sz_moveoverhead]
+           call  CmpStringCaseless
+            lea  rbx, [.MoveOverhead]
+           test  eax, eax
+            jnz  .CheckValue
 
-		lea   rcx, [sz_uci_chess960]
-	       call   CmpStringCaseless
-		lea   rbx, [.Chess960]
-	       test   eax, eax
-		jnz   .CheckValue
+            lea  rcx, [sz_uci_chess960]
+           call  CmpStringCaseless
+            lea  rbx, [.Chess960]
+           test  eax, eax
+            jnz  .CheckValue
+
+            lea  rcx, [sz_logfile]
+           call  CmpStringCaseless
+            lea  rbx, [.Log]
+           test  eax, eax
+            jnz  .CheckValue
 
 if USE_SYZYGY = 1
 		lea   rcx, [sz_syzygypath]
@@ -789,7 +794,7 @@ end if
 		lea   rdi, [Output]
 	       call   PrintString
        PrintNewLine
-	       call   Os_WriteOut_Output
+	       call   WriteLine_Output
 		jmp   UciGetInput
 .CheckValue:
 	       call   SkipSpaces
@@ -985,6 +990,26 @@ end if
 		mov   dword[options.moveOverhead], eax
 		jmp   UciGetInput
 
+.Log:
+    ; if path is <empty>, send NULL to init
+            lea  rcx, [sz_empty]
+           call  CmpString
+            xor  ecx, ecx
+           test  eax, eax
+            jnz  .LogPathDone
+    ; find terminator and replace it with zero
+            mov  rcx, rsi
+    @1:	
+            add  rsi, 1
+            cmp  byte[rsi], ' '
+            jae  @1b
+            mov  byte[rsi], 0
+.LogPathDone:
+           call  Log_Init
+            jmp  UciGetInput
+
+
+
 if USE_SYZYGY = 1
 .SyzygyProbeDepth:
 	       call   ParseInteger
@@ -1055,27 +1080,27 @@ end if
 ;;;;;;;;;;;;
 
 UciPerft:
-	       call   SkipSpaces
-	       call   ParseInteger
-	       test   eax, eax
-		 jz   .bad_depth
-		cmp   eax, 10		; probably will take a long time
-		 ja   .bad_depth
-		mov   esi, eax
-		mov   ecx, eax
-	       call   Position_SetExtraCapacity
-	       call   Os_SetPriority_Realtime
-		mov   ecx, esi
-	       call   Perft_Root
-	       call   Os_SetPriority_Normal
-		jmp   UciGetInput
+           call  SkipSpaces
+           call  ParseInteger
+           test  eax, eax
+             jz  .bad_depth
+            cmp  eax, 10		; probably will take a long time
+             ja  .bad_depth
+            mov  esi, eax
+            mov  ecx, eax
+           call  Position_SetExtraCapacity
+           call  Os_SetPriority_Realtime
+            mov  ecx, esi
+           call  Perft_Root
+           call  Os_SetPriority_Normal
+            jmp  UciGetInput
 .bad_depth:
-		lea   rdi, [Output]
-                lea   rcx, [sz_error_depth]
-	       call   PrintString
-		mov   ecx, 8
-	       call   ParseToken
-		jmp   UciWriteOut_NewLine
+            lea  rdi, [Output]
+            lea  rcx, [sz_error_depth]
+           call  PrintString
+            mov  ecx, 8
+           call  ParseToken
+            jmp  UciWriteOut_NewLine
 
 
 
@@ -1164,7 +1189,7 @@ UciBench:
                 xor   r8, r8
                call   PrintFancy
 if VERBOSE = 0
-	       call   Os_WriteOut_Output
+	       call   WriteLine_Output
 end if
 		mov   dword[options.hash], r14d
 	       call   MainHash_ReadOptions
@@ -1230,7 +1255,7 @@ end if
 
 
 if VERBOSE = 0
-	       call   Os_WriteOut_Output
+	       call   WriteLine_Output
 else
 		lea   rcx, [Output]
 	       call   Os_WriteError
@@ -1259,7 +1284,7 @@ end if
                call   PrintFancy
 
 if VERBOSE = 0
-	       call   Os_WriteOut_Output
+	       call   WriteLine_Output
 else
 		lea   rcx, [Output]
 	       call   Os_WriteError

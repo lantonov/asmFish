@@ -609,126 +609,120 @@ end if
 
 if USE_BOOK
 .play_book_move:
-        ; esi book move
-
-                lea   rdi, [Output]
-                mov   rax, 'info str'
-              stosq
-                mov   eax, 'ing '
-              stosd
-                mov   rax, 'playing '
-              stosq
-                mov   rax, 'book mov'
-              stosq
-                mov   rax, 'e weight'
-              stosq
-                mov   al, ' '
-              stosb
-                mov   eax, dword[book.weight]
-               call   PrintUnsignedInteger
-       PrintNewLine
-               call   Os_WriteOut_Output
-
-                lea   rdi, [Output]
-                mov   rax, 'bestmove'
-              stosq
-                mov   al, ' '
-              stosb
-                mov   ecx, esi
-              movzx   edx, byte[rbp+Pos.chess960]
-               call   PrintUciMove
-
-                mov   ecx, dword[book.ponder]
-               test   ecx, ecx
-                 jz   .NoBookPonder
-                mov   rax, ' ponder '
-              stosq
-              movzx   edx, byte[rbp+Pos.chess960]
-               call   PrintUciMove
-  .NoBookPonder:
-
-       PrintNewLine
-               call   Os_WriteOut_Output
-                jmp   .return
+    ; esi book move
+            lea   rdi, [Output]
+            mov   rax, 'info str'
+          stosq
+            mov   eax, 'ing '
+          stosd
+            mov   rax, 'playing '
+          stosq
+            mov   rax, 'book mov'
+          stosq
+            mov   rax, 'e weight'
+          stosq
+            mov   al, ' '
+          stosb
+            mov   eax, dword[book.weight]
+           call   PrintUnsignedInteger
+        PrintNL
+           call   WriteLine_Output
+            lea   rdi, [Output]
+            mov   rax, 'bestmove'
+          stosq
+            mov   al, ' '
+          stosb
+            mov   ecx, esi
+          movzx   edx, byte[rbp+Pos.chess960]
+           call   PrintUciMove
+            mov   ecx, dword[book.ponder]
+           test   ecx, ecx
+             jz   .NoBookPonder
+            mov   rax, ' ponder '
+          stosq
+          movzx   edx, byte[rbp+Pos.chess960]
+           call   PrintUciMove
+.NoBookPonder:
+        PrintNL
+           call   WriteLine_Output
+            jmp   .return
 end if
 
 
 .mate:
-		lea   rdi, [Output]
-		mov   rax, 'info dep'
-	      stosq
-		mov   rax, 'th 0 sco'
-	      stosq
-		mov   eax, 're '
-	      stosd
-		sub   rdi, 1
-		cmp   qword[rbx+State.checkersBB], 1
-		sbb   ecx, ecx
-		and   ecx, VALUE_DRAW+VALUE_MATE
-		sub   ecx, VALUE_MATE
-	       call   PrintScore_Uci
-       PrintNewLine
-	       call   Os_WriteOut_Output
-		jmp   .search_done
-
+            lea  rdi, [Output]
+            mov  rax, 'info dep'
+          stosq
+            mov  rax, 'th 0 sco'
+          stosq
+            mov  eax, 're '
+          stosd
+            sub  rdi, 1
+            cmp  qword[rbx+State.checkersBB], 1
+            sbb  ecx, ecx
+            and  ecx, VALUE_DRAW + VALUE_MATE
+            sub  ecx, VALUE_MATE
+           call  PrintScore_Uci
+        PrintNL
+           call  WriteLine_Output
+            jmp  .search_done
 
 .mate_bestmove:
-
-		lea   rdi, [Output]
-		mov   rax, 'bestmove'
-	      stosq
-		mov   rax, ' NONE'
-	      stosq
-		sub   rdi, 3
-       PrintNewLine
-	       call   Os_WriteOut_Output
-		jmp   .return
+            lea  rdi, [Output]
+            mov  rax, 'bestmove'
+          stosq
+            mov  rax, ' NONE'
+          stosq
+            sub  rdi, 3
+        PrintNL
+           call  WriteLine_Output
+            jmp  .return
 
 
 
 
 DisplayMove_Uci:
-	; in: rcx address of best thread
-	       push   rbp rsi rdi
-                lea   rbp, [rcx+Thread.rootPos]
+    ; in: rcx address of best thread
+           push  rbp rsi rdi
+            lea  rbp, [rcx+Thread.rootPos]
 
-		mov   al, byte[options.displayInfoMove]
-	       test   al, al
-		 jz   .return
+            mov  al, byte[options.displayInfoMove]
+           test  al, al
+             jz  .return
 
 	; print best move and ponder move
-		lea   rdi, [Output]
-		mov   rax, 'bestmove'
-	      stosq
-		mov   al, ' '
-	      stosb
-		mov   rcx, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
-		mov   ecx, dword[rcx+0*sizeof.RootMove+RootMove.pv+4*0]
-	       call   PrintUciMove
+            lea  rdi, [Output]
+            mov  rax, 'bestmove'
+          stosq
+            mov  al, ' '
+          stosb
+            mov  rcx, qword[rbp + Pos.rootMovesVec + RootMovesVec.table]
+            mov  ecx, dword[rcx + 0*sizeof.RootMove + RootMove.pv + 4*0]
+           call  PrintUciMove
 
-		mov   rcx, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
-		mov   eax, dword[rcx+0*sizeof.RootMove+RootMove.pvSize]
-		cmp   eax, 2
-		 jb   .get_ponder_from_tt
+            mov  rcx, qword[rbp + Pos.rootMovesVec + RootMovesVec.table]
+            mov  eax, dword[rcx + 0*sizeof.RootMove + RootMove.pvSize]
+            cmp  eax, 2
+             jb  .get_ponder_from_tt
 .have_ponder_from_tt:
-		mov   rax, ' ponder '
-	      stosq
-		mov   ecx, dword[rcx+0*sizeof.RootMove+RootMove.pv+4*1]
-	       call   PrintUciMove
+            mov  rax, ' ponder '
+          stosq
+            mov  ecx, dword[rcx + 0*sizeof.RootMove + RootMove.pv + 4*1]
+           call  PrintUciMove
 .skip_ponder:
-       PrintNewLine
-	       call   Os_WriteOut_Output
+        PrintNL
+           call  WriteLine_Output
 .return:
-		pop   rdi rsi rbp
-		ret
+            pop  rdi rsi rbp
+            ret
 
 .get_ponder_from_tt:
-		mov   rcx, rbp
-	       call   ExtractPonderFromTT
-		mov   rcx, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
-	       test   eax, eax
-		jnz   .have_ponder_from_tt
-		jmp   .skip_ponder
+            mov  rcx, rbp
+           call  ExtractPonderFromTT
+            mov  rcx, qword[rbp + Pos.rootMovesVec + RootMovesVec.table]
+           test  eax, eax
+            jnz  .have_ponder_from_tt
+            jmp  .skip_ponder
 
 
 ExtractPonderFromTT:
@@ -956,55 +950,49 @@ end if
 	       call   PrintUnsignedInteger
 
 if USE_HASHFULL
-		mov   ecx, dword[.hashfull]
-	       test   ecx, ecx
-		 js   @f
-		mov   rax, ' hashful'
-	      stosq
-		mov   ax, 'l '
-	      stosw
-		mov   eax, ecx
-	       call   PrintUnsignedInteger
-	@@:
+            mov  ecx, dword[.hashfull]
+           test  ecx, ecx
+             js  @1f
+            mov  rax, ' hashful'
+          stosq
+            mov  ax, 'l '
+          stosw
+            mov  eax, ecx
+           call  PrintUnsignedInteger
+    @1:
 end if
-
 if USE_SYZYGY
-		mov   rax, ' tbhits '
-	      stosq
-		mov   rax, qword[.tbHits]
-	       call   PrintUnsignedInteger
+            mov  rax, ' tbhits '
+          stosq
+            mov  rax, qword[.tbHits]
+           call  PrintUnsignedInteger
 end if
-
-		mov   eax, ' pv'
-	      stosd
-		sub   rdi, 1
-
-		mov   r13d, dword[rsi+RootMove.pvSize]
-		lea   r12, [rsi+RootMove.pv]
-		lea   r13, [r12+4*r13]
-	.next_move:
-		mov   al, ' '
-		cmp   r12, r13
-		jae   .moves_done
-	      stosb
-		mov   ecx, dword[r12]
-	       call   PrintUciMove
-		add   r12, 4
-		jmp   .next_move
-	.moves_done:
-       PrintNewLine
-		lea   rcx, [.output]
-	       call   Os_WriteOut
-
+            mov  eax, ' pv'
+          stosd
+            sub  rdi, 1
+            mov  r13d, dword[rsi+RootMove.pvSize]
+            lea  r12, [rsi+RootMove.pv]
+            lea  r13, [r12+4*r13]
+.next_move:
+            mov  al, ' '
+            cmp  r12, r13
+            jae  .moves_done
+          stosb
+            mov  ecx, dword[r12]
+           call  PrintUciMove
+            add  r12, 4
+            jmp  .next_move
+.moves_done:
+        PrintNL
+            lea  rcx, [.output]
+           call  WriteLine
 .multipv_cont:
-		add   r15d, 1
-		cmp   r15d, dword[.multiPV]
-		 jb   .multipv_loop
-
+            add  r15d, 1
+            cmp  r15d, dword[.multiPV]
+             jb  .multipv_loop
 .return:
-		add   rsp, .localsize
-		pop   r15 r14 r13 r12 rdi rsi rbx
-
+            add  rsp, .localsize
+            pop  r15 r14 r13 r12 rdi rsi rbx
 DisplayMove_None:
 DisplayInfo_None:
-		ret
+            ret
