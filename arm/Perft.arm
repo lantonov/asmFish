@@ -57,8 +57,8 @@ end virtual
            strb  w0, [x27], 1
             mov  x0, x29
              bl  PrintUInt
-   PrintNewLine
-             bl  Os_WriteOut_Output
+        PrintNL
+             bl  WriteLine_Output
             add  x26, x26, sizeof.ExtMove
               b  .MoveLoop
 
@@ -84,7 +84,7 @@ end virtual
             mov  x3, 0
              bl  PrintFancy
             add  sp, sp, 32
-             bl  Os_WriteOut_Output
+             bl  WriteLine_Output
 
 .Done:
             str  x21, [x20, Pos.state]

@@ -18,6 +18,8 @@ USE_WEAKNESS    = 1
 USE_VARIETY     = 0
 USE_MATEFINDER  = 0
 
+LOG_FILE = '<empty>'
+
 
 ; instruction and format macros
 include 'format/format.inc'

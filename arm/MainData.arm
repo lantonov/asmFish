@@ -136,7 +136,6 @@ sz_failed_x0:
         db " x0: 0x", 0
 
 
-
 szStartFEN:         db "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 0
 PieceToChar:        db ".?PNBRQK??pnbrqk"
 
@@ -161,6 +160,7 @@ sz_all:         db "all", 0
 sz_low:         db "low", 0
 sz_uci:         db "uci", 0
 sz_fen:         db "fen", 0
+sz_log:         db "log", 0
 sz_wait:        db "wait", 0
 sz_quit:        db "quit", 0
 sz_none:        db "none", 0

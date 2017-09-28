@@ -138,7 +138,7 @@ ThreadPool_DisplayThreadDistribution:
             add  x26, x26, sizeof.NumaNode
             cmp  x26, x25
             blo  .NextNode
-             bl  Os_WriteOut_Output
+             bl  WriteLine_Output
 .Return:
             ldp  x24, x25, [sp], 16
             ldp  x26, x27, [sp], 16

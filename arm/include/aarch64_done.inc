@@ -1,12 +1,6 @@
 macro adrp a*, b*
-display 'in adrp a',10
     aarch64.parse_operand @op0, a
-display 'in adrp b',10
     aarch64.parse_operand @op1, b
-
-    display 'op1type: '
-    display '0' + (bsf @op1.type),10
-
     if (@op0.type and @type_xn_xzr) & (@op1.type and @type_immc) & ($ relativeto 0)
         @imm.number = (@op1.data shr 12) - ($ shr 12)
         aarch64.restrict @imm.number, -0x100000, 0xFFFFF 
@@ -15,9 +9,8 @@ display 'in adrp b',10
         aarch64.store_reloc @op1.data - $, -1, R_AARCH64_ADR_PREL_PG_HI21
         dd 0x90000000 + (@op0.data shl 0)
     else
-        err '1 invalid operand 1'
+        err 'invalid operand'
     end if
-display 'leaving adrp',10
 end macro
 
 macro adr a*, b*

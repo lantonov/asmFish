@@ -164,14 +164,36 @@ Os_EventWait:
               b  Failed_EventWait
 
 
+;;;;;;;;
+; File ;
+;;;;;;;;
+
+Os_FileOpenWrite:
+    ; in:  x1 path string
+    ; out: x0 handle from CreateFile (win), fd (linux)
+    ;         -1 on error
+            stp  x29, x30, [sp, -16]!
+            mov  x0, AT_FDCWD
+            mov  x2, O_WRONLY or O_CREAT or O_TRUNC
+            mov  x3, 0664o      ; set mode to 664 octal
+            mov  x8, sys_openat
+            svc  0
+            tst  w0, w0
+            bpl  @1f
+            mov  x0, -1
+    @1:
+            ldp  x29, x30, [sp], 16
+            ret
+
+
 Os_FileOpenRead:
-	; in: x1 path string
-	; out: x0 handle from CreateFile (win), fd (linux)
-	;      x0=-1 on error
+    ; in:  x1 path string
+    ; out: x0 handle from CreateFile (win), fd (linux)
+    ;         -1 on error
             stp  x29, x30, [sp, -16]!
             mov  x0, AT_FDCWD
             mov  x2, O_RDONLY
-            mov  x3, 0      ; ignored
+            mov  x3, 0          ; mode ignored
             mov  x8, sys_openat
             svc  0
             tst  w0, w0
@@ -187,6 +209,20 @@ Os_FileClose:
             stp  x29, x30, [sp, -16]!
             mov  x0, x1
             mov  x8, sys_close
+            svc  0
+            ldp  x29, x30, [sp], 16
+            ret
+
+Os_FileWrite:
+	; in: x1 handle from CreateFile (win), fd (linux)
+	;     x2 buffer
+    ;     x8 size (32bits)
+    ; out: x0 !=0 success
+            stp  x29, x30, [sp, -16]!
+            mov  x0, x1
+            mov  x1, x2
+            mov  x2, x8
+            mov  x8, 64
             svc  0
             ldp  x29, x30, [sp], 16
             ret
@@ -243,6 +279,10 @@ Os_FileUnmap:
             ldp  x29, x30, [sp], 16
             ret
 
+
+;;;;;;;;;;
+; thread ;
+;;;;;;;;;;
 
 Os_ThreadCreate:
     ; in: x1  address of start
@@ -311,7 +351,7 @@ Os_ThreadJoin:
     ; in: x1 address of ThreadHandle
             stp  x29, x30, [sp, -16]!
             mov  x29, x1
-            add  x0, x29, ThreadHandle.mutex
+            add  x0, x1, ThreadHandle.mutex
             mov  x1, FUTEX_WAIT_PRIVATE
             mov  x2, 0
             mov  x3, 0
@@ -415,10 +455,8 @@ Os_VirtualAlloc:
             mov  x3, MAP_PRIVATE or MAP_ANONYMOUS
             mov  x2, 0x03
             mov  x0, 0
-Display 1, "  mmap(size = %X1)"
             mov  x8, sys_mmap
             svc  0
-Display 1, ":       %X0%n"
             tst  x0, x0
             bmi  Failed_sys_mmap_VirtualAlloc
             ldp  x29, x30, [sp], 16
@@ -429,25 +467,23 @@ Os_VirtualFree:
     ; in: x1 address
     ;     x2 size
             stp  x29, x30, [sp, -16]!
-            cbz  x1, Os_VirtualFree.Null
+            cbz  x1, .Null
             mov  x0, x1
             mov  x1, x2
-Display 1, "munmap(size = %X1, addr = %X0)"
             mov  x8, sys_munmap
             svc  0
-Display 1, ": %X0%n"
             cmp  w0, 0
             bne  Failed_sys_unmap_VirtualFree
-Os_VirtualFree.Null:
+.Null:
             ldp  x29, x30, [sp], 16
             ret
 
 
-Os_WriteOut_Output:
-            lea  x1, Output
-Os_WriteOut:
+_Os_WriteOut_Output:
+           _lea  x1, Output
+_Os_WriteOut:
     ; in: x1 address of string start
-    ; in: x27 address of string end
+    ;     x27 address of string end
             stp  x29, x30, [sp, -16]!
             sub  x2, x27, x1
             mov  x0, 1
@@ -456,9 +492,9 @@ Os_WriteOut:
             ldp  x29, x30, [sp], 16
             ret
 
-Os_WriteError:
+_Os_WriteError:
     ; in: x1 address of string start
-    ; in: x27 address of string end
+    ;     x27 address of string end
             stp  x29, x30, [sp, -16]!
             sub  x2, x27, x1
             mov  x0, 2
@@ -543,17 +579,9 @@ Os_ParseCommandLine:
 
 
 Failed_sys_mmap:
-            adr  x27, @1f
-              b  Failed
-@1:
-    db "sys_mmap failed",0
-    balign 4
+        lstring  x27, Failed, "sys_mmap failed"
 Failed_sys_fstat:
-            adr  x27, @1f
-              b  Failed
-@1:
-    db "sys_fstat failed", 0
-    balign 4
+        lstring  x27, Failed, "sys_fstat failed"
 Failed_sys_futex_EventSignal:
            _lea  x27, sz_error_sys_futex_EventSignal
               b  Failed
@@ -594,7 +622,7 @@ Failed:
              bl  PrintInt32
             mov  w0, ')'
            strb  w0, [x27], 1
-   PrintNewLine
+        PrintNL
            _lea  x27, Output
              bl  Os_ErrorBox
             mov  x0, 1

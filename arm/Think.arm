@@ -695,8 +695,8 @@ MainThread_Think.mate:
             tst  x5, x5
            csel  w1, w1, w4, ne
              bl  PrintScore_Uci
-   PrintNewLine
-             bl  Os_WriteOut_Output
+        PrintNL
+             bl  WriteLine_Output
               b  MainThread_Think.search_done
 
 MainThread_Think.sz1:
@@ -707,7 +707,7 @@ MainThread_Think.mate_bestmove:
            _lea  x27, Output
             adr  x1, MainThread_Think.sz2
              bl  PrintString
-             bl  Os_WriteOut_Output
+             bl  WriteLine_Output
               b  MainThread_Think.return
 
 MainThread_Think.sz2:
@@ -777,7 +777,7 @@ DisplayMove_Uci.have_ponder_from_tt:
     
 DisplayMove_Uci.skip_ponder:
             PrintNewLine
-             bl  Os_WriteOut_Output
+             bl  WriteLine_Output
 
 DisplayMove_Uci.return:
             ldp  x27, x20, [sp], 16
@@ -1115,7 +1115,7 @@ DisplayInfo_Uci.no_bound:
 
 if USE_HASHFULL
             ldr  w1, [sp, DisplayInfo_Uci.hashfull]
-           tbnz  w1, 31, @f
+           tbnz  w1, 31, @1f
             mov  w0, ' '
            strb  w0, [x27], 1
             mov  w0, 'h'
@@ -1138,7 +1138,7 @@ if USE_HASHFULL
            strb  w0, [x27], 1
             mov  w0, w1
              bl  PrintUInt
-    @@:
+    @1:
 end if
 
 
@@ -1184,9 +1184,9 @@ DisplayInfo_Uci.next_move:
               b  DisplayInfo_Uci.next_move
 
 DisplayInfo_Uci.moves_done:
-   PrintNewLine
+        PrintNL
             add  x1, sp, DisplayInfo_Uci.output
-             bl  Os_WriteOut
+             bl  WriteLine
 
 DisplayInfo_Uci.multipv_cont:
             add  w25, w25, 1

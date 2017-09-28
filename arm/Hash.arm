@@ -86,7 +86,7 @@ MainHash_DisplayInfo:
                 add  x2, sp, 0
                 mov  x3, 0
                  bl  PrintFancy
-                 bl  Os_WriteOut_Output
+                 bl  WriteLine_Output
                 add  sp, sp, 64
                 ldp  x27, x30, [sp], 16
                 ret

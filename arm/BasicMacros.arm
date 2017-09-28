@@ -125,16 +125,20 @@ macro PrintNewLine
            strb  w0, [x27], 1
 end macro
 
+macro PrintNL
+            mov  w0, 10
+           strb  w0, [x27], 1
+end macro
+
 ; lazy way to put an address of a string into a register
-macro lstring reg, Mes
-  local m, over
+macro lstring reg, target, Mes
+  local m
             adr  reg, m
-              b  over
+              b  target
     m:
         db Mes
         db 0
-        balign 4
-    over:
+         balign  4
 end macro
 
 macro PushAll
@@ -231,7 +235,7 @@ anol:
                 add  x3, sp, 32*8
                  bl  PrintFancy
                 lea  x1, DisplayOutput
-                 bl  Os_WriteOut
+                 bl  _Os_WriteOut
 ;                lea  x1, DisplayLock
 ;                 bl  Os_MutexUnlock
              PopAll

@@ -180,8 +180,8 @@ printf:
            _lea  x27, Output
             mov  x1, x0
              bl  PrintString
-   PrintNewLine
-             bl  Os_WriteOut_Output
+        PrintNL
+             bl  WriteLine_Output
             ldp  x27, x30, [sp], 16
             ret
         
@@ -2580,9 +2580,9 @@ Tablebase_DisplayInfo.PrintNext:
                 mov  w0, '"'
                strb  w0, [x27], 1                
 ;       PrintNewLine
-       PrintNewLine                
+            PrintNL             
 ;	       call   _WriteOut_Output
-                 bl  Os_WriteOut_Output
+                 bl  WriteLine_Output
 ;		add   esi, 1
                 add  w26, w26, 1
 ;		jmp   .PrintNext
@@ -2685,9 +2685,9 @@ Tablebase_DisplayInfo.PrintDone:
                 mov  w0, 's'
                strb  w0, [x27], 1
 ;       PrintNewLine
-       PrintNewLine
+            PrintNL
 ;	       call   _WriteOut_Output
-                 bl  Os_WriteOut_Output
+                 bl  WriteLine_Output
 ;                pop   rdi rsi rbx
 ;                ret
 

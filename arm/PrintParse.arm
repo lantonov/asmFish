@@ -501,243 +501,326 @@ PrintDouble:
                 ret
 
 PrintUInt32:
-               uxtw  x0, w0
-                  b  PrintUInt
+           uxtw  x0, w0
+              b  PrintUInt
 PrintInt32:
-               sxtw  x0, w0
+           sxtw  x0, w0
 PrintInt:
 PrintSInt:
-        ; in: x0 signed integer
-        ; io: x27 string
-                tst  x0, x0
-                mov  w1, '-'
-               strb  w1, [x27]
-               cinc  x27, x27, lt
-               cneg  x0, x0, lt
+    ; in: x0 signed integer
+    ; io: x27 string
+            tst  x0, x0
+            mov  w1, '-'
+           strb  w1, [x27]
+           cinc  x27, x27, lt
+           cneg  x0, x0, lt
 
 PrintUInt:
-        ; in: x0 unsigned integer
-        ; io: x27 string
-                sub  sp, sp, 64
-                mov  x3, 0
-                mov  x2, 10
-PrintUInt.PushLoop:
-               udiv  x1, x0, x2
-               msub  x0, x1, x2, x0
-               strb  w0, [sp, x3]
-                add  x3, x3, 1
-                mov  x0, x1
-               cbnz  x1, PrintUInt.PushLoop
-PrintUInt.PopLoop:
-               subs  x3, x3, 1
-               ldrb  w0, [sp, x3]
-                add  w0, w0, '0'
-               strb  w0, [x27], 1
-                bhi  PrintUInt.PopLoop
-                add  sp, sp, 64
-                ret
+    ; in: x0 unsigned integer
+    ; io: x27 string
+            sub  sp, sp, 64
+            mov  x3, 0
+            mov  x2, 10
+.PushLoop:
+           udiv  x1, x0, x2
+           msub  x0, x1, x2, x0
+           strb  w0, [sp, x3]
+            add  x3, x3, 1
+            mov  x0, x1
+           cbnz  x1, .PushLoop
+.PopLoop:
+           subs  x3, x3, 1
+           ldrb  w0, [sp, x3]
+            add  w0, w0, '0'
+           strb  w0, [x27], 1
+            bhi  .PopLoop
+            add  sp, sp, 64
+            ret
 
 
 ParseInteger:
-        ; io: x26 string
-        ; out: x0
-               ldrb  w1, [x26]
-                mov  x2, 0
-                mov  x0, 0
-                cmp  w1, '-'
-                beq  ParseInteger.Neg
-                cmp  w1, '+'
-                beq  ParseInteger.Pos
-                  b  ParseInteger.Loop
-ParseInteger.Neg:
-                mvn  x2, x2
-ParseInteger.Pos:
-                add  x26, x26, 1
-ParseInteger.Loop:     
-               ldrb  w1, [x26]
-               subs  x1, x1, '0'
-                blo  ParseInteger.Done
-                cmp  x1, 9
-                bhi  ParseInteger.Done
-                add  x26, x26, 1
-                add  x0, x0, x0, lsl 2
-                add  x0, x1, x0, lsl 1
-                  b  ParseInteger.Loop
-ParseInteger.Done:      
-                eor  x0, x0, x2
-                sub  x0, x0, x2
-                ret
+    ; io: x26 string
+    ; out: x0
+           ldrb  w1, [x26]
+            mov  x2, 0
+            mov  x0, 0
+            cmp  w1, '-'
+            beq  .Neg
+            cmp  w1, '+'
+            beq  .Pos
+              b  .Loop
+.Neg:
+            mvn  x2, x2
+.Pos:
+            add  x26, x26, 1
+.Loop:     
+           ldrb  w1, [x26]
+           subs  x1, x1, '0'
+            blo  .Done
+            cmp  x1, 9
+            bhi  .Done
+            add  x26, x26, 1
+            add  x0, x0, x0, lsl 2
+            add  x0, x1, x0, lsl 1
+              b  .Loop
+.Done:      
+            eor  x0, x0, x2
+            sub  x0, x0, x2
+            ret
 
 
 ParseBoole:
-                stp  x29, x30, [sp, -16]!
-               _lea  x1, sz_true
-                 bl  CmpString
-                cmp  w0, 0
-                mov  x0, -1
-                bne  ParseBoole.Done
-               _lea  x1, sz_false
-                 bl  CmpString
-                mov  x0, 0
-ParseBoole.Done:
-                ldp  x29, x30, [sp], 16
-                ret
+            stp  x29, x30, [sp, -16]!
+           _lea  x1, sz_true
+             bl  CmpString
+            cmp  w0, 0
+            mov  x0, -1
+            bne  .Done
+           _lea  x1, sz_false
+             bl  CmpString
+            mov  x0, 0
+.Done:
+            ldp  x29, x30, [sp], 16
+            ret
 
 
-GetLine:
-        ; out: x0 = 0 if success, = -1 if failed
-        ;      x1 length of string
-        ;      x26 address of string
-                stp  x29, x30, [sp,-16]!
-                stp  x25, x28, [sp,-16]!
-                stp  x23, x24, [sp,-16]!
-                stp  x21, x22, [sp,-16]!
-               _lea  x29, ioBuffer
-                ldr  w22, [x29, IOBuffer.tmp_i]
-                ldr  w23, [x29, IOBuffer.tmp_j]
-                ldr  x24, [x29, IOBuffer.inputBufferSizeB]
-                ldr  x25, [x29, IOBuffer.inputBuffer]
-                mov  x28, 0
-GetLine.NextChar:
-                cmp  x28, x24
-                bhs  GetLine.Realloc
-GetLine.ReallocRet:
-                cmp  x22, x23
-                bhs  GetLine.GetMore
-GetLine.GetMoreRet:
-                add  x0, x29, IOBuffer.tmpBuffer
-               ldrb  w0, [x0, x22]
-                add  x22, x22, 1
-               strb  w0, [x25, x28]
-                add  x28, x28, 1
-                cmp  w0, ' '
-                bhs  GetLine.NextChar
-                mov  x0, 0
-GetLine.Done:
-                str  w22, [x29,IOBuffer.tmp_i]
-                str  w23, [x29,IOBuffer.tmp_j]
-                str  x24, [x29,IOBuffer.inputBufferSizeB]
-                str  x25, [x29,IOBuffer.inputBuffer]
-                mov  x26, x25
-                mov  x1, x28
-                ldp  x21, x22, [sp], 16
-                ldp  x23, x24, [sp], 16
-                ldp  x25, x28, [sp], 16
-                ldp  x29, x30, [sp], 16
-                ret
-GetLine.GetMore:
-                mov  x22, 0
-                add  x1, x29, IOBuffer.tmpBuffer
-                mov  x2, sizeof.IOBuffer.tmpBuffer
-                 bl  Os_ReadStdIn
-                mov  x23, x0
-                cmp  x0, 1
-                bge  GetLine.GetMoreRet
-GetLine.Failed:
-                mov  x0, -1
-                mov  x23, 0
-                  b  GetLine.Done
-GetLine.Realloc:
-                add  x0, x24, 4096
-                 bl  Os_VirtualAlloc
-                mov  x23, x0
-                mov  x1, x25
-                mov  x2, x24
-                 bl  MemoryCopy
-                mov  x0, x25
-                mov  x1, x24
-                 bl  Os_VirtualFree
-                mov  x25, x23
-                add  x24, x24, 4096
-                  b  GetLine.ReallocRet
+ReadLine:
+    ; out: x0 = 0 if success, = -1 if failed
+    ;      x1  address of string end (including new line char(s))
+    ;      x26 address of string
+            stp  x29, x30, [sp,-16]!
+            stp  x25, x28, [sp,-16]!
+            stp  x23, x24, [sp,-16]!
+            stp  x21, x22, [sp,-16]!
+           _lea  x29, ioBuffer
+            ldr  w22, [x29, IOBuffer.tmp_i]
+            ldr  w23, [x29, IOBuffer.tmp_j]
+            ldr  x24, [x29, IOBuffer.inputBufferSizeB]
+            ldr  x25, [x29, IOBuffer.inputBuffer]
+            mov  x28, 0
+.NextChar:
+            cmp  x28, x24
+            bhs  .Realloc
+.ReallocRet:
+            cmp  x22, x23
+            bhs  .GetMore
+.GetMoreRet:
+            add  x0, x29, IOBuffer.tmpBuffer
+           ldrb  w0, [x0, x22]
+            add  x22, x22, 1
+           strb  w0, [x25, x28]
+            add  x28, x28, 1
+            cmp  w0, ' '
+            bhs  .NextChar
+            mov  w0, 10
+            sub  x4, x28, 1
+           strb  w0, [x25, x4]  ; make sure NL char is stored at end
+            mov  x0, 0
+.Done:
+            str  w22, [x29, IOBuffer.tmp_i]
+            str  w23, [x29, IOBuffer.tmp_j]
+            str  x24, [x29, IOBuffer.inputBufferSizeB]
+            str  x25, [x29, IOBuffer.inputBuffer]
+            
+            ldr  x2, [x29, IOBuffer.log]
+            tbz  x2, 63, .logger
+.loggerRet:
+            mov  x26, x25
+            add  x1, x25, x28
+            ldp  x21, x22, [sp], 16
+            ldp  x23, x24, [sp], 16
+            ldp  x25, x28, [sp], 16
+            ldp  x29, x30, [sp], 16
+            ret
+.GetMore:
+            mov  x22, 0
+            add  x1, x29, IOBuffer.tmpBuffer
+            mov  x2, sizeof.IOBuffer.tmpBuffer
+             bl  Os_ReadStdIn
+            mov  x23, x0
+            cmp  x0, 1
+            bge  .GetMoreRet
+.Failed:
+            mov  x0, -1
+            mov  x23, 0
+              b  .Done
+.Realloc:           
+            add  x0, x24, 4096
+             bl  Os_VirtualAlloc
+            mov  x23, x0
+            mov  x1, x25
+            mov  x2, x24
+             bl  MemoryCopy
+            mov  x0, x25
+            mov  x1, x24
+             bl  Os_VirtualFree
+            mov  x25, x23
+            add  x24, x24, 4096
+              b  .ReallocRet
+.logger:
+            stp  x0, x27, [sp, -16]!
+            sub  sp, sp, 64            
+             bl  Os_GetTime
+            mov  x27, sp
+            mov  w4, '<<'
+           strh  w4, [x27], 2
+             bl  PrintUInt
+            mov  w4, ': '
+           strh  w4, [x27], 2
+            ldr  x1, [x29, IOBuffer.log]
+            mov  x2, sp
+            sub  x8, x27, x2
+             bl  Os_FileWrite
+            add  sp, sp, 64
+            ldr  x1, [x29, IOBuffer.log]
+            mov  x2, x25
+            mov  x8, x28
+             bl  Os_FileWrite
+            ldp  x0, x27, [sp], 16
+              b  .loggerRet
+            
+
+WriteLine_Output:
+           _lea  x1, Output
+WriteLine:
+    ; in: x1  address of string start
+    ;     x27 address of string end (supposed to include new line char(s))
+           _lea  x6, ioBuffer
+            ldr  x2, [x6, IOBuffer.log]
+            tbz  x2, 63, .logger
+              b  _Os_WriteOut
+.logger:
+            stp  x29, x30, [sp, -16]!
+            stp  x1, x27, [sp, -16]!
+            sub  sp, sp, 64
+            mov  x29, x2
+             bl  Os_GetTime
+            mov  x27, sp
+            mov  w4, '>>'
+           strh  w4, [x27], 2
+             bl  PrintUInt
+            mov  w4, ': '
+           strh  w4, [x27], 2
+            mov  x1, x29
+            mov  x2, sp
+            sub  x8, x27, x2
+             bl  Os_FileWrite
+            add  sp, sp, 64
+            ldp  x2, x8, [sp]
+            mov  x1, x29
+            sub  x8, x8, x2
+             bl  Os_FileWrite
+            ldp  x1, x27, [sp], 16
+            ldp  x29, x30, [sp], 16
+              b  _Os_WriteOut
+            
+Log_Init:
+    ; in: x1 address of file string
+    ;        0 for no string
+            stp  x29, x30, [sp, -16]!
+            stp  x26, x28, [sp, -16]!
+           _lea  x28, ioBuffer
+            mov  x26, x1
+            ldr  x1, [x28, IOBuffer.log]
+           tbnz  x1, 63, .no_close
+             bl  Os_FileClose
+.no_close:
+            mov  x0, -1
+            mov  x1, x26
+            cbz  x26, .no_new
+             bl  Os_FileOpenWrite
+.no_new:
+            str  x0, [x28, IOBuffer.log]
+            ldp  x26, x28, [sp], 16
+            ldp  x29, x30, [sp], 16
+            ret
 
 
 MemoryCopy.Next:
-               ldrb  w3, [x1], 1
-               strb  w3, [x0], 1
+           ldrb  w3, [x1], 1
+           strb  w3, [x0], 1
 MemoryCopy:
-        ; copy x2 bytes from x1 to x0
-        ; advance x0 to the end of the block
-        ; preserve every reg except x0, x1, x2, x3
-               subs  x2, x2, 1        
-                bpl  MemoryCopy.Next
-                ret
+    ; copy x2 bytes from x1 to x0
+    ; advance x0 to the end of the block
+    ; preserve every reg except x0, x1, x2, x3
+           subs  x2, x2, 1        
+            bpl  MemoryCopy.Next
+            ret
 
 
 MemoryFill.Next:
-               strb  w1, [x0], 1
+           strb  w1, [x0], 1
 MemoryFill:
-        ; fill x2 bytes from the lower byte in x1 to x0
-        ; advance x0 to the end of the block
-        ; preserve every reg except x0, x1, x2
-               subs  x2, x2, 1        
-                bpl  MemoryFill.Next
-                ret
+    ; fill x2 bytes from the lower byte in x1 to x0
+    ; advance x0 to the end of the block
+    ; preserve every reg except x0, x1, x2
+           subs  x2, x2, 1        
+            bpl  MemoryFill.Next
+            ret
 
 
 
 RepMovsb.Next:
-               ldrb  w4, [x16], 1
-               strb  w4, [x17], 1
+           ldrb  w4, [x16], 1
+           strb  w4, [x17], 1
 RepMovsb:
-        ; in: x16 source
-        ;     x17 destination
-        ;     x1 number of 1 byte chunks to move
-               subs  x1, x1, 1
-                bpl  RepMovsb.Next
-                ret
+    ; in: x16 source
+    ;     x17 destination
+    ;     x1 number of 1 byte chunks to move
+           subs  x1, x1, 1
+            bpl  RepMovsb.Next
+            ret
 
 RepMovsd.Next:
-                ldr  w4, [x16], 4
-                str  w4, [x17], 4
+            ldr  w4, [x16], 4
+            str  w4, [x17], 4
 RepMovsd:
-        ; in: x16 source
-        ;     x17 destination
-        ;     x1 number of 4 byte chunks to move
-               subs  x1, x1, 1
-                bpl  RepMovsd.Next
-                ret
+    ; in: x16 source
+    ;     x17 destination
+    ;     x1 number of 4 byte chunks to move
+           subs  x1, x1, 1
+            bpl  RepMovsd.Next
+            ret
 
 RepMovsq.Next:
-                ldr  x4, [x16], 8
-                str  x4, [x17], 8
+            ldr  x4, [x16], 8
+            str  x4, [x17], 8
 RepMovsq:
-        ; in: x16 source
-        ;     x17 destination
-        ;     x1 number of 8 byte chunks to move
-               subs  x1, x1, 1
-                bpl  RepMovsq.Next
-                ret
+    ; in: x16 source
+    ;     x17 destination
+    ;     x1 number of 8 byte chunks to move
+           subs  x1, x1, 1
+            bpl  RepMovsq.Next
+            ret
 
 
 RepStosb.Next:
-               strb  w0, [x17], 1
+           strb  w0, [x17], 1
 RepStosb:
-        ; in: w0 1 byte to store
-        ;     x17 destination
-        ;     x1 number of 1 byte chunks to move
-               subs  x1, x1, 1
-                bpl  RepStosb.Next
-                ret
+    ; in: w0 1 byte to store
+    ;     x17 destination
+    ;     x1 number of 1 byte chunks to move
+           subs  x1, x1, 1
+            bpl  RepStosb.Next
+            ret
 
 
 RepStosd.Next:
-                str  w0, [x17], 4
+            str  w0, [x17], 4
 RepStosd:
-        ; in: w0 4 bytes to store
-        ;     x17 destination
-        ;     x1 number of 4 byte chunks to move
-               subs  x1, x1, 1
-                bpl  RepStosd.Next
-                ret
+    ; in: w0 4 bytes to store
+    ;     x17 destination
+    ;     x1 number of 4 byte chunks to move
+           subs  x1, x1, 1
+            bpl  RepStosd.Next
+            ret
 
 RepStosq.Next:
-                str  x0, [x17], 8
+            str  x0, [x17], 8
 RepStosq:
-        ; in: x0 8 bytes to store
-        ;     x17 destination
-        ;     x1 number of 8 byte chunks to move
-               subs  x1, x1, 1
-                bpl  RepStosq.Next
-                ret
-
+    ; in: x0 8 bytes to store
+    ;     x17 destination
+    ;     x1 number of 8 byte chunks to move
+           subs  x1, x1, 1
+            bpl  RepStosq.Next
+            ret

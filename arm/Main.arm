@@ -15,11 +15,21 @@
              bl  Pawn_Init
              bl  Endgame_Init
 
+    ; setup logger
+if LOG_FILE = '<empty>'
+            mov  x1, 0
+else
+        lstring  x1, @1f, LOG_FILE
+    @1:
+end if
+             bl  Log_Init
+
+
     ; write engine name
 if VERBOSE = 0
            _lea  x27, szGreetingEnd
            _lea  x1, szGreeting
-             bl  Os_WriteOut
+             bl  WriteLine
 end if
 
     ; set up threads and hash
@@ -47,6 +57,10 @@ end if
     ; clean up threads and hash
              bl  ThreadPool_Destroy
              bl  MainHash_Destroy
+
+    ; release logger file if in use
+            mov  x1, 0
+             bl  Log_Init
 
     ; options may also require cleaning
              bl  Options_Destroy

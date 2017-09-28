@@ -29,6 +29,9 @@ if USE_VARIETY
             str  w0, [x1, Options.varietyMod]
             str  wzr, [x1, Options.varietyBound]
 end if
+            mov  x0, -1
+           _lea  x6, ioBuffer
+            str  x0, [x6, IOBuffer.log]
             ret
 
 
@@ -103,14 +106,14 @@ UciNextCmdFromCmdLine.Found:
 
 
 UciWriteOut_NewLine:
-   PrintNewLine
+        PrintNL
 UciWriteOut:
-             bl  Os_WriteOut_Output
+             bl  WriteLine_Output
 UciGetInput:
            _lea  x6, ioBuffer
             ldr  x26, [x6, IOBuffer.cmdLineStart]
            cbnz  x26, UciNextCmdFromCmdLine
-             bl  GetLine
+             bl  ReadLine
            cbnz  w0, UciQuit
 
 UciChoose:
@@ -203,10 +206,10 @@ UciQuit:
            _lea  x16, signals
            strb  w0, [x16, Signals.stop]
            _lea  x16, threadPool
-            ldr  x1, [x16, ThreadPool.threadTable+8*0]
+            ldr  x1, [x16, ThreadPool.threadTable + 8*0]
              bl  Thread_StartSearching_TRUE
            _lea  x16, threadPool
-            ldr  x1, [x16, ThreadPool.threadTable+8*0]
+            ldr  x1, [x16, ThreadPool.threadTable + 8*0]
              bl  Thread_WaitForSearchFinished
 
             add  x0, sp, UciLoop.th1+Thread.rootPos
@@ -226,7 +229,7 @@ UciQuit:
 UciUci:
            _lea  x1, szUciResponse
            _lea  x27, szUciResponseEnd
-             bl  Os_WriteOut
+             bl  WriteLine
               b  UciGetInput
 
 
@@ -254,7 +257,7 @@ UciPonderHit:
             mov  w0, -1
            strb  w0, [x16, Signals.stop]
            _lea  x16, threadPool
-            ldr  x1, [x16, ThreadPool.threadTable+8*0]
+            ldr  x1, [x16, ThreadPool.threadTable + 8*0]
              bl  Thread_StartSearching_TRUE
               b  UciGetInput
 
@@ -409,7 +412,6 @@ UciGo.parse_searchmoves_new:
               b  UciGo.parse_searchmoves
 
 UciPosition:
-
              bl  SkipSpaces
            ldrb  w0, [x26]
             cmp  w0, ' '
@@ -425,7 +427,6 @@ UciPosition:
             cbz  w0, UciPosition.BadCmd
 
 UciPosition.Start:
-
             mov  x25, x26
            _lea  x26, szStartFEN
            _lea  x7, options
@@ -435,17 +436,14 @@ UciPosition.Start:
               b  UciPosition.check
 
 UciPosition.Fen:
-
            _lea  x16, options
            ldrb  w1, [x16, Options.chess960]
              bl  Position_ParseFen
         
 UciPosition.check:
-
            cbnz  w0, UciPosition.illegal
 
 UciPosition.moves:
-
             add  x1, sp, UciLoop.th1 + Thread.rootPos
              bl  Position_CopyTo
             add  x20, sp, UciLoop.th1 + Thread.rootPos
@@ -458,7 +456,6 @@ UciPosition.moves:
             cbz  x0, UciGetInput
 
 UciPosition.badmove:
-
             mov  x26, x0
            _lea  x1, sz_error_moves
              bl  PrintString
@@ -469,7 +466,6 @@ UciPosition.badmove:
               b  UciWriteOut
 
 UciPosition.illegal:
-
            _lea  x27, Output
            _lea  x1, sz_error_fen
              bl  PrintString
@@ -596,6 +592,10 @@ UciSetOption.Read:
             adr  x21, UciSetOption.Chess960
            cbnz  w0, UciSetOption.CheckValue
 
+           _lea  x1, sz_log
+             bl  CmpStringCaseless
+            adr  x21, UciSetOption.Log
+           cbnz  w0, UciSetOption.CheckValue
 
 if USE_SYZYGY
            _lea  x1, sz_syzygypath
@@ -800,6 +800,20 @@ UciSetOption.MoveOverhead:
             str  w0, [x16, Options.moveOverhead]
               b  UciGetInput
 
+UciSetOption.Log:
+           _lea  x1, sz_empty
+             bl  CmpString
+            mov  x1, 0
+           cbnz  w0, UciSetOption.LogPathDone
+            mov  x1, x26
+    @1:
+           ldrb  w4, [x26, 1]!
+            cmp  w4, ' '
+            bhs  @1b
+           strb  wzr, [x26]
+UciSetOption.LogPathDone:
+             bl  Log_Init
+              b  UciGetInput
 
 if USE_SYZYGY
 UciSetOption.SyzygyProbeDepth:
@@ -866,6 +880,7 @@ UciSetOption.Variety:
             str  w0, [x6, Options.varietyBound]
               b  UciGetInput            
 end if
+
 
 
 UciPerft:
@@ -971,7 +986,7 @@ UciBench.parse_done:
              bl  PrintFancy
             add  sp, sp, 32
 if VERBOSE = 0
-             bl  Os_WriteOut_Output
+             bl  WriteLine_Output
 end if
            _lea  x16, options
             str  w24, [x16, Options.hash]
@@ -1035,7 +1050,7 @@ UciBench.nextpos:
              bl  PrintFancy
             add  sp, sp, 32
 if VERBOSE = 0
-             bl  Os_WriteOut_Output
+             bl  WriteLine_Output
 else
            _lea  x1, Output
              bl  Os_WriteError
@@ -1066,7 +1081,7 @@ end if
              bl  PrintFancy
             add  sp, sp, 32
 if VERBOSE = 0
-             bl  Os_WriteOut_Output
+             bl  WriteLine_Output
 else
            _lea  x1, Output
              bl  Os_WriteError
