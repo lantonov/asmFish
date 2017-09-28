@@ -3,7 +3,7 @@ format ELF64 executable 0
 entry Start
 
 
-macro balign boundary
+macro calign boundary
     local size
     size = (boundary-1)-($+boundary-1) mod boundary
 	db (size mod 4) dup 0
@@ -14,52 +14,43 @@ end macro
 ; some comments on ld-linux-aarch64.so.1:
 ;
 ; - Does require the program headers to be contained in a load command.
-;       Throws a failed assert if not:
-;           Inconsistency detected by ld.so: rtld.c: 1290: dl_main: Assertion `_rtld_local._dl_rtld_map.l_libname' failed!
-;       This seems to be a bug. For this reason format.inc now has
+;       For this reason format.inc now has
 ;           ELF.Settings.LoadHeaders = 1
-; - Does require the dynamic segment to be contained in another load segment.
-;       Throws a segmentation fault if not. This seems to be another bug.
-;       For this reason, the "segment" macro in elfexe.inc has been extended
 ; - Does not require the interpreter segment to be contained in another load segment.
-;       It is in this example, but the commented out segment works fine too.
+; - Does require the dynamic segment to be contained in another load segment.
+;       For this reason the segment macros have been extended.
 
+
+segment interpreter readable            ; will go inside next loaded segment
+    db '/lib/ld-linux-aarch64.so.1', 0
 
 segment readable executable 
 
-segment { interpreter readable 
-    db '/lib/ld-linux-aarch64.so.1',0
-segment }
-
-         balign  4      ; instruction addresses should be divisible by 4
+    ; instruction addresses should be divisible by 4
+         calign  4
 Start:
+    ; print hello without linkage
             mov  x0, 1
-            adr  x1, Test
-            mov  x2, TestEnd - Test
+            adr  x1, Message
+            mov  x2, MessageEnd - Message
             mov  x8, 64
             svc  0
 
+    ; print hello using linked function
             mov  x0, 1
             adr  x1, Message
             mov  x2, MessageEnd - Message
             ldr  x8, write      ; if the address of write is too far away, another method of loading it is required
             blr  x8
 
+    ; exit using linked function
             mov  x0, 0
             ldr  x8, exit       ; ditto for exit
             blr  x8
 
 
-;segment interpreter readable 
-;    db '/lib/ld-linux-aarch64.so.1',0
-
-
-segment readable writeable
-
-          align  8      ; alignment not necessary
-segment { dynamic readable writeable
-
-    dq DT_NEEDED,  _libc-strtab 
+segment dynamic readable writeable      ; will go inside next loaded segment
+    dq DT_NEEDED,  _libc - strtab 
     dq DT_STRTAB,  strtab 
     dq DT_STRSZ,   strsz 
     dq DT_SYMTAB,  symtab 
@@ -69,12 +60,13 @@ segment { dynamic readable writeable
     dq DT_RELAENT, sizeof.Elf64_Rela 
     ;dq DT_REL,     rel                 ; Not necessary if empty.
     ;dq DT_RELSZ,   relsz               ; (eventhough "rel" is claimed to be
-    ;dq DT_RELENT,  sizeof.Elf64_Rela   ; manditory by the standard)
+    ;dq DT_RELENT,  sizeof.Elf64_Rela   ;      manditory by the standard)
     dq DT_HASH,    hash 
-    dq DT_NULL,    0 
-segment }
+    dq DT_NULL,    0
 
-          align  64
+segment readable writeable
+
+          align  16
 write:  dq 0
 exit:   dq 0
 
@@ -101,11 +93,9 @@ hash:
         dd %    ; chain for all symbol table entries 
     end repeat
 
-Test:
-    db '1 Hello World!', 10
-TestEnd:
+
 Message:
-    db '2 Hello World!', 10
+    db 'Hello World!', 10
 MessageEnd:
 
 strtab: 
@@ -114,6 +104,5 @@ strtab:
     _write  db 'write',0 
     _exit   db 'exit',0 
 strsz = $ - strtab 
-
 
 
