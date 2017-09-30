@@ -49,7 +49,7 @@ macro search RootNode, PvNode
     .ttHit                  rb 1
     .moveCountPruning       rb 1    ; -1 for true
     .ttCapture              rd 1    ; 1 for true
-                        rd 1
+    .reduction              rd 1
     .quietsSearched     rd 64
     if PvNode = 1
       .pv               rd MAX_PLY + 1
@@ -741,7 +741,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
              je   .MovePickLoop
     ; at the root search only moves in the move list
   if RootNode = 1
-            imul   ecx, dword[rbp-Thread.rootPos+Thread.PVIdx], sizeof.RootMove
+           imul   ecx, dword[rbp-Thread.rootPos+Thread.PVIdx], sizeof.RootMove
             add   rcx, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
             mov   rdx, qword[rbp+Pos.rootMovesVec+RootMovesVec.ender]
     @1:
@@ -856,122 +856,135 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             mov   dword[.extension], 1
 .12dont_extend:
 .12done:
+
     ; Step 13. Pruning at shallow depth
-            mov   r12d, dword[.move]
-            shr   r12d, 6
-            and   r12d, 63				; r12d = from
-            mov   r13d, dword[.move]
-            and   r13d, 63				; r13d = to
-          movzx   r14d, byte[rbp+Pos.board+r12]	; r14d = from piece
-          movzx   r15d, byte[rbp+Pos.board+r13]	; r15d = to piece
-            mov   eax, dword[.extension]
-            mov   edx, dword[.depth]
-            sub   eax, 1
-            add   eax, edx
-            mov   dword[.newDepth], eax
+            mov  r12d, dword[.move]
+            shr  r12d, 6
+            and  r12d, 63				; r12d = from
+            mov  r13d, dword[.move]
+            and  r13d, 63				; r13d = to
+          movzx  r14d, byte[rbp+Pos.board+r12]	; r14d = from piece
+          movzx  r15d, byte[rbp+Pos.board+r13]	; r15d = to piece
+
+            mov  ecx, dword[.moveCount]
+            mov  eax, dword[rbx - 1*sizeof.State + State.moveCount]
+            shr  eax, 4
+            sub  ecx, eax
+            mov  eax, 1
+         cmovle  ecx, eax
+            mov  esi, 63
+            cmp  ecx, esi
+          cmova  ecx, esi
+            add  ecx, dword[.reductionOffset]
+            mov  r9d, dword[Reductions+4*(rcx+2*64*64*PvNode)]
+            mov  dword[.reduction], r9d
+
+            mov  eax, dword[.extension]
+            mov  edx, dword[.depth]
+            sub  eax, 1
+            add  eax, edx
+            mov  dword[.newDepth], eax
+
     ; edx = depth
   if (RootNode = 0 & USE_MATEFINDER = 0) | (PvNode = 0 & USE_MATEFINDER = 1)
-            mov   r8d, dword[rbp+Pos.sideToMove]
-            mov   ecx, dword[.bestValue]
-          movzx   esi, word[rbx+State.npMaterial+2*0]
-            add   eax, ecx
-            cmp   ecx, VALUE_MATED_IN_MAX_PLY
-            jle   .13done
-          movzx   ecx, word[rbx+State.npMaterial+2*r8]
-           test   ecx, ecx
-             jz   .13done
-            mov   al, byte[.captureOrPromotion]
-          movzx   ecx, word[rbx+State.npMaterial+2*1]
-            add   esi, ecx
-             or   al, byte[rbx+State.givesCheck]
-            jnz   .13else
-            lea   ecx, [8*r8+Pawn]
-            cmp   esi, 5000
-            jae   .13do
-            cmp   r14d, ecx
-            jne   .13do
-           imul   r8d, 56
-            xor   r8d, r12d
-            cmp   r8d, SQ_A5
-            jae   .13else
+            mov  r8d, dword[rbp+Pos.sideToMove]
+            mov  ecx, dword[.bestValue]
+          movzx  esi, word[rbx+State.npMaterial+2*0]
+            add  eax, ecx
+            cmp  ecx, VALUE_MATED_IN_MAX_PLY
+            jle  .13done
+          movzx  ecx, word[rbx+State.npMaterial+2*r8]
+           test  ecx, ecx
+             jz  .13done
+            mov  al, byte[.captureOrPromotion]
+          movzx  ecx, word[rbx+State.npMaterial+2*1]
+            add  esi, ecx
+             or  al, byte[rbx+State.givesCheck]
+            jnz  .13else
+            lea  ecx, [8*r8+Pawn]
+            cmp  esi, 5000
+            jae  .13do
+            cmp  r14d, ecx
+            jne  .13do
+           imul  r8d, 56
+            xor  r8d, r12d
+            cmp  r8d, SQ_A5
+            jae  .13else
 .13do:
     ; Move count based pruning
-            mov   al, byte[.moveCountPruning]
-             or   byte[.skipQuiets], al
-           test   al, al
-            jnz   .MovePickLoop
-            mov   edi, dword[.newDepth]
-            mov   esi, 63
-            mov   ecx, dword[.moveCount]
-            cmp   ecx, esi
-          cmova   ecx, esi
-            add   ecx, dword[.reductionOffset]
-            sub   edi, dword[Reductions+4*(rcx+2*64*64*PvNode)]
+            mov  al, byte[.moveCountPruning]
+             or  byte[.skipQuiets], al
+            mov  edi, dword[.newDepth]
+           test  al, al
+            jnz  .MovePickLoop
+            sub  edi, r9d
     ; edi = lmrDepth
     ; Countermoves based pruning
-            mov   r8, qword[.CMH]
-            mov   r9, qword[.FMH]
-            lea   r11, [8*r14]
-            lea   r11, [8*r11+r13]
-            mov   eax, dword[r8+4*r11]
-            mov   ecx, dword[r9+4*r11]
-            cmp   edi, 3*ONE_PLY
-            jge   .13DontSkip2
+            mov  r8, qword[.CMH]
+            mov  r9, qword[.FMH]
+            lea  r11, [8*r14]
+            lea  r11, [8*r11+r13]
+            mov  eax, dword[r8+4*r11]
+            mov  ecx, dword[r9+4*r11]
+            cmp  edi, 3*ONE_PLY
+            jge  .13DontSkip2
     if CounterMovePruneThreshold <> 0       ; code assumes
         err
     end if
-            and   eax, ecx
-             js   .MovePickLoop
+            and  eax, ecx
+             js  .MovePickLoop
 .13DontSkip2:
     ; Futility pruning: parent node
-            xor   edx, edx
-            cmp   edi, 7*ONE_PLY
-             jg   .13done
-             je   .13check_see
-           test   edi, edi
-          cmovs   edi, edx
-           imul   eax, edi, 200
-            add   eax, 256
-            cmp   rdx, qword[rbx+State.checkersBB]
-            jne   .13check_see
-            add   eax, dword[rbx+State.staticEval]
-            cmp   eax, dword[.alpha]
-            jle   .MovePickLoop
+            xor  edx, edx
+            cmp  edi, 7*ONE_PLY
+             jg  .13done
+             je  .13check_see
+           test  edi, edi
+          cmovs  edi, edx
+           imul  eax, edi, 200
+            add  eax, 256
+            cmp  rdx, qword[rbx+State.checkersBB]
+            jne  .13check_see
+            add  eax, dword[rbx+State.staticEval]
+            cmp  eax, dword[.alpha]
+            jle  .MovePickLoop
 .13check_see:
     ; Prune moves with negative SEE at low depths
-            mov   ecx, dword[.move]
-           imul   edx, edi, -35
-           imul   edx, edi
-           call   SeeTestGe
-           test   eax, eax
-             jz   .MovePickLoop
-            jmp   .13done
+            mov  ecx, dword[.move]
+           imul  edx, edi, -35
+           imul  edx, edi
+           call  SeeTestGe
+           test  eax, eax
+             jz  .MovePickLoop
+            jmp  .13done
 .13else:
-            mov   ecx, dword[.move]
-            cmp   edx, 7*ONE_PLY
-            jge   .13done
-            cmp   byte[.extension], 0
-            jne   .13done
-           imul   edx, -PawnValueEg
-           call   SeeTestGe
-           test   eax, eax
-             jz   .MovePickLoop
+            mov  ecx, dword[.move]
+            cmp  edx, 7*ONE_PLY
+            jge  .13done
+            cmp  byte[.extension], 0
+            jne  .13done
+           imul  edx, -PawnValueEg
+           call  SeeTestGe
+           test  eax, eax
+             jz  .MovePickLoop
 .13done:
   end if
+
     ; Speculative prefetch as early as possible
-            shl   r14d, 6+3
-            shl   r15d, 6+3
-            mov   rax, qword[rbx+State.key]
-            xor   rax, qword[Zobrist_side]
-            xor   rax, qword[Zobrist_Pieces+r14+8*r12]
-            xor   rax, qword[Zobrist_Pieces+r14+8*r13]
-            xor   rax, qword[Zobrist_Pieces+r15+8*r13]
-            and   rax, qword[mainHash.mask]
-            shl   rax, 5
-            add   rax, qword[mainHash.table]
-    prefetchnta   [rax]
-            shr   r14d, 6+3
-            shr   r15d, 6+3
+            shl  r14d, 6+3
+            shl  r15d, 6+3
+            mov  rax, qword[rbx+State.key]
+            xor  rax, qword[Zobrist_side]
+            xor  rax, qword[Zobrist_Pieces+r14+8*r12]
+            xor  rax, qword[Zobrist_Pieces+r14+8*r13]
+            xor  rax, qword[Zobrist_Pieces+r15+8*r13]
+            and  rax, qword[mainHash.mask]
+            shl  rax, 5
+            add  rax, qword[mainHash.table]
+    prefetchnta  [rax]
+            shr  r14d, 6+3
+            shr  r15d, 6+3
+
     ; Check for legality just before making the move
   if RootNode = 0
             mov   ecx, dword[.move]
@@ -1012,20 +1025,15 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
     @1:
   end if
             mov   r8l, byte[.captureOrPromotion]
+            mov   edi, dword[.reduction]
            test   r8l, r8l
              jz   @1f
-            mov   al, byte[.moveCountPruning]
-           test   al, al
-             jz   .15skip
+            cmp   byte[.moveCountPruning], 0
+             je   .15skip
     @1:
-            mov   esi, 63
-            cmp   ecx, esi
-          cmova   ecx, esi
-            add   ecx, dword[.reductionOffset]
-            mov   edi, dword[Reductions+4*(rcx+2*64*64*PvNode)]
+            xor   eax, eax
            test   r8l, r8l
              jz   .15NotCaptureOrPromotion
-            xor   eax, eax
            test   edi, edi
           setnz   al
             sub   edi, eax
