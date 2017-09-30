@@ -867,6 +867,8 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
           movzx  r15d, byte[rbp+Pos.board+r13]	; r15d = to piece
 
             mov  ecx, dword[.moveCount]
+            mov  edx, ecx
+            mov  edi, dword[.reductionOffset]
             mov  eax, dword[rbx - 1*sizeof.State + State.moveCount]
             shr  eax, 4
             sub  ecx, eax
@@ -875,9 +877,14 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             mov  esi, 63
             cmp  ecx, esi
           cmova  ecx, esi
-            add  ecx, dword[.reductionOffset]
-            mov  r9d, dword[Reductions+4*(rcx+2*64*64*PvNode)]
-            mov  dword[.reduction], r9d
+            cmp  edx, esi
+          cmova  edx, esi
+            lea  edi, [Reductions + 4*(rdi + 2*64*64*PvNode)]
+;            add  ecx, edi
+;            add  edx, edi
+            mov  r9d, dword[rdi+4*(rdx)]
+            mov  edx, dword[rdi+4*(rcx)]
+            mov  dword[.reduction], edx
 
             mov  eax, dword[.extension]
             mov  edx, dword[.depth]
@@ -1099,7 +1106,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             mov   r8d, dword[.newDepth]
             sub   r8d, edi
             cmp   r8d, eax
-           cmovl   r8d, eax
+          cmovl   r8d, eax
             mov   edi, r8d
             mov   edx, dword[.alpha]
             neg   edx
