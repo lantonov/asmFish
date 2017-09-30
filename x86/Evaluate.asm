@@ -482,27 +482,27 @@ KingSafetyDoneRet:
 		mov   r8, qword[.ei.attackedBy2+8*Us]
 	      _andn   r8, r8, qword[.ei.attackedBy+8*(8*Us+King)]
 		and   r8, AttackedByThem
-	; r8=undefended
-
+	; r8=kingOnlyDefended
 		mov   r9, PiecesThem
 		 or   r9, AttackedByUs
 	      _andn   r9, r9, qword[.ei.kingRing+8*Us]
 		and   r9, AttackedByThem
-	; r9=b
+	; r9=undefended
+                 or   r9, r8
 	        cmp   ecx, 2
 		 jb   AllDone
 
 	       imul   edi, dword[.ei.kingAttackersWeight+4*Them]
 	       imul   eax, dword[.ei.kingAdjacentZoneAttacksCount+4*Them], 102
 		add   edi, eax
-	    _popcnt   rax, r8, rcx
-	       imul   eax, 201
-		add   edi, eax
+
 	    _popcnt   rax, r9, rcx
+	       imul   eax, 191
+		add   edi, eax
 		mov   rdx, qword[.ei.pinnedPieces+8*Us]
 		neg   rdx
-		adc   eax, 0
-	       imul   eax, 143
+		sbb   eax, eax
+	        and   eax, 143
 		add   edi, eax
 	       test   PiecesThem, qword[rbp+Pos.typeBB+8*Queen]
 		lea   eax, [rdi-848]
