@@ -195,7 +195,7 @@ macro movz a*, b*, c
     aarch64.parse_operand @op1, b
     aarch64.parse_shf           c
     if (@op0.type and @type_wn_wzr_xn_xzr)
-        @adr.encode = 0x72800000 + (@op0.vfull shl 31) + (@op0.data shl 0)
+        @adr.encode = 0x52800000 + (@op0.vfull shl 31) + (@op0.data shl 0)
         if (@op1.type and @type_immc) & (@shf.success) & (@shf.kind = 0)
             aarch64.restrict @shf.shift, 0, 48, 0x0f
             aarch64.restrict @op1.data, 0, 0xFFFF

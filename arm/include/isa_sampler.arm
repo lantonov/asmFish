@@ -1,6 +1,7 @@
 ;// this should be able to be assembled by gas as well as fasmg
 
 _start:
+           csel  x0, x1, x0, ne
 
 
 Math_Lerp:

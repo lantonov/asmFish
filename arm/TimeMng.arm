@@ -115,26 +115,25 @@ remaining:
 TimeMng_Init:
             stp  x21, x30, [sp, -16]!
             stp  x22, x23, [sp, -16]!
-
             mov  w21, w1
             mov  w22, w2
            _lea  x23, time
            _lea  x6, limits
             ldr  x0, [x6, Limits.startTime]
             str  x0, [x23, Time.startTime]
-
             mov  w4, w22
             mov  w5, 0
              bl  remaining
+           _lea  x6, options
+            add  x1, x0, x0, lsr 2
+           ldrb  w4, [x6, Options.ponder]
+            tst  w4, w4
+           csel  x0, x1, x0, ne
             str  x0, [x23, Time.optimumTime]
-Display 1, "optimumTime: %I0%n"
-
             mov  w4, w22
             mov  w5, 1
              bl  remaining
             str  x0, [x23, Time.maximumTime]
-Display 1, " maximumTime: %I0%n"
-
             ldp  x22, x23, [sp], 16
             ldp  x21, x30, [sp], 16
             ret
