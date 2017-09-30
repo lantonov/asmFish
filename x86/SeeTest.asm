@@ -131,8 +131,8 @@ end if
 		neg   swap
 		xor   res, res
 
-		cmp   ecx, MOVE_TYPE_EPCAP shl 12
-		jae   .Special
+               test   ecx, 0xFFFFF000
+		jnz   .Special
 
 	      movzx   ecx, byte[rbp+Pos.board+to]
 		add   swap, dword[PieceValue_MG+4*rcx]
@@ -301,35 +301,13 @@ end if
 		xor   occupied, bb
 		jmp   .Loop
 
-
-	     calign   8
+         calign  8
 .Special:
-	; if we get here, .swap = -value
-	;            and  .res = 0
-		cmp   ecx, MOVE_TYPE_CASTLE shl 12
-		jae   .Castle
-		mov   ecx, dword[rbp+Pos.sideToMove]
-		shl   ecx, 3
-		lea   ecx, [to+2*rcx-8]
-		btr   occupied, rcx
-		add   swap, PawnValueMg
-		cmp   swap, res
-		jge   .EpCaptureRet
-.ReturnSpecial:
-
-		pop   rdi rsi r15 r14 r13 r12
-if DEBUG
-		pop   rcx
-		cmp   eax, ecx
-		jne   SeeTest_Error
-end if
-		ret
-
-.Castle:
-	; return 0 <= swap
-		cmp   swap, 0x80000000
-		adc   res, res
-		jmp   .ReturnSpecial
+    ; if we get here, swap = -value  and  res = 0
+            cmp  swap, 0x80000000
+            adc  res, res
+            pop  rdi rsi r15 r14 r13 r12
+            ret
 
 
 if DEBUG
