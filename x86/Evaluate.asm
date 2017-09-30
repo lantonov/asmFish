@@ -273,14 +273,41 @@ OutpostDone:
 
 	; Penalty for pawns on the same color square as the bishop
     if Pt = Bishop
-		xor   ecx, ecx
-		mov   rax, DarkSquares
-		 bt   rax, r14
-		adc   rcx, rdi
-	      movzx   eax, byte[rcx+PawnEntry.pawnsOnSquares+2*Us]
-	       imul   eax, BishopPawns
-	     subadd   esi, eax
+            xor  ecx, ecx
+            mov  rax, DarkSquares
+             bt  rax, r14
+            adc  rcx, rdi
+          movzx  eax, byte[rcx+PawnEntry.pawnsOnSquares+2*Us]
+           imul  eax, BishopPawns
+         subadd  esi, eax
     end if
+
+    if PEDANTIC = 1 & Pt = Bishop
+TrappedBishopA1H1 = (50 shl 16) + 50
+            lea  rdx, [rbp + Pos.board + r14]
+            cmp  byte[rbp + Pos.chess960], 0
+             je  @2f
+            mov  rcx, DELTA_E + 8*(1-2*Us)
+            cmp  r14d, SQ_A1 xor (56*Us)
+             je  @1f
+            mov  rcx, DELTA_W + 8*(1-2*Us)
+            cmp  r14d, SQ_H1 xor (56*Us)
+            jne  @2f
+    @1:
+            cmp  byte[rdx + rcx], 8*Us + Pawn
+            jne  @2f
+            mov  eax, 4*TrappedBishopA1H1
+            cmp  byte[rdx + rcx + 8*(1-2*Us)], 0
+            jne  @1f
+            mov  eax, 2*TrappedBishopA1H1
+            cmp  byte[rdx + rcx + rcx], 8*Us + Pawn
+             je  @1f
+            mov  eax, TrappedBishopA1H1
+    @1:
+         subadd  esi, eax
+    @2:
+    end if
+
 
   else if Pt = Rook
 

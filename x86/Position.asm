@@ -814,49 +814,49 @@ end if
 ;;;;;;;;;;;;;;;
 
 Position_ParseFEN:
-	; in: rsi address of fen string
-	;     rbp address of Pos
-	;     ecx isChess960
-	; out: eax = 0 success
-	;      eax = -1 failure
+    ; in: rsi address of fen string
+    ;     rbp address of Pos
+    ;     ecx isChess960
+    ; out: eax = 0 success
+    ;      eax = -1 failure
 
-	       push   rbp rbx rdi r12 r13 r14 r15
-		mov   r12d, ecx
+           push   rbp rbx rdi r12 r13 r14 r15
+            mov   r12d, ecx
 
-		mov   rbx, qword[rbp+Pos.stateTable]
-	       test   rbx, rbx
-		 jz   .alloc
+            mov   rbx, qword[rbp+Pos.stateTable]
+           test   rbx, rbx
+             jz   .alloc
 .alloc_ret:
-		xor   eax, eax
-		mov   ecx, Pos._copy_size/8
-		mov   rdi, rbp
-	  rep stosq
-		mov   dword[rbp+Pos.chess960], r12d
+            xor   eax, eax
+            mov   ecx, Pos._copy_size/8
+            mov   rdi, rbp
+      rep stosq
+            mov   dword[rbp+Pos.chess960], r12d
 
-		xor   eax, eax
-		mov   ecx, sizeof.State/8
-		mov   rdi, rbx
-	  rep stosq
+            xor   eax, eax
+            mov   ecx, sizeof.State/8
+            mov   rdi, rbx
+      rep stosq
 
-		xor   eax, eax
-		mov   ecx, Thread.castling_end-Thread.castling_start
-		lea   rdi, [rbp-Thread.rootPos+Thread.castling_start]
-	  rep stosb
+            xor   eax, eax
+            mov   ecx, Thread.castling_end-Thread.castling_start
+            lea   rdi, [rbp-Thread.rootPos+Thread.castling_start]
+      rep stosb
 
-	       call   SkipSpaces
+           call   SkipSpaces
 
-		xor   eax,eax
-		xor   ecx,ecx
-		jmp   .ExpectPiece
+            xor   eax,eax
+            xor   ecx,ecx
+            jmp   .ExpectPiece
 
 .ExpectPieceOrSlash:
-	       test   ecx,7
-		jnz   .ExpectPiece
-	      lodsb
-		cmp   al, '/'
-		jne   .Failed
+           test   ecx,7
+            jnz   .ExpectPiece
+          lodsb
+            cmp   al, '/'
+            jne   .Failed
 .ExpectPiece:
-	      lodsb
+           lodsb
 
 		mov   edx, 8*White+Pawn
 		cmp   al, 'P'
@@ -1004,43 +1004,45 @@ Position_ParseFEN:
 		mov   byte[rbx+State.epSquare], 64
 
 .FiftyMoves:
-	       call   SkipSpaces
-	       call   ParseInteger
-		mov   word[rbx+State.rule50], ax
+           call   SkipSpaces
+           call   ParseInteger
+            mov   word[rbx+State.rule50], ax
 
 .MoveNumber:
-	       call   SkipSpaces
-	       call   ParseInteger
-		sub   eax, 1
-		adc   eax, 0
-		add   eax, eax
-		add   eax, dword[rbp+Pos.sideToMove]
-		mov   dword[rbp+Pos.gamePly], eax
+           call   SkipSpaces
+           call   ParseInteger
+            sub   eax, 1
+            adc   eax, 0
+            add   eax, eax
+            add   eax, dword[rbp+Pos.sideToMove]
+            mov   dword[rbp+Pos.gamePly], eax
 
-	       call   Position_SetState
-	       call   Position_SetPieceLists
-	       call   Position_IsLegal
-	       test   eax,eax
-		jnz   .Failed
+            mov   qword[rbp+Pos.state], rbx
+
+           call   Position_SetState
+           call   Position_SetPieceLists
+           call   Position_IsLegal
+           test   eax,eax
+            jnz   .Failed
 
 .done:
-		pop   r15 r14 r13 r12 rdi rbx rbp
-		ret
+            pop   r15 r14 r13 r12 rdi rbx rbp
+            ret
 
 .Failed:
-		 or   eax, -1
-		jmp   .done
+             or   eax, -1
+            jmp   .done
 
 .alloc:
-		mov   ecx, 64*sizeof.State
-		mov   r15d, ecx
-	       call   Os_VirtualAlloc
-		mov   rbx, rax
-		mov   qword[rbp+Pos.state], rax
-		mov   qword[rbp+Pos.stateTable], rax
-		add   rax, r15
-		mov   qword[rbp+Pos.stateEnd], rax
-		jmp   .alloc_ret
+            mov   ecx, 64*sizeof.State
+            mov   r15d, ecx
+           call   Os_VirtualAlloc
+            mov   rbx, rax
+            mov   qword[rbp+Pos.state], rax
+            mov   qword[rbp+Pos.stateTable], rax
+            add   rax, r15
+            mov   qword[rbp+Pos.stateEnd], rax
+            jmp   .alloc_ret
 
 
 
@@ -1371,83 +1373,83 @@ Position_CopyTo:
 
 
 Position_CopyToSearch:
-	; rbp address of source position
-	; rcx address of destination position
-	;  up to Pos._copy_size is copied
-	;  and state array is copied
-	; enough elements are copied for
-	;   draw by 50 move detection
-	;   referencing ss-5 and ss+2 in search
+    ; rbp address of source position
+    ; rcx address of destination position
+    ;  up to Pos._copy_size is copied
+    ;  and state array is copied
+    ; enough elements are copied for
+    ;   draw by 50 move detection
+    ;   referencing ss-5 and ss+2 in search
 
-	       push   rsi rdi r13
-		mov   r13, rcx
+            push   rsi rdi r13
+            mov   r13, rcx
 
-	; copy castling data
-		mov   ecx, Thread.castling_end-Thread.castling_start
-		lea   rsi, [rbp-Thread.rootPos+Thread.castling_start]
-		lea   rdi, [r13-Thread.rootPos+Thread.castling_start]
-	  rep movsb
+            ; copy castling data
+            mov   ecx, Thread.castling_end-Thread.castling_start
+            lea   rsi, [rbp-Thread.rootPos+Thread.castling_start]
+            lea   rdi, [r13-Thread.rootPos+Thread.castling_start]
+            rep movsb
 
-	; copy basic position info
-		lea   rsi, [rbp]
-		lea   rdi, [r13]
-		mov   ecx, Pos._copy_size/8
-	  rep movsq
+            ; copy basic position info
+            lea   rsi, [rbp]
+            lea   rdi, [r13]
+            mov   ecx, Pos._copy_size/8
+            rep movsq
 
-	; if destination has no table, we need to alloc
-		mov   r9, qword[r13+Pos.stateTable]
-	       test   r9, r9
-		 jz   .alloc
+            ; if destination has no table, we need to alloc
+            mov   r9, qword[r13+Pos.stateTable]
+            test   r9, r9
+            jz   .alloc
 
-	; rcx = capacity of states in destination
-	; if rcx < MAX_PLY+102, we need to realloc
-		mov   rdx, qword[r13+Pos.stateEnd]
-		sub   rdx, r9
-		cmp   rdx, sizeof.State*(100+MAX_PLY+2+MAX_SYZYGY_PLY)
-		 jb   .realloc
+            ; rcx = capacity of states in destination
+            ; if rcx < MAX_PLY+102, we need to realloc
+            mov   rdx, qword[r13+Pos.stateEnd]
+            sub   rdx, r9
+            cmp   rdx, sizeof.State*(100+MAX_PLY+2+MAX_SYZYGY_PLY)
+            jb   .realloc
 .copy_states:
-	; r9 = address of its state table
-	; r8 = address of our state table
-		mov   r8, qword[rbp+Pos.stateTable]
+            ; r9 = address of its state table
+            ; r8 = address of our state table
+            mov   r8, qword[rbp+Pos.stateTable]
 
-		mov   r10, qword[rbp+Pos.state]
-		lea   r11, [r9+100*sizeof.State]
-		mov   qword[r13+Pos.state], r11
+            mov   r10, qword[rbp+Pos.state]
+            lea   r11, [r9+100*sizeof.State]
+            mov   qword[r13+Pos.state], r11
 .looper:
-		mov   rsi, r10
-		mov   rdi, r11
-		mov   ecx, sizeof.State/8
-	  rep movsq
-	; make sure that pliesFromNull never references a state past the beginning
-	;  we don't want to fall of the cliff when checking 50 move rule
-		mov   edx, 100
-	      movzx   eax, word[r11+State.pliesFromNull]
-		cmp   eax, edx
-	      cmova   eax, edx
-		mov   word[r11+State.pliesFromNull], ax
+            mov   rsi, r10
+            mov   rdi, r11
+            mov   ecx, sizeof.State/8
+      rep movsq
+    ; make sure that pliesFromNull never references a state past the beginning
+    ;  we don't want to fall of the cliff when checking 50 move rule
+            mov   edx, 100
+            movzx   eax, word[r11+State.pliesFromNull]
+            cmp   eax, edx
+            cmova   eax, edx
+            mov   word[r11+State.pliesFromNull], ax
 
-		sub   r10, sizeof.State
-		sub   r11, sizeof.State
-		cmp   r11, r9
-		 jb   .done
-		cmp   r10, r8
-		jae   .looper
+            sub   r10, sizeof.State
+            sub   r11, sizeof.State
+            cmp   r11, r9
+            jb   .done
+            cmp   r10, r8
+            jae   .looper
 .done:
-		pop   r13 rdi rsi
-		ret
+            pop   r13 rdi rsi
+            ret
 
 .realloc:
-		mov   rcx, r9
-		; rdx already has the size
-	       call   Os_VirtualFree
+            mov   rcx, r9
+            ; rdx already has the size
+            call   Os_VirtualFree
 .alloc:
-		mov   ecx, sizeof.State*(100+MAX_PLY+2+MAX_SYZYGY_PLY)
-	       call   Os_VirtualAlloc
-		mov   r9, rax
-		mov   qword[r13+Pos.stateTable], rax
-		add   rax, sizeof.State*(100+MAX_PLY+2+MAX_SYZYGY_PLY)
-		mov   qword[r13+Pos.stateEnd], rax
-		jmp   .copy_states
+            mov   ecx, sizeof.State*(100+MAX_PLY+2+MAX_SYZYGY_PLY)
+            call   Os_VirtualAlloc
+            mov   r9, rax
+            mov   qword[r13+Pos.stateTable], rax
+            add   rax, sizeof.State*(100+MAX_PLY+2+MAX_SYZYGY_PLY)
+            mov   qword[r13+Pos.stateEnd], rax
+            jmp   .copy_states
 
 
 
