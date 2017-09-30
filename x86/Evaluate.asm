@@ -807,27 +807,28 @@ macro ShelterStorm Us
 	; to avoid an anoying min(f,FILE_H-f) in ShelterStorm
 
 
-		sub   eax, dword[ShelterWeakness+rdx+4*rsi]
-
 		add   esi, 1
 	; esi = rkUs+1
 
 		lea   r11, [StormDanger_BlockedByKing+rdx]
+                lea   r8, [ShelterWeakness_No - 4*1 + rdx]
 		cmp   ecx, r12d
 		lea   r12d, [r12+1]
 		jne   TryNext
+                lea   r8, [ShelterWeakness_Yes - 4*1 + rdx]
 		cmp   edi, r13d
 		 je   AddStormDanger
 	TryNext:
-		lea   r11, [StormDanger_NoFriendlyPawn+rdx]
+		lea   r11, [StormDanger_NoFriendlyPawn + rdx]
 		cmp   esi, 1
 		 je   AddStormDanger
-		lea   r11, [StormDanger_BlockedByPawn+rdx]
+		lea   r11, [StormDanger_BlockedByPawn + rdx]
 		cmp   esi, edi
 		 je   AddStormDanger
-		lea   r11, [StormDanger_Unblocked+rdx]
+		lea   r11, [StormDanger_Unblocked + rdx]
 	AddStormDanger:
-		sub   eax, dword[r11+4*rdi]
+		sub   eax, dword[r8 + 4*rsi]
+		sub   eax, dword[r11 + 4*rdi]
   end macro
 
     ShelterStormAcc

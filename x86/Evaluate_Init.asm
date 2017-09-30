@@ -27,7 +27,7 @@ Evaluate_Init:
 
 		lea   rsi, [.ShelterWeakness]
 		lea   rdi, [ShelterWeakness]
-		mov   ecx, 8*8
+		mov   ecx, 2*8*8
 	  rep movsd
 		lea   rsi, [.StormDanger]
 		lea   rdi, [StormDanger]
@@ -193,14 +193,25 @@ Evaluate_Init:
 ; ShelterWeakness and StormDanger are twice as big
 ; to avoid an anoying min(f,FILE_H-f) in ShelterStorm
 .ShelterWeakness:
- dd 100, 20, 10, 46, 82,  86,  98, 0
- dd 116,  4, 28, 87, 94, 108, 104, 0
- dd 109,  1, 59, 87, 62,  91, 116, 0
- dd  75, 12, 43, 59, 90,  84, 112, 0
- dd  75, 12, 43, 59, 90,  84, 112, 0
- dd 109,  1, 59, 87, 62,  91, 116, 0
- dd 116,  4, 28, 87, 94, 108, 104, 0
- dd 100, 20, 10, 46, 82,  86,  98, 0
+.ShelterWeakness_No:
+ dd  97,  17,   9,  44,  84,  87,  99, 0
+ dd 106,   6,  33,  86,  87, 104, 112, 0
+ dd 101,   2,  65,  98,  58,  89, 115, 0
+ dd  73,   7,  54,  73,  84,  83, 111, 0
+ dd  73,   7,  54,  73,  84,  83, 111, 0
+ dd 101,   2,  65,  98,  58,  89, 115, 0
+ dd 106,   6,  33,  86,  87, 104, 112, 0
+ dd  97,  17,   9,  44,  84,  87,  99, 0
+
+.ShelterWeakness_Yes:
+ dd 104,  20,   6,  27,  86,  93,  82, 0
+ dd 123,   9,  34,  96, 112,  88,  75, 0
+ dd 120,  25,  65,  91,  66,  78, 117, 0
+ dd  81,   2,  47,  63,  94,  93, 104, 0
+ dd  81,   2,  47,  63,  94,  93, 104, 0
+ dd 120,  25,  65,  91,  66,  78, 117, 0
+ dd 123,   9,  34,  96, 112,  88,  75, 0
+ dd 104,  20,   6,  27,  86,  93,  82, 0
 
 .StormDanger:
  dd 4,	 73, 132, 46, 31 ,  0,0,0

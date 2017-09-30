@@ -103,7 +103,9 @@ MobilityBonus_Bishop rd 16
 MobilityBonus_Rook   rd 16
 MobilityBonus_Queen  rd 32
 Lever                      rd 8
-ShelterWeakness            rd 8*8
+ShelterWeakness:
+ShelterWeakness_No         rd 8*8
+ShelterWeakness_Yes        rd 8*8
 StormDanger:
 StormDanger_NoFriendlyPawn rd 8*8
 StormDanger_Unblocked	   rd 8*8

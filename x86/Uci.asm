@@ -7,7 +7,7 @@ Options_Init:
             mov  dword[rdx + Options.hash], 16
             mov   byte[rdx + Options.ponder], 0
             mov  dword[rdx + Options.multiPV], 1
-            mov  dword[rdx + Options.moveOverhead], 30
+            mov  dword[rdx + Options.moveOverhead], 50
             mov   byte[rdx + Options.chess960], 0
             mov  dword[rdx + Options.syzygyProbeDepth], 1
             mov   byte[rdx + Options.syzygy50MoveRule], -1
