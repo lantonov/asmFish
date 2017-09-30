@@ -663,7 +663,10 @@ end if
             and  ecx, VALUE_DRAW + VALUE_MATE
             sub  ecx, VALUE_MATE
            call  PrintScore_Uci
+.mate_print:
         PrintNL
+            cmp  byte[options.displayInfoMove], 0
+             je  .return
            call  WriteLine_Output
             jmp  .search_done
 
@@ -674,9 +677,7 @@ end if
             mov  rax, ' NONE'
           stosq
             sub  rdi, 3
-        PrintNL
-           call  WriteLine_Output
-            jmp  .return
+            jmp  .mate_print
 
 
 
@@ -686,9 +687,8 @@ DisplayMove_Uci:
            push  rbp rsi rdi
             lea  rbp, [rcx+Thread.rootPos]
 
-            mov  al, byte[options.displayInfoMove]
-           test  al, al
-             jz  .return
+            cmp  byte[options.displayInfoMove], 0
+             je  .return
 
 	; print best move and ponder move
             lea  rdi, [Output]
@@ -815,9 +815,8 @@ end virtual
 
 ;	     Assert   ne, r10d, 0, 'assertion dword[.multiPV]!=0 in Position_WriteOutUciInfo failed'
 
-		mov   al, byte[options.displayInfoMove]
-	       test   al, al
-		 jz   .return
+            cmp  byte[options.displayInfoMove], 0
+             je  .return
 
 if USE_SPAMFILTER
 		cmp   r9, SPAMFILTER_DELAY

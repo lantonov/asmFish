@@ -15,13 +15,15 @@ USE_VARIETY     = 0
 USE_BOOK        = 0
 USE_MATEFINDER  = 0
 
+PEDANTIC = 1
+
+
 CPU_HAS_POPCNT = 0
 CPU_HAS_BMI1 = 0
 CPU_HAS_BMI2 = 0
 CPU_HAS_AVX1 = 0 ; not implemented yet
 CPU_HAS_AVX2 = 0 ;
 
-PEDANTIC = 1
 
 if VERSION_POST = 'popcnt'
   CPU_HAS_POPCNT = 1

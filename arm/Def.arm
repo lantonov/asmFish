@@ -1,6 +1,7 @@
 SEP_CHAR = ':'
+LOG_FILE = '<empty>'    ; use something other than <empty> to hardcode a starting log file into the engine
 
-MAX_RESETCNT = 80000
+MAX_RESETCNT = 50000
 MIN_RESETCNT = 40
 SPAMFILTER_DELAY = 100
 CURRMOVE_MIN_TIME = 3000

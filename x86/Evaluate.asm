@@ -270,7 +270,6 @@ OutpostElse:
 	     cmovnz   esi, ecx
 OutpostDone:
 
-
 	; Penalty for pawns on the same color square as the bishop
     if Pt = Bishop
             xor  ecx, ecx

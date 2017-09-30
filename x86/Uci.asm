@@ -1178,7 +1178,7 @@ end if
             xor  eax, eax
             mov  qword[UciLoop.nodes], rax
 if VERBOSE = 0
-;            mov  byte[options.displayInfoMove], al
+            mov  byte[options.displayInfoMove], al
 end if
            call  Search_Clear
 
@@ -1187,25 +1187,12 @@ end if
             mov  qword[UciLoop.nodes], r13
             lea  rsi, [BenchFens]
 .nextpos:
-
-;Display 0,"string: "
-;mov rcx, rsi
-;lea rdi, [rsi+8]
-;call _Os_WriteOut
-;Display 0,"%n"
-
             add  r13d, 1
            call  SkipSpaces
 
-;            lea   rbp, [UciLoop.th2.rootPos]
-;          movzx   ecx, byte[options.chess960]
-;           call   Position_ParseFEN
-;            lea   rcx, [UciLoop.th1.rootPos]
-;           call   Position_CopyTo
-;            lea   rbp, [UciLoop.th1.rootPos]
-
             lea  rcx, [Bench960Fens]
             sub  rcx, rsi
+            neg  ecx
             sar  ecx, 31
             not  ecx
 

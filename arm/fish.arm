@@ -9,18 +9,18 @@ VERSION_PRE = 'armFish'
 
 DEBUG   = 0
 VERBOSE = 0
+PROFILE = 0
+
 USE_SYZYGY      = 1
-USE_CURRMOVE    = 0
+USE_CURRMOVE    = 1
 USE_HASHFULL    = 1
 USE_CMDLINEQUIT = 1
-
-USE_WEAKNESS    = 1
+USE_WEAKNESS    = 0
 USE_VARIETY     = 0
+USE_BOOK        = 0
 USE_MATEFINDER  = 0
 
-; use something other than <empty> to hardcode a starting log file into the engine
-LOG_FILE = '<empty>'
-
+PEDANTIC = 1
 
 ; instruction and format macros
 include 'format/format.inc'

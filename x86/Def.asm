@@ -1,3 +1,10 @@
+if VERSION_OS = 'W'
+  SEP_CHAR = ';'
+else
+  SEP_CHAR = ':'
+end if
+LOG_FILE = '<empty>'    ; use something other than <empty> to hardcode a starting log file into the engine
+
 
 ; MAX_RESETCNT should NOT be more than the number of times search is called per second/core,
 ; which is about half of nps/core (the other half comes from qsearch). Higher setting are 
@@ -12,12 +19,6 @@ SPAMFILTER_DELAY = 100
 
 ; if USE_CURRMOVE, don't print current move info before this number of ms
 CURRMOVE_MIN_TIME = 3000
-
-if VERSION_OS = 'W'
-  SEP_CHAR = ';'
-else
-  SEP_CHAR = ':'
-end if
 
 ; some bounds
 MAX_MOVES = 224	; maximum number of pseudo legal moves for any position

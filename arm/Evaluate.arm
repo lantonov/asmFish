@@ -279,8 +279,7 @@ OutpostElse:
            csel  w26, w1, w26, ne
 OutpostDone:
 
-
-        ; Penalty for pawns on the same color square as the bishop
+    ; Penalty for pawns on the same color square as the bishop
     if Pt = Bishop
           mov64  x0, DarkSquares
             mov  x4, 1
@@ -292,6 +291,39 @@ OutpostDone:
             mul  w0, w0, w4
          AddSub  Them, w26, w26, w0
     end if
+
+    if PEDANTIC = 1 & Pt = Bishop
+TrappedBishopA1H1 = (50 shl 16) + 50
+            add  x2, x20, x24
+           ldrb  w4, [x20, Pos.chess960]
+            cbz  w4, @2f
+            mov  x1, DELTA_E + 8*(1-2*Us)
+            cmp  x24, SQ_A1 xor (56*Us)
+            beq  @1f
+            mov  x1, DELTA_W + 8*(1-2*Us)
+            cmp  x24, SQ_H1 xor (56*Us)
+            bne  @2f
+    @1:
+           ldrb  w4, [x2, x1]
+            cmp  w4, 8*Us + Pawn
+            bne  @2f
+         _mov32  w0, 4*TrappedBishopA1H1
+            add  x4, x2, x1
+           ldrb  w4, [x4, 8*(1-2*Us)]
+            cmp  w4, 0
+            bne  @1f
+         _mov32  w0, 2*TrappedBishopA1H1
+            add  x4, x2, x1, lsl 1
+           ldrb  w4, [x4]
+            cmp  w4, 8*Us + Pawn
+            beq  @1f
+         _mov32  w0, TrappedBishopA1H1
+    @1:
+         AddSub  Them, w26, w26, w0
+    @2:
+    end if
+
+
 
  else if Pt = Rook
 

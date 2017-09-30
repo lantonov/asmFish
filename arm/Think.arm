@@ -331,12 +331,9 @@ end if
 
 
 if USE_WEAKNESS
-;		cmp   byte[weakness.enabled], 0
-;		 je   .multipv_loop
            _lea  x6, weakness
            ldrb  w4, [x6, Weakness.enabled]
             cbz  w4, .multipv_loop
-;	       call   Weakness_SetMultiPV
              bl  Weakness_SetMultiPV
 end if
               b  .multipv_loop
@@ -669,17 +666,11 @@ MainThread_Think.return:
 
 if USE_WEAKNESS
 MainThread_Think.pick_weak_move:
-;	       call   Weakness_PickMove
              bl  Weakness_PickMove
-;		mov   rax, qword[rbp+Pos.rootMovesVec.table]
             ldr  x0, [x20, Pos.rootMovesVec + RootMovesVec.table]
-;		mov   eax, dword[rax+0*sizeof.RootMove+RootMove.score]
             ldr  w0, [x0, 0*sizeof.RootMove + RootMove.score]
-;		lea   rcx, [rbp-Thread.rootPos]
             add  x1, x20, -Thread.rootPos
-;		mov   dword[rcx+Thread.previousScore], eax
             str  w0, [x1, Thread.previousScore]
-;		jmp   .display_move
               b  MainThread_Think.display_move
 end if
 
@@ -695,6 +686,10 @@ MainThread_Think.mate:
             tst  x5, x5
            csel  w1, w1, w4, ne
              bl  PrintScore_Uci
+MainThread_Think.mate_print:
+           _lea  x6, options
+           ldrb  w0, [x6, Options.displayInfoMove]
+            cbz  w0, MainThread_Think.return
         PrintNL
              bl  WriteLine_Output
               b  MainThread_Think.search_done
@@ -707,11 +702,10 @@ MainThread_Think.mate_bestmove:
            _lea  x27, Output
             adr  x1, MainThread_Think.sz2
              bl  PrintString
-             bl  WriteLine_Output
-              b  MainThread_Think.return
+              b  MainThread_Think.mate_print
 
 MainThread_Think.sz2:
-        db 'bestmove NONE', 10, 0
+        db 'bestmove NONE', 0
         balign 4
 
 

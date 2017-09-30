@@ -605,6 +605,8 @@ Position_ParseFen.alloc_ret:
             add  x17, x20, -Thread.rootPos + Thread.castling_start
              bl  RepStosb
 
+            str  x21, [x20, Pos.state]
+
              bl  SkipSpaces
             mov  x0, 0
             mov  x1, 0

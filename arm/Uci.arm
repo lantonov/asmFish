@@ -470,11 +470,11 @@ UciPosition.illegal:
            _lea  x1, sz_error_fen
              bl  PrintString
             PrintNewLine
-            add  x20, sp, UciLoop.th1+Thread.rootPos
+            add  x20, sp, UciLoop.th1 + Thread.rootPos
               b  UciWriteOut
 
 UciPosition.BadCmd:
-            add  x20, sp, UciLoop.th1+Thread.rootPos
+            add  x20, sp, UciLoop.th1 + Thread.rootPos
               b  UciUnknown
 
 UciPosition.CheckJunk:
@@ -488,7 +488,10 @@ UciPosition.CheckJunk:
               b  UciWriteOut_NewLine
 
 UciParseMoves:
-
+    ; in:  x20 position
+    ;      x26 string
+    ; out: x0  0 if full string could be parsed
+    ;          address of illegal move if there is one
             stp  x21, x30, [sp, -16]!
             stp  x26, x27, [sp, -16]!
 UciParseMoves.get_move:
@@ -518,7 +521,7 @@ UciParseMoves.get_move:
              bl  SetCheckInfo
               b  UciParseMoves.get_move
 UciParseMoves.done:
-            ldp  x26, x27, [sp], 16
+            ldp  x1, x27, [sp], 16
             ldp  x21, x30, [sp], 16
             ret
 
@@ -841,25 +844,17 @@ end if
 
 if USE_WEAKNESS
 UciSetOption.UciLimitStrength:
-;	       call   ParseBoole
              bl  ParseBoole
-;		mov   byte[weakness.enabled], al
            _lea  x6, weakness
            strb  w0, [x6, Weakness.enabled]
-;		jmp   UciGetInput
               b  UciGetInput
 UciSetOption.UciElo:
-;	       call   ParseInteger
              bl  ParseInteger
-;      ClampUnsigned   eax, 0, 3300
             mov  w4, 0
             mov  w5, 3300
   ClampUnsigned  w0, w4, w5
-;		mov   ecx, eax
             mov  w1, w0
-;	       call   Weakness_SetElo
              bl  Weakness_SetElo
-;		jmp   UciGetInput
               b  UciGetInput
 end if
 
@@ -907,7 +902,6 @@ UciBench:
             mov  x22, 13
             mov  x23, 1
             mov  x24, 16
-            mov  x25, 0
             adr  x27, UciBench.parse_hash
 UciBench.parse_loop:
              bl  SkipSpaces
@@ -933,12 +927,7 @@ UciBench.parse_loop:
              bl  CmpString
            cbnz  w0, UciBench.parse_hash
 
-           _lea  x1, sz_realtime
-             bl  CmpString
-           cbnz  w0, UciBench.parse_realtime
-              b  UciBench.parse_done
 UciBench.parse_hash:
-
             adr  x27, UciBench.parse_threads
              bl  SkipSpaces
              bl  ParseInteger
@@ -947,8 +936,8 @@ UciBench.parse_hash:
   ClampUnsigned  w0, w4, w5
             mov  w24, w0
               b  UciBench.parse_loop
-UciBench.parse_threads:
 
+UciBench.parse_threads:
             adr  x27, UciBench.parse_depth
              bl  SkipSpaces
              bl  ParseInteger
@@ -957,9 +946,9 @@ UciBench.parse_threads:
   ClampUnsigned  w0, w4, w5
             mov  w23, w0
               b  UciBench.parse_loop
-UciBench.parse_depth:
 
-            adr  x27, UciBench.parse_realtime
+UciBench.parse_depth:
+            mov  x27, 0
              bl  SkipSpaces
              bl  ParseInteger
             mov  w4, 1
@@ -968,14 +957,6 @@ UciBench.parse_depth:
             mov  w22, w0
               b  UciBench.parse_loop
 
-UciBench.parse_realtime:
-
-            mov  x27, 0
-             bl  SkipSpaces
-             bl  ParseInteger
-            cmp  x0, 0
-           cset  x27, ne
-              b  UciBench.parse_loop
 UciBench.parse_done:
 
             stp  x22, x25, [sp, -16]!
@@ -1001,9 +982,6 @@ if VERBOSE = 0
 end if
              bl  Search_Clear
 
-            cbz  w25, @1f
-             bl  Os_SetPriority_Realtime
-        @1:
             mov  x23, 0
             str  xzr, [sp, UciLoop.time]
             str  xzr, [sp, UciLoop.nodes]
@@ -1012,8 +990,37 @@ end if
 UciBench.nextpos:
             add  x23, x23, 1
              bl  SkipSpaces
-            mov  w1, 0
+
+;            lea  rcx, [Bench960Fens]
+;            sub  rcx, rsi
+;            sar  ecx, 31
+;            not  ecx
+;
+;            lea  rbp, [UciLoop.th1.rootPos]
+;            mov  dword[options.chess960], ecx
+;           call  Position_ParseFEN
+;           call  SkipSpaces
+;            lea  rcx, [sz_moves]
+;           call  CmpString
+;           test  eax, eax
+;             jz  @1f
+;           call  UciParseMoves
+;    @1:
+
+           _lea  x1, Bench960Fens
+            sub  x1, x26, x1
+            asr  w1, w1, 31
+            mvn  w1, w1
+            add  x20, sp, UciLoop.th1 + Thread.rootPos
+           _lea  x6, options
+            str  w1, [x6, Options.chess960]
              bl  Position_ParseFen
+             bl  SkipSpaces
+           _lea  x1, sz_moves
+             bl  CmpString
+            cbz  w0, @1f
+             bl  UciParseMoves
+    @1:
             add  x1, sp, UciLoop.limits
              bl  Limits_Init
             add  x1, sp, UciLoop.limits

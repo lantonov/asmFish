@@ -843,8 +843,9 @@ Position_ParseFEN:
             lea   rdi, [rbp-Thread.rootPos+Thread.castling_start]
       rep stosb
 
-           call   SkipSpaces
+            mov   qword[rbp+Pos.state], rbx
 
+           call   SkipSpaces
             xor   eax,eax
             xor   ecx,ecx
             jmp   .ExpectPiece
@@ -1016,8 +1017,6 @@ Position_ParseFEN:
             add   eax, eax
             add   eax, dword[rbp+Pos.sideToMove]
             mov   dword[rbp+Pos.gamePly], eax
-
-            mov   qword[rbp+Pos.state], rbx
 
            call   Position_SetState
            call   Position_SetPieceLists
