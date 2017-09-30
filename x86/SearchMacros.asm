@@ -860,36 +860,23 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
     ; Step 13. Pruning at shallow depth
             mov  r12d, dword[.move]
             shr  r12d, 6
-            and  r12d, 63				; r12d = from
+            and  r12d, 63                               ; r12d = from
             mov  r13d, dword[.move]
-            and  r13d, 63				; r13d = to
-          movzx  r14d, byte[rbp+Pos.board+r12]	; r14d = from piece
-          movzx  r15d, byte[rbp+Pos.board+r13]	; r15d = to piece
+            and  r13d, 63                               ; r13d = to
+          movzx  r14d, byte[rbp + Pos.board + r12]      ; r14d = from piece
+          movzx  r15d, byte[rbp + Pos.board + r13]      ; r15d = to piece
 
             mov  ecx, dword[.moveCount]
-            mov  edx, ecx
-            mov  edi, dword[.reductionOffset]
-            mov  eax, dword[rbx - 1*sizeof.State + State.moveCount]
-            shr  eax, 4
-            sub  ecx, eax
-            mov  eax, 1
-         cmovle  ecx, eax
+            mov  eax, dword[.extension]
+            mov  edx, dword[.depth]
             mov  esi, 63
             cmp  ecx, esi
           cmova  ecx, esi
-            cmp  edx, esi
-          cmova  edx, esi
-            lea  edi, [Reductions + 4*(rdi + 2*64*64*PvNode)]
-;            add  ecx, edi
-;            add  edx, edi
-            mov  r9d, dword[rdi+4*(rdx)]
-            mov  edx, dword[rdi+4*(rcx)]
-            mov  dword[.reduction], edx
-
-            mov  eax, dword[.extension]
-            mov  edx, dword[.depth]
             sub  eax, 1
+            add  ecx, dword[.reductionOffset]
             add  eax, edx
+            mov  r9d, dword[Reductions + 4*(rcx + 2*64*64*PvNode)]
+            mov  dword[.reduction], r9d
             mov  dword[.newDepth], eax
 
     ; edx = depth
@@ -924,7 +911,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             mov  edi, dword[.newDepth]
            test  al, al
             jnz  .MovePickLoop
-            sub  edi, r9d
+            sub  edi, dword[.reduction]
     ; edi = lmrDepth
     ; Countermoves based pruning
             mov  r8, qword[.CMH]
@@ -1013,50 +1000,59 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
            sete   dl
             and   eax, edx
              or   dword[.ttCapture], eax
+
     ; Step 14. Make the move
            call   Move_Do__Search
+
     ; Step 15. Reduced depth search (LMR)
-            mov   edx, dword[.depth]
-            mov   ecx, dword[.moveCount]
-            cmp   edx, 3*ONE_PLY
-             jl   .15skip
-            cmp   ecx, 1
-            jbe   .15skip
+            mov  edx, dword[.depth]
+            mov  ecx, dword[.moveCount]
+            cmp  edx, 3*ONE_PLY
+             jl  .15skip
+            cmp  ecx, 1
+            jbe  .15skip
   if USE_MATEFINDER = 1
-            cmp   dl, byte[rbp-Thread.rootPos+Thread.selDepth]
-            jae   .15skip
-            cmp   byte[rbx-1*sizeof.State+State.ply], 3
-             ja   @1f
-            cmp   edx, 16
-            jae   .15skip
+            cmp  dl, byte[rbp-Thread.rootPos+Thread.selDepth]
+            jae  .15skip
+            cmp  byte[rbx-1*sizeof.State+State.ply], 3
+             ja  @1f
+            cmp  edx, 16
+            jae  .15skip
     @1:
   end if
-            mov   r8l, byte[.captureOrPromotion]
-            mov   edi, dword[.reduction]
-           test   r8l, r8l
-             jz   @1f
-            cmp   byte[.moveCountPruning], 0
-             je   .15skip
+            mov  r8l, byte[.captureOrPromotion]
+            mov  edi, dword[.reduction]
+            mov  ecx, 15
+           test  r8l, r8l
+             jz  @1f
+            cmp  byte[.moveCountPruning], 0
+             je  .15skip
     @1:
-            xor   eax, eax
-           test   r8l, r8l
-             jz   .15NotCaptureOrPromotion
-           test   edi, edi
-          setnz   al
-            sub   edi, eax
-            jmp   .15ReadyToSearch
+            xor  eax, eax
+           test  r8l, r8l
+             jz  .15NotCaptureOrPromotion
+           test  edi, edi
+          setnz  al
+            sub  edi, eax
+            jmp  .15ReadyToSearch
+
 .15NotCaptureOrPromotion:
     ; r12d = from
     ; r13d = to
     ; r14d = from piece
     ; r15d = to piece
+    ; ecx = 15
+
+    ; Decrease reduction if opponent's move count is high
+            cmp  ecx, dword[rbx - 2*sizeof.State + State.moveCount]
+            sbb  edi, 0
     ; Increase reduction if ttMove is a capture
             add   edi, dword[.ttCapture]
     ; Increase reduction for cut nodes
-            cmp   byte[.cutNode], 0
-             jz   .15testA
-            add   edi, 2*ONE_PLY
-            jmp   .15skipA
+            cmp  byte[.cutNode], 0
+             jz  .15testA
+            add  edi, 2*ONE_PLY
+            jmp  .15skipA
 .15testA:
             mov   ecx, dword[.move]
             cmp   ecx, MOVE_TYPE_PROM shl 12
