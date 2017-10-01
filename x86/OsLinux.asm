@@ -719,9 +719,9 @@ Os_SetStdHandles:
             ret
 
 
-_Os_WriteOut_Output:
+Os_WriteOut_Output:
             lea   rcx, [Output]
-_Os_WriteOut:
+Os_WriteOut:
     ; in: rcx  address of string start
     ;     rdi  address of string end
            push  rsi rdi rbx
@@ -739,7 +739,7 @@ _Os_WriteOut:
             ret
 
 
-_Os_WriteError:
+Os_WriteError:
     ; in: rcx  address of string start
     ;     rdi  address of string end
            push  rsi rdi rbx
@@ -747,7 +747,7 @@ _Os_WriteError:
             mov  rdx, rdi
             sub  rdx, rcx
             mov  edi, 2
-            jmp  _Os_WriteOut.go
+            jmp  Os_WriteOut.go
 
 
 

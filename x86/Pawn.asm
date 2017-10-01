@@ -154,7 +154,13 @@ Neighbours_True__Lever_False__RelRank_big:
             xor   r10, r10
 Continue:
         _popcnt   rax, r8, r9
+    if CPU_HAS_POPCNT = 1
+         popcnt   r9, rbx
+    else
+           push   r10             
         _popcnt   r9, rbx, r10
+            pop   r10
+    end if
             neg   r11d
             neg   rbx
             adc   r11d, r11d

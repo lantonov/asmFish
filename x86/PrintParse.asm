@@ -628,7 +628,7 @@ WriteLine:
             mov  rdx, qword[ioBuffer + IOBuffer.log]
            test  rdx, rdx
             jns  .logger
-            jmp  _Os_WriteOut
+            jmp  Os_WriteOut
 .logger:
            push  rbx rcx rdi
             sub  rsp, 64
@@ -652,7 +652,7 @@ WriteLine:
             sub  r8, rdx
            call  Os_FileWrite
             pop  rdi rcx rbx
-            jmp  _Os_WriteOut
+            jmp  Os_WriteOut
 
 
 Log_Init:            
