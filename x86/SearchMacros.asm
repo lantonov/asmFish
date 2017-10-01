@@ -52,6 +52,7 @@ macro search RootNode, PvNode
     .reduction              rd 1
     .quietsSearched     rd 64
     if PvNode = 1
+      .pvExact          rd 1
       .pv               rd MAX_PLY + 1
     end if
     .lend               rb 0
@@ -591,42 +592,44 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
   end if
 
 
-	    ; Step 10. Internal iterative deepening (skipped when in check)
-                mov   r8d, dword[.depth]
-                mov   ecx, dword[.ttMove]
-               test   ecx, ecx
-                jnz   .10skip
-                cmp   r8d, 6*ONE_PLY
-                 jl   .10skip
-                lea   r8d, [3*r8]
-                sar   r8d, 2
-                sub   r8d, 2*ONE_PLY
+    ; Step 10. Internal iterative deepening (skipped when in check)
+            mov  r8d, dword[.depth]
+            mov  ecx, dword[.ttMove]
+           test  ecx, ecx
+            jnz  .10skip
+            cmp  r8d, 6*ONE_PLY
+             jl  .10skip
+            lea  r8d, [3*r8]
+            sar  r8d, 2
+            sub  r8d, 2*ONE_PLY
   if PvNode = 1
-                mov   ecx, dword[.alpha]
-                mov   edx, dword[.beta]
-              movzx   r9d, byte[.cutNode]
-                mov   byte[rbx+State.skipEarlyPruning], -1
-               call   Search_Pv
+            mov  ecx, dword[.alpha]
+            mov  edx, dword[.beta]
+          movzx  r9d, byte[.cutNode]
+            mov  byte[rbx+State.skipEarlyPruning], -1
+           call  Search_Pv
   else
-            mov   eax, dword[rbx+State.staticEval]
-            add   eax, 256
-            cmp   eax, dword[.beta]
-             jl   .10skip
-            mov   ecx, dword[.alpha]
-            mov   edx, dword[.beta]
-          movzx   r9d, byte[.cutNode]
-            mov   byte[rbx+State.skipEarlyPruning], -1
-           call   Search_NonPv
+            mov  eax, dword[rbx+State.staticEval]
+            add  eax, 256
+            cmp  eax, dword[.beta]
+             jl  .10skip
+            mov  ecx, dword[.alpha]
+            mov  edx, dword[.beta]
+          movzx  r9d, byte[.cutNode]
+            mov  byte[rbx+State.skipEarlyPruning], -1
+           call  Search_NonPv
   end if
-            mov   byte[rbx+State.skipEarlyPruning], 0
-            mov   rcx, qword[.posKey]
-           call   MainHash_Probe
-            mov   qword[.tte], rax
-            mov   qword[.ltte], rcx
-            mov   byte[.ttHit], dl
-            shr   ecx, 16
-            mov   dword[.ttMove], ecx
+            mov  byte[rbx+State.skipEarlyPruning], 0
+            mov  rcx, qword[.posKey]
+           call  MainHash_Probe
+            mov  qword[.tte], rax
+            mov  qword[.ltte], rcx
+            mov  byte[.ttHit], dl
+            shr  ecx, 16
+            mov  dword[.ttMove], ecx
 .10skip:
+
+
 .moves_loop:	    ; this is actually not the head of the loop
     ; The data at tte could have been changed by
     ;   Step 6. Razoring
@@ -636,6 +639,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
     ; the data is reloaded
     ; Also, in the case of a tt miss, tte points to junk but must be used anyways.
     ; We reload the data in .ltte for its use in .singularExtensionNode.
+
             mov   rax, qword[.tte]
             mov   rax, qword[rax]
             mov   qword[.ltte], rax
@@ -700,6 +704,8 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             xor   eax, eax 
             mov   byte[.skipQuiets], al
             mov   dword[.ttCapture], eax
+
+
   if RootNode = 1
             mov   byte[.singularExtensionNode], al
   else
@@ -729,7 +735,19 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             and   al, cl
             mov   byte[.singularExtensionNode], al
   end if
+
+  if PvNode = 1
+            mov   al, byte[.ltte+MainHashEntry.genBound]
+            and   al, BOUND_EXACT
+            cmp   al, BOUND_EXACT
+           sete   al
+            and   al, byte[.ttHit]
+            mov   dword[.pvExact], eax
+  end if
+
+
     ; Step 11. Loop through moves
+
          calign   8
 .MovePickLoop:	     ; this is the head of the loop
           movsx   esi, byte[.skipQuiets]
@@ -1045,7 +1063,11 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
 
     ; Decrease reduction if opponent's move count is high
             cmp  ecx, dword[rbx - 2*sizeof.State + State.moveCount]
+if PvNode = 1
+            sbb  edi, dword[.pvExact]
+else
             sbb  edi, 0
+end if
     ; Increase reduction if ttMove is a capture
             add   edi, dword[.ttCapture]
     ; Increase reduction for cut nodes
