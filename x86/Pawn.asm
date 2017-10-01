@@ -21,10 +21,15 @@ macro EvalPawns Us
 	Right = DELTA_SW
 	Left  = DELTA_SE
   end if
-  Isolated0   = ((27 shl 16) + (30))
-  Isolated1   = ((13 shl 16) + (18))
-  Backward0   = ((40 shl 16) + (26))
-  Backward1   = ((24 shl 16) + (12))
+
+  Isolated0    = (27 shl 16) + (30)
+  Isolated1    = (13 shl 16) + (18)
+  Isolated     = (13 shl 16) + (18)
+
+  Backward0    = (40 shl 16) + (26)
+  Backward1    = (24 shl 16) + (12)
+  Backward     = (24 shl 16) + (12)
+
   Doubled     = ((18 shl 16) + (38))
             xor   eax, eax
             mov   qword[rdi+PawnEntry.passedPawns+8*Us], rax
@@ -83,6 +88,7 @@ NextPiece:
     ; rdx = adjacent_files_bb(f)
             mov   r10, qword[PassedPawnMask+8*(64*Us+rcx)]
             and   r10, r14
+           push   r10
     ; r10 = stoppers
             mov   r8d, ecx
             shr   r8d, 3
@@ -125,37 +131,31 @@ Neighbours_True__Lever_False__RelRank_small:
             shr   eax, 3
             mov   rax, qword[RankBB+8*rax]
             and   rdx, rax
-       ShiftBB   Up, rdx
+        ShiftBB   Up, rdx
              or   rdx, rax
-            mov   eax, r11d
-            and   eax, Backward0-Backward1
-            sub   eax, Backward0
+            mov   eax, -Backward
             and   rdx, r10
          cmovnz   edx, eax
     ; edx = backwards ? Backward[opposed] : 0
+            lea   eax, [r11 + 1]
+         cmovnz   r10d, eax
             jmp   Continue
 Neighbours_False:
             and   rax, r14
-            cmovnz   eax, dword[Lever+4*r12]
+         cmovnz   eax, dword[Lever+4*r12]
             add   esi, eax
-            mov   edx, r11d
-            and   edx, Isolated0-Isolated1
-            sub   edx, Isolated0
-    ; edx = Isolated[opposed]
+            mov   edx, -Isolated
+            lea   r10d, [r11 + 1]
             jmp   Continue
+
 Neighbours_True__Lever_True:
 Neighbours_True__Lever_False__RelRank_big:
             xor   edx, edx
+            xor   r10, r10
 Continue:
-	    _popcnt   rax, r8, r9
-  if CPU_HAS_POPCNT = 0        ; out of registers in this case
-           push   r10
+        _popcnt   rax, r8, r9
         _popcnt   r9, rbx, r10
-            pop   r10
-  else
-	     popcnt   r9, rbx
-  end if
-		    neg   r11d
+            neg   r11d
             neg   rbx
             adc   r11d, r11d
             lea   r11d, [3*r11]
@@ -164,10 +164,17 @@ Continue:
     ; r11 = [opposed][!!phalanx][popcount(supported)][relative_rank(Us, s)]
              or   rbx, r8
          cmovnz   edx, dword[Connected+4*r11]
+            jnz   @1f
+  if Us = Black
+            shl   r10d, 4*Us
+  end if
+            add   byte[rdi+PawnEntry.weakUnopposed], r10l
+    @1:
             add   esi, edx
     ; r8 = supported
     ; r9 = popcnt(phalanx)
     ; rax = popcnt(supported)
+            pop   r10
     ; r10 = stoppers
             mov   r11, qword[PawnAttacks+8*(64*Us+rcx)]
             and   r11, r14
@@ -176,7 +183,7 @@ Continue:
             and   rdx, r14
 	; rdx = leverPush
             mov   r12, r10
-            test   r13, qword[ForwardBB+8*(64*Us+rcx)]
+           test   r13, qword[ForwardBB+8*(64*Us+rcx)]
             jnz   NoPassed
             xor   r10, r11
             xor   r10, rdx

@@ -128,14 +128,14 @@ macro EvalPieces Us, Pt
 	RookOnFile1	  = ((45 shl 16) + (20))
 
   if Pt = Knight
-	Outpost0	  = ((22 shl 16) + (6))
-	Outpost1	  = ((33 shl 16) + (9))
+	Outpost0	  = ((22 shl 16) + ( 6))
+	Outpost1	  = ((36 shl 16) + (12))
 	KingAttackWeight  = 78
 	MobilityBonus	  equ MobilityBonus_Knight
         KingProtector_Pt  = ((-3 shl 16) + (-5))
   else if Pt = Bishop
 	Outpost0	  = (( 9 shl 16) + (2))
-	Outpost1	  = ((14 shl 16) + (4))
+	Outpost1	  = ((15 shl 16) + (5))
 	KingAttackWeight  = 56
 	MobilityBonus	  equ MobilityBonus_Bishop
         KingProtector_Pt  = ((-4 shl 16) + (-3))
@@ -1011,42 +1011,58 @@ ThreatRookDone:
 	     addsub   esi, eax
 
 WeakDone:
-		mov   rax, not TRank7BB
-		and   rax, PiecesUs
-		and   rax, PiecesPawn
 
-		mov   r8, PiecesUs
-		 or   r8, PiecesThem
+        WeakUnopposedPawn = (5 shl 16) + 25
 
-		mov   rcx, TRank2BB
-		and   rcx, rax
-	   ShiftBB   Up, rcx
-	      _andn   rdx, r8, rcx
-		 or   rax, rdx
-	   ShiftBB   Up, rax
+            mov  rcx, qword[rbp + Pos.typeBB + 8*Rook]
+             or  rcx, qword[rbp + Pos.typeBB + 8*Queen]
+          movzx  edx, byte[rdi + PawnEntry.weakUnopposed]
+            mov  rax, not TRank7BB
+            and  rax, PiecesUs
+            and  rax, PiecesPawn
+           test  rcx, PiecesUs
+             jz  @1f
+  if Us = White
+            shr  edx, 4
+  else
+            and  edx, 0x0F
+  end if
+           imul  edx, WeakUnopposedPawn
+         addsub  esi, edx
+    @1:
 
-		mov   rdx, r8
-		not   rdx
-		and   rax, rdx
-		mov   rcx, qword[.ei.attackedBy+8*(8*Them+Pawn)]
-		not   rcx
-		and   rax, rcx
-		mov   rdx, AttackedByThem
-		not   rdx
-		 or   rdx, AttackedByUs
-		and   rax, rdx
+            mov  r8, PiecesUs
+             or  r8, PiecesThem
 
-		mov   rdx, rax
-	   ShiftBB   Left, rax, rcx
-	   ShiftBB   Right, rdx, rcx
-		 or   rax, rdx
-		and   rax, PiecesThem
-		mov   rcx, qword[.ei.attackedBy+8*(8*Us+Pawn)]
-		not   rcx
-		and   rax, rcx
-	    _popcnt   rax, rax, rdx
-	       imul   eax, ThreatByPawnPush
-	     addsub   esi, eax
+            mov  rcx, TRank2BB
+            and  rcx, rax
+        ShiftBB  Up, rcx
+          _andn  rdx, r8, rcx
+             or  rax, rdx
+        ShiftBB  Up, rax
+
+            mov  rdx, r8
+            not  rdx
+            and  rax, rdx
+            mov  rcx, qword[.ei.attackedBy+8*(8*Them+Pawn)]
+            not  rcx
+            and  rax, rcx
+            mov  rdx, AttackedByThem
+            not  rdx
+             or  rdx, AttackedByUs
+            and  rax, rdx
+
+            mov  rdx, rax
+        ShiftBB  Left, rax, rcx
+        ShiftBB  Right, rdx, rcx
+             or  rax, rdx
+            and  rax, PiecesThem
+            mov  rcx, qword[.ei.attackedBy+8*(8*Us+Pawn)]
+            not  rcx
+            and  rax, rcx
+        _popcnt  rax, rax, rdx
+           imul  eax, ThreatByPawnPush
+         addsub  esi, eax
 end macro
 
 
@@ -1366,6 +1382,7 @@ virtual at rsp
 end virtual
 	     calign   16
 .DoPawnEval:
+                mov   byte[rdi + PawnEntry.weakUnopposed], 0
                 mov   qword[rbp+Pos.state], rbx
 	  EvalPawns   White
 		mov   dword[rdi+PawnEntry.score], esi

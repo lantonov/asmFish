@@ -47,7 +47,7 @@ struct PawnEntry	; 80 bytes
  asymmetry	rb 1  ; [0,8]
  openFiles	rb 1
  castlingRights rb 1
-		rb 1
+ weakUnopposed  rb 1
 ends
 
 struct HistoryStats
