@@ -63,7 +63,7 @@ szGreetingEnd:
 	NewLineData
 	db 'option name Contempt type spin default 0 min -100 max 100'
 	NewLineData
-	db 'option name MoveOverhead type spin default 30 min 0 max 5000'
+	db 'option name MoveOverhead type spin default 50 min 0 max 5000'
 	NewLineData
 
 if USE_SYZYGY

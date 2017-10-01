@@ -12,7 +12,7 @@ Options_Init:
            strb  w0, [x1, Options.ponder]
             mov  w0, 1
             str  w0, [x1, Options.multiPV]
-            mov  w0, 30
+            mov  w0, 50
             str  w0, [x1, Options.moveOverhead]
             mov  w0, 0
            strb  w0, [x1, Options.chess960]

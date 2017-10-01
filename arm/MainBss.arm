@@ -102,7 +102,9 @@ MobilityBonus_Bishop:   rb 4*16
 MobilityBonus_Rook:     rb 4*16
 MobilityBonus_Queen:    rb 4*32
 Lever:                  rb 4*8
-ShelterWeakness:        rb 4*8*8
+ShelterWeakness:
+ShelterWeakness_No         rd 8*8
+ShelterWeakness_Yes        rd 8*8
 StormDanger:
 StormDanger_NoFriendlyPawn: rb 4*8*8
 StormDanger_Unblocked:	    rb 4*8*8
