@@ -22,8 +22,10 @@ macro EvalPawns Us
   end if
   Isolated0   = ((27 shl 16) + (30))
   Isolated1   = ((13 shl 16) + (18))
+  Isolated    = ((13 shl 16) + (18))
   Backward0   = ((40 shl 16) + (26))
   Backward1   = ((24 shl 16) + (12))
+  Backward    = ((24 shl 16) + (12))
   Doubled     = ((18 shl 16) + (38))
             mov  w0, 0
             str  x0, [x27, PawnEntry.passedPawns + 8*Us]
@@ -138,47 +140,47 @@ Neighbours_True__Lever_False__RelRank_small:
             and  x2, x2, x0
         ShiftBB  Up, x2, x2
             orr  x2, x2, x0
-          mov32  w4, Backward0
-          mov32  w5, Backward1
-            sub  w0, w4, w5
-            and  w0, w0, w11
-            sub  w0, w0, w4
+          mov32  w0, -Backward
             tst  x2, x10
+            add  w4, w11, 1
            csel  w2, w0, wzr, ne
-    ; w2 = backwards ? Backward[opposed] : 0
+           csel  w12, w4, wzr, ne
               b  Continue
+
 Neighbours_False:
             tst  x0, x24
             lea  x6, Lever
             ldr  w4, [x6, x22, lsl 2]
            csel  w0, w4, wzr, ne
             add  w26, w26, w0
-
-          mov32  w4, Isolated0
-          mov32  w5, Isolated1
-            sub  w2, w4, w5
-            and  w2, w2, w11
-            sub  w2, w2, w4
-    ; w2 = Isolated[opposed]
+          mov32  w2, -Isolated
+            add  w12, w11, 1
               b  Continue
+
 Neighbours_True__Lever_True:
 Neighbours_True__Lever_False__RelRank_big:
             mov  w2, 0
+            mov  w12, 0
 Continue:
         _popcnt  x0, x8, x9
         _popcnt  x9, x3, x4
             sub  w11, wzr, w11, lsl 1
             tst  x3, x3
-            cinc  w11, w11, ne 
+           cinc  w11, w11, ne 
             add  w11, w11, w11, lsl 1
             add  w11, w11, w0
             add  w11, w22, w11, lsl 3
     ; w11 = [opposed][!!phalanx][popcount(supported)][relative_rank(Us, s)]
             orr  x3, x3, x8
             tst  x3, x3
-            lea  x6, Connected
+           _lea  x6, Connected
             ldr  w4, [x6, x11, lsl 2]
-            csel  w2, w4, w2, ne
+           csel  w2, w4, w2, ne
+            bne  @1f
+            ldr  w4, [x27, PawnEntry.weakUnopposed]
+            add  w4, w4, w12, lsl 4*Us
+            str  w4, [x27, PawnEntry.weakUnopposed]            
+    @1:
             add  w26, w26, w2
     ; r8 = supported
     ; r9 = popcnt(phalanx)

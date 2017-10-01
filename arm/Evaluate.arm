@@ -110,16 +110,16 @@ macro EvalPieces Us, Pt
 	RookOnFile1 = ((45 shl 16) + (20))
 
   if Pt = Knight
- 	Outpost0 = ((22 shl 16) + (6))
- 	Outpost1 = ((33 shl 16) + (9))
- 	KingAttackWeight = 78
- 	MobilityBonus equ MobilityBonus_Knight
+        Outpost0 = ((22 shl 16) + ( 6))
+        Outpost1 = ((36 shl 16) + (12))
+        KingAttackWeight = 78
+        MobilityBonus equ MobilityBonus_Knight
         KingProtector_Pt = ((-3 shl 16) + (-5))
   else if Pt = Bishop
-	Outpost0 = (( 9 shl 16) + (2))
-	Outpost1 = ((14 shl 16) + (4))
-	KingAttackWeight = 56
-	MobilityBonus equ MobilityBonus_Bishop
+        Outpost0 = (( 9 shl 16) + (2))
+        Outpost1 = ((15 shl 16) + (5))
+        KingAttackWeight = 56
+        MobilityBonus equ MobilityBonus_Bishop
         KingProtector_Pt = ((-4 shl 16) + (-3))
   else if Pt = Rook
 	KingAttackWeight = 45
@@ -1098,10 +1098,25 @@ ThreatRookDone:
          Addsub  Us, w26, w26, w0
 
 WeakDone:
+    WeakUnopposedPawn = (5 shl 16) + 25
+            ldr  x1, [x20, Pos.typeBB + 8*Rook]
+            ldr  x4, [x20, Pos.typeBB + 8*Queen]
+            orr  x1, x1, x4
+           ldrb  w2, [x27, PawnEntry.weakUnopposed]
           mov64  x0, AllSquares xor TRank7BB
             and  x0, x0, PiecesUs
             and  x0, x0, PiecesPawn
-
+            tst  x1, PiecesUs
+            beq  @1f
+  if Us = White
+            lsr  w2, w2, 4
+  else
+            and  w2, w2, 0x0F
+  end if
+         _mov32  w4, WeakUnopposedPawn
+            mul  w2, w2, w4
+         Addsub  Us, w26, w26, w2
+    @1:
             orr  x8, PiecesUs, PiecesThem
 
           mov64  x1, TRank2BB
@@ -1432,6 +1447,7 @@ end macro
 Evaluate_Cold:
 
 .DoPawnEval:
+           strb  wzr, [x27, PawnEntry.weakUnopposed]
       EvalPawns  White
             str  w26, [x27, PawnEntry.score]
       EvalPawns  Black

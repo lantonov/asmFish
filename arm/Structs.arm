@@ -43,7 +43,8 @@ PawnEntry.pawnsOnSquares = 2*sizeof.rb + PawnEntry.semiopenFiles
 PawnEntry.asymmetry = 4*sizeof.rb + PawnEntry.pawnsOnSquares
 PawnEntry.openFiles = 1*sizeof.rb + PawnEntry.asymmetry
 PawnEntry.castlingRights = 1*sizeof.rb + PawnEntry.openFiles
-sizeof.PawnEntry = 1*sizeof.rb + 1*sizeof.rb + PawnEntry.castlingRights
+PawnEntry.weakUnopposed  = 1*sizeof.rb + PawnEntry.castlingRights
+sizeof.PawnEntry = 1*sizeof.rb + PawnEntry.weakUnopposed
 
 HistoryStats.___ = 0
 sizeof.HistoryStats = 0 + 2*64*64*sizeof.rd + HistoryStats.___
