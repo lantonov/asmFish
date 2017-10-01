@@ -517,14 +517,14 @@ KingSafetyDoneRet:
             ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + King)]
             bic  x8, x4, x8
             and  x8, x8, AttackedByThem
-    ; x8=undefended
+    ; x8=kingOnlyDefended
 
             orr  x9, PiecesThem, AttackedByUs
             ldr  x4, [sp, EvalInfo.kingRing + 8*Us]
             bic  x9, x4, x9
             and  x9, x9, AttackedByThem
-    ; x9=b
-
+    ; x9=undefended
+            orr  x9, x9, x8
             cmp  w1, 2
             blo  AllDone
 
@@ -534,16 +534,14 @@ KingSafetyDoneRet:
             ldr  w4, [sp, EvalInfo.kingAdjacentZoneAttacksCount+4*Them]
             mul  w0, w0, w4
             add  w27, w27, w0
-            Popcnt  x0, x8, x1
-            mov  w4, 201
+        _popcnt  x0, x9, x1
+            mov  w4, 191
             mul  w0, w0, w4
             add  w27, w27, w0
-            Popcnt  x0, x9, x1
             ldr  x2, [sp, EvalInfo.pinnedPieces + 8*Us]
             tst  x2, x2
-           cinc  w0, w0, ne
             mov  w4, 143
-            mul  w0, w0, w4
+           csel  w0, w4, wzr, ne
             add  w27, w27, w0
             ldr  x4, [x20, Pos.typeBB + 8*Queen]
             tst  PiecesThem, x4
