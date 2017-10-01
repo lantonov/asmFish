@@ -44,8 +44,8 @@ res	         equ w0
 
             neg  swap, swap
             mov  res, 0
-            cmp  w1, MOVE_TYPE_EPCAP shl 12
-            bhs  .Special
+            tst  w1, 0xFFFFF000
+            bne  .Special
 
             add  x6, x20, Pos.board
            ldrb  w1, [x6, to]
@@ -219,28 +219,10 @@ res	         equ w0
               b  .Loop
 
 .Special:
-    ; if we get here, .swap = -value
-    ;            and  .res = 0
-            cmp  w1, MOVE_TYPE_CASTLE shl 12
-            bhs  .Castle
-            ldr  w1, [x20, Pos.sideToMove]
-            add  x1, to, x1, lsl 4
-            sub  w1, w1, 8
-            mov  x4, 1
-            lsl  x4, x4, x1
-            bic  occupied, occupied, x4
-            add  swap, swap, PawnValueMg
-            cmp  swap, res
-            bge  .EpCaptureRet
-
-.ReturnSpecial:
-            ret
-
-.Castle:
-    ; return 0 <= swap
+    ; if we get here, swap = -value  and  res = 0
             cmp  swap, 0
            cset  res, ge
-              b  .ReturnSpecial
+            ret
 
 restore from
 restore from_d

@@ -2,6 +2,7 @@
 
 _start:
            csel  x0, x1, x0, ne
+            tst  w1, 0xFFFFF000
 
 
 Math_Lerp:
