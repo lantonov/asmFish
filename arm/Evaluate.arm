@@ -1447,7 +1447,7 @@ end macro
 Evaluate_Cold:
 
 .DoPawnEval:
-           strb  wzr, [x27, PawnEntry.weakUnopposed]
+            mov  x17, 0
       EvalPawns  White
             str  w26, [x27, PawnEntry.score]
       EvalPawns  Black
@@ -1465,6 +1465,7 @@ Evaluate_Cold:
             str  w0, [x27, PawnEntry.score]
            strb  w1, [x27, PawnEntry.asymmetry]
            strb  w2, [x27, PawnEntry.openFiles]
+           strb  w17, [x27, PawnEntry.weakUnopposed]
               b  Evaluate.DoPawnEvalReturn
 
 

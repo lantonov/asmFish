@@ -97,6 +97,6 @@ Move_DoNull_GoError:
                 xor   eax, eax
               stosd
                 lea   rdi, [Output]
-               call   _ErrorBox
+               call   Os_ErrorBox
                int3
 end if

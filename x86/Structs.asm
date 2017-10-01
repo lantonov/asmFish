@@ -132,11 +132,11 @@ struct Pos
  gamePly     rd 1
  chess960    rd 1
  _copy_size rb 0
-;if DEBUG
-; debugQWORD1	rq 1   ; some general purpose data
-; debugDWORD1	rd 1   ; for asserting the asserts in debug
-; debugDWORD2	rd 1   ;
-;end if
+if DEBUG
+ debugQWORD1	rq 1   ; some general purpose data
+ debugDWORD1	rd 1   ; for asserting the asserts in debug
+ debugDWORD2	rd 1   ;
+end if
  state		rq 1 ; the current state struct
  stateTable	rq 1 ; the beginning of the vector of State structs
  stateEnd	rq 1 ; the end of

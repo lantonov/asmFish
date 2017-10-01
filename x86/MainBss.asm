@@ -1,6 +1,9 @@
 ; todo: see if the order/alignment of these variables affects performance
               align   16
 Output 	  rb 4096  ; output buffer has static allocation
+if DEBUG = 1
+  DebugOutput rb 4096
+end if
 
               align   16
 ioBuffer  IOBuffer

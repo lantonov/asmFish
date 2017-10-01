@@ -1,6 +1,7 @@
 macro EvalPawns Us
 	; in  x20 address of Pos struct
 	;     x27 address of pawn table entry
+    ;     x17 byte[x27, PawnEntry.weakUnopposed]
 	; out w26 score
   local Them, Up, Right, Left
   local Isolated0, Isolated1, Backward0, Backward1, Doubled
@@ -20,16 +21,13 @@ macro EvalPawns Us
         Right = DELTA_SW
         Left  = DELTA_SE
   end if
-  Isolated0   = ((27 shl 16) + (30))
-  Isolated1   = ((13 shl 16) + (18))
   Isolated    = ((13 shl 16) + (18))
-  Backward0   = ((40 shl 16) + (26))
-  Backward1   = ((24 shl 16) + (12))
   Backward    = ((24 shl 16) + (12))
   Doubled     = ((18 shl 16) + (38))
-            mov  w0, 0
-            str  x0, [x27, PawnEntry.passedPawns + 8*Us]
-            str  x0, [x27, PawnEntry.pawnAttacksSpan + 8*Us]
+
+            mov  x15, 0
+            mov  x16, 0
+
             mov  w4, 64
            strb  w4, [x27, PawnEntry.kingSquares + Us]
             mov  w4, 255
@@ -77,9 +75,7 @@ NextPiece:
            strb  w0, [x27, PawnEntry.semiopenFiles + Us]
            _lea  x6, PawnAttackSpan + 8*(64*Us)
             ldr  x0, [x6, x1, lsl 3]
-            ldr  x4, [x27, PawnEntry.pawnAttacksSpan + 8*Us]
-            orr  x4, x4, x0
-            str  x4, [x27, PawnEntry.pawnAttacksSpan + 8*Us]
+            orr  x16, x16, x0
            _lea  x6, ForwardBB + 8*(64*Us)
             ldr  x11, [x6, x1, lsl 3]
             tst  x11, x24
@@ -149,7 +145,7 @@ Neighbours_True__Lever_False__RelRank_small:
 
 Neighbours_False:
             tst  x0, x24
-            lea  x6, Lever
+           _lea  x6, Lever
             ldr  w4, [x6, x22, lsl 2]
            csel  w0, w4, wzr, ne
             add  w26, w26, w0
@@ -176,12 +172,9 @@ Continue:
            _lea  x6, Connected
             ldr  w4, [x6, x11, lsl 2]
            csel  w2, w4, w2, ne
-            bne  @1f
-            ldr  w4, [x27, PawnEntry.weakUnopposed]
-            add  w4, w4, w12, lsl 4*Us
-            str  w4, [x27, PawnEntry.weakUnopposed]            
-    @1:
+            add  w5, w17, w12, lsl 4*Us
             add  w26, w26, w2
+           csel  w17, w5, w17, eq
     ; r8 = supported
     ; r9 = popcnt(phalanx)
     ; rax = popcnt(supported)
@@ -209,9 +202,7 @@ Continue:
             bcc  NoPassed
             mov  x0, 1
             lsl  x0, x0, x1
-            ldr  x4, [x27, PawnEntry.passedPawns + 8*Us]
-            orr  x4, x4, x0
-            str  x4, [x27, PawnEntry.passedPawns + 8*Us]
+            orr  x15, x15, x0
               b  Done
 NoPassed:
             add  w0, w1, Up
@@ -240,9 +231,7 @@ PopLoop:
            ands  x2, x2, x9
            cset  w0, eq
             lsl  x0, x0, x1
-            ldr  x4, [x27, PawnEntry.passedPawns + 8*Us]
-            orr  x4, x4, x0
-            str  x4, [x27, PawnEntry.passedPawns + 8*Us]
+            orr  x15, x15, x0
             sub  x0, x8, 1
             and  x8, x8, x0
            cbnz  x8, PopLoop
@@ -251,4 +240,6 @@ Done:
             cmp  w1, 64
             blo  NextPiece
 AllDone:
+            str  x15, [x27, PawnEntry.passedPawns + 8*Us]
+            str  x16, [x27, PawnEntry.pawnAttacksSpan + 8*Us]
 end macro

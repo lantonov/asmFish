@@ -64,7 +64,7 @@
 
 
 
-	     calign   16, SeeTestGe.HaveFromTo
+	     calign  16, SeeTestGe.HaveFromTo
 SeeTestGe:
 	; in: rbp address of Pos
 	;     rbx address of State
@@ -96,23 +96,6 @@ res	     equ eax
 		and   r9d, 63
 .HaveFromTo:
 
-;ProfileInc SeeTest
-
-if DEBUG
-	       push   rcx rdx r8 r9
-		and   ecx, 15 shl 12
-		shl   r8d, 6
-		add   ecx, r8d
-		add   ecx, r9d
-		mov   dword[rbp+Pos.debugDWORD1], ecx
-		mov   dword[rbp+Pos.debugDWORD2], edx
-	       call   See
-		pop   r9 r8 rdx rcx
-		cmp   eax, edx
-	      setge   al
-	      movzx   eax, al
-	       push   rax
-end if
 	       push   r12 r13 r14 r15 rsi rdi
 
 		mov   occupied, qword[rbp+Pos.typeBB+8*White]
@@ -236,11 +219,6 @@ end if
 
 .Return:
 		pop   rdi rsi r15 r14 r13 r12
-if DEBUG
-		pop   rcx
-		cmp   eax, ecx
-		jne   SeeTest_Error
-end if
 		ret
 
 
@@ -308,36 +286,6 @@ end if
             adc  res, res
             pop  rdi rsi r15 r14 r13 r12
             ret
-
-
-if DEBUG
-SeeTest_Error:
-		lea   rdi, [Output]
-	       push   rcx rax
-	     szcall   PrintString, 'SeeTest mismatch: SeeTest = '
-		pop   rax
-	       call   PrintUnsignedInteger
-	     szcall   PrintString, 'while (See >= value) = '
-		pop   rax
-	       call   PrintUnsignedInteger
-PrintNewLine
-		mov   rax, 'move:   '
-	      stosq
-		mov   ecx, dword[rbp+Pos.debugDWORD1]
-		mov   edx, dword[rbp+Pos.chess960]
-	       call  PrintUciMoveLong
-PrintNewLine
-		mov   rax, 'value:  '
-	      stosq
-	     movsxd   rax, dword[rbp+Pos.debugDWORD2]
-	       call   PrintSignedInteger
-PrintNewLine
-		mov   qword[rbp+Pos.state], rbx
-	       call   Position_PrintSmall
-		lea   rdi, [Output]
-	       call   _ErrorBox
-               int3
-end if
 
 
 

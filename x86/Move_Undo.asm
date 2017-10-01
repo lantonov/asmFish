@@ -277,6 +277,6 @@ Move_Undo_Check:
 	       call   PrintUciMoveLong
        PrintNewLine
 		lea   rdi, [DebugOutput]
-	       call   _ErrorBox
+	       call   Os_ErrorBox
                int3
 end if

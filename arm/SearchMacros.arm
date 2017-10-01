@@ -1057,7 +1057,6 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             add  x6, x21, - 2*sizeof.State + State.moveCount
             ldr  w4, [x6]
             cmp  w1, w4
-
   if PvNode = 1
             ldr  w4, [sp, .pvExact]
             sbc  w27, w27, w4
@@ -1133,14 +1132,17 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             mov  w9, -1
              bl  Search_NonPv
             neg  w0, w0
-            str  w0, [sp, .value]
             ldr  w4, [sp, .alpha]
+            mov  x9, 0
             cmp  w0, w4
             ble  .17entry
             ldr  w4, [sp, .newDepth]
             cmp  w27, w4
+  if PvNode = 1
             beq  .15dontdofulldepthsearch
-            mov  x9, 0
+  else
+            beq  .17entry
+  end if
             ldr  w8, [sp, .newDepth]
             adr  x10, QSearch_NonPv_InCheck
             adr  x11, QSearch_NonPv_NoCheck
@@ -1158,14 +1160,16 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             mvn  w9, w9
             blr  x0
             neg  w0, w0
-            str  w0, [sp, .value]
+  if PvNode = 1
             ldr  w4, [sp, .alpha]
             cmp  w0, w4
             ble  .17entry
+  else
+              b  .17entry
+  end if
 .15dontdofulldepthsearch:
   if PvNode = 1
     if RootNode = 0
-            ldr  w0, [sp, .value]
             ldr  w4, [sp, .beta]
             cmp  w0, w4
             bge  .17entry
@@ -1192,18 +1196,18 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             blr  x0
             neg  w0, w0
             str  w0, [sp, .value]
-  end if
               b  .17entry
+  end if
 .15skip:
     ; Step 16. full depth search   this is for when step 15 is skipped
+            mov  x9, 0
+            ldr  w8, [sp, .newDepth]
   if PvNode = 1
             ldr  w4, [sp, .moveCount]
             cmp  w4, 1
             bls  .DoFullPvSearch
   end if
 .FullDepthSearch:
-            mov  x9, 0
-            ldr  w8, [sp, .newDepth]
             adr  x10, QSearch_NonPv_InCheck
             adr  x11, QSearch_NonPv_NoCheck
            ldrb  w4, [x21, -1*sizeof.State + State.givesCheck]
@@ -1220,22 +1224,19 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             mvn  w9, w9
             blr  x0
             neg  w0, w0
-            mov  w27, w0
-            str  w0, [sp, .value]
   if PvNode = 1
             ldr  w4, [sp, .alpha]
-            cmp  w27, w4
+            cmp  w0, w4
             ble  .SkipFullPvSearch
     if RootNode = 0
             ldr  w4, [sp, .beta]
-            cmp  w27, w4
+            cmp  w0, w4
             bge  .SkipFullPvSearch
     end if
 .DoFullPvSearch:
             add  x0, sp, .pv
             str  x0, [x21, State.pv]
             str  wzr, [x0]
-            mov  x9, 0
             ldr  w8, [sp, .newDepth]
             adr  x10, QSearch_Pv_InCheck
             adr  x11, QSearch_Pv_NoCheck
@@ -1245,7 +1246,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             adr  x0, Search_Pv
             cmp  w8, 1
            csel  x0, x11, x0, lt
-           csel  w8, w9, w8, lt
+           csel  w8, wzr, w8, lt
             ldr  w1, [sp, .beta]
             neg  w1, w1
             ldr  w2, [sp, .alpha]
@@ -1253,16 +1254,17 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             mov  w9, 0
             blr  x0
             neg  w0, w0
-            mov  w27, w0
-            str  w0, [sp, .value]
 .SkipFullPvSearch:
   end if
+
     ; Step 17. Undo move
 .17entry:
             ldr  w1, [sp, .move]
+            mov  w27, w0
+            str  w0, [sp, .value]
              bl  Move_Undo
+
     ; Step 18. Check for new best move
-            ldr  w27, [sp, .value]
             mov  w0, 0
            _lea  x6, signals + Signals.stop
            ldrb  w4, [x6]
