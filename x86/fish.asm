@@ -1,30 +1,43 @@
 ; VERSION_POST and VERSION_OS should be defined on cmd line
+if ~ defined VERSION_OS
+  err 'VERSION_OS is not defined'
+end if
+
+if ~ defined VERSION_POST
+  err 'VERSION_POST is not defined'
+end if
+
 VERSION_PRE = 'asmFish'
 
-DEBUG   = 0
-VERBOSE = 0
-PROFILE = 0
+macro SetDefault val*, sym*
+  if ~ defined sym
+    restore sym
+    sym = val
+  end if
+end macro
 
-USE_SYZYGY      = 1
-USE_CURRMOVE    = 1
-USE_HASHFULL    = 1
-USE_CMDLINEQUIT = 1
-USE_SPAMFILTER  = 0
-USE_WEAKNESS    = 0
-USE_VARIETY     = 0
-USE_BOOK        = 0
-USE_MATEFINDER  = 0
+SetDefault 0, DEBUG
+SetDefault 0, VERBOSE
+SetDefault 0, PROFILE
 
-PEDANTIC = 1
+SetDefault 1, USE_SYZYGY
+SetDefault 1, USE_CURRMOVE
+SetDefault 1, USE_HASHFULL
+SetDefault 1, USE_CMDLINEQUIT
+SetDefault 0, USE_SPAMFILTER
+SetDefault 0, USE_WEAKNESS
+SetDefault 0, USE_VARIETY
+SetDefault 0, USE_BOOK
+SetDefault 0, USE_MATEFINDER
 
+SetDefault 0, PEDANTIC
+SetDefault '<empty>', LOG_FILE  ; use something other than <empty> to hardcode a starting log file into the engine
 
 CPU_HAS_POPCNT = 0
 CPU_HAS_BMI1 = 0
 CPU_HAS_BMI2 = 0
 CPU_HAS_AVX1 = 0 ; not implemented yet
 CPU_HAS_AVX2 = 0 ;
-
-
 if VERSION_POST = 'popcnt'
   CPU_HAS_POPCNT = 1
 else if VERSION_POST = 'bmi2'
@@ -32,9 +45,6 @@ else if VERSION_POST = 'bmi2'
   CPU_HAS_BMI1 = 1
   CPU_HAS_BMI2 = 1
 end if
-
-; use something other than <empty> to hardcode a starting log file into the engine
-LOG_FILE = '<empty>'
 
 
 ; instruction and format macros
@@ -149,9 +159,6 @@ QSearch_Pv_NoCheck:     QSearch   1, 0
 Search_NonPv:   search   0, 0
 
 include 'SeeTest.asm'
-if DEBUG
-  include 'See.asm'
-end if
 include 'Move_DoNull.asm'
 include 'CheckTime.asm'
 include 'Castling.asm'
@@ -212,8 +219,8 @@ end if
 
 
 if VERSION_OS = 'W'
-  section '.idata' import data readable writeable
 
+  section '.idata' import data readable writeable
   library kernel,'KERNEL32.DLL'
   import kernel,\
 	__imp_CreateFileA,'CreateFileA',\
@@ -249,7 +256,6 @@ if VERSION_OS = 'W'
 	__imp_VirtualFree,'VirtualFree',\
 	__imp_WaitForSingleObject,'WaitForSingleObject',\
 	__imp_WriteFile,'WriteFile'
-
 
 else if VERSION_OS = 'X'
 

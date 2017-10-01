@@ -32,131 +32,124 @@ Book_Destroy:
 
 
 Book_Load:
-        ; in: rsi file string
-               push   rbx rsi rdi r14 r15
-
-               call   Book_Destroy
-
-        ; find terminator and replace it with null
-               call   SkipSpaces
-                mov   rcx, rsi
-        @@:
-                add   rcx, 1
-                cmp   byte[rcx], ' '
-                jae   @b
-                mov   byte[rcx], 0
-
-                lea   rcx, [sz_empty]
-               call   CmpString
-               test   eax, eax
-                jnz   .Return
-
-                mov   rcx, rsi
-               call   Os_FileOpenRead
-                cmp   rax, -1
-                 je   .Failed
-                mov   r15, rax
-                mov   rcx, rax
-               call   Os_FileSize
-                cmp   rax, 1 shl 28
-                jae   .FailedAndClose
-                cmp   eax, 16
-                 jb   .FailedAndClose
-               test   eax, 15
-                jnz   .FailedAndClose
-                shr   eax, 4
-                mov   dword[book.entryCount], eax
-
-        ; space for reading
-               imul   ecx, dword[book.entryCount], 16
-               call   Os_VirtualAlloc
-                mov   r14, rax
-               imul   ecx, dword[book.entryCount], sizeof.BookEntry
-               call   Os_VirtualAlloc
-                mov   qword[book.buffer], rax
-
-        ; read polyglot book into r14
-                mov   rcx, r15
-                mov   rdx, r14
-               imul   r8d, dword[book.entryCount], 16
-               call   Os_FileRead
-               test   eax, eax
-                 jz   .Failed
-
-        ; get the entries
-                mov   rsi, r14
-                mov   rdi, qword[book.buffer]
-                mov   ecx, dword[book.entryCount]
-                xor   edx, edx
-                xor   r8, r8
-                xor   r9, r9
-        .NextEntry:
-            ; key
-              lodsq
-              bswap   rax
-              stosq
-                cmp   rax, r8
-                adc   edx, 0
-                mov   r8, rax
-            ; move
-              lodsw
-               xchg   al, ah
-              stosw
-            ; weight
-              lodsw
-               xchg   al, ah
-              stosw
-                cmp   ax, 1
-                adc   r9, 0
-            ; learn
-              lodsd
-                sub   ecx, 1
-                jnz   .NextEntry
-                mov   eax, dword[book.entryCount]
-Display 0, 'info string %i0 entries in book (%i9 entries have zero weight)%n'
-        ; check if all entries are ordered
-               test   edx, edx
-                 jz   .InOrder
-Display 0, 'info string undefined behaviour from unsorted keys%n'
-        .InOrder:
-
-        ; free space r14
-                mov   rcx, r14
-               imul   edx, dword[book.entryCount], 16
-               call   Os_VirtualFree
-
-        ; start "in book"
-               call   Book_Refresh
-
+    ; in: rsi file string
+           push  rbx rsi rdi r14 r15
+           call  Book_Destroy
+    ; find terminator and replace it with null
+           call  SkipSpaces
+            mov  rcx, rsi
+    @1:
+            add  rcx, 1
+            cmp  byte[rcx], ' '
+            jae  @1b
+            mov  byte[rcx], 0
+    ; if <empty>, dont do anything
+            lea  rdi, [Output]
+            lea  rcx, [sz_empty]
+           call  CmpString
+           test  eax, eax
+            jnz  .Return_NoPrint
+    ; try to open file
+            mov  rcx, rsi
+           call  Os_FileOpenRead
+            cmp  rax, -1
+             je  .Failed
+            mov  r15, rax
+            mov  rcx, rax
+           call  Os_FileSize
+            cmp  rax, 1 shl 28
+            jae  .FailedAndClose
+            cmp  eax, 16
+             jb  .FailedAndClose
+           test  eax, 15
+            jnz  .FailedAndClose
+            shr  eax, 4
+            mov  dword[book.entryCount], eax
+    ; space for reading
+           imul  ecx, dword[book.entryCount], 16
+           call  Os_VirtualAlloc
+            mov  r14, rax
+           imul  ecx, dword[book.entryCount], sizeof.BookEntry
+           call  Os_VirtualAlloc
+            mov  qword[book.buffer], rax
+    ; read polyglot book into r14
+            mov  rcx, r15
+            mov  rdx, r14
+           imul  r8d, dword[book.entryCount], 16
+           call  Os_FileRead
+           test  eax, eax
+             jz  .Failed
+    ; get the entries
+            mov  rsi, r14
+            mov  rdi, qword[book.buffer]
+            mov  ecx, dword[book.entryCount]
+            xor  r12, r12
+            xor  r8, r8
+            xor  r9, r9
+.NextEntry:
+          lodsq             ; key
+          bswap  rax
+          stosq
+            cmp  rax, r8
+            adc  r12, 0
+            mov  r8, rax
+          lodsw             ; move
+           xchg  al, ah
+          stosw
+          lodsw             ; weight
+           xchg  al, ah
+          stosw
+            cmp  ax, 1
+            adc  r9, 0
+          lodsd             ; learn
+            sub  ecx, 1
+            jnz  .NextEntry
+            mov  eax, dword[book.entryCount]
+           push  r9 rax
+            lea  rcx, [.sz_format1]
+            mov  rdx, rsp
+            xor  r8, r8
+            lea  rdi, [Output]
+           call  PrintFancy
+            pop  rax r9
+    ; check if all entries are ordered
+           test  r12, r12
+             jz  @1f
+            lea  rcx, [.sz_format2]
+           call  PrintString
+    @1:
+    ; free space r14
+            mov  rcx, r14
+           imul  edx, dword[book.entryCount], 16
+           call  Os_VirtualFree
+    ; start "in book"
+           call  Book_Refresh
 .Return:
-                pop   r15 r14 rdi rsi rbx
-                ret
+           call  WriteLine_Output
+.Return_NoPrint:
+            pop  r15 r14 rdi rsi rbx
+            ret
 
 .FailedAndClose:
-                mov   rcx, r15
-               call   Os_FileClose
+            mov  rcx, r15
+           call  Os_FileClose
 .Failed:
-                lea   rdi, [Output]
-                mov   rax, 'info str'
-              stosq
-                mov   rax, 'ing bad '
-              stosq
-                mov   rax, 'bookfile'
-              stosq
-            PrintNL
-               call   _Os_WriteOut_Output
-               call   Book_Destroy
-                jmp   .Return
+            lea  rcx, [.sz_format3]
+           call  PrintString
+           call  Book_Destroy
+            jmp  .Return
 
+.sz_format1:
+    db 'info string %i0 entries in book (%i1 entries have zero weight)%n', 0
+.sz_format2:
+    db 'info string undefined behaviour from unsorted keys'
+    NewLineData
+    db 0
+.sz_format3:
+    db 'info string bad bookfile'
+    NewLineData
+    db 0
 
-        ; convert a move to internal format without the special type
-macro PlotglotMove2Move reg
-  local  notSpecial
-               test   reg, (-1) shl 12
-                 jz   notSpecial
-                add   reg, (-1) shl 12
-notSpecial:
-end macro
 
 Book_Probe:
         ; in: rbp address of position
@@ -244,7 +237,11 @@ end virtual
 
               movzx   edx, word[r15+BookEntry.move]
               movzx   esi, word[r15+BookEntry.weight]
-  PlotglotMove2Move   edx
+        ; convert move edx to internal format without the special type
+               test   edx, (-1) shl 12
+                 jz   @1f
+                add   edx, (-1) shl 12
+    @1:
                 lea   r8, [.legalList]
     .CheckLegalLoop:
                 mov   eax, dword[r8+ExtMove.move]
@@ -291,8 +288,6 @@ Book_GetMove:
         ;      ecx ponder move
         ;          undefined if eax=MOVE_NONE
         ;          could be MOVE_NONE
-
-               push   r15 r14 r13 r12 rbx rsi rdi
 virtual at rsp
  .move       rd 1
  .weight     rd 1
@@ -302,6 +297,8 @@ virtual at rsp
  .lend       rb 0
 end virtual
 .localsize = ((.lend-rsp+15) and (-16))
+
+               push   r15 r14 r13 r12 rbx rsi rdi
          _chkstk_ms   rsp, .localsize
                 sub   rsp, .localsize
                 cmp   dword[book.failCount], 3     ; 3 strikes and out
@@ -583,7 +580,7 @@ end virtual
             lea  rdi, [Output]
             mov  al, ' '
       rep stosb
-           call  _Os_WriteOut_Output
+           call  Os_WriteOut_Output
 .Good:
             lea  rdi, [Output]
             mov  ecx, dword[rsi+ExtBookMove.move]
@@ -598,7 +595,7 @@ end virtual
             lea  rcx, [Output]
             lea  r13, [r14+rdi]
             sub  r13, rcx
-           call  _Os_WriteOut
+           call  Os_WriteOut
 
             mov  ecx, dword[rsi+ExtBookMove.move]
            call  Move_Do__PerftGen_Root
@@ -612,144 +609,12 @@ end virtual
 .ReturnNL:
             lea  rcx, [sz_NewLine]
             lea  rdi, [sz_NewLineEnd]
-           call  _Os_WriteOut
+           call  Os_WriteOut
             xor  r13, r13
 .Return:
             add  rsp, .localsize
             pop  rdi rsi rbx r14 r15
             ret
-
-
-
-
-
-
-
-Move_ToPolyglot:
-		mov   eax, ecx
-		and   eax, 0x00FFF
-		and   ecx, 0x0F000
-		sub   ecx, MOVE_TYPE_PROM shl 12
-		cmp   ecx, 4
-		 jb   .prom
-		ret
-	.prom:
-		lea   eax, [rax+rcx+0x01000]
-		ret
-
-
-RadixSort_Brain:
-	; sort the entries by the brain key
-	; in: rcx left
-	;     rdx right
-	       push   r12 r13 r14 r15 rbx
-		xor   r12, r12
-		bts   r12, 48-1
-		mov   r13d, BrainEntry.brainKey
-		lea   r14, [Swap_BrainEntry]
-		mov   r15d, sizeof.BrainEntry
-	       call   RadixSort
-		pop   rbx r15 r14 r13 r12
-		ret
-
-RadixSort_BrainPolyglot:
-	; sort the entries by the polyglot key
-	; in: rcx left
-	;     rdx right
-	       push   r12 r13 r14 r15 rbx
-		xor   r12, r12
-		bts   r12, 64-1
-		mov   r13d, BrainEntry.polyglotKey
-		lea   r14, [Swap_BrainEntry]
-		mov   r15d, sizeof.BrainEntry
-	       call   RadixSort
-		pop   rbx r15 r14 r13 r12
-		ret
-
-_RadixSort_Polyglot:
-	       push   r12 r13 r14 r15 rbx
-		xor   r12, r12
-		bts   r12, 64-1
-		mov   r13d, PolyglotEntry.key
-		lea   r14, [Swap_PolyglotEntry]
-		mov   r15d, sizeof.PolyglotEntry
-	       call   RadixSort
-		pop   rbx r15 r14 r13 r12
-		ret
-
-
-	      align   16
-Swap_BrainEntry:
-	    vmovaps   xmm0, dqword[rax+00]
-	    vmovaps   xmm1, dqword[rax+16]
-	    vmovaps   xmm2, dqword[rbx+00]
-	    vmovaps   xmm3, dqword[rbx+16]
-	    vmovaps   dqword[rax+00], xmm2
-	    vmovaps   dqword[rax+16], xmm3
-	    vmovaps   dqword[rbx+00], xmm0
-	    vmovaps   dqword[rbx+16], xmm1
-		ret
-
-	      align   16
-Swap_PolyglotEntry:
-	    vmovaps   xmm0, dqword[rax+00]
-	    vmovaps   xmm2, dqword[rbx+00]
-	    vmovaps   dqword[rax+00], xmm2
-	    vmovaps   dqword[rbx+00], xmm0
-		ret
-
-	      align   16
-RadixSort:
-	; in: rcx left
-	;     rdx right
-	;     r12 mask (preserved)
-	;     r13 offset in struct to find key
-	;     r14 swaping function
-	;         should swap structs at rax and rbx
-	;     r15 sizeof struct
-	; out: sort in the range [left,right) assuming bits above mask are sorted
-	       push   rbx rsi rdi
-	     Assert   ae, rdx, rcx, 'bad dimensions in RadixSort'
-	     Assert   ne, r12, 0, 'bad mask in RadixSort'
-
-		mov   rsi, rcx ; left
-		mov   rdi, rdx ; right
-		mov   rbx, rcx ; midpoint
-
-	; do nothing on list of 0 or 1 elements
-		add   rcx, sizeof.BrainEntry
-		cmp   rcx, rdx
-		jae   .Return
-
-	; make sure [left,mid) has all zeros
-	;           [mid,right) has all ones
-		mov   rax, rsi
-    .Loop:
-	       test   r12, qword[rax+r13]
-		jnz   .DontSwap
-	       call   r14
-		add   rbx, r15
-	.DontSwap:
-		add   rax, r15
-		cmp   rax, rdi
-		 jb   .Loop
-
-	; if mask = 1, then we have just sorted everything
-		cmp   r12, 2
-		 jb   .Return
-
-	; else sort [left,mid) and [mid,right) separately
-		shr   r12, 1
-		mov   rcx, rsi
-		mov   rdx, rbx
-	       call   RadixSort
-		mov   rcx, rbx
-		mov   rdx, rdi
-	       call   RadixSort
-		shl   r12, 1
-    .Return:
-		pop   rdi rsi rbx
-		ret
 
 
 
@@ -931,3 +796,134 @@ dq   0x4AE7D6A36EB5DBCB, 0x2D8D5432157064C8, 0xD1E649DE1E7F268B, 0x8A328A1CEDFE5
 dq   0xF6F7FD1431714200, 0x30C05B1BA332F41C, 0x8D2636B81555A786, 0x46C9FEB55D120902,   0xCCEC0A73B49C9921, 0x4E9D2827355FC492, 0x19EBB029435DCB0F, 0x4659D2B743848A2C
 dq   0x963EF2C96B33BE31, 0x74F85198B05A2E7D, 0x5A0F544DD2B1FB18, 0x03727073C2E134B1,   0xC7F6AA2DE59AEA61, 0x352787BAA0D7C22F, 0x9853EAB63B5E0B35, 0xABBDCDD7ED5C0860
 dq   0xCF05DAF5AC8D77B0, 0x49CAD48CEBF4A71E, 0x7A4C10EC2158C4A6, 0xD9E92AA246BF719E,   0x13AE978D09FE5557, 0x730499AF921549FF, 0x4E4B705B92903BA4, 0xFF577222C14F0A3A
+
+
+
+;if 0
+;RadixSort_Brain:
+;	; sort the entries by the brain key
+;	; in: rcx left
+;	;     rdx right
+;	       push   r12 r13 r14 r15 rbx
+;		xor   r12, r12
+;		bts   r12, 48-1
+;		mov   r13d, BrainEntry.brainKey
+;		lea   r14, [Swap_BrainEntry]
+;		mov   r15d, sizeof.BrainEntry
+;	       call   RadixSort
+;		pop   rbx r15 r14 r13 r12
+;		ret
+;
+;RadixSort_BrainPolyglot:
+;	; sort the entries by the polyglot key
+;	; in: rcx left
+;	;     rdx right
+;	       push   r12 r13 r14 r15 rbx
+;		xor   r12, r12
+;		bts   r12, 64-1
+;		mov   r13d, BrainEntry.polyglotKey
+;		lea   r14, [Swap_BrainEntry]
+;		mov   r15d, sizeof.BrainEntry
+;	       call   RadixSort
+;		pop   rbx r15 r14 r13 r12
+;		ret
+;
+;_RadixSort_Polyglot:
+;	       push   r12 r13 r14 r15 rbx
+;		xor   r12, r12
+;		bts   r12, 64-1
+;		mov   r13d, PolyglotEntry.key
+;		lea   r14, [Swap_PolyglotEntry]
+;		mov   r15d, sizeof.PolyglotEntry
+;	       call   RadixSort
+;		pop   rbx r15 r14 r13 r12
+;		ret
+;
+;
+;	      align   16
+;Swap_BrainEntry:
+;	    vmovaps   xmm0, dqword[rax+00]
+;	    vmovaps   xmm1, dqword[rax+16]
+;	    vmovaps   xmm2, dqword[rbx+00]
+;	    vmovaps   xmm3, dqword[rbx+16]
+;	    vmovaps   dqword[rax+00], xmm2
+;	    vmovaps   dqword[rax+16], xmm3
+;	    vmovaps   dqword[rbx+00], xmm0
+;	    vmovaps   dqword[rbx+16], xmm1
+;		ret
+;
+;	      align   16
+;Swap_PolyglotEntry:
+;	    vmovaps   xmm0, dqword[rax+00]
+;	    vmovaps   xmm2, dqword[rbx+00]
+;	    vmovaps   dqword[rax+00], xmm2
+;	    vmovaps   dqword[rbx+00], xmm0
+;		ret
+;
+;	      align   16
+;RadixSort:
+;	; in: rcx left
+;	;     rdx right
+;	;     r12 mask (preserved)
+;	;     r13 offset in struct to find key
+;	;     r14 swaping function
+;	;         should swap structs at rax and rbx
+;	;     r15 sizeof struct
+;	; out: sort in the range [left,right) assuming bits above mask are sorted
+;	       push   rbx rsi rdi
+;	     Assert   ae, rdx, rcx, 'bad dimensions in RadixSort'
+;	     Assert   ne, r12, 0, 'bad mask in RadixSort'
+;
+;		mov   rsi, rcx ; left
+;		mov   rdi, rdx ; right
+;		mov   rbx, rcx ; midpoint
+;
+;	; do nothing on list of 0 or 1 elements
+;		add   rcx, sizeof.BrainEntry
+;		cmp   rcx, rdx
+;		jae   .Return
+;
+;	; make sure [left,mid) has all zeros
+;	;           [mid,right) has all ones
+;		mov   rax, rsi
+;    .Loop:
+;	       test   r12, qword[rax+r13]
+;		jnz   .DontSwap
+;	       call   r14
+;		add   rbx, r15
+;	.DontSwap:
+;		add   rax, r15
+;		cmp   rax, rdi
+;		 jb   .Loop
+;
+;	; if mask = 1, then we have just sorted everything
+;		cmp   r12, 2
+;		 jb   .Return
+;
+;	; else sort [left,mid) and [mid,right) separately
+;		shr   r12, 1
+;		mov   rcx, rsi
+;		mov   rdx, rbx
+;	       call   RadixSort
+;		mov   rcx, rbx
+;		mov   rdx, rdi
+;	       call   RadixSort
+;		shl   r12, 1
+;    .Return:
+;		pop   rdi rsi rbx
+;		ret
+;
+;Move_ToPolyglot:
+;            mov   eax, ecx
+;            and   eax, 0x00FFF
+;            and   ecx, 0x0F000
+;            sub   ecx, MOVE_TYPE_PROM shl 12
+;            cmp   ecx, 4
+;             jb   .prom
+;            ret
+;.prom:
+;            lea   eax, [rax+rcx+0x01000]
+;            ret
+;
+;end if
+

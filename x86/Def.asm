@@ -3,8 +3,6 @@ if VERSION_OS = 'W'
 else
   SEP_CHAR = ':'
 end if
-LOG_FILE = '<empty>'    ; use something other than <empty> to hardcode a starting log file into the engine
-
 
 ; MAX_RESETCNT should NOT be more than the number of times search is called per second/core,
 ; which is about half of nps/core (the other half comes from qsearch). Higher setting are 
