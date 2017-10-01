@@ -851,30 +851,21 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
            ldrb  w25, [x6, x23]
 
             ldr  w1, [sp, .moveCount]
-            mov  w2, w1
-            ldr  w27, [sp, .reductionOffset]
-            ldr  w0, [x21, - 1*sizeof.State + State.moveCount]
-            sub  w1, w1, w0, lsr 4
-            mov  w0, 1
-            cmp  w1, 0
-           csel  w1, w0, w1, le
+            ldr  w0, [sp, .extension]
+            ldr  w2, [sp, .depth]
             mov  w26, 63
             cmp  w1, w26
            csel  w1, w26, w1, hi
-            cmp  w2, w26
-           csel  w2, w26, w2, hi
-           _lea  x6, Reductions+4*(2*64*64*PvNode)
-            add  x27, x6, x27, lsl 2
-            ldr  w9, [x27, x2, lsl 2]
-            ldr  w2, [x27, x1, lsl 2]
-            str  w2, [sp, .reduction]
-
-            ldr  w0, [sp, .extension]
-            ldr  w2, [sp, .depth]
             sub  w0, w0, 1
+            ldr  w4, [sp, .reductionOffset]
+            add  w1, w1, w4
             add  w0, w0, w2
+           _lea  x6, Reductions + 4*(2*64*64*PvNode)
+            ldr  w9, [x6, x1, lsl 2]
+            str  w9, [sp, .reduction]
             str  w0, [sp, .newDepth]
     ; w2 = depth
+
   if (RootNode = 0 & USE_MATEFINDER = 0) | (PvNode = 0 & USE_MATEFINDER = 1)
             ldr  w8, [x20, Pos.sideToMove]
             ldr  w1, [sp, .bestValue]
@@ -912,7 +903,8 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
            strb  w4, [sp, .skipQuiets]
             ldr  w27, [sp, .newDepth]
            cbnz  w0, .MovePickLoop
-            sub  w27, w27, w9
+            ldr  w4, [sp, .reduction]
+            sub  w27, w27, w4
     ; w27 = lmrDepth
 
     ; Countermoves based pruning
@@ -1034,22 +1026,31 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
   end if
            ldrb  w8, [sp, .captureOrPromotion]
             ldr  w27, [sp, .reduction]
+            mov  w1, 15
             cbz  w8, @1f
-           ldrb  w0, [sp, .moveCountPruning]
-            cbz  w0, .15skip
+           ldrb  w4, [sp, .moveCountPruning]
+            cbz  w4, .15skip
     @1:
-
-            cbz  w8, .15NotCaptureOrPromotion
             mov  w0, 0
+            cbz  w8, .15NotCaptureOrPromotion
             tst  w27, w27
            cset  w0, ne
             sub  w27, w27, w0
               b  .15ReadyToSearch
 .15NotCaptureOrPromotion:
-    ; r12d = from
-    ; r13d = to
-    ; r14d = from piece
-    ; r15d = to piece
+    ; x12 = from
+    ; x13 = to
+    ; x14 = from piece
+    ; x15 = to piece
+    ; x1 = 15
+
+            add  x6, x21, - 2*sizeof.State + State.moveCount
+            ldr  w4, [x6]
+            cmp  w1, w4
+            bhs  @1f
+            sub  w27, w27, 1
+    @1:
+
     ; Increase reduction if ttMove is a capture
             ldr  w4, [sp, .ttCapture]
             add  w27, w27, w4
