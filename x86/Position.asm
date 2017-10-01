@@ -774,38 +774,34 @@ if DEBUG > 0
 Position_PrintSmall:
 	; in: rbp address of Pos
 	; io: rdi string
-
-	       push   rbx rsi r13 r14 r15
-
-		mov   rbx, qword[rbp+Pos.state]
-
-		mov   rax, 'side:   '
-	      stosq
-		mov   eax, dword[rbp+Pos.sideToMove]
-	       call   PrintUnsignedInteger
-		mov   al, 10
-	      stosb
-
-		xor   ecx, ecx
-	@@:	xor   ecx, 0111000b
-	      movzx   eax, byte[rbp+Pos.board+rcx]
-		mov   edx, '  ' + (10 shl 16)
-		mov   dl, byte[PieceToChar+rax]
-		mov   eax, '* ' + (10 shl 16)
-		cmp   cl, byte[rbx+State.epSquare]
-	     cmovne   eax, edx
-	      stosd
-		xor   ecx, 0111000b
-		lea   eax, [rcx+1]
-		and   eax, 7
-		neg   eax
-		sbb   rdi, 1
-		add   ecx, 1
-		cmp   ecx, 64
-		 jb   @b
-
-		pop   r15 r14 r13 rsi rbx
-		ret
+           push  rbx rsi r13 r14 r15
+            mov  rbx, qword[rbp+Pos.state]
+            mov  rax, 'side:   '
+          stosq
+            mov  eax, dword[rbp+Pos.sideToMove]
+           call  PrintUnsignedInteger
+            mov  al, 10
+          stosb
+            xor  ecx, ecx
+	@1:
+            xor  ecx, 0111000b
+          movzx  eax, byte[rbp+Pos.board+rcx]
+            mov  edx, '  ' + (10 shl 16)
+            mov  dl, byte[PieceToChar+rax]
+            mov  eax, '* ' + (10 shl 16)
+            cmp  cl, byte[rbx+State.epSquare]
+         cmovne  eax, edx
+          stosd
+            xor  ecx, 0111000b
+            lea  eax, [rcx+1]
+            and  eax, 7
+            neg  eax
+            sbb  rdi, 1
+            add  ecx, 1
+            cmp  ecx, 64
+             jb  @1b
+            pop  r15 r14 r13 rsi rbx
+            ret
 end if
 
 

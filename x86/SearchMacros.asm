@@ -745,9 +745,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             mov   dword[.pvExact], eax
   end if
 
-
     ; Step 11. Loop through moves
-
          calign   8
 .MovePickLoop:	     ; this is the head of the loop
           movsx   esi, byte[.skipQuiets]
@@ -1042,16 +1040,12 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             mov  edi, dword[.reduction]
             mov  ecx, 15
            test  r8l, r8l
-             jz  @1f
+             jz  .15NotCaptureOrPromotion
+            lea  eax, [rdi - 1]
             cmp  byte[.moveCountPruning], 0
              je  .15skip
-    @1:
-            xor  eax, eax
-           test  r8l, r8l
-             jz  .15NotCaptureOrPromotion
            test  edi, edi
-          setnz  al
-            sub  edi, eax
+         cmovnz  edi, eax
             jmp  .15ReadyToSearch
 
 .15NotCaptureOrPromotion:
@@ -1063,11 +1057,11 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
 
     ; Decrease reduction if opponent's move count is high
             cmp  ecx, dword[rbx - 2*sizeof.State + State.moveCount]
-if PvNode = 1
+  if PvNode = 1
             sbb  edi, dword[.pvExact]
-else
+  else
             sbb  edi, 0
-end if
+  end if
     ; Increase reduction if ttMove is a capture
             add   edi, dword[.ttCapture]
     ; Increase reduction for cut nodes
@@ -1249,6 +1243,7 @@ end if
   end if
     ; Step 17. Undo move
 .17entry:
+         ;Assert   e, edi, dword[.value], 'assertion edi = dword[.value] failed'
             mov   ecx, dword[.move]
            call   Move_Undo
     ; Step 18. Check for new best move
@@ -1279,15 +1274,15 @@ end if
           movzx   eax, byte[rbp-Thread.rootPos+Thread.selDepth]
             mov   rcx, qword[rbx+1*sizeof.State+State.pv]
             mov   dword[rdx+RootMove.selDepth], eax
-            jmp   .CopyRootPvw
-.CopyRootPv:
+            jmp   @2f
+    @1:
             add   rcx, 4
             mov   dword[rdx+RootMove.pv+4*rsi], eax
             add   esi, 1
-.CopyRootPvw:
+    @2:
             mov   eax, dword[rcx]
            test   eax, eax
-            jnz   .CopyRootPv
+            jnz   @1b
             mov   dword[rdx+RootMove.pvSize], esi
 .FoundRootMoveDone:
             mov   dword[rdx+RootMove.score], r10d
@@ -1301,26 +1296,25 @@ end if
             jle   .18NoNewAlpha
             mov   dword[.bestMove], ecx
   if PvNode = 1 & RootNode = 0
-            mov   ecx, dword[.move]
             mov   r8, qword[rbx+0*sizeof.State+State.pv]
             mov   r9, qword[rbx+1*sizeof.State+State.pv]
             xor   eax, eax
             mov   dword[r8], ecx
             add   r8, 4
            test   r9, r9
-             jz   .pv_copy_end
-.pv_copy_loop:
+             jz   @2f
+    @1:
             mov   eax, dword[r9]
             add   r9, 4
-.pv_copy_end:
+    @2:
             mov   dword[r8], eax
             add   r8, 4
            test   eax, eax
-            jnz   .pv_copy_loop
+            jnz   @1b
   end if
   if PvNode = 1
             cmp   edi, dword[.beta]
-            jge   .18fail_high
+            jge   .MovePickDone
             mov   dword[.alpha], edi
             jmp   .18NoNewBestValue
   end if
@@ -1332,16 +1326,16 @@ end if
             mov   ecx, dword[.move]
             mov   eax, dword[.quietCount]
             cmp   byte[.captureOrPromotion], 0
-            jnz   .18Done
+            jnz   .MovePickLoop
             cmp   ecx, dword[.bestMove]
-             je   .18Done
+             je   .MovePickLoop
             cmp   eax, 64
-            jae   .18Done
+            jae   .MovePickLoop
             mov   dword[.quietsSearched+4*rax], ecx
             add   eax, 1
             mov   dword[.quietCount], eax
-.18Done:
             jmp   .MovePickLoop
+
 .MovePickDone:
     ; Step 20. Check for mate and stalemate
             mov   eax, dword[rbx-1*sizeof.State+State.currentMove]

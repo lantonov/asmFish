@@ -70,7 +70,7 @@ include 'Pawn.arm'
 
 ; code section
 segment readable executable
-              align  64
+          align  64
 if USE_SYZYGY
   include 'TablebaseCore.arm'
   include 'Tablebase.arm'
@@ -79,7 +79,7 @@ if USE_WEAKNESS
   include 'Weakness.arm'
 end if
 Start:
-            lea  x6, spEntry
+           _lea  x6, spEntry
             mov  x0, sp
             str  x0, [x6]
 include 'Main.arm'

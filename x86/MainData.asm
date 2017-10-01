@@ -328,6 +328,10 @@ end if
 align 8
  LargePageMinSize dq ?
  WarnMask         dd ?
+                  dd ?
+if DEBUG = 1
+ DebugBalance dq 0
+end if
 
 
 

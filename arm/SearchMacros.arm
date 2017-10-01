@@ -1039,16 +1039,14 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
            ldrb  w8, [sp, .captureOrPromotion]
             ldr  w27, [sp, .reduction]
             mov  w1, 15
-            cbz  w8, @1f
-           ldrb  w4, [sp, .moveCountPruning]
-            cbz  w4, .15skip
-    @1:
-            mov  w0, 0
             cbz  w8, .15NotCaptureOrPromotion
+           ldrb  w4, [sp, .moveCountPruning]
+            sub  w0, w27, 1
+            cbz  w4, .15skip
             tst  w27, w27
-           cset  w0, ne
-            sub  w27, w27, w0
+           csel  w27, w0, w27, ne
               b  .15ReadyToSearch
+
 .15NotCaptureOrPromotion:
     ; x12 = from
     ; x13 = to
@@ -1059,12 +1057,12 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             add  x6, x21, - 2*sizeof.State + State.moveCount
             ldr  w4, [x6]
             cmp  w1, w4
-            bhs  @1f
-            sub  w27, w27, 1
-    @1:
+
   if PvNode = 1
             ldr  w4, [sp, .pvExact]
-            sub  w27, w27, w4
+            sbc  w27, w27, w4
+  else
+            sbc  w27, w27, wzr
   end if
 
     ; Increase reduction if ttMove is a capture
@@ -1298,15 +1296,15 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             ldr  w0, [x6, Thread.selDepth]
             ldr  x1, [x21, 1*sizeof.State + State.pv]
             str  w0, [x2, RootMove.selDepth]
-              b  .CopyRootPvw
-.CopyRootPv:
+              b  @2f
+    @1:
             add  x1, x1, 4
             add  x6, x2, RootMove.pv
             str  w0, [x6, x26, lsl 2]
             add  w26, w26, 1
-.CopyRootPvw:
+    @2:
             ldr  w0, [x1]
-           cbnz  w0, .CopyRootPv
+           cbnz  w0, @1b
             str  w26, [x2, RootMove.pvSize]
 .FoundRootMoveDone:
             str  w10, [x2, RootMove.score]
@@ -1328,19 +1326,19 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             mov  w0, 0
             str  w1, [x8]
             add  x8, x8, 4
-            cbz  x9, .pv_copy_end
-.pv_copy_loop:
+            cbz  x9, @2f
+    @1:
             ldr  w0, [x9]
             add  x9, x9, 4
-.pv_copy_end:
+    @2:
             str  w0, [x8]
             add  x8, x8, 4
-           cbnz  w0, .pv_copy_loop
+           cbnz  w0, @1b
   end if
   if PvNode = 1
             ldr  w4, [sp, .beta]
             cmp  w27, w4
-            bge  .18fail_high
+            bge  .MovePickDone
             str  w27, [sp, .alpha]
               b  .18NoNewBestValue
   end if
@@ -1351,18 +1349,18 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             ldr  w1, [sp, .move]
             ldr  w0, [sp, .quietCount]
            ldrb  w4, [sp, .captureOrPromotion]
-           cbnz  w4, .18Done
+           cbnz  w4, .MovePickLoop
             ldr  w4, [sp, .bestMove]
             cmp  w1, w4
-            beq  .18Done
+            beq  .MovePickLoop
             cmp  w0, 64
-            bhs  .18Done        
+            bhs  .MovePickLoop
             add  x6, sp, .quietsSearched
             str  w1, [x6, x0, lsl 2]
             add  w0, w0, 1
             str  w0, [sp, .quietCount]
-.18Done:
               b  .MovePickLoop
+
 .MovePickDone:
     ; Step 20. Check for mate and stalemate
             ldr  w0, [x21, -1*sizeof.State + State.currentMove]

@@ -3,7 +3,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 macro Assert cc, a, b, mes
-
+  if DEBUG = 1
+    local skip, errorbox, message
+            cmp  a, b
+           j#cc  skip
+            jmp  errorbox
+message:
+            db mes
+            db 0
+errorbox:
+            lea  rdi, [message]
+           call  Os_ErrorBox
+            mov  ecx, 1
+            jmp  Os_ExitProcess
+skip:
+  end if
 end macro
 
 
