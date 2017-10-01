@@ -1094,13 +1094,14 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             add  w0, w0, w4
             ldr  w4, [x11, x2, lsl 2]
             add  w0, w0, w4
-            neg  w2, w0
-            and  w2, w2, w1
-            neg  w1, w1
-            and  w1, w1, w0
-            add  w27, w27, w2, asr 31
-            sub  w27, w27, w1, asr 31
+    ; Decrease/increase reduction by comparing opponent's stat score
+            eor  w2, w1, w0
+            and  w1, w1, w2
+            sub  w27, w27, w1, lsr 31
+            and  w2, w2, w0
+            add  w27, w27, w2, lsr 31
             str  w0, [x21, -1*sizeof.State + State.history]
+
             mov  w1, 20000
            sdiv  w0, w0, w1
            subs  w27, w27, w0
