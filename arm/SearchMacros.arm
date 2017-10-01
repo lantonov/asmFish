@@ -38,7 +38,7 @@ macro Search PvNode, RootNode
     .ttHit                  rb 1
     .moveCountPruning       rb 1  ; -1 for true
     .ttCapture              rd 1  ; 1 for true
-                        rd 1
+    .reduction              rd 1
     .quietsSearched     rd 64
     if PvNode = 1
       .pv               rd MAX_PLY + 1
@@ -841,6 +841,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             str  w4, [sp, .extension]
 .12dont_extend:
 .12done:
+
     ; Step 13. Pruning at shallow depth
             ldr  w23, [sp, .move]
            ubfx  w22, w23, 6, 6
@@ -848,6 +849,22 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             add  x6, x20, Pos.board
            ldrb  w24, [x6, x22]
            ldrb  w25, [x6, x23]
+
+            ldr  w1, [sp, .moveCount]
+            ldr  w0, [x21, - 1*sizeof.State + State.moveCount]
+            sub  w1, w1, w0, lsr 4
+            mov  w0, 1
+            cmp  w1, 0
+           csel  w1, w0, w1, le
+            mov  w26, 63
+            cmp  w1, w26
+           csel  w1, w26, w1, hi
+            ldr  w4, [sp, .reductionOffset]
+            add  w1, w1, w4
+           _lea  x6, Reductions+4*(2*64*64*PvNode)
+            ldr  w9, [x6, x1, lsl 2]
+            str  w9, [sp, .reduction]
+
             ldr  w0, [sp, .extension]
             ldr  w2, [sp, .depth]
             sub  w0, w0, 1
@@ -889,18 +906,11 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
            ldrb  w4, [sp, .skipQuiets]
             orr  w4, w4, w0
            strb  w4, [sp, .skipQuiets]
-           cbnz  w0, .MovePickLoop
             ldr  w27, [sp, .newDepth]
-            mov  w26, 63
-            ldr  w1, [sp, .moveCount]
-            cmp  w1, w26
-           csel  w1, w26, w1, hi
-            ldr  w4, [sp, .reductionOffset]
-            add  w1, w1, w4
-           _lea  x6, Reductions + 4*(2*64*64*PvNode)
-            ldr  w4, [x6, x1, lsl 2]
-            sub  w27, w27, w4
-    ; edi = lmrDepth
+           cbnz  w0, .MovePickLoop
+            sub  w27, w27, w9
+    ; w27 = lmrDepth
+
     ; Countermoves based pruning
             add  x6, x21, -1*sizeof.State + State.counterMoves
             ldr  x8, [x6]
@@ -1019,17 +1029,12 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
     @1:
   end if
            ldrb  w8, [sp, .captureOrPromotion]
+            ldr  w27, [sp, .reduction]
             cbz  w8, @1f
            ldrb  w0, [sp, .moveCountPruning]
             cbz  w0, .15skip
     @1:
-            mov  w26, 63
-            cmp  w1, w26
-           csel  w1, w26, w1, hi
-            ldr  w4, [sp, .reductionOffset]
-            add  w1, w1, w4
-           _lea  x6, Reductions + 4*(2*64*64*PvNode)
-            ldr  w27, [x6, x1, lsl 2]
+
             cbz  w8, .15NotCaptureOrPromotion
             mov  w0, 0
             tst  w27, w27

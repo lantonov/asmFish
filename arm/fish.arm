@@ -1,4 +1,12 @@
 ; VERSION_POST and VERSION_OS should be defined on cmd line
+if ~ defined VERSION_OS
+  err 'VERSION_OS is not defined'
+end if
+
+if ~ defined VERSION_POST
+  err 'VERSION_POST is not defined'
+end if
+
 if VERSION_POST <> 'v8'
     err "only VERSION_POST = 'v8' supported"
 end if
@@ -7,20 +15,30 @@ if VERSION_OS <> 'L'
 end if
 VERSION_PRE = 'armFish'
 
-DEBUG   = 0
-VERBOSE = 0
-PROFILE = 0
+macro SetDefault val*, sym*
+  if ~ defined sym
+    restore sym
+    sym = val
+  end if
+end macro
 
-USE_SYZYGY      = 1
-USE_CURRMOVE    = 1
-USE_HASHFULL    = 1
-USE_CMDLINEQUIT = 1
-USE_WEAKNESS    = 0
-USE_VARIETY     = 0
-USE_BOOK        = 0
-USE_MATEFINDER  = 0
+SetDefault 0, DEBUG
+SetDefault 0, VERBOSE
+SetDefault 0, PROFILE
 
-PEDANTIC = 1
+SetDefault 1, USE_SYZYGY
+SetDefault 1, USE_CURRMOVE
+SetDefault 1, USE_HASHFULL
+SetDefault 1, USE_CMDLINEQUIT
+SetDefault 0, USE_SPAMFILTER
+SetDefault 0, USE_WEAKNESS
+SetDefault 0, USE_VARIETY
+SetDefault 0, USE_BOOK
+SetDefault 0, USE_MATEFINDER
+
+SetDefault 0, PEDANTIC
+SetDefault '<empty>', LOG_FILE  ; use something other than <empty> to hardcode a starting log file into the engine
+
 
 ; instruction and format macros
 include 'format/format.inc'
@@ -61,9 +79,9 @@ if USE_WEAKNESS
   include 'Weakness.arm'
 end if
 Start:
-                lea  x6, spEntry
-                mov  x0, sp
-                str  x0, [x6]
+            lea  x6, spEntry
+            mov  x0, sp
+            str  x0, [x6]
 include 'Main.arm'
 include 'Castling.arm'
 include 'AttackersTo.arm'
