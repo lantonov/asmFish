@@ -41,6 +41,7 @@ macro Search PvNode, RootNode
     .reduction              rd 1
     .quietsSearched     rd 64
     if PvNode = 1
+      .pvExact          rd 1
       .pv               rd MAX_PLY + 1
     end if
     .lend               rb 0
@@ -705,6 +706,17 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             and  w0, w0, w1
            strb  w0, [sp, .singularExtensionNode]
   end if
+
+  if PvNode = 1
+           ldrb  w0, [sp, .ltte + MainHashEntry.genBound]
+            and  w0, w0, BOUND_EXACT
+            cmp  w0, BOUND_EXACT
+           cset  w0, eq
+            ldr  w4, [sp, .ttHit]
+            and  w0, w0, w4
+            str  w0, [sp, .pvExact]
+  end if
+
         ; Step 11. Loop through moves
 .MovePickLoop:
           ldrsb  w26, [sp, .skipQuiets]
@@ -1050,6 +1062,10 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             bhs  @1f
             sub  w27, w27, 1
     @1:
+  if PvNode = 1
+            ldr  w4, [sp, .pvExact]
+            sub  w27, w27, w4
+  end if
 
     ; Increase reduction if ttMove is a capture
             ldr  w4, [sp, .ttCapture]
