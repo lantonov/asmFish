@@ -1081,16 +1081,18 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             add   eax, dword[r9+4*rdx]
             add   eax, dword[r10+4*rdx]
             add   eax, dword[r11+4*rdx]
-            mov   edx, eax
-            neg   edx
-            and   edx, ecx
-            neg   ecx
-            and   ecx, eax
-            sar   edx, 31
-            add   edi, edx
-            sar   ecx, 31
+
+   ; Decrease/increase reduction by comparing opponent's stat score
+            mov   edx, ecx
+            xor   edx, eax
+            and   ecx, edx
+            shr   ecx, 31
             sub   edi, ecx
-            mov   dword[rbx-1*sizeof.State+State.history], eax
+            and   edx, eax
+            shr   edx, 31
+            add   edi, edx
+            mov   dword[rbx - 1*sizeof.State + State.history], eax
+
             cdq
             mov   ecx, 20000
            idiv   ecx
