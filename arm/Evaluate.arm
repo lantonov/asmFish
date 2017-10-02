@@ -27,10 +27,14 @@ macro EvalInit Us
   local NotUsed, PinnedLoop, NoPinned, YesPinned
 
   if Us = White
+	AttackedBy_Us     = x12
+	AttackedBy_Them   = x13
         AttackedBy_UsPawn = x16
         Them = Black
         Down = DELTA_S
   else
+	AttackedBy_Us     = x13
+	AttackedBy_Them   = x12
         AttackedBy_UsPawn = x17
         Them = White
         Down = DELTA_N
@@ -84,11 +88,12 @@ macro EvalPieces Us, Pt
     ;      x21 address of State struct
     ;      sp  address of evaluation info
     ;      x27 address of PawnEntry struct
+    ;      x16 qword[sp, EvalInfo.attackedBy + 8*(8*White + Pawn)]
+    ;      x17 qword[sp, EvalInfo.attackedBy + 8*(8*Black + Pawn)]
+    ;      x23 all pieces
+    ;      x22 qword[x20, Pos.typeBB + 8*Pt]
     ; io:  w26 score accumulated
-    ;
-    ; in: x23 all pieces
-    ;     x22 pieces of type Pt ( qword[rbp+Pos.typeBB+8*Pt])
-    ;     x25 should be zero  for dirty trick
+
 
   local addsub, subadd
   local Them, OutpostRanks
@@ -105,9 +110,25 @@ macro EvalPieces Us, Pt
   if Us = White
         Them = Black
         OutpostRanks = 0x0000FFFFFF000000
+	AttackedBy_Us       = x12
+	AttackedBy_Them     = x13
+        AttackedBy_UsPawn   = x16
+        AttackedBy_ThemPawn = x17
+        Pieces_Pawn         = x19
+        Pieces_All          = x23
+        Pieces_Us           = x28
+        Pieces_Them         = x29
   else
         Them = White
 	OutpostRanks = 0x000000FFFFFF0000
+	AttackedBy_Us       = x13
+	AttackedBy_Them     = x12
+        AttackedBy_UsPawn   = x17
+        AttackedBy_ThemPawn = x16
+        Pieces_Pawn         = x19
+        Pieces_All          = x23
+        Pieces_Us           = x29
+        Pieces_Them         = x28
   end if
 
 	RookOnFile0 = ((20 shl 16) + (7))
@@ -140,8 +161,6 @@ macro EvalPieces Us, Pt
             mov  w0, 0
             str  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + Pt)]
 
-            ldr  x11, [x20, Pos.typeBB + 8*Us]
-    ; w11 = our pieces
             add  x25, x20, Pos.pieceList + 16*(8*Us + Pt)
            ldrb  w24, [x20, Pos.pieceList + 16*(8*Us + Pt)]
             cmp  w24, 64
@@ -155,18 +174,18 @@ NextPiece:
             ldr  x9, [x6, x24, lsl 3]
   else if Pt = Bishop
             ldr  x0, [x20, Pos.typeBB + 8*Queen]
-            and  x0, x0, x11
-            eor  x0, x0, x23
+            and  x0, x0, Pieces_Us
+            eor  x0, x0, Pieces_All
   BishopAttacks  x9, x24, x0, x2, x4
   else if Pt = Rook
             ldr  x0, [x20, Pos.typeBB + 8*Queen]
             orr  x0, x0, x22
-            and  x0, x0, x11
-            eor  x0, x0, x23
+            and  x0, x0, Pieces_Us
+            eor  x0, x0, Pieces_All
     RookAttacks  x9, x24, x0, x2, x4
   else if Pt = Queen
-    RookAttacks  x9, x24, x23, x0, x4
-  BishopAttacks  x2, x24, x23, x0, x4
+    RookAttacks  x9, x24, Pieces_All, x0, x4
+  BishopAttacks  x2, x24, Pieces_All, x0, x4
             orr  x9, x9, x2
   else
         err "bad Pt in EvalPieces"
@@ -186,15 +205,17 @@ NextPiece:
             and  x9, x9, x4
 NoPinned:
             ldr  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + Pt)]
-            ldr  x2, [sp, EvalInfo.attackedBy + 8*(8*Us + 0)]
-            and  x1, x9, x2
+            ;ldr  x2, [sp, EvalInfo.attackedBy + 8*(8*Us + 0)]
+            ;and  x1, x9, x2
+             and  x1, x9, AttackedBy_Us
             orr  x0, x0, x9
-            orr  x2, x2, x0
+            ;orr  x2, x2, x0
+             orr  AttackedBy_Us, AttackedBy_Us, x0
             ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Us]
             orr  x4, x4, x1
             str  x4, [sp, EvalInfo.attackedBy2 + 8*Us]
             str  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + Pt)]
-            str  x2, [sp, EvalInfo.attackedBy + 8*(8*Us + 0)]
+            ;str  x2, [sp, EvalInfo.attackedBy + 8*(8*Us + 0)]
 
             ldr  x4, [sp, EvalInfo.kingRing + 8*Them]
             tst  x9, x4
@@ -233,6 +254,9 @@ NoKingRing:
 
   if Pt = Knight | Pt = Bishop
 
+            mov  x7, 1
+            lsl  x7, x7, x24
+
     ; Bonus when behind a pawn
     if Us = White
             cmp  w24, SQ_A5
@@ -242,11 +266,10 @@ NoKingRing:
             blo  NoBehindPawnBonus
     end if
 
-            ldr  x0, [x20, Pos.typeBB + 8*Pawn]
             add  w1, w24, 8*(Them - Us)
             mov  x4, 1
             lsl  x4, x4, x1
-            tst  x0, x4
+            tst  x4, Pieces_Pawn
           mov32  w4, MinorBehindPawn
          AddSub  Us, w4, w26, w4
            csel  w26, w4, w26, ne
@@ -254,60 +277,49 @@ NoBehindPawnBonus:
     ; Bonus for outpost squares
           mov64  x0, OutpostRanks
             ldr  x1, [x27, PawnEntry.pawnAttacksSpan + 8*Them]
-            mov  x2, x11
             bic  x1, x0, x1
-            ldr  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
-            mov  x4, 1
-            lsl  x4, x4, x24
-            tst  x1, x4
+            tst  x1, x7
             beq  OutpostElse
           mov32  w5, Outpost1
           mov32  w4, Outpost0
          AddSub  Us, w1, w26, w5, 1
          AddSub  Us, w26, w26, w4, 1
-            mov  x4, 1
-            lsl  x4, x4, x24
-            tst  x0, x4
+            tst  x7, AttackedBy_UsPawn
            csel  w26, w1, w26, ne
               b  OutpostDone
 OutpostElse:
-            bic  x2, x1, x2
+            bic  x2, x1, Pieces_Us
            ands  x2, x2, x9
             beq  OutpostDone
           mov32  w5, Outpost1
           mov32  w4, Outpost0
          AddSub  Us, w1, w26, w5
          AddSub  Us, w26, w26, w4
-            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
-            tst  x2, x4
+            tst  x2, AttackedBy_UsPawn
            csel  w26, w1, w26, ne
 OutpostDone:
 
     ; Penalty for pawns on the same color square as the bishop
     if Pt = Bishop
           mov64  x0, DarkSquares
-            mov  x4, 1
-            lsl  x4, x4, x24
-            tst  x0, x4
+            tst  x0, x7
            cinc  x1, x27, ne
            ldrb  w0, [x1, PawnEntry.pawnsOnSquares + 2*Us]
           mov32  w4, BishopPawns
             mul  w0, w0, w4
          AddSub  Them, w26, w26, w0
 
-            ldr  x2, [sp, EvalInfo.attackedBy + 8*(8*Them + Pawn)]
          _mov64  x0, 0x8142241818244281
          _mov64  x1, (FileDBB or FileEBB) and (Rank4BB or Rank5BB)
-            bic  x0, x0, x2
+            bic  x0, x0, AttackedBy_ThemPawn
             mov  w4, LongRangedBishop*(Them - Us)
             add  w2, w26, w4
-            lsr  x0, x0, x24
            _lea  x6, BishopAttacksPDEP
-            tbz  x0, 0, @1f
+            tst  x0, x7
+            beq  @1f
             ldr  x4, [x6, x24, lsl 3]
             and  x1, x1, x4
-            ldr  x4, [x20, Pos.typeBB + 8*Pawn]
-            tst  x1, x4
+            tst  x1, Pieces_Pawn
            csel  w26, w2, w26, eq
     @1:
 
@@ -354,9 +366,7 @@ OutpostDone:
             cmp  w24, SQ_A5
             bhs  NoEnemyPawnBonus
     end if
-            ldr  x0, [x20, Pos.typeBB + 8*Them]
-            ldr  x4, [x20, Pos.typeBB + 8*Pawn]
-            and  x0, x0, x4
+            and  x0, Pieces_Them, Pieces_Pawn
            _lea  x6, RookAttacksPDEP
             ldr  x4, [x6, x24, lsl 3]
             and  x0, x0, x4
@@ -439,8 +449,7 @@ NoTrappedByKing:
             ldr  x9, [x20, Pos.typeBB + 8*Rook]
             ldr  x4, [x20, Pos.typeBB + 8*Bishop]
             orr  x9, x9, x4
-            ldr  x4, [x20, Pos.typeBB + 8*Them]
-            and  x9, x9, x4
+            and  x9, x9, Pieces_Them
            ands  x0, x0, x9
             beq  SkipQueenPin
             lsl  w24, w24, 9
@@ -452,7 +461,7 @@ QueenPinLoop:
             ldr  x1, [x6, x1, lsl 3]
             sub  x9, x0, 1
             and  x0, x0, x9
-            and  x1, x1, x23
+            and  x1, x1, Pieces_All
             sub  x8, x1, 1
            ands  x8, x8, x1
           csetm  x8, ne
@@ -461,7 +470,7 @@ QueenPinLoop:
            rbit  x1, x0
             clz  x1, x1
            cbnz  x0, QueenPinLoop     
-            tst  x2, x23
+            tst  x2, Pieces_All
           mov32  w4, WeakQueen
          AddSub  Them, w0, w26, w4
            csel  w26, w0, w26, ne
@@ -483,7 +492,7 @@ macro EvalKing Us
         ; add/sub score to dword[.ei.score]
 
   local Them, Up, Camp
-  local PiecesUs, PiecesThem
+  local Pieces_Us, Pieces_Them
   local QueenCheck, RookCheck, BishopCheck, KnightCheck
   local AllDone, DoKingSafety, KingSafetyDoneRet
   local RookDone, BishopDone, KnightDone
@@ -493,19 +502,25 @@ macro EvalKing Us
   if Us = White
         Them = Black
         Up = DELTA_N
-        AttackedByUs   = x22
-	AttackedByThem = x23
-	PiecesUs       = x24
-	PiecesThem     = x25
-        Camp             = (Rank1BB or Rank2BB or Rank3BB or Rank4BB or Rank5BB)
+        AttackedBy_Us   = x12
+	AttackedBy_Them = x13
+        AttackedBy_UsPawn   = x16
+        AttackedBy_ThemPawn = x17
+        Pieces_Pawn    = x19
+	Pieces_Us      = x28
+	Pieces_Them    = x29
+        Camp           = (Rank1BB or Rank2BB or Rank3BB or Rank4BB or Rank5BB)
  else
         Them = White
         Up = DELTA_S
-        AttackedByUs   = x23
-	AttackedByThem = x22
-	PiecesUs       = x25
-	PiecesThem     = x24
-        Camp             = (Rank4BB or Rank5BB or Rank6BB or Rank7BB or Rank8BB)
+        AttackedBy_Us   = x13
+	AttackedBy_Them = x12
+        AttackedBy_UsPawn   = x17
+        AttackedBy_ThemPawn = x16
+        Pieces_Pawn    = x19
+	Pieces_Us      = x29
+	Pieces_Them    = x28
+        Camp           = (Rank4BB or Rank5BB or Rank6BB or Rank7BB or Rank8BB)
  end if
 
 	QueenCheck	  = 780
@@ -536,13 +551,13 @@ KingSafetyDoneRet:
             ldr  x8, [sp, EvalInfo.attackedBy2 + 8*Us]
             ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + King)]
             bic  x8, x4, x8
-            and  x8, x8, AttackedByThem
+            and  x8, x8, AttackedBy_Them
     ; x8=kingOnlyDefended
 
-            orr  x9, PiecesThem, AttackedByUs
+            orr  x9, Pieces_Them, AttackedBy_Us
             ldr  x4, [sp, EvalInfo.kingRing + 8*Us]
             bic  x9, x4, x9
-            and  x9, x9, AttackedByThem
+            and  x9, x9, AttackedBy_Them
     ; x9=undefended
             orr  x9, x9, x8
             cmp  w1, 2
@@ -564,7 +579,7 @@ KingSafetyDoneRet:
            csel  w0, w4, wzr, ne
             add  w27, w27, w0
             ldr  x4, [x20, Pos.typeBB + 8*Queen]
-            tst  PiecesThem, x4
+            tst  Pieces_Them, x4
             sub  w0, w27, 848
            csel  w27, w0, w27, eq
     ; the following does w27 += - 9*mg_value(score)/8 + 40
@@ -578,26 +593,24 @@ KingSafetyDoneRet:
     ; w27 = kingDanger
             ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Them]
             and  x8, x8, x4
-            bic  x8, AttackedByUs, x8
-            orr  x8, x8, PiecesThem
+            bic  x8, AttackedBy_Us, x8
+            orr  x8, x8, Pieces_Them
             mvn  x8, x8
     ; x8 = safe
 
-            ldr  x9, [x20, Pos.typeBB + 8*Pawn]
-            and  x0, PiecesThem, x9
-        ShiftBB  Up, x9, x9
+            and  x0, Pieces_Them, x19
+        ShiftBB  Up, x9, x19
             and  x9, x9, x0
-            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
-            orr  x9, x9, x4
+            orr  x9, x9, AttackedBy_UsPawn
             mvn  x9, x9
     ; x9 = other
 
-            eor  PiecesUs, PiecesUs, PiecesThem
-            RookAttacks  x10, x11, PiecesUs, x0, x4
+            eor  Pieces_Us, Pieces_Us, Pieces_Them
+    RookAttacks  x10, x11, Pieces_Us, x0, x4
     ; x10 = b1 = pos.attacks_from<ROOK  >(ksq)
-            BishopAttacks  x2, x11, PiecesUs, x0, x4
+  BishopAttacks  x2, x11, Pieces_Us, x0, x4
     ; r2 = b1 = pos.attacks_from<BISHOP>(ksq)
-            eor  PiecesUs, PiecesUs, PiecesThem
+            eor  Pieces_Us, Pieces_Us, Pieces_Them
 
     ; Enemy queen safe checks
             orr  x0, x10, x2
@@ -610,12 +623,10 @@ KingSafetyDoneRet:
 
     ; For other pieces, also consider the square safe if attacked twice,
     ; and only defended by a queen.
-            mov  x0, PiecesThem
-            ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Us]
-            orr  x0, x0, x4
-            mvn  x0, x0
+            ldr  x0, [sp, EvalInfo.attackedBy2 + 8*Us]
+            orr  x0, x0, Pieces_Them
             ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Queen)]
-            and  x0, x0, x4
+            bic  x0, x4, x0
             ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Them]
             and  x0, x0, x4
     ; x8 = safe
@@ -709,8 +720,7 @@ NoQueenSide:
            _lea  x1, DistanceRingBB
             add  x1, x1, x11, lsl 6
             ldr  x27, [sp, EvalInfo.pi]
-            ldr  x2, [x20, Pos.typeBB + 8*Pawn]
-           ands  x2, x2, PiecesUs
+           ands  x2, Pieces_Pawn, Pieces_Us
             str  w26, [x27, PawnEntry.kingSafety + 4*Us]
             beq  KingSafetyDoneRet
             sub  w26, w26, 16
@@ -759,20 +769,17 @@ AllDone:
 
           mov64  x0, Camp
             and  x0, x0, x11
-            and  x0, x0, AttackedByThem
+            and  x0, x0, AttackedBy_Them
 
             ldr  x27, [sp, EvalInfo.pi]
 
-            ldr  x4, [x20, Pos.typeBB + 8*Pawn]
-            tst  x11, x4
+            tst  x11, Pieces_Pawn
           mov32  w4, PawnlessFlank
             sub  w1, w26, w4
            csel  w26, w1, w26, eq
 
-            ldr  x2, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
-            mvn  x2, x2
             ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Them]
-            and  x2, x2, x4
+            bic  x2, x4, AttackedBy_UsPawn
             and  x2, x2, x0
   if Us = White
             lsl  x0, x0, 4
@@ -803,13 +810,15 @@ macro ShelterStorm Us
  if Us = White
     Them = Black
     Up = DELTA_N
-	PiecesUs   = x24
-	PiecesThem = x25
+        Pieces_Pawn = x19
+	Pieces_Us   = x28
+	Pieces_Them = x29
  else
     Them = White
     Up = DELTA_S
-	PiecesUs   = x25
-	PiecesThem = x24
+        Pieces_Pawn = x19
+	Pieces_Us   = x29
+	Pieces_Them = x28
  end if
 
 	MaxSafetyBonus = 258
@@ -825,13 +834,12 @@ macro ShelterStorm Us
            _lea  x6, RankBB
             ldr  x4, [x6, x23, lsl 3]
             orr  x8, x8, x4
-            ldr  x4, [x20, Pos.typeBB + 8*Pawn]
-            and  x8, x8, x4
+            and  x8, x8, Pieces_Pawn
 
     ; r8 = b
-            and  x9, PiecesUs, x8
+            and  x9, Pieces_Us, x8
     ; r9 = ourPawns
-            and  x10, PiecesThem, x8
+            and  x10, Pieces_Them, x8
     ; r10 = theirPawns
     ; w0 = saftey
             mov  w0, MaxSafetyBonus
@@ -949,7 +957,6 @@ macro EvalThreats Us
         ; io: w26 score accumulated
 
   local addsub, Them, Up, Left, Right
-  local AttackedByUs, AttackedByThem, PiecesPawn, PiecesUs, PiecesThem
   local TRank2BB, TRank7BB
   local ThreatByKing0, ThreatByKing1
   local SafeThreatsDone, SafeThreatsLoop, WeakDone
@@ -961,11 +968,13 @@ macro EvalThreats Us
         ThreatByKing1 = (( 9 shl 16) + (138))
 
   if Us = White
-	AttackedByUs	= x22
-	AttackedByThem	= x23
-	PiecesPawn	= x11
-	PiecesUs	= x24
-	PiecesThem	= x25
+	AttackedBy_Us       = x12
+	AttackedBy_Them     = x13
+        AttackedBy_UsPawn   = x16
+        AttackedBy_ThemPawn = x17
+	Pieces_Pawn	= x19
+	Pieces_Us	= x28
+	Pieces_Them	= x29
 	Them		= Black
 	Up		= DELTA_N
 	Left		= DELTA_NW
@@ -973,11 +982,13 @@ macro EvalThreats Us
 	TRank2BB	= Rank2BB
 	TRank7BB	= Rank7BB
   else
-	AttackedByUs	= x23
-	AttackedByThem	= x22
-	PiecesPawn	= x11
-	PiecesUs	= x25
-	PiecesThem	= x24
+	AttackedBy_Us       = x13
+	AttackedBy_Them     = x12
+        AttackedBy_UsPawn   = x17
+        AttackedBy_ThemPawn = x16
+	Pieces_Pawn	= x19
+	Pieces_Us	= x29
+	Pieces_Them	= x28
 	Them		= White
 	Up		= DELTA_S
 	Left		= DELTA_SE
@@ -986,21 +997,18 @@ macro EvalThreats Us
 	TRank7BB	= Rank2BB
   end if
 
-            mov  x8, PiecesThem
-            and  x9, PiecesPawn, PiecesThem
-            eor  x8, x8, x9
-            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
-           ands  x8, x8, x4
+            and  x9, Pieces_Pawn, Pieces_Them
+            eor  x8, Pieces_Them, x9
+           ands  x8, x8, AttackedBy_UsPawn
     ; x8 = weak
             beq  SafeThreatsDone
 
-            mvn  x9, AttackedByThem
-            orr  x9, x9, AttackedByUs
-            and  x9, x9, PiecesUs
-            and  x9, x9, PiecesPawn
-            mov  x2, x9
+            mvn  x9, AttackedBy_Them
+            orr  x9, x9, AttackedBy_Us
+            and  x9, x9, Pieces_Us
+            and  x9, x9, Pieces_Pawn
+        ShiftBB  Left, x2, x9
         ShiftBB  Right, x9, x9
-        ShiftBB  Left, x2, x2
             orr  x9, x9, x2
             and  x9, x9, x8
     ; x9 = safeThreats
@@ -1021,14 +1029,13 @@ SafeThreatsDone:
             ldr  x9, [sp, EvalInfo.attackedBy2 + 8*Us]
             ldr  x4, [sp, EvalInfo.attackedBy2 + 8*Them]
             bic  x9, x4, x9
-            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + Pawn)]
-            orr  x9, x9, x4
+            orr  x9, x9, AttackedBy_ThemPawn
     ; x9 = stronglyProtected
-            bic  x8, PiecesThem, PiecesPawn
+            bic  x8, Pieces_Them, Pieces_Pawn
             and  x8, x8, x9
     ; x8 = defended (= pos.pieces(Them) & ~pos.pieces(PAWN) & stronglyProtected)
-            bic  x9, PiecesThem, x9
-            and  x9, x9, AttackedByUs
+            bic  x9, Pieces_Them, x9
+            and  x9, x9, AttackedBy_Us
     ; x9 = weak  (stronglyProtected variable is not used anymore)
             orr  x8, x8, x9
     ; x8 = defended or weak
@@ -1065,9 +1072,8 @@ ThreatMinorLoop:
             bne  ThreatMinorLoop
 ThreatMinorDone:
 
-            mov  x2, PiecesThem
-            ldr  x4, [x20, Pos.typeBB + 8*Queen]
-            and  x2, x2, x4
+            ldr  x2, [x20, Pos.typeBB + 8*Queen]
+            and  x2, x2, Pieces_Them
             orr  x2, x2, x9
             ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Rook)]
            ands  x2, x2, x4
@@ -1097,7 +1103,7 @@ ThreatRookLoop:
             bne  ThreatRookLoop
 ThreatRookDone:
 
-            bic  x0, x9, AttackedByThem
+            bic  x0, x9, AttackedBy_Them
          Popcnt  x0, x0, x1
           mov32  w4, Hanging
             mul  w0, w0, w4
@@ -1124,9 +1130,9 @@ WeakDone:
             orr  x1, x1, x4
            ldrb  w2, [x27, PawnEntry.weakUnopposed]
           mov64  x0, AllSquares xor TRank7BB
-            and  x0, x0, PiecesUs
-            and  x0, x0, PiecesPawn
-            tst  x1, PiecesUs
+            and  x0, x0, Pieces_Us
+            and  x0, x0, Pieces_Pawn
+            tst  x1, Pieces_Us
             beq  @1f
   if Us = White
             lsr  w2, w2, 4
@@ -1137,7 +1143,7 @@ WeakDone:
             mul  w2, w2, w4
          Addsub  Us, w26, w26, w2
     @1:
-            orr  x8, PiecesUs, PiecesThem
+            orr  x8, Pieces_Us, Pieces_Them
 
           mov64  x1, TRank2BB
             and  x1, x1, x0
@@ -1148,21 +1154,17 @@ WeakDone:
 
             mvn  x2, x8
             and  x0, x0, x2
-            ldr  x1, [sp, EvalInfo.attackedBy + 8*(8*Them + Pawn)]
-            mvn  x1, x1
-            and  x0, x0, x1
-            mvn  x2, AttackedByThem
-            orr  x2, x2, AttackedByUs
+            bic  x0, x0, AttackedBy_ThemPawn
+            mvn  x2, AttackedBy_Them
+            orr  x2, x2, AttackedBy_Us
             and  x0, x0, x2
 
             mov  x2, x0
         ShiftBB  Left, x0, x0
         ShiftBB  Right, x2, x2
             orr  x0, x0, x2
-            and  x0, x0, PiecesThem
-            ldr  x1, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
-            mvn  x1, x1
-            and  x0, x0, x1
+            and  x0, x0, Pieces_Them
+            bic  x0, x0, AttackedBy_UsPawn
          Popcnt  x0, x0, x2
           mov32  w4, ThreatByPawnPush
             mul  w0, w0, w4
@@ -1179,24 +1181,26 @@ macro EvalPassedPawns Us
     ;     r15 qword[rdi+PawnEntry.passedPawns+8*Us]
     ; add to dword[.ei.score]
 
-  local addsub, subadd, Them, Up, s, PiecesUs, PiecesThem
+  local addsub, subadd, Them, Up, s, Pieces_Us, Pieces_Them
   local NextPawn, AllDone, AddToBonus, Continue
   local DoScaleDown, DontScaleDown
 
   if Us = White
-        Them = Black
-        Up = DELTA_N
-	AttackedByUs	= x22
-	AttackedByThem	= x23
-	PiecesUs	= x24
-	PiecesThem	= x25
+        Them            = Black
+        Up              = DELTA_N
+	AttackedBy_Us   = x12
+	AttackedBy_Them = x13
+        Pieces_Pawn     = x19
+	Pieces_Us	= x28
+	Pieces_Them	= x29
   else
 	Them		= White
 	Up		= DELTA_S
-	AttackedByUs	= x23
-	AttackedByThem	= x22
-	PiecesUs	= x25
-	PiecesThem	= x24
+	AttackedBy_Us   = x13
+	AttackedBy_Them = x12
+        Pieces_Pawn     = x19
+	Pieces_Us	= x29
+	Pieces_Them	= x28
  end if
 
 NextPawn:
@@ -1220,7 +1224,7 @@ NextPawn:
 
     ; w8 = blockSq
             add  w8, w8, Up
-            orr  x2, AttackedByThem, PiecesThem
+            orr  x2, AttackedBy_Them, Pieces_Them
             and  x0, x0, x2
          Popcnt  x0, x0, x10
           mov32  w4, HinderPassedPawn
@@ -1280,18 +1284,18 @@ NextPawn:
             add  w0, w27, w1, lsl 1
             mov  x4, 1
             lsl  x4, x4, x8
-            tst  PiecesUs, x4
+            tst  Pieces_Us, x4
             bne  AddToBonus
             mov  x11, x10
             mov  x4, 1
             lsl  x4, x4, x8
-            tst  PiecesThem, x4
+            tst  Pieces_Them, x4
             bne  Continue
 
-            eor  PiecesThem, PiecesThem, PiecesUs
+            eor  Pieces_Them, Pieces_Them, Pieces_Us
             sub  x5, x8, Up
-    RookAttacks  x0, x5, PiecesThem, x2, x4 
-            eor  PiecesThem, PiecesThem, PiecesUs
+    RookAttacks  x0, x5, Pieces_Them, x2, x4 
+            eor  Pieces_Them, Pieces_Them, Pieces_Us
             ldr  x1, [x20, Pos.typeBB + 8*Rook]
             ldr  x4, [x20, Pos.typeBB + 8*Queen]
             orr  x1, x1, x4
@@ -1301,14 +1305,14 @@ NextPawn:
             and  x0, x0, x1
 
             mov  x1, -1
-            tst  PiecesUs, x0
-           csel  x1, AttackedByUs, x1, eq
+            tst  Pieces_Us, x0
+           csel  x1, AttackedBy_Us, x1, eq
             and  x10, x10, x1
 
             mov  x1, -1
-            tst  PiecesThem, x0
-           csel  x1, AttackedByThem, x1, eq
-            orr  x1, x1, PiecesThem
+            tst  Pieces_Them, x0
+           csel  x1, AttackedBy_Them, x1, eq
+            orr  x1, x1, Pieces_Them
             and  x11, x11, x1
 
             mov  x4, 1
@@ -1345,12 +1349,11 @@ Continue:
             add  w1, w26, 0x08000
             asr  w1, w1, 16
            sbfx  w0, w26, 0, 16
-            ldr  x10, [x20, Pos.typeBB + 8*Pawn]
            _lea  x6, ForwardBB + 8*(64*Us - Up)
             ldr  x4, [x6, x8, lsl 3]
-            tst  x10, x4
+            tst  Pieces_Pawn, x4
             bne  DoScaleDown
-            and  x10, x10, PiecesThem
+            and  x10, Pieces_Pawn, Pieces_Them
            _lea  x6, PassedPawnMask + 8*(64*Us)
             ldr  x4, [x6, x8, lsl 3]
             tst  x10, x4
@@ -1389,53 +1392,51 @@ macro EvalSpace Us
         ;     rsp evaluation info
 
   local addsub, Them, SpaceMask
-  local AttackedByUs, AttackedByThem
-  local PiecesPawn, PiecesAll, PiecesUs, PiecesThem
 
 
   if Us = White
-	AttackedByUs   = x22
-	AttackedByThem = x23
-	PiecesPawn     = x11
-	PiecesUs       = x24
-	PiecesThem     = x25
+	AttackedBy_Us   = x12
+	AttackedBy_Them = x13
+        AttackedBy_UsPawn   = x16
+        AttackedBy_ThemPawn = x17
+	Pieces_Pawn     = x19
+	Pieces_Us       = x28
+	Pieces_Them     = x29
 	Them	       = Black
 	SpaceMask      = (FileCBB or FileDBB or FileEBB or FileFBB);
         SpaceMask      = SpaceMask and (Rank2BB or Rank3BB or Rank4BB)
   else
-	AttackedByUs   = x23
-	AttackedByThem = x22
-	PiecesPawn     = x11
-	PiecesUs       = x25
-	PiecesThem     = x24
+	AttackedBy_Us   = x13
+	AttackedBy_Them = x12
+        AttackedBy_UsPawn   = x17
+        AttackedBy_ThemPawn = x16
+	Pieces_Pawn     = x19
+	Pieces_Us       = x29
+	Pieces_Them     = x28
 	Them	       = White
 	SpaceMask      = (FileCBB or FileDBB or FileEBB or FileFBB);
         SpaceMask      = SpaceMask and (Rank7BB or Rank6BB or Rank5BB)
   end if
 
     ; rdx = pos.pieces(Us, PAWN)
-            and  x2, PiecesUs, PiecesPawn
+            and  x2, Pieces_Us, Pieces_Pawn
 
-            bic  x0, AttackedByThem, AttackedByUs
-            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + Pawn)]
-            orr  x0, x0, x4
+            bic  x0, AttackedBy_Them, AttackedBy_Us
+            orr  x0, x0, AttackedBy_ThemPawn
             orr  x0, x0, x2
           mov64  x1, SpaceMask
     ; rax = safe
             bic  x0, x1, x0
 
-            mov  x1, x2
   if Us = White
-            lsr  x2, x2, 8
+            lsr  x1, x2, 8
             orr  x1, x1, x2
-            mov  x2, x1
-            lsr  x2, x2, 16
+            lsr  x2, x1, 16
             orr  x1, x1, x2
   else
-            lsl  x2, x2, 8
+            lsl  x1, x2, 8
             orr  x1, x1, x2
-            mov  x2, x1
-            lsl  x2, x2, 16
+            lsl  x2, x1, 16
             orr  x1, x1, x2
   end if
     ; rcx = behind
@@ -1451,8 +1452,7 @@ macro EvalSpace Us
 
            ldrb  w1, [x27, PawnEntry.openFiles]
             add  w1, w1, w1
-            ldr  x4, [x20, Pos.typeBB + 8*Us]
-         Popcnt  x2, x4, x8
+         Popcnt  x2, Pieces_Us, x8
             sub  w2, w2, w1
             mul  w2, w2, w2
 
@@ -1502,10 +1502,11 @@ Evaluate_Cold:
             sub  w0, w0, w1
 Display 2, "Lazy Eval returning %i0%n"
             add  sp, sp, sizeof.EvalInfo
+            ldp  x21, x30, [sp], 16
+            ldp  x28, x29, [sp], 16
+            ldp  x26, x27, [sp], 16
             ldp  x24, x25, [sp], 16
             ldp  x22, x23, [sp], 16
-            ldp  x26, x27, [sp], 16
-            ldp  x21, x30, [sp], 16
             ret
 
 
@@ -1525,11 +1526,16 @@ Evaluate:
     ;     x21 address of State struct
     ; out w0 evaluation
 
-            stp  x21, x30, [sp, -16]!
-            stp  x26, x27, [sp, -16]!
             stp  x22, x23, [sp, -16]!
             stp  x24, x25, [sp, -16]!
+            stp  x26, x27, [sp, -16]!
+            stp  x28, x29, [sp, -16]!
+            stp  x21, x30, [sp, -16]!
             sub  sp, sp, sizeof.EvalInfo
+
+            ldr  x28, [x20, Pos.typeBB + 8*White]
+            ldr  x29, [x20, Pos.typeBB + 8*Black]
+            ldr  x19, [x20, Pos.typeBB + 8*Pawn]
 
             ldr  x27, [x21, State.pawnKey]
             and  w27, w27, PAWN_HASH_ENTRY_COUNT-1
@@ -1546,9 +1552,7 @@ Evaluate:
             ldr  x22, [x20, Pos.typeBB + 8*Queen]
             ldr  x23, [x20, Pos.typeBB + 8*Rook]
             orr  x23, x23, x22
-            ldr  x24, [x20, Pos.typeBB + 8*White]
-            ldr  x4, [x20, Pos.typeBB + 8*Black]
-            orr  x24, x24, x4
+            orr  x24, x28, x29
             ldr  x4, [x20, Pos.typeBB + 8*Bishop]
             orr  x22, x22, x4
             ldr  w26, [x20, Pos.sideToMove]
@@ -1568,12 +1572,10 @@ Evaluate:
             str  x1, [sp, EvalInfo.attackedBy + 8*(8*Black + 0   )]
             str  x2, [sp, EvalInfo.attackedBy + 8*(8*Black + King)]
 
-            ldr  x0, [x20, Pos.typeBB + 8*White]
-            ldr  x2, [x20, Pos.typeBB + 8*Black]
             ldr  x4, [x21, State.blockersForKing + 8*White]
-            and  x0, x0, x4
+            and  x0, x28, x4
             ldr  x4, [x21, State.blockersForKing + 8*Black]
-            and  x2, x2, x4
+            and  x2, x29, x4
             str  x0, [sp, EvalInfo.pinnedPieces + 8*White]
             str  x2, [sp, EvalInfo.pinnedPieces + 8*Black]
 
@@ -1620,57 +1622,46 @@ Evaluate.DoPawnEvalReturn:
     ; is in the unsigned range [0,-4*(LazyThreshold+1)]
 
             add  w2, w0, 0x08000
-            asr  w2, w2, 16
            sbfx  w0, w0, 0, 16
             mov  w4, -2*(LazyThreshold + 1)
-            add  w0, w0, w2
+            add  w0, w0, w2, asr 16
             add  w0, w0, w4
-            mov  w4, -2*(LazyThreshold + 1)
             cmp  w0, w4, lsl 1
             bls  Evaluate_Cold.ReturnLazyEval
 
        EvalInit  White
        EvalInit  Black
-    ; x16 = 
+    ; x16 = qword[sp, EvalInfo.attackedBy + 8*(8*White + Pawn)]
+    ; x17 = qword[sp, EvalInfo.attackedBy + 8*(8*Black + Pawn)]
 
-            ldr  x8, [x20, Pos.typeBB + 8*White]
-            ldr  x9, [x20, Pos.typeBB + 8*Black]
             mov  x1, Rank2BB + Rank3BB
             mov  x26, Rank7BB + Rank6BB
-            orr  x0, x8, x9
-            mov  x2, x0
-            mov  x23, x0
+            orr  x23, x28, x29
     ; x23 = all pieces
-        ShiftBB  DELTA_S, x0, x0
-        ShiftBB  DELTA_N, x2, x2
-            ldr  x4, [x20, Pos.typeBB + 8*Pawn]
-            and  x8, x8, x4
-            ldr  x4, [x20, Pos.typeBB + 8*Pawn]
-            and  x9, x9, x4
+        ShiftBB  DELTA_S, x0, x23
+        ShiftBB  DELTA_N, x2, x23
+            and  x8, x28, x19
+            and  x9, x29, x19
             orr  x0, x0, x1
             orr  x2, x2, x26
             and  x0, x0, x8
             and  x2, x2, x9
-            ldr  w1, [sp, EvalInfo.ksq + 4*White]
-            ldr  w26, [sp, EvalInfo.ksq + 4*Black]
-            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Black + Pawn)]
+            orr  x0, x0, x17
+            orr  x2, x2, x16
+            ldr  x5, [x20, Pos.typeBB + 8*King]
+            and  x4, x5, x28
+            and  x5, x5, x29
             orr  x0, x0, x4
-            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*White + Pawn)]
-            orr  x2, x2, x4
-            mov  x4, 1
-            lsl  x4, x4, x1
-            orr  x0, x0, x4
-            mov  x4, 1
-            lsl  x4, x4, x26
-            orr  x2, x2, x4
+            orr  x2, x2, x5
             mvn  x0, x0
             mvn  x2, x2
-            str  x0, [sp, EvalInfo.mobilityArea + 8*White]
-            str  x2, [sp, EvalInfo.mobilityArea + 8*Black]
+            stp  x0, x2, [sp, EvalInfo.mobilityArea]
+
+            ldr  x12, [sp, EvalInfo.attackedBy + 8*(8*White + 0)]
+            ldr  x13, [sp, EvalInfo.attackedBy + 8*(8*Black + 0)]
 
     ; EvalPieces adds to esi
             ldr  w26, [sp, EvalInfo.score]
-            mov  x25, 0
             ldr  x22, [x20, Pos.typeBB + 8*Knight]
      EvalPieces  White, Knight
      EvalPieces  Black, Knight
@@ -1684,10 +1675,8 @@ Evaluate.DoPawnEvalReturn:
      EvalPieces  White, Queen
      EvalPieces  Black, Queen
 
-            ldr  x24, [x20, Pos.typeBB + 8*White]
-            ldr  x25, [x20, Pos.typeBB + 8*Black]
-            ldr  x22, [sp, EvalInfo.attackedBy + 8*(8*White + 0)]
-            ldr  x23, [sp, EvalInfo.attackedBy + 8*(8*Black + 0)]
+            str  x12, [sp, EvalInfo.attackedBy + 8*(8*White + 0)]
+            str  x13, [sp, EvalInfo.attackedBy + 8*(8*Black + 0)]
 
     ; EvalKing adds to dword[.ei.score]
             str  w26, [sp, EvalInfo.score]
@@ -1796,18 +1785,15 @@ Evaluate.HaveScaleFunctionReturn:
 
             sub  w1, w0, 48
             ldr  x10, [x20, Pos.typeBB + 8*Bishop]
-            ldr  x8, [x20, Pos.typeBB + 8*White]
-            ldr  x9, [x20, Pos.typeBB + 8*Black]
             ldr  w27, [x21, State.npMaterial]
-            and  x8, x8, x10
-            and  x9, x9, x10
+            and  x8, x28, x10
+            and  x9, x29, x10
             tst  w1, not 16
             bne  Evaluate.ScaleFactorDone
             sub  x1, x8, 1
             and  x8, x8, x1
             sub  x1, x9, 1
             and  x9, x9, x1
-            ldr  x11, [x20, Pos.typeBB + 8*Pawn]
           mov64  x1, DarkSquares
             tst  x1, x10
             beq  Evaluate.NotOppBishop
@@ -1816,8 +1802,8 @@ Evaluate.HaveScaleFunctionReturn:
             beq  Evaluate.NotOppBishop
             orr  x8, x8, x9
            cbnz  x8, Evaluate.NotOppBishop
-            sub  x1, x11, 1
-            and  x1, x1, x11
+            sub  x1, x19, 1
+            and  x1, x1, x19
             mov  w0, 46
             tst  x1, x1
           csetm  w1, ne
@@ -1832,7 +1818,7 @@ Evaluate.NotOppBishop:
             add  w9, w22, BishopValueEg
             add  x6, x20, Pos.typeBB
             ldr  x4, [x6, x23, lsl 3]
-            and  x11, x11, x4
+            and  x11, x19, x4
             eor  w23, w23, 1
             cmp  w9, 2*BishopValueEg + 1
             bhs  Evaluate.ScaleFactorDone
@@ -1867,28 +1853,26 @@ Evaluate.ScaleFactorDone:
             mov  w27, 128
             sub  w27, w27, w2
             mul  w27, w27, w22
-            mov  w11, w1
+            neg  w11, w1
             mul  w27, w27, w0
+            tst  w22, w22
             add  w24, w27, 0x03F
-            tst  w27, w27
            csel  w27, w24, w27, mi
             mul  w26, w26, w2
-            asr  w27, w27, 6
-            add  w2, w27, w26
+           adds  w2, w26, w27, asr 6
             add  w0, w2, 0x07F
-            tst  w2, w2
            csel  w2, w0, w2, mi
-            neg  w11, w11
             asr  w2, w2, 7
             eor  w2, w2, w11
             add  w0, w1, Eval_Tempo
             add  w0, w0, w2
 Display 2, "Evaluate returning %i0%n"
             add  sp, sp, sizeof.EvalInfo
+            ldp  x21, x30, [sp], 16
+            ldp  x28, x29, [sp], 16
+            ldp  x26, x27, [sp], 16
             ldp  x24, x25, [sp], 16
             ldp  x22, x23, [sp], 16
-            ldp  x26, x27, [sp], 16
-            ldp  x21, x30, [sp], 16
             ret
 
 
@@ -1925,10 +1909,11 @@ HaveSpecializedEval:
             blr  x0
 Display 2, "Special Eval returned %i0%n"
             add  sp, sp, sizeof.EvalInfo
+            ldp  x21, x30, [sp], 16
+            ldp  x28, x29, [sp], 16
+            ldp  x26, x27, [sp], 16
             ldp  x24, x25, [sp], 16
             ldp  x22, x23, [sp], 16
-            ldp  x26, x27, [sp], 16
-            ldp  x21, x30, [sp], 16
             ret
 
 ; this is rarely called and should preserve rdi,r12,r13,r14,r15 (as well as rbx and rbp)
@@ -1948,26 +1933,23 @@ DoMaterialEval:
            ldrh  w24, [x21, State.npMaterial + 2*0]
            ldrh  w25, [x21, State.npMaterial + 2*1]
             add  w0, w24, w25
-            mov  w2, 0
             mov  w1, MidgameLimit - EndgameLimit
            subs  w0, w0, EndgameLimit
-           csel  w0, w2, w0, mi
+           csel  w0, wzr, w0, mi
             cmp  w0, w1
            csel  w0, w1, w0, hs
             lsl  w0, w0, 7
            udiv  w0, w0, w1
 
-            mov  w2, 0
             str  x22, [x26, MaterialEntry.key]
-           strb  w2, [x26, MaterialEntry.scalingFunction + 0]
-           strb  w2, [x26, MaterialEntry.scalingFunction + 1]
-           strb  w2, [x26, MaterialEntry.evaluationFunction]
+           strb  wzr, [x26, MaterialEntry.scalingFunction + 0]
+           strb  wzr, [x26, MaterialEntry.scalingFunction + 1]
+           strb  wzr, [x26, MaterialEntry.evaluationFunction]
            strb  w0, [x26, MaterialEntry.gamePhase]
             mov  w4, SCALE_FACTOR_NORMAL
            strb  w4, [x26, MaterialEntry.factor + 1*White]
-            mov  w4, SCALE_FACTOR_NORMAL
            strb  w4, [x26, MaterialEntry.factor + 1*Black]
-           strh  w2, [x26, MaterialEntry.value]
+           strh  wzr, [x26, MaterialEntry.value]
 
     ; Let's look if we have a specialized evaluation function for this particular
     ; material configuration. Firstly we look for a fixed configuration one, then

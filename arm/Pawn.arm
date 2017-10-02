@@ -1,7 +1,7 @@
 macro EvalPawns Us
 	; in  x20 address of Pos struct
 	;     x27 address of pawn table entry
-    ;     x17 byte[x27, PawnEntry.weakUnopposed]
+        ;     x17 byte[x27, PawnEntry.weakUnopposed]
 	; out w26 score
   local Them, Up, Right, Left
   local Isolated0, Isolated1, Backward0, Backward1, Doubled
@@ -11,11 +11,17 @@ macro EvalPawns Us
   local Neighbours_True__Lever_True, Neighbours_True__Lever_False__RelRank_big
   local Continue, NoPassed, PopLoop
   if Us = White
+        Pieces_Pawn = x19
+        Pieces_Us   = x28
+        Pieces_Them = x29
         Them  = Black
         Up    = DELTA_N
         Right = DELTA_NE
         Left  = DELTA_NW
   else
+        Pieces_Pawn = x19
+        Pieces_Us   = x29
+        Pieces_Them = x28
         Them  = White
         Up    = DELTA_S
         Right = DELTA_SW
@@ -32,32 +38,27 @@ macro EvalPawns Us
            strb  w4, [x27, PawnEntry.kingSquares + Us]
             mov  w4, 255
            strb  w4, [x27, PawnEntry.semiopenFiles + Us]
-            ldr  x25, [x20, Pos.typeBB + 8*Pawn]
-            mov  x24, x25
-            ldr  x4, [x20, Pos.typeBB + 8*Them]
-            and  x24, x24, x4
-            ldr  x4, [x20, Pos.typeBB + 8*Us]
-            and  x25, x25, x4
-            mov  x23, x25
-    ; r14 = their pawns
-    ; r13 = our pawns     = r15
-        ShiftBB  Right, x0, x25
-        ShiftBB  Left, x2, x25
+            and  x24, Pieces_Pawn, Pieces_Them
+            and  x23, Pieces_Pawn, Pieces_Us
+    ; x24 = their pawns
+    ; x23 = our pawns
+        ShiftBB  Right, x0, x23
+        ShiftBB  Left, x2, x23
+            add  x25, x20, Pos.pieceList + 16*(8*Us + Pawn)
             orr  x0, x0, x2
             str  x0, [x27, PawnEntry.pawnAttacks + 8*Us]
-          mov64  x0, LightSquares
-            and  x0, x0, x25
+          mov64  x0, LightSquares            
+            and  x0, x0, x23
         _popcnt  x0, x0, x1
           mov64  x2, DarkSquares
-            and  x2, x2, x25
+            and  x2, x2, x23
         _popcnt  x2, x2, x1
            strb  w0, [x27, PawnEntry.pawnsOnSquares + 2*Us + White]
            strb  w2, [x27, PawnEntry.pawnsOnSquares + 2*Us + Black]
             mov  w26, 0
     ; esi = score
-            cbz  x25, AllDone
-            add  x25, x20, Pos.pieceList + 16*(8*Us + Pawn)
-           ldrb  w1, [x20, Pos.pieceList + 16*(8*Us + Pawn)]
+            cbz  x23, AllDone
+           ldrb  w1, [x25]
 NextPiece:
             add  x25, x25, 1
             and  w2, w1, 7
