@@ -4,6 +4,7 @@ _start:
            csel  x0, x1, x0, ne
             tst  w1, 0xFFFFF000
 
+mov  w4, ((22 * 0x10000)  +  0)*(1 - 0)
 
 Math_Lerp:
             ld1  {v3.16b}, [x1], 16

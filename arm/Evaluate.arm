@@ -13,6 +13,8 @@ ThreatByRank        = (( 16 shl 16) + (  3))
 Hanging             = (( 48 shl 16) + ( 27))
 ThreatByPawnPush    = (( 38 shl 16) + ( 22))
 HinderPassedPawn    = ((  7 shl 16) + (  0))
+LongRangedBishop        =  (22 shl 16)  +  0
+TrappedBishopA1H1       =  (50 shl 16)  + 50
 
 LazyThreshold = 1500
 
@@ -25,9 +27,11 @@ macro EvalInit Us
   local NotUsed, PinnedLoop, NoPinned, YesPinned
 
   if Us = White
+        AttackedBy_UsPawn = x16
         Them = Black
         Down = DELTA_S
   else
+        AttackedBy_UsPawn = x17
         Them = White
         Down = DELTA_N
   end if
@@ -44,10 +48,9 @@ macro EvalInit Us
             ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + 0)]
             orr  x4, x4, x9
             str  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + 0)]
-            ldr  x10, [x27, PawnEntry.pawnAttacks + 8*Us]
-            str  x10, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
+            ldr  AttackedBy_UsPawn, [x27, PawnEntry.pawnAttacks + 8*Us]
             ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + 0)]
-            orr  x4, x4, x10
+            orr  x4, x4, AttackedBy_UsPawn
             str  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + 0)]
 
             mov  x8, 0
@@ -59,8 +62,8 @@ macro EvalInit Us
         ShiftBB  Down, x8, x8
             and  x8, x8, x0
             orr  x8, x8, x9
-            and  x9, x9, x10
-         Popcnt  x2, x9, x1
+            and  x9, x9, AttackedBy_UsPawn
+        _popcnt  x2, x9, x1
             mov  w0, 0
             str  w0, [sp, EvalInfo.kingAttackersWeight + 4*Us]
             str  w0, [sp, EvalInfo.kingAdjacentZoneAttacksCount + 4*Us]
@@ -68,7 +71,8 @@ NotUsed:
             str  x8, [sp, EvalInfo.kingRing + 8*Them]
             str  w2, [sp, EvalInfo.kingAttackersCount + 4*Us]
             ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + King)]
-            and  x10, x10, x4
+            and  x10, AttackedBy_UsPawn, x4
+            str  AttackedBy_UsPawn, [sp, EvalInfo.attackedBy + 8*(8*Us + Pawn)]
             str  x10, [sp, EvalInfo.attackedBy2 + 8*Us]
 end macro
 
@@ -290,10 +294,26 @@ OutpostDone:
           mov32  w4, BishopPawns
             mul  w0, w0, w4
          AddSub  Them, w26, w26, w0
+
+            ldr  x2, [sp, EvalInfo.attackedBy + 8*(8*Them + Pawn)]
+         _mov64  x0, 0x8142241818244281
+         _mov64  x1, (FileDBB or FileEBB) and (Rank4BB or Rank5BB)
+            bic  x0, x0, x2
+            mov  w4, LongRangedBishop*(Them - Us)
+            add  w2, w26, w4
+            lsr  x0, x0, x24
+           _lea  x6, BishopAttacksPDEP
+            tbz  x0, 0, @1f
+            ldr  x4, [x6, x24, lsl 3]
+            and  x1, x1, x4
+            ldr  x4, [x20, Pos.typeBB + 8*Pawn]
+            tst  x1, x4
+           csel  w26, w2, w26, eq
+    @1:
+
     end if
 
     if PEDANTIC = 1 & Pt = Bishop
-TrappedBishopA1H1 = (50 shl 16) + 50
             add  x2, x20, x24
            ldrb  w4, [x20, Pos.chess960]
             cbz  w4, @2f
@@ -1611,6 +1631,7 @@ Evaluate.DoPawnEvalReturn:
 
        EvalInit  White
        EvalInit  Black
+    ; x16 = 
 
             ldr  x8, [x20, Pos.typeBB + 8*White]
             ldr  x9, [x20, Pos.typeBB + 8*Black]

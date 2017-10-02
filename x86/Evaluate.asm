@@ -13,6 +13,9 @@ ThreatByRank		= (( 16 shl 16) + (  3))
 Hanging 		= (( 48 shl 16) + ( 27))
 ThreatByPawnPush	= (( 38 shl 16) + ( 22))
 HinderPassedPawn	= ((  7 shl 16) + (  0))
+LongRangedBishop        =  (22 shl 16)  +  0
+TrappedBishopA1H1       =  (50 shl 16)  + 50
+
 
 LazyThreshold = 1500
 
@@ -86,7 +89,6 @@ macro EvalPieces Us, Pt
 	;
 	; in: r13 all pieces
 	;     r12 pieces of type Pt ( qword[rbp+Pos.typeBB+8*Pt])
-	;     r15 should be zero  for dirty trick
 
   local addsub, subadd
   local Them, OutpostRanks
@@ -279,10 +281,21 @@ OutpostDone:
           movzx  eax, byte[rcx+PawnEntry.pawnsOnSquares+2*Us]
            imul  eax, BishopPawns
          subadd  esi, eax
+
+            mov  rdx, qword[.ei.attackedBy + 8*(8*Them + Pawn)]
+            mov  rax, 0x8142241818244281
+            mov  rcx, (FileDBB or FileEBB) and (Rank4BB or Rank5BB)
+          _andn  rax, rdx, rax
+            lea  edx, [rsi + LongRangedBishop*(Them - Us)]
+             bt  rax, r14
+            jnc  @1f
+            and  rcx, qword[BishopAttacksPDEP + 8*r14]
+           test  rcx, qword[rbp + Pos.typeBB + 8*Pawn]
+          cmovz  esi, edx
+    @1:
     end if
 
     if PEDANTIC = 1 & Pt = Bishop
-TrappedBishopA1H1 = (50 shl 16) + 50
             lea  rdx, [rbp + Pos.board + r14]
             cmp  byte[rbp + Pos.chess960], 0
              je  @2f
@@ -408,11 +421,9 @@ SkipQueenPin:
 
   end if
 
-
 	      movzx   r14d, byte[r15]
 		cmp   r14d, 64
 		 jb   NextPiece
-
 AllDone:
 end macro
 
