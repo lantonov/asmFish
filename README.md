@@ -19,20 +19,20 @@ This allows multiple versions to be assembled from the same source.
 The x86-64 linux version links against nothing and should work with any 64 bit x86 linux kernel.
 
         export include="x86/include/"
-        ./fasmg "x86/fish.arm" "asmfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'"
+        ./fasmg "x86/fish.asm" "asmfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'"
         chmod 755 ./asmfish
 
 ## x86-64 Windows
 The x86-64 windows version links against only `kernel32.dll` and should work even on XP.
 
         set include="x86\include\"
-        fasmg "x86/fish.arm" "asmfish" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'"
+        fasmg "x86\fish.asm" "asmfish" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'"
 
 ## x86-64 Mac
 The x86-64 macOS version links against `/usr/lib/libSystem.B.dylib`  and works on version 10.12.16.
 
         export include="x86/include/"
-        ./fasmg "x86/fish.arm" "asmfish" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'popcnt'"
+        ./fasmg "x86/fish.asm" "asmfish" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'popcnt'"
         chmod 755 ./asmfish
 
 ## aarch64 Linux
@@ -72,7 +72,7 @@ Besides the usual uci commands there are the following:
 | | included by default
 |---|---
 |Priority|       Try to set the priority of the process. The default is 'none', which runs the engine which whichever priority it was started.
-|LogFile|        Location to write all communication. Useful for buggy gui's.
+|LogFile|        Location to write all communication. Useful for buggy gui's. This option should be currently broken on windows.
 |TTFile|         Set the location of the file for TTSave and TTLoad.
 |TTSave|         Saves the current hash table to TTFile.
 |TTLoad|         Loads the current hash table while possibily changing the size.
