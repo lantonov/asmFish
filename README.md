@@ -26,7 +26,7 @@ The x86-64 linux version links against nothing and should work with any 64 bit x
 The x86-64 windows version links against only `kernel32.dll` and should work even on XP.
 
         set include="x86\include\"
-        fasmg "x86\fish.asm" "asmfish" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'"
+        fasmg.exe "x86\fish.asm" "asmfish" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'"
 
 ## x86-64 Mac
 The x86-64 macOS version links against `/usr/lib/libSystem.B.dylib`  and works on version 10.12.16.
@@ -149,11 +149,11 @@ Simply stating that asmFish crashed in your gui is useless information by itself
 asmfish is known to have problems in the fritz15 gui, while it plays much better
 in the fritz11 gui.
 
-Windows might through a "The system cannot execute the specified program." or
+Windows might throw a "The system cannot execute the specified program." or
 "Insufficient system resources exist to complete the requested service.". The
 likely source of this problem is your virus software. Rest assured that the
 sources here do not produce any behaviour that is even remotely virus-like
-(unless you run analysis for a long time witn syzygy6 installed).
+(unless you run analysis for a long time with syzygy6 installed).
 
 
 # FAQ
