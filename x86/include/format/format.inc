@@ -74,7 +74,7 @@ macro format? clause
 	else match =PE64? settings, clause:
 		PE.Settings.Magic = 0x20B
 		PE.Settings.Machine = IMAGE_FILE_MACHINE_AMD64
-		PE.Settings.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE or IMAGE_FILE_32BIT_MACHINE or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED
+		PE.Settings.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE or IMAGE_FILE_LARGE_ADDRESS_AWARE or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED
 		PE.Settings.DllCharacteristics = 0
 		PE.Settings.MajorSubsystemVersion = 5
 		PE.Settings.MinorSubsystemVersion = 0
