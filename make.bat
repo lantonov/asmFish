@@ -15,12 +15,14 @@ echo    3 - Linux
 echo    4 - Mac
 echo    5 - ARM
 echo    6 - Base
+echo    7 - Matefinder
 
 echo.
 echo    Q - Quit
-choice /c:123456Q>nul
+choice /c:1234567Q>nul
 
-if errorlevel 7 goto done
+if errorlevel 8 goto done
+if errorlevel 7 goto matefinder
 if errorlevel 6 goto base
 if errorlevel 5 goto arm
 if errorlevel 4 goto mac
@@ -70,6 +72,18 @@ set include=x86\include\
 "fasmg.exe" "x86\fish.asm" "asmFishW_%datestamp%_base.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'"
 "fasmg.exe" "x86\fish.asm" "asmFishL_%datestamp%_base" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'"
 "fasmg.exe" "x86\fish.asm" "asmFishX_%datestamp%_base" -e 1000 -i "VERSION_OS='X'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'"
+goto menu
+ 
+:matefinder
+set include=arm\include\
+"fasmg.exe" "arm\fish.arm" "mateFishL_%datestamp%_v8" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'v8'" -i "USE_MATEFINDER = 1"
+set include=x86\include\
+"fasmg.exe" "x86\fish.asm" "mateFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1"
+"fasmg.exe" "x86\fish.asm" "mateFishW_%datestamp%_bmi2.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1"
+"fasmg.exe" "x86\fish.asm" "mateFishL_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1"
+"fasmg.exe" "x86\fish.asm" "mateFishL_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1"
+"fasmg.exe" "x86\fish.asm" "mateFishX_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='X'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1"
+"fasmg.exe" "x86\fish.asm" "mateFishX_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='X'" -i "PEDANTIC = 1" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1"
 goto menu
  
 :done
