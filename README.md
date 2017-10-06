@@ -14,34 +14,49 @@ to be supplied by macros. This slows down the processing of the source by a few
 orders of magnitute. The `-e 100` switch tells fasmg to display the last 100 errors
 when processing the source. The `-i` switch inserts lines at the beginning at the
 source. The fish source expect that `VERSION_OS` and `VERSION_POST` are defined this way.
-This allows multiple versions to be assembled from the same source. 
+This allows multiple versions to be assembled from the same source. Your working
+directory should be the root directory of this repository (the one that contains the
+fasmg executables)
 ## x86-64 Linux
 The x86-64 linux version links against nothing and should work with any 64 bit x86 linux kernel.
 
-        export include="x86/include/"
-        ./fasmg "x86/fish.asm" "asmfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'"
-        chmod 755 ./asmfish
+        ~/asm$ export INCLUDE="x86/include/"
+        ~/asm$ ./fasmg "x86/fish.asm" "asmfish" -e 100 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'"
+            flat assembler  version g.hwx32
+            4 passes, 18.5 seconds, 112326 bytes.
+        ~/asm$ chmod 755 ./asmfish
+        ~/asm$ ./asmfish bench
 
 ## x86-64 Windows
 The x86-64 windows version links against only `kernel32.dll` and should work even on XP.
 
-        set include="x86\include\"
-        fasmg.exe "x86\fish.asm" "asmfish" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'"
+        C:\Users\me\asm>set include="x86\include\"
+        C:\Users\me\asm>fasmg.exe "x86\fish.asm" "asmfish.exe" -e 100 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'"
+            flat assembler  version g.hwx32
+            5 passes, 23.2 seconds, 115200 bytes.
+        C:\Users\me\asm>asmfish.exe bench
+        
 
 ## x86-64 Mac
 The x86-64 macOS version links against `/usr/lib/libSystem.B.dylib`  and works on version 10.12.16.
 
-        export include="x86/include/"
-        ./fasmg "x86/fish.asm" "asmfish" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'popcnt'"
-        chmod 755 ./asmfish
+        ~/asm$ export INCLUDE="x86/include/"
+        ~/asm$ ./fasmg "x86/fish.asm" "asmfish" -e 100 -i "VERSION_OS='X'" -i "VERSION_POST = 'popcnt'"
+            flat assembler  version g.hwx32
+            4 passes, 17.7 seconds, 119495 bytes.
+        ~/asm$ chmod 755 ./asmfish
+        ~/asm$ ./asmfish bench
 
 ## aarch64 Linux
 The aarch64 linux version links against nothing should work with any 64 bit arm linux
 kernel. Of course it can currently only be built on x86 machines.
 
-        export include="arm/include/"
-        ./fasmg "arm/fish.arm" "armfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'v8'"
-        chmod 755 ./armfish
+        ~/asm$ export INCLUDE="arm/include/"
+        ~/asm$ ./fasmg "arm/fish.arm" "armfish" -e 100 -i "VERSION_OS='L'" -i "VERSION_POST = 'v8'"
+            flat assembler  version g.hwx32
+            3 passes, 8.1 seconds, 128018 bytes.
+        ~/asm$ chmod 755 ./armfish
+        ~/asm$ qemu-aarch64 ./armfish bench
 
 # Using the engine from the command line
 
@@ -57,14 +72,14 @@ Besides the usual uci commands there are the following:
 |perft| Usual move generation verification. Use like `perft 7`.
 |bench| Usual bench command. Use like stockfish or the more readable form `bench hash 16 threads 1 depth 13`. These are the defaults.
 |wait|  Waits for the main search thread to finish. Use with caution (esp. on an infinite search). This is useful when feeding commands via the command line. The command `wait` can be used after `go` to ensure that engine doesn't quit before finishing.
-
-| | `VERBOSE=1` assemble option
-|---|---
+| | __`VERBOSE=1` assemble option__
 |show|  Prints out the internal rep of the position.
 |moves| Makes the succeeding moves then does 'show'.
 |undo|  Undoes one or a certain number of moves
 |donull| Does a null move.
 |eval|   Displays evaluation.
+| | __`USE_BOOK=1` assemble option__
+|bookprobe|     Displays book entries from the current position. Use like `bookprobe 3`.
 
 
 # Engine options
@@ -72,24 +87,22 @@ Besides the usual uci commands there are the following:
 | | included by default
 |---|---
 |Priority|       Try to set the priority of the process. The default is 'none', which runs the engine which whichever priority it was started.
-|LogFile|        Location to write all communication. Useful for buggy gui's. This option should be currently broken on windows.
-|TTFile|         Set the location of the file for TTSave and TTLoad.
+|LogFile|        Set the location to write all communication. Useful for buggy gui's. A value of `<empty>` means the logger is off.
+|TTFile|         Set the location of the file for TTSave and TTLoad. A value of `<empty>` means that the following two command will fail.
 |TTSave|         Saves the current hash table to TTFile.
-|TTLoad|         Loads the current hash table while possibily changing the size.
+|TTLoad|         Loads the current hash table from TTFile while possibily changing the size.
 |LargePages|     Try to use large pages when allocating the hash. Hash and threads are only allocated when receiving `isready` or `go`.
-|NodeAffinity|   The default is "all". Here is the behavior:
+|NodeAffinity|   The default is `all`. The command `setoption name nodeaffinity value all` will show the detected cores/nodes in your machine. Here is the general behavior:
 ```
-"all"  pin threads to all nodes your machine in a uniform way
-"none"  disable pinning threads to nodes
-"0 1 2 3" only use nodes 0, 1, 2 and 3
-"2" only use node 2
-"0.1 2.3" use nodes 0, 1, 2 and 3
-    but node 1 shares per-node memory with node 0
-    node 3 shares per-node memory with node 2
-"0.1.2.3" use nodes 0, 1, 2 and 3
-    but nodes 1, 2 and 3 share per-node memory with node 0
-if you want to see the detected cores/nodes in your machine
-    run "setoption name NodeAffinity value all"
+all       pin threads to all nodes your machine in a uniform way
+none      disable pinning threads to nodes
+0 1 2 3   only use nodes 0, 1, 2 and 3
+2         only use node 2
+0.1 2.3   use nodes 0, 1, 2 and 3
+            but node 1 shares per-node memory with node 0
+            node 3 shares per-node memory with node 2
+0.1.2.3   use nodes 0, 1, 2 and 3
+            but nodes 1, 2 and 3 share per-node memory with node 0
 ```
 
 | | `USE_SYZYGY=1` default assemble option
@@ -111,7 +124,6 @@ if you want to see the detected cores/nodes in your machine
 |OwnBook|        Lookup position in book if possible. Ponder moves are also selected from the book when possible
 |BookFile|       Loads polyglot book into engine.
 |BestBookMove|  Use only the best moves from the book (highest weight)
-|bookprobe|     Display book entries from current pos. Use like 'bookprobe 3'.
 |BookDepth|     Tricky setting works as follows:
 ```
 BookDepth <= 0:
@@ -159,6 +171,7 @@ sources here do not produce any behaviour that is even remotely virus-like
 # FAQ
 Q: Why not just start with the compiler output and speed up the critical functions?
    or write critical functions in asm and include them in cpp code?
+
 A: With this approach the critical functions would still need to conform to the
    standards set in place by the ABI. All of the critical functions in asmFish do
    not conform to these standards. Plus, asmFish would be dependent on a compiler
@@ -168,13 +181,15 @@ A: With this approach the critical functions would still need to conform to the
    is not speed critical but cumbersome to write by hand.
 
 Q: Is asmFish search the same as official stockfish?
+
 A: It does now that PEDANTIC = 1 is the default! The changes previously thought
    to be inconsequential lose about 2 Elo in a head-to-head matchup. The
    functionality when using syzygy is not 100% identical because asmFish uses
    Ronald's original alpha-beta search while official stockfish does not. This
    causes minor inconsequential differences due to the piece lists.
    
-Q: Where can I find the executable files of the old versions ?
+Q: Where can I find the executable files of the old versions?
+
 A: All older versions of asmFish/pedantFish are in the branch
    https://github.com/lantonov/asmFish/tree/executables
 
