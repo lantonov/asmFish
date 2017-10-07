@@ -1,3 +1,5 @@
+display 'elfexe.inc included'
+
 ELFCLASSNONE = 0
 ELFCLASS32   = 1
 ELFCLASS64   = 2

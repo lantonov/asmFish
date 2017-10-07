@@ -1,26 +1,25 @@
 # Introduction
 Welcome to the project of translating Stockfish into assembly language. This project
 now uses the new assembler engine fasmg from Tomasz Grysztar. The includes in
-`arm/includes/` or `x86/include` contain instruction and formatting macros for
+`arm/includes/` or `x86/include/` contain instruction and formatting macros for
 the four popular targets in the _Building_ section. The hello world examples in these
 directories should provide enough to grasp the syntax.
 
 # Building
 All versions of the executables may be built using the fasmg executable. However,
-fasmg is currently only available as an x86 executable. It is most important to
-set the `include` environment variable before running fasmg on the sources. fasmg
-is a generic assembler which relies on the particual flavor of the assembly language
-to be supplied by macros. This slows down the processing of the source by a few
-orders of magnitute. The `-e 100` switch tells fasmg to display the last 100 errors
+fasmg is currently only available as an x86 executable. fasmg is a generic assembler
+which relies on the particual flavor of the assembly language to be supplied by macros.
+This slows down the processing of the source by a few orders of magnitute. The location
+of these macros (relative to the current source) is harded coded into the fish source in
+the variable `FASMG_INC`. The `-e 100` switch tells fasmg to display the last 100 errors
 when processing the source. The `-i` switch inserts lines at the beginning at the
-source. The fish source expect that `VERSION_OS` and `VERSION_POST` are defined this way.
+source. The fish source expect that `VERSION_OS` is defined this way.
 This allows multiple versions to be assembled from the same source. Your working
 directory should be the root directory of this repository (the one that contains the
 fasmg executables)
 ## x86-64 Linux
 The x86-64 linux version links against nothing and should work with any 64 bit x86 linux kernel.
 
-        ~/asm$ export INCLUDE="x86/include/"
         ~/asm$ ./fasmg "x86/fish.asm" "asmfish" -e 100 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'"
             flat assembler  version g.hwx32
             4 passes, 18.5 seconds, 112326 bytes.
@@ -30,17 +29,15 @@ The x86-64 linux version links against nothing and should work with any 64 bit x
 ## x86-64 Windows
 The x86-64 windows version links against only `kernel32.dll` and should work even on XP.
 
-        C:\Users\me\asm>set include="x86\include\"
-        C:\Users\me\asm>fasmg.exe "x86\fish.asm" "asmfish.exe" -e 100 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'"
+        C:\asm>fasmg.exe "x86\fish.asm" "asmfish.exe" -e 100 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'"
             flat assembler  version g.hwx32
             5 passes, 23.2 seconds, 115200 bytes.
-        C:\Users\me\asm>asmfish.exe bench
+        C:\asm>asmfish.exe bench
         
 
 ## x86-64 Mac
 The x86-64 macOS version links against `/usr/lib/libSystem.B.dylib`  and works on version 10.12.16.
 
-        ~/asm$ export INCLUDE="x86/include/"
         ~/asm$ ./fasmg "x86/fish.asm" "asmfish" -e 100 -i "VERSION_OS='X'" -i "VERSION_POST = 'popcnt'"
             flat assembler  version g.hwx32
             4 passes, 17.7 seconds, 119495 bytes.
@@ -51,7 +48,6 @@ The x86-64 macOS version links against `/usr/lib/libSystem.B.dylib`  and works o
 The aarch64 linux version links against nothing should work with any 64 bit arm linux
 kernel. Of course it can currently only be built on x86 machines.
 
-        ~/asm$ export INCLUDE="arm/include/"
         ~/asm$ ./fasmg "arm/fish.arm" "armfish" -e 100 -i "VERSION_OS='L'" -i "VERSION_POST = 'v8'"
             flat assembler  version g.hwx32
             3 passes, 8.1 seconds, 128018 bytes.
@@ -72,14 +68,14 @@ Besides the usual uci commands there are the following:
 |perft| Usual move generation verification. Use like `perft 7`.
 |bench| Usual bench command. Use like stockfish or the more readable form `bench hash 16 threads 1 depth 13`. These are the defaults.
 |wait|  Waits for the main search thread to finish. Use with caution (esp. on an infinite search). This is useful when feeding commands via the command line. The command `wait` can be used after `go` to ensure that engine doesn't quit before finishing.
+| | __`USE_BOOK=1` default assemble option__
+|bookprobe|     Displays book entries from the current position. Use like `bookprobe 3`.
 | | __`VERBOSE=1` assemble option__
 |show|  Prints out the internal rep of the position.
 |moves| Makes the succeeding moves then does 'show'.
 |undo|  Undoes one or a certain number of moves
 |donull| Does a null move.
 |eval|   Displays evaluation.
-| | __`USE_BOOK=1` assemble option__
-|bookprobe|     Displays book entries from the current position. Use like `bookprobe 3`.
 
 
 # Engine options
@@ -119,7 +115,7 @@ none      disable pinning threads to nodes
 |UCI_Elo|        level at which to play
 
 
-| | `USE_BOOK=1` assemble option
+| | `USE_BOOK=1` default assemble option
 |---|---
 |OwnBook|        Lookup position in book if possible. Ponder moves are also selected from the book when possible
 |BookFile|       Loads polyglot book into engine.
@@ -148,6 +144,28 @@ With BookDepth <= -5, the move h2h3 is also not considered.
 BookDepth >= 1:
 Book is not probed if gameply >= BookDepth
 ```
+The option `BestBookMove` is also slightly complicated for compatibility with the 
+cerebellum book in polyglot format. In the following pseudocode, `movelist` is the
+list of legal book moves after processing the `BookDepth` option. After this pseudocode
+if `movelist` is non-empty, then a random move is chosen from `movelist` according to
+the weights of these moves.
+```
+if BestBookMove = true
+   if length(movelist) = 1
+       do nothing
+   else
+       filter out moves from movelist that lead to repetitions
+       filter out moves from movelist without highest weight
+else
+   filter out moves from movelist that lead to repetitions
+end if
+```
+This means that if `BestBookMove=true` and the first move is encoded with a higher weight
+than the second move (both having non-zero weight in the book), then the behaviour should
+match that of brainfish. If `BestBookMove=false`, then the only difference is that in the
+case where the first move leads to repetition and there is no second move, then the
+engine starts calculating.
+
 
 # Misbehaviour
 If you observe a crash/misbehaviour in asmfish, please raise an issue here

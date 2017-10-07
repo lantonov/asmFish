@@ -192,9 +192,6 @@ end virtual
             mov  r9, qword[r8+State.key]
             xor  eax, eax
           movzx  ecx, word[rbx+State.pliesFromNull]
-
-;Display 0,"pliesFromNull: %i1%n"
-
 .RepLoop:
             sub  r8, 2*sizeof.State
             sub  ecx, 2

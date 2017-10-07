@@ -1,18 +1,11 @@
-; VERSION_POST and VERSION_OS should be defined on cmd line
 if ~ defined VERSION_OS
-  err 'VERSION_OS is not defined'
+  err 'VERSION_OS should be defined in a cmd line argument'
 end if
 
-if ~ defined VERSION_POST
-  err 'VERSION_POST is not defined'
-end if
-
-if VERSION_POST <> 'v8'
-    err "only VERSION_POST = 'v8' supported"
-end if
 if VERSION_OS <> 'L'
-    err "only VERSION_OS = 'L' supported"
+    err "unsupported VERSION_OS"
 end if
+
 VERSION_PRE = 'armFish'
 
 macro SetDefault val*, sym*
@@ -27,21 +20,24 @@ SetDefault 0, VERBOSE
 SetDefault 0, PROFILE
 
 SetDefault 1, USE_SYZYGY
-SetDefault 1, USE_CURRMOVE
-SetDefault 1, USE_HASHFULL
 SetDefault 1, USE_CMDLINEQUIT
+SetDefault 1, USE_HASHFULL
+SetDefault 1, USE_CURRMOVE
 SetDefault 0, USE_SPAMFILTER
 SetDefault 0, USE_WEAKNESS
 SetDefault 0, USE_VARIETY
-SetDefault 0, USE_BOOK
 SetDefault 0, USE_MATEFINDER
-
-SetDefault 0, PEDANTIC
+SetDefault 1, PEDANTIC
 SetDefault '<empty>', LOG_FILE  ; use something other than <empty> to hardcode a starting log file into the engine
 
+SetDefault 'v8', VERSION_POST
 
-; instruction and format macros
-include 'format/format.inc'
+
+FASMG_INC = 'include/'
+include string 'format.inc' shl (8*lengthof FASMG_INC) + FASMG_INC
+
+
+; instruction and target macros
 format ELF64 executable 0
 entry Start
 

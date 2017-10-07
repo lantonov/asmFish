@@ -1,4 +1,6 @@
-include 'format/format.inc'
+FASMG_INC = '../'
+include string 'format.inc' shl (8*lengthof FASMG_INC) + FASMG_INC
+
 format ELF64 executable 0
 entry Start
 

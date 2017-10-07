@@ -328,7 +328,6 @@ macro aarch64.parse_operand ns, x
             else if ns.data relativeto 0
                 ns.type = @type_immc
             else
-display 'setting immr',10
                 ns.type = @type_immr
             end if
         end if
