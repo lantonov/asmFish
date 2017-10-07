@@ -20,6 +20,7 @@ SetDefault 0, DEBUG
 SetDefault 0, VERBOSE
 SetDefault 0, PROFILE
 
+SetDefault 1, USE_BOOK
 SetDefault 1, USE_SYZYGY
 SetDefault 1, USE_CURRMOVE
 SetDefault 1, USE_HASHFULL
@@ -27,10 +28,9 @@ SetDefault 1, USE_CMDLINEQUIT
 SetDefault 0, USE_SPAMFILTER
 SetDefault 0, USE_WEAKNESS
 SetDefault 0, USE_VARIETY
-SetDefault 0, USE_BOOK
 SetDefault 0, USE_MATEFINDER
 
-SetDefault 0, PEDANTIC
+SetDefault 1, PEDANTIC
 SetDefault '<empty>', LOG_FILE  ; use something other than <empty> to hardcode a starting log file into the engine
 
 CPU_HAS_POPCNT = 0
