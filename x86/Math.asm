@@ -122,7 +122,7 @@ ender	equ rdx
        _vcomisd   x, b
             jbe   .Lerp
             cmp   current, ender
-             jb   @1
+             jb   @1b
 .Return_by:
       _vmovhlps   x, x, b
             ret
