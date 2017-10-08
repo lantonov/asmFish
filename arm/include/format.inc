@@ -13,11 +13,11 @@ macro format? clause
 		else match brand:, settings
 			ELF.Settings.ABI = brand
 		end match
-		include 'format/elfexe.inc'
-		include 'aarch64.inc'
+		include string 'targets/elfexe.inc' shl (8*lengthof FASMG_INC) + FASMG_INC
+		include string 'instructions/aarch64.inc' shl (8*lengthof FASMG_INC) + FASMG_INC
 	else match =ELF64?, clause
-		include 'format/elf64.inc'
-		include 'aarch64.inc'
+		include string 'targets/elf64.inc' shl (8*lengthof FASMG_INC) + FASMG_INC
+		include string 'instructions/aarch64.inc' shl (8*lengthof FASMG_INC) + FASMG_INC
 	else
 		err 'invalid argument'
 	end match

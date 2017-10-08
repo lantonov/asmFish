@@ -505,43 +505,6 @@ struct Book
         rd 1
 ends
 
-struct Brain
- startOrg   rq 1
- enderOrg   rq 1
- currentOrg  rq 1
- start	     rq 1
- ender	    rq 1
- file_	    rq 1
- path	      rq 1
- entriesCount rd 1
- visitedCount rd 1
- depthRecordBuffer rq 1
-		   rq 1
-
- depthRecord   rd 1
-	       rd 1
- maxDepth      rd 1
- timer	       rb 1
-	       rb 3
-
-ends
-
-struct BrainEntry
- brainKey   rq 1  ; bits 0-47 contain bits 16-63 of sf key
-	    rb 1
- brainMove0 rb 1
- brainMove1 rb 1
-	    rb 1
- visitedDepth rd 1
- polyglotKey	rq 1
- polyglotMove0	rw 1
- polyglotMove1	rw 1
-		rd 1
-ends
-if sizeof.BrainEntry <> 32
- err
-end if
-
 struct PolyglotEntry
  key	rq 1
  move	rw 1
@@ -564,5 +527,6 @@ struct ExtBookMove
  move   rd 1
  weight rd 1
  total  rd 1
+ repetition rd 1
 ends
 

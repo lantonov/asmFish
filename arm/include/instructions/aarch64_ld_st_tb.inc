@@ -87,7 +87,7 @@ macro aarch64.parse_adr_f13 lit, size, x&
             aarch64.restrict @opB.data, -256, 255
             @adr.encode = 0x00000c00 + ((@opB.data and 0x1FF) shl 12) + (@opA.data shl 5)
         else
-            err 'invalid address 42'
+            err 'invalid address'
         end if
     else match [a]=,b, x
         @adr.type = @atype_postincr

@@ -175,13 +175,13 @@ macro movk a*, b*, c
             dd @adr.encode + (         0 shl 17) + (((        0 shr  0) and 0xFFFF) shl 5)
         else if @op1.type = @type_immr_g1_nc
             aarch64.store_reloc @op1.data, R_AARCH64_MOVW_UABS_G1_NC, R_AARCH64_MOVW_PREL_G1_NC
-            dd @adr.encode + (         0 shl 17) + (((        0 shr 16) and 0xFFFF) shl 5)
+            dd @adr.encode + (        16 shl 17) + (((        0 shr 16) and 0xFFFF) shl 5)
         else if @op1.type = @type_immr_g2_nc
             aarch64.store_reloc @op1.data, R_AARCH64_MOVW_UABS_G2_NC, R_AARCH64_MOVW_PREL_G1_NC
-            dd @adr.encode + (         0 shl 17) + (((        0 shr 32) and 0xFFFF) shl 5)
+            dd @adr.encode + (        32 shl 17) + (((        0 shr 32) and 0xFFFF) shl 5)
         else if @op1.type = @type_immr_g3
             aarch64.store_reloc @op1.data, R_AARCH64_MOVW_UABS_G3,    -1
-            dd @adr.encode + (         0 shl 17) + (((        0 shr 48) and 0xFFFF) shl 5)
+            dd @adr.encode + (        48 shl 17) + (((        0 shr 48) and 0xFFFF) shl 5)
         else
             err 'invalid operand'
         end if
@@ -219,13 +219,13 @@ macro movz a*, b*, c
             dd @adr.encode + (         0 shl 17) + (((        0 shr ( 0)) and 0xFFFF) shl 5)
         else if @op1.type = @type_immr_g1
             aarch64.store_reloc @op1.data, R_AARCH64_MOVW_SABS_G1, R_AARCH64_MOVW_PREL_G1
-            dd @adr.encode + (         0 shl 17) + (((        0 shr (16)) and 0xFFFF) shl 5)
+            dd @adr.encode + (        16 shl 17) + (((        0 shr (16)) and 0xFFFF) shl 5)
         else if @op1.type = @type_immr_g2
             aarch64.store_reloc @op1.data, R_AARCH64_MOVW_SABS_G2, R_AARCH64_MOVW_PREL_G2
-            dd @adr.encode + (         0 shl 17) + (((        0 shr (32)) and 0xFFFF) shl 5)
+            dd @adr.encode + (        32 shl 17) + (((        0 shr (32)) and 0xFFFF) shl 5)
         else if @op1.type = @type_immr_g3
             aarch64.store_reloc @op1.data, R_AARCH64_MOVW_UABS_G3, R_AARCH64_MOVW_PREL_G3
-            dd @adr.encode + (         0 shl 17) + (((        0 shr (48)) and 0xFFFF) shl 5)
+            dd @adr.encode + (        48 shl 17) + (((        0 shr (48)) and 0xFFFF) shl 5)
 
         else
             err 'invalid operand'
@@ -264,13 +264,13 @@ macro movn a*, b*, c
             dd @adr.encode + (         0 shl 17) + (((        0 shr ( 0)) and 0xFFFF) shl 5)
         else if @op1.type = @type_immr_g1
             aarch64.store_reloc @op1.data, R_AARCH64_MOVW_SABS_G1, R_AARCH64_MOVW_PREL_G1
-            dd @adr.encode + (         0 shl 17) + (((        0 shr (16)) and 0xFFFF) shl 5)
+            dd @adr.encode + (        16 shl 17) + (((        0 shr (16)) and 0xFFFF) shl 5)
         else if @op1.type = @type_immr_g2
             aarch64.store_reloc @op1.data, R_AARCH64_MOVW_SABS_G2, R_AARCH64_MOVW_PREL_G2
-            dd @adr.encode + (         0 shl 17) + (((        0 shr (32)) and 0xFFFF) shl 5)
+            dd @adr.encode + (        32 shl 17) + (((        0 shr (32)) and 0xFFFF) shl 5)
         else if @op1.type = @type_immr_g3
             aarch64.store_reloc @op1.data, R_AARCH64_MOVW_UABS_G3, R_AARCH64_MOVW_PREL_G3
-            dd @adr.encode + (         0 shl 17) + (((        0 shr (48)) and 0xFFFF) shl 5)
+            dd @adr.encode + (        48 shl 17) + (((        0 shr (48)) and 0xFFFF) shl 5)
 
         else
             err 'invalid operand'

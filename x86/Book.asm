@@ -152,33 +152,61 @@ Book_Load:
 
 
 Book_Probe:
-        ; in: rbp address of position
-        ;     rbx address of state
-        ;     rcx address to write null terminated move list
-        ;         entries are ExtBookMove struct
-        ; out: eax best book move, MOVE_NONE iff no moves found
-        ;          could be a move with zero weight
-        ;      ecx total weight, total weight of found moves
-        ;      edx weight of move eax
+    ; in: rbp address of position
+    ;     rbx address of state
+    ;     rcx address to write null terminated move list
+    ;         entries are ExtBookMove struct
+    ; out: eax best book move, MOVE_NONE iff no moves found
+    ;          could be a move with zero weight
+    ;      ecx total weight, total weight of found moves
+    ;      edx weight of move eax
 
-               push   r15 r14 r13 r12 rbx rsi rdi
 virtual at rsp
  .moveList   rq 1
  .legalList  rb MAX_MOVES*sizeof.ExtMove
  .lend       rb 0
 end virtual
 .localsize = ((.lend-rsp+15) and (-16))
-         _chkstk_ms   rsp, .localsize
-                sub   rsp, .localsize
-                mov   qword[.moveList], rcx
 
-                lea   rdi, [.legalList]
-               call   Gen_Legal
-                xor   eax, eax
-              stosd
+           push   r15 r14 r13 r12 rbx rsi rdi
+     _chkstk_ms   rsp, .localsize
+            sub   rsp, .localsize
+            mov   qword[.moveList], rcx
+
+            lea   rdi, [.legalList]
+           call   Gen_Legal
+            xor   eax, eax
+          stosq
+
+            lea  rsi, [.legalList - sizeof.ExtMove]
+.LegalLoop:
+            add  rsi, sizeof.ExtMove
+            mov  ecx, dword[rsi + ExtMove.move]
+           test  ecx, ecx
+             jz  .LegaLoopDone
+           call  Move_GivesCheck
+            mov  ecx, dword[rsi+ExtMove.move]
+            mov  byte[rbx+State.givesCheck], al
+           call  Move_Do__PerftGen_Root
+            mov  r8, rbx
+            mov  r9, qword[r8+State.key]
+            xor  eax, eax
+          movzx  ecx, word[rbx+State.pliesFromNull]
+.RepLoop:
+            sub  r8, 2*sizeof.State
+            sub  ecx, 2
+             js  .RepLoopDone
+            cmp  r9, qword[r8+State.key]
+            jne  .RepLoop
+             or  eax, -1
+.RepLoopDone:
+            mov  dword[rsi+ExtMove.value], eax
+            mov  ecx, dword[rsi+ExtMove.move]
+           call  Move_Undo
+            jmp  .LegalLoop
+.LegaLoopDone:
 
                call   Position_PolyglotKey
-
                 mov   r13, rax
         ; r13 is the key we want
                 mov   r15, qword[book.buffer]
@@ -242,19 +270,21 @@ end virtual
                  jz   @1f
                 add   edx, (-1) shl 12
     @1:
-                lea   r8, [.legalList]
+                lea   r8, [.legalList - sizeof.ExtMove]
     .CheckLegalLoop:
+                add   r8, sizeof.ExtMove
                 mov   eax, dword[r8+ExtMove.move]
                test   eax, eax
                  jz   .NextEntry
                 mov   ecx, edx
                 xor   ecx, eax
-                add   r8, sizeof.ExtMove
                test   ecx, 0x03FFF
                 jnz   .CheckLegalLoop
+                mov   ecx, dword[r8 + ExtMove.value]
                 mov   dword[rdi+ExtBookMove.move], eax
                 mov   dword[rdi+ExtBookMove.weight], esi
                 mov   dword[rdi+ExtBookMove.total], r11d
+                mov   dword[rdi+ExtBookMove.repetition], ecx
                 cmp   esi, r12d
              cmovae   r10d, eax
              cmovae   r12d, esi
@@ -262,8 +292,8 @@ end virtual
                 add   r11d, esi
                 sub   r9d, 1
                 jns   .NextEntry  ; guard against books with too many entries for this pos
-
 .EntriesDone:
+
                 mov   eax, r10d  ; best book move
                 mov   ecx, r11d  ; total weight
                 mov   edx, r12d  ; best weight
@@ -274,10 +304,116 @@ end virtual
                 pop   rdi rsi rbx r12 r13 r14 r15
                 ret
 
+Book_Filter:
+    ; in: rbp address of position
+    ;     rbx address of state
+    ;     rcx address of null terminated move list
+    ; out: eax best book move, MOVE_NONE iff no moves found
+    ;          could be a move with zero weight
+    ;      ecx total weight, total weight of found moves
+    ;      edx weight of move eax
 
+;   if BestBookMove = true
+;       if length(move list) = 1
+;           do nothing
+;       else
+;           filter out moves that lead to repetitions
+;           filter out moves without highest weight
+;   else
+;       filter out moves that lead to repetitions
+;   end if
+;
 
+; equivalently
 
+;   if BestBookMove = false  or  length(move list) > 1
+;       filter out moves that lead to repetitions
+;   end if
+;
+;   if BestBookMove = true
+;       filter out moves without highest weight
+;   end if
+;
+           push  rbx rsi rdi
+            mov  rbx, rcx
 
+         Assert  ne, dword[rbx + ExtBookMove.move], 0, 'empty move list in Book_FilterRepetitions'
+
+    ; find last move
+            lea  rdi, [rbx - 2*sizeof.ExtBookMove]
+.FindLastMove:
+            add  rdi, sizeof.ExtBookMove
+            cmp  dword[rdi + 1*sizeof.ExtBookMove + ExtBookMove.move], 0
+            jne  .FindLastMove
+
+    ; filter repetitions
+            lea  rsi, [rbx - 1*sizeof.ExtBookMove]
+            cmp  byte[book.bestBookMove], 0
+             je  .FilterRep
+            cmp  rdi, rbx
+            jbe  .FilterRepDone
+.FilterRep:
+            add  rsi, sizeof.ExtBookMove
+            cmp  rsi, rdi
+             ja  .FilterRepDone
+            cmp  dword[rsi + ExtBookMove.repetition], 0
+             je  .FilterRep
+           call  .DeleteEntry
+            jmp  .FilterRep
+.FilterRepDone:
+
+    ; find max and bestmove
+            xor  eax, eax
+            xor  edx, edx
+            lea  rsi, [rbx - sizeof.ExtBookMove]
+.FindMax:
+            add  rsi, sizeof.ExtBookMove
+            cmp  rsi, rdi
+             ja  .FindMaxDone
+            cmp  edx, dword[rsi + ExtBookMove.weight]
+          cmovb  eax, dword[rsi + ExtBookMove.move]
+          cmovb  edx, dword[rsi + ExtBookMove.weight]
+            jmp  .FindMax
+.FindMaxDone:
+
+    ; filter lower weights
+            lea  rsi, [rbx - sizeof.ExtBookMove]
+            cmp  byte[book.bestBookMove], 0
+             je  .FilterLowerDone
+.FilterLower:
+            add  rsi, sizeof.ExtBookMove
+            cmp  rsi, rdi
+             ja  .FilterLowerDone
+            cmp  edx, dword[rsi + ExtBookMove.weight]
+            jbe  .FilterLower
+           call  .DeleteEntry
+            jmp  .FilterLower
+.FilterLowerDone:
+
+    ; total the weights
+            xor  ecx, ecx
+            lea  rsi, [rbx - sizeof.ExtBookMove]
+.Total:
+            add  rsi, sizeof.ExtBookMove
+            cmp  rsi, rdi
+             ja  .TotalDone
+            mov  dword[rsi + ExtBookMove.total], ecx
+            add  ecx, dword[rsi + ExtBookMove.weight]
+            jmp  .Total
+.TotalDone:
+
+            mov  dword[rdi+sizeof.ExtBookMove+ExtBookMove.move], 0
+            mov  dword[rdi+sizeof.ExtBookMove+ExtBookMove.weight], 0
+            mov  dword[rdi+sizeof.ExtBookMove+ExtBookMove.total], -1
+            pop  rdi rsi rbx
+            ret
+
+.DeleteEntry:
+       _vmovups  xmm0, dqword[rdi]
+       _vmovups  dqword[rsi], xmm0
+            sub  rsi, sizeof.ExtBookMove
+            sub  rdi, sizeof.ExtBookMove
+            ret
 
 Book_GetMove:
         ; in: rbp address of position
@@ -330,18 +466,24 @@ end virtual
                 lea   rcx, [.moveList]
                call   Book_Probe
 .ChooseMove:
-                mov   esi, ecx
                test   eax, eax
                  jz   .Failed
                test   ecx, ecx
                  jz   .FoundMove     ; all weights are zero
-                cmp   byte[book.bestBookMove], 0
-                jne   .FoundMove
+                lea   rcx, [.moveList]
+               call   Book_Filter
+               test   eax, eax
+                 jz   .Failed
+               test   ecx, ecx
+                 jz   .FoundMove     ; all weights are zero
+                mov   esi, ecx
+               push   rax
                 lea   rcx, [book.seed]
                call   Math_Rand_i
                 xor   edx, edx
                 div   rsi
                 mov   esi, edx
+                pop   rax
                 lea   rdi, [.moveList]
 .MoveLoop:
                 mov   ecx, dword[rdi+ExtBookMove.move]
@@ -634,9 +776,16 @@ Position_PolyglotKey:
             xor  ecx, ecx
 .NextSquare:
           movzx  edx, byte[rbp+Pos.board+rcx]
-         Assert  ne, edx, 9, 'Assertion edx!=9 failed in Position_PolyglotKey'
+            lea  r8, [PolyglotKeys_WhitePieces+8*rcx]
+            lea  r9, [PolyglotKeys_BlackPieces+8*rcx]
+           test  edx, 8
+         cmovnz  r8, r9
+            and  edx, 7
+            sub  edx, 2
+             js  @1f
             shl  edx, 6+3
-            xor  rax, qword[PolyglotKeys_Pieces+rdx+8*rcx]
+            xor  rax, qword[r8+rdx]
+    @1:
             add  ecx, 1
             cmp  ecx, 64
              jb  .NextSquare
@@ -650,9 +799,7 @@ Position_PolyglotKey:
 
 
 	    align 16
-PolyglotKeys_Pieces:
-rq 64
-rq 64
+PolyglotKeys_WhitePieces:
 ; white pawn
 dq   0x5355F900C2A82DC7, 0x07FB9F855A997142, 0x5093417AA8A7ED5E, 0x7BCBC38DA25A7F3C,   0x19FC8A768CF4B6D4, 0x637A7780DECFC0D9, 0x8249A47AEE0E41F7, 0x79AD695501E7D1E8
 dq   0x14ACBAF4777D5776, 0xF145B6BECCDEA195, 0xDABF2AC8201752FC, 0x24C3C94DF9C8D3F6,   0xBB6E2924F03912EA, 0x0CE26C0B95C980D9, 0xA49CD132BFBF7CC4, 0xE99D662AF4243939
@@ -708,40 +855,7 @@ dq   0x65FA4F227A2B6D79, 0xD5F9E858292504D5, 0xC2B5A03F71471A6F, 0x59300222B4561
 dq   0x150F361DAB9DEC26, 0x9F6A419D382595F4, 0x64A53DC924FE7AC9, 0x142DE49FFF7A7C3D,   0x0C335248857FA9E7, 0x0A9C32D5EAE45305, 0xE6C42178C4BBB92E, 0x71F1CE2490D20B07
 dq   0xF1BCC3D275AFE51A, 0xE728E8C83C334074, 0x96FBF83A12884624, 0x81A1549FD6573DA5,   0x5FA7867CAF35E149, 0x56986E2EF3ED091B, 0x917F1DD5F8886C61, 0xD20D8C88C8FFE65F
 
-rq 64
-
-rq 64-16-8-1; we should be able to hide extra keys in here
-
-PolyglotKeys_side:
-dq   0xF8D626AAAF278509
-
-PolyglotKeys_Castling:
-.WhiteShort = 0x31D71DCE64B2C310
-.WhiteLong  = 0xF165B587DF898190
-.BlackShort = 0xA57E6339DD2CF3A0
-.BlackLong  = 0x1EF6E6DBB1961EC9
-dq (0*.WhiteShort) xor (0*.WhiteLong) xor (0*.BlackShort) xor (0*.BlackLong)
-dq (1*.WhiteShort) xor (0*.WhiteLong) xor (0*.BlackShort) xor (0*.BlackLong)
-dq (0*.WhiteShort) xor (1*.WhiteLong) xor (0*.BlackShort) xor (0*.BlackLong)
-dq (1*.WhiteShort) xor (1*.WhiteLong) xor (0*.BlackShort) xor (0*.BlackLong)
-dq (0*.WhiteShort) xor (0*.WhiteLong) xor (1*.BlackShort) xor (0*.BlackLong)
-dq (1*.WhiteShort) xor (0*.WhiteLong) xor (1*.BlackShort) xor (0*.BlackLong)
-dq (0*.WhiteShort) xor (1*.WhiteLong) xor (1*.BlackShort) xor (0*.BlackLong)
-dq (1*.WhiteShort) xor (1*.WhiteLong) xor (1*.BlackShort) xor (0*.BlackLong)
-dq (0*.WhiteShort) xor (0*.WhiteLong) xor (0*.BlackShort) xor (1*.BlackLong)
-dq (1*.WhiteShort) xor (0*.WhiteLong) xor (0*.BlackShort) xor (1*.BlackLong)
-dq (0*.WhiteShort) xor (1*.WhiteLong) xor (0*.BlackShort) xor (1*.BlackLong)
-dq (1*.WhiteShort) xor (1*.WhiteLong) xor (0*.BlackShort) xor (1*.BlackLong)
-dq (0*.WhiteShort) xor (0*.WhiteLong) xor (1*.BlackShort) xor (1*.BlackLong)
-dq (1*.WhiteShort) xor (0*.WhiteLong) xor (1*.BlackShort) xor (1*.BlackLong)
-dq (0*.WhiteShort) xor (1*.WhiteLong) xor (1*.BlackShort) xor (1*.BlackLong)
-dq (1*.WhiteShort) xor (1*.WhiteLong) xor (1*.BlackShort) xor (1*.BlackLong)
-
-PolyglotKeys_Ep:
-dq   0x70CC73D90BC26E24, 0xE21A6B35DF0C3AD7, 0x003A93D8B2806962, 0x1C99DED33CB890A1, 0xCF3145DE0ADD4289, 0xD0E4427A5514FB72, 0x77C621CC9FB3A483, 0x67A34DAC4356550B
-
-
-
+PolyglotKeys_BlackPieces:
 ; black pawns
 dq   0x9D39247E33776D41, 0x2AF7398005AAA5C7, 0x44DB015024623547, 0x9C15F73E62A76AE2,   0x75834465489C0C89, 0x3290AC3A203001BF, 0x0FBBAD1F61042279, 0xE83A908FF2FB60CA
 dq   0x0D7E765D58755C10, 0x1A083822CEAFE02D, 0x9605D5F0E25EC3B0, 0xD021FF5CD13A2ED5,   0x40BDF15D4A672E32, 0x011355146FD56395, 0x5DB4832046F3D9E5, 0x239F8B2D7FF719CC
@@ -796,6 +910,35 @@ dq   0x4AE7D6A36EB5DBCB, 0x2D8D5432157064C8, 0xD1E649DE1E7F268B, 0x8A328A1CEDFE5
 dq   0xF6F7FD1431714200, 0x30C05B1BA332F41C, 0x8D2636B81555A786, 0x46C9FEB55D120902,   0xCCEC0A73B49C9921, 0x4E9D2827355FC492, 0x19EBB029435DCB0F, 0x4659D2B743848A2C
 dq   0x963EF2C96B33BE31, 0x74F85198B05A2E7D, 0x5A0F544DD2B1FB18, 0x03727073C2E134B1,   0xC7F6AA2DE59AEA61, 0x352787BAA0D7C22F, 0x9853EAB63B5E0B35, 0xABBDCDD7ED5C0860
 dq   0xCF05DAF5AC8D77B0, 0x49CAD48CEBF4A71E, 0x7A4C10EC2158C4A6, 0xD9E92AA246BF719E,   0x13AE978D09FE5557, 0x730499AF921549FF, 0x4E4B705B92903BA4, 0xFF577222C14F0A3A
+
+
+PolyglotKeys_Castling:
+.WhiteShort = 0x31D71DCE64B2C310
+.WhiteLong  = 0xF165B587DF898190
+.BlackShort = 0xA57E6339DD2CF3A0
+.BlackLong  = 0x1EF6E6DBB1961EC9
+dq (0*.WhiteShort) xor (0*.WhiteLong) xor (0*.BlackShort) xor (0*.BlackLong)
+dq (1*.WhiteShort) xor (0*.WhiteLong) xor (0*.BlackShort) xor (0*.BlackLong)
+dq (0*.WhiteShort) xor (1*.WhiteLong) xor (0*.BlackShort) xor (0*.BlackLong)
+dq (1*.WhiteShort) xor (1*.WhiteLong) xor (0*.BlackShort) xor (0*.BlackLong)
+dq (0*.WhiteShort) xor (0*.WhiteLong) xor (1*.BlackShort) xor (0*.BlackLong)
+dq (1*.WhiteShort) xor (0*.WhiteLong) xor (1*.BlackShort) xor (0*.BlackLong)
+dq (0*.WhiteShort) xor (1*.WhiteLong) xor (1*.BlackShort) xor (0*.BlackLong)
+dq (1*.WhiteShort) xor (1*.WhiteLong) xor (1*.BlackShort) xor (0*.BlackLong)
+dq (0*.WhiteShort) xor (0*.WhiteLong) xor (0*.BlackShort) xor (1*.BlackLong)
+dq (1*.WhiteShort) xor (0*.WhiteLong) xor (0*.BlackShort) xor (1*.BlackLong)
+dq (0*.WhiteShort) xor (1*.WhiteLong) xor (0*.BlackShort) xor (1*.BlackLong)
+dq (1*.WhiteShort) xor (1*.WhiteLong) xor (0*.BlackShort) xor (1*.BlackLong)
+dq (0*.WhiteShort) xor (0*.WhiteLong) xor (1*.BlackShort) xor (1*.BlackLong)
+dq (1*.WhiteShort) xor (0*.WhiteLong) xor (1*.BlackShort) xor (1*.BlackLong)
+dq (0*.WhiteShort) xor (1*.WhiteLong) xor (1*.BlackShort) xor (1*.BlackLong)
+dq (1*.WhiteShort) xor (1*.WhiteLong) xor (1*.BlackShort) xor (1*.BlackLong)
+
+PolyglotKeys_Ep:
+dq   0x70CC73D90BC26E24, 0xE21A6B35DF0C3AD7, 0x003A93D8B2806962, 0x1C99DED33CB890A1, 0xCF3145DE0ADD4289, 0xD0E4427A5514FB72, 0x77C621CC9FB3A483, 0x67A34DAC4356550B
+
+PolyglotKeys_side:
+dq   0xF8D626AAAF278509
 
 
 

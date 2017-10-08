@@ -1,10 +1,9 @@
-; VERSION_POST and VERSION_OS should be defined on cmd line
 if ~ defined VERSION_OS
-  err 'VERSION_OS is not defined'
+  err 'VERSION_OS should be defined in a cmd line argument'
 end if
 
-if ~ defined VERSION_POST
-  err 'VERSION_POST is not defined'
+if VERSION_OS <> 'L' & VERSION_OS <> 'W' & VERSION_OS <> 'X'
+  err "unsupported VERSION_OS"
 end if
 
 VERSION_PRE = 'asmFish'
@@ -20,26 +19,35 @@ SetDefault 0, DEBUG
 SetDefault 0, VERBOSE
 SetDefault 0, PROFILE
 
+SetDefault 1, USE_BOOK
 SetDefault 1, USE_SYZYGY
-SetDefault 1, USE_CURRMOVE
-SetDefault 1, USE_HASHFULL
 SetDefault 1, USE_CMDLINEQUIT
+SetDefault 1, USE_HASHFULL
+SetDefault 1, USE_CURRMOVE
 SetDefault 0, USE_SPAMFILTER
 SetDefault 0, USE_WEAKNESS
 SetDefault 0, USE_VARIETY
-SetDefault 0, USE_BOOK
 SetDefault 0, USE_MATEFINDER
 
-SetDefault 0, PEDANTIC
+SetDefault 1, PEDANTIC
 SetDefault '<empty>', LOG_FILE  ; use something other than <empty> to hardcode a starting log file into the engine
 
-CPU_HAS_POPCNT = 0
-CPU_HAS_BMI1 = 0
-CPU_HAS_BMI2 = 0
-CPU_HAS_AVX1 = 0 ; not implemented yet
-CPU_HAS_AVX2 = 0 ;
-if VERSION_POST = 'popcnt'
+SetDefault 'base', VERSION_POST
+SetDefault 0, CPU_HAS_POPCNT
+SetDefault 0, CPU_HAS_BMI1
+SetDefault 0, CPU_HAS_BMI2
+SetDefault 0, CPU_HAS_TZCNT ; not implemented yet
+SetDefault 0, CPU_HAS_AVX1  ; not implemented yet
+SetDefault 0, CPU_HAS_AVX2  ; not implemented yet
+
+if VERSION_POST = 'base'
+  CPU_HAS_POPCNT = 0
+  CPU_HAS_BMI1 = 0
+  CPU_HAS_BMI2 = 0
+else if VERSION_POST = 'popcnt'
   CPU_HAS_POPCNT = 1
+  CPU_HAS_BMI1 = 0
+  CPU_HAS_BMI2 = 0
 else if VERSION_POST = 'bmi2'
   CPU_HAS_POPCNT = 1
   CPU_HAS_BMI1 = 1
@@ -47,28 +55,23 @@ else if VERSION_POST = 'bmi2'
 end if
 
 
-; instruction and format macros
+
+FASMG_INC = 'include/'
+include string 'format.inc'             shl (8*lengthof FASMG_INC) + FASMG_INC
+include string 'instructions/bmi2.inc'  shl (8*lengthof FASMG_INC) + FASMG_INC
+include string 'instructions/avx.inc'   shl (8*lengthof FASMG_INC) + FASMG_INC
+
+
+; instruction and target macros
 if VERSION_OS = 'L'
-  include 'format/format.inc'
-  include 'bmi2.inc'
-  include 'avx.inc'
   format ELF64 executable 3
   entry Start
 else if VERSION_OS = 'W'
-  include 'format/format.inc'
-  include 'bmi2.inc'
-  include 'avx.inc'
   format PE64 console
   stack THREAD_STACK_SIZE
   entry Start
 else if VERSION_OS = 'X'
-  include 'x64.inc'
-  include 'bmi2.inc'
-  include 'avx.inc'
-  use64
-  MachO.Settings.ProcessorType equ CPU_TYPE_X86_64
-  MachO.Settings.BaseAddress = 0x00400000
-  include 'macinc/macho.inc'
+  format MACHO64
   entry Start
 end if
 

@@ -281,20 +281,14 @@ namespace PE
 		.STACK_LENGTH = 100h
 
 		namespace Stub
-
-		      include '../8086.inc'
-
-		start:
-		      push    cs
-		      pop     ds
-		      mov     dx,message - start
-		      mov     ah,9
-		      int     21h
-		      mov     ax,4C01h
-		      int     21h
-
-		message db 'This program cannot be run in DOS mode.',0Dh,0Ah,24h
-
+            db 0x0e
+            db 0x1f
+            db 0xba, 0x0e, 0x00
+            db 0xb4, 0x09
+            db 0xcd, 0x21
+            db 0xb8, 0x01, 0x4c
+            db 0xcd, 0x21
+		    db 'This program cannot be run in DOS mode.',0Dh,0Ah,24h
 		end namespace
 
 		align 16

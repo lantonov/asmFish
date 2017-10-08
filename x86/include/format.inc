@@ -137,8 +137,8 @@ macro format? clause
 				end match
 			end match
 		end while
-		include 'format/pe.inc'
-		include 'x64.inc'
+		include string 'targets/pe.inc' shl (8*lengthof FASMG_INC) + FASMG_INC
+		include string 'instructions/x64.inc' shl (8*lengthof FASMG_INC) + FASMG_INC
 		use64
 	else match =ELF? =executable? settings, clause:
 		match brand =at? base:, settings
@@ -164,8 +164,8 @@ macro format? clause
 		else match brand:, settings
 			ELF.Settings.ABI = brand
 		end match
-		include 'format/elfexe.inc'
-		include 'x64.inc'
+		include string 'targets/elfexe.inc' shl (8*lengthof FASMG_INC) + FASMG_INC
+		include string 'instructions/x64.inc' shl (8*lengthof FASMG_INC) + FASMG_INC
 		use64
 	else match =ELF?, clause
 		include 'format/elf32.inc'
@@ -189,6 +189,12 @@ macro format? clause
 		COFF.Settings.Characteristics = IMAGE_FILE_32BIT_MACHINE or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_BYTES_REVERSED_LO
 		include 'format/coffms.inc'
 		include 'x64.inc'
+		use64
+    else match =MACHO64?, clause
+        MachO.Settings.ProcessorType equ CPU_TYPE_X86_64
+        MachO.Settings.BaseAddress = 0x00400000
+		include string 'targets/macho.inc' shl (8*lengthof FASMG_INC) + FASMG_INC
+		include string 'instructions/x64.inc' shl (8*lengthof FASMG_INC) + FASMG_INC
 		use64
 	else
 		err 'invalid argument'
