@@ -473,29 +473,26 @@ end if
 .MovePickDone:
                 mov   r9, qword[rbx+State.key]
                 mov   edi, dword[.bestValue]
+                lea   ecx, [rdi+VALUE_MATE_IN_MAX_PLY]
 
   if USE_VARIETY = 1
-                mov   rax, qword[rbp-Thread.rootPos+Thread.randSeed]
-                mov   rdx, rax
-                shr   rdx, 12
-                xor   rax, rdx
-                mov   rdx, rax
-                shl   rdx, 25
-                xor   rax, rdx
-                mov   rdx, rax
-                shr   rdx, 27
-                xor   rax, rdx
-                mov   edx, 2685821657736338717 and 0x0FFFFFFFF
-                mov   qword[rbp-Thread.rootPos+Thread.randSeed], rax
-                mul   edx
-                cdq
-               idiv   dword[options.varietyMod]         ; varietyMod = 1 + variety
-                add   edx, edi
-                cmp   edi, dword[options.varietyBound]  ; varietyBound = - variety * PawnValueEg / 100
-             cmovge   edi, edx
+            mov  edx, dword[rbp - Thread.rootPos + Thread.extra]
+            mov  eax, dword[variety.a_bound]
+            add  eax, edi
+            add  edx, edi
+            cmp  eax, dword[variety.b_bound]
+          cmovb  edi, edx
+       _vmovaps  xmm0, dqword[rbp - Thread.rootPos + Thread.randSeed]
+        _vmulps  xmm0, xmm0, xmm0
+        _vmulps  xmm0, xmm0, dqword[variety.b_float]
+        _vaddps  xmm0, xmm0, dqword[variety.a_float]
+        _vmaxps  xmm0, xmm0, dqword[variety.clamp]
+       _vmovaps  dqword[rbp - Thread.rootPos + Thread.randSeed], xmm0
+       _vhaddps  xmm0, xmm0, xmm0
+       _vhsubps  xmm0, xmm0, xmm0
+    _vcvttss2si  eax, xmm0
+            mov  dword[rbp - Thread.rootPos + Thread.extra], eax
   end if
-
-                lea   ecx, [rdi+VALUE_MATE_IN_MAX_PLY]
 
   if InCheck = 1
               movzx   eax, byte[rbx+State.ply]
