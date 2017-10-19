@@ -99,7 +99,7 @@ if USE_WEAKNESS
 end if
 
 if USE_VARIETY
-    db 'option name Variety type spin default 0 min 0 max 40'
+    db 'option name Variety type spin default 0 min 0 max 100'
     NewLineData
 end if
 

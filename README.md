@@ -72,7 +72,7 @@ Besides the usual uci commands there are the following:
 |bookprobe|     Displays book entries from the current position. Use like `bookprobe 3`.
 | | __`VERBOSE=1` assemble option__
 |show|  Prints out the internal rep of the position.
-|moves| Makes the succeeding moves then does 'show'.
+|moves| Makes the succeeding moves then does `show`.
 |undo|  Undoes one or a certain number of moves
 |donull| Does a null move.
 |eval|   Displays evaluation.
@@ -82,7 +82,7 @@ Besides the usual uci commands there are the following:
 
 | | included by default
 |---|---
-|Priority|       Try to set the priority of the process. The default is 'none', which runs the engine which whichever priority it was started.
+|Priority|       Try to set the priority of the process. The default is 'none', which runs the engine at whichever priority it was started.
 |LogFile|        Set the location to write all communication. Useful for buggy gui's. A value of `<empty>` means the logger is off.
 |TTFile|         Set the location of the file for TTSave and TTLoad. A value of `<empty>` means that the following two command will fail.
 |TTSave|         Saves the current hash table to TTFile.
@@ -107,12 +107,6 @@ none      disable pinning threads to nodes
 |SyzygyProbeLimit| Don't probe if number of board pieces is bigger than this.
 |Syzygy50MoveRule| Consider 50 move rule when probing.
 |SyzygyPath|     Path to syzygy tablebases.
-
-
-| |`USE_WEAKNESS=1` assembly option
-|---|---
-|UCI_LimitStrength| make the engine play at certain level
-|UCI_Elo|        level at which to play
 
 
 | | `USE_BOOK=1` default assemble option
@@ -151,20 +145,38 @@ if `movelist` is non-empty, then a random move is chosen from `movelist` accordi
 the weights of these moves.
 ```
 if BestBookMove = true
-   if length(movelist) = 1
-       do nothing
-   else
+   if length(movelist) > 1
        filter out moves from movelist that lead to repetitions
        filter out moves from movelist without highest weight
+   end if
 else
    filter out moves from movelist that lead to repetitions
 end if
 ```
 This means that if `BestBookMove=true` and the first move is encoded with a higher weight
 than the second move (both having non-zero weight in the book), then the behaviour should
-match that of brainfish. If `BestBookMove=false`, then the only difference is that in the
-case where the first move leads to repetition and there is no second move, then the
-engine starts calculating.
+match that of brainfish. If `BestBookMove=false`, then the only differences are
+  - if the first move leads to repetition and there is no second move, then the engine starts calculating
+  - if there are two moves, neither of which lead to a repition, then both of these moves will be considered.
+
+| |`USE_WEAKNESS=1` assembly option
+|---|---
+|UCI_LimitStrength| make the engine play at certain level
+|UCI_Elo|        level at which to play
+| | __`USE_VARIETY=1` assemble option__
+|Variety| In QSearch, if the score is in the range [-4v, 1000+4v), add a pseudorandom integer from (-4v, 4v) to the score.
+The distribution of this integer is roughly triangular with mean 0.
+```
+               X
+             X X X
+           X X X X X
+         X X X X X X X
+         X X X X X X X
+       X X X X X X X X X
+     X X X X X X X X X X X
+   X X X X X X X X X X X X X
+-4v            0            +4v
+```
 
 
 # Misbehaviour

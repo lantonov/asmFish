@@ -1045,7 +1045,7 @@ if USE_WEAKNESS = 1
             jmp  UciGetInput
 .UciElo:
            call  ParseInteger
-  ClampUnsigned  eax, 0, 3300
+    ClampSigned  eax, 0, 3300
             mov  ecx, eax
            call  Weakness_SetElo
             jmp  UciGetInput
@@ -1073,7 +1073,7 @@ if USE_VARIETY = 1
        _vmovaps  dqword[rdx + Variety.a_float], xmm0
        _vmovaps  dqword[rdx + Variety.b_float], xmm1
        _vmovaps  dqword[rdx + Variety.clamp], xmm2
-            lea  eax, [3*rax]
+            lea  eax, [4*rax]
             lea  ecx, [2*rax+1000]
             mov  dword[rdx + Variety.a_bound], eax
             mov  dword[rdx + Variety.b_bound], ecx

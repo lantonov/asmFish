@@ -494,6 +494,12 @@ end if
             mov  dword[rbp - Thread.rootPos + Thread.extra], eax
   end if
 
+  if PvNode = 1
+                mov   esi, dword[.oldAlpha]
+                sub   esi, edi
+                sar   esi, 31
+  end if
+
   if InCheck = 1
               movzx   eax, byte[rbx+State.ply]
                 sub   eax, VALUE_MATE
@@ -501,11 +507,6 @@ end if
                  je   .Return
   end if
 
-  if PvNode = 1
-                mov   esi, dword[.oldAlpha]
-                sub   esi, edi
-                sar   esi, 31
-  end if
                 mov   r8, qword[.tte]
                 shr   r9, 48
                 mov   edx, edi
