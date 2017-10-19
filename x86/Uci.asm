@@ -350,7 +350,6 @@ UciSync:
 ;;;;;;;
 
 UciGo:
-xor ebx, ebx
             mov  al, byte[options.changed]
            test  al, al
              jz  .ok
@@ -483,8 +482,6 @@ xor ebx, ebx
 ;;;;;;;;;;;;
 
 UciPosition:
-
-xor ebx, ebx
            call  SkipSpaces
             cmp  byte[rsi], ' '
              jb  UciUnknown
@@ -1253,6 +1250,7 @@ end if
             mov  qword[UciLoop.extra + 8*0], r13
             mov  qword[UciLoop.extra + 8*1], r15
             mov  qword[UciLoop.extra + 8*2], rax
+            mov  qword[UciLoop.extra + 8*3], r14
             lea  rcx, [sz_format_bench2]
             lea  rdx, [UciLoop.extra]
             xor  r8, r8

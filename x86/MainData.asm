@@ -138,7 +138,7 @@ sz_format_perft1:
 sz_format_bench1:
         db '*** bench hash %u0 threads %u1 depth %u2 ***%n', 0
 sz_format_bench2:
-        db '%U0: %a8nodes: %U1 %a32%U2 knps%n', 0
+        db '%U0: %a8nodes: %U1 %a32%U2 knps %a48%U3 ms%n', 0
 sz_format_perft2:
 sz_format_bench3:
         db '===========================%n'
