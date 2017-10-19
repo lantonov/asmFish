@@ -136,6 +136,14 @@ if USE_WEAKNESS
 	@@:
 end if
 
+if USE_VARIETY
+            mov  dword[rbp - Thread.rootPos + Thread.extra], 0
+            mov  dword[rbp - Thread.rootPos + Thread.randSeed + 4*0], dword 0.1
+            mov  dword[rbp - Thread.rootPos + Thread.randSeed + 4*1], dword 0.2
+            mov  dword[rbp - Thread.rootPos + Thread.randSeed + 4*2], dword 0.4
+            mov  dword[rbp - Thread.rootPos + Thread.randSeed + 4*3], dword 0.6
+end if
+
 	; MultiPV loop. We perform a full root search for each PV line
 		 or   r14d, -1
 .multipv_loop:

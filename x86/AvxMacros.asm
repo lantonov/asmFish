@@ -102,6 +102,75 @@ macro _vmulsd a,b,c
 end macro
 
 
+macro _vmulps a,b,c
+    if a eq b
+	      mulps   a, c
+    else
+        match size[addr], c
+	     movaps   a, b
+	      mulps   a, c
+        else
+            if a eq c
+	      mulsd   a, b
+            else
+	     movaps   a, b
+	      mulps   a, c
+            end if
+        end match
+    end if
+end macro
+
+macro _vaddps a,b,c
+    if a eq b
+	      addps   a, c
+    else
+        match size[addr], c
+	     movaps   a, b
+	      addps   a, c
+        else
+            if a eq c
+	      addsd   a, b
+            else
+	     movaps   a, b
+	      addps   a, c
+            end if
+        end match
+    end if
+end macro
+
+macro _vmaxps a,b,c
+    if a eq b
+	      maxps   a, c
+    else
+        match size[addr], c
+	     movaps   a, b
+	      maxps   a, c
+        else
+            if a eq c
+	      maxsd   a, b
+            else
+	     movaps   a, b
+	      maxps   a, c
+            end if
+        end match
+    end if
+end macro
+
+
+macro _vpunpckldq a,b,c
+    if a eq b
+      punpckldq  a, c
+    else if a eq c
+	   display 'arguments of vdivsd are strange for no avx1'
+	   display 13,10
+	   err
+    else
+	     movaps  a, b
+      punpckldq  a, c
+    end if
+end macro
+
+
 ; a = b*c+d
 macro _vfmaddsd a,b,c,d
 ; match =1, CPU_HAS_AVX2 \{
@@ -141,12 +210,35 @@ macro _vcvtsi2sd a,b,c
 ; \}
 end macro
 
+macro _vcvtsi2ss a,b,c
+; match =1, CPU_HAS_AVX1 \{
+;         vcvtsi2sd   a, b, c
+; \}
+; match =0, CPU_HAS_AVX1 \{
+    if a eq b
+	   cvtsi2ss   a, c
+    else
+	     movaps   a, b
+	   cvtsi2ss   a, c
+    end if
+; \}
+end macro
+
 macro _vcvttsd2si a,b
 ; match =1, CPU_HAS_AVX1 \{
 ;	 vcvttsd2si   a, b
 ; \}
 ; match =0, CPU_HAS_AVX1 \{
 	  cvttsd2si   a, b
+; \}
+end macro
+
+macro _vcvttss2si a,b
+; match =1, CPU_HAS_AVX1 \{
+;	 vcvttsd2si   a, b
+; \}
+; match =0, CPU_HAS_AVX1 \{
+	  cvttss2si   a, b
 ; \}
 end macro
 
@@ -168,6 +260,61 @@ macro _vdivsd a,b,c
     end if
 ; \}
 end macro
+
+macro _vdivps a,b,c
+; match =1, CPU_HAS_AVX1 \{
+;	     vdivsd   a, b, c
+; \}
+; match =0, CPU_HAS_AVX1 \{
+    if a eq b
+	      divps   a, c
+    else if a eq c
+	   display 'arguments of vdivsd are strange for no avx1'
+	   display 13,10
+	   err
+    else
+	     movaps   a, b
+	      divps   a, c
+    end if
+; \}
+end macro
+
+macro _vhaddps a,b,c
+; match =1, CPU_HAS_AVX1 \{
+;	     vdivsd   a, b, c
+; \}
+; match =0, CPU_HAS_AVX1 \{
+    if a eq b
+	     haddps   a, c
+    else if a eq c
+	   display 'arguments of vdivsd are strange for no avx1'
+	   display 13,10
+	   err
+    else
+	     movaps   a, b
+	     haddps   a, c
+    end if
+; \}
+end macro
+
+macro _vhsubps a,b,c
+; match =1, CPU_HAS_AVX1 \{
+;	     vdivsd   a, b, c
+; \}
+; match =0, CPU_HAS_AVX1 \{
+    if a eq b
+	     hsubps   a, c
+    else if a eq c
+	   display 'arguments of vdivsd are strange for no avx1'
+	   display 13,10
+	   err
+    else
+	     movaps   a, b
+	     hsubps   a, c
+    end if
+; \}
+end macro
+
 
 
 

@@ -254,15 +254,20 @@ struct Options
  syzygy50MoveRule rb 1	    ; bool 0 or -1
  syzygyProbeDepth rd 1
  syzygyProbeLimit rd 1
-if USE_VARIETY = 1
- varietyMod   rd 1
- varietyBound rd 1
-              rq 1
-end if
  hashPath	rq 1
  hashPathSizeB	rq 1
  hashPathBuffer rq 14
 ends
+
+struct Variety
+ a_float   rd 4
+ b_float   rd 4
+ clamp     rd 4
+ a_bound   rd 1
+ b_bound   rd 1
+           rd 2
+ends
+
 
 
 struct Weakness
@@ -368,7 +373,7 @@ struct Thread
  completedDepth  rd 1
  callsCnt	 rd 1
  resetCnt	 rd 1
-		 rd 1
+ extra		 rd 1
  searching	  rb 1
  exit		  rb 1
  failedLow	  rb 1
@@ -380,8 +385,7 @@ struct Thread
  nodes		rq 1
  tbHits 	rq 1
 if USE_VARIETY = 1
- randSeed     rq 1
-              rq 1
+ randSeed     rq 2
 end if
  idx		rd 1
  rootDepth	rd 1

@@ -6,11 +6,11 @@ if DEBUG = 1
 end if
 
               align   16
-ioBuffer  IOBuffer
+ioBuffer        IOBuffer
 
 if USE_WEAKNESS
               align   16
-  weakness	Weakness
+  weakness      Weakness
 end if
 
 if USE_BOOK
@@ -18,8 +18,13 @@ if USE_BOOK
   book          Book
 end if
 
+if USE_VARIETY
               align   16
-options	Options
+  variety       Variety
+end if
+
+              align   16
+options         Options
               align   16
 time            Time
               align   16

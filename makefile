@@ -1,7 +1,7 @@
 now := $(shell /bin/date "+%Y-%m-%d")
 all:
 	./fasmg "arm/fish.arm" "armFishL_$(now)_v8"         -i "VERSION_OS='L'"
-	./fasmg "x86/fish.asm" "asmFishL_$(now)_base"    -e 1000   -i "VERSION_OS='L'"
+	./fasmg "x86/fish.asm" "asmFishL_$(now)_base"       -i "VERSION_OS='L'"
 	./fasmg "x86/fish.asm" "asmFishL_$(now)_popcnt"     -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'"
 	./fasmg "x86/fish.asm" "asmFishL_$(now)_bmi2"       -i "VERSION_OS='L'" -i "VERSION_POST = 'bmi2'"
 	./fasmg "x86/fish.asm" "asmFishW_$(now)_base.exe"   -i "VERSION_OS='W'"
@@ -19,7 +19,7 @@ bincheck:
 	diff "NEWarmfish" "armfish"
 	diff "NEWasmfish" "asmfish"
 asmquick:
-	./fasmg "x86/fish.asm" "afish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST='popcnt'" -i "PEDANTIC=1"; chmod 755 ./asmfish
+	./fasmg "x86/fish.asm" "afish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST='popcnt'" -i "PEDANTIC=1" -i "USE_BOOK=0" -i "USE_VARIETY=1"; chmod 755 ./afish
 armquick:
 	./fasmg "arm/fish.arm" "armfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST='v8'" -i "PEDANTIC=1";     chmod 755 ./armfish
 test:
