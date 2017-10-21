@@ -1,4 +1,4 @@
-### Que vadis? asmFish
+### Quo vadis? asmFish
 If the original objective for this project was to rewrite SF in assembly, it was fulfilled with a vengeance. Now asmFish is faster, leaner, and meaner than SF. The program gathered a small fan club of people who use asmFish instead of SF, taking advantage of its greater speed and counting on regular updates. Regularity of updates is a goal that we continue to fulfil.
 
 However, there is also a group of sceptics that view asmFish as a clone of SF with nothing original. They say that asmFish is just another compile of SF. Although many of them acknowledge the hard work of rewriting SF into assembly, they think that all this has been in vain, because the same effect can be achieved by just rewriting only the critical parts in assembly.
@@ -10,3 +10,5 @@ Another direction, which none of the serious chess programs at the moment has ta
 Combining the two ideas, imagine a distributed network playing 24/7 chess using a program that itself is a neural network. This self-learning entity is capable to reinvent chess itself. We can see play that is unfathomable even for a chess genius, like sacrificing the Queen on move 2 and winning the game on move 380.
 
 We can leave pedantFish to be the SF copy, following closely the SF updates, monitoring the bench equality, etc., and develop asmFish in the above directions taking the freedom to diverge benches, evaluations, adding the new functions and features.
+<p>
+<img src="https://lh3.googleusercontent.com/-tTIplrSTC1s/V8Sq7NKW1uI/AAAAAAAAASk/GANvgYBN18wEzzPn_e1YsFmxoMrOSrnTACJoC/w663-h265-n-rw/A%2Bnew%2BLogo%2Bfor%2BAsmFish%2BEngine.jpg" width=900 height=400 /></p>
