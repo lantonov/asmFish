@@ -368,6 +368,8 @@ struct Thread
  threadHandle	 ThreadHandle
  numaNode	 rq 1
  bestMoveChanges rq 1
+ previousTimeReduction rq 1
+                 rq 1
  PVIdx		 rd 1
  previousScore	 rd 1
  completedDepth  rd 1
@@ -377,7 +379,7 @@ struct Thread
  searching	  rb 1
  exit		  rb 1
  failedLow	  rb 1
- easyMovePlayed   rb 1
+          rb 1
 		  rb 1
 		  rb 1
  selDepth         rb 1

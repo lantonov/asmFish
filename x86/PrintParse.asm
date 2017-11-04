@@ -74,7 +74,7 @@ PrintFancy:
                 mov   r12d, eax
                 cmp   al, 'a'
                  je   .Alignment
-if VERBOSE > 0
+if VERBOSE > 0 | DEBUG > 0
                 cmp   al, 'p'
                  je   .Position
 end if
@@ -136,7 +136,7 @@ end if
               stosb
                 jmp  .l2
 
-if VERBOSE > 0
+if VERBOSE > 0 | DEBUG > 0
 .Position:
                 mov   qword[rbp+Pos.state], rbx
                call   Position_PrintFen

@@ -8,7 +8,7 @@ OtherCheck		= (( 10 shl 16) + ( 10))
 CloseEnemies		= ((  7 shl 16) + (  0))
 PawnlessFlank		= (( 20 shl 16) + ( 80))
 ThreatByHangingPawn	= (( 71 shl 16) + ( 61))
-ThreatBySafePawn        = ((182 shl 16) + (175))
+ThreatBySafePawn        = ((192 shl 16) + (175))
 ThreatByRank		= (( 16 shl 16) + (  3))
 Hanging 		= (( 48 shl 16) + ( 27))
 ThreatByPawnPush	= (( 38 shl 16) + ( 22))
@@ -278,21 +278,20 @@ OutpostDone:
             mov  rax, DarkSquares
              bt  rax, r14
             adc  rcx, rdi
+            mov  r8, (FileDBB or FileEBB) and (Rank4BB or Rank5BB)
           movzx  eax, byte[rcx+PawnEntry.pawnsOnSquares+2*Us]
            imul  eax, BishopPawns
          subadd  esi, eax
 
-            mov  rdx, qword[.ei.attackedBy + 8*(8*Them + Pawn)]
-            mov  rax, 0x8142241818244281
-            mov  rcx, (FileDBB or FileEBB) and (Rank4BB or Rank5BB)
-          _andn  rax, rdx, rax
-            lea  edx, [rsi + LongRangedBishop*(Them - Us)]
-             bt  rax, r14
-            jnc  @1f
-            and  rcx, qword[BishopAttacksPDEP + 8*r14]
-           test  rcx, qword[rbp + Pos.typeBB + 8*Pawn]
-          cmovz  esi, edx
-    @1:
+    ; Bonus for bishop on a long diagonal which can "see" both center squares
+            mov  rdx, qword[rbp + Pos.typeBB + 8*Pawn]
+  BishopAttacks  rax, r14, rdx, rcx
+            bts  rax, r14
+            lea  edx, [rsi + (Them - Us)*LongRangedBishop]
+            and  rax, r8
+            lea  rcx, [rax - 1]
+           test  rcx, rax
+         cmovnz  esi, edx
     end if
 
     if PEDANTIC = 1 & Pt = Bishop

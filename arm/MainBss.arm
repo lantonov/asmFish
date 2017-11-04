@@ -19,8 +19,8 @@ end if
 time:     rb sizeof.Time
         balign  16
 limits:   rb sizeof.Limits
-        balign  16
-easyMoveMng:    rb sizeof.EasyMoveMng
+;        balign  16
+;easyMoveMng:    rb sizeof.EasyMoveMng
         balign  16
 signals:   rb sizeof.Signals
         balign  16

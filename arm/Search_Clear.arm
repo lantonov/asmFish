@@ -15,8 +15,11 @@ Search_Clear.NextThread:
            _lea  x6, threadPool
             add  x6, x6, ThreadPool.threadTable
             ldr  x3, [x6, x16, lsl 3]
+
             mov  w4, VALUE_INFINITE
+           fmov  d0, 1.0
             str  w4, [x3, Thread.previousScore]
+            str  d0, [x3, Thread.previousTimeReduction]
 
     ; clear thread stats
             ldr  x17, [x3, Thread.rootPos + Pos.history]

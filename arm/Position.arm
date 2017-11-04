@@ -993,7 +993,7 @@ SetCastlingRights.ksquare_lookup:
 
 
 
-
+if VERBOSE > 0 | DEBUG > 0
 Position_PrintFen:
             stp  x21, x30, [sp, -16]!
             ldr  x21, [x20, Pos.state]
@@ -1067,23 +1067,12 @@ Position_PrintFen.cont:
             tst  w4, w4
            csel  w0, w2, w0, ne
 
+  iterate i, 1, 2, 4, 8
            strb  w0, [x27]
             lsr  w0, w0, 8
-            tst  x1, 1
+            tst  x1, i
            cinc  x27, x27, ne
-           strb  w0, [x27]
-            lsr  w0, w0, 8
-            tst  x1, 2
-           cinc  x27, x27, ne
-           strb  w0, [x27]
-            lsr  w0, w0, 8
-            tst  x1, 4
-           cinc  x27, x27, ne
-           strb  w0, [x27]
-            lsr  w0, w0, 8
-            tst  x1, 8
-           cinc  x27, x27, ne
-
+  end iterate
 
             mov  w0, ' '
            strb  w0, [x27], 1
@@ -1104,7 +1093,7 @@ Position_PrintFen.cont:
 
             ldp  x21, x30, [sp], 16
             ret
-
+end if
 
 
 Position_CopyTo:
@@ -1343,6 +1332,8 @@ Position_PrintSmall:
             ldp  x21, x30, [sp], 16
             ret
 
+
+if VERBOSE > 0
 Position_Print:
 
 Position_Print.moveList = 0
@@ -1719,5 +1710,5 @@ Position_Print.sz_npMaterial: db "npMaterial:     ",0
 Position_Print.sz_Gen_Legal:  db "Gen_Legal:      ",0
         balign 4
 
-
+end if
 

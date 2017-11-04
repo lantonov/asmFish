@@ -95,8 +95,10 @@ PrintFancy.GotOne:
                ldrb  w24, [x26], 1
                 cmp  w24, 'a'
                 beq  PrintFancy.Alignment
+if VERBOSE > 0 | DEBUG > 0
                 cmp  w24, 'p'
                 beq  PrintFancy.Position
+end if
                 cmp  w24, 'n'
                 beq  PrintFancy.NewLine
 
@@ -118,9 +120,11 @@ PrintFancy.GotOne:
                 adr  x4, PrintHex
                csel  x3, x4, x3, eq
 
+if VERBOSE > 0
                 cmp  w24, 's' ; 16|16 score
                 adr  x4, PrintFancy.PrintScore
                csel  x3, x4, x3, eq
+end if
 
                 cmp  w24, 'i'   ; 32 bit signed integer
                 adr  x4, PrintInt32
@@ -161,11 +165,6 @@ PrintFancy.NewLine:
                 mov  x23, x27
                   b  PrintFancy.Loop
 
-PrintFancy.Position:
-                str  x21, [x20, Pos.state]
-                 bl  Position_PrintFen
-                  b  PrintFancy.Loop
-
 PrintFancy.Alignment:
                  bl  ParseInteger
                 add  x0, x0, x23
@@ -175,6 +174,12 @@ PrintFancy.Alignment:
                 mov  w4, ' '
                strb  w4, [x27], 1
                   b  @1b
+
+if VERBOSE > 0 | DEBUG > 0
+PrintFancy.Position:
+                str  x21, [x20, Pos.state]
+                 bl  Position_PrintFen
+                  b  PrintFancy.Loop
 
 PrintFancy.PrintScore:
                 stp  x0, x30, [sp, -16]!
@@ -186,6 +191,8 @@ PrintFancy.PrintScore:
                 ldp  x0, x30, [sp], 16
                sbfx  x0, x0, 0, 16
                   b  PrintInt
+end if
+
 
 CmpString:
         ; if beginning of string at x26 matches null terminated string at x1

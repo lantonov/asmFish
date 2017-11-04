@@ -31,8 +31,8 @@ time            Time
 signals         Signals
               align   16
 limits          Limits
-              align   16
-easyMoveMng     EasyMoveMng
+;              align   16
+;easyMoveMng     EasyMoveMng
               align   16
 mainHash        MainHash
               align   16

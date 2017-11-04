@@ -26,7 +26,6 @@ macro BishopAttacks x, sq, occ, t
 		mov   x#d, dword[BishopAttacksMOFF+4*(sq)]
 	       imul   t, qword[BishopAttacksIMUL+8*(sq)]
 		shr   t, 64-9
-		xor   ecx, ecx
 		mov   x, qword[x+8*(t)]
   end if
 end macro

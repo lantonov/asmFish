@@ -117,3 +117,46 @@ NextQuiet:
 BonusTooBig:
 Return:
 end macro
+
+
+macro UpdateCaptureStats move, captures, captureCnt, bonus32, absbonus
+	; clobbers rax, rcx, rdx, r8, r9
+	; it also might clobber rsi and change the sign of bonus32
+  local BonusTooBig, NextCapture, Return
+
+           imul   bonus32, absbonus, 2
+            cmp   absbonus, 324
+            jae   BonusTooBig
+
+
+		add   r8, qword[rbp + Pos.captureHistory]
+
+	apply_bonus   r8, bonus32, absbonus, 324
+
+
+
+  match =0, quiets
+  else
+	; Decrease all the other played quiet moves
+		neg   bonus32
+		xor   esi, esi
+		cmp   esi, captureCnt
+		 je   Return
+NextCapture:
+
+		add   r8, qword[rbp + Pos.captureHistory]
+
+
+	apply_bonus   r8, bonus32, absbonus, 324
+
+		add   esi, 1
+		cmp   esi, quietsCnt
+		 jb   NextQuiet
+  end match
+
+BonusTooBig:
+Return:
+end macro
+
+
+

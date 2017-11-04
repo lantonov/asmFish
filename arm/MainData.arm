@@ -16,6 +16,8 @@ constd._628p0:
         dd 0
         dd 1082368000
 
+constd._1p3 dq 1.3
+
 szUciResponse:
 	db 'id name '
 szGreeting:
