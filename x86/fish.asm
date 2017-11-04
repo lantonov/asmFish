@@ -175,7 +175,7 @@ include 'Gen_NonEvasions.asm'
 include 'Gen_Legal.asm'
 include 'Perft.asm'
 include 'AttackersTo.asm'
-include 'EasyMoveMng.asm'
+;include 'EasyMoveMng.asm'
 include 'Think.asm'
 include 'TimeMng.asm'
 if USE_WEAKNESS

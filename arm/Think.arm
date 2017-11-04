@@ -1,14 +1,16 @@
 Thread_Think:
         ; in:  x1 address of Thread struct
 virtual at 0
+ .timeReduction rq 1
  .elapsed   rq 1
- .completedDepth rd 1
  .alpha      rd 1
  .beta	     rd 1
  .delta      rd 1
  .bestValue  rd 1
  .easyMove   rd 1
  .multiPV    rd 1
+ .lastBestMove rd 1
+ .lastBestMoveDepth rd 1
  .lend	     rb 0
 end virtual
 .localsize = (.lend + 15) and -16
@@ -24,12 +26,14 @@ end virtual
 
             mov  w4, -VALUE_INFINITE
             mov  w5, +VALUE_INFINITE
-            str  wzr, [sp, .easyMove]
+            str  wzr, [sp, .lastBestMove]
+            str  wzr, [sp, .lastBestMoveDepth]
             str  w4, [sp, .alpha]
             str  w5, [sp, .beta]
             str  w4, [sp, .delta]
             str  w4, [sp, .bestValue]
-            str  wzr, [sp, .completedDepth]
+           fmov  d0, 1.0
+            str  d0, [sp, .timeReduction]
 
             sub  x2, x21, 5*sizeof.State
             add  x8, x21, 3*sizeof.State
@@ -51,18 +55,11 @@ end virtual
             str  x0, [x21, -1*sizeof.State + State.endMoves]
 
     ; resets for main thread
-            add  x7, x20, -Thread.rootPos 
-           strb  wzr, [x7, Thread.easyMovePlayed]
+            add  x7, x20, -Thread.rootPos
            strb  wzr, [x7, Thread.failedLow]
             str  xzr, [x7, Thread.bestMoveChanges]
-            ldr  w0, [x7, Thread.idx]
-           cbnz  w0, .skip_easymove
-            ldr  x1, [x21, State.key]
-             bl  EasyMoveMng_Get
-            str  w0, [sp, .easyMove]
-             bl  EasyMoveMng_Clear
 
-.skip_easymove:
+    ; set multiPV
             add  x1, x20, Pos.rootMovesVec
              bl  RootMovesVec_Size
            _lea  x6, options
@@ -137,17 +134,12 @@ end virtual
             blo  .save_next
 
 if USE_WEAKNESS
-;	; if using weakness, reset multiPV local variable
-;		cmp   byte[weakness.enabled], 0
-;		 je   @f
+    ; if using weakness, reset multiPV local variable
            _lea  x6, weakness
            ldrb  w4, [x6, Weakness.enabled]
             cbz  w4, @1f
-;		mov   eax, dword[weakness.multiPV]
             ldr  w0, [x6, Weakness.multiPV]
-;		mov   dword[.multiPV], eax
             str  w0, [sp, .multiPV]
-;	@@:
     @1:
 end if
 
@@ -346,14 +338,22 @@ end if
            cbnz  w0, @1f
             str  w25, [x7, Thread.completedDepth]
     @1:
-            ldr  w4, [x7, Thread.idx]
-           cbnz  w4, .id_loop
 
-    ; If skill level is enabled and time is up, pick a sub-optimal best move
-        ; not implemented
+            ldr  x0, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            ldr  w0, [x0, RootMove.pv + 4*0]
+            ldr  w4, [sp, .lastBestMove]
+            cmp  w0, w4
+            beq  @1f
+            str  w0, [sp, .lastBestMove]
+            str  w15, [sp,.lastBestMoveDepth]
+    @1:
 
     ; Have we found a "mate in x"
         ; not implemented
+
+            ldr  w4, [x7, Thread.idx]
+           cbnz  w4, .id_loop
+
 
     ; w22 = bestValue  remember
 
@@ -365,8 +365,10 @@ end if
            ldrb  w0, [x6, Signals.stop]
            ldrb  w4, [x6, Signals.stopOnPonderhit]
             orr  w0, w0, w4
-           cbnz  w0, .handle_easymove
+           cbnz  w0, .id_loop
 
+    ; Stop the search if only one legal move is available, or if all
+    ; of the available time has been used
              bl  Os_GetTime
            _lea  x6, time
             ldr  x4, [x6, Time.startTime]
@@ -412,14 +414,7 @@ end if
           scvtf  d3, w0
 ; d3 = improvingFactor
 
-           _lea  x6, time
-            ldr  w0, [x6, Time.optimumTime]
-            add  x0, x0, x0, lsl 2
-            mov  x4, 44
-           udiv  x0, x0, x4
-; w0 = Time.optimum() * 5 / 42
-            ldr  x8, [x20, Pos.rootMovesVec + RootMovesVec.table]
-            ldr  w1, [x8, RootMove.pv + 4*0]
+
             add  x6, x20, -Thread.rootPos
             ldr  d0, [x6, Thread.bestMoveChanges]
             add  w9, w10, 1
@@ -427,20 +422,28 @@ end if
            fadd  d2, d2, d0
 ; d2 = unstablePvFactor
 
-            mov  w9, 0
-           cbnz  w10, @1f
-            cmp  w11, w0
-            bls  @1f
-            ldr  w4, [sp, .easyMove]
-            cmp  w1, w4
-            bne  @1f
-           _lea  x6, constd._0p03
-            ldr  d4, [x6]
-          fcmpe  d0, d4
-          csetm  w9, mi
+           fmov  d0, 1.0
+            ldr  w1, [sp, .lastBestMoveDepth]
+           cbnz  w10, @2f
+  iterate i, 3, 4, 5
+            mov  w4, i
+            mul  w0, w4, w1
+            cmp  w0, w25
+            bge  @1f
+           _lea  x6, constd._1p3
+            ldr  d6, [x6]
+           fmul  d0, d0, d6
     @1:
-; w9 = doEasyMove
-
+  end iterate
+    @2:
+            add  x7, x20, -Thread.rootPos
+            ldr  d4, [x7, Thread.previousTimeReduction]
+          fsqrt  d4, d4
+           fdiv  d4, d4, d0
+           fmul  d2, d2, d4
+            str  d0, [sp, .timeReduction]
+            
+            ldr  x8, [x20, Pos.rootMovesVec + RootMovesVec.table]
            fmul  d2, d2, d3
           ucvtf  d0, w11
            _lea  x6, constd._628p0
@@ -455,11 +458,7 @@ end if
             cmp  x8, x4
             beq  .set_stop
           fcmpe  d0, d1
-            bpl  .set_stop
-
-           strb  w9, [x20, -Thread.rootPos + Thread.easyMovePlayed]
-            cbz  w9, .handle_easymove
-
+            bmi  .id_loop
 .set_stop:
            _lea  x6, limits
            _lea  x7, signals
@@ -467,32 +466,15 @@ end if
            ldrb  w0, [x6, Limits.ponder]
            cbnz  w0, @1f
            strb  w4, [x7, Signals.stop]
-              b  .handle_easymove
-    @1:
-           strb  w4, [x7, Signals.stopOnPonderhit]
-
-.handle_easymove:
-            ldr  x1, [x20, Pos.rootMovesVec + RootMovesVec.table]
-            ldr  w0, [x1, RootMove.pvSize]
-            cmp  w0, 3
-            blo  @1f
-             bl  EasyMoveMng_Update
               b  .id_loop
     @1:
-             bl  EasyMoveMng_Clear
+           strb  w4, [x7, Signals.stopOnPonderhit]
               b  .id_loop
 
 .id_loop_done:
-           ldrb  w0, [x20, -Thread.rootPos + Thread.easyMovePlayed]
-           _lea  x6, easyMoveMng
-            ldr  w1, [x6, EasyMoveMng.stableCnt]
-            ldr  w4, [x20, -Thread.rootPos + Thread.idx]
-           cbnz  w4, .done
-            cmp  w1, 6
-            blo  @1f
-            cbz  w0, .done
-    @1:
-             bl  EasyMoveMng_Clear
+            ldr  d0, [sp, .timeReduction]
+            add  x7, x20, -Thread.rootPos
+            str  d0, [x7, Thread.previousTimeReduction]
 
 .done:
             add  sp, sp, .localsize
@@ -699,8 +681,6 @@ end if
             sub  w0, w0, 1
            _lea  x6, limits
             ldr  w4, [x6, Limits.depth]
-            orr  w0, w0, w4
-           ldrb  w4, [x20, -Thread.rootPos + Thread.easyMovePlayed]
             orr  w0, w0, w4
            cbnz  w0, MainThread_Think.best_done
             ldr  x1, [x20, Pos.rootMovesVec+RootMovesVec.table]
