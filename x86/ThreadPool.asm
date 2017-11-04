@@ -217,6 +217,8 @@ end virtual
 
 if USE_SYZYGY
 	; Skip TB probing when no TB found
+            cmp   dword[options.multiPV], 1
+            jne   .check_tb_ret
 		mov   dl, byte[options.syzygy50MoveRule]
 		mov   byte[Tablebase_RootInTB], 0
 		mov   byte[Tablebase_UseRule50], dl

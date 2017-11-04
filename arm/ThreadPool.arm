@@ -223,6 +223,9 @@ if USE_SYZYGY
 
     ; Skip TB probing when no TB found
            _lea  x6, options
+            ldr  w4, [x6, Options.multiPV]
+            cmp  w4, 1
+            bne  .check_tb_ret
            ldrb  w2, [x6, Options.syzygy50MoveRule]
            _lea  x6, Tablebase_RootInTB
            strb  wzr, [x6]
