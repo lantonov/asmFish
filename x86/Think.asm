@@ -4,6 +4,7 @@ Thread_Think:
 
 	       push   rbp rbx rsi rdi r13 r14 r15
 virtual at rsp
+ .elapsed    rq 1
  .completedDepth rd 1
  .alpha      rd 1
  .beta	     rd 1
@@ -333,7 +334,22 @@ end if
 
 	       call   Os_GetTime
 		sub   rax, qword[time.startTime]
-		mov   r11, rax
+		mov   qword[.elapsed], rax
+
+            xor  r10d, r10d
+            mov  edx, dword[rbp + Pos.sideToMove]
+            cmp  r12d, dword[DrawValue + 4*rdx]
+            jne  @1f
+            mov  ecx, dword[limits.time + 4*rdx]
+            sub  ecx, eax
+            xor  edx, 1
+            cmp  ecx, dword[limits.time + 4*rdx]
+            jle  @1f
+           call  PvIsDraw
+            mov  r10d, eax
+    @1:
+            mov  r11, qword[.elapsed]
+    ; r10d = thinkHard
 	; r11 = Time.elapsed()
 
 		xor   eax, eax
@@ -363,19 +379,22 @@ end if
 		mov   r8, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
 		mov   ecx, dword[r8+RootMove.pv+4*0]
 
-	    _vmovsd   xmm0, qword[rbp-Thread.rootPos+Thread.bestMoveChanges]
-	    _vmovsd   xmm2, qword[constd._1p0]
-	    _vaddsd   xmm2, xmm2, xmm0
+        _vmovsd  xmm0, qword[rbp - Thread.rootPos + Thread.bestMoveChanges]
+            lea  r9d, [r10d + 1]
+     _vcvtsi2sd  xmm2, xmm2, r9d
+        _vaddsd  xmm2, xmm2, xmm0
 	; xmm2 = unstablePvFactor
 
 		xor   r9d, r9d
+       test   r10d, r10d
+        jnz   @1f
 		cmp   r11d, eax
-		jbe   @f
+		jbe   @1f
 		cmp   ecx, dword[.easyMove]
-		jne   @f
+		jne   @1f
 	   _vcomisd   xmm0, qword[constd._0p03]
 		sbb   r9d, r9d
-	@@:
+	@1:
 	; r9d = doEasyMove
 
 	    _vmulsd   xmm2, xmm2, xmm3
@@ -435,7 +454,59 @@ end if
 
 
 
+PvIsDraw:
+           push  rsi rdi r15
+            mov  rdi, qword[rbp + Pos.rootMovesVec + RootMovesVec.table]
+            mov  r15d, dword[rdi + RootMove.pvSize]
 
+             or  esi, -1
+.do_loop:
+            add  esi, 1
+            cmp  esi, r15d
+            jae  .do_done
+            mov  ecx, dword[rdi + RootMove.pv + 4*rsi]
+	       call  Move_GivesCheck
+            mov  ecx, dword[rdi + RootMove.pv + 4*rsi]
+            mov  byte[rbx+State.givesCheck], al
+	       call  Move_Do__Tablebase_ProbeAB
+            jmp  .do_loop
+.do_done:
+            mov  eax, r15d
+           call  _PosIsDraw
+
+            mov  esi, r15d
+            mov  r15d, eax
+.undo_loop:
+            sub  esi, 1
+             js  .undo_done
+            mov  ecx, dword[rdi + RootMove.pv + 4*rsi]
+	       call  Move_Undo
+            jmp  .undo_loop
+.undo_done:
+            mov  eax, r15d
+            pop  r15 rdi rsi
+            ret
+
+
+_PosIsDraw:
+    ; in : eax ply
+    ; out: eax boole
+           push  rdi
+          movzx  edx,  word[rbx+State.rule50]
+          movzx  ecx,  word[rbx+State.pliesFromNull]
+            mov  r8, qword[rbx+State.key]
+      PosIsDraw  .yes_draw, .cold, .coldreturn
+.no_draw:
+            xor  eax, eax
+            pop  rdi
+            ret
+.yes_draw:
+            mov  eax, 1
+            pop  rdi
+            ret
+
+.cold:
+ PosIsDraw_Cold  .yes_draw, .coldreturn
 
 
 MainThread_Think:

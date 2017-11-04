@@ -1,6 +1,7 @@
 Thread_Think:
         ; in:  x1 address of Thread struct
 virtual at 0
+ .elapsed   rq 1
  .completedDepth rd 1
  .alpha      rd 1
  .beta	     rd 1
@@ -369,7 +370,27 @@ end if
              bl  Os_GetTime
            _lea  x6, time
             ldr  x4, [x6, Time.startTime]
-            sub  x11, x0, x4
+            sub  x0, x0, x4
+            str  x0, [sp, .elapsed]
+
+            mov  w10, 0
+            ldr  w2, [x20, Pos.sideToMove]
+           _lea  x6, DrawValue
+            ldr  w4, [x6, x2, lsl 2]
+            cmp  w22, w4
+            bne  @1f
+           _lea  x6, limits + Limits.time
+            ldr  w1, [x6, x2, lsl 2]
+            sub  w1, w1, w0
+            eor  w2, w2, 1
+            ldr  w4, [x6, x2, lsl 2]
+            cmp  w1, w4
+            ble  @1f
+             bl  PvIsDraw
+            mov  w10, w0
+    @1:
+            ldr  x11, [sp, .elapsed]
+    ; r10 = thinkHard
     ; r11 = Time.elapsed()
 
             add  x7, x20, -Thread.rootPos
@@ -401,11 +422,13 @@ end if
             ldr  w1, [x8, RootMove.pv + 4*0]
             add  x6, x20, -Thread.rootPos
             ldr  d0, [x6, Thread.bestMoveChanges]
-           fmov  d2, 1.0
+            add  w9, w10, 1
+          scvtf  d2, w9
            fadd  d2, d2, d0
 ; d2 = unstablePvFactor
 
             mov  w9, 0
+           cbnz  w10, @1f
             cmp  w11, w0
             bls  @1f
             ldr  w4, [sp, .easyMove]
@@ -479,6 +502,65 @@ end if
             ldp  x20, x30, [sp], 16
             ret
 
+
+PvIsDraw:
+            stp  x26, x27, [sp, -16]!
+            stp  x25, x30, [sp, -16]!
+
+            ldr  x27, [x20, Pos.rootMovesVec + RootMovesVec.table]
+            ldr  w25, [x27, RootMove.pvSize]
+
+            mov  w26, -1
+.do_loop:
+            add  w26, w26, 1
+            cmp  w26, w25
+            bhs  .do_done
+            add  x6, x27, RootMove.pv
+            ldr  w1, [x6, x26, lsl 2]
+             bl  Move_GivesCheck
+            add  x6, x27, RootMove.pv
+            ldr  w1, [x6, x26, lsl 2]
+           strb  w0, [x21, State.givesCheck]
+             bl  Move_Do__Tablebase_ProbeAB
+              b  .do_loop
+.do_done:
+            mov  w0, w25
+             bl  _PosIsDraw
+
+            mov  w26, w25
+            mov  w25, w0
+.undo_loop:
+           subs  w26, w26, 1
+            bmi  .undo_done
+            add  x6, x27, RootMove.pv
+            ldr  w1, [x6, x26, lsl 2]
+             bl  Move_Undo
+              b  .undo_loop
+.undo_done:
+            mov  w0, w25
+            ldp  x25, x30, [sp], 16
+            ldp  x26, x27, [sp], 16
+            ret
+
+
+_PosIsDraw:
+    ; in : w0 ply
+    ; out: w0 boole
+            stp  x27, x30, [sp, -16]!
+           ldrh  w2, [x21, State.rule50]
+           ldrh  w1, [x21, State.pliesFromNull]
+            ldr  x8, [x21, State.key]
+      PosIsDraw  .yes_draw, .cold, .coldreturn
+.no_draw:
+            mov  w0, 0
+            ldp  x27, x30, [sp], 16
+            ret
+.yes_draw:
+            mov  w0, 1
+            ldp  x27, x30, [sp], 16
+            ret
+.cold:
+ PosIsDraw_Cold  .yes_draw, .coldreturn
 
 
 MainThread_Think:

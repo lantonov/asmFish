@@ -454,7 +454,7 @@ end if
 
 ;;;;;;;;;;;;;; fen ;;;;;;;;;;;;;;;;;;
 
-if VERBOSE>0
+if VERBOSE > 0
 Position_Print:  ; in: rbp address of Pos
 		 ; io: rdi string
 
@@ -1192,7 +1192,7 @@ SetCastlingRights:
 
 
 
-if VERBOSE > 0
+if VERBOSE > 0 | DEBUG > 0
 Position_PrintFen:
 	; in: rbp address of Pos
 	; io: rdi string
@@ -1259,7 +1259,7 @@ Position_PrintFen:
 		add   edx, 'AAaa'
 		cmp   byte[rbp+Pos.chess960], 0
 	     cmovne   eax, edx
-iterate i, 0 1 2 3
+iterate i, 0, 1, 2, 3
 		mov   byte[rdi], al
 		shr   eax, 8
 		 bt   ecx, i

@@ -112,11 +112,8 @@ TimeMng_Init:
             cmp  byte[options.ponder], 0
          cmovne  rax, rcx
             mov  qword[time.optimumTime], rax
-Display 0, "opt: %I0%n"
             mov  r9d, 1
            call  remaining
             mov  qword[time.maximumTime], rax
-Display 0, "max: %I0%n"
-
             pop  rdi rsi rbx
             ret
