@@ -49,9 +49,12 @@ remaining:
         _vmulsd  xmm2, xmm2, xmm0
             jmp  .L21
 .L8:
-        _vmulsd  xmm2, xmm2, qword[.LC10]
+        _vmulsd  xmm2, xmm2, qword[.LC10]            
 .L21:
        _vmovapd  xmm0, xmm1
+            cmp  dword[limits.movestogo], 1
+            jle  .L9
+        _vminsd  xmm2, xmm2, qword[.LC12]
             jmp  .L9
 .NoMovesToGo:
      _vcvtsi2sd  xmm0, xmm0, eax
@@ -90,6 +93,7 @@ remaining:
 .LC9:   dq 1.1
 .LC10:  dq 1.5
 .LC11:  dq 500.0
+.LC12:  dq 0.75
 
 
 TimeMng_Init:
@@ -108,8 +112,11 @@ TimeMng_Init:
             cmp  byte[options.ponder], 0
          cmovne  rax, rcx
             mov  qword[time.optimumTime], rax
+Display 0, "opt: %I0%n"
             mov  r9d, 1
            call  remaining
             mov  qword[time.maximumTime], rax
+Display 0, "max: %I0%n"
+
             pop  rdi rsi rbx
             ret
