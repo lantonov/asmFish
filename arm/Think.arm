@@ -686,7 +686,6 @@ MainThread_Think.mate:
             tst  x5, x5
            csel  w1, w1, w4, ne
              bl  PrintScore_Uci
-MainThread_Think.mate_print:
            _lea  x6, options
            ldrb  w0, [x6, Options.displayInfoMove]
             cbz  w0, MainThread_Think.return
@@ -698,11 +697,17 @@ MainThread_Think.sz1:
         db 'info depth 0 score ',0
         balign 4
 
+
 MainThread_Think.mate_bestmove:
            _lea  x27, Output
             adr  x1, MainThread_Think.sz2
              bl  PrintString
-              b  MainThread_Think.mate_print
+        PrintNL
+           _lea  x6, options
+           ldrb  w0, [x6, Options.displayInfoMove]
+            cbz  w0, MainThread_Think.return
+             bl  WriteLine_Output
+              b  MainThread_Think.return
 
 MainThread_Think.sz2:
         db 'bestmove NONE', 0

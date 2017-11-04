@@ -671,7 +671,6 @@ end if
             and  ecx, VALUE_DRAW + VALUE_MATE
             sub  ecx, VALUE_MATE
            call  PrintScore_Uci
-.mate_print:
         PrintNL
             cmp  byte[options.displayInfoMove], 0
              je  .return
@@ -685,7 +684,11 @@ end if
             mov  rax, ' NONE'
           stosq
             sub  rdi, 3
-            jmp  .mate_print
+        PrintNL
+            cmp  byte[options.displayInfoMove], 0
+             je  .return
+           call  WriteLine_Output
+            jmp  .return
 
 
 
