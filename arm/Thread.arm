@@ -60,13 +60,6 @@ Thread_Create:
             str  wzr, [x21, Thread.callsCnt]
             str  w26, [x21, Thread.idx]
             str  x27, [x21, Thread.numaNode]
-if USE_VARIETY = 1
-             bl  Os_GetTime
-            eor  x0, x0, x2
-            orr  x0, x0, 1
-mov x0, 1
-            str  x0, [x21, Thread.randSeed]
-end if
 
     ; per thread memory allocations
      ; create sync objects
@@ -88,11 +81,13 @@ end if
              bl  RootMovesVec_Create
 
      ; allocate stats
-            mov  x1, sizeof.HistoryStats + sizeof.MoveStats
+         _mov32  x1, sizeof.HistoryStats + sizeof.CapturePieceToHistory + sizeof.MoveStats
             mov  w2, w25
              bl  Os_VirtualAllocNuma
             str  x0, [x21, Thread.rootPos + Pos.history]
             add  x0, x0, sizeof.HistoryStats
+            str  x0, [x21, Thread.rootPos + Pos.captureHistory]
+            add  x0, x0, sizeof.CapturePieceToHistory
             str  x0, [x21, Thread.rootPos + Pos.counterMoves]
 
      ; allocate pawn hash
@@ -194,7 +189,7 @@ Thread_Delete:
 
     ; free stats
             ldr  x1, [x21, Thread.rootPos+Pos.history]
-            mov  x2, sizeof.HistoryStats + sizeof.MoveStats
+         _mov32  x2, sizeof.HistoryStats + sizeof.CapturePieceToHistory + sizeof.MoveStats
              bl  Os_VirtualFree
             str  xzr, [x21, Thread.rootPos+Pos.history]
             str  xzr, [x21, Thread.rootPos+Pos.counterMoves]

@@ -134,10 +134,10 @@ macro UpdateCaptureStats move, captures, captureCnt, bonusW, absbonus
             shr  ecx, 6
             and  eax, 63
             and  ecx, 63
-          movzx  ecx, byte[rbp+Pos.board+rcx]
+          movzx  ecx, byte[rbp + Pos.board + rcx]
             shl  ecx, 6
             add  ecx, eax
-          movzx  eax, byte[rbp+Pos.board+rax]
+          movzx  eax, byte[rbp + Pos.board + rax]
             and  eax, 7
             shl  ecx, 3
             add  ecx, eax
@@ -146,7 +146,6 @@ macro UpdateCaptureStats move, captures, captureCnt, bonusW, absbonus
 
   match =0, quiets
   else
-    ; Decrease all the other played quiet moves
             neg  bonusW
             xor  esi, esi
             cmp  esi, captureCnt
@@ -157,17 +156,16 @@ NextCapture:
             shr  ecx, 6
             and  eax, 63
             and  ecx, 63
-          movzx  ecx, byte[rbp+Pos.board+rcx]
+            lea  esi, [rsi + 1]
+          movzx  ecx, byte[rbp + Pos.board + rcx]
             shl  ecx, 6
             add  ecx, eax
-          movzx  eax, byte[rbp+Pos.board+rax]
+          movzx  eax, byte[rbp + Pos.board + rax]
             and  eax, 7
             shl  ecx, 3
             add  ecx, eax
             lea  r8, [r9 + 4*rcx]
     apply_bonus  r8, bonusW, absbonus, 324
-
-            add  esi, 1
             cmp  esi, captureCnt
              jb  NextCapture
   end match

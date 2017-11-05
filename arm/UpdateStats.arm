@@ -108,3 +108,51 @@ BonusTooBig:
 Return:
 end macro
 
+
+macro UpdateCaptureStats move, captures, usecaptures, capturesCnt, bonusW, absbonus
+  local BonusTooBig, NextCapture, Return
+	; clobbers rax, rcx, rdx, r8, r9
+	; it also might clobber rsi and change the sign of bonus32
+
+            add  bonusW, absbonus, absbonus
+            ldr  x9, [x20, Pos.captureHistory]
+            cmp  absbonus, 324
+            bhs  BonusTooBig
+
+            and  w0, move, 63
+           ubfx  w1, move, 6, 6
+           ldrb  w1, [x20, x1]  ; Pos.board = 0
+            add  w1, w0, w1, lsl 6
+           ldrb  w0, [x20, x0]  ; Pos.board = 0
+            and  w0, w0, 7
+            add  w1, w0, w1, lsl 3
+            ldr  w0, [x9, x1, lsl 2]
+            mov  w4, 324
+     ApplyBonus  w0, w2, bonusW, absbonus, w4
+            str  w0, [x9, x1, lsl 2]
+
+  if usecaptures
+            neg  bonusW, bonusW
+            mov  w16, 0
+            cbz  capturesCnt, Return
+NextCapture:
+            ldr  w4, [captures, x16, lsl 2]
+            and  w0, w4, 63
+           ubfx  w1, w4, 6, 6
+            add  w16, w16, 1
+           ldrb  w1, [x20, x1]  ; Pos.board = 0
+            add  w1, w0, w1, lsl 6
+           ldrb  w0, [x20, x0]  ; Pos.board = 0
+            and  w0, w0, 7
+            add  w1, w0, w1, lsl 3
+            ldr  w0, [x9, x1, lsl 2]
+            mov  w4, 324
+     ApplyBonus  w0, w2, bonusW, absbonus, w4
+            str  w0, [x9, x1, lsl 2]
+            cmp  w16, capturesCnt
+            blo  NextCapture
+  end if
+
+BonusTooBig:
+Return:
+end macro

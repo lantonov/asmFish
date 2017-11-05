@@ -23,7 +23,7 @@ Search_Clear.NextThread:
 
     ; clear thread stats
             ldr  x17, [x3, Thread.rootPos + Pos.history]
-            mov  w1, (sizeof.HistoryStats + sizeof.MoveStats)/4
+            mov  w1, (sizeof.HistoryStats + sizeof.CapturePieceToHistory + sizeof.MoveStats)/4
             mov  w0, 0
              bl  RepStosd
 

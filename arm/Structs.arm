@@ -49,6 +49,10 @@ sizeof.PawnEntry = 1*sizeof.rb + PawnEntry.weakUnopposed
 HistoryStats.___ = 0
 sizeof.HistoryStats = 0 + 2*64*64*sizeof.rd + HistoryStats.___
 
+struct CapturePieceToHistory    ; 32 KiB
+ rd 16*64*8
+ends
+
 MoveStats.___ = 0
 sizeof.MoveStats = 0 + 16*64*sizeof.rd + MoveStats.___
 
@@ -109,7 +113,10 @@ Pos.stateEnd = 1*sizeof.rq + Pos.stateTable
 Pos.counterMoveHistory = 1*sizeof.rq + Pos.stateEnd
 Pos.history = 1*sizeof.rq + Pos.counterMoveHistory
 Pos.counterMoves = 1*sizeof.rq + Pos.history
-Pos.materialTable = 1*sizeof.rq + Pos.counterMoves
+
+Pos.captureHistory = 1*sizeof.rq + Pos.counterMoves
+
+Pos.materialTable = 1*sizeof.rq + Pos.captureHistory
 Pos.pawnTable = 1*sizeof.rq + Pos.materialTable
 Pos.rootMovesVec = 1*sizeof.rq + Pos.pawnTable
 Pos.moveList = 1*sizeof.RootMovesVec + Pos.rootMovesVec

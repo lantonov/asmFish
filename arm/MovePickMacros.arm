@@ -104,23 +104,23 @@ end macro
 
 macro ScoreCaptures start, ender
   local WhileLoop, Done
-            ldr  w1, [x20, Pos.sideToMove]
-            lsl  w4, w1, 3
-            sub  w1, w4, w1
+            ldr  x8, [x20, Pos.captureHistory]
+           _lea  x6, PieceValue_MG
             cmp  start, ender
             bhs  Done
 WhileLoop:
             ldr  w0, [start, ExtMove.move]
+           ubfx  w1, w0, 6, 6
             and  w0, w0, 63
             add  start, start, sizeof.ExtMove
-            add  x6, x20, Pos.board
-           ldrb  w2, [x6, x0]
-           _lea  x6, PieceValue_MG
-            ldr  w2, [x6, x2, lsl 2]
-            eor  w0, w1, w0, lsr 3
-            mov  w4, 200
-            mul  w0, w0, w4
-            sub  w2, w2, w0
+           ldrb  w1, [x20, x1]  ; Pos.board = 0
+            add  w1, w0, w1, lsl 6
+           ldrb  w0, [x20, x0]  ; Pos.board = 0
+            ldr  w2, [x6, x0, lsl 2]
+            and  w0, w0, 7
+            add  w1, w0, w1, lsl 3
+            ldr  w4, [x8, x1, lsl 2]
+            add  w2, w2, w4
             str  w2, [start, -sizeof.ExtMove + ExtMove.value]
             cmp  start, ender
             blo  WhileLoop
