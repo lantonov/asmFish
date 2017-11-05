@@ -7,7 +7,7 @@ cls
 
 :menu
 echo    EXECUTABLES
-echo    ==========
+echo    ===========
 echo.
 echo    1 - All
 echo    2 - Windows
