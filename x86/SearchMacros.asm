@@ -27,7 +27,6 @@ macro search RootNode, PvNode
     .predictedDepth     rd 1
     .moveCount          rd 1
     .quietCount         rd 1
-    .capturesCount      rd 1
     .alpha              rd 1
     .beta               rd 1
     .depth              rd 1
@@ -52,7 +51,6 @@ macro search RootNode, PvNode
     .ttCapture              rd 1    ; 1 for true
     .reduction              rd 1
     .quietsSearched     rd 64
-    .capturesSearched   rd 32
     if PvNode = 1
       .pvExact          rd 1
       .pv               rd MAX_PLY + 1
@@ -80,7 +78,6 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
                 xor   eax, eax
                 mov   dword[.moveCount], eax
                 mov   dword[.quietCount], eax
-                mov   dword[.captureCount], eax
                 mov   dword[rbx+State.moveCount], eax
                 mov   dword[rbx+State.history], eax
                 mov   dword[.bestValue], -VALUE_INFINITE
@@ -1328,23 +1325,15 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
 .18NoNewBestValue:
             mov   ecx, dword[.move]
             mov   eax, dword[.quietCount]
-            mov   edx, dword[.captureCount]
+            cmp   byte[.captureOrPromotion], 0
+            jnz   .MovePickLoop
             cmp   ecx, dword[.bestMove]
              je   .MovePickLoop
-            cmp   byte[.captureOrPromotion], 0
-            jnz   @1f
             cmp   eax, 64
             jae   .MovePickLoop
             mov   dword[.quietsSearched+4*rax], ecx
             add   eax, 1
             mov   dword[.quietCount], eax
-            jmp   .MovePickLoop
-    @1:
-            cmp   edx, 32
-            jae   .MovePickLoop
-            mov   dword[.capturesSearched+4*rdx], ecx
-            add   edx, 1
-            mov   dword[.captureCount], edx
             jmp   .MovePickLoop
 
 .MovePickDone:
@@ -1379,13 +1368,9 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
           movzx   eax, byte[rbp+Pos.board+rax]
              or   al, byte[_CaptureOrPromotion_or+rdx]
            test   al, byte[_CaptureOrPromotion_and+rdx]
-            jnz   .20Quiet_UpdateCaptureStats
+            jnz   .20Quiet_SkipUpdateStats
     UpdateStats   r12d, .quietsSearched, dword[.quietCount], r11d, r10d, r15
-            jmp   .20Quiet_UpdateStatsDone
-.20Quiet_UpdateCaptureStats:
-    UpdateCaptureStats   r12d, .capturesSearched, dword[.captureCount], r11d, r10d, r15
-
-.20Quiet_UpdateStatsDone:
+.20Quiet_SkipUpdateStats:
             lea   r10d, [r10+2*(r13+1)+1]
     ; r10d = penalty
             cmp   dword[rbx-1*sizeof.State+State.moveCount], 1
@@ -1516,12 +1501,9 @@ Display 2, "Search returning %i0%n"
             lea   r15d, [rax+rcx]
     ; r15d = offset of [piece_on(prevSq),prevSq]
            test   dl, dl
-            jnz   .ReturnTTValue_UpdateCaptureStats
+            jnz   .ReturnTTValue_SkipUpdateStats
     UpdateStats   r12d, 0, 0, r11d, r10d, r15
-            jmp   .ReturnTTValue_UpdateStatsDone
-.ReturnTTValue_UpdateCaptureStats:
-    UpdateCaptureStats  r12d, 0, 0, r11d, r10d, r15
-.ReturnTTValue_UpdateStatsDone:
+.ReturnTTValue_SkipUpdateStats:
             mov   eax, edi
             lea   r10d, [r10+2*(r13+1)+1]
     ; r10d = penalty

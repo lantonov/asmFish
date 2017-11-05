@@ -165,7 +165,6 @@ match that of brainfish. If `BestBookMove=false`, then the only differences are
 |UCI_Elo|        level at which to play
 | | __`USE_VARIETY=1` assemble option__
 |Variety| In QSearch, if the score is in the range [-4v, 1000+4v), add a pseudorandom integer from (-4v, 4v) to the score.
-
 The distribution of this integer is roughly triangular with mean 0.
 ```
                X
