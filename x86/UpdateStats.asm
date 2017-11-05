@@ -119,39 +119,57 @@ Return:
 end macro
 
 
-macro UpdateCaptureStats move, captures, captureCnt, bonus32, absbonus
+macro UpdateCaptureStats move, captures, captureCnt, bonusW, absbonus
 	; clobbers rax, rcx, rdx, r8, r9
-	; it also might clobber rsi and change the sign of bonus32
+	; it also might clobber rsi
   local BonusTooBig, NextCapture, Return
 
-           imul   bonus32, absbonus, 2
-            cmp   absbonus, 324
-            jae   BonusTooBig
+           imul  bonusW, absbonus, 2
+            mov  r9, qword[rbp + Pos.captureHistory]
+            cmp  absbonus, 324
+            jae  BonusTooBig
 
-
-		add   r8, qword[rbp + Pos.captureHistory]
-
-	apply_bonus   r8, bonus32, absbonus, 324
-
-
+            mov  eax, move
+            mov  ecx, move
+            shr  ecx, 6
+            and  eax, 63
+            and  ecx, 63
+          movzx  ecx, byte[rbp+Pos.board+rcx]
+            shl  ecx, 6
+            add  ecx, eax
+          movzx  eax, byte[rbp+Pos.board+rax]
+            and  eax, 7
+            shl  ecx, 3
+            add  ecx, eax
+            lea  r8, [r9 + 4*rcx]
+    apply_bonus  r8, bonusW, absbonus, 324
 
   match =0, quiets
   else
-	; Decrease all the other played quiet moves
-		neg   bonus32
-		xor   esi, esi
-		cmp   esi, captureCnt
-		 je   Return
+    ; Decrease all the other played quiet moves
+            neg  bonusW
+            xor  esi, esi
+            cmp  esi, captureCnt
+             je  Return
 NextCapture:
+            mov  eax, dword[captures + 4*rsi]
+            mov  ecx, dword[captures + 4*rsi]
+            shr  ecx, 6
+            and  eax, 63
+            and  ecx, 63
+          movzx  ecx, byte[rbp+Pos.board+rcx]
+            shl  ecx, 6
+            add  ecx, eax
+          movzx  eax, byte[rbp+Pos.board+rax]
+            and  eax, 7
+            shl  ecx, 3
+            add  ecx, eax
+            lea  r8, [r9 + 4*rcx]
+    apply_bonus  r8, bonusW, absbonus, 324
 
-		add   r8, qword[rbp + Pos.captureHistory]
-
-
-	apply_bonus   r8, bonus32, absbonus, 324
-
-		add   esi, 1
-		cmp   esi, quietsCnt
-		 jb   NextQuiet
+            add  esi, 1
+            cmp  esi, captureCnt
+             jb  NextCapture
   end match
 
 BonusTooBig:

@@ -27,7 +27,7 @@ macro search RootNode, PvNode
     .predictedDepth     rd 1
     .moveCount          rd 1
     .quietCount         rd 1
-    .capturesCount      rd 1
+    .captureCount       rd 1
     .alpha              rd 1
     .beta               rd 1
     .depth              rd 1
@@ -1383,8 +1383,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
     UpdateStats   r12d, .quietsSearched, dword[.quietCount], r11d, r10d, r15
             jmp   .20Quiet_UpdateStatsDone
 .20Quiet_UpdateCaptureStats:
-    UpdateCaptureStats   r12d, .capturesSearched, dword[.captureCount], r11d, r10d, r15
-
+    UpdateCaptureStats   r12d, .capturesSearched, dword[.captureCount], r11d, r10d
 .20Quiet_UpdateStatsDone:
             lea   r10d, [r10+2*(r13+1)+1]
     ; r10d = penalty
@@ -1520,7 +1519,7 @@ Display 2, "Search returning %i0%n"
     UpdateStats   r12d, 0, 0, r11d, r10d, r15
             jmp   .ReturnTTValue_UpdateStatsDone
 .ReturnTTValue_UpdateCaptureStats:
-    UpdateCaptureStats  r12d, 0, 0, r11d, r10d, r15
+    UpdateCaptureStats  r12d, 0, 0, r11d, r10d
 .ReturnTTValue_UpdateStatsDone:
             mov   eax, edi
             lea   r10d, [r10+2*(r13+1)+1]

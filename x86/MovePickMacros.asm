@@ -20,8 +20,6 @@ macro apply_bonus address, bonus32, absbonus, denominator
 
 end macro
 
-
-
 macro GetNextMove
 	; in: rbp Position
 	;     rbx State
@@ -277,10 +275,9 @@ WhileLoop:
             shl   ecx, 3
             add   ecx, eax
 
-          movsw   eax, [r8 + 2*rcx]
-            add   eax, edx
+            add   edx, dword[r8 + 4*rcx]
 
-            mov   dword[start-sizeof.ExtMove+ExtMove.value], eax
+            mov   dword[start-sizeof.ExtMove+ExtMove.value], edx
             cmp   start, ender
              jb   WhileLoop
 Done:
