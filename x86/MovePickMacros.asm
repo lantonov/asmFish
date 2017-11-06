@@ -1,4 +1,3 @@
-
 macro apply_bonus address, bonus32, absbonus, denominator
 		mov   eax, dword[address]
 	       imul   eax, absbonus
