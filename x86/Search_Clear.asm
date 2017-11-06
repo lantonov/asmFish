@@ -20,7 +20,7 @@ Search_Clear:
 
 	; clear thread stats
 		mov   rdi, qword[rbx+Thread.rootPos.history]
-		mov   ecx, (sizeof.HistoryStats + sizeof.MoveStats)/4
+		mov   ecx, (sizeof.HistoryStats + sizeof.CapturePieceToHistory + sizeof.MoveStats)/4
 		xor   eax, eax
 	  rep stosd
 

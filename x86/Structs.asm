@@ -50,18 +50,21 @@ struct PawnEntry	; 80 bytes
  weakUnopposed  rb 1
 ends
 
-struct HistoryStats
+struct HistoryStats     ; 32 KiB
  rd 2*64*64
 ends
 
-struct MoveStats
+struct CapturePieceToHistory    ; 32 KiB
+ rd 16*64*8
+ends
+
+struct MoveStats        ; 4 KiB
  rd 16*64
 ends
 
 struct CounterMoveHistoryStats
  rd 16*64*16*64
 ends
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ; evaluation structures
@@ -143,6 +146,7 @@ end if
  counterMoveHistory  rq 1	 ; these structs hold addresses
  history 	rq 1		 ; of tables used by the search
  counterMoves	rq 1		 ;
+ captureHistory rq 1
  materialTable	rq 1		 ;
  pawnTable	rq 1		 ;
  rootMovesVec	RootMovesVec	 ;

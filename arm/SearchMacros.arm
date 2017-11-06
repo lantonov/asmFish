@@ -16,6 +16,7 @@ macro Search PvNode, RootNode
     .predictedDepth     rd 1
     .moveCount          rd 1
     .quietCount         rd 1
+    .captureCount       rd 1
     .alpha              rd 1
     .beta               rd 1
     .depth              rd 1
@@ -40,6 +41,7 @@ macro Search PvNode, RootNode
     .ttCapture              rd 1  ; 1 for true
     .reduction              rd 1
     .quietsSearched     rd 64
+    .capturesSearched   rd 32
     if PvNode = 1
       .pvExact          rd 1
       .pv               rd MAX_PLY + 1
@@ -61,6 +63,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             mov  w0, 0
             str  w0, [sp, .moveCount]
             str  w0, [sp, .quietCount]
+            str  wzr, [sp, .captureCount]
             str  w0, [x21, State.moveCount]
             str  w0, [x21, State.history]
             mov  w4, -VALUE_INFINITE
@@ -1349,19 +1352,29 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
 .18NoNewAlpha:
 .18NoNewBestValue:
             ldr  w1, [sp, .move]
-            ldr  w0, [sp, .quietCount]
+            ldr  w5, [sp, .bestMove]
            ldrb  w4, [sp, .captureOrPromotion]
-           cbnz  w4, .MovePickLoop
-            ldr  w4, [sp, .bestMove]
-            cmp  w1, w4
+            ldr  w0, [sp, .quietCount]
+            ldr  w2, [sp, .captureCount]
+            cmp  w1, w5
             beq  .MovePickLoop
+           cbnz  w4, @1f
+            add  x6, sp, .quietsSearched
             cmp  w0, 64
             bhs  .MovePickLoop
-            add  x6, sp, .quietsSearched
             str  w1, [x6, x0, lsl 2]
             add  w0, w0, 1
             str  w0, [sp, .quietCount]
               b  .MovePickLoop
+    @1:
+            add  x6, sp, .capturesSearched
+            cmp  w2, 32
+            bhs  .MovePickLoop
+            str  w1, [x6, x2, lsl 2]
+            add  w2, w2, 1
+            str  w2, [sp, .captureCount]
+              b  .MovePickLoop
+
 
 .MovePickDone:
     ; Step 20. Check for mate and stalemate
@@ -1401,11 +1414,17 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
            _lea  x6, _CaptureOrPromotion_and
            ldrb  w4, [x6, x2]
             tst  w0, w4
-            bne  .20Quiet_SkipUpdateStats
+            bne  .20Quiet_UpdateCaptureStats
             add  x3, sp, .quietsSearched
             ldr  w5, [sp, .quietCount]
     UpdateStats  w22, x3, 1, w5, w11, w10, x25
-.20Quiet_SkipUpdateStats:
+              b  .20Quiet_UpdateStatsDone
+.20Quiet_UpdateCaptureStats:
+            add  x3, sp, .capturesSearched
+            ldr  w5, [sp, .captureCount]
+    UpdateCaptureStats  w22, x3, 1, w5, w11, w10
+.20Quiet_UpdateStatsDone:
+
             add  w10, w10, w23, lsl 1
             add  w10, w10, 3
     ; r10d = penalty
@@ -1552,9 +1571,12 @@ Display 2, "Search returning %i0n"
             lsl  w1, w1, 6
             add  w25, w0, w1
     ; r15d = offset of [piece_on(prevSq),prevSq]
-           cbnz  w2, .ReturnTTValue_SkipUpdateStats
+           cbnz  w2, .ReturnTTValue_UpdateCaptureStats
     UpdateStats  w22, 0, 0, 0, w11, w10, x25
-.ReturnTTValue_SkipUpdateStats:
+              b  .ReturnTTValue_UpdateStatsDone
+.ReturnTTValue_UpdateCaptureStats:
+    UpdateCaptureStats  w22, 0, 0, 0, w11, w10
+.ReturnTTValue_UpdateStatsDone:
             mov  w0, w27
             add  w10, w10, w23, lsl 1
             add  w10, w10, 3
