@@ -534,6 +534,8 @@ if USE_BOOK
                 mov   dword[book.move], esi
                 mov   dword[book.weight], esi
                 mov   dword[book.ponder], esi
+                cmp   sil, byte[limits.infinite]
+                jne   @f
                 cmp   sil, byte[book.ownBook]
                  je   @f
                 cmp   rsi, qword[book.buffer]
