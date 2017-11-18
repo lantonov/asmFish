@@ -341,13 +341,13 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
 	    ; Step 8. Null move search with verification search (is omitted in PV nodes)
   if PvNode = 0
                 mov   edx, dword[.depth]
-               imul   eax, edx, 35
+               imul   eax, edx, 36
                 add   eax, dword[rbx+State.staticEval]
                 mov   esi, dword[.beta]
                 mov   ecx, dword[rbp+Pos.sideToMove]
                 cmp   esi, dword[.evalu]
                  jg   .8skip
-                add   esi, 35*6
+                add   esi, 225
     if USE_MATEFINDER = 0
               movzx   ecx, word[rbx+State.npMaterial+2*rcx]
                test   ecx, ecx
@@ -363,9 +363,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
                 cmp   r8d, 4*VALUE_KNOWN_WIN-1
                 jae   .8skip
     end if
-                sub   edx, 13*ONE_PLY
                 sub   eax, esi
-                and   edx, eax
                  js   .8skip
 
     if USE_MATEFINDER = 1
