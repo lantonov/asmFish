@@ -9,7 +9,7 @@
 
 var pgn4web_version = '3.03';
 
-var pgn4web_project_url = "http://pgn4web.casaschi.net";
+var pgn4web_project_url = "https://lantonov.github.io/asmFish/";
 var pgn4web_project_author = "Paolo Casaschi";
 var pgn4web_project_email = "pgn4web@casaschi.net";
 
