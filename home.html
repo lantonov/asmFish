@@ -1,0 +1,218 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2016 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<title>pgn4web</title>
+
+<script src="pgn4web-server-config.js" type="text/javascript"></script>
+<script src="pgn4web.js" type="text/javascript"></script>
+
+<style type="text/css">
+
+html, body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  color: black;
+  background: white;
+  font-family: sans-serif;
+  padding: 1.75em;
+}
+
+a {
+  color: black;
+  text-decoration: none;
+}
+
+a:hover, a:active {
+  color: red;
+}
+
+.menu_heading {
+  font-weight: normal;
+  margin-left: 0px;
+  margin-right: 2em;
+  margin-top: 1.5em;
+  margin-bottom: 0px;
+  white-space: nowrap;
+}
+
+.menu_item {
+  font-weight: bold;
+  margin-left: 1.25em;
+  margin-right: 2em;
+  margin-top: 0.5em;
+  margin-bottom: 0px;
+  white-space: nowrap;
+}
+
+.menu_subitem {
+  display: none;
+  font-size: 0.8em;
+  margin-left: 1em;
+  margin-top: 0.5em;
+  white-space: nowrap;
+}
+
+.banner {
+  font-size: 1.5em;
+  letter-spacing: 0.1em;
+  word-spacing: 0.1em;
+  line-height: 1.4em;
+  margin-bottom: 0.1em;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.iframe_area {
+  display: block;
+  margin: 0;
+  margin-right: 1em;
+  background-color: #EDE8D5;
+  box-shadow: 0px 0px 20px #663300;
+  border-style: solid;
+  border-color: #EDE8D5;
+  border-width: 13px;
+  border-radius: 10px;
+}
+
+.positionLink {
+  display:block;
+  width:708px;
+  height:0.5em;
+  margin-right:1em;
+}
+
+</style>
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+
+<!-- DeploymentCheck: google analytics code -->
+
+<!-- end DeploymentCheck -->
+
+
+</head>
+
+<body>
+
+<table border="0" cellpadding="0" cellspacing="0" width="99.9%"><tbody>
+<tr>
+<td align="left" valign="top">
+
+<div class="menu_heading" style="display:inline-block; margin-top:0px;"><a title="read how to add the chess puzzler to your website or your blog" href="http://pgn4web-project.casaschi.net/wiki/Example_Puzzler/">chess&nbsp;puzzler</a></div>
+<h1 style="display:inline-block; margin:0px; padding:0px;">&nbsp;</h1>
+
+</td>
+<td align="center" valign="top">
+
+<h1 style="margin:0px; padding:0px; text-align:right;">
+<span style="float:left; color:red; padding-left:13%">
+pgn4web
+</span>
+<a href="." onfocus="this.blur();" style="width:49px; height:29px; background:url(pawns.png) -47px -15px; vertical-align:baseline; display:inline-block; padding-right:0.5em;"></a>
+</h1>
+
+</td>
+</tr>
+<tr>
+<td align="left" valign="top">
+
+<div class="menu_item" style="margin-left:0px;">
+<iframe height='218' width='194' frameborder='0' scrolling='no' marginheight='0' marginwidth='0' src='puzzler.php?pgnData=tactics.pgn&amp;gameNum=&amp;pieceFont=hash&amp;squareSize=24&amp;lightColorHex=FFFFFF&amp;darkColorHex=EEEEEE&amp;controlBackgroundColorHex=FFFFFF&amp;controlTextColorHex=888888&amp;frameBorderColorHex=none'>
+iframe support required to display the chess puzzler
+</iframe>
+</div>
+
+</td>
+<td align="center" valign="middle">
+
+<div class="banner">javascript chess games viewer<br/>for websites, blogs and live broadcasts</div>
+
+</td>
+</tr>
+<tr>
+<td align="left" valign="top">
+
+<div class="menu_heading"><a href="http://pgn4web-project.casaschi.net/wiki/ServiceAvailability/">online&nbsp;services</a></div>
+<div class="menu_item"><a id="board_generator_link" title="online service adding an interactive chessboard to your website or your blog" href=".">board&nbsp;generator</a></div>
+<div class="menu_item"><a title="online service for viewing chess games from *.PGN files, from links to *.PGN URLs and from PGN text" href="viewer.php">games&nbsp;viewer</a></div>
+<div class="menu_item"><a id="live_link" title="online service broadcasting live games from current chess events" href="live.html" onclick="location.href = liveLinks[Math.floor(liveLinks.length * Math.random())]; return false;">live&nbsp;broadcast</a><a id="live_analysis_link" class="menu_subitem" title="live broadcast analysis view" href=".">analysis&nbsp;view</a><a id="live_fullscreen_link" class="menu_subitem" title="live broadcast fullscreen view" href=".">fullscreen&nbsp;view</a><a id="live_mosaic_link" class="menu_subitem" title="live broadcast mosaic view with multiple chessboards" href=".">mosaic&nbsp;view</a><a id="live_results_link" class="menu_subitem" title="live broadcast results view" href=".">results&nbsp;view</a><a id="live_games_web_app_link" class="menu_subitem" title="live games web app installation" href=".">web&nbsp;app</a></div>
+
+<div class="menu_heading"><a href="http://pgn4web-project.casaschi.net/">software</a></div>
+<div class="menu_item"><a href="demo.html">demo</a></div>
+<div class="menu_item"><a href="http://pgn4web-downloads.casaschi.net">downloads</a></div>
+<div class="menu_item"><a href="http://pgn4web-project.casaschi.net/wiki/">wiki</a></div>
+
+
+<!-- DeploymentCheck: contacts -->
+
+<!-- end DeploymentCheck -->
+
+
+</td>
+<td align="center" valign="top" width="100%">
+
+<iframe
+  class='iframe_area' height='354' width='708' frameborder='0' scrolling='no' marginheight='0' marginwidth='0'
+  src='board.html?am=l&amp;d=3000&amp;ih=1&amp;ss=41&amp;ps=33&amp;pf=r&amp;lcs=Wtyk&amp;dcs=OXJO&amp;bbcs=OXJO&amp;hm=n&amp;hcs=ZbNv&amp;bd=h&amp;hd=c&amp;md=f&amp;tm=17&amp;fhcs=nkYj&amp;fhs=14&amp;fmcs=nkYj&amp;fccs=nkYj&amp;hmcs=ZbNv&amp;fms=14&amp;fcs=m&amp;cd=h&amp;bcs=Wtyk&amp;fp=10&amp;hl=t&amp;fh=b&amp;fw=p&amp;ee=t&amp;pd=gotd.php'
+>
+  your web browser and/or your host do not support iframes as required to display the chessboard
+</iframe>
+
+</td>
+</tr>
+
+
+<!-- DeploymentCheck: blog entries -->
+
+<!-- end DeploymentCheck -->
+
+
+</tbody></table>
+
+<script type="text/javascript">
+"use strict";
+
+function activate_menu_subitem(theObject, link, addToLiveLinks) {
+  theObj.href = link;
+  theObj.style.display = "block";
+  if (addToLiveLinks) { liveLinks.push(link); }
+}
+
+var theObj;
+
+if (theObj = document.getElementById("board_generator_link")) { theObj.href = pgn4web_generator_url; }
+
+var liveLinks = new Array();
+if (theObj = document.getElementById("live_analysis_link")) { activate_menu_subitem(theObj, "live.html?m=a", true); }
+if (theObj = document.getElementById("live_fullscreen_link")) { activate_menu_subitem(theObj, pgn4web_live_pointer_url + "/live-fullscreen.html?scf=t", true); }
+if (theObj = document.getElementById("live_mosaic_link")) { activate_menu_subitem(theObj, pgn4web_live_pointer_url + "/live-mosaic.html", true); }
+if (theObj = document.getElementById("live_results_link")) { activate_menu_subitem(theObj, pgn4web_live_pointer_url + "/live-results.html", true); }
+
+
+<!-- DeploymentCheck: live games web app -->
+
+<!-- end DeploymentCheck -->
+
+
+if (theObj = document.getElementById("email_link")) { theObj.href = "mailto:" + pgn4web_project_email; }
+
+</script>
+
+</body>
+
+</html>
