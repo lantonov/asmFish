@@ -1,0 +1,127 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2014 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<title>pgn4web games collection example</title>
+
+<style type="text/css">
+
+html, body
+{ margin: 0px;  padding: 0px; }
+
+body
+{ color: black; background: white; font-family: sans-serif; padding: 1.75em; }
+
+a
+{ color: black; text-decoration: none; }
+
+table, tr, td
+{ border-style: solid; border-width: 1px; border-color: gray; border-collapse: collapse; }
+
+</style>
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+</head><body>
+
+<p>
+This is an application example showing how to use the pgn4web file collection.html to manage a collection of PGN files.
+<br>
+Two alternative options are shown.
+</p>
+
+<p style="font-size: 200%; font-weight: bold;">
+links to the viewer
+<p>
+A link can be listed for viewing each PGN file in a new browser window:
+</p>
+
+<table width=100% cellpadding=20 cellspacing=0 border=1>
+
+<tr>
+<td align=left>Chess Informant sample</td>
+<td align=center><a href="collection.html?pgnFile=chess-informant-sample.pgn&amp;title=Chess Informant sample" target="viewer">view</a></td>
+<td align=center><a href="chess-informant-sample.pgn">download</a></td>
+</tr>
+
+<tr>
+<td align=left>London Chess Classic 2009 round 5</td>
+<td align=center><a href="collection.html?pgnFile=lon09r5.pgn&amp;title=London Chess Classic 2009 round 5" target="viewer">view</a></td>
+<td align=center><a href="lon09r5.pgn">download</a></td>
+</tr>
+
+<tr>
+<td align=left>Personal account on Kramnik and the Petrov</td>
+<td align=center><a href="collection.html?pgnFile=demoGames.pgn&amp;title=Personal account on Kramnik and the Petrov" target="viewer">view</a></td>
+<td align=center><a href="demoGames.pgn">download</a></td>
+</tr>
+
+<tr>
+<td align=left>The Week In Chess #944</td>
+<!-- when present the URL (in this case as part of the title string), the char # needs to be escaped as %23
+     same would apply to ? (%3F) & (%38) and any other URL special characters -->
+<td align=center><a href="collection.html?pgnFile=twic944.pgn&amp;title=The Week In Chess %23944" target="viewer">view</a></td>
+<td align=center><a href="twic944.pgn">download</a></td>
+</tr>
+
+<tr>
+<td align=left>Tilburg Fontys 1998 round 2</td>
+<td align=center><a href="collection.html?pgnFile=tilb98r2.pgn&amp;title=Tilburg Fontys 1998 round 2" target="viewer">view</a></td>
+<td align=center><a href="tilb98r2.pgn">download</a></td>
+</tr>
+
+</table>
+
+<p style="font-size: 200%; font-weight: bold; margin-top: 1em;">
+dropdown menu selection
+
+<form style="width:100%;">
+<select id="selectmenu" style="width:100%;">
+<option value="">select a PGN archive from the chess games collection for display in the inline frame underneath</option>
+<option value="chess-informant-sample.pgn">Chess Informant sample</option>
+<option value="lon09r5.pgn">London Chess Classic 2009 round 5</option>
+<option value="demoGames.pgn">Personal account on Kramnik and the Petrov</option>
+<option value="twic944.pgn">The Week In Chess #944</option>
+<option value="tilb98r2.pgn">Tilburg Fontys 1998 round 2</option>
+</select>
+</form>
+
+<br/>
+
+<iframe id="inlineframe" name="inlineframe" height="1200" width="100%" frameborder="0" scrolling="auto" marginwidth="0px;" marginheight=0px;" src="collection.html">
+your web browser and/or your host do not support iframes as required to display the chessboard
+</iframe>
+
+<script type="text/javascript">
+"use strict";
+
+var oldChosenoptionValue = "";
+var selectmenu=document.getElementById("selectmenu");
+selectmenu.onchange = function() {
+    var chosenoption = this.options[this.selectedIndex];
+    if ((chosenoption.value !== "") && (chosenoption.value != oldChosenoptionValue)) {
+        oldChosenoptionValue = chosenoption.value;
+        var theObj = frames['inlineframe'].document.getElementById('searchPgnExpression');
+        var searchPgnString = theObj ? '&search=' + escape(theObj.value) : '';
+        frames['inlineframe'].location.href = "collection.html?pgnFile=" + chosenoption.value + "&title=" + escape(chosenoption.innerHTML) + searchPgnString;
+    }
+    this.selectedIndex = 0;
+    this.blur();
+};
+
+</script>
+
+</body>
+
+</html>
+

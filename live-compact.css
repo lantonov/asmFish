@@ -1,0 +1,178 @@
+/*
+ *  pgn4web javascript chessboard
+ *  copyright (C) 2009-2015 Paolo Casaschi
+ *  see README file and http://pgn4web.casaschi.net
+ *  for credits, license and more details
+ */
+
+@import url("fonts/pgn4web-font-LiberationSans.css");
+@import url("fonts/pgn4web-font-ChessSansPiratf.css");
+
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  font-family: 'pgn4web Liberation Sans', sans-serif;
+  font-size: 13px;
+  color: #615F54;
+  background: #EDE8D5;
+}
+
+a {
+  text-decoration: none;
+  color: black;
+}
+
+.boardTable {
+}
+
+.pieceImage {
+  width: 26px;
+  height: 26px;
+}
+
+.whiteSquare,
+.blackSquare,
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  width: 26px;
+  height: 26px;
+  border-style: solid;
+  border-width: 2px;
+}
+
+.whiteSquare,
+.highlightWhiteSquare {
+  border-color: #EDE8D5;
+  background: #EDE8D5;
+}
+
+.blackSquare,
+.highlightBlackSquare {
+  border-color: #CFCBB3;
+  background: #CFCBB3;
+}
+
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  border-style: solid;
+  border-color: #F8CCA0;
+}
+
+.selectControl {
+/* a "width" attribute here must use the !important flag to override default settings */
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  width: 450px !important;
+  height: 23px;
+  color: #A19E8B;
+  font-size: 13px;
+  padding: 2px;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 0px;
+  border-color: #CFCBB3;
+  background-color: #EDE8D5;
+}
+
+.optionSelectControl {
+  color: black;
+  background-color: #EDE8D5;
+}
+
+.buttonControlPlay,
+.buttonControlStop,
+.buttonControl {
+/* a "width" attribute here must use the !important flag to override default settings */
+  font-size: 13px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.buttonControlSpace {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.searchPgnButton {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.searchPgnExpression {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.header,
+.headerNosize,
+.headerHighlighted,
+.headerHighlightedNosize,
+.helplinkNosize,
+.helplinkNosizeHighlighted,
+.comment {
+  text-decoration: none;
+  font-family: 'pgn4web Liberation Sans', sans-serif; /* fixes IE9 body css issue */
+}
+
+.header,
+.headerHighlighted {
+  font-size: 13px;
+}
+
+.move,
+.variation,
+.comment {
+  font-size: 12px;
+  line-height: 1.4em;
+}
+
+.move,
+.variation,
+.commentMove {
+  font-family: 'pgn4web ChessSansPiratf', 'pgn4web Liberation Sans', sans-serif;
+}
+
+a.move,
+a.variation,
+.commentMove {
+  white-space: nowrap;
+}
+
+.move,
+.variation {
+  text-decoration: none;
+}
+
+.helplinkNosize {
+  color: #BFBAA5;
+}
+
+.header,
+.headerNosize,
+.move,
+.variation {
+  color: #615F54 !important;
+}
+
+a.variation {
+  color: #615F54 !important;
+}
+
+.comment {
+  color: #A19D8B;
+}
+
+.headerHighlighted,
+.headerHighlightedNosize,
+.moveOn,
+.variationOn {
+  color: black;
+  background: #F8CCA0;
+}
+
+.movebox {
+  scrollbar-base-color: #E8E3D0;
+  text-align: justify;
+}
+

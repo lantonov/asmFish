@@ -1,0 +1,1412 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2015 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<title>pgn4web chessboard</title>
+
+<!-- use the base tag to host board.html on a different server than pgn4web.js
+
+<base href="http://pgn4web.casaschi.net">
+
+-->
+
+<style type="text/css">
+
+@import url("fonts/pgn4web-font-ChessSansPiratf.css");
+@import url("fonts/pgn4web-font-LiberationSans.css");
+
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  font-family: sans-serif;
+  color: black;
+}
+
+.boardTable {
+  border-style: double;
+  border-color: black;
+  border-width: 3px;
+}
+
+.pieceImage,
+.whiteSquare,
+.blackSquare,
+.highlightWhiteSquare,
+.highlightBlackSquare {
+}
+
+.selectControl,
+.buttonControlPlay,
+.buttonControlStop,
+.buttonControl,
+.buttonControlSpace {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.optionSelectControl {
+}
+
+.header {
+  color: black;
+  font-weight: bold;
+  line-height: 1.4em;
+}
+
+.headerLive, .headerVariations {
+  font-weight: normal;
+  overflow: hidden;
+}
+
+.move,
+.variation {
+  line-height: 1.4em;
+  text-decoration: none;
+}
+
+a.move,
+a.variation,
+.commentMove {
+  white-space: nowrap;
+}
+
+.move {
+  color: black;
+}
+
+.comment,
+.variation {
+  color: gray;
+  line-height: 1.4em;
+}
+
+.moveOn,
+.variationOn {
+  background: #DAF4D7;
+}
+
+</style>
+
+<!--[if lt IE 9]>
+<style type="text/css">
+.move, .moveOn { position: relative; /* bugfix: IE offsetTop issue */ }
+</style>
+<![endif]-->
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+<script type="text/javascript">
+"use strict";
+
+// reads the URL search string and sets parameters
+
+function gup(name) {
+
+  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  var regexS = "[\\?&]"+name+"=([^&#]*)";
+  regexS = regexS+"(?!.*"+regexS+")"; // matches the LAST occurrence
+  var regex = new RegExp( regexS, "i" );
+  var results = regex.exec( window.location.href );
+  if (results !== null) { return decodeURIComponent(results[1]); }
+
+  // allows for short version of the URL parameters, for instance sC matches squareColor
+  var compact_name = name.charAt(0);
+  for (var i=1; i<name.length; i++) {
+    if (name.charAt(i).match(/[A-Z]/)) { compact_name = compact_name + name.charAt(i).toLowerCase(); }
+  }
+  name = compact_name;
+
+  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  regexS = "[\\?&]"+name+"=([^&#]*)";
+  regexS = regexS+"(?!.*"+regexS+")"; // matches the LAST occurrence
+  regex = new RegExp( regexS, "i" );
+
+  results = regex.exec( window.location.href );
+  if (results !== null) { return decodeURIComponent(results[1]); }
+
+  return "";
+}
+
+var oldMovesDisplay = "";
+var showMoves = gup("showMoves");
+if ((showMoves == "true")  || (showMoves == "t")) { oldMovesDisplay = "justified"; }
+if ((showMoves == "false") || (showMoves == "f")) { oldMovesDisplay = "hidden"; }
+var movesDisplay = gup("movesDisplay");
+if (movesDisplay === "") {
+  movesDisplay = oldMovesDisplay === "" ? "hidden" : oldMovesDisplay;
+}
+if (movesDisplay == "f") { movesDisplay = "figurine"; }
+if (movesDisplay == "t") { movesDisplay = "text"; }
+if (movesDisplay == "h") { movesDisplay = "hidden"; }
+if (movesDisplay == "n") { movesDisplay = "nosymbols"; } // "nosymbols" option is undocumented
+if (movesDisplay == "p") { movesDisplay = "puzzle"; }
+if ((movesDisplay == "justified") || (movesDisplay == "j")) { movesDisplay = "figurine"; } // backward compatibility
+if ((movesDisplay != "figurine") && (movesDisplay != "nosymbols") && (movesDisplay != "puzzle") && (movesDisplay != "text") && (movesDisplay != "hidden")) { movesDisplay = "figurine"; }
+
+var blockChessInformantNAGSymbols = ((movesDisplay != "figurine") && ((movesDisplay != "puzzle")));
+
+</script>
+
+<script src="pgn4web.js" type="text/javascript"></script>
+<script src="fonts/chess-informant-NAG-symbols.js" type="text/javascript"></script>
+<script id="engineScript" type="text/javascript"></script>
+
+<script src="pgn-decoder.js" type="text/javascript"></script>
+
+<script src="fide-lookup.js" type="text/javascript"></script>
+
+
+<!-- DeploymentCheck: google analytics code -->
+
+<!-- end DeploymentCheck -->
+
+
+</head>
+
+<body onResize="autoScrollToCurrentMoveIfEnabled();">
+
+<!-- paste your PGN below and make sure you dont specify an external source with SetPgnUrl() -->
+<form style="display: none;"><textarea style="display: none;" id="pgnText">
+
+</textarea></form>
+<!-- paste your PGN above and make sure you dont specify an external source with SetPgnUrl() -->
+
+<script type="text/javascript">
+"use strict";
+
+
+<!-- DeploymentCheck: enableEngine_default -->
+var enableEngine_default = "false";
+<!-- end DeploymentCheck -->
+
+
+// undocumented option
+var enableEngine = gup("enableEngine") || enableEngine_default;
+if ((enableEngine == "true")  || (enableEngine == "t")) {
+  var engineScriptObject = document.getElementById("engineScript");
+  if (engineScriptObject) { engineScriptObject.src = "engine.js"; }
+}
+
+function percentFixFromUrl(text) {
+  text += ''; // makes sure text is a string
+  return text.replace(/pct$/,'%').replace(/p$/,'%'); // 100pct and 100p both mean 100%
+}
+
+var sexEncodingCharSet = "$0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
+function sex2hex(sex) {
+  if (sex === "") { return ""; }
+  sex += "";
+  var dec = 0;
+  for (var cnt=0; cnt<sex.length; cnt++) {
+    dec <<= 6;
+    dec += sexEncodingCharSet.indexOf(sex.charAt(cnt));
+  }
+  var hex = dec.toString(16).toUpperCase() + "";
+  while (hex.length < 6) { hex = "0" + hex; }
+  return hex;
+}
+
+var pieceSizeOptions = new Array(20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 52, 56, 60, 64, 72, 80, 88, 96, 112, 128, 144, 300);
+function defaultPieceSize(squareSize) {
+  var targetPieceSize = Math.floor(0.8 * squareSize);
+  for (var ii=(pieceSizeOptions.length-1); ii>=0; ii--) {
+    if (pieceSizeOptions[ii] <= targetPieceSize) { return pieceSizeOptions[ii]; }
+  }
+  return pieceSizeOptions[0];
+}
+
+SetHighlightOption(true);
+SetShortcutKeysEnabled(true);
+
+var squareSize = gup("squareSize");
+if (squareSize === "") { squareSize = 28; }
+else { squareSize = parseInt(squareSize, 10); }
+if (squareSize < 20) { squareSize = 20; }
+
+var highlightMode = gup("highlightMode");
+if (highlightMode === "") { highlightMode = "square"; }
+if (highlightMode == "b") { highlightMode = "border"; }
+if (highlightMode == "n") { highlightMode = "none"; }
+if (highlightMode == "s") { highlightMode = "square"; }
+var borderSize = highlightMode == "border" ? Math.floor(0.05 * squareSize) : 0;
+
+var lightColor = gup("lightColorName");
+if (lightColor === "") {
+  if ((lightColor = "#" + gup("lightColorHex")) == "#") {
+    if ((lightColor = "#" + sex2hex(gup("lightColorSex"))) == "#") { lightColor = "#EFF4EC"; }
+  }
+}
+var darkColor = gup("darkColorName");
+if (darkColor === "") {
+  if ((darkColor = "#" + gup("darkColorHex")) == "#") {
+    if ((darkColor = "#" + sex2hex(gup("darkColorSex"))) == "#") { darkColor = "#C6CEC3"; }
+  }
+}
+var highlightColor = gup("highlightColorName");
+if (highlightColor === "") {
+  if ((highlightColor = "#" + gup("highlightColorHex")) == "#") {
+    if ((highlightColor = "#" + sex2hex(gup("highlightColorSex"))) == "#") { highlightColor = "#DAF4D7"; }
+  }
+}
+var highlightLightColor = highlightColor;
+var highlightDarkColor = highlightColor;
+if ((highlightMode == 'none') || (highlightColor == 'none') || (highlightColor == '#none')) {
+  highlightMode = 'none';
+  borderSize = 0;
+  highlightLightColor = lightColor;
+  highlightDarkColor = darkColor;
+  clearShortcutSquares("D", "7");
+}
+
+var pieceSize = gup("pieceSize");
+if ((pieceSize === "") || (pieceSize == "default") || (pieceSize == "d")) { pieceSize = defaultPieceSize(squareSize); }
+else { pieceSize = parseInt(pieceSize, 10); }
+if (pieceSize > (squareSize - 2 * borderSize)) { pieceSize = defaultPieceSize(squareSize - 2 * borderSize); }
+
+var pieceFont = gup("pieceFont");
+if (pieceFont === "") {
+  if ((pieceFont = gup("font")) === "") // left for compatibility with older version
+    { pieceFont = "default"; }
+}
+if (pieceFont == "a") { pieceFont = "alpha"; }
+if (pieceFont == "m") { pieceFont = "merida"; }
+if (pieceFont == "u") { pieceFont = "uscf"; }
+if (pieceFont == "i") { pieceFont = "igorsvg"; } // undocumented option
+if (pieceFont == "s") { pieceFont = "svgchess"; } // undocumented option
+if (pieceFont == "t") { pieceFont = "tilesvg"; } // undocumented option
+if ((pieceFont == "random") || (pieceFont == "r")) {
+  pieceFont = ["alpha", "merida", "uscf"][Math.floor(3 * Math.random())];
+}
+if ((pieceFont == "default") || (pieceFont == "d")) {
+  if (pieceSize < 28) { pieceFont = "uscf"; }
+  else {
+    if (pieceSize > 39) { pieceFont = "merida"; }
+    else { pieceFont = "alpha"; }
+  }
+}
+
+// undocumented option
+var pieceFontRoot = gup("pieceFontRoot");
+if (pieceFontRoot !== "") {
+  if (pieceFontRoot.charAt(pieceFontRoot.length - 1) != "/") { pieceFontRoot += "/"; }
+}
+
+SetImagePath("" + pieceFontRoot + "images/" + pieceFont + "/" + pieceSize);
+if ((pieceFont == "igorsvg") || (pieceFont == "svgchess") || (pieceFont == "tilesvg")) {
+  SetImagePath("" + pieceFontRoot + "images/" + pieceFont);
+  SetImageType("svg");
+}
+
+var boardBorderColor = gup("boardBorderColorName");
+if (boardBorderColor === "") {
+  if ((boardBorderColor = "#" + gup("boardBorderColorHex")) == "#") {
+    if ((boardBorderColor = "#" + sex2hex(gup("boardBorderColorSex"))) == "#") { boardBorderColor = "#000000"; }
+  }
+}
+
+var boardShadowColor = gup("boardShadowColorName");
+if (boardShadowColor === "") {
+  if ((boardShadowColor = "#" + gup("boardShadowColorHex")) == "#") {
+    var boardShadowColorSex = gup("boardShadowColorSex");
+    if ((boardShadowColorSex == "transparent") || (boardShadowColorSex == "t")) {
+      boardShadowColor = "transparent";
+    } else if ((boardShadowColorSex == "border") || (boardShadowColorSex == "b")) {
+      boardShadowColor = "border";
+    } else {
+      if ((boardShadowColor = "#" + sex2hex(gup("boardShadowColorSex"))) == "#") { boardShadowColor = "transparent"; }
+    }
+  }
+}
+if ((boardShadowColor ==  "border") || (boardShadowColor ==  "b") ||
+    (boardShadowColor == "#border") || (boardShadowColor == "#b")) {
+  boardShadowColor = boardBorderColor;
+}
+if ((boardShadowColor ==  "transparent") || (boardShadowColor ==  "t") ||
+    (boardShadowColor == "#transparent") || (boardShadowColor == "#t")) {
+  boardShadowColor = "transparent";
+}
+
+var backgroundColor = gup("backgroundColorName");
+if (backgroundColor === "") {
+  if ((backgroundColor = "#" + gup("backgroundColorHex")) == "#") {
+    var backgroundColorSex = gup("backgroundColorSex");
+    if ((backgroundColorSex == "transparent") || (backgroundColorSex == "t")) {
+      backgroundColor = "transparent";
+    } else {
+      if ((backgroundColor = "#" + sex2hex(gup("backgroundColorSex"))) == "#") { backgroundColor = "#FFFFFF"; }
+    }
+  }
+}
+if ((backgroundColor ==  "transparent") || (backgroundColor ==  "t") ||
+    (backgroundColor == "#transparent") || (backgroundColor == "#t")) {
+  backgroundColor = "transparent";
+}
+
+var highlightMoveColor = gup("highlightMoveColorName");
+if (highlightMoveColor === "") {
+  if ((highlightMoveColor = "#" + gup("highlightMoveColorHex")) == "#") {
+    var highlightMoveColorSex = gup("highlightMoveColorSex");
+    if ((highlightMoveColorSex == "background") || (highlightMoveColorSex == "b")) {
+      highlightMoveColor = "background";
+    } else {
+      if ((highlightMoveColor = "#" + sex2hex(highlightMoveColorSex)) == "#") { highlightMoveColor = "#DAF4D7"; }
+    }
+  }
+}
+if ((highlightMoveColor ==  "background") || (highlightMoveColor ==  "b") ||
+    (highlightMoveColor == "#background") || (highlightMoveColor == "#b")) {
+  highlightMoveColor = backgroundColor;
+}
+
+var framePadding = gup("framePadding");
+if (framePadding === "") { framePadding = 0;}
+else { framePadding = parseInt(framePadding, 10); }
+
+var fontHeaderSize = percentFixFromUrl(gup("fontHeaderSize"));
+if (fontHeaderSize === "") { fontHeaderSize = "16"; }
+var fontHeaderColor = gup("fontHeaderColorName");
+if (fontHeaderColor === "") {
+  if ((fontHeaderColor = "#" + gup("fontHeaderColorHex")) == "#") {
+    if ((fontHeaderColor = "#" + sex2hex(gup("fontHeaderColorSex"))) == "#") { fontHeaderColor = "#000000"; }
+  }
+}
+
+var fontMovesSize = percentFixFromUrl(gup("fontMovesSize"));
+if (fontMovesSize === "") { fontMovesSize = "16"; }
+var fontMovesColor = gup("fontMovesColorName");
+if (fontMovesColor === "") {
+  if ((fontMovesColor = "#" + gup("fontMovesColorHex")) == "#") {
+    if ((fontMovesColor = "#" + sex2hex(gup("fontMovesColorSex"))) == "#") { fontMovesColor = "#000000";}
+  }
+}
+
+var fontCommentsSize = percentFixFromUrl(gup("fontCommentsSize"));
+if (fontCommentsSize === "") { fontCommentsSize = "moves"; }
+if (fontCommentsSize == "m") { fontCommentsSize = "moves"; }
+var fontCommentsColor = gup("fontCommentsColorName");
+if (fontCommentsColor === "") {
+  if ((fontCommentsColor = "#" + gup("fontCommentsColorHex")) == "#") {
+    if ((fontCommentsColor = "#" + sex2hex(gup("fontCommentsColorSex"))) == "#") { fontCommentsColor = "#808080"; }
+  }
+}
+
+var fontVariationsSize = percentFixFromUrl(gup("fontVariationsSize"));
+if (fontVariationsSize === "") { fontVariationsSize = "comments"; }
+if (fontVariationsSize == "c") { fontVariationsSize = "comments"; }
+var fontVariationsColor = gup("fontVariationsColorName");
+if (fontVariationsColor === "") {
+  if ((fontVariationsColor = "#" + gup("fontVariationsColorHex")) == "#") {
+    if ((fontVariationsColor = "#" + sex2hex(gup("fontVariationsColorSex"))) == "#") { fontVariationsColor = "comments"; }
+  }
+}
+
+var oldAutoplayMode = "";
+var auto = gup("auto");
+if ((auto == "false") || (auto == "f")) { oldAutoplayMode = "none"; }
+var loop = gup("loop");
+if ((loop == "true") || (loop == "t")) { oldAutoplayMode = "loop"; }
+var autoplayMode = gup("autoplayMode");
+if (autoplayMode === "") {
+  autoplayMode = oldAutoplayMode === "" ? "game" : oldAutoplayMode;
+}
+if (autoplayMode == "g") { autoplayMode = "game"; }
+if (autoplayMode == "l") { autoplayMode = "loop"; }
+if (autoplayMode == "n") { autoplayMode = "none"; }
+
+switch (autoplayMode) {
+  case "loop":
+    SetAutostartAutoplay(true);
+    SetAutoplayNextGame(true);
+    break;
+  case "none":
+    SetAutostartAutoplay(false);
+    SetAutoplayNextGame(false);
+    break;
+  case "game":
+  default:
+    SetAutostartAutoplay(true);
+    SetAutoplayNextGame(false);
+    break;
+}
+
+if (gup("delay") === "") { SetAutoplayDelay(1000); }
+else { SetAutoplayDelay(gup("delay")); }
+
+// use init_Game to avoid overlap with existing global var initialGame in pgn4web.js
+var init_Game = gup("initialGame");
+if (init_Game === "") {
+  init_Game = "first";
+} else {
+  if (init_Game == "f") { init_Game = "first"; }
+  if (init_Game == "l") { init_Game = "last"; }
+  if (init_Game == "r") { init_Game = "random"; }
+}
+SetInitialGame(init_Game);
+
+// use init_Variation to avoid overlap with existing global var initialVariation in pgn4web.js
+var init_Variation = gup("initialVariation");
+if (init_Variation !== "") {
+  SetInitialVariation(init_Variation);
+}
+
+// use init_Halfmove to avoid overlap with existing global var initialHalfmove in pgn4web.js
+var always_Halfmove = false;
+var init_Halfmove = gup("initialHalfmove");
+if (init_Halfmove === "") {
+  init_Halfmove = "start";
+} else {
+  if (init_Halfmove == "s") { init_Halfmove = "start"; }
+  if (init_Halfmove == "e") { init_Halfmove = "end"; }
+  if (init_Halfmove == "r") { init_Halfmove = "random"; }
+  if (init_Halfmove == "c") { init_Halfmove = "comment"; }
+  if (init_Halfmove == "v") { init_Halfmove = "variation"; }
+  if ((init_Halfmove == "start")  || (init_Halfmove == "end") ||
+      (init_Halfmove == "random") || (init_Halfmove == "comment") ||
+      (init_Halfmove == "variation")) {
+     always_Halfmove = true;
+  }
+}
+SetInitialHalfmove(init_Halfmove,always_Halfmove);
+
+var oldButtonsDisplay = "";
+var showButtons = gup("showButtons");
+if ((showButtons == "true")  || (showButtons == "t")) { oldButtonsDisplay = "custom"; }
+if ((showButtons == "false") || (showButtons == "f")) { oldButtonsDisplay = "hidden"; }
+var buttonsDisplay = gup("buttonsDisplay");
+if (buttonsDisplay === "") {
+  buttonsDisplay = oldButtonsDisplay === "" ? "hidden" : oldButtonsDisplay;
+}
+if (buttonsDisplay == "c") { buttonsDisplay = "custom"; }
+if (buttonsDisplay == "h") { buttonsDisplay = "hidden"; }
+if (buttonsDisplay == "s") { buttonsDisplay = "standard"; }
+if ((buttonsDisplay != "custom") && (buttonsDisplay != "standard")) { buttonsDisplay = "hidden"; }
+
+// SetGameSelectorOptions(head, num, chEvent, chSite, chRound, chWhite, chBlack, chResult, chDate);
+SetGameSelectorOptions(null, false, 0, 0, 0, 15, 15, 3, 10);
+
+var controlBackgroundColor = "default";
+var controlTextColor = "#000000";
+if (buttonsDisplay == "custom") {
+
+  if ((controlBackgroundColor = gup("controlBackgroundColorName")) === "") {
+    if ((controlBackgroundColor = "#" + gup("controlBackgroundColorHex")) == "#") {
+      var controlBackgroundColorSex = gup("controlBackgroundColorSex");
+      if (controlBackgroundColorSex == "default") {
+          controlBackgroundColor = "#default";
+      } else if (controlBackgroundColorSex == "d") {
+            controlBackgroundColor = "#d";
+      } else {
+        if ((controlBackgroundColor = "#" + sex2hex(controlBackgroundColorSex)) == "#") {
+          controlBackgroundColor = "#default";
+        }
+      }
+    }
+  }
+
+  if ((controlBackgroundColor == "d") || (controlBackgroundColor == "#d")) { controlBackgroundColor = "default"; }
+  if (controlBackgroundColor == "#default") { controlBackgroundColor = "default"; }
+
+  if (controlBackgroundColor == "default") { buttonsDisplay = "standard"; }
+
+  if ((controlTextColor = gup("controlTextColorName")) === "") {
+    if ((controlTextColor = "#" + gup("controlTextColorHex")) == "#") {
+      if ((controlTextColor = "#" + sex2hex(gup("controlTextColorSex"))) == "#") { controlTextColor = "#000000"; }
+    }
+  }
+
+}
+
+var oldCommentsDisplay = "";
+var showCommentsOnSeparateLines = gup("showCommentsOnSeparateLines");
+if ((showCommentsOnSeparateLines == "true") || (showCommentsOnSeparateLines == "t")) { oldCommentsDisplay = "newline"; }
+var showComments = gup("showComments");
+if ((showComments == "false") || (showComments == "f")) { oldCommentsDisplay = "hidden"; }
+var commentsDisplay = gup("commentsDisplay");
+if (commentsDisplay === "") {
+  commentsDisplay = oldCommentsDisplay === "" ? "inline" : oldCommentsDisplay;
+}
+if (commentsDisplay == "h") { commentsDisplay = "hidden"; }
+if (commentsDisplay == "i") { commentsDisplay = "inline"; }
+if (commentsDisplay == "n") { commentsDisplay = "newline"; }
+
+switch (commentsDisplay) {
+  case "hidden":
+    SetCommentsIntoMoveText(false);
+    SetCommentsOnSeparateLines(false);
+    break;
+  case "newline":
+    SetCommentsIntoMoveText(true);
+    SetCommentsOnSeparateLines(true);
+    break;
+  case "inline":
+  default:
+    SetCommentsIntoMoveText(true);
+    SetCommentsOnSeparateLines(false);
+    break;
+}
+
+function cleanPgnInput(pgnInput) {
+  pgnInput += "";
+
+  pgnInput = pgnInput.replace(/\[/g,"\n\n[");
+  pgnInput = pgnInput.replace(/\]/g,"]\n\n");
+  pgnInput = pgnInput.replace(/([012\*])(\s*)(\[)/g,"$1\n\n$3");
+  pgnInput = pgnInput.replace(/\]\s*\[/g,"]\n[");
+  pgnInput = pgnInput.replace(/^\s*\[/g,"[");
+  pgnInput = pgnInput.replace(/\n[\s*\n]+/g,'\n\n');
+
+  return pgnInput;
+}
+
+var newPgnId = gup("pgnId");
+var newPgnIdData;
+if (newPgnId !== "") {
+  try {
+    if (parent && (parent !== window) && parent.document.getElementById(newPgnId)) {
+      var theParentObject = parent.document.getElementById(newPgnId);
+      if (theParentObject.tagName.toLowerCase() == "textarea") {
+        newPgnIdData = theParentObject.value;
+      } else { // backward compatibility with pgn4web older than 1.77 when the <span> technique was used for pgnText
+        newPgnIdData = theParentObject.innerHTML;
+        // fixes issue with some browser removing \n from innerHTML
+        if (newPgnIdData.indexOf('\n') < 0) { newPgnIdData = newPgnIdData.replace(/((\[[^\[\]]*\]\s*)+)/g, "\n$1\n"); }
+        // fixes issue with some browser replacing quotes with &quot;
+        if (newPgnIdData.indexOf('"') < 0) { newPgnIdData = newPgnIdData.replace(/(&quot;)/g, '"'); }
+      }
+      document.getElementById('pgnText').value = newPgnIdData = cleanPgnInput(newPgnIdData);
+    } else {
+      myAlert("error: data not found for pgnId=" + newPgnId, true);
+    }
+  } catch(e) {
+    myAlert("error: data error for pgnId=" + newPgnId, true);
+  }
+}
+
+var fenString = gup("fenString");
+if (fenString !== "") {
+  document.getElementById('pgnText').value = '[FEN "' + fenString + '"]';
+}
+
+var newPgnText = gup("pgnText");
+if (newPgnText !== "") {
+  document.getElementById('pgnText').value = newPgnText = cleanPgnInput(newPgnText);
+}
+
+var newPgnEncoded = gup("pgnEncoded");
+var newPgnDecoded;
+if (newPgnEncoded !== "") {
+  newPgnDecoded = DecodePGN(newPgnEncoded);
+  document.getElementById('pgnText').value = newPgnDecoded = cleanPgnInput(newPgnDecoded);
+}
+
+var pgnData = gup("pgnData");
+if (pgnData !== "") {
+  SetPgnUrl(pgnData);
+  document.getElementById('pgnText').value = "";
+}
+
+if ((pgnData !== "") && ((newPgnEncoded !== "") || (newPgnText !== "") ||
+  (fenString !== "") || (newPgnId !==""))) {
+  myAlert("warning: pgnData value superseeds pgnEncoded, pgnText, pgnId and/or fenString values.", false);
+}
+
+if ((newPgnEncoded !== "") && ((newPgnText !== "") || (fenString !== "") || (newPgnId !==""))) {
+  myAlert("warning: pgnEncoded value superseeds pgnText, pgnId and/or fenString values.", false);
+}
+
+if ((newPgnText !== "") && ((fenString !== "") || (newPgnId !==""))) {
+  myAlert("warning: pgnText value superseeds pgnId and/or fenString value.", false);
+}
+
+if ((fenString !== "") && (newPgnId !=="")) {
+  myAlert("warning: fenString value superseeds pgnId value.", false);
+}
+
+var oldHeaderDisplay = "";
+var showHeader = gup("showHeader");
+if ((showHeader == "true")  || (showHeader == "t")) { oldHeaderDisplay = "justified"; }
+if ((showHeader == "false") || (showHeader == "f")) { oldHeaderDisplay = "hidden"; }
+var headerDisplay = gup("headerDisplay");
+if (headerDisplay === "") {
+  headerDisplay = oldHeaderDisplay === "" ? "hidden" : oldHeaderDisplay;
+}
+if (headerDisplay == "c") { headerDisplay = "centered"; }
+if (headerDisplay == "h") { headerDisplay = "hidden"; }
+if (headerDisplay == "j") { headerDisplay = "justified"; }
+if (headerDisplay == "l") { headerDisplay = "live"; }
+if (headerDisplay == "v") { headerDisplay = "variations"; }
+if ((headerDisplay != "centered") && (headerDisplay != "live") && (headerDisplay != "variations") && (headerDisplay != "hidden")) { headerDisplay = "justified"; }
+
+// movesDisplay is set at the beginning of the script
+
+var textHeight = percentFixFromUrl(gup("textHeight"));
+if (textHeight === "") { textHeight = "100%"; }
+if (!textHeight.match(/[^0-9]/)) { textHeight += "px"; }
+
+var textWidth = percentFixFromUrl(gup("textWidth"));
+if (textWidth === "") { textWidth = "100%"; }
+if (!textWidth.match(/[^0-9]/)) { textWidth += "px"; }
+
+var textMargin = gup("textMargin");
+if (textMargin === "") { textMargin = 0; }
+else { textMargin = parseInt(textMargin, 10); }
+
+var frameHeight = gup("frameHeight");
+var fixFrameHeightToBoard = false;
+switch (frameHeight) {
+  case "b":
+  case "board":
+    frameHeight = "";
+    fixFrameHeightToBoard = true;
+    break;
+  case "p":
+  case "page":
+    if (window.innerHeight) { frameHeight = window.innerHeight; }
+    else if (document.documentElement && document.documentElement.clientHeight) { frameHeight = document.documentElement.clientHeight; }
+    else if (document.body && document.body.clientHeight) { frameHeight = document.body.clientHeight; }
+    else { frameHeight = ""; }
+    break;
+  case "":
+    break;
+  default:
+    frameHeight = parseInt(frameHeight, 10);
+    if (isNaN(frameHeight)) { frameHeight = ""; }
+    break;
+}
+
+var frameWidth = gup("frameWidth");
+var fixFrameWidthToBoard = false;
+switch (frameWidth) {
+  case "b":
+  case "board":
+    frameWidth = "";
+    fixFrameWidthToBoard = true;
+    break;
+  case "p":
+  case "page":
+    frameWidth = "";
+    textWidth = "100%";
+    break;
+  case "":
+    break;
+  default:
+    frameWidth = parseInt(frameWidth, 10);
+    if (isNaN(frameWidth)) { frameWidth = ""; }
+    break;
+}
+
+var horizontalLayout = false;
+if ((gup("horizontalLayout") == "true") || (gup("horizontalLayout") == "t")) { horizontalLayout = true; }
+
+var demoFlag = false;
+var alertFlag = false;
+if ((gup("refreshDemo") == "true") || (gup("refreshDemo") == "t")) { demoFlag = true; alertFlag = true; }
+
+var refreshMinutes = 0;
+if ((refreshMinutes = gup("refreshMinutes")) !== "") {
+  var testMinutes = refreshMinutes + "";
+  if ((testMinutes.match(/[^0-9\.]/)) || (refreshMinutes === 0)) {
+    myAlert("error: refreshMinutes parameter must be a positive number.\n" +
+      "Supplied " + testMinutes + "; live refresh disabled.", true);
+    refreshMinutes = 0;
+  }
+}
+
+if (refreshMinutes > 0) {
+  if (pgnData !== "") { SetLiveBroadcast(refreshMinutes, alertFlag, demoFlag, true); }
+  else {
+    myAlert("error: live broadcast requires using pgnData parameter as PGN source.", true);
+  }
+  if (gup("initialHalfmove") === "") {
+    SetInitialHalfmove(init_Halfmove = "end", always_Halfmove = true);
+  }
+  if (gup("autoplayMode") === "") {
+    autoplayMode = "none";
+    SetAutostartAutoplay(false);
+    SetAutoplayNextGame(false);
+  }
+}
+
+
+if ((gup("help") == "true") || (gup("help") == "t")) {
+  document.write("<PRE>");
+  document.write("URL parameters\n");
+  document.write("\n");
+  document.write(" - pgnText = PGN games to display\n");
+  document.write(" - pgnEncoded = encoded PGN games to display (used only by the board generator tool)\n");
+  document.write(" - fenString = FEN position to display\n");
+  document.write(" - pgnId = id of the parent's textarea containing the PGN games (parent page/frame MUST be in the same domain)\n");
+  document.write(" - pgnData = URL of the file containing the PGN games (file MUST be in the same domain)\n");
+  document.write("\n");
+  document.write(" - refreshMinutes = live broadcast delay (default 0 = live broadcast disabled)\n");
+  document.write(" - refreshDemo = if set true sets live demo mode (default false)\n");
+  document.write("\n");
+  document.write(" - initialGame = first | last | random | a number | a search expression (default first)\n");
+  document.write(" - initialVariation = a number (default 0)\n");
+  document.write(" - initialHalfmove = start | end | random | comment | variation | a number (default start)\n");
+  document.write("\n");
+  document.write(" - autoplayMode = game (autoplay first game once) | loop (loops through games continuously) | none (default game)\n");
+  document.write(" - delay = autoplay delay in ms (default 1000)\n");
+  document.write("\n");
+  document.write(" - squareSize = size of square (default 28)\n");
+  document.write(" - pieceSize = size of pieces | default (default selects piece size based on square size)\n");
+  document.write(" - pieceFont = alpha | merida | uscf | random | default (default selects piece font based on piece size)\n");
+  document.write(" - highlightMode = border | square | none (default square)\n");
+  document.write(" - lightColorHex = light square color hex code, like FF0000 (default EFF4EC)\n");
+  document.write(" - darkColorHex = dark square color hex code, like FF0000 (default C6CEC3)\n");
+  document.write(" - highlightColorHex = highlight color hex code, like FF0000 (default DAF4D7)\n");
+  document.write(" - boardBorderColorHex = board border color hex code, like FF0000 (default 000000)\n");
+  document.write(" - boardShadowColorHex = board shadow color hex code, like FF0000, 'transparent' for no shadow, 'border' for same color as board border (default transparent)\n");
+  document.write("\n");
+  document.write(" - buttonsDisplay = hidden | standard (use browser's standard buttons) | custom (use custom color buttons) (default hidden)\n");
+  document.write(" - controlBackgroundColorHex = control buttons background color hex code, like FF0000 (default reverts to standard buttons)\n");
+  document.write(" - controlTextColorHex = control buttons text color hex code, like FF0000 (default 000000)\n");
+  document.write("\n");
+  document.write(" - headerDisplay = justified | centered | hidden | live | variations (default hidden)\n");
+  document.write(" - movesDisplay = figurine | text | puzzle | hidden (default hidden)\n");
+  document.write(" - textHeight = set height of the textual section, header and/or moves text, might be ignored if frameHeight is set (default 100%)\n");
+  document.write(" - textWidth = set width of the textual section, header and/or moves text, might be ignored if frameWidth is set (default 100%)\n");
+  document.write(" - textMargin = set left/right margin width of the textual section, header and/or moves text (default 0)\n");
+  document.write(" - commentsDisplay = hidden | inline (same line as moves) | newline (new lines) (default inline)\n");
+  document.write(" - fontHeaderColorHex = header color hex code, like FF0000 (default 000000)\n");
+  document.write(" - fontMovesColorHex = moves color hex code, like FF0000 (default 000000)\n");
+  document.write(" - fontCommentsColorHex = comments color hex code, like FF0000 (default 808080)\n");
+  document.write(" - fontVariationsColorHex = variations color hex code, like FF0000; if set as 'comments' fontCommentsColorHex is copied (default comments)\n");
+  document.write(" - highlightMoveColorHex = background color hex code to highlight current move, like FF0000, 'background' for no highlight (default DAF4D7)\n");
+  document.write(" - fontHeaderSize = header font size (default 16)\n");
+  document.write(" - fontMovesSize = moves font size (default 16)\n");
+  document.write(" - fontCommentsSize = comments font size; if set as 'moves' fontMovesSize is copied (default moves)\n");
+  document.write(" - fontVariationsSize = variations font size; if set as 'comments' fontCommentsSize is copied (default comments)\n");
+  document.write("\n");
+  document.write(" - backgroundColorHex = page background color hex code, like FF0000, 'transparent' to use the parent's background color (default FFFFFF)\n");
+  document.write(" - horizontalLayout = if set true, shows header/moves text at the right of the board, below otherwise (default false)\n");
+  document.write(" - frameHeight = set height of the overall frame, as a number, as 'board' or as 'page', overriding textHeight (default not set)\n");
+  document.write(" - frameWidth = set width of the overall frame, as a number, as 'board' or as 'page', overriding textWidth (default not set)\n");
+  document.write(" - framePadding = padding within the frame (default 0)\n");
+  document.write("\n");
+  document.write(" - showHeightWidth = if set true, calculates optimal iframe dimensions (default false)\n");
+  document.write(" - help = true\n");
+  document.write("\n");
+  document.write("URL parameters can be shortened: for example squareSize => sq, autoplayMode => am, highlightMoveColorHex => hmch\n");
+  document.write("Also supplied textual values can be shortened: true => t, false => f\n");
+  document.write("\n");
+  document.write("Every color parameter can by assigned also by name (like 'red') or using a proprietary encoding in base 64.\n");
+  document.write("For instance, the light square color, besides using the lightColorHex parameter can be also assigned using the lightColorName or the lightColorSex parameter.\n");
+  document.write("The latter is proprietary and used by the board generator tool. \n");
+  document.write("\n");
+  document.write("</PRE>\n<HR>\n");
+}
+
+
+// write updated CSS stylesheet with new values overriding the one at the top of the file
+
+var newStyleSheet = '<style type="text/css"> \n';
+
+if ((movesDisplay == "figurine") || (movesDisplay == "nosymbols") || (movesDisplay == "puzzle")) {
+  newStyleSheet += 'body, .header, .comment { font-family: \'pgn4web Liberation Sans\', sans-serif; } \n';
+  newStyleSheet += '.move, .variation, .commentMove { font-family: \'pgn4web ChessSansPiratf\', \'pgn4web Liberation Sans\', sans-serif; } \n';
+}
+
+newStyleSheet += 'body { background: ' + backgroundColor + '; padding: ' + framePadding + 'px; } \n';
+
+newStyleSheet += '.pieceImage { width: ' + pieceSize + 'px; height: ' + pieceSize + 'px; } \n';
+
+if (highlightMode == 'border') {
+
+  newStyleSheet += '.whiteSquare { ' +
+                   'width: ' + (squareSize - 2 * borderSize) + 'px; ' +
+                   'height: ' + (squareSize - 2 * borderSize) + 'px; ' +
+                   'background: ' + lightColor + '; ' +
+                   'border-style: solid; ' +
+                   'border-width: ' + borderSize + 'px; ' +
+                   'border-color: ' + lightColor + '; ' +
+                   '} \n';
+
+  newStyleSheet += '.blackSquare { ' +
+                   'width: ' + (squareSize - 2 * borderSize) + 'px; ' +
+                   'height: ' + (squareSize - 2 * borderSize) + 'px; ' +
+                   'background: ' + darkColor + '; ' +
+                   'border-style: solid; ' +
+                   'border-width: ' + borderSize + 'px; ' +
+                   'border-color: ' + darkColor + '; ' +
+                   '} \n';
+
+  newStyleSheet += '.highlightWhiteSquare { ' +
+                   'width: ' + (squareSize - 2 * borderSize) + 'px; ' +
+                   'height: ' + (squareSize - 2 * borderSize) + 'px; ' +
+                   'background: ' + lightColor + '; ' +
+                   'border-style: solid; ' +
+                   'border-width: ' + borderSize + 'px; ' +
+                   'border-color: ' + highlightLightColor + '; ' +
+                   '} \n';
+
+  newStyleSheet += '.highlightBlackSquare { ' +
+                   'width: ' + (squareSize - 2 * borderSize) + 'px; ' +
+                   'height: ' + (squareSize - 2 * borderSize) + 'px; ' +
+                   'background: ' + darkColor + '; ' +
+                   'border-style: solid; ' +
+                   'border-width: ' + borderSize + 'px; ' +
+                   'border-color: ' + highlightDarkColor + '; ' +
+                   '} \n';
+
+} else {
+
+  newStyleSheet += '.whiteSquare { ' +
+                   'width: ' + (squareSize - 2 * borderSize) + 'px; ' +
+                   'height: ' + (squareSize - 2 * borderSize) + 'px; ' +
+                   'background: ' + lightColor + '; ' +
+                   '} \n';
+
+  newStyleSheet += '.blackSquare { ' +
+                   'width: ' + (squareSize - 2 * borderSize) + 'px; ' +
+                   'height: ' + (squareSize - 2 * borderSize) + 'px; ' +
+                   'background: ' + darkColor + '; ' +
+                   '} \n';
+
+  newStyleSheet += '.highlightWhiteSquare { ' +
+                   'width: ' + (squareSize - 2 * borderSize) + 'px; ' +
+                   'height: ' + (squareSize - 2 * borderSize) + 'px; ' +
+                   'background: ' + highlightLightColor + '; ' +
+                   '} \n';
+
+  newStyleSheet += '.highlightBlackSquare { ' +
+                   'width: ' + (squareSize - 2 * borderSize) + 'px; ' +
+                   'height: ' + (squareSize - 2 * borderSize) + 'px; ' +
+                   'background: ' + highlightDarkColor + '; ' +
+                   '} \n';
+
+}
+
+var boardHeight = squareSize * 8 + 6;
+var boardWidth = boardHeight;
+
+newStyleSheet += '.boardTable { height: ' + boardHeight + 'px; ' +
+  'width: ' + boardHeight + 'px; border-color: ' + boardBorderColor + '; } \n';
+
+if (boardShadowColor != 'transparent') {
+  newStyleSheet += '.boardTable { ' +
+    'box-shadow: 0px 0px ' + Math.ceil(squareSize / 2) + 'px ' + boardShadowColor + '; ' +
+    '} \n';
+}
+
+if (!fontHeaderSize.match(/[^0-9]/)) {
+  fontHeaderSize += 'px';
+  newStyleSheet += 'body, table { font-size: ' + fontHeaderSize + '; } \n';
+}
+newStyleSheet += '.header { color: ' + fontHeaderColor + '; font-size: ' + fontHeaderSize + '; } \n';
+
+if (!fontMovesSize.match(/[^0-9]/)) { fontMovesSize += 'px'; }
+newStyleSheet += '.move { color: ' + fontMovesColor + '; font-size: ' + fontMovesSize + '; } \n';
+
+if (!fontCommentsSize.match(/[^0-9]/)) { fontCommentsSize += 'px'; }
+newStyleSheet += '.comment, .variation { ' +
+                 ' color: ' + fontCommentsColor + ';' +
+                 ' font-size: ' + (fontCommentsSize == 'moves' ? fontMovesSize : fontCommentsSize) + '; ' +
+                 '} \n';
+
+if (!fontVariationsSize.match(/[^0-9]/)) { fontCommentsSize += 'px'; }
+if (fontVariationsColor !== 'comments') {
+  newStyleSheet += '.variation, a.variation { ' +
+                   ' color: ' + fontVariationsColor + '; ' +
+                   '} \n';
+}
+if (fontVariationsSize !== 'comments') {
+  newStyleSheet += '.variation { ' +
+                   ' font-size: ' + fontVariationsSize + '; ' +
+                   '} \n';
+}
+
+//  newStyleSheet += 'a.move:hover, a.variation:hover { ' +
+//                   ' background: ' + (highlightMoveColor == 'none' ? backgroundColor : highlightMoveColor) + '; ' +
+//                   '} \n';
+
+newStyleSheet += '.moveOn, .variationOn { ' +
+                 ' background: ' + (highlightMoveColor == 'none' ? backgroundColor : highlightMoveColor) + '; ' +
+                 '} \n';
+
+if ((controlBackgroundColor != 'default') && (controlBackgroundColor != '#default')) {
+  var controlFontSize = Math.floor(squareSize / 2.5);
+  newStyleSheet += '.buttonControl, .buttonControlPlay, .buttonControlStop { ' +
+                   '-moz-appearance: none; -webkit-appearance: none; ' +
+                   'border-style: solid; ' +
+                   'border-width: 0px; ' +
+                   'border-radius: 0px; ' +
+                   'border-color: ' + backgroundColor + '; ' +
+                   'background-color: ' + controlBackgroundColor + '; ' +
+                   'color: ' + controlTextColor + '; ' +
+                   'font-size: ' + controlFontSize + 'px; ' +
+                   'text-align: center; ' +
+                   'vertical-align: middle; ' +
+                   ' } \n';
+
+  newStyleSheet += '.selectControl { ' +
+                   '-moz-appearance: none; -webkit-appearance: none; ' +
+                   'padding: 3px; ' +
+                   'border-style: solid; ' +
+                   'border-width: 1px; ' +
+                   'border-radius: 0px; ' +
+                   'border-color: ' + backgroundColor + '; ' +
+                   'background-color: ' + controlBackgroundColor + '; ' +
+                   'color: ' + controlTextColor + '; ' +
+                   'font-size: ' + controlFontSize + 'px; ' +
+                   ' } \n';
+
+  newStyleSheet += '.optionSelectControl { ' +
+                   'background-color: ' + controlBackgroundColor + '; ' +
+                   ' } \n';
+}
+
+newStyleSheet += '</style> \n';
+
+document.write(newStyleSheet);
+
+
+// write actual chessboard components
+
+document.write("<center>");
+document.write("<table id='outerFrame' style='width: 100%;' cellspacing=0 cellpadding=0 border=0>");
+document.write("<tr>");
+document.write("<td id='extendedBoard' align=center valign=top>");
+display_board();
+document.write("</td>");
+if (horizontalLayout === true) {
+  document.write("<td id='headerMovesPadding' width='0px' >");
+  document.write("<td id='extendedHeaderMoves' align=left valign=top>");
+} else {
+  document.write("</tr><tr><td id='extendedHeaderMoves' align=center valign=top>");
+}
+display_header_moves();
+document.write("</td>");
+document.write("</tr>");
+document.write("</table>");
+document.write("</center>");
+
+function display_board() {
+  document.write("<table width=100% cellpadding=0 cellspacing=0 border=0>");
+  document.write("<tr><td align=center valign=top>");
+  if (buttonsDisplay != "hidden") { document.write("<div id='GameSelector'></div>"); }
+  document.write("<div id='GameBoard'></div>");
+  if (buttonsDisplay != "hidden") { document.write("<div id='GameButtons'></div>"); }
+  document.write("</td></tr></table>");
+}
+
+function display_header_moves() {
+
+  if (((headerDisplay != "hidden") || (movesDisplay != "hidden")) && (horizontalLayout === false)) {
+    if (headerDisplay != "hidden") {
+      document.write("<div id='boardHeadermovesPadding' class='header' style='text-align: center;'>&nbsp;</div>");
+    } else {
+      document.write("<div id='boardHeadermovesPadding' class='moves' style='text-align: center;'>&nbsp;</div>");
+    }
+  }
+  if ((headerDisplay != "hidden") || (movesDisplay != "hidden")) {
+    document.write("<div id='headerMoves' style='overflow:auto; overflow-x:hidden;" +
+                   " height: " + textHeight + "; width: " + textWidth +
+                   "; scrollbar-base-color: " + backgroundColor + ";'>");
+  }
+
+  if (headerDisplay == "variations") {
+
+    document.write("<table width=100% cellpadding=0 cellspacing=0 border=0><tr>");
+    document.write("<td align=left>");
+    document.write("<div class='header headerVariations' style='white-space: nowrap; margin-left: "  + textMargin +
+                   "px; margin-right: 3%;' id=GameWhite></div>");
+    document.write("</td><td align=right>");
+    document.write("<div class='header headerVariations' style='white-space: nowrap; margin-right: " + textMargin +
+                   "px; margin-left: 3%;'>&nbsp;<span class='move'>&nbsp;</span>" +
+                   "<span id='GameLastMove' title='last move'></span>" +
+                   "<span id='GameLastVariations' title='last move alternatives'></span></div>");
+    document.write("</td></tr></table>");
+
+    document.write("<table width=100% cellpadding=0 cellspacing=0 border=0><tr>");
+    document.write("<td align=left>");
+    document.write("<div class='header headerVariations' style='white-space: nowrap; margin-left: "  + textMargin +
+                   "px; margin-right: 3%;' id=GameBlack></div>");
+    document.write("</td><td align=right>");
+    document.write("<div class='header headerVariations' style='white-space: nowrap; margin-right: " + textMargin +
+                   "px; margin-left: 3%;'>&nbsp;<span class='move'>&nbsp;</span>" +
+                   "<span id='GameNextMove' title='next move'></span>" +
+                   "<span id='GameNextVariations' title='next move alternatives'></span></div>");
+    document.write("</td></tr></table>");
+
+    document.write("<table width=100% cellpadding=0 cellspacing=0 border=0><tr>");
+    document.write("<td align=left>");
+    document.write("<div class='header headerVariations' style='white-space: nowrap; margin-left: "  + textMargin +
+                   "px; margin-right: 3%;' id=GameResult></div>");
+    document.write("</td><td align=right>");
+    document.write("<div class='header headerVariations' style='white-space: nowrap; margin-right: " + textMargin +
+                   "px; margin-left: 3%;'></div>");
+    document.write("</td></tr></table>");
+  }
+
+  if (headerDisplay == "live") {
+
+    document.write("<table width=100% cellpadding=0 cellspacing=0 border=0><tr>");
+    document.write("<td align=left>");
+    document.write("<div class='header headerLive' style='white-space: nowrap; margin-left: "  + textMargin +
+                   "px; margin-right: 3%;' id=GameWhite></div>");
+    document.write("</td><td align=right>");
+    document.write("<div class='header headerLive' style='white-space: nowrap; margin-right: " + textMargin +
+                   "px; margin-left: 3%;'>&nbsp;<span id=GameWhiteClock></span></div>");
+    document.write("</td></tr></table>");
+
+    document.write("<table width=100% cellpadding=0 cellspacing=0 border=0><tr>");
+    document.write("<td align=left>");
+    document.write("<div class='header headerLive' style='white-space: nowrap; margin-left: "  + textMargin +
+                   "px; margin-right: 3%;' id=GameBlack></div>");
+    document.write("</td><td align=right>");
+    document.write("<div class='header headerLive' style='white-space: nowrap; margin-right: " + textMargin +
+                   "px; margin-left: 3%;'>&nbsp;<span id=GameBlackClock></span></div>");
+    document.write("</td></tr></table>");
+
+    document.write("<table width=100% cellpadding=0 cellspacing=0 border=0><tr>");
+    document.write("<td align=left>");
+    document.write("<div class='header headerLive' style='white-space: nowrap; margin-left: "  + textMargin +
+                   "px; margin-right: 3%;'><span id=GameNextMove></span><span class='move'>&nbsp;</span></div>");
+    document.write("</td><td align=right>");
+    document.write("<div class='header headerLive' style='white-space: nowrap; margin-right: " + textMargin +
+                   "px; margin-left: 3%;'>&nbsp;<span id=GameLiveStatus></span></div>");
+    document.write("</td></tr></table>");
+  }
+
+  if (headerDisplay == "justified") {
+
+    document.write("<table width=100% cellpadding=0 cellspacing=0 border=0><tr>");
+    document.write("<td align=left>");
+    document.write("<div class='header' style='white-space: nowrap; margin-left: "  + textMargin +
+                   "px; margin-right: 3%;' id=GameWhite></div>");
+    document.write("</td><td align=right>");
+    document.write("<div class='header' style='white-space: nowrap; margin-right: " + textMargin +
+                   "px; margin-left: 3%;'  id=GameDate></div>");
+    document.write("</td></tr></table>");
+
+    document.write("<table width=100% cellpadding=0 cellspacing=0 border=0><tr>");
+    document.write("<td align=left>");
+    document.write("<div class='header' style='white-space: nowrap; margin-left: "  + textMargin +
+                   "px; margin-right: 3%;' id=GameBlack></div>");
+    document.write("</td><td align=right>");
+    document.write("<div class='header' style='white-space: nowrap; margin-right: " + textMargin +
+                   "px; margin-left: 3%;'  id=GameSite></div>");
+    document.write("</td></tr></table>");
+
+    document.write("<table width=100% cellpadding=0 cellspacing=0 border=0><tr>");
+    document.write("<td align=left>");
+    document.write("<div class='header' style='white-space: nowrap; margin-left: "  + textMargin +
+                   "px; margin-right: 3%;' id=GameResult></div>");
+    document.write("</td><td align=right>");
+    document.write("<div class='header' style='white-space: nowrap; margin-right: " + textMargin +
+                   "px; margin-left: 3%;'><span id=GameEvent></span><span id=roundDetails></span></div>");
+    document.write("</td></tr></table>");
+  }
+
+  if (headerDisplay == "centered") {
+
+    document.write("<table width=100% cellpadding=0 cellspacing=0 border=0><tr>");
+    document.write("<td align=center>");
+    document.write("<div id=playersDetails class='header' style='white-space: nowrap; margin-left: "  + textMargin +
+                   "px; margin-right: " + textMargin + "px;'>");
+    document.write("<span id=GameWhite></span><span id=whiteBlackSpacer></span><span id=GameBlack></span><span id=blackResultSpacer></span><span id=GameResult></span>");
+    document.write("</div>");
+    document.write("</td></tr><tr><td align=center>");
+    document.write("<div class='header' style='white-space: nowrap; margin-left: "  + textMargin +
+                   "px; margin-right: " + textMargin + "px;'>");
+    document.write("<span id=GameEvent></span><span id=roundDetails></span>");
+    document.write("</div>");
+    document.write("</td></tr><tr><td align=center>");
+    document.write("<div class='header' style='white-space: nowrap; margin-left: "  + textMargin +
+                   "px; margin-right: " + textMargin + "px;'>");
+    document.write("<span id=GameSite></span><span id=siteDateSpacer></span><span id=GameDate></span>");
+    document.write("</div>");
+    document.write("</td></tr></table>");
+
+  }
+
+  if (movesDisplay != "hidden") {
+    if (headerDisplay != "hidden") {
+      document.write("<div id='headerMovesSpacer' class='header' style='text-align: center;'>&nbsp;</div>");
+    }
+    if (movesDisplay == "puzzle") {
+      document.write("<div style='margin-left:" + textMargin + "px; margin-right:" + textMargin +
+                     "px; text-align: justify;' id=GamePuzzleTask></div>");
+    }
+    document.write("<div style='margin-left:" + textMargin + "px; margin-right:" + textMargin +
+                   "px; text-align: justify;' id=GameText></div>");
+  }
+
+  if ((headerDisplay != "hidden") || (movesDisplay != "hidden")) {
+    document.write("</div>");
+  }
+
+}
+
+function customFunctionOnPgnTextLoad() {
+  var theObj;
+
+  var paddingControlHeight = Math.floor(squareSize / 2.5);
+  var paddingControlWidth = squareSize - textMargin;
+  if (paddingControlWidth < 0) { paddingControlWidth = 0; }
+
+  if (theObj = document.getElementById("GameButtons"))
+  { theObj.style.paddingTop = paddingControlHeight + "px"; }
+
+  if (theObj = document.getElementById("GameSelector")) {
+    if ((buttonsDisplay != "hidden") && (numberOfGames > 1)) {
+      theObj.style.paddingBottom = paddingControlHeight + "px";
+      theObj.style.display = "block";
+    } else {
+      theObj.style.paddingBottom = "0px";
+      theObj.style.display = "inline";
+    }
+  }
+
+  if (theObj = document.getElementById("headerMovesPadding")) {
+    if (horizontalLayout === true) { theObj.width = paddingControlWidth + "px"; }
+    else { theObj.style.minHeight = paddingControlHeight; }
+  }
+
+  var boardHeight = document.getElementById("boardTable").offsetHeight;
+  var boardWidth = document.getElementById("boardTable").offsetWidth;
+
+  if (theObj = document.getElementById("GameButtons")) {
+    if (buttonsDisplay != "hidden") { boardHeight += document.getElementById("GameButtons").offsetHeight; }
+  }
+
+  if (theObj = document.getElementById("GameSelector")) {
+    if ((buttonsDisplay != "hidden") && (numberOfGames > 1)) { boardHeight += document.getElementById("GameSelector").offsetHeight; }
+  }
+
+  if (horizontalLayout === true) {
+    document.getElementById("extendedBoard").width = boardWidth + "px";
+  }
+
+  if (fixFrameWidthToBoard) { frameWidth = boardWidth + 2 * framePadding; }
+  if (fixFrameHeightToBoard) { frameHeight = boardHeight + 2 * framePadding; }
+
+  if (theObj = document.getElementById("headerMoves")) {
+    if (horizontalLayout === true) {
+      if (frameWidth === "") { theObj.style.width = textWidth; }
+      else { document.getElementById("outerFrame").style.width = frameWidth - 2 * framePadding + "px"; }
+      theObj.style.height = (frameHeight === "" ? textHeight : (frameHeight - 2 * framePadding) + "px");
+    } else {
+      theObj.style.width = (frameWidth === "" ? textWidth : (frameWidth - 2 * framePadding) + "px");
+      if (frameHeight === "") { theObj.style.height = textHeight; }
+      else {
+       var boardHeadermovesPaddingHeight = document.getElementById("boardHeadermovesPadding") ? document.getElementById("boardHeadermovesPadding").offsetHeight : 0;
+       theObj.style.height = (frameHeight - boardHeight - 2 * framePadding - boardHeadermovesPaddingHeight) + "px";
+      }
+    }
+  }
+
+  // cope with occasional failures to load the live PGN data
+  if ((LiveBroadcastDelay !== 0) && (LiveBroadcastTicker > 0) && (!LiveBroadcastFoundOldGame)) {
+    var thisCurrentGame = currentGame;
+    SetInitialGame(init_Game);
+    setCurrentGameFromInitialGame();
+    if (currentGame != thisCurrentGame) {
+      SetInitialHalfmove("end",true);
+      Init();
+      GoToInitialHalfmove();
+    }
+  }
+
+  if (firstCurrentGame == -1) { firstCurrentGame = currentGame; }
+
+  if (gup("showHeightWidth") !== "") {
+    myAlert("info: board width=" + boardWidth + " height=" + boardHeight, false);
+  }
+}
+
+var firstCurrentGame = -1;
+var objectHiddenPuzzler = ["GameResult", "GameLastMove", "GameLastVariations", "GameNextMove", "GameNextVariations", "GameLastComment"];
+
+function customFunctionOnPgnGameLoad() {
+  var ii, theObj;
+
+  if (movesDisplay == "puzzle") {
+    if ((currentGame === firstCurrentGame) && (!alwaysInitialHalfmove)) { GoToInitialHalfmove(); }
+    if (firstCurrentGame == -1) { firstCurrentGame = currentGame; }
+
+    for (ii = 0; ii < objectHiddenPuzzler.length; ii++) {
+      if (theObj = document.getElementById(objectHiddenPuzzler[ii])) {
+        theObj.style.visibility = "hidden";
+      }
+    }
+    if (theObj = document.getElementById("GameText")) {
+        theObj.style.display = "none";
+    }
+    if (theObj = document.getElementById("GamePuzzleTask")) {
+      theObj.innerHTML = "<A CLASS='move moveOn'" +
+        "HREF='javascript:void(0);' " + "ONCLICK='GoToMove(CurrentPly + 1);'>" +
+        Math.floor((CurrentPly / 2) + 1) +
+        (CurrentPly % 2 ? "..." : ".") + " ?</A>";
+      theObj.title = (CurrentPly % 2 ? "Black" : "White") +
+        " to move: find the best move... click the ? for the solution";
+      theObj.style.display = "block";
+    }
+  }
+
+  if (theObj = document.getElementById("roundDetails")) {
+    if ((gameRound[currentGame] !=  undefined) &&
+        (gameRound[currentGame] !== "") &&
+        (gameRound[currentGame] !== "*") &&
+        (gameRound[currentGame] !=  "?")) {
+      theObj.innerHTML = "&nbsp;(" + gameRound[currentGame] + ")";
+    } else {
+      theObj.innerHTML = "";
+    }
+  }
+
+  if (theObj = document.getElementById("siteDateSpacer")) {
+    if ((gameSite[currentGame] != undefined) &&
+        (gameSite[currentGame] !== "") &&
+        (gameDate[currentGame] != undefined) &&
+        (gameDate[currentGame] !== "")) {
+      theObj.innerHTML = "&nbsp; &nbsp;";
+    } else {
+      theObj.innerHTML = "";
+    }
+  }
+
+  if (theObj = document.getElementById("whiteBlackSpacer")) {
+    if ((gameWhite[currentGame] != undefined) &&
+        (gameWhite[currentGame] !== "") &&
+        (gameBlack[currentGame] != undefined) &&
+        (gameBlack[currentGame] !== "")) {
+      theObj.innerHTML = "&nbsp;-&nbsp;";
+    } else {
+      theObj.innerHTML = "";
+    }
+  }
+
+  if (theObj = document.getElementById("blackResultSpacer")) {
+    if ((gameBlack[currentGame] != undefined) &&
+        (gameBlack[currentGame] !== "") &&
+        (gameResult[currentGame] != undefined) &&
+        (gameResult[currentGame] !== "")) {
+      theObj.innerHTML = "&nbsp; &nbsp;";
+    } else {
+      theObj.innerHTML = "";
+    }
+  }
+
+  if (theObj = document.getElementById("playersDetails")) {
+    if ( ( ((gameWhite[currentGame] != undefined) && (gameWhite[currentGame] !== ""))   ||
+           ((gameBlack[currentGame] != undefined) && (gameBlack[currentGame] !== ""))   ||
+           ((gameResult[currentGame] != undefined) && (gameResult[currentGame] !== "")) )  &&
+         ( ((gameEvent[currentGame] != undefined) && (gameEvent[currentGame] !== ""))   ||
+           ((gameRound[currentGame] != undefined) && (gameRound[currentGame] !== "") &&
+            (gameRound[currentGame] != "?") && (gameRound[currentGame] != "*"))        ||
+           ((gameSite[currentGame] != undefined) && (gameSite[currentGame] !== ""))     ||
+           ((gameDate[currentGame] != undefined) && (gameDate[currentGame] !== "")) ) ) {
+      theObj.style.paddingBottom = "0.33em";
+    } else {
+      theObj.style.paddingBottom = "";
+    }
+  }
+
+  if (theObj = document.getElementById("headerMovesSpacer")) {
+    if ( (headerDisplay == "live")                                                    ||
+         (headerDisplay == "variations")                                              ||
+         ((gameWhite[currentGame] != undefined) && (gameWhite[currentGame] !== ""))   ||
+         ((gameBlack[currentGame] != undefined) && (gameBlack[currentGame] !== ""))   ||
+         ((gameResult[currentGame] != undefined) && (gameResult[currentGame] !== "")) ||
+         ((gameEvent[currentGame] != undefined) && (gameEvent[currentGame] !== ""))   ||
+         ((gameRound[currentGame] != undefined) && (gameRound[currentGame] !== "") &&
+          (gameRound[currentGame] != "?") && (gameRound[currentGame] != "*"))         ||
+         ((gameSite[currentGame] != undefined) && (gameSite[currentGame] !== ""))     ||
+         ((gameDate[currentGame] != undefined) && (gameDate[currentGame] !== "")) ) {
+      theObj.style.display = "inline";
+    } else {
+      theObj.style.display = "none";
+    }
+  }
+
+// uncomment this to show the result at the end of the moves text
+//
+//   if (theObj = document.getElementById("GameText")) {
+//     if ( (gameResult[currentGame] == "1-0")     ||
+//          (gameResult[currentGame] == "0-1")     ||
+//          (gameResult[currentGame] == "1/2-1/2") ||
+//          (gameResult[currentGame] == "*") ) {
+//       theObj.innerHTML += '<span class="move" style="white-space: nowrap;"> ' + gameResult[currentGame] + '</span>';
+//     }
+//   }
+
+}
+
+function customFunctionOnMove() {
+  var theObj, ii;
+
+  if (movesDisplay == "puzzle") {
+    if (theObj = document.getElementById("GamePuzzleTask")) {
+      theObj.style.display = "none";
+      theObj.innerHTML = "";
+    }
+    for (ii = 0; ii < objectHiddenPuzzler.length; ii++) {
+      if (theObj = document.getElementById(objectHiddenPuzzler[ii])) {
+        theObj.style.visibility = "";
+      }
+    }
+    if (theObj = document.getElementById("GameText")) {
+      theObj.style.display = "";
+    }
+  }
+  if (theObj = document.getElementById("GameLastVariations")) {
+    theObj.style.paddingLeft = theObj.innerHTML ? "1ex" : "";
+  }
+  if (theObj = document.getElementById("GameNextVariations")) {
+    theObj.style.paddingLeft = theObj.innerHTML ? "1ex" : "";
+  }
+
+}
+
+
+function customDebugInfo() {
+  return "autoScroll=" + (autoScrollToCurrentMove_objId !== "");
+}
+
+enableAutoScrollToCurrentMove("headerMoves");
+
+// F5
+if (movesDisplay == "puzzle") { boardShortcut("F5", "reset puzzle", function(t,e){ Init(currentGame); }); }
+// G5
+boardShortcut("G5", "toggle auto-scroll moves text to current move", function(t,e){ toggleAutoScrollToCurrentMove('headerMoves'); });
+// H5
+boardShortcut("H5", "scroll moves text to current move", function(t,e){ autoScrollToCurrentMove('headerMoves'); });
+
+// customShortcutKey_Shift_1 defined by fide-lookup.js
+// customShortcutKey_Shift_2 defined by fide-lookup.js
+
+function customShortcutKey_Shift_5() {
+  if (movesDisplay == "puzzle") { Init(currentGame); }
+}
+
+var boardGeneratorWin=null;
+function customShortcutKey_Shift_6() {
+  if ((newPgnEncoded === "") && (newPgnText === "")) { return; }
+  if (!window.location.href.match(/board\.html/)) { return; }
+  if (boardGeneratorWin && !boardGeneratorWin.closed) { boardGeneratorWin.close(); }
+  boardGeneratorWin = window.open(window.location.href.replace(/board\.html/g, "board-generator.html").replace(window.location.hash, "") + "#preview");
+  if (boardGeneratorWin && window.focus) { boardGeneratorWin.focus(); }
+}
+
+// customShortcutKey_Shift_8 defined by engine.js
+// customShortcutKey_Shift_9 defined by engine.js
+// customShortcutKey_Shift_0 defined by engine.js
+
+</script>
+
+</body>
+
+</html>

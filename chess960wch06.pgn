@@ -1,0 +1,144 @@
+[Event "Chess960 rapid WCh"]
+[Site "Mainz GER"]
+[Date "2006"]
+[Round "1"]
+[White "Aronian, Levon"]
+[Black "Svidler, Peter"]
+[Result "1-0"]
+[Variant "Chess960"]
+[SetUp "1"]
+[FEN "nbbrnkrq/pppppppp/8/8/8/8/PPPPPPPP/NBBRNKRQ w KQkq - 0 1"]
+
+1. c4 c5 2. d4 cxd4 3. Rxd4 Be5 4. Rd1 O-O 5. Nf3 Bf6 6. Nc2 g6 7. b3
+Nac7 8. Ne3 Bb2 9. O-O Bxc1 10. Rxc1 Nf6 11. h3 b6 12. Qh2 d6 13. Qg3 Qg7 14.
+Qh4 Bb7 15. Rfd1 Rc8 16. Nd4 Rfd8 17. Rc3 e6 18. Nef5 exf5 19. Nxf5 g5 20. Qg3
+Nh5 21. Qe3 Qf6 22. Ne7+ Kf8 23. Nxc8 Rxc8 24. Qd2 Nf4 25. Rg3 Rd8 26. Bxh7
+Nce6 27. e3 Nh5 28. Rg4 Qh6 29. Bf5 Neg7 30. Qc2 Qf6 31. Be4 Bc8 32. Bf3 Qe5
+33. Re4 Bf5 34. Rxe5 Bxc2 35. Rd2 Bg6 36. Bxh5 Nxh5 37. Rxg5 Nf6 38. f3 Ke7 39.
+e4 Nh7 40. Rgd5 f6 41. f4 1-0
+
+[Event "Chess960 rapid WCh"]
+[Site "Mainz GER"]
+[Date "2006"]
+[Round "2"]
+[White "Svidler, Peter"]
+[Black "Aronian, Levon"]
+[Result "0-1"]
+[Variant "Chess960"]
+[SetUp "1"]
+[FEN "bqnrkbrn/pppppppp/8/8/8/8/PPPPPPPP/BQNRKBRN w KQkq - 0 1"]
+
+1. c4 Ng6 2. e3 e6 3. f4 b6 4. b3 d5 5. cxd5 Bxd5 6. Ng3 Nd6 7. Bd3
+Qa8 8. e4 Bc6 9. Nce2 Nb5 10. Qc2 Bc5 11. Bxb5 Bxb5 12. d4 Bb4+ 13. Kf2 O-O 14.
+f5 exf5 15. Nxf5 Ne7 16. Neg3 Nxf5 17. Nxf5 Bd7 18. g4 Rde8 19. Kf3 f6 20. d5
+Rf7 21. h4 Bf8 22. h5 c6 23. d6 c5 24. Rge1 g6 25. hxg6 hxg6 26. Nh4 f5 27.
+gxf5 gxf5 28. Rg1+ Kh7 29. Ng6 Bh6 30. Ne5 Rxe5 31. Bxe5 fxe4+ 32. Ke2 Rf5 33.
+Qc4 Qe8 34. Bg3 Bb5 35. d7 Bxc4+ 36. bxc4 Qh5+ 37. Ke1 Qf3 0-1
+
+[Event "Chess960 rapid WCh"]
+[Site "Mainz GER"]
+[Date "2006"]
+[Round "3"]
+[White "Svidler, Peter"]
+[Black "Aronian, Levon"]
+[Result "1-0"]
+[Variant "Chess960"]
+[SetUp "1"]
+[FEN "bnrkrbnq/pppppppp/8/8/8/8/PPPPPPPP/BNRKRBNQ w KQkq - 0 1"]
+
+1. b3 b6 2. e4 e5 3. Nf3 f6 4. Bc4 Bc5 5. Qf1 Ne7 6. O-O-O Nbc6 7. Ba6
+Rb8 8. Bc4 Qf8 9. Nc3 Nd4 10. Nxd4 Bxd4 11. Kb1 Nc8 12. f4 Nd6 13. Bd3 b5 14.
+Nxb5 Nxb5 15. Bxb5 Bxa1 16. Kxa1 exf4 17. Qd3 Qd6 18. Qxd6 cxd6 19. Bd3 f5 20.
+exf5 Bxg2 21. Rg1 f3 22. Bf1 O-O 23. Bxg2 fxg2 24. Rxg2 Rxf5 25. Rg4 Kf7 26.
+Kb2 g5 27. Rd4 Rb6 28. h4 h6 29. hxg5 hxg5 30. Rh1 Kg7 31. c4 d5 32. c5 Rc6 33.
+b4 d6 34. cxd6 Rxd6 35. a4 a6 36. Kc3 Rb6 37. b5 axb5 38. a5 Rc6+ 39. Kb4 Rc4+
+40. Rxc4 bxc4 41. a6 Rf8 42. Kc5 Kg6 43. a7 g4 44. Kxd5 Ra8 45. Ra1 g3 46. Kc6
+Kf5 47. Kb7 Rxa7+ 48. Rxa7 Ke4 49. Ra3 Kf4 50. Rc3 1-0
+
+[Event "Chess960 rapid WCh"]
+[Site "Mainz GER"]
+[Date "2006"]
+[Round "4"]
+[White "Aronian, Levon"]
+[Black "Svidler, Peter"]
+[Result "0-1"]
+[Variant "Chess960"]
+[SetUp "1"]
+[FEN "bbqrknrn/pppppppp/8/8/8/8/PPPPPPPP/BBQRKNRN w KQkq - 0 1"]
+
+1. c4 c5 2. b3 b6 3. Nhg3 Nhg6 4. Ne3 Ne6 5. Nd5 Nef4 6. Nxf4 Bxf4 7.
+e3 Bb8 8. d4 cxd4 9. Bxd4 O-O 10. e4 d5 11. exd5 e6 12. O-O exd5 13. c5 bxc5
+14. Qxc5 Nf4 15. Nf5 Qxc5 16. Bxc5 Rfe8 17. Nd4 Ne6 18. Ba3 Nxd4 19. Rxd4 Bc6
+20. Bd3 Be5 21. Rh4 g6 22. Bc1 Rc8 23. Ba6 Rcd8 24. Rh3 d4 25. f4 Bc7 26. Bd3
+Re3 27. Rg3 Bb6 28. Bd2 f5 29. Kf2 Be4 30. Bc4+ Kg7 31. Rd1 Rc3 32. Rc1 Rc2 33.
+Ke2 Rxa2 34. Kd1 d3 35. b4 Rc2 36. Rxc2 dxc2+ 37. Kc1 Bc7 0-1
+
+[Event "Chess960 rapid WCh"]
+[Site "Mainz GER"]
+[Date "2006"]
+[Round "5"]
+[White "Aronian, Levon"]
+[Black "Svidler, Peter"]
+[Result "1-0"]
+[Variant "Chess960"]
+[SetUp "1"]
+[FEN "bnqrnbkr/pppppppp/8/8/8/8/PPPPPPPP/BNQRNBKR w KQkq - 0 1"]
+
+1. c4 c5 2. b3 b6 3. Nf3 e6 4. d4 cxd4 5. Nxd4 Nc6 6. Nf3 Be7 7. Nc3
+O-O 8. g3 Nf6 9. Bg2 Nb4 10. O-O d5 11. a3 Na6 12. cxd5 Nxd5 13. b4 Nxc3 14.
+Bxc3 Rxd1 15. Rxd1 Rd8 16. Rxd8+ Bxd8 17. Qb2 f6 18. Bh3 Nc7 19. Nd4 Qd7 20.
+Bg4 f5 21. Bf3 Nd5 22. Qb3 Nxc3 23. Qxc3 Bf6 24. Bxa8 Bxd4 25. Qd3 Qd8 26. Bb7
+Kf7 27. Ba6 Bf6 28. Qb3 Ke7 29. Bc4 Qd6 30. Qf3 Be5 31. Bb3 Kf6 32. h4 Bb2 33.
+g4 Bxa3 34. Qc3+ Kg6 35. h5+ Kh6 36. g5+ Kxh5 37. Qxg7 Kg4 38. g6 h5 39. Qc3
+1-0
+
+[Event "Chess960 rapid WCh"]
+[Site "Mainz GER"]
+[Date "2006"]
+[Round "6"]
+[White "Svidler, Peter"]
+[Black "Aronian, Levon"]
+[Result "1-0"]
+[Variant "Chess960"]
+[SetUp "1"]
+[FEN "qnrkbrnb/pppppppp/8/8/8/8/PPPPPPPP/QNRKBRNB w KQkq - 0 1"]
+
+1. d4 g6 2. Nf3 c5 3. d5 d6 4. a4 Na6 5. c4 Bd7 6. Bc3 Nf6 7. b3 O-O-O
+8. O-O Ne4 9. Bxh8 Rxh8 10. g3 Qb8 11. Ne1 Nf6 12. Nd3 h5 13. b4 h4 14. b5 Nc7
+15. Nd2 Rh6 16. Nf3 hxg3 17. fxg3 Rdh8 18. Ng5 Rxh2 19. Bg2 R8h5 20. Nxf7 Ng4
+21. Nf4 Ne3 22. Rf3 Nxg2 23. Nxh5 Rxh5 24. Kxg2 Bh3+ 25. Kg1 Ne8 26. a5 Bf5 27.
+Re3 e5 28. dxe6 Qc7 29. e7 Rh7 30. Ng5 Rxe7 31. b6 1-0
+
+[Event "Chess960 rapid WCh"]
+[Site "Mainz GER"]
+[Date "2006"]
+[Round "7"]
+[White "Svidler, Peter"]
+[Black "Aronian, Levon"]
+[Result "0-1"]
+[Variant "Chess960"]
+[SetUp "1"]
+[FEN "rbbqnknr/pppppppp/8/8/8/8/PPPPPPPP/RBBQNKNR w HAha - 0 1"]
+
+1. c4 c6 2. Ngf3 d5 3. cxd5 cxd5 4. d4 Ngf6 5. O-O O-O 6. Nd3 Bf5 7.
+Nh4 Be4 8. f3 Bxd3 9. Qxd3 Qb6 10. b3 Nd6 11. Kh1 Rc8 12. g3 a6 13. Bd2 Qd8 14.
+Bc2 Bc7 15. Rac1 Ba5 16. b4 Bb6 17. Bg5 g6 18. Bb3 Rxc1 19. Rxc1 Rc8 20. g4 Nb5
+21. Rxc8 Qxc8 22. Be3 Qc3 23. g5 Qe1+ 24. Kg2 Nh5 25. Kh3 e6 26. a4 Nc3 27. Ng2
+Qxe2 28. Qxe2 Nxe2 29. Bd1 Nc3 30. Bc2 Na2 31. b5 axb5 32. axb5 Nc3 33. Bd3 Nd1
+34. Bg1 Kf8 35. Kg4 Ke7 36. f4 Ng7 37. Ne1 Nf5 38. Nc2 Nc3 39. h4 Bc7 40. Bf2
+h5+ 41. gxh6 Nxh6+ 42. Kg5 Nf5 43. h5 gxh5 44. Kxh5 Ne4 0-1
+
+[Event "Chess960 rapid WCh"]
+[Site "Mainz GER"]
+[Date "2006"]
+[Round "8"]
+[White "Aronian, Levon"]
+[Black "Svidler, Peter"]
+[Result "1-0"]
+[Variant "Chess960"]
+[SetUp "1"]
+[FEN "bqrknbrn/pppppppp/8/8/8/8/PPPPPPPP/BQRKNBRN w GCgc - 0 1"]
+
+1. c4 Ng6 2. Nf3 Nf6 3. Ng5 Ke8 4. e3 c5 5. f4 b6 6. b3 e6 7. Bd3 Nxf4
+8. exf4 Qxf4 9. Nf3 Bd6 10. O-O-O Bxf3 11. gxf3 g6 12. Ng3 Be5 13. Ne2 1-0
+

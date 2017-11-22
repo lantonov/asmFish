@@ -1,0 +1,143 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2014 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<title>Basic PGN viewer form</title>
+
+<link href="inputform.css" type="text/css" rel="stylesheet" />
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+<script src="pgn4web.js" type="text/javascript"></script>
+<script src="engine.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+   "use strict";
+
+   SetImagePath("images/merida/26");
+   SetImageType("png");
+   SetHighlightOption(false);
+   SetGameSelectorOptions(null, true, 8, 8, 0, 12, 12, 3, 10); // (head, num, chEvent, chSite, chRound, chWhite, chBlack, chResult, chDate);
+   SetAutoplayDelay(2000); // milliseconds
+   SetShortcutKeysEnabled(true);
+</script>
+
+</head>
+
+<body>
+
+<!-- paste your PGN below and make sure you dont specify an external source with SetPgnUrl() -->
+<form style="display: none;"><textarea style="display: none;" id="pgnText">
+
+</textarea></form>
+<!-- paste your PGN above and make sure you dont specify an external source with SetPgnUrl() -->
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border: solid 5px transparent; outline: solid 5px #E8E8E8;">
+
+<tr>
+
+<td width="272" align="left" valign="top" style="background-color:#E8E8E8;">
+<div id="GameBoard"></div>
+</td>
+
+<td align="left" valign="top" style="background-color:#E8E8E8;">
+
+<div class="pgnheader">&nbsp;</div>
+<div class="pgnheader"><span id="GameDate" title="date"></span>&nbsp;</div>
+<div class="pgnheader"><span id="GameSite" title="site"></span>&nbsp;</div>
+<div class="pgnheader"><span id="GameEvent" title="event"></span>&nbsp;</div>
+<div class="pgnheader"><span id="GameRound" title="round"></span>&nbsp;</div>
+<div class="pgnheader">&nbsp;</div>
+<div class="pgnheader"><span id="GameWhite" title="white player"></span>&nbsp;</div>
+<div class="pgnheader"><span id="GameBlack" title="black player"></span>&nbsp;</div>
+<div class="pgnheader"><span id="GameResult" title="result"></span>&nbsp;</div>
+<div class="pgnheader">&nbsp;</div>
+<div class="pgnheader"><span id="GameLastMove" title="last move"></span>&nbsp;&nbsp;<span id="GameLastVariations" title="last move alternatives"></span></div>
+<div class="pgnheader"><span id="GameNextMove" title="next move"></span>&nbsp;&nbsp;<span id="GameNextVariations" title="next move alternatives"></span></div>
+<div class="pgnheader" style="text-align:right; padding-right:10px;"><a class="pgnSubmit" href="javascript:loadPgnData();" onclick="this.blur();" title="submit PGN data; a flashing chessboard signals errors in the PGN data, click on the top left chessboard square for debug messages">click here to show chess games</a></div>
+
+</td>
+
+</tr>
+
+<tr height="34">
+<td style="background-color:#E8E8E8;">
+<div id="GameButtons"></div>
+</td>
+<td valign="bottom" style="padding-left:30px; background-color:#E8E8E8;">
+<div id="GameSelector"></div>
+</td>
+</tr>
+
+<tr><td colspan="2" height="5" align="center"></td></tr>
+
+<tr><td colspan="2" align="center" style="background-color:#E8E8E8;">
+<textarea id="pgnForm" style="padding:0px; border-style:none; width:100%; overflow:auto; background-color:#E8E8E8; scrollbar-base-color:#E8E8E8; resize:vertical;" rows="12" onFocus="disableShortcutKeysAndStoreStatus();" onBlur="restoreShortcutKeysStatus();" title="enter PGN data; a flashing chessboard signals errors in the PGN data, click on the top left chessboard square for debug messages">
+
+ { enter PGN data here }
+</textarea>
+</td>
+</tr>
+
+</table>
+
+<script type="text/javascript">
+"use strict";
+
+function customFunctionOnAlert(message_string) {
+  stopAlertPrompt();
+  alert(message_string);
+}
+
+// customShortcutKey_Shift_8 defined by engine.js
+// customShortcutKey_Shift_9 defined by engine.js
+// customShortcutKey_Shift_0 defined by engine.js
+
+function cleanPgnData(text) {
+  text = text.replace(/\[/g,'\n\n[');
+  text = text.replace(/\]/g,']\n\n');
+  text = text.replace(/([012\*])(\s*)(\[)/g,'$1\n\n$3');
+  text = text.replace(/\]\s*\[/g,']\n[');
+  text = text.replace(/^\s*\[/g,'[');
+  text = text.replace(/\n[\s*\n]+/g,'\n\n');
+  return text;
+}
+
+function loadPgnData() {
+  firstStart = true;
+  document.getElementById('pgnText').value = simpleHtmlentities(cleanPgnData(document.getElementById('pgnForm').value));
+  start_pgn4web();
+}
+
+
+function gup(name) {
+  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  var regexS = "[\\?&]"+name+"=([^&#]*)";
+  regexS = regexS+"(?!.*"+regexS+")"; // matches the LAST occurrence
+  var regex = new RegExp( regexS, "i" );
+  var results = regex.exec( window.location.href );
+  if (results === null) { return ""; }
+  else { return decodeURIComponent(results[1]); }
+}
+
+var newPgnText = gup("pgnText");
+if (newPgnText === "") { newPgnText = gup("pt"); }
+if (newPgnText !== "") {
+  newPgnText = simpleHtmlentities(cleanPgnData(newPgnText));
+  document.getElementById('pgnText').value = newPgnText;
+  document.getElementById('pgnForm').value = newPgnText;
+}
+
+</script>
+
+</body>
+
+</html>

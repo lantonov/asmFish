@@ -1,0 +1,57 @@
+CACHE MANIFEST
+
+# Live Games app
+# version 3.03+0000
+
+# pgn4web javascript chessboard
+# copyright (C) 2009-2017 Paolo Casaschi
+# see README file and http://pgn4web.casaschi.net
+# for credits, license and more details
+
+README.txt
+engine.js
+fide-lookup.js
+fonts/chess-informant-NAG-symbols.js
+fonts/pgn4web-font-ChessInformantReader.css
+fonts/pgn4web-font-LiberationSans.css
+fonts/ChessInformantReader.eot
+fonts/ChessInformantReader.svg
+fonts/ChessInformantReader.ttf
+fonts/ChessInformantReader.woff
+fonts/LiberationSans-Bold.eot
+fonts/LiberationSans-Bold.svg
+fonts/LiberationSans-Bold.ttf
+fonts/LiberationSans-Bold.woff
+fonts/LiberationSans-Regular.eot
+fonts/LiberationSans-Regular.svg
+fonts/LiberationSans-Regular.ttf
+fonts/LiberationSans-Regular.woff
+images/alpha/96/bb.png
+images/alpha/96/bk.png
+images/alpha/96/bn.png
+images/alpha/96/bp.png
+images/alpha/96/bq.png
+images/alpha/96/br.png
+images/alpha/96/clear.png
+images/alpha/96/wb.png
+images/alpha/96/wk.png
+images/alpha/96/wn.png
+images/alpha/96/wp.png
+images/alpha/96/wq.png
+images/alpha/96/wr.png
+libs/garbochess/garbochess.js
+# live-games-app.json
+# live-games-app.php
+# live-games-app.webapp
+live-games-app-engine.php
+live-games-app-icon-128x128.png
+live-games-app-icon-16x16.ico
+live-games-app-icon-60x60.png
+pgn4web.js
+
+
+NETWORK:
+*
+
+FALLBACK:
+

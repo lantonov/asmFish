@@ -1,0 +1,140 @@
+/*
+ *  pgn4web javascript chessboard
+ *  copyright (C) 2009-2013 Paolo Casaschi
+ *  see README file and http://pgn4web.casaschi.net
+ *  for credits, license and more details
+ */
+
+@import url("fonts/pgn4web-font-LiberationSans.css");
+@import url("fonts/pgn4web-font-ChessSansUsual.css");
+
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  padding: 1.75em;
+  font-family: 'pgn4web Liberation Sans', sans-serif;
+  color: black;
+  background: white;
+}
+
+div, span, table, tr, td {
+  font-family: 'pgn4web Liberation Sans', sans-serif; /* fixes IE9 body css issue */
+}
+
+.boardTable {
+  border-style: double;
+  border-color: black;
+  border-width: 3px;
+  width: 358px;
+  height: 358px;
+}
+
+.pieceImage {
+  width: 40px;
+  height: 40px;
+}
+
+.whiteSquare,
+.blackSquare,
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  width: 42px;
+  height: 42px;
+  border-style: solid;
+  border-width: 1px;
+}
+
+.whiteSquare,
+.highlightWhiteSquare {
+  border-color: #EFF4EC;
+  background: #EFF4EC;
+}
+
+.blackSquare,
+.highlightBlackSquare {
+  border-color: #C6CEC3;
+  background: #C6CEC3;
+}
+
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  border-style: inset;
+  border-color: gray;
+}
+
+.selectControl {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.optionSelectControl {
+}
+
+.buttonControlPlay,
+.buttonControlStop,
+.buttonControl {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.buttonControlSpace {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.searchPgnButton {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.searchPgnExpression {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.move,
+.variation,
+.comment {
+  line-height: 1.4em;
+  font-weight: normal;
+}
+
+.move,
+.variation,
+.commentMove {
+  font-family: 'pgn4web ChessSansUsual', 'pgn4web Liberation Sans', sans-serif;
+}
+
+a.move,
+a.variation,
+.commentMove {
+  white-space: nowrap;
+}
+
+.move,
+.variation {
+  text-decoration: none;
+}
+
+a.move:hover, a.variation:hover {
+  text-decoration: underline;
+}
+
+.move {
+  color: black;
+}
+
+.comment,
+.variation,
+.label {
+  color: gray;
+}
+
+a.variation {
+  color: gray;
+}
+
+.moveOn,
+.variationOn {
+  background: #DAF4D7;
+}
+

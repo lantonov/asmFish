@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<Module>
+
+  <ModulePrefs
+    title="Chess Puzzler"
+    directory_title="Chess Puzzler"
+    title_url="http://pgn4web.casaschi.net/"
+    description="chess puzzler of the day from the pgn4web project at http://pgn4web.casaschi.net"
+    author="Paolo Casaschi"
+    author_email="pgn4web@casaschi.net"
+    height="270"
+    width="240">
+    <Require feature="dynamic-height"/>
+  </ModulePrefs>
+
+  <UserPref name="squareSize"
+     display_name="size"
+     datatype="enum"
+     default_value="0">
+    <EnumValue value="0" display_value="auto resize"/>
+    <EnumValue value="20" display_value="tiny"/>
+    <EnumValue value="24" display_value="small"/>
+    <EnumValue value="30" display_value="medium"/>
+    <EnumValue value="40" display_value="large"/>
+    <EnumValue value="60" display_value="big"/>
+    <EnumValue value="80" display_value="huge"/>
+    <EnumValue value="110" display_value="giant"/>
+    <EnumValue value="150" display_value="colossal"/>
+  </UserPref>
+  <UserPref name="colorScheme"
+     display_name="color"
+     datatype="enum"
+     default_value="0">
+    <EnumValue value="7" display_value="black"/>
+    <EnumValue value="0" display_value="blue"/>
+    <EnumValue value="1" display_value="braun"/>
+    <EnumValue value="8" display_value="cyan"/>
+    <EnumValue value="2" display_value="gray"/>
+    <EnumValue value="3" display_value="green"/>
+    <EnumValue value="4" display_value="pink"/>
+    <EnumValue value="5" display_value="white"/>
+    <EnumValue value="6" display_value="wood"/>
+  </UserPref>
+  <UserPref name="showBorder"
+     display_name="border"
+     datatype="bool"
+     default_value="false"/>
+  <UserPref name="advancedParameters"
+     display_name="advanced"
+     datatype="string"
+     default_value=""/>
+
+  <Content type="html">
+    <![CDATA[
+
+      <body onLoad="myOnResize();" onResize="myOnResize();">
+
+        <center>
+        <iframe id='mainframe' frameborder='0' scrolling='no' marginheight='0' marginwidth='0'>
+        iframe support required to display the chess puzzler
+        </iframe>
+        </center>
+
+        <script type="text/javascript">
+        <!--
+
+        /*
+         *  pgn4web javascript chessboard
+         *  copyright (C) 2009-2015 Paolo Casaschi
+         *  see README file and http://pgn4web.casaschi.net
+         *  for credits, license and more details
+         */
+
+          "use strict";
+
+          function myOnResize() {
+
+            function getWidth() {
+              if (self.innerHeight) { return self.innerWidth; }
+                else if (document.documentElement && document.documentElement.clientHeight) {
+                return document.documentElement.clientWidth;
+              } else if (document.body) { return document.body.clientWidth; }
+              return 0;
+            }
+
+            var prefs = new _IG_Prefs();
+            var lightColorHex =
+                new Array("E8E8E8","F2D798","F4F4F4","EFF4EC","EDE8D5","FFFFFF","FFCC99","999999", "F4F4FF");
+            var darkColorHex =
+                new Array("C2C9D1","C9AD6F","E0E0E0","C6CEC3","CFCBB3","E4E4E4","CC9966","888888", "D4E6FC");
+            var controlBackgroundColorHex =
+                new Array("E8E8E8","F2D798","F4F4F4","EFF4EC","EDE8D5","FFFFFF","FFCC99","888888", "D4E6FC");
+            var controlTextColorHex =
+                new Array("585B5E","54110C","888888","888888","615F54","888888","705438","000000", "87AFDA");
+            var frameBorderColorHex =
+                new Array("C2C9D1","C9AD6F","E0E0E0","C6CEC3","CFCBB3","E4E4E4","CC9966","888888", "D4E6FC");
+            var colorScheme = prefs.getInt("colorScheme");
+
+            var squareSize = prefs.getInt("squareSize");
+            var showBorder = prefs.getBool("showBorder");
+            var borderSize = showBorder ? Math.ceil(squareSize / 50) : 0;
+            var frameBorderColorHexValue = showBorder ? frameBorderColorHex[colorScheme] : "none";
+            if (squareSize == 0) {
+              var containerWidth = getWidth();
+              squareSize = Math.floor(containerWidth / 8);
+              if (squareSize == 0) { squareSize = 30; }
+              if (showBorder) {
+                borderSize = Math.ceil(squareSize / 50);
+                if (squareSize * 8 + borderSize * 2 > containerWidth) {
+                   squareSize = squareSize - Math.ceil(squareSize / (50 * 8 / 2));
+                   borderSize = Math.ceil(squareSize / 50);
+                }
+              }
+            }
+
+            var advancedParameters = prefs.getString("advancedParameters");
+            if (advancedParameters && (advancedParameters.charAt(0) != "&")) {
+               advancedParameters = "&" + advancedParameters;
+            }
+
+            var matches, frameHeight, frameWidth;
+            if (matches = advancedParameters.match(/frameHeight=([^&]*)/)) { frameHeight = matches[1]; }
+            else if (matches = advancedParameters.match(/fh=([^&]*)/)) { frameHeight = matches[1]; }
+            else { frameHeight = squareSize * 9 + borderSize * 2; }
+            advancedParameters = advancedParameters.replace(/(frameHeight|fh)=([^&]*)/, "");
+            if (matches = advancedParameters.match(/frameWidth=([^&]*)/)) { frameWidth = matches[1]; }
+            else if (matches = advancedParameters.match(/fw=([^&]*)/)) { frameWidth = matches[1]; }
+            else { frameWidth = squareSize * 8 + borderSize * 2; }
+            advancedParameters = advancedParameters.replace(/(frameWidth|fw)=([^&]*)/, "");
+
+            var theObj = document.getElementById('mainframe');
+            if (theObj) {
+              theObj.height = frameHeight;
+              theObj.style.height = frameHeight + "px";
+              theObj.width = frameWidth;
+              theObj.style.width = frameWidth + "px";
+              theObj.src = "http://pgn4web.casaschi.net/puzzler.php?" +
+                "pf=hash" +
+                "&ss=" + squareSize +
+                "&lch=" + lightColorHex[colorScheme] +
+                "&dch=" + darkColorHex[colorScheme] +
+                "&cbch=" + controlBackgroundColorHex[colorScheme] +
+                "&ctch=" + controlTextColorHex[colorScheme] +
+                "&fbch=" + frameBorderColorHexValue +
+                advancedParameters;
+            }
+
+            gadgets.window.adjustHeight();
+
+      }
+      // -->
+      </script>
+    ]]>
+  </Content>
+
+</Module>

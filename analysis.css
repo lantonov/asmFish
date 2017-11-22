@@ -1,0 +1,257 @@
+/*
+ *  pgn4web javascript chessboard
+ *  copyright (C) 2009-2015 Paolo Casaschi
+ *  see README file and http://pgn4web.casaschi.net
+ *  for credits, license and more details
+ */
+
+@import url("fonts/pgn4web-font-LiberationSans.css");
+@import url("fonts/pgn4web-font-ChessSansUsual.css");
+
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'pgn4web Liberation Sans', sans-serif;
+  font-size: 19px;
+  color: black;
+  background: white;
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+  -webkit-text-size-adjust: none;
+  -moz-text-size-adjust: none;
+  -ms-text-size-adjust: none;
+  -o-text-size-adjust: none;
+  text-size-adjust: none;
+  -webkit-touch-callout: none;
+}
+
+a {
+  color: black;
+  text-decoration: none;
+}
+
+div, span {
+  font-family: 'pgn4web Liberation Sans', sans-serif; /* fixes IE9 body css issue */
+}
+
+.analysisheaderDiv {
+  position: absolute;
+  top: 0px;
+  left: 115px; /* 30px boardTable.paddingLeft + 376px boardTable.width - 3px boardTable.borderWidth - 288px gameAnalysisFrame.width */
+  transition: left 2s;
+}
+
+.gameAnalysisFrame {
+  width: 288px;
+  height: 380px;
+  margin-top: 222px; /* 210 header + 3 boardTable.borderWidth + 9 filling */
+}
+
+.boardheaderDiv {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  padding: 30px;
+  width: 376px;
+  overflow: hidden;
+}
+
+.boardHeaderInfo {
+  background: white;
+  position: relative;
+  z-index: 2;
+}
+
+.headerLine {
+  overflow: hidden;
+  white-space: nowrap;
+  width: 376px;
+  height: 30px;
+  font-weight: bold;
+  font-size: 22px;
+  line-height: 30px;
+  text-align: center;
+  text-overflow: ellipsis;
+}
+
+.gameNum {
+  width:188px;
+  text-align: left;
+}
+
+.gameECO {
+  width:188px;
+  text-align: right;
+}
+
+.gameSiteEventDate {
+  font-weight: normal;
+}
+
+.shortRowSpace {
+  height: 15px;
+  line-height: 15px;
+}
+
+.gameBoard {
+  padding-top: 30px;
+  padding-bottom: 30px;
+  background: white;
+  position: relative;
+  z-index: 2;
+}
+
+.gameLastNext {
+  background: white;
+  padding-bottom: 30px;
+  position: relative;
+  z-index: 2;
+}
+
+.gameLastMove, .gameNextMove {
+  font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.gamesList {
+  position: fixed;
+  bottom: 30px;
+  z-index: 1;
+}
+
+.topSpacer {
+  height: 30px;
+}
+
+.gametextresultDiv {
+  padding-left: 15px;
+  padding-right: 30px;
+  margin-left: 436px;
+  transition: margin-left 2s;
+  margin-bottom: 30px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  text-align: justify;
+  scrollbar-base-color: #FFFFFF;
+}
+
+.gameAnnotator {
+  float: right;
+  color: gray;
+}
+
+.boardTable {
+  width: 376px;
+  height: 376px;
+  border-style: solid;
+  border-color: #808080;
+  border-width: 3px;
+  box-shadow: 0px 0px 20px #DDDDDD;
+}
+
+.pieceImage {
+  width: 39px;
+  height: 39px;
+}
+
+.whiteSquare,
+.blackSquare,
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  width: 45px;
+  height: 45px;
+  border-style: solid;
+  border-width: 1px;
+}
+
+.whiteSquare,
+.highlightWhiteSquare {
+  border-color: #FFFFFF;
+  background: #FFFFFF;
+}
+
+.blackSquare,
+.highlightBlackSquare {
+  border-color: #DDDDDD;
+  background: #DDDDDD;
+}
+
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  border-color: #AAAAAA;
+  border-style: solid;
+}
+
+.selectControl {
+/* a "width" attribute here must use the !important flag to override default settings */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border-style: none;
+  color: gray;
+  background-color: white;
+}
+
+.optionSelectControl {
+  color: black;
+}
+
+.move,
+.variation,
+.comment {
+  color: black;
+  line-height: 1.4em;
+  font-weight: normal;
+  text-decoration: none;
+}
+
+.move,
+.variation,
+.commentMove {
+  font-family: 'pgn4web ChessSansUsual', 'pgn4web Liberation Sans', sans-serif;
+}
+
+a.move,
+a.variation,
+.commentMove {
+  white-space: nowrap;
+}
+
+.comment,
+.variation {
+  color: gray !important;
+}
+
+a.variation {
+  color: gray !important;
+}
+
+.moveOn,
+.variationOn,
+a.move:hover,
+a.variation:hover {
+  background: #DDDDDD;
+  border-radius: 2px;
+}
+
+.helpLink {
+  position: absolute;
+  bottom: 0px;
+  right: 2px;
+  color: lightgray;
+}
+
+.helpLink:hover {
+  color: black;
+}
+

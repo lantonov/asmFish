@@ -1,0 +1,168 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2014 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<title>Gelfand Grisichuk 2011 - needs an HTML5 browser with SVG IMG support</title>
+
+<!-- use viewport settings when body.onresize adapts the chessboard to the available space -->
+<meta name="viewport" content="initial-scale=1, maximum-scale=1">
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+<style type="text/css">
+
+html, body {
+  margin:0px;
+  padding:0px;
+}
+
+body {
+  background: #F4F4F4;
+}
+
+.boardTable {
+  border-style: solid;
+  border-color: transparent;
+}
+
+.whiteSquare, .highlightWhiteSquare {
+  background-color: #FFCE9E;
+}
+
+.blackSquare, .highlightBlackSquare {
+  background-color: #D18B47;
+}
+
+</style>
+
+<style id="dynamicStyle" type="text/css"></style>
+
+<script type="text/javascript">
+"use strict";
+
+var squareSize;
+function myOnResize() {
+  var boardObject = document.getElementById("GameBoard");
+  var squareSize = Math.floor(Math.min(window.innerWidth, window.innerHeight) / 9);
+  if (squareSize > 0) {
+    var pieceSize = Math.floor(squareSize * (pieceFont == "svgchess" ? 0.9 : 0.8));
+    var boardBorder = Math.ceil(squareSize / 20);
+    var shadowBorder = Math.floor(squareSize / 2);
+
+    var sheet = document.styleSheets[1];
+    var oldRules = sheet.cssRules.lenght;
+    sheet.insertRule(".boardTable { border-width: " + boardBorder + "px; border-radius: " + boardBorder + "px; box-shadow: 0px 0px " + shadowBorder + "px #734C27; } ", sheet.cssRules.length);
+    sheet.insertRule(".pieceImage { width:" + pieceSize + "px; height:" + pieceSize + "px; } ", sheet.cssRules.length);
+    sheet.insertRule(".whiteSquare, .blackSquare, .highlightWhiteSquare, .highlightBlackSquare { width:" + squareSize + "px; height:" + squareSize + "px; } ", sheet.cssRules.length);
+    for (var ii = 0; ii < oldRules; ii++) { sheet.deleteRule(0); }
+
+    boardObject.style.paddingTop = (window.innerHeight - 8 * squareSize - 2 * boardBorder) / 2 + "px";
+    boardObject.style.paddingBottom = (window.innerHeight - 8 * squareSize - 2 * boardBorder) / 2 + "px";
+    boardObject.style.paddingLeft = (window.innerWidth - 8 * squareSize - 2 * boardBorder) / 2 + "px";
+    boardObject.style.paddingRight = (window.innerWidth - 8 * squareSize - 2 * boardBorder) / 2 + "px";
+    var theObj = document.getElementById("boardTable");
+    if (theObj) {
+      theObj.style.height = (squareSize * 8 + boardBorder * 2) + "px";
+      theObj.style.width = (squareSize * 8 + boardBorder * 2) + "px";
+    }
+  }
+}
+
+</script>
+
+<script src="pgn4web.js" type="text/javascript"></script>
+<script type="text/javascript">
+"use strict";
+
+var pieceFont = "random";
+var thisRegExp = /(&|\?)(pieceFont|pf)=([^&]*)(&|$)/i;
+if (window.location.search.match(thisRegExp) !== null) {
+  pieceFont = unescape(window.location.search.match(thisRegExp)[3]);
+}
+if (pieceFont == "i") { pieceFont = "igorsvg"; }
+if (pieceFont == "s") { pieceFont = "svgchess"; }
+if (pieceFont == "t") { pieceFont = "tilesvg"; }
+if ((pieceFont != "igorsvg") && (pieceFont != "svgchess") && (pieceFont != "tilesvg")) { pieceFont = "random"; }
+if ((pieceFont == "random") || (pieceFont == "r")) {
+  pieceFont = ["igorsvg", "svgchess", "tilesvg"][Math.floor(3 * Math.random())];
+}
+
+SetImagePath("images/" + pieceFont);
+SetImageType("svg");
+SetHighlightOption(true);
+SetAutoplayDelay(2000); // milliseconds
+SetAutostartAutoplay(true);
+SetAutoplayNextGame(true);
+SetShortcutKeysEnabled(false);
+
+function customFunctionOnPgnGameLoad() { myOnResize(); }
+
+function customDebugInfo() { return "squareSize=" + squareSize; }
+
+// redefine FlipBoard() to include myOnResize()
+window['defaultFlipBoard'] = window['FlipBoard'];
+window['FlipBoard'] = function() { defaultFlipBoard(); myOnResize(); };
+
+</script>
+
+</head>
+
+<body onResize="myOnResize();">
+
+<!-- paste your PGN below and make sure you dont specify an external source with SetPgnUrl() -->
+<form style="display: none;"><textarea style="display: none;" id="pgnText">
+
+[Event "WCh Candidates"]
+[Site "Kazan RUS"]
+[Date "2011.05.25"]
+[Round "3.6"]
+[White "Gelfand, Boris"]
+[Black "Grischuk, Alexander"]
+[Result "1-0"]
+
+1. d4 Nf6 2. c4 g6 3. Nf3 Bg7 4. g3 d5 5. cxd5 Nxd5 6. Bg2 Nb6 7. Nc3 Nc6 8. e3
+O-O 9. O-O Re8 10. Re1 a5 11. Qe2 Bg4 12. h3 Be6 13. b3 a4 14. Rb1 axb3 15. axb3
+Qc8 16. Kh2 Ra5 17. Rd1 Rh5 18. Nh4 Bf6 19. f4 Rd8 20. Qf2 Bxh4 21. gxh4 Nd5 22.
+Nxd5 Rhxd5 23. Bb2 Rb5 24. Qe2 Rh5 25. e4 Bxb3 26. Rdc1 Na5 27. d5 b6 28. Be5 c5
+29. dxc6 f6 30. Ba1 Rc5 31. Rxc5 bxc5 32. Qb5 Qc7 33. Rxb3 Nxc6 34. e5 Nd4 35.
+Qc4+ 1-0
+
+</textarea></form>
+<!-- paste your PGN above and make sure you dont specify an external source with SetPgnUrl() -->
+
+<div id="GameBoard"></div>
+
+<script type="text/javascript">
+"use strict";
+
+window.onerror = function(msg, url, linenumber) {
+  document.body.innerHTML = "<p style='font-family: sans-serif; text-align: center;'><br>this web browser<br>is not supported</p>";
+  document.body.innerHTML += "<p style='font-family: sans-serif; text-align: left;'><br><br>message: " + msg + "<br><br>url: " + url + "<br><br>line: " + linenumber + "<br><br>browser: " + navigator.userAgent + "</p>";
+};
+
+function checkSVGSupport() {
+  var img = document.createElement("img");
+  img.onerror = function() { throw("SVG browser support required for the IMG HTML tag"); };
+  img.onload = function() { };
+  img.setAttribute("src","data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNzUiIGhlaWdodD0iMjc1Ij48L3N2Zz4%3D");
+}
+
+function pgn4web_onload(e) {
+  checkSVGSupport();
+  myOnResize();
+  start_pgn4web();
+}
+
+</script>
+
+</body>
+
+</html>

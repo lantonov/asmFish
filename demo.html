@@ -1,0 +1,273 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2017 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<title>pgn4web demo site</title>
+
+<style type="text/css">
+
+html, body { margin: 0px; padding: 0px; }
+
+body
+{ color: black; background: white; font-family: sans-serif; padding: 1.75em; padding-bottom: 4em; overflow-x: hidden; }
+
+a
+{ color: black; text-decoration: none; }
+
+.linkhead,
+a.linklist,
+a.linkselected
+{ font-size: 80%; color: black; text-decoration: none; word-spacing: normal; white-space: nowrap; }
+
+a.linkhead:hover,
+a.linklist:hover,
+a.linkselected
+{ color: red; }
+
+</style>
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+<script type="text/javascript">
+"use strict";
+
+function gup(name) {
+  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  var regexS = "[\\?&]"+name+"=([^&#]*)";
+  regexS = regexS+"(?!.*"+regexS+")"; // matches the LAST occurrence
+  var regex = new RegExp( regexS, "i" );
+  var results = regex.exec( window.location.href );
+  if (results === null) { return ""; }
+  else { return decodeURIComponent(results[1]); }
+}
+
+var pgn4webTestWin = null;
+function openPgn4webTest(url) {
+  if (pgn4webTestWin && !pgn4webTestWin.closed) { pgn4webTestWin.close(); }
+  pgn4webTestWin = window.open(url, "pgn4webTest");
+  if (window.focus) { pgn4webTestWin.focus(); }
+  return false;
+}
+
+</script>
+
+</head><body>
+
+<h1 style="margin-top:0px; padding-top:0px; text-align:right;">
+<span style="float:left; color:red;">
+pgn4web demo site
+</span>
+<a href="." onfocus="this.blur();" style="width:49px; height:29px; background:url(pawns.png) -47px -15px; vertical-align:baseline; display:inline-block;"></a>
+</h1>
+
+<div style="height:1em;"></div>
+
+<table style="font-size: 100%; font-weight: bold; text-align: left; line-height: 1.5em; word-spacing: 0.9em">
+<tbody><tr valign="top"><td>
+
+<a class="linkhead" style="font-weight: normal; white-space: nowrap; margin-right: 1em;" onclick="return openPgn4webTest(this.href);" onfocus="this.blur();" href="http://pgn4web-test.casaschi.net">web platforms integration:</a>
+
+</td><td>
+
+<a class="linklist" href="http://pgn4web-test.casaschi.net/blogger/" onclick="return openPgn4webTest(this.href);">blog:blogger</a>
+<a class="linklist" href="http://pgn4web-test.casaschi.net/wordpress/" onclick="return openPgn4webTest(this.href);">blog:wordpress.org</a>
+<a class="linklist" href="http://pgn4web-test.casaschi.net/phpbb/" onclick="return openPgn4webTest(this.href);">forum:phpbb</a>
+<a class="linklist" href="http://pgn4web-test.casaschi.net/joomla/" onclick="return openPgn4webTest(this.href);">portal:joomla</a>
+
+</td></tr></tbody></table>
+
+<table style="font-size: 100%; font-weight: bold; text-align: left; line-height: 1.5em; word-spacing: 0.9em">
+<tbody><tr valign="top"><td>
+
+<a class="linkhead" style="font-weight: normal; margin-right: 1em;" onclick="select_frame(random_frame());" onfocus="this.blur();" href="javascript:void(0);">demos:</a>
+
+</td><td>
+
+<a class="linklist" id="annotations.informant" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="analysis.html?ewdab=t&amp;ig=3&amp;iv=3&amp;ih=32&amp;pd=chess-informant-sample.pgn">annotations.informant</a>
+
+<a class="linklist" id="annotations.text" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="board.html?am=n&amp;d=3000&amp;ih=18&amp;ss=50&amp;ps=d&amp;pf=d&amp;lcs=_XNo&amp;dcs=O8AB&amp;bbcs=r4fT&amp;hm=b&amp;hcs=r4fT&amp;bd=s&amp;cbcs=YeiP&amp;ctcs=$$$$&amp;hd=j&amp;md=f&amp;tm=25&amp;fhcs=$$$$&amp;fhs=23&amp;fmcs=$$$$&amp;fccs=v71$&amp;hmcs=_XNo&amp;fms=19&amp;fcs=m&amp;cd=i&amp;bcs=____&amp;fp=0&amp;hl=t&amp;fh=b&amp;fw=p&amp;ee=t&amp;pd=demoGames.pgn">annotations.text</a>
+
+<a class="linklist" id="annotations.widget" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="widget.html">annotations.widget</a>
+
+<a class="linklist" id="custom.layout" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="lon09r5.html">custom.layout</a>
+
+<a class="linklist" id="custom.scripts" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="tilb98r2.html">custom.scripts</a>
+
+<a class="linklist" id="live.compact" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="live-compact.html?pgnData=tilb98r2.pgn&amp;initialGame=2&amp;refreshMinutes=0.25&amp;refreshDemo=true">live.compact</a>
+
+<a class="linklist" id="live.dynamic" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="dynamic-frame.html?pgnData=demoLiveGames.pgn&amp;refreshMinutes=0.25&amp;refreshDemo=true&amp;initialGame=vovk&amp;showColorFlag=true&amp;pieceFont=random&amp;colorTheme=blue">live.dynamic</a>
+
+<a class="linklist" id="live.mosaic" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="live-mosaic.html?pgnData=demoLiveGames.pgn&amp;refreshMinutes=0.25&amp;refreshDemo=true&amp;demoPly=0,1,2,3&amp;maxBoards=4&amp;barePadding=40px">live.mosaic</a>
+
+<a class="linklist" id="live.teams" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="live-mosaic.html?barePadding=0&pgnData=oly14r11.pgn&amp;boardTool=stone&amp;flipBoards=even&amp;hideFinishedGamesClocks=true&amp;displayGame=1&amp;maxBoards=8&amp;refreshMinutes=0.1&amp;refreshDemo=true&amp;demoPly=1,1,1,1,1,1,1,1,1,1,1,1">live.teams</a>
+
+<a class="linklist" id="live.widget" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="board.html?am=n&amp;d=1000&amp;ig=vovk&amp;ih=e&amp;ss=36&amp;ps=d&amp;pf=d&amp;lcs=Wtyk&amp;dcs=OXJO&amp;bbcs=OXJO&amp;hm=b&amp;hcs=C8B5&amp;bd=c&amp;cbcs=UJ2e&amp;ctcs=nkYj&amp;hd=l&amp;md=h&amp;tm=0&amp;fhcs=nkYi&amp;fhs=18&amp;fmcs=nkYi&amp;fccs=DoRa&amp;hmcs=ZbNv&amp;fms=18&amp;fcs=m&amp;cd=h&amp;bcs=Wtyk&amp;fp=18&amp;hl=f&amp;fh=515&amp;fw=b&amp;ee=t&amp;pd=demoLiveGames.pgn&amp;rm=0.25&amp;rd=t">live.widget</a>
+
+<a class="linklist" id="tools.debug" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="board.html?am=l&amp;d=3000&amp;ss=36&amp;ps=d&amp;pf=d&amp;lcs=YeiP&amp;dcs=Qcij&amp;bbcs=D91v&amp;bscs=Lb2$&amp;hm=n&amp;hcs=Udiz&amp;bd=h&amp;hd=j&amp;md=f&amp;tm=0&amp;fhcs=$$$$&amp;fhs=16&amp;fmcs=$$$$&amp;fccs=v71$&amp;hmcs=Qcij&amp;fms=16&amp;fcs=m&amp;cd=n&amp;bcs=____&amp;fp=18&amp;hl=t&amp;fh=330&amp;fw=660&amp;pe=520$A_e0G3vgZt82XAeAsL4AVvs$ZZaxf5uL5kaKo0IxBHl3M0dgK1LKQNH3ueKCLtwmVLpw7HXh3HKeSvNFrlZqMzg9Pjt7_uIutuqw_BN_OTC_N9o0F0Plt7Z84KDu3avM0_4CxgW7yVPou8veUoK33Q4ca4zKUTcnz1eOM7HX5uqyZt2l8$ZZaxf5uL5kaKo0IxBHl3M0dgK3qPHaYrG06OWUX6DkZH5Dhae3waaOYTbFC4KBXo3hI46xeSWmSCRTuUHKXZ8_XxBfpvs4CxexgqV6M1TbfuMoTztN7ZI5mNn2Zl3M4ca4zKUTcnz1eOM7OEnp6YCLokd$OZ$NEsW7cHjQzHVl5viUkGcvUEkXRqIRWrOsJSqnqHqdcHmBcC5QVYtK5KmGOqDLiDfSn6XmdwRqftwh31BHl4ZJkvyUYXZ2P9_l2j84CxfAAUZX5kixSOtbx8lxyM6WYGWOWreXRmZu3_Zgi7cfdxOM6M7IY2Twr57eTHXheo3ulyaUb0_$0">tools.debug</a>
+
+<a class="linklist" id="tools.video" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="video.html?headerDisplay=false&amp;pgnData=carlsensvidler.pgn&amp;videoUrl=http://pb.casaschi.net/carlsensvidlervideo&amp;videoWidth=480&amp;videoHeight=270&amp;videoLoop=true">tools.video</a>
+
+<a class="linklist" id="variant.chess960" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="chess960wch06.html">variant.chess960</a>
+
+<a class="linklist" id="viewer.basic" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="mini.html">viewer.basic</a>
+
+<a class="linklist" id="viewer.collection" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="collection-example.html">viewer.collection</a>
+
+<a class="linklist" id="viewer.database" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="twic944.html">viewer.database</a>
+
+<a class="linklist" id="viewer.form" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="inputform.html">viewer.form</a>
+
+<a class="linklist" id="viewer.puzzles" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="tactics.html">viewer.puzzles</a>
+
+<a class="linklist" id="viewer.results" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href="live-results.html?headlessPage=true&amp;showLastMoves=true&amp;pgnData=euroteams2011.pgn&amp;refreshMinutes=0">viewer.results</a>
+
+<a class="linklist" id="viewer.widget" target="pgnframe" onclick="return select_frame(this.id);" onfocus="this.blur();" href='board.html?am=g&amp;d=1000&amp;ss=50&amp;ps=40&amp;pf=u&amp;lcs=Ut65&amp;dcs=ObJH&amp;bbcs=$$$$&amp;hm=b&amp;hcs=__X$&amp;bd=h&amp;hd=c&amp;md=f&amp;tm=50&amp;fhcs=$$$$&amp;fhs=16&amp;fmcs=$$$$&amp;fccs=_L$$&amp;hmcs=__X$&amp;fms=14&amp;fcs=m&amp;cd=i&amp;bcs=____&amp;fp=10&amp;hl=f&amp;fh=1000&amp;fw=609&amp;pe=1227$zlax9RvmYXZNS4XYTucLSNGYTbS4coab2l8$JzaLr6WMr52wilheKl8$y2xz1BHASUtGJ05n9pNmXX5Hh0oyuOYZ64Tef4XZ2eMilh1NYfdvls2eVe3u0Vd_c3ul4coaE6V_9P1je54cnHb11nvoaz7$ij2qQ2$gK3qU5$fbzN3ZgD30jM$Om7T1$BBf3BjH90$OlPfJeaDr02O7YF0L7YxcQ8F29$yshpvqS7bn3ayNV0FpvN$fVg3dzrl5n10xnvoFKHfq$71GW32kYx2p06h5voGz5T1$IDyR7bj1$zYfYN2d$v8W308pwnnr13Xf3iz7j0$RXf4i37b16sDwSoj7f1dZRpdE3rw2$fAx$IVw5$fcijdPrl7P16pbvC7gL3me7vqoj790$RRgij7r0$OlDsEN32vfcKzdQSN59$vAsXv9I5a5502kpbwazbf13YfYkejbn13FEVwajbL1$zRgrzk2c$vnBKP2k8F5r0$khpwGhMwf7VzpdKdfML308ryO7nd06jHgU3nj04bf4lB7Ln3q9vatDLv3m8HyKBuAB5$xy7VYUNbn06mHfijnP1dK4uDJ8Nbr06h4uDJSNb4$yIhpyIpb_gwL3m87yI3uAB0L7J7paFW9yhv7VhJYuDJENc506sX_grPk5z$yJNKPmtU5B$yElPgRJPgG$7JGI3cnlpP16HgrQFcr02RDExc4$yKyfCkWjpr01u7tM5wL7i9wUzrj0$g1DVBU1Owvf3zU2N7Tv3mjg4QdgMv7WHPcb_gO$7JDN6yoDW6c$yImygsKjrT1aBzfAwoLD3sRqY4MbgML3sDpaIHyvT3sRqY4M3fjD1dPc1i79b1$FpyIjND9f1dQExdW9l4b06hn_grzp1H$vat7hg0uRt2eTDXgZ_pZXZS$_2qi8p9tkwDzq2eRZmxXir0AnaSNYY$_7P_2l81OUY2lmNr0ZmKWfPmD29KNeG0AjTY2XbeBZg7u3h7Z7Gfz6fNJfojz8eK2TCZxSPtwJBGvuzpwGWOWra$ZWCPjmKWu2TcBUcLeLQCDaSNYY4We2gKQKgUmr4WUtZwJZ7zgXglw6U_fDtb0'>viewer.widget</a>
+
+</td></tr></tbody></table>
+
+<div>&nbsp;</div>
+<div style="text-align:center;"><a href="#top" onfocus="this.blur();" style="display:inline-block; width:20%;">&nbsp;</a><span style="display:inline-block; width:20%;"></span><a name="demo" href="#demo" onfocus="this.blur();" style="display:inline-block; width:20%;">&nbsp;</a></div>
+
+<p></p>
+<center>
+<iframe id="pgnframe" name="pgnframe" style="height:0; width:0; border:none;" scrolling="no">your browser does not support the required iframe functionality</iframe>
+</center>
+
+<script type="text/javascript">
+"use strict";
+
+var selected_object = null;
+function select_frame(new_frame) {
+
+  var new_object = document.getElementById(new_frame);
+  if (new_object !== null) {
+
+    if (selected_object !== null) {
+      if (new_object == selected_object) { return false; }
+      selected_object.className = "linklist";
+    }
+    selected_object = new_object;
+    frames['pgnframe'].location.href = selected_object.href;
+
+    var new_frame_width = "100%";
+    var new_frame_height = "1000px";
+    var new_frame_border = "none";
+    var new_frame_padding = "";
+    var new_frame_borderRadius = "";
+    var new_frame_boxShadow = "";
+    var new_frame_scrolling = "no";
+
+    switch (new_frame) {
+      case "annotations.informant":
+        new_frame_height = "622px";
+        break;
+      case "annotations.text":
+        new_frame_height = "556px";
+        break;
+      case "live.compact":
+        new_frame_width = "480px";
+        new_frame_height = "363px";
+        new_frame_border = "solid 30px #EDE8D5";
+        new_frame_borderRadius = "15px";
+        new_frame_boxShadow = "0px 0px 20px #663300";
+        break;
+      case "live.dynamic":
+        if (Math.random() > 0.33) {
+          new_frame_width = "800px";
+          new_frame_height = "400px";
+          new_frame_padding = "5px";
+          new_frame_border = "solid 1px #596978";
+        } else {
+          new_frame_width = "328px";
+          new_frame_height = "592px";
+          new_frame_border = "double 8px #80B0E0";
+          new_frame_borderRadius = "4px";
+          new_frame_boxShadow = "0px 0px 10px #80B0E0";
+        }
+        break;
+      case "live.teams":
+        new_frame_width = "1184px"; // (256 + 40) * 4
+        new_frame_height = "691px"; // (318 + 20) * 2 + 15
+        break;
+      case "live.mosaic":
+        new_frame_width = "672px"; // ((256 + 40) * 2) + 40 * 2
+        new_frame_height = "747px"; // ((306 + 20) * 2 + 15) + 40 * 2
+        new_frame_boxShadow = "0px 0px 10px #E4E4E4";
+        break;
+      case "live.widget":
+        new_frame_height = "515px";
+        new_frame_width = "330px";
+        new_frame_border = "solid 10px #EDE8D5";
+        new_frame_borderRadius = "10px";
+        new_frame_boxShadow = "0px 0px 20px #663300";
+        break;
+      case "viewer.basic":
+        new_frame_height = "450px";
+        break;
+      case "viewer.collection":
+        new_frame_height = "2000px";
+        break;
+      case "viewer.database":
+        new_frame_height = "1200px";
+        break;
+      case "viewer.form":
+        new_frame_width = "753px";
+        break;
+      case "viewer.puzzles":
+        new_frame_width = "508px";
+        new_frame_height = "246px";
+        new_frame_border = "solid 50px transparent";
+        new_frame_borderRadius = "3px";
+        new_frame_boxShadow = "0px 0px 15px #C9AD6F";
+        break;
+      case "viewer.results":
+        new_frame_width = "1100px";
+        new_frame_height = "550px";
+        new_frame_border = "inset 2px #EFF4EC";
+        new_frame_boxShadow = "0px 0px 2px 1px #C6CEC3";
+        new_frame_scrolling = "auto";
+        break;
+      default:
+        break;
+    }
+    document.getElementById("pgnframe").style.width = new_frame_width;
+    document.getElementById("pgnframe").style.height = new_frame_height;
+    document.getElementById("pgnframe").style.padding = new_frame_padding;
+    document.getElementById("pgnframe").style.border = new_frame_border;
+    document.getElementById("pgnframe").style.borderRadius = new_frame_borderRadius;
+    document.getElementById("pgnframe").style.boxShadow = new_frame_boxShadow;
+    document.getElementById("pgnframe").scrolling = new_frame_scrolling;
+
+    selected_object.className = "linkselected";
+
+  } else {
+    select_frame("viewer.basic");
+  }
+  return false;
+}
+
+function random_frame() {
+  var random_selection = ["annotations.informant", "annotations.informant", "annotations.informant", "annotations.informant", "annotations.text", "annotations.text", "annotations.widget", "annotations.widget", "custom.layout", "custom.layout", "custom.scripts", "custom.scripts", "live.compact", "live.compact", "live.dynamic", "live.dynamic", "live.dynamic", "live.dynamic", "live.mosaic", "live.mosaic", "live.teams", "live.teams", "live.teams", "live.teams", "live.widget", "live.widget", "tools.video", "tools.video", "variant.chess960", "variant.chess960", "viewer.basic", "viewer.basic", "viewer.basic", "viewer.basic", "viewer.puzzles", "viewer.puzzles", "viewer.results", "viewer.results", "viewer.widget"];
+  return random_selection[Math.floor(random_selection.length * Math.random())];
+}
+
+var initial_frame = gup("frame");
+if (initial_frame === "") { initial_frame = "random"; }
+if (initial_frame == "random") { initial_frame = random_frame(); }
+select_frame(initial_frame);
+
+</script>
+
+</body>
+
+</html>

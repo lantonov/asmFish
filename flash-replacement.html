@@ -1,0 +1,235 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2015 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<title>flash replacement</title>
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+<style type="text/css">
+
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  padding: 1.75em;
+  font-family: sans-serif;
+  color: black;
+  background: #F4F4F4;
+}
+
+a {
+  color: black;
+}
+
+p {
+  padding: 0.25em;
+}
+
+ul {
+  list-style-type: square;
+}
+
+.exampleLink {
+  background: #E8E8E8;
+  padding-left: 0.25em;
+  padding-right: 0.25em;
+  white-space: pre;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1 style="margin-top:0px; padding-top:0px; text-align:right;">
+<span style="float:left; color:black;">
+pgn4web live broadcast: flash replacement
+</span>
+<span style="width:49px; height:29px; background:url(pawns.png) -47px -15px; vertical-align:baseline; display:inline-block;"></span>
+</h1>
+
+<div style="height:1px;"></div>
+
+<p>
+What about replacing with a broadly supported technology a well known live chess broadcast client based on the adobe flash technology and therefore not supported by mobile devices such as android phones and tablets, the iphone and the ipad? This page shows equivalent functionality based on HTML5 (javascript + css) that works on mobile devices as well.
+</p>
+
+<a name="basicExample"></a>
+<h3>basic example</h3>
+<p>
+This replicates the flash based client layout and functionality:
+</p>
+<p>
+<center>
+
+
+<!--
+  this is the inline frame code showing the live chessboard on the page;
+  when copying the code on a new live page, please adjust the inline frame src
+  property with the relative path from the new live page to dynamic-frame.html
+-->
+<iframe id='gameframe' frameborder='0' scrolling='no'
+ style='width: 640px; height: 360px; border: solid black 1px; padding: 5px; margin: 0px; background: transparent;'
+ src='./dynamic-frame.html?ct=blue&amp;hch=t&amp;pf=merida&amp;scf=t&amp;l=t'
+>your web browser and/or your host do not support iframes as required to display the chessboard
+</iframe>
+
+
+</center>
+</p>
+<p>
+</p>
+
+<a name="advancedExample"></a>
+<h3>advanced example</h3>
+<p>
+This shows additional functionality of the pgn4web viewer, including customized colors, customized chess pieces and integrated user/engine analysis board:
+</p>
+<p>
+<center>
+
+<table style="border: 40px solid #FFCE9E; border-radius: 10px; background: #FFCE9E; box-shadow: 0 0 25px #CC9966;" cellspacing="0" cellpadding="0" border="0"><tr><td valign="middle">
+<iframe id='analysisframeAdvanced' name='analysisframeAdvanced' frameborder='0' scrolling='no'
+ style='width: 208px; height: 260px; margin-right: 40px; opacity: 0.9;'
+ src='./blank.html'
+>your web browser and/or your host do not support iframes as required to display the chessboard
+</iframe>
+</td><td valign="middle">
+<iframe id='gameframeAdvanced' frameborder='0' scrolling='no'
+ style='width: 580px; height: 320px;'
+ src='./dynamic-frame.html?ct=brown&amp;hch=t&amp;pf=u&amp;scf=t&amp;l=t&amp;ewt=analysisframeAdvanced&amp;eww=216&amp;ewh=260&amp;ewup=lch%3DFFCE9E%26dch%3DE3B688%26hch%3DD18B47%26fmch%3D000000%26ctch%3D7D654C%26bch%3DFFCE9E%26ss%3D26%26fpr%3D0%26pf%3Du%26fms%3D11%26fcs%3D19&amp;ewpi=t'
+>your web browser and/or your host do not support iframes as required to display the chessboard
+</iframe>
+</td></tr></table>
+
+</center>
+</p>
+<p>
+</p>
+
+<h3>more examples</h3>
+<p>
+Please find below links to few more live chess broadcast examples showing the multiple options available from pgn4web:
+<ul>
+<li><a id="liveCompact" href="./live-compact.html" target="_blank">live compact view</a></li>
+<li><a id="liveFullscreen" href="./dynamic-frame.html?l=t&amp;scf=t" target="_blank">live fullscreen view</a></li>
+<li><a id="liveMosaic" href="./live-mosaic.html" target="_blank">live mosaic view</a></li>
+<li><a id="liveResults" href="./live-results.html" target="_blank">live results view</a></li>
+</ul>
+</p>
+
+<h3>end user hints for the client user interface</h3>
+<ul>
+<li>use the arrow keys to move throughout the game</li>
+<li>click on the dots at the bottom or click on square F5 for the list of available games</li>
+<li>click on square H5 for a fullscreen view, then use the browser's back button to return to this page</li>
+<li>click on square E8 of the main board to activate the analysis board, copying the postion from the main board and starting the built-in chess engine (if supported by the web browser); try moves and variations clicking the from/to squares on the analysis board.</li>
+<li>click on square H8 for further general help</li>
+</ul>
+
+<h3>webmaster hints to setup a live games broadcast</h3>
+<p>
+The following instructions refer to the basic example; the advanced example including the integrated user/engine analysis board is relatively more complex, please contact the pgn4web project for detailed instructions based on specific requirements.
+</p>
+<ul>
+<li>copy the pgn4web files on the server, for instance in the folder accessible as <span class='exampleLink'>http://example.com/somewhere/pgn4web/</span></li>
+<li>reuse the same tools that generate the chess moves for the flash based client processing the inputs from the electronic boards</li>
+<li>configure those tools to save games as a PGN file accessible as <span class='exampleLink'>http://example.com/somewhere/pgn4web/live/live.pgn</span>, including clock information if available</li>
+<li>replace the flash object in the live web pages with an inline frame using a src url similar to the example of this page, such as <span class='exampleLink'>http://example.com/somewhere/pgn4web/dynamic-frame.html?<span id='urlparameters'></span></span></li>
+<li>set the inline frame height/width as appropriate to each live web page on the server and add any desired iframe css style property</li>
+<li>done</li>
+<li>more info about configuration options <a href="http://pgn4web-project.casaschi.net/wiki/DynamicFrame_summary">at the pgn4web wiki</a></li>
+</ul>
+
+<!--
+  the following scripts are normally not required in user pages embedding
+  dynamic-frame.html and should be left out unless otherwise instructed
+-->
+<script src="pgn4web-server-config.js" type="text/javascript"></script>
+<script type="text/javascript">
+"use strict";
+
+var pgn4web_live_pointer_url;
+var theIframeObject;
+var theSpanObject;
+var theLinkObject;
+
+if (pgn4web_live_pointer_url === undefined) { pgn4web_live_pointer_url = "."; }
+if (theIframeObject = document.getElementById('gameframe')) {
+  theIframeObject.src = fixUrlAllParameters(theIframeObject.src);
+  if (theSpanObject = document.getElementById('urlparameters')) {
+    theSpanObject.innerHTML = extractParametersAfterRemoving(theIframeObject.src);
+  }
+}
+if (theIframeObject = document.getElementById('gameframeAdvanced')) {
+  theIframeObject.src = fixUrlOnlyParameters(theIframeObject.src);
+}
+if (theIframeObject = document.getElementById('analysisframeAdvanced')) {
+  theIframeObject.src = fixUrlNoParameters(theIframeObject.src);
+}
+if (theLinkObject = document.getElementById('liveCompact')) {
+  theLinkObject.href = fixUrlOnlyParameters(theLinkObject.href);
+}
+if (theLinkObject = document.getElementById('liveFullscreen')) {
+  theLinkObject.href = fixUrlOnlyParameters(theLinkObject.href);
+}
+if (theLinkObject = document.getElementById('liveMosaic')) {
+  theLinkObject.href = fixUrlOnlyParameters(theLinkObject.href);
+}
+if (theLinkObject = document.getElementById('liveResults')) {
+  theLinkObject.href = fixUrlOnlyParameters(theLinkObject.href);
+}
+
+function fixUrlAllParameters(url) {
+  if (pgn4web_live_pointer_url == "." && !window.location.search.match(/\?.+$/)) { return url; }
+  var matches = url.match(/\?(.*)(#|$)/);
+  var parameters = matches ? matches[1] : "";
+  matches = url.match(/.*(\/[^\/\?]*)/);
+  return pgn4web_live_pointer_url + matches[1] + "?" + window.location.search.replace(/^\?(.+)$/, '$1&') + parameters;
+}
+
+function extractParametersAfterRemoving(url) {
+  var parameters = url.replace(/(^[^\?]+|#.*$)/g, "");
+  return parameters.replace(/(^|\?|&)(pd|pgnData|rm|refreshMinutes|rd|refreshDemo)=[^&]*/g, "").replace(/^[\?^]+/, "");
+}
+
+function fixUrlOnlyParameters(url) {
+  if (pgn4web_live_pointer_url == "." && !window.location.search.match(/\?.+$/)) { return url; }
+  var matches = url.match(/\?(.*)(#|$)/);
+  var parameters = matches ? matches[1] : "";
+  matches = window.location.search.match(/(\?|&)((pd|pgnData)=[^&]*)(&|$)/);
+  parameters = (matches ? matches[2] + "&" : "") + parameters;
+  matches = window.location.search.match(/(\?|&)((l|live)=[^&]*)(&|$)/);
+  parameters = (matches ? matches[2] + "&" : "") + parameters;
+  matches = window.location.search.match(/(\?|&)((rm|refreshMinutes)=[^&]*)(&|$)/);
+  parameters = (matches ? matches[2] + "&" : "") + parameters;
+  matches = window.location.search.match(/(\?|&)((rd|refreshDemo)=[^&]*)(&|$)/);
+  parameters = (matches ? matches[2] + "&" : "") + parameters;
+  matches = url.match(/.*(\/[^\/\?]*)/);
+  return pgn4web_live_pointer_url + matches[1] + "?" + parameters;
+}
+
+function fixUrlNoParameters(url) {
+  if (pgn4web_live_pointer_url == ".") { return url; }
+  var matches = url.match(/.*(\/[^\/]*)/);
+  return pgn4web_live_pointer_url + matches[1];
+}
+
+</script>
+
+</body>
+
+</html>

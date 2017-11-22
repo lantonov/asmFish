@@ -1,0 +1,226 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2014 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<meta http-equiv="content-type" content="text-html; charset=utf-8">
+
+<title>pgn4web board generator test set</title>
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+<style type="text/css">
+
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  font-family: sans-serif;
+  color: black;
+  background: white;
+  padding: 1.75em;
+}
+
+a {
+  text-decoration: none;
+  color: black;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1 style="margin-top:0px; padding-top:0px; text-align:right;">
+<span style="float:left; color:black;">
+pgn4web board generator test
+</span>
+<span style="width:49px; height:29px; background:url(pawns.png) -47px -15px; vertical-align:baseline; display:inline-block;"></span>
+</h1>
+
+<div style="height:1px;"></div>
+
+<script type="text/javascript">
+"use strict";
+
+var targetWin = null;
+var targetName = 'pgn4web_boardGeneratorTest';
+function refreshTarget(targetRef) {
+  if (targetWin && !targetWin.closed) { targetWin.close(); }
+  targetWin = window.open(targetRef, targetName);
+  if (window.focus) { targetWin.focus(); }
+  return false;
+}
+</script>
+
+<OL>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF=board-generator.html#game_preview>
+plain</A>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF=board-generator.html?hd=h&amp;md=h#game_preview>
+plain and bare</A>
+
+<P></P>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=g&amp;d=1000&amp;pf=a&amp;ps=30&amp;ss=40&amp;lch=EFF4EC&amp;dch=C6CEC3&amp;bbch=000000&amp;hm=s&amp;hch=DAF4D7&amp;bd=h&amp;hd=j&amp;md=f&amp;tm=0&amp;fhch=000000&amp;fhs=16&amp;fmch=000000&amp;fcch=808080&amp;hmch=DAF4D7&amp;fms=16&amp;fcs=16&amp;cd=h&amp;bch=FFFFFF&amp;hl=f&amp;fh=726&amp;fw=326&amp;fp=0&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 $6 {This is a weak move already.} 4. dxe5 $1 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 {$23 Black cant develop the knight because the Pawn is hanging, the Bishop is blocked because of the Queen.} b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ $18 Nxb8 17. Rd8 1-0#game_preview'>
+plain game with hex colors</A>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=g&amp;d=1000&amp;pf=a&amp;ps=30&amp;ss=40&amp;lch=EFF4EC&amp;dch=C6CEC3&amp;bbch=000000&amp;hm=s&amp;hch=DAF4D7&amp;bd=h&amp;hd=j&amp;md=f&amp;tm=0&amp;fhch=000000&amp;fhs=18&amp;fmch=000000&amp;fcch=808080&amp;hmch=DAF4D7&amp;fms=18&amp;fcs=m&amp;cd=i&amp;bch=FFFFFF&amp;hl=f&amp;fh=726&amp;fw=326&amp;fp=0&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 $6 {This is a weak move already.} 4. dxe5 $1 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 {$23 Black cant develop the knight because the Pawn is hanging, the Bishop is blocked because of the Queen.} b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ $18 Nxb8 17. Rd8 1-0#game_preview'>
+game with comments of same size as moves</A>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=g&amp;d=1000&amp;ss=40&amp;ps=30&amp;pf=a&amp;lcs=W_iH&amp;dcs=MHW2&amp;bbcs=$$$$&amp;hm=s&amp;hcs=RKim&amp;bd=s&amp;cbcs=W_iH&amp;ctcs=$$$$&amp;hd=j&amp;md=f&amp;tm=0&amp;fhcs=$$$$&amp;fhs=16&amp;fmcs=$$$$&amp;fccs=v71$&amp;hmcs=RKim&amp;fms=16&amp;fcs=16&amp;cd=i&amp;bcs=____&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8 1-0 [Event ""] [Site "New York"] [Date "1857"] [Round ""] [White "Louis Paulsen"] [Black "Paul Morphy"] [Result "0-1"] 1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Bb5 Bc5 5. O-O O-O 6. Nxe5 Re8 7. Nxc6 dxc6 8. Bc4 b5 9. Be2 Nxe4 10. Nxe4 Rxe4 11. Bf3 Re6 12. c3 Qd3 13. b4 Bb6 14. a4 bxa4 15. Qxa4 Bd7 16. Ra2 Rae8 17. Qa6 Qxf3 18. gxf3 Rg6+ 19. Kh1 Bh3 20. Rd1 Bg2+ 21. Kg1 Bxf3+ 22. Kf1 Bg2+ 23. Kg1 Bh3+ 24. Kh1 Bxf2 25. Qf1 Bxf1 26. Rxf1 Re2 27. Ra1 Rh6 28. d4 Be3 0-1#game_preview'>
+two games with default control buttons and sex colors</A>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=g&amp;d=1000&amp;ss=34&amp;ps=28&amp;pf=a&amp;lcs=W_iH&amp;dcs=MHW2&amp;bbcs=$$$$&amp;hm=s&amp;hcs=RKim&amp;bd=h&amp;hd=j&amp;md=f&amp;tm=12&amp;fhcs=$$$$&amp;fhs=16&amp;fmcs=$$$$&amp;fccs=v71$&amp;hmcs=RKim&amp;fms=16&amp;fcs=16&amp;cd=n&amp;bcs=____&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 $6 {This is a weak move already.} 4. dxe5 $1 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 {$23 Black cant develop the knight because the Pawn is hanging, the Bishop is blocked because of the Queen.} b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ $18 Nxb8 17. Rd8 1-0#game_preview'>
+game with comments, smaller board, comments on separate lines, text overflow and text margin</A>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=g&amp;d=1000&amp;ss=34&amp;ps=28&amp;pf=a&amp;lcs=W_iH&amp;dcs=MHW2&amp;bbcs=$$$$&amp;hm=s&amp;hcs=RKim&amp;bd=s&amp;cbcs=W_iH&amp;ctcs=$$$$&amp;hd=j&amp;md=f&amp;tm=12&amp;fhcs=$$$$&amp;fhs=16&amp;fmcs=$$$$&amp;fccs=v71$&amp;hmcs=RKim&amp;fms=16&amp;fcs=16&amp;cd=n&amp;bcs=____&amp;fp=0&amp;hl=f&amp;fh=500&amp;fw=278&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8 1-0 [Event ""] [Site "New York"] [Date "1857"] [Round ""] [White "Louis Paulsen"] [Black "Paul Morphy"] [Result "0-1"] 1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Bb5 Bc5 5. O-O O-O 6. Nxe5 Re8 7. Nxc6 dxc6 8. Bc4 b5 9. Be2 Nxe4 10. Nxe4 Rxe4 11. Bf3 Re6 12. c3 Qd3 13. b4 Bb6 14. a4 bxa4 15. Qxa4 Bd7 16. Ra2 Rae8 17. Qa6 Qxf3 18. gxf3 Rg6+ 19. Kh1 Bh3 20. Rd1 Bg2+ 21. Kg1 Bxf3+ 22. Kf1 Bg2+ 23. Kg1 Bh3+ 24. Kh1 Bxf2 25. Qf1 Bxf1 26. Rxf1 Re2 27. Ra1 Rh6 28. d4 Be3 0-1#game_preview'>
+two games, smaller board, comments on separate lines, text overflow, text margin and standard controls</A>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=g&amp;d=1000&amp;ss=34&amp;ps=28&amp;pf=a&amp;lcs=W_iH&amp;dcs=MHW2&amp;bbcs=$$$$&amp;hm=s&amp;hcs=RKim&amp;bd=s&amp;cbcs=W_iH&amp;ctcs=$$$$&amp;hd=j&amp;md=f&amp;tm=12&amp;fhcs=$$$$&amp;fhs=16&amp;fmcs=$$$$&amp;fccs=v71$&amp;hmcs=RKim&amp;fms=16&amp;fcs=16&amp;cd=n&amp;bcs=____&amp;fp=0&amp;hl=t&amp;fh=b&amp;fw=730&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8 1-0 [Event ""] [Site "New York"] [Date "1857"] [Round ""] [White "Louis Paulsen"] [Black "Paul Morphy"] [Result "0-1"] 1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Bb5 Bc5 5. O-O O-O 6. Nxe5 Re8 7. Nxc6 dxc6 8. Bc4 b5 9. Be2 Nxe4 10. Nxe4 Rxe4 11. Bf3 Re6 12. c3 Qd3 13. b4 Bb6 14. a4 bxa4 15. Qxa4 Bd7 16. Ra2 Rae8 17. Qa6 Qxf3 18. gxf3 Rg6+ 19. Kh1 Bh3 20. Rd1 Bg2+ 21. Kg1 Bxf3+ 22. Kf1 Bg2+ 23. Kg1 Bh3+ 24. Kh1 Bxf2 25. Qf1 Bxf1 26. Rxf1 Re2 27. Ra1 Rh6 28. d4 Be3 0-1#game_preview'>
+same as above, without comments, with horizontal display, frame height as board and wider frame width</A>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=g&amp;d=1000&amp;ss=34&amp;ps=28&amp;pf=a&amp;lcs=W_iH&amp;dcs=MHW2&amp;bbcs=$$$$&amp;hm=s&amp;hcs=RKim&amp;bd=s&amp;cbcs=W_iH&amp;ctcs=$$$$&amp;hd=j&amp;md=f&amp;tm=12&amp;fhcs=$$$$&amp;fhs=16&amp;fmcs=$$$$&amp;fccs=v71$&amp;hmcs=RKim&amp;fms=16&amp;fcs=16&amp;cd=n&amp;bcs=____&amp;fp=0&amp;hl=t&amp;fh=b&amp;fw=730&amp;pt=[Event ""] [Site ""] [Date ""] [Round ""] [White ""] [Black ""] [Result ""] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 $6 {This is a weak move already.} 4. dxe5 $1 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 {$23 Black cant develop the knight because the Pawn is hanging, the Bishop is blocked because of the Queen.} b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ $18 Nxb8 17. Rd8 1-0#game_preview'>
+same as above, with one game only and with empty header</A>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=g&amp;d=1000&amp;ss=34&amp;ps=28&amp;pf=a&amp;lcs=W_iH&amp;dcs=MHW2&amp;bbcs=$$$$&amp;hm=s&amp;hcs=RKim&amp;bd=s&amp;cbcs=W_iH&amp;ctcs=$$$$&amp;hd=h&amp;md=f&amp;tm=12&amp;fmcs=$$$$&amp;fccs=v71$&amp;hmcs=RKim&amp;fms=16&amp;fcs=16&amp;cd=n&amp;bcs=____&amp;fp=0&amp;hl=t&amp;fh=b&amp;fw=444&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8 1-0 [Event ""] [Site "New York"] [Date "1857"] [Round ""] [White "Louis Paulsen"] [Black "Paul Morphy"] [Result "0-1"] 1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Bb5 Bc5 5. O-O O-O 6. Nxe5 Re8 7. Nxc6 dxc6 8. Bc4 b5 9. Be2 Nxe4 10. Nxe4 Rxe4 11. Bf3 Re6 12. c3 Qd3 13. b4 Bb6 14. a4 bxa4 15. Qxa4 Bd7 16. Ra2 Rae8 17. Qa6 Qxf3 18. gxf3 Rg6+ 19. Kh1 Bh3 20. Rd1 Bg2+ 21. Kg1 Bxf3+ 22. Kf1 Bg2+ 23. Kg1 Bh3+ 24. Kh1 Bxf2 25. Qf1 Bxf1 26. Rxf1 Re2 27. Ra1 Rh6 28. d4 Be3 0-1#game_preview'>
+same as above, again with two games, with header but without displaying it, with narrower frame width and overflow</A>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?ep=t&amp;am=g&amp;d=1000&amp;ss=34&amp;ps=28&amp;pf=a&amp;lcs=W_iH&amp;dcs=MHW2&amp;bbcs=MHW2&amp;hm=s&amp;hcs=RKim&amp;bd=h&amp;hd=j&amp;md=f&amp;tm=12&amp;fhcs=$$$$&amp;fhs=16&amp;fmcs=$$$$&amp;fccs=v71$&amp;hmcs=RKim&amp;fms=16&amp;fcs=16&amp;cd=n&amp;bcs=W_iH&amp;fp=10&amp;hl=t&amp;fh=b&amp;fw=600&amp;pe=779$zlax9RvfEMab2l8$GSCLoZ9rheKl8$ydpr4d8sZmFWvfEMaZt2l8$GSAZjmWUXStaLEM7aaQ$V06NXd86AsMuuaQq1C3JzuGXGf7MUfjTb11nvBDf10zBgKzb05Xf3Cxb$yshpv9Fi7P16pEbyshpyv71Ex0zJfj16lBfVfF6$fcgzjU$T308VwGj5j0$QlIghGlDbn30kpQZvoGoj5f14MUrtmgSqz5n1dQRk6pW9vR$gSoDs8N2p0$ksAuD5GHF2r02GiCV0FIdfnD3sRU0yNzha4M4qf7jTAB0G3vfM0_$uWUX61C3yWQxf7OBxwixmuAVJT39rh_CvQxg$HZZmwCXmKaXCU4gixflmF0P1KtmUguKCOsTK1C3JzuGXGf8fXnjTb11nvBDf10zBfcizb0$Q5fbANb$v8Gj0jQ5vfJeaDm6APr0$QhpyE6790$QprysprwL30jM2lD6$v7x75Fi35j0$QhnyIhnvMvf3zNdzU0z$xy7sRN2b02l71pU0H$yR7pGW35P16pZM$lNDcL3sXxdZ7U0xvfWWzdQho0C$fCk8zsiUZvLT3me5v8Uz7j06sBv8c6V3504NoD1FzOY13$xU7P08D_fwv7Jic$iOeP7L1aCyf4k837P16jyf4k7P7T1dQhc6h7w0f7WTPstU16$gK303o1wTL0#game_preview'>
+similar to the above, with encoded PGN, with nicer colors and displaying header</a>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?ep=t&amp;am=g&amp;d=1000&amp;ss=34&amp;ps=28&amp;pf=a&amp;lcs=W_iH&amp;dcs=MHW2&amp;bbcs=MHW2&amp;hm=s&amp;hcs=RKim&amp;bd=h&amp;hd=j&amp;md=f&amp;tm=12&amp;fhcs=$$$$&amp;fhs=16&amp;fmcs=$$$$&amp;fccs=v71$&amp;hmcs=b&amp;fms=16&amp;fcs=16&amp;cd=n&amp;bcs=W_iH&amp;fp=10&amp;hl=t&amp;fh=b&amp;fw=600&amp;pe=779$zlax9RvfEMab2l8$GSCLoZ9rheKl8$ydpr4d8sZmFWvfEMaZt2l8$GSAZjmWUXStaLEM7aaQ$V06NXd86AsMuuaQq1C3JzuGXGf7MUfjTb11nvBDf10zBgKzb05Xf3Cxb$yshpv9Fi7P16pEbyshpyv71Ex0zJfj16lBfVfF6$fcgzjU$T308VwGj5j0$QlIghGlDbn30kpQZvoGoj5f14MUrtmgSqz5n1dQRk6pW9vR$gSoDs8N2p0$ksAuD5GHF2r02GiCV0FIdfnD3sRU0yNzha4M4qf7jTAB0G3vfM0_$uWUX61C3yWQxf7OBxwixmuAVJT39rh_CvQxg$HZZmwCXmKaXCU4gixflmF0P1KtmUguKCOsTK1C3JzuGXGf8fXnjTb11nvBDf10zBfcizb0$Q5fbANb$v8Gj0jQ5vfJeaDm6APr0$QhpyE6790$QprysprwL30jM2lD6$v7x75Fi35j0$QhnyIhnvMvf3zNdzU0z$xy7sRN2b02l71pU0H$yR7pGW35P16pZM$lNDcL3sXxdZ7U0xvfWWzdQho0C$fCk8zsiUZvLT3me5v8Uz7j06sBv8c6V3504NoD1FzOY13$xU7P08D_fwv7Jic$iOeP7L1aCyf4k837P16jyf4k7P7T1dQhc6h7w0f7WTPstU16$gK303o1wTL0#game_preview'>
+same as above, with highlight move color as background</a>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?ep=t&amp;am=g&amp;d=1000&amp;ss=34&amp;ps=28&amp;pf=a&amp;lcs=W_iH&amp;dcs=MHW2&amp;bbcs=MHW2&amp;hm=s&amp;hcs=RKim&amp;bd=h&amp;hd=j&amp;md=f&amp;tm=12&amp;fhcs=$$$$&amp;fhs=16&amp;fmcs=$$$$&amp;fccs=v71$&amp;hmcs=b&amp;fms=16&amp;fcs=16&amp;cd=n&amp;bcs=t&amp;fp=10&amp;hl=t&amp;fh=b&amp;fw=600&amp;pe=779$zlax9RvfEMab2l8$GSCLoZ9rheKl8$ydpr4d8sZmFWvfEMaZt2l8$GSAZjmWUXStaLEM7aaQ$V06NXd86AsMuuaQq1C3JzuGXGf7MUfjTb11nvBDf10zBgKzb05Xf3Cxb$yshpv9Fi7P16pEbyshpyv71Ex0zJfj16lBfVfF6$fcgzjU$T308VwGj5j0$QlIghGlDbn30kpQZvoGoj5f14MUrtmgSqz5n1dQRk6pW9vR$gSoDs8N2p0$ksAuD5GHF2r02GiCV0FIdfnD3sRU0yNzha4M4qf7jTAB0G3vfM0_$uWUX61C3yWQxf7OBxwixmuAVJT39rh_CvQxg$HZZmwCXmKaXCU4gixflmF0P1KtmUguKCOsTK1C3JzuGXGf8fXnjTb11nvBDf10zBfcizb0$Q5fbANb$v8Gj0jQ5vfJeaDm6APr0$QhpyE6790$QprysprwL30jM2lD6$v7x75Fi35j0$QhnyIhnvMvf3zNdzU0z$xy7sRN2b02l71pU0H$yR7pGW35P16pZM$lNDcL3sXxdZ7U0xvfWWzdQho0C$fCk8zsiUZvLT3me5v8Uz7j06sBv8c6V3504NoD1FzOY13$xU7P08D_fwv7Jic$iOeP7L1aCyf4k837P16jyf4k7P7T1dQhc6h7w0f7WTPstU16$gK303o1wTL0#game_preview'>
+same as above, with background color as transparent</a>
+
+<P></P>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=l&amp;d=3000&amp;ss=50&amp;ps=40&amp;pf=m&amp;lcs=XItn&amp;dcs=NpQK&amp;bbcs=k03b&amp;hm=b&amp;hcs=__X$&amp;bd=h&amp;hd=c&amp;md=f&amp;tm=0&amp;fhcs=k03b&amp;fhs=150p&amp;fmcs=k03b&amp;fccs=DPQ1&amp;hmcs=__X$&amp;fms=133p&amp;fcs=120p&amp;cd=n&amp;bcs=VZ2d&amp;fp=0&amp;hl=f&amp;fh=831&amp;fw=800&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 $6 {This is a weak move already.} 4. dxe5 $1 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 {$23 Black cant develop the knight because the Pawn is hanging, the Bishop is blocked because of the Queen.} b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ $18 Nxb8 17. Rd8 1-0#game_preview'>
+large board with colors, no buttons, font customizations with size in percentage, centered header and border highlight</A>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=l&amp;d=3000&amp;ss=50&amp;ps=40&amp;pf=m&amp;lcs=XItn&amp;dcs=NpQK&amp;bbcs=k03b&amp;hm=b&amp;hcs=__X$&amp;bd=h&amp;hd=c&amp;md=h&amp;tm=0&amp;fhcs=k03b&amp;fhs=150p&amp;bcs=VZ2d&amp;fp=0&amp;hl=f&amp;fh=555&amp;fw=600&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8 1-0 [Event ""] [Site "New York"] [Date "1857"] [Round ""] [White "Louis Paulsen"] [Black "Paul Morphy"] [Result "0-1"] 1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Bb5 Bc5 5. O-O O-O 6. Nxe5 Re8 7. Nxc6 dxc6 8. Bc4 b5 9. Be2 Nxe4 10. Nxe4 Rxe4 11. Bf3 Re6 12. c3 Qd3 13. b4 Bb6 14. a4 bxa4 15. Qxa4 Bd7 16. Ra2 Rae8 17. Qa6 Qxf3 18. gxf3 Rg6+ 19. Kh1 Bh3 20. Rd1 Bg2+ 21. Kg1 Bxf3+ 22. Kf1 Bg2+ 23. Kg1 Bh3+ 24. Kh1 Bxf2 25. Qf1 Bxf1 26. Rxf1 Re2 27. Ra1 Rh6 28. d4 Be3 0-1#game_preview'>
+same as above, with two games, no moves shown and loop trhough games</A>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=n&amp;d=3000&amp;ss=50&amp;ps=40&amp;pf=m&amp;lcs=XItn&amp;dcs=NpQK&amp;bbcs=k03b&amp;hm=b&amp;hcs=__X$&amp;bd=h&amp;hd=h&amp;md=f&amp;tm=0&amp;fmcs=k03b&amp;fccs=DPQ1&amp;hmcs=__X$&amp;fms=133p&amp;fcs=120p&amp;cd=n&amp;bcs=VZ2d&amp;fp=0&amp;hl=f&amp;fh=700&amp;fw=600&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8 1-0 [Event ""] [Site "New York"] [Date "1857"] [Round ""] [White "Louis Paulsen"] [Black "Paul Morphy"] [Result "0-1"] 1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Bb5 Bc5 5. O-O O-O 6. Nxe5 Re8 7. Nxc6 dxc6 8. Bc4 b5 9. Be2 Nxe4 10. Nxe4 Rxe4 11. Bf3 Re6 12. c3 Qd3 13. b4 Bb6 14. a4 bxa4 15. Qxa4 Bd7 16. Ra2 Rae8 17. Qa6 Qxf3 18. gxf3 Rg6+ 19. Kh1 Bh3 20. Rd1 Bg2+ 21. Kg1 Bxf3+ 22. Kf1 Bg2+ 23. Kg1 Bh3+ 24. Kh1 Bxf2 25. Qf1 Bxf1 26. Rxf1 Re2 27. Ra1 Rh6 28. d4 Be3 0-1#game_preview'>
+same as above but with moves shown, no comments, no header and no autoplay</A>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=n&amp;d=3000&amp;ss=50&amp;ps=40&amp;pf=m&amp;lcs=XItn&amp;dcs=NpQK&amp;bbcs=k03b&amp;hm=b&amp;hcs=__X$&amp;bd=c&amp;cbcs=Tcq4&amp;ctcs=k03b&amp;hd=h&amp;md=f&amp;tm=0&amp;fmcs=k03b&amp;fccs=DPQ1&amp;hmcs=__X$&amp;fms=133p&amp;fcs=120p&amp;cd=n&amp;bcs=VZ2d&amp;fp=0&amp;hl=f&amp;fh=730&amp;fw=600&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8 1-0 [Event ""] [Site "New York"] [Date "1857"] [Round ""] [White "Louis Paulsen"] [Black "Paul Morphy"] [Result "0-1"] 1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Bb5 Bc5 5. O-O O-O 6. Nxe5 Re8 7. Nxc6 dxc6 8. Bc4 b5 9. Be2 Nxe4 10. Nxe4 Rxe4 11. Bf3 Re6 12. c3 Qd3 13. b4 Bb6 14. a4 bxa4 15. Qxa4 Bd7 16. Ra2 Rae8 17. Qa6 Qxf3 18. gxf3 Rg6+ 19. Kh1 Bh3 20. Rd1 Bg2+ 21. Kg1 Bxf3+ 22. Kf1 Bg2+ 23. Kg1 Bh3+ 24. Kh1 Bxf2 25. Qf1 Bxf1 26. Rxf1 Re2 27. Ra1 Rh6 28. d4 Be3 0-1#game_preview'>
+same as above but with custom buttons</A>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=n&amp;d=3000&amp;ss=50&amp;ps=40&amp;pf=m&amp;lcs=XItn&amp;dcs=NpQK&amp;bbcs=k03b&amp;hm=b&amp;hcs=__X$&amp;bd=c&amp;cbcs=Tcq4&amp;ctcs=k03b&amp;hd=j&amp;md=f&amp;tm=0&amp;fhcs=k03b&amp;fhs=150p&amp;fmcs=k03b&amp;fccs=DPQ1&amp;hmcs=__X$&amp;fms=133p&amp;fcs=120p&amp;cd=n&amp;bcs=VZ2d&amp;fp=0&amp;hl=t&amp;fh=b&amp;fw=p&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8 1-0 [Event ""] [Site "New York"] [Date "1857"] [Round ""] [White "Louis Paulsen"] [Black "Paul Morphy"] [Result "0-1"] 1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Bb5 Bc5 5. O-O O-O 6. Nxe5 Re8 7. Nxc6 dxc6 8. Bc4 b5 9. Be2 Nxe4 10. Nxe4 Rxe4 11. Bf3 Re6 12. c3 Qd3 13. b4 Bb6 14. a4 bxa4 15. Qxa4 Bd7 16. Ra2 Rae8 17. Qa6 Qxf3 18. gxf3 Rg6+ 19. Kh1 Bh3 20. Rd1 Bg2+ 21. Kg1 Bxf3+ 22. Kf1 Bg2+ 23. Kg1 Bh3+ 24. Kh1 Bxf2 25. Qf1 Bxf1 26. Rxf1 Re2 27. Ra1 Rh6 28. d4 Be3 0-1#game_preview'>
+same as above, with horizontal layout, with header, frame width as page and frame height as board</A>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=n&amp;d=3000&amp;ss=50&amp;ps=40&amp;pf=m&amp;lcs=XItn&amp;dcs=NpQK&amp;bbcs=k03b&amp;hm=b&amp;hcs=__X$&amp;bd=c&amp;cbcs=Tcq4&amp;ctcs=k03b&amp;hd=j&amp;md=f&amp;tm=0&amp;fhcs=k03b&amp;fhs=150p&amp;fmcs=k03b&amp;fccs=DPQ1&amp;hmcs=__X$&amp;fms=133p&amp;fcs=120p&amp;cd=n&amp;bcs=VZ2d&amp;fp=0&amp;hl=t&amp;fh=b&amp;fw=p&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 $6 {This is a weak move already.} 4. dxe5 $1 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 {$23 Black cant develop the knight because the Pawn is hanging, the Bishop is blocked because of the Queen.} b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ $18 Nxb8 17. Rd8 1-0#game_preview'>
+same as above, with one game only and with comments</A>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=n&amp;d=3000&amp;ss=50&amp;ps=40&amp;pf=m&amp;lcs=XItn&amp;dcs=NpQK&amp;bbcs=k03b&amp;hm=b&amp;hcs=__X$&amp;bd=c&amp;cbcs=Tcq4&amp;ctcs=k03b&amp;hd=j&amp;md=t&amp;tm=0&amp;fhcs=k03b&amp;fhs=150p&amp;fmcs=k03b&amp;fccs=DPQ1&amp;hmcs=__X$&amp;fms=133p&amp;fcs=120p&amp;cd=n&amp;bcs=VZ2d&amp;fp=0&amp;hl=t&amp;fh=b&amp;fw=p&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 $6 {This is a weak move already.} 4. dxe5 $1 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 {$23 Black cant develop the knight because the Pawn is hanging, the Bishop is blocked because of the Queen.} b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ $18 Nxb8 17. Rd8 1-0#game_preview'>
+same as above, without figurine fonts</A>
+
+<P></P>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=l&amp;d=3000&amp;ss=26&amp;ps=20&amp;pf=u&amp;lcs=Wtyk&amp;dcs=OXJO&amp;bbcs=OXJO&amp;hm=s&amp;hcs=ZbNv&amp;bd=h&amp;hd=c&amp;md=f&amp;tm=0&amp;fhcs=$$$$&amp;fhs=11&amp;fmcs=$$$$&amp;fccs=v71$&amp;hmcs=ZbNv&amp;fms=11&amp;fcs=11&amp;cd=h&amp;bcs=Wtyk&amp;fp=0&amp;hl=f&amp;fh=388&amp;fw=214&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 $6 {This is a weak move already.} 4. dxe5 $1 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 {$23 Black cant develop the knight because the Pawn is hanging, the Bishop is blocked because of the Queen.} b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ $18 Nxb8 17. Rd8 1-0#game_preview'>
+tiny board, tiny fonts and centered header</a>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=l&amp;d=3000&amp;ss=26&amp;ps=20&amp;pf=u&amp;lcs=Wtyk&amp;dcs=OXJO&amp;bbcs=OXJO&amp;hm=s&amp;hcs=ZbNv&amp;bd=h&amp;hd=c&amp;md=f&amp;tm=0&amp;fhcs=$$$$&amp;fhs=11&amp;fmcs=$$$$&amp;fccs=v71$&amp;hmcs=ZbNv&amp;fms=11&amp;fcs=11&amp;cd=h&amp;bcs=Wtyk&amp;fp=10&amp;hl=f&amp;fh=400&amp;fw=234&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 $6 {This is a weak move already.} 4. dxe5 $1 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 {$23 Black cant develop the knight because the Pawn is hanging, the Bishop is blocked because of the Queen.} b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ $18 Nxb8 17. Rd8 1-0#game_preview'>
+same as above, with frame padding</a>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=l&amp;d=3000&amp;ss=26&amp;ps=20&amp;pf=u&amp;lcs=Wtyk&amp;dcs=OXJO&amp;bbcs=OXJO&amp;hm=s&amp;hcs=ZbNv&amp;bd=h&amp;hd=j&amp;md=f&amp;tm=0&amp;fhcs=$$$$&amp;fhs=11&amp;fmcs=$$$$&amp;fccs=kQka&amp;hmcs=ZbNv&amp;fms=11&amp;fcs=11&amp;cd=n&amp;bcs=Wtyk&amp;fp=10&amp;hl=f&amp;fh=580&amp;fw=234&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 $6 {This is a weak move already.} 4. dxe5 $1 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 {$23 Black cant develop the knight because the Pawn is hanging, the Bishop is blocked because of the Queen.} b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ $18 Nxb8 17. Rd8 1-0#game_preview'>
+same as above, with justified header, with frame padding and comments</a>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=l&amp;d=3000&amp;ss=26&amp;ps=20&amp;pf=u&amp;lcs=Wtyk&amp;dcs=OXJO&amp;bbcs=OXJO&amp;hm=s&amp;hcs=ZbNv&amp;bd=c&amp;cbcs=Vdef&amp;ctcs=umEH&amp;hd=j&amp;md=f&amp;tm=0&amp;fhcs=$$$$&amp;fhs=11&amp;fmcs=$$$$&amp;fccs=kQka&amp;hmcs=ZbNv&amp;fms=11&amp;fcs=11&amp;cd=n&amp;bcs=Wtyk&amp;fp=10&amp;hl=f&amp;fh=520&amp;fw=234&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8 1-0 [Event ""] [Site "New York"] [Date "1857"] [Round ""] [White "Louis Paulsen"] [Black "Paul Morphy"] [Result "0-1"] 1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Bb5 Bc5 5. O-O O-O 6. Nxe5 Re8 7. Nxc6 dxc6 8. Bc4 b5 9. Be2 Nxe4 10. Nxe4 Rxe4 11. Bf3 Re6 12. c3 Qd3 13. b4 Bb6 14. a4 bxa4 15. Qxa4 Bd7 16. Ra2 Rae8 17. Qa6 Qxf3 18. gxf3 Rg6+ 19. Kh1 Bh3 20. Rd1 Bg2+ 21. Kg1 Bxf3+ 22. Kf1 Bg2+ 23. Kg1 Bh3+ 24. Kh1 Bxf2 25. Qf1 Bxf1 26. Rxf1 Re2 27. Ra1 Rh6 28. d4 Be3 0-1#game_preview'>
+same as above, with two games, frame padding, no comments and custom buttons</a>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=l&amp;d=3000&amp;ss=26&amp;ps=20&amp;pf=u&amp;lcs=Wtyk&amp;dcs=OXJO&amp;bbcs=OXJO&amp;hm=s&amp;hcs=ZbNv&amp;bd=c&amp;cbcs=Vdef&amp;ctcs=umEH&amp;hd=j&amp;md=f&amp;tm=0&amp;fhcs=$$$$&amp;fhs=11&amp;fmcs=$$$$&amp;fccs=kQka&amp;hmcs=ZbNv&amp;fms=11&amp;fcs=11&amp;cd=n&amp;bcs=Wtyk&amp;fp=10&amp;hl=f&amp;fh=520&amp;fw=234&amp;ep=f&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8 1-0 [Event ""] [Site "New York"] [Date "1857"] [Round ""] [White "Louis Paulsen"] [Black "Paul Morphy"] [Result "0-1"] 1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Bb5 Bc5 5. O-O O-O 6. Nxe5 Re8 7. Nxc6 dxc6 8. Bc4 b5 9. Be2 Nxe4 10. Nxe4 Rxe4 11. Bf3 Re6 12. c3 Qd3 13. b4 Bb6 14. a4 bxa4 15. Qxa4 Bd7 16. Ra2 Rae8 17. Qa6 Qxf3 18. gxf3 Rg6+ 19. Kh1 Bh3 20. Rd1 Bg2+ 21. Kg1 Bxf3+ 22. Kf1 Bg2+ 23. Kg1 Bh3+ 24. Kh1 Bxf2 25. Qf1 Bxf1 26. Rxf1 Re2 27. Ra1 Rh6 28. d4 Be3 0-1#game_preview'>
+same as above, without PGN encoding</a>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=l&amp;d=3000&amp;ss=26&amp;ps=20&amp;pf=u&amp;lcs=Wtyk&amp;dcs=OXJO&amp;bbcs=OXJO&amp;hm=s&amp;hcs=ZbNv&amp;bd=c&amp;cbcs=Vdef&amp;ctcs=umEH&amp;hd=j&amp;md=f&amp;tm=0&amp;fhcs=$$$$&amp;fhs=11&amp;fmcs=$$$$&amp;fccs=kQka&amp;hmcs=ZbNv&amp;fms=11&amp;fcs=11&amp;cd=n&amp;bcs=Wtyk&amp;fp=10&amp;hl=f&amp;fh=520&amp;fw=234&amp;ep=f&amp;pe=779$zlax9RvfEMab2l8$GSCLoZ9rheKl8$ydpr4d8sZmFWvfEMaZt2l8$GSAZjmWUXStaLEM7aaQ$V06NXd86AsMuuaQq1C3JzuGXGf7MUfjTb11nvBDf10zBgKzb05Xf3Cxb$yshpv9Fi7P16pEbyshpyv71Ex0zJfj16lBfVfF6$fcgzjU$T308VwGj5j0$QlIghGlDbn30kpQZvoGoj5f14MUrtmgSqz5n1dQRk6pW9vR$gSoDs8N2p0$ksAuD5GHF2r02GiCV0FIdfnD3sRU0yNzha4M4qf7jTAB0G3vfM0_$uWUX61C3yWQxf7OBxwixmuAVJT39rh_CvQxg$HZZmwCXmKaXCU4gixflmF0P1KtmUguKCOsTK1C3JzuGXGf8fXnjTb11nvBDf10zBfcizb0$Q5fbANb$v8Gj0jQ5vfJeaDm6APr0$QhpyE6790$QprysprwL30jM2lD6$v7x75Fi35j0$QhnyIhnvMvf3zNdzU0z$xy7sRN2b02l71pU0H$yR7pGW35P16pZM$lNDcL3sXxdZ7U0xvfWWzdQho0C$fCk8zsiUZvLT3me5v8Uz7j06sBv8c6V3504NoD1FzOY13$xU7P08D_fwv7Jic$iOeP7L1aCyf4k837P16jyf4k7P7T1dQhc6h7w0f7WTPstU16$gK303o1wTL0#game_preview'>
+same as above, supplying an encoded PGN</a>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=l&amp;d=3000&amp;ss=26&amp;ps=20&amp;pf=u&amp;lcs=Wtyk&amp;dcs=OXJO&amp;bbcs=OXJO&amp;hm=n&amp;hcs=ZbNv&amp;bd=c&amp;cbcs=Vdef&amp;ctcs=umEH&amp;hd=h&amp;md=f&amp;tm=0&amp;fmcs=$$$$&amp;fccs=kQka&amp;hmcs=ZbNv&amp;fms=14&amp;fcs=14&amp;cd=n&amp;bcs=Wtyk&amp;fp=10&amp;hl=t&amp;fh=369&amp;fw=357&amp;ep=f&amp;pe=779$zlax9RvfEMab2l8$GSCLoZ9rheKl8$ydpr4d8sZmFWvfEMaZt2l8$GSAZjmWUXStaLEM7aaQ$V06NXd86AsMuuaQq1C3JzuGXGf7MUfjTb11nvBDf10zBgKzb05Xf3Cxb$yshpv9Fi7P16pEbyshpyv71Ex0zJfj16lBfVfF6$fcgzjU$T308VwGj5j0$QlIghGlDbn30kpQZvoGoj5f14MUrtmgSqz5n1dQRk6pW9vR$gSoDs8N2p0$ksAuD5GHF2r02GiCV0FIdfnD3sRU0yNzha4M4qf7jTAB0G3vfM0_$uWUX61C3yWQxf7OBxwixmuAVJT39rh_CvQxg$HZZmwCXmKaXCU4gixflmF0P1KtmUguKCOsTK1C3JzuGXGf8fXnjTb11nvBDf10zBfcizb0$Q5fbANb$v8Gj0jQ5vfJeaDm6APr0$QhpyE6790$QprysprwL30jM2lD6$v7x75Fi35j0$QhnyIhnvMvf3zNdzU0z$xy7sRN2b02l71pU0H$yR7pGW35P16pZM$lNDcL3sXxdZ7U0xvfWWzdQho0C$fCk8zsiUZvLT3me5v8Uz7j06sBv8c6V3504NoD1FzOY13$xU7P08D_fwv7Jic$iOeP7L1aCyf4k837P16jyf4k7P7T1dQhc6h7w0f7WTPstU16$gK303o1wTL0#game_preview'>
+same as above, with horizontal layout, larger move fonts, taller frame height and no highlight</a>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=n&amp;d=3000&amp;ig=l&amp;ih=33&amp;ss=26&amp;ps=20&amp;pf=u&amp;lcs=Wtyk&amp;dcs=OXJO&amp;bbcs=OXJO&amp;hm=n&amp;hcs=ZbNv&amp;bd=c&amp;cbcs=Vdef&amp;ctcs=umEH&amp;hd=c&amp;md=f&amp;tm=0&amp;fhcs=$$$$&amp;fhs=16&amp;fmcs=$$$$&amp;fccs=kQka&amp;hmcs=ZbNv&amp;fms=14&amp;fcs=14p&amp;cd=n&amp;bcs=Wtyk&amp;fp=10&amp;hl=t&amp;fh=b&amp;fw=p&amp;pe=779$zlax9RvfEMab2l8$GSCLoZ9rheKl8$ydpr4d8sZmFWvfEMaZt2l8$GSAZjmWUXStaLEM7aaQ$V06NXd86AsMuuaQq1C3JzuGXGf7MUfjTb11nvBDf10zBgKzb05Xf3Cxb$yshpv9Fi7P16pEbyshpyv71Ex0zJfj16lBfVfF6$fcgzjU$T308VwGj5j0$QlIghGlDbn30kpQZvoGoj5f14MUrtmgSqz5n1dQRk6pW9vR$gSoDs8N2p0$ksAuD5GHF2r02GiCV0FIdfnD3sRU0yNzha4M4qf7jTAB0G3vfM0_$uWUX61C3yWQxf7OBxwixmuAVJT39rh_CvQxg$HZZmwCXmKaXCU4gixflmF0P1KtmUguKCOsTK1C3JzuGXGf8fXnjTb11nvBDf10zBfcizb0$Q5fbANb$v8Gj0jQ5vfJeaDm6APr0$QhpyE6790$QprysprwL30jM2lD6$v7x75Fi35j0$QhnyIhnvMvf3zNdzU0z$xy7sRN2b02l71pU0H$yR7pGW35P16pZM$lNDcL3sXxdZ7U0xvfWWzdQho0C$fCk8zsiUZvLT3me5v8Uz7j06sBv8c6V3504NoD1FzOY13$xU7P08D_fwv7Jic$iOeP7L1aCyf4k837P16jyf4k7P7T1dQhc6h7w0f7WTPstU16$gK303o1wTL0#game_preview'>
+same games, with horizontal layout, board height and page width, centered header, autoplay none, initial game last and initial halfmove number</a>
+
+<P></P>
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=n&amp;d=3000&amp;ig=l&amp;ih=33&amp;ss=26&amp;ps=20&amp;pf=u&amp;lcs=Wtyk&amp;dcs=OXJO&amp;bbcs=OXJO&amp;hm=n&amp;hcs=ZbNv&amp;bd=c&amp;cbcs=Vdef&amp;ctcs=umEH&amp;hd=c&amp;md=f&amp;tm=0&amp;fhcs=$$$$&amp;fhs=16&amp;fmcs=$$$$&amp;fccs=kQka&amp;hmcs=ZbNv&amp;fms=14&amp;fcs=14&amp;cd=n&amp;bcs=Wtyk&amp;fp=10&amp;hl=t&amp;fh=b&amp;fw=p&amp;bu=board.html&amp;ut=t&amp;ep=f&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8 1-0 [Event ""] [Site "New York"] [Date "1857"] [Round ""] [White "Louis Paulsen"] [Black "Paul Morphy"] [Result "0-1"] 1. e4 e5 {comments коментарии} 2. Nf3 Nc6 3. Nc3 Nf6 4. Bb5 Bc5 5. O-O O-O 6. Nxe5 Re8 7. Nxc6 dxc6 8. Bc4 b5 9. Be2 Nxe4 10. Nxe4 Rxe4 11. Bf3 Re6 12. c3 Qd3 13. b4 Bb6 14. a4 bxa4 15. Qxa4 Bd7 16. Ra2 Rae8 17. Qa6 Qxf3 18. gxf3 Rg6+ 19. Kh1 Bh3 20. Rd1 Bg2+ 21. Kg1 Bxf3+ 22. Kf1 Bg2+ 23. Kg1 Bh3+ 24. Kh1 Bxf2 25. Qf1 Bxf1 26. Rxf1 Re2 27. Ra1 Rh6 28. d4 Be3 0-1#game_preview'>
+same as above, enabling useTextarea (and setting baseUrl and disabling encodePgn as required by useTextarea) and adding non ascii characters as comments</a>
+
+<P></P>
+
+</OL>
+
+</body>
+
+</html>
+
+<!--
+
+Baseline URL excluding &amp;pt
+==========================
+
+<LI><A ONCLICK='return refreshTarget(this.href);' HREF='board-generator.html?am=g&amp;d=1000&amp;ss=40&amp;ps=d&amp;pf=d&amp;lcs=W_iH&amp;dcs=MHW2&amp;bbcs=$$$$&amp;hm=s&amp;hcs=RKim&amp;bd=h&amp;hd=j&amp;md=f&amp;tm=0&amp;fhcs=$$$$&amp;fhs=16&amp;fmcs=$$$$&amp;fccs=v71$&amp;hmcs=RKim&amp;fms=16&amp;fcs=m&amp;cd=i&amp;bcs=____&amp;fp=0&amp;hl=f&amp;fh=726&amp;fw=489'>
+
+Remember to correct to the desired value the parameters fh and fw from the board-generator URL.
+
+one game with comments
+======================
+
+[Event ""]
+[Site "Paris"]
+[Date "1858"]
+[Round ""]
+[White "Paul Morphy"]
+[Black "Duke and Count"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 d6 3. d4 Bg4 $6 {This is a weak move already.} 4. dxe5 $1 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 {$23 Black cant develop the knight because the Pawn is hanging, the Bishop is blocked because of the Queen.} b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ $18 Nxb8 17. Rd8 1-0
+
+&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 $6 {This is a weak move already.} 4. dxe5 $1 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 {$23 Black cant develop the knight because the Pawn is hanging, the Bishop is blocked because of the Queen.} b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ $18 Nxb8 17. Rd8 1-0
+
+&amp;pe=490$zlax9RvfEMab2l8$GSCLoZ9rheKl8$ydpr4d8sZmFWvfEMaZt2l8$GSAZjmWUXStaLEM7aaQ$V06NXd86AsMuuaQq1C3JzuGXGf7MUfjTb11nvBDf10zBgKzb05Xf3Cx1_eOLo_$o_6D6Ue0P2WTJ86HCMeqaL2Zy$7SjBD1FzNc$wRFi7SjBDT1$Fnvoaz4$wQEzdz9wL32jo4dfd0$htDaXaaQ$V$OZ$NHtycQVtqy_NFrc_CTpLqUl6xexu_7t84e9Ryo1TBmOtae3vdk28KlwDAeaSU7HXhaSwZG$o_2SAjLNFntxOM712eSKBX0CXcouj2xqwDAeaSU7ZhxOM7smz7F$_DpQ0A$fckGjjFQF250$klIuD5pRk0z$wrtm6APsRU0B$yIsAgRJNDcv3sRp6hrvRvf4momV0FW9vS$fVPUZvpGiz5906sJfnXD0
+
+two games without comments
+==========================
+
+[Event ""]
+[Site "Paris"]
+[Date "1858"]
+[Round ""]
+[White "Paul Morphy"]
+[Black "Duke and Count"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8 1-0
+
+[Event ""]
+[Site "New York"]
+[Date "1857"]
+[Round ""]
+[White "Louis Paulsen"]
+[Black "Paul Morphy"]
+[Result "0-1"]
+
+1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Bb5 Bc5 5. O-O O-O 6. Nxe5 Re8 7. Nxc6 dxc6 8. Bc4 b5 9. Be2 Nxe4 10. Nxe4 Rxe4 11. Bf3 Re6 12. c3 Qd3 13. b4 Bb6 14. a4 bxa4 15. Qxa4 Bd7 16. Ra2 Rae8 17. Qa6 Qxf3 18. gxf3 Rg6+ 19. Kh1 Bh3 20. Rd1 Bg2+ 21. Kg1 Bxf3+ 22. Kf1 Bg2+ 23. Kg1 Bh3+ 24. Kh1 Bxf2 25. Qf1 Bxf1 26. Rxf1 Re2 27. Ra1 Rh6 28. d4 Be3 0-1
+
+&amp;pt=[Event ""] [Site "Paris"] [Date "1858"] [Round ""] [White "Paul Morphy"] [Black "Duke and Count"] [Result "1-0"] 1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8 1-0 [Event ""] [Site "New York"] [Date "1857"] [Round ""] [White "Louis Paulsen"] [Black "Paul Morphy"] [Result "0-1"] 1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Bb5 Bc5 5. O-O O-O 6. Nxe5 Re8 7. Nxc6 dxc6 8. Bc4 b5 9. Be2 Nxe4 10. Nxe4 Rxe4 11. Bf3 Re6 12. c3 Qd3 13. b4 Bb6 14. a4 bxa4 15. Qxa4 Bd7 16. Ra2 Rae8 17. Qa6 Qxf3 18. gxf3 Rg6+ 19. Kh1 Bh3 20. Rd1 Bg2+ 21. Kg1 Bxf3+ 22. Kf1 Bg2+ 23. Kg1 Bh3+ 24. Kh1 Bxf2 25. Qf1 Bxf1 26. Rxf1 Re2 27. Ra1 Rh6 28. d4 Be3 0-1
+
+&amp;pe=779$zlax9RvfEMab2l8$GSCLoZ9rheKl8$ydpr4d8sZmFWvfEMaZt2l8$GSAZjmWUXStaLEM7aaQ$V06NXd86AsMuuaQq1C3JzuGXGf7MUfjTb11nvBDf10zBgKzb05Xf3Cxb$yshpv9Fi7P16pEbyshpyv71Ex0zJfj16lBfVfF6$fcgzjU$T308VwGj5j0$QlIghGlDbn30kpQZvoGoj5f14MUrtmgSqz5n1dQRk6pW9vR$gSoDs8N2p0$ksAuD5GHF2r02GiCV0FIdfnD3sRU0yNzha4M4qf7jTAB0G3vfM0_$uWUX61C3yWQxf7OBxwixmuAVJT39rh_CvQxg$HZZmwCXmKaXCU4gixflmF0P1KtmUguKCOsTK1C3JzuGXGf8fXnjTb11nvBDf10zBfcizb0$Q5fbANb$v8Gj0jQ5vfJeaDm6APr0$QhpyE6790$QprysprwL30jM2lD6$v7x75Fi35j0$QhnyIhnvMvf3zNdzU0z$xy7sRN2b02l71pU0H$yR7pGW35P16pZM$lNDcL3sXxdZ7U0xvfWWzdQho0C$fCk8zsiUZvLT3me5v8Uz7j06sBv8c6V3504NoD1FzOY13$xU7P08D_fwv7Jic$iOeP7L1aCyf4k837P16jyf4k7P7T1dQhc6h7w0f7WTPstU16$gK303o1wTL0
+
+-->
+

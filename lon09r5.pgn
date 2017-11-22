@@ -1,0 +1,81 @@
+[Event "London Chess Classic"]
+[Site "London"]
+[Date "2009.12.13"]
+[Round "5"]
+[White "Ni, Hua"]
+[Black "Carlsen, Magnus"]
+[Result "0-1"]
+[WhiteElo "2665"]
+[BlackElo "2801"]
+[ECO "B51"]
+
+1. e4 c5 2. Nf3 d6 3. Bb5+ Nd7 4. d4 a6 5. Bxd7+ Bxd7 6. dxc5 dxc5 7. Nc3
+e6 8. Bf4 Ne7 9. Ne5 Ng6 10. Qh5 Bc6 11. Bg3 Nxe5 12. Bxe5 c4 13. O-O Qa5
+14. Qg5 h6 15. Qg3 f6 16. Qg6+ Ke7 17. Bf4 Be8 18. Qg3 Kf7 19. Rad1 Bc6 20.
+Rd2 e5 21. Be3 Bb4 22. f4 Rhe8 23. f5 Bc5 24. Rfd1 Rad8 25. Rxd8 Bxe3+ 26.
+Qxe3 Rxd8 27. Rxd8 Qxd8 28. Kf2 Qd6 29. a3 a5 30. Kf3 Kg8 31. g3 b5 32. Ke2
+b4 33. axb4 axb4 34. Nd1 Ba4 35. b3 cxb3 36. cxb3 Qa6+ 37. Kd2 Bb5 38. Qc5
+Qa2+ 39. Qc2 Qa7 40. Qc8+ Kh7 41. Kc1 Qa1+ 42. Kc2 Qd4 0-1
+
+[Event "London Chess Classic"]
+[Site "London"]
+[Date "2009.12.13"]
+[Round "5"]
+[White "Howell, David"]
+[Black "Kramnik, Vladimir"]
+[Result "1/2-1/2"]
+[WhiteElo "2597"]
+[BlackElo "2772"]
+[ECO "C42"]
+
+1. e4 e5 2. Nf3 Nf6 3. Nxe5 d6 4. Nf3 Nxe4 5. d4 d5 6. Bd3 Nc6 7. O-O Be7
+8. Re1 Bg4 9. c3 f5 10. Qb3 O-O 11. Nbd2 Na5 12. Qa4 Nc6 13. Qb3 Na5 14.
+Qc2 Nc6 15. b4 a6 16. Rb1 b5 17. a4 Rb8 18. axb5 axb5 19. Ne5 Nxe5 20. dxe5
+Nxf2 21. Kxf2 Bh4+ 22. Kf1 Bxe1 23. Kxe1 Qh4+ 24. g3 Qxh2 25. Nf1 Qxc2 26.
+Bxc2 Rbe8 27. Bd3 Rxe5+ 28. Kf2 f4 29. gxf4 Bf5 30. Bxf5 Rexf5 31. Ng3 R5f6
+32. Kf3 Rc6 33. Bd2 g5 34. Ne2 gxf4 35. Nd4 Rg6 36. Nxb5 Rg3+ 37. Kf2 Rd3
+38. Rg1+ Kh8 39. Ke2 Rg3 40. Kf2 Rxg1 41. Kxg1 c5 42. Nd6 cxb4 43. cxb4 Kg7
+44. Bc3+ Kg6 45. b5 Rd8 46. Be5 Rb8 47. Bd4 Rd8 48. Be5 Rb8 49. Kf2 Rb6 50.
+Kf3 Kg5 51. Nf7+ Kg6 52. Nd6 Kg5 53. Nf7+ Kg6 1/2-1/2
+
+[Event "London Chess Classic"]
+[Site "London"]
+[Date "2009.12.13"]
+[Round "5"]
+[White "Nakamura, Hikaru"]
+[Black "McShane, Luke"]
+[Result "0-1"]
+[WhiteElo "2715"]
+[BlackElo "2615"]
+[ECO "E94"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Be2 O-O 6. Nf3 e5 7. O-O Na6 8.
+Be3 Ng4 9. Bg5 Qe8 10. c5 exd4 11. Nd5 Be6 12. Be7 Bxd5 13. Bxf8 Qxf8 14.
+exd5 dxc5 15. Qb3 Rb8 16. Rfe1 Qd6 17. h3 Nf6 18. Bxa6 Qxa6 19. Rac1 Bf8
+20. Ne5 Qb6 21. Qf3 Qd6 22. g4 Bh6 23. Rc2 Re8 24. Rce2 Rf8 25. Nc4 Qxd5
+26. Qxf6 Bg7 27. Qh4 Qxc4 28. Re8 Qd5 29. Rxf8+ Bxf8 30. Re8 Kg7 31. g5 Qd6
+32. Kf1 b5 33. Ke1 c4 34. Qe4 c5 35. h4 c3 36. bxc3 dxc3 37. Qe5+ Qxe5+ 38.
+Rxe5 a5 39. Kd1 a4 40. a3 b4 41. Kc2 h6 42. Rd5 hxg5 43. hxg5 Kh7 44. Rd7
+Bg7 45. Rxf7 b3+ 46. Kb1 Kg8 47. Ra7 Bd4 48. Rxa4 Kf7 49. Ra6 Be5 50. Ra4
+Ke6 51. Rh4 Kd5 52. a4 c4 53. Rh1 c2+ 54. Kc1 c3 55. Rh4 Bd6 0-1
+
+[Event "London Chess Classic"]
+[Site "London"]
+[Date "2009.12.13"]
+[Round "5"]
+[White "Adams, Michael"]
+[Black "Short, Nigel"]
+[Result "1/2-1/2"]
+[WhiteElo "2698"]
+[BlackElo "2707"]
+[ECO "C80"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Nxe4 6. d4 b5 7. Bb3 d5 8.
+dxe5 Be6 9. Nbd2 Nc5 10. c3 Nxb3 11. Nxb3 Be7 12. h3 O-O 13. Re1 a5 14. a4
+bxa4 15. Rxa4 Qd7 16. Nbd4 Nxd4 17. cxd4 Rfb8 18. Bd2 Rxb2 19. Rxa5 Rxa5
+20. Bxa5 Bf5 21. Bc3 Rb6 22. Kh2 h6 23. Qa1 Rg6 24. Bd2 Kh7 25. Qc3 Be4 26.
+Qe3 Qf5 27. Qf4 Qxf4+ 28. Bxf4 c5 29. dxc5 Bxc5 30. Be3 d4 31. Bd2 Bd5 32.
+Rc1 Ba7 33. Ra1 Bb6 34. Ra4 d3 35. Be3 Bc7 36. Bf4 Rc6 37. Rd4 Bxf3 38.
+gxf3 Rc3 39. Kg2 g5 40. e6 Bb6 41. Rxd3 Rxd3 42. e7 Rd8 43. exd8=Q Bxd8
+1/2-1/2
+

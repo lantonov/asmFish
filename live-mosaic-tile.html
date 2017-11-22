@@ -1,0 +1,407 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2015 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<title>pgn4web live chessboard</title>
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+<script src="pgn4web.js" type="text/javascript"></script>
+<script src="engine.js" type="text/javascript"></script>
+
+<script src="fide-lookup.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+  "use strict";
+
+  var thisRegExp;
+
+  var readyToReceivePgn = false;
+
+  var useTextarea = false;
+  thisRegExp = /(&|\?)(useTextarea|ut)=([^&]*)(&|$)/i;
+  if (window.location.search.match(thisRegExp) !== null) {
+    var useTextareaValue = unescape(window.location.search.match(thisRegExp)[3]);
+    if ((useTextareaValue == "true") || (useTextareaValue == "t")) { useTextarea = true; }
+  }
+
+  var pgnFile_default = location.protocol + "//" + location.hostname +
+    location.pathname.replace(/\/[^\/]*$/, "/live/live.pgn");
+  var pgnFile = pgnFile_default;
+  thisRegExp = /(&|\?)(pgnData|pd)=([^&]*)(&|$)/i;
+  if (window.location.search.match(thisRegExp) !== null) {
+    pgnFile = unescape(window.location.search.match(thisRegExp)[3]);
+  } else {
+    // accepts pgnData as alias for pgnFile for consistency with board.html
+    thisRegExp = /(&|\?)(pgnFile|pf)=([^&]*)(&|$)/i;
+    if (window.location.search.match(thisRegExp) !== null) {
+      pgnFile = unescape(window.location.search.match(thisRegExp)[3]);
+    }
+  }
+
+  var alertFlag = false;
+  var demoFlag = false;
+  thisRegExp = /(&|\?)(refreshDemo|rd|demo|d)=([^&]*)(&|$)/i;
+  if (window.location.search.match(thisRegExp) !== null) {
+    var refreshDemo = unescape(window.location.search.match(thisRegExp)[3]);
+    if ((refreshDemo == "true") || (refreshDemo == "t")) { alertFlag = demoFlag = true; }
+  }
+
+  var refreshMinutes_default = 1;
+  var refreshMinutes = refreshMinutes_default;
+  var stepFlag = true;
+  thisRegExp = /(&|\?)(refreshMinutes|rm)=([^&]*)(&|$)/i;
+  if (window.location.search.match(thisRegExp) !== null) {
+    refreshMinutes = parseFloat(unescape(window.location.search.match(thisRegExp)[3]));
+    if (isNaN(refreshMinutes)) { refreshMinutes = refreshMinutes_default; }
+    if (refreshMinutes <= 0) { refreshMinutes = refreshMinutes_default; }
+  }
+
+  var iniGame_default = 1;
+  var iniGame = iniGame_default;
+  thisRegExp = /(&|\?)(initialGame|ig)=([^&]*)(&|$)/i;
+  if (window.location.search.match(thisRegExp) !== null) {
+    iniGame = unescape(window.location.search.match(thisRegExp)[3]);
+  }
+
+  // set hideFinishedGamesClocks to true/false to hide/show the clocks of finished games
+  var hideFinishedGamesClocks = true;
+
+  thisRegExp = /(&|\?)(help|h)=(true|t)(&|$)/i;
+  if (window.location.search.match(thisRegExp) !== null) {
+    alert("pgn4web live-mosaic-tile.html parameters" + "\n" +
+      " - useTextarea = " + useTextarea + "; if set true uses textarea as PGN input (default false = use pgnData)" + "\n" +
+      " - pgnData = " + pgnFile + "; PGN file to load (default " + pgnFile_default + ")" + "\n" +
+      " - refreshMinutes = " + refreshMinutes + "; refresh interval in minutes, decimals allowed (default " + refreshMinutes_default + ")" + "\n" +
+      " - refreshDemo = " + demoFlag + "; sets live demo mode (default false)" + "\n" +
+      " - initialGame = " + iniGame + "; initial game number or search string" + "\n" +
+      " - help = true");
+  }
+
+  if (!useTextarea) { SetPgnUrl(pgnFile); }
+  SetImagePath("images/alpha/24");
+  SetImageType("png");
+  SetHighlightOption(true); // true or false
+  SetCommentsIntoMoveText(false);
+  SetCommentsOnSeparateLines(false);
+  SetAutoplayDelay(1000); // milliseconds
+  SetAutostartAutoplay(false);
+  SetAutoplayNextGame(false);
+  SetInitialGame(iniGame);
+  SetInitialVariation(0);
+  SetInitialHalfmove("end", true);
+  SetShortcutKeysEnabled(false);
+  SetLiveBroadcast(refreshMinutes, demoFlag, alertFlag, stepFlag);
+
+  clearShortcutSquares("G", "8");
+  clearShortcutSquares("BCEFG", "7");
+  clearShortcutSquares("CDEF", "6");
+  clearShortcutSquares("ABCDEFGH", "345");
+
+  try {
+    var pcscsfcf, cscs;
+    if (parent && (parent !== window) && (pcscsfcf = parent.pgn4webClearShortCutSquaresForChildFrames)) {
+      for (cscs in pcscsfcf) { clearShortcutSquares(pcscsfcf[cscs][0], pcscsfcf[cscs][1]); }
+    }
+    if (parent && (parent !== window) && parent.displayPgnData && parent.savePgnData) {
+      boardShortcut("D8", "show full PGN source data", function(t,e){ if (e.shiftKey) { parent.savePgnData(); } else { parent.displayPgnData(); } });
+    }
+  } catch(e) { myAlert("warning: failed accessing frame's parent for shortcut squares to clear", false); }
+
+  function addTagToTitle(tagLabel, tagValue, object) {
+    if (!tagValue || tagValue[1] == "?" || !object) { return; }
+    object.title += ((object.title && tagLabel) ? "\n" : (object.title ? "  " : "")) + simpleHtmlentitiesDecode(tagLabel + tagValue);
+  }
+
+  function hideThisGame() {
+    try {
+      if (parent && (parent !== window) && parent.pgn4webHideChildFrameGame) {
+        parent.pgn4webHideChildFrameGame(gameEvent[currentGame], gameSite[currentGame], gameDate[currentGame], gameRound[currentGame], gameWhite[currentGame], gameBlack[currentGame]);
+      }
+    } catch(e) { myAlert("error: failed accessing frame's parent for hiding game", true); }
+  }
+
+  function customFunctionOnPgnTextLoad() {
+    var thisCurrentGame = currentGame;
+
+    // force reloading iniGame each time
+    SetInitialGame(iniGame);
+    setCurrentGameFromInitialGame();
+    if (currentGame != thisCurrentGame) {
+      SetInitialVariation(0);
+      SetInitialHalfmove("end",true);
+      Init();
+      GoToInitialHalfmove();
+    }
+
+  }
+
+  var old_gameKey = "";
+  var old_PlyNumber = -1;
+  function customFunctionOnPgnGameLoad() {
+    var theObj;
+
+    theObj = document.getElementById("GameWhiteClock");
+    if (theObj) { theObj.style.visibility = ((hideFinishedGamesClocks) && (gameResult[currentGame] != "*")) ? "hidden" : ""; }
+    theObj = document.getElementById("GameBlackClock");
+    if (theObj) { theObj.style.visibility = ((hideFinishedGamesClocks) && (gameResult[currentGame] != "*")) ? "hidden" : ""; }
+
+    theObj = document.getElementById("bottomContainer");
+    if (theObj) {
+      theObj.title = numberOfGames > 1 ? "game " + (currentGame+1) + " of " + numberOfGames : "";
+      addTagToTitle("event:  ", gameEvent[currentGame], theObj);
+      addTagToTitle("", customPgnHeaderTag("Section"), theObj);
+      addTagToTitle("", customPgnHeaderTag("Stage"), theObj);
+      addTagToTitle("site:  ", gameSite[currentGame], theObj);
+      addTagToTitle("date:  ", gameDate[currentGame], theObj);
+      addTagToTitle("round:  ", gameRound[currentGame], theObj);
+      addTagToTitle("white:  ", gameWhite[currentGame], theObj);
+      addTagToTitle("", customPgnHeaderTag("WhiteTitle"), theObj);
+      addTagToTitle("", customPgnHeaderTag("WhiteElo"), theObj);
+      addTagToTitle("", customPgnHeaderTag("WhiteTeam"), theObj);
+      addTagToTitle("black:  ", gameBlack[currentGame], theObj);
+      addTagToTitle("", customPgnHeaderTag("BlackTitle"), theObj);
+      addTagToTitle("", customPgnHeaderTag("BlackElo"), theObj);
+      addTagToTitle("", customPgnHeaderTag("BlackTeam"), theObj);
+      addTagToTitle("result:  ", gameResult[currentGame], theObj);
+      addTagToTitle("termination:  ", customPgnHeaderTag("Termination"), theObj);
+      addTagToTitle("timecontrol:  ", customPgnHeaderTag("TimeControl"), theObj);
+    }
+
+    try {
+      if (parent && (parent !== window) && parent.pgn4webHideChildFrameGame) {
+        if (parent.barePadding === "") {
+          if (parent.pgn4webHideChildFrameGame(gameEvent[currentGame], gameSite[currentGame], gameDate[currentGame], gameRound[currentGame], gameWhite[currentGame], gameBlack[currentGame], true)) {
+            boardShortcut("A6", "hide this game", function(t,e){ hideThisGame(); });
+          } else {
+            boardShortcut("A6", "hiding option unavailable for this game", function(t,e){} );
+          }
+        }
+      }
+    } catch(e) { myAlert("warning: failed accessing frame's parent for hiding game option", false); }
+
+    var this_gameKey = gameKey(gameEvent[currentGame], gameSite[currentGame], gameDate[currentGame], gameRound[currentGame], gameWhite[currentGame], gameBlack[currentGame]);
+    newMovesFlag((old_gameKey === this_gameKey) && (old_PlyNumber !== PlyNumber));
+    old_gameKey = this_gameKey;
+    old_PlyNumber = PlyNumber;
+  }
+
+  var newMovesFlagTimeout = null;
+  function newMovesFlag(onOff) {
+    if (newMovesFlagTimeout) {
+      clearTimeout(newMovesFlagTimeout);
+      newMovesFlagTimeout = null;
+    }
+    var theObj = document.getElementById("GameNewMoves");
+    if (theObj) { theObj.innerHTML = onOff ? "^" : ""; }
+    if (onOff) { newMovesFlagTimeout = setTimeout("newMovesFlag(false);", refreshMinutes * 60000 + 2000); }
+  }
+
+  function gameKey(event, site, date, round, white, black) {
+    var key = "";
+    key += "[" + (typeof(event) == "string" ? event : "") + "]";
+    key += "[" + (typeof(site) == "string" ? site : "") + "]";
+    key += "[" + (typeof(round) == "string" ? round : "") + "]";
+    key += "[" + (typeof(white) == "string" ? white : "") + "]";
+    key += "[" + (typeof(black) == "string" ? black : "") + "]";
+    return key;
+  }
+
+  function replayPreviousMovesMosaic(force) {
+    if (force || newMovesFlagTimeout) { replayPreviousMoves(1); }
+  }
+
+  function customShortcutKey_Shift_0() { try { if (parent && (parent !== window) && parent.customShortcutKey_Shift_0) { parent.customShortcutKey_Shift_0(); } } catch(e) { myAlert("error: failed accessing frame's parent custom shortcut key function"); } }
+
+  // customShortcutKey_Shift_1 defined by fide-lookup.js
+  // customShortcutKey_Shift_2 defined by fide-lookup.js
+
+  function customShortcutKey_Shift_3() { try { if (parent && (parent !== window) && parent.customShortcutKey_Shift_3) { parent.customShortcutKey_Shift_3(); } } catch(e) { myAlert("error: failed accessing frame's parent custom shortcut key function"); } }
+  function customShortcutKey_Shift_4() { try { if (parent && (parent !== window) && parent.customShortcutKey_Shift_4) { parent.customShortcutKey_Shift_4(); } } catch(e) { myAlert("error: failed accessing frame's parent custom shortcut key function"); } }
+  function customShortcutKey_Shift_5() { try { if (parent && (parent !== window) && parent.customShortcutKey_Shift_5) { parent.customShortcutKey_Shift_5(); } } catch(e) { myAlert("error: failed accessing frame's parent custom shortcut key function"); } }
+  function customShortcutKey_Shift_6() { try { if (parent && (parent !== window) && parent.customShortcutKey_Shift_6) { parent.customShortcutKey_Shift_6(); } } catch(e) { myAlert("error: failed accessing frame's parent custom shortcut key function"); } }
+  function customShortcutKey_Shift_7() { try { if (parent && (parent !== window) && parent.customShortcutKey_Shift_7) { parent.customShortcutKey_Shift_7(); } } catch(e) { myAlert("error: failed accessing frame's parent custom shortcut key function"); } }
+
+  // overwriting engine.js definitions of customShortcutKey_Shift_8 9 0
+  function customShortcutKey_Shift_8() { try { if (parent && (parent !== window) && parent.customShortcutKey_Shift_8) { parent.customShortcutKey_Shift_8(); } } catch(e) { myAlert("error: failed accessing frame's parent custom shortcut key function"); } }
+  function customShortcutKey_Shift_9() { try { if (parent && (parent !== window) && parent.customShortcutKey_Shift_9) { parent.customShortcutKey_Shift_9(); } } catch(e) { myAlert("error: failed accessing frame's parent custom shortcut key function"); } }
+
+
+  function pgn4web_onload(e) {
+    start_pgn4web();
+    readyToReceivePgn = true;
+    try {
+      if (parent && (parent !== window)) {
+        if (parent.readyToSendPgn) {
+          var boardId = parseInt(window.name.substr(5), 10);
+          if (!isNaN(boardId)) { parent.updateBoard(boardId); }
+          else { myAlert("warning: failed detecting board id", false); }
+        }
+        if (parent.document.body.style.backgroundColor) {
+          var RGB;
+          if (RGB = parent.document.body.style.backgroundColor.match(/^rgb\((\d+), (\d+), (\d+)\)$/)) {
+            // RGB to Luma conversion: Photometric/digital ITU-R
+            if ((0.2126 * parseInt(RGB[1],10) + 0.7152 * parseInt(RGB[2],10) + 0.0722 * parseInt(RGB[3],10)) < (256 * 0.45)) {
+              if (theObj = document.body) { theObj.style.color = "white"; }
+              if (theObj = document.getElementById("GameWhiteFlag")) { theObj.style.borderColor = "white"; }
+              if (theObj = document.getElementById("GameBlackFlag")) { theObj.style.borderColor = "white"; }
+            }
+          }
+        }
+      } else { myAlert("warning: parent not avalable", false); }
+    } catch(e) { myAlert("warning: failed accessing parent", false); }
+  }
+
+</script>
+
+<style type="text/css">
+
+@import url("fonts/pgn4web-font-LiberationSans.css");
+
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  background: transparent;
+  color: black;
+  font-family: 'pgn4web Liberation Sans', sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 13px;
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+  -webkit-text-size-adjust: none;
+  -moz-text-size-adjust: none;
+  -ms-text-size-adjust: none;
+  -o-text-size-adjust: none;
+  text-size-adjust: none;
+  -webkit-touch-callout: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.boardTable {
+  border-style: solid;
+  border-color: #663300;
+  border-width: 3px;
+  background: #CC9966;
+  box-shadow: 0px 0px 13px #663300;
+  width: 230px;
+  height: 230px;
+}
+
+.pieceImage {
+  width: 24px;
+  height: 24px;
+}
+
+.whiteSquare,
+.blackSquare,
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  width: 26px;
+  height: 26px;
+  border-style: solid;
+  border-width: 1px;
+}
+
+.whiteSquare,
+.highlightWhiteSquare {
+  border-color: #FFCC99;
+  background: #FFCC99;
+}
+
+.blackSquare,
+.highlightBlackSquare {
+  border-color: #CC9966;
+  background: #CC9966;
+}
+
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  border-style: inset;
+  border-color: #CC9966;
+}
+
+.move,
+.variation,
+.comment {
+}
+
+.bottomContainer {
+  width: 230px;
+  margin-top: 10px;
+}
+
+.leftHeaderItem,
+.rightHeaderItem {
+  white-space: nowrap;
+  overflow: hidden;
+  width: 103px;
+}
+
+.leftHeaderItem {
+  float: left;
+  text-align: left;
+}
+
+.rightHeaderItem {
+  float: right;
+  text-align: right;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- paste your PGN below and make sure you dont specify an external source with SetPgnUrl() -->
+<form style="display: none;"><textarea style="display: none;" id="pgnText">
+
+[Result "*"]
+
+</textarea></form>
+<!-- paste your PGN above and make sure you dont specify an external source with SetPgnUrl() -->
+
+<center>
+
+<div id="GameBoard"></div>
+
+<div id="bottomContainer" class="bottomContainer">
+
+<div class="leftHeaderItem"><span id="GameLastMove"></span>&nbsp;</div>
+<div class="rightHeaderItem">&nbsp;<span id="GameNextMove"></span></div>
+<div>&nbsp;<a href="javascript:void(0);" onclick="newMovesFlag(false); this.blur();" title="new moves received" id="GameNewMoves"></a>&nbsp;</div>
+
+<div class="leftHeaderItem"><a href="javascript:void(0);" onclick="if (typeof(openFidePlayerUrl) == 'function') { openFidePlayerUrl(gameWhite[currentGame], customPgnHeaderTag('WhiteFideId')); } this.blur();" id="GameWhite" class="notranslate"></a>&nbsp;</div>
+<div class="rightHeaderItem">&nbsp;<a href="javascript:void(0);" onclick="if (typeof(openFidePlayerUrl) == 'function') { openFidePlayerUrl(gameBlack[currentGame], customPgnHeaderTag('BlackFideId')); } this.blur();" id="GameBlack" class="notranslate"></a></div>
+
+<div class="leftHeaderItem"><span id="GameWhiteClock"></span>&nbsp;</div>
+<div class="rightHeaderItem">&nbsp;<span id="GameBlackClock"></span></div>
+
+</div>
+
+</center>
+
+</body>
+
+</html>

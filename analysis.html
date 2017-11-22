@@ -1,0 +1,423 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2015 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<title>0.</title>
+
+<!-- use viewport settings when body.onresize adapts the chessboard to the available space -->
+<meta name="viewport" content="initial-scale=1, maximum-scale=1">
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+<link href="analysis.css" type="text/css" rel="stylesheet" />
+
+<script src="pgn4web.js" type="text/javascript"></script>
+<script src="fonts/chess-informant-NAG-symbols.js" type="text/javascript"></script>
+<script src="engine.js" type="text/javascript"></script>
+
+<script src="fide-lookup.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+  "use strict";
+
+  var pgn4web_engineWindowUrlParameters = "as=66&ss=36&ps=29&pf=m&fms=14&fcs=22&lch=FFFFFF&dch=DDDDDD&hch=AAAAAA&ctch=808080&fpr=0";
+  var pgn4web_engineWindowTarget = "pgn4webAnalysisBoardForAnalysis";
+  var pgn4web_engineWindowHeight = "";
+  var pgn4web_engineWindowWidth = "";
+
+  var thisRegExp;
+
+  thisRegExp = /(&|\?)(help|h)=(true|t)(&|$)/i;
+  if (window.location.search.match(thisRegExp) !== null) {
+    alert("pgn4web analysis.html parameters" + "\n" +
+          " - pgnFile = filename.pgn" + "\n" +
+          " - initialGame = first | last | random | a number | a search expression (default first)" + "\n" +
+          " - initialVariation = a number (default 0)" + "\n" +
+          " - initialHalfmove = start | end | random | comment | variation | a number (default start)" + "\n" +
+          " - showLastNext = true | false (default false)" + "\n" +
+          " - showGamesList = true | false (default false)" + "\n" +
+          " - help = true");
+  }
+
+  var pgnFilename = "";
+  thisRegExp = /(&|\?)(pgnFile|pf)=([^&]*)(&|$)/i;
+  if (window.location.search.match(thisRegExp) !== null) {
+    pgnFilename = unescape(window.location.search.match(thisRegExp)[3]);
+  } else {
+    // accepts pgnData as alias for pgnFile for consistency with board.html
+    thisRegExp = /(&|\?)(pgnData|pd)=([^&]*)(&|$)/i;
+    if (window.location.search.match(thisRegExp) !== null) {
+      pgnFilename = unescape(window.location.search.match(thisRegExp)[3]);
+    }
+  }
+  if (pgnFilename !== "") { SetPgnUrl(pgnFilename); }
+
+  thisRegExp = /(&|\?)(initialGame|ig)=([^&]*)(&|$)/i;
+  if (window.location.search.match(thisRegExp) !== null) {
+    SetInitialGame(unescape(window.location.search.match(thisRegExp)[3]));
+  }
+
+  thisRegExp = /(&|\?)(initialVariation|iv)=([^&]*)(&|$)/i;
+  if (window.location.search.match(thisRegExp) !== null) {
+    SetInitialVariation(unescape(window.location.search.match(thisRegExp)[3]));
+  }
+
+  thisRegExp = /(&|\?)(initialHalfmove|ih)=([^&]*)(&|$)/i;
+  if (window.location.search.match(thisRegExp) !== null) {
+    SetInitialHalfmove(unescape(window.location.search.match(thisRegExp)[3]), false);
+  }
+
+  thisRegExp = /(&|\?)(showLastNext|sln)=(true|t)(&|$)/i;
+  var showLastNext = (window.location.search.match(thisRegExp) !== null);
+
+  thisRegExp = /(&|\?)(showGamesList|sgl)=(true|t)(&|$)/i;
+  var showGamesList = (window.location.search.match(thisRegExp) !== null);
+
+  SetImagePath("images/merida/39");
+  SetImageType("png");
+  SetHighlightOption(true);
+  SetGameSelectorOptions(null, true, 15, 15, 3, 15, 15, 3, 10); // (head, num, chEvent, chSite, chRound, chWhite, chBlack, chResult, chDate);
+  SetCommentsIntoMoveText(true); // if changing this line, set accordingly the visibility of object with ID = "GameAnnotator"
+  SetCommentsOnSeparateLines(false);
+  SetAutoplayDelay(1000); // milliseconds
+  SetAutostartAutoplay(false);
+  SetAutoplayNextGame(false);
+  SetShortcutKeysEnabled(true);
+
+  // customShortcutKey_Shift_1 defined by fide-lookup.js
+  // customShortcutKey_Shift_2 defined by fide-lookup.js
+
+  function customShortcutKey_Shift_3() { toggleLastNext(); }
+  function customShortcutKey_Shift_4() { toggleGamesList(); }
+  function customShortcutKey_Shift_5() { showCurrentGameInfo(); }
+
+  // overwriting engine.js definitions
+  function customShortcutKey_Shift_8() { showAnalysisBoard(true); }
+  function customShortcutKey_Shift_9() { showAnalysisBoard(false); }
+  function customShortcutKey_Shift_0() { showAnalysisBoard(); }
+
+  if (!pgn4web_engineWindowDisableAnalysisBoard) {
+    boardShortcut("E8", "open/update analysis board", function(t,e){ showAnalysisBoard(e.shiftKey); });
+    boardShortcut("F8", "close/pause analysis board", function(t,e){ if (!e.shiftKey) { hideAnalysisBoard(); } });
+  }
+  boardShortcut("E7", "toggle last/next moves information", function(t,e){ toggleLastNext(); });
+  boardShortcut("G7", "toggle show comments on separate lines", function(t,e){ if (e.shiftKey) { SetCommentsIntoMoveText(!commentsIntoMoveText); } else { SetCommentsOnSeparateLines(!commentsOnSeparateLines); } var oldPly = CurrentPly; var oldVar = CurrentVar; Init(); GoToMove(oldPly, oldVar); });
+  boardShortcut("A6", "search previous annotator", function(t,e){ searchAnnotator(e.shiftKey, true); });
+  boardShortcut("B6", "search next annotator", function(t,e){ searchAnnotator(e.shiftKey, false); });
+  boardShortcut("G6", "scroll moves text to current move", function(t,e){ autoScrollToCurrentMoveIfEnabled(); });
+  boardShortcut("H6", "scroll moves text to top", function(t,e){ document.getElementById("GameTextResult").scrollTop = 0; });
+  boardShortcut("F5", "toggle games list", function(t,e){ toggleGamesList(); });
+  boardShortcut("G5", "game info", function(t,e){ showCurrentGameInfo(); });
+  boardShortcut("H5", "scroll moves text to bottom", function(t,e){ document.getElementById("GameTextResult").scrollTop = document.getElementById("GameTextResult").scrollHeight; });
+
+  function FlipBoard() {}
+
+  window['defaultSetCommentsIntoMoveText'] = window['SetCommentsIntoMoveText'];
+  window['SetCommentsIntoMoveText'] = function(onOff) {
+    defaultSetCommentsIntoMoveText(onOff);
+    var theObj = document.getElementById("GameAnnotator");
+    if (theObj) { theObj.style.display = onOff ? "" : "none"; }
+  };
+
+  var firstCustomFunctionOnPgnTextLoad = true;
+  function customFunctionOnPgnTextLoad() {
+    myOnResize();
+    if (firstCustomFunctionOnPgnTextLoad) {
+      firstCustomFunctionOnPgnTextLoad = false;
+      showEngineAnalysisBoard(true, true); // prepare analysis frame with an idle board
+    }
+  }
+
+  var currentGameInfo = '';
+
+  function customFunctionOnPgnGameLoad() {
+    var theObj, theOther, whiteElo, blackElo, eco, annotator, newTitle;
+    if (theObj = document.getElementById('GameSiteEvent')) {
+      theObj.innerHTML = gameSite[currentGame];
+      fixSiteInnerHTML('GameSiteEvent');
+      if (theObj.innerHTML === "") {
+        theObj.innerHTML = gameEvent[currentGame];
+        fixObjInnerHTML('GameSiteEvent');
+      }
+    }
+    fixDateInnerHTML('GameDate');
+    fixObjInnerHTML('GameWhite');
+    fixObjInnerHTML('GameBlack');
+    fixObjInnerHTML('GameResult');
+    if (theObj = document.getElementById('GameNum')) { theObj.innerHTML = (currentGame + 1); }
+    fixObjInnerHTML('GameNum');
+    whiteElo = customPgnHeaderTag('WhiteElo', 'GameWhiteElo');
+    fixObjInnerHTML('GameWhiteElo');
+    blackElo = customPgnHeaderTag('BlackElo', 'GameBlackElo');
+    fixObjInnerHTML('GameBlackElo');
+    eco = customPgnHeaderTag('ECO', 'GameECO');
+    fixObjInnerHTML('GameECO');
+    annotator = customPgnHeaderTag('Annotator', 'GameAnnotator');
+    fixObjInnerHTML('GameAnnotator');
+    theObj = document.getElementById('GameWhite');
+    theOther = document.getElementById('GameWhiteElo');
+    theOther.style.marginLeft = (theObj && theObj.innerHTML && theOther && theOther.innerHTML) ? '1.2ex' : '';
+    theObj = document.getElementById('GameBlack');
+    theOther = document.getElementById('GameBlackElo');
+    theOther.style.marginLeft = (theObj && theObj.innerHTML && theOther && theOther.innerHTML) ? '1.2ex' : '';
+    theObj = document.getElementById('GameSiteEvent');
+    theOther = document.getElementById('GameDate');
+    theOther.style.marginLeft = (theObj && theObj.innerHTML && theOther && theOther.innerHTML) ? '1.2ex' : '';
+
+    newTitle = (currentGame + 1) + '.';
+    if ((theObj = document.getElementById('GameWhite')) && (theObj.innerHTML)) { newTitle += '  ' + theObj.innerHTML; }
+    if ((theObj = document.getElementById('GameBlack')) && (theObj.innerHTML)) { newTitle += '  ' + theObj.innerHTML; }
+    if ((theObj = document.getElementById('GameResult')) && (theObj.innerHTML)) { newTitle += '  ' + theObj.innerHTML; }
+    if ((theObj = document.getElementById('GameSiteEvent')) && (theObj.innerHTML)) { newTitle += '  ' + theObj.innerHTML; }
+    if ((theObj = document.getElementById('GameDate')) && (theObj.innerHTML)) { newTitle += '  ' + theObj.innerHTML; }
+    document.title = simpleHtmlentitiesDecode(newTitle);
+
+    newTitle = '';
+    if (gameEvent[currentGame])  { newTitle += '\nevent:  ' + gameEvent[currentGame]; }
+    if (gameSite[currentGame])   { newTitle += '\nsite:  ' + gameSite[currentGame]; }
+    if (gameDate[currentGame])   { newTitle += '\ndate:  ' + gameDate[currentGame]; }
+    if (gameRound[currentGame])  { newTitle += '\nround:  ' + gameRound[currentGame]; }
+    if (gameWhite[currentGame])  {
+      newTitle += '\nwhite:  ' + gameWhite[currentGame];
+      if (whiteElo) { newTitle += '  ' + whiteElo; }
+    }
+    if (gameBlack[currentGame])  {
+      newTitle += '\nblack:  ' + gameBlack[currentGame];
+      if (blackElo) { newTitle += '  ' + blackElo; }
+    }
+    if (gameResult[currentGame]) { newTitle += '\nresult:  ' + gameResult[currentGame]; }
+    if (eco) { newTitle += '\neco:  ' + eco; }
+    if (annotator) { newTitle += '\nnotes:  ' + annotator; }
+    if (newTitle) { newTitle = '\n' + newTitle; }
+    newTitle = 'game ' + (currentGame + 1) + ' of ' + numberOfGames + newTitle;
+    if (theObj = document.getElementById('boardHeaderInfo')) { theObj.title = simpleHtmlentitiesDecode(newTitle); }
+    currentGameInfo = newTitle;
+  }
+
+  function fixObjInnerHTML(id) {
+    var theObj = document.getElementById(id);
+    if (theObj) { theObj.innerHTML = theObj.innerHTML.replace(/\.?\?[.?]*/, "").replace(/,(\w)/g, ", $1"); }
+  }
+
+  function fixDateInnerHTML(id) {
+    var theObj = document.getElementById(id);
+    if (theObj) { theObj.innerHTML = theObj.innerHTML.replace(/\.?\?[.?]*/, "").replace(/,(\w)/g, ", $1").replace(/^\s*(\d+)\D.*$/, "$1"); }
+  }
+
+  function fixSiteInnerHTML(id) {
+    var theObj = document.getElementById(id);
+    if (theObj) { theObj.innerHTML = theObj.innerHTML.replace(/\.?\?[.?]*/, "").replace(/,(\w)/g, ", $1").replace(/\s[A-Z]{3}$/, ""); }
+  }
+
+  function showCurrentGameInfo() {
+    if (confirm(currentGameInfo + "\n\nclick OK for the PGN source data")) { displayPgnData(true); }
+  }
+
+  function searchPlayer(name, FideId) {
+    if (typeof(openFidePlayerUrl) == "function") { openFidePlayerUrl(name, FideId); }
+  }
+
+  function searchAnnotator(same, backward) {
+    var fixedAnnotator = fixRegExp(customPgnHeaderTag("Annotator"));
+    searchPgnGame(same ? '\\[\\s*Annotator\\s*"' + fixedAnnotator + '"\\s*\\]' : '\\[\\s*Annotator\\s*"(?!' + fixedAnnotator + '"\\s*\\])', backward);
+    document.getElementById("GameTextResult").scrollTop = document.getElementById("GameTextResult").scrollHeight;
+  }
+
+  function myOnResize() {
+    var ww, wh, theObj;
+    if (window.innerWidth && window.innerHeight) { ww = window.innerWidth; wh = window.innerHeight; }
+    else if (document.documentElement && document.documentElement.clientWidth) { ww = document.documentElement.clientWidth; wh = document.documentElement.clientHeight; }
+    else if (document.body && document.body.clientWidth) { ww = document.body.clientWidth; wh = document.body.clientHeight; }
+    else { return; }
+
+    if (theObj = document.getElementById("GameTextResult")) { theObj.style.height = (wh - 60) + "px"; }
+
+    autoScrollToCurrentMoveIfEnabled();
+  }
+
+  enableAutoScrollToCurrentMove("GameTextResult");
+
+
+  var thisEngineWin;
+  var thisEngineWinShown = false;
+
+  function showAnalysisBoard(de) {
+    if (pgn4web_engineWindowDisableAnalysisBoard) { return; }
+    var theObj;
+    if ((thisEngineWin = showEngineAnalysisBoard(de)) && (!thisEngineWinShown)) {
+      if (theObj = document.getElementById("GameAnalysisFrame")) { theObj.style.visibility = ""; }
+      if (theObj = document.getElementById('analysisHeader')) {
+        theObj.style.left = "451px"; // 436px boardheaderDiv.width + 15px gametextresultDiv.paddingLeft
+      }
+      if (theObj = document.getElementById('GameTextResult')) {
+        theObj.style.marginLeft = "769px"; // 451px analysisHeader.left + 288px analysisHeader.width + 30px padding
+      }
+      setTimeout(autoScrollToCurrentMoveIfEnabled, 2100);
+      thisEngineWinShown = true;
+    }
+  }
+
+  function hideAnalysisBoard() {
+    if (pgn4web_engineWindowDisableAnalysisBoard) { return; }
+    var theObj;
+    if (thisEngineWinShown) {
+      if (theObj = document.getElementById('analysisHeader')) {
+        theObj.style.left = "";
+      }
+      if (theObj = document.getElementById('GameTextResult')) {
+        theObj.style.marginLeft = "";
+      }
+      setTimeout(autoScrollToCurrentMoveIfEnabled, 2100);
+      thisEngineWinShown = false;
+    }
+    if (typeof(thisEngineWin) != "undefined") {
+      if (typeof(thisEngineWin.StopBackgroundEngine) == "function") { thisEngineWin.StopBackgroundEngine(); }
+      if (typeof(thisEngineWin.autoUpdate) != "undefined") { thisEngineWin.autoUpdate = false; }
+    }
+  }
+
+  function toggleLastNext(sln) {
+    showLastNext = (typeof(sln) == "undefined") ? !showLastNext : sln;
+    var theObj = document.getElementById("GameLastNext");
+    if (theObj) {
+      theObj.style.display = showLastNext ? "" : "none";
+    }
+  }
+
+  function toggleGamesList(sgl) {
+    showGamesList = (typeof(sgl) == "undefined") ? !showGamesList : sgl;
+    var theObj = document.getElementById("GamesList");
+    if (theObj) {
+      theObj.style.display = showGamesList ? "" : "none";
+    }
+  }
+
+</script>
+
+</head>
+
+<body onResize="myOnResize();">
+
+<!-- paste your PGN below and make sure you dont specify an external source with SetPgnUrl() -->
+<form style="display: none;"><textarea style="display: none;" id="pgnText">
+
+</textarea></form>
+<!-- paste your PGN above and make sure you dont specify an external source with SetPgnUrl() -->
+
+<div class="analysisheaderDiv" id="analysisHeader">
+<iframe class="gameAnalysisFrame" style="visibility: hidden;" id="GameAnalysisFrame" name="pgn4webAnalysisBoardForAnalysis" src="./blank.html" frameborder="0" scrolling="no" marginheight="0" marginwidth="0">your web browser and/or your host do not support iframes as required</iframe>
+</div>
+
+<div class="boardheaderDiv" id="boardHeader">
+<div class="boardHeaderInfo" id="boardHeaderInfo">
+<table cellspacing=0 cellpadding=0 border=0><tr>
+<td><div class="headerLine gameNum"><span id="GameNum">1</span>.</div></td>
+<td><div class="headerLine gameECO"><span id="GameECO"></span></div></td>
+</tr></table>
+<div class="shortRowSpace">&nbsp;</div>
+<div class="headerLine"><a id="GameWhite" href="javascript:void(0);" onclick="searchPlayer(this.innerHTML, customPgnHeaderTag('WhiteFideId')); this.blur();"></a><span id="GameWhiteElo"></span></div>
+<div class="headerLine"><a id="GameBlack" href="javascript:void(0);" onclick="searchPlayer(this.innerHTML, customPgnHeaderTag('BlackFideId')); this.blur();"></a><span id="GameBlackElo"></span></div>
+<div class="shortRowSpace">&nbsp;</div>
+<div class="headerLine gameSiteEventDate"><span id="GameSiteEvent"></span><span id="GameDate"></span></div>
+</div>
+<div class="gameBoard" id="GameBoard"></div>
+<div class="gameLastNext" id="GameLastNext" style="display: none;">
+<div class="gameLastMove">
+<span id="GameLastMove" title="last move"></span>&nbsp;&nbsp;<span id="GameLastVariations" title="last move alternatives"></span>&nbsp;
+</div>
+<div class="shortRowSpace">&nbsp;</div>
+<div class="gameNextMove">
+<span id="GameNextMove" title="next move"></span>&nbsp;&nbsp;<span id="GameNextVariations" title="next move alternatives"></span>&nbsp;
+</div>
+</div>
+<div class="gamesList" id="GamesList" style="display: none;">
+<div class="gameSelector" id="GameSelector"></div>
+</div>
+</div>
+
+<div class="topSpacer">&nbsp;</div>
+
+<div class="gametextresultDiv" id="GameTextResult">
+<div id="GameText"></div>
+<div class="comment" style="line-height: 33%;">&nbsp;</div>
+<a class="gameAnnotator" id="GameAnnotator" href="javascript:void(0);" onclick="searchAnnotator(!event.shiftKey, false); this.blur();"></a>
+<div id="GameResult"></div>
+</div>
+
+<a class="helpLink" title="pgn4web help" href="javascript:void(0);" onclick="displayHelp(); this.blur();">?</a>
+
+<script type="text/javascript">
+  "use strict";
+
+  toggleLastNext(showLastNext);
+  toggleGamesList(showGamesList);
+
+  function pgn4web_handleTouchEnd_Header(e) {
+    e.stopPropagation();
+    var jj, deltaX, deltaY;
+    for (var ii = 0; ii < e.changedTouches.length; ii++) {
+      if ((jj = pgn4webOngoingTouchIndexById(e.changedTouches[ii].identifier)) != -1) {
+        if (pgn4webOngoingTouches.length == 1) {
+          deltaX = e.changedTouches[ii].clientX - pgn4webOngoingTouches[jj].clientX;
+          deltaY = e.changedTouches[ii].clientY - pgn4webOngoingTouches[jj].clientY;
+          if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) >= 13) {
+            if (Math.abs(deltaX) > 1.5 * Math.abs(deltaY)) {
+              if (deltaX > 0) { // horizontal right
+                showAnalysisBoard(false);
+              } else { // horizontal left
+                hideAnalysisBoard();
+              }
+            } else if (Math.abs(deltaY) > 1.5 * Math.abs(deltaX)) { // vertical up or down
+              SetCommentsIntoMoveText(!commentsIntoMoveText);
+              var oldPly = CurrentPly;
+              var oldVar = CurrentVar;
+              Init();
+              GoToMove(oldPly, oldVar);
+            }
+          }
+          pgn4webMaxTouches = 0;
+        }
+        pgn4webOngoingTouches.splice(jj, 1);
+      }
+    }
+    clearSelectedText();
+  }
+
+  if (touchEventEnabled) {
+    var theObj = document.getElementById("boardHeader");
+    if (theObj) {
+      simpleAddEvent(theObj, "touchstart", pgn4web_handleTouchStart);
+      simpleAddEvent(theObj, "touchmove", pgn4web_handleTouchMove);
+      simpleAddEvent(theObj, "touchend", pgn4web_handleTouchEnd_Header);
+      simpleAddEvent(theObj, "touchleave", pgn4web_handleTouchEnd_Header);
+      simpleAddEvent(theObj, "touchcancel", pgn4web_handleTouchCancel);
+    }
+    theObj = document.getElementById("analysisHeader");
+    if (theObj) {
+      simpleAddEvent(theObj, "touchstart", pgn4web_handleTouchStart);
+      simpleAddEvent(theObj, "touchmove", pgn4web_handleTouchMove);
+      simpleAddEvent(theObj, "touchend", pgn4web_handleTouchEnd_Header);
+      simpleAddEvent(theObj, "touchleave", pgn4web_handleTouchEnd_Header);
+      simpleAddEvent(theObj, "touchcancel", pgn4web_handleTouchCancel);
+    }
+    touchGestures_helpActions =  touchGestures_helpActions.concat([ "&nbsp;", "game header vertical swipe" ]);
+    touchGestures_helpText = touchGestures_helpText.concat([ "", "toggle show comments in game text" ]);
+    if (!pgn4web_engineWindowDisableAnalysisBoard) {
+      touchGestures_helpActions =  touchGestures_helpActions.concat([ "game header left-right swipe", "game header right-left swipe" ]);
+      touchGestures_helpText = touchGestures_helpText.concat([ "open/update analysis board", "close/pause analysis board" ]);
+    }
+  }
+
+</script>
+
+</body>
+
+</html>

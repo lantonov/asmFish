@@ -1,0 +1,186 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2014 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<title>chess games</title>
+
+<link href="collection.css" type="text/css" rel="stylesheet" />
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+<script src="pgn4web.js" type="text/javascript"></script>
+<script src="fonts/chess-informant-NAG-symbols.js" type="text/javascript"></script>
+
+<script src="fide-lookup.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+   "use strict";
+
+   var thisRegExp;
+
+   thisRegExp = /(&|\?)(help|h)=(true|t)(&|$)/i;
+   if (window.location.search.match(thisRegExp) !== null) {
+       alert("pgn4web collection.html parameters" + "\n" +
+             " - pgnFile=filename.pgn" + "\n" +
+             " - title=page title" + "\n" +
+             " - search=search expression" + "\n" +
+             " - help = true");
+   }
+   var pgnFilename = "";
+   thisRegExp = /(&|\?)(pgnFile|pf)=([^&]*)(&|$)/i;
+   if (window.location.search.match(thisRegExp) !== null) {
+       pgnFilename = unescape(window.location.search.match(thisRegExp)[3]);
+   } else {
+       // accepts pgnData as alias for pgnFile for consistency with board.html
+       thisRegExp = /(&|\?)(pgnData|pd)=([^&]*)(&|$)/i;
+       if (window.location.search.match(thisRegExp) !== null) {
+           pgnFilename = unescape(window.location.search.match(thisRegExp)[3]);
+       }
+   }
+   var pgnTitle = "no PGN file loaded";
+   if (pgnFilename !== "") {
+       SetPgnUrl(pgnFilename); // if set, this has precedence over the inline PGN in the HTML file
+       pgnTitle = pgnFilename;
+   }
+   thisRegExp = /(&|\?)(title|t)=([^&]*)(&|$)/i;
+   if (window.location.search.match(thisRegExp) !== null) {
+       pgnTitle = unescape(window.location.search.match(thisRegExp)[3]);
+   }
+   document.title = "chess games: " + pgnTitle;
+   thisRegExp = /(&|\?)(search|s)=([^&]*)(&|$)/i;
+   var pgnSearchTarget;
+   if (window.location.search.match(thisRegExp) !== null) {
+       pgnSearchTarget = unescape(window.location.search.match(thisRegExp)[3]);
+   } else {
+       pgnSearchTarget = "";
+   }
+
+   SetImagePath("images/alpha/36"); // use "" path if images are in the same folder as this javascript file
+   SetImageType("png");
+   SetHighlightOption(false); // true or false
+   SetGameSelectorOptions(" Event         Site          Rd  White            Black            Res  Date", true, 12, 12, 2, 15, 15, 3, 10); // (head, num, chEvent, chSite, chRound, chWhite, chBlack, chResult, chDate);
+   SetCommentsIntoMoveText(true);
+   SetCommentsOnSeparateLines(false);
+   SetAutoplayDelay(1000); // milliseconds
+   SetAutostartAutoplay(false);
+   SetAutoplayNextGame(false); // if set, move to the next game at the end of the current game during autoplay
+   SetInitialGame(1); // number of game to be shown at load, from 1 (default); values (keep the quotes) of "first", "last", "random" are accepted; other string values assumed as PGN search string
+   SetInitialVariation(0); // number for the variation to be shown at load, 0 (default) for main variation
+   SetInitialHalfmove(1, true); // halfmove number to be shown at load, 0 for start position, -1 for random halfmove
+   SetShortcutKeysEnabled(true);
+
+   function customFunctionOnPgnTextLoad() {
+     var theObj = document.getElementById('numGm');
+     if (theObj) { theObj.innerHTML = numberOfGames; }
+     searchPgnGame(pgnSearchTarget);
+   }
+
+   function customFunctionOnPgnGameLoad() {
+     var theObj = document.getElementById('currGm');
+     if (theObj) { theObj.innerHTML = currentGame+1; }
+   }
+
+   // customShortcutKey_Shift_1 defined by fide-lookup.js
+   // customShortcutKey_Shift_2 defined by fide-lookup.js
+
+</script>
+
+</head>
+
+<body>
+
+<!-- paste your PGN below and make sure you dont specify an external source with SetPgnUrl() -->
+<form style="display: none;"><textarea style="display: none;" id="pgnText">
+
+</textarea></form>
+<!-- paste your PGN above and make sure you dont specify an external source with SetPgnUrl() -->
+
+<table class="containerTable">
+
+<tr valign=bottom>
+<td class="containerCell" colspan=2>
+<div style="font-size: 200%; font-weight: bold; text-align: center;">
+<script type="text/javascript">
+document.write(simpleHtmlentities(pgnTitle));
+</script>
+
+</div>
+</td>
+</tr>
+
+<tr valign=bottom>
+<td class="containerCell" colspan=2>
+<div id="GameSelector"></div>
+<div id="GameSearch" style="white-space:nowrap;"></div>
+</td>
+
+</tr>
+
+<tr valign=top>
+
+<td class="containerCell" align="left" width=50%>
+<div id="GameBoard"></div>
+<p></p>
+<div id="GameButtons"></div>
+</td>
+
+<td class="containerCell" width=50% style="text-align: left;">
+
+<table>
+<tr><td class="label">date</td><td><span id="GameDate"></span>&nbsp;</td></tr>
+<tr><td class="label">site</td><td><span style="white-space: nowrap;" id="GameSite"></span>&nbsp;</td></tr>
+<tr><td colspan=2 class="rowSpace"></td></tr>
+<tr><td class="label">event</td><td><span style="white-space: nowrap;" id="GameEvent"></span>&nbsp;</td></tr>
+<tr><td class="label">round</td><td><span id="GameRound"></span>&nbsp;</td></tr>
+<tr><td colspan=2 class="rowSpace"></td></tr>
+<tr><td class="label">white</td><td class="boldItem"><span style="white-space: nowrap;" id="GameWhite"></span>&nbsp;</td></tr>
+<tr><td class="label">black</td><td class="boldItem"><span style="white-space: nowrap;" id="GameBlack"></span>&nbsp;</td></tr>
+<tr><td colspan=2 class="rowSpace"></td></tr>
+<tr><td class="label">result</td><td class="boldItem"><span id="GameResult"></span>&nbsp;</td></tr>
+<tr><td colspan=2 class="rowSpace"></td></tr>
+<tr><td class="label">last</td><td class="move"><span id="GameLastMove"></span>&nbsp; &nbsp;<span id="GameLastVariations"></span></td></tr>
+<tr><td class="label">next</td><td class="move"><span id="GameNextMove"></span>&nbsp; &nbsp;<span id="GameNextVariations"></span></td></tr>
+<!--
+<tr><td class="label">side</td><td><span id="GameSideToMove"></span>&nbsp;</td></tr>
+-->
+<tr><td colspan=2 class="rowSpace"></td></tr>
+<tr><td class="label">game</td><td><span id=currGm>0</span>&nbsp;(<span id=numGm>0</span>)</td></tr>
+<tr><td class="label">archive</td>
+<td>
+<script type="text/javascript">
+  if (pgnFilename) {
+    document.write('<a class="linkItem" href="' + pgnFilename + '">' + pgnFilename + '</a>');
+  }
+</script>
+&nbsp;</td>
+<!--
+<tr><td colspan=2 class="rowSpace"></td></tr>
+<tr><td class="label">Move comment</td><td><span id="GameLastComment"></span>&nbsp;</td></tr>
+-->
+</table>
+
+</td>
+
+</tr>
+
+<tr valign=top>
+<td class="gametextContainerCell" style="text-align: justify;" colspan=2>
+<div class="gametextDiv" id="GameText"></div>
+</td>
+</tr>
+
+</table>
+
+</body>
+
+</html>
+
+

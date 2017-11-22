@@ -1,0 +1,1241 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2017 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<title>pgn4web analysis board</title>
+
+<!-- AppCheck: meta -->
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+<style type="text/css">
+
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  font-family: sans-serif;
+  overflow: hidden;
+  color: #F4F4F4;
+  background: #F4F4F4;
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+  -webkit-text-size-adjust: none;
+  -moz-text-size-adjust: none;
+  -ms-text-size-adjust: none;
+  -o-text-size-adjust: none;
+  text-size-adjust: none;
+  -webkit-touch-callout: none;
+}
+
+a {
+  text-decoration: none;
+}
+
+.container {
+  overflow: hidden;
+  position: relative;
+}
+
+.gameCustomButtons {
+  width: 100%;
+}
+
+.gameCustomButtonsHidden {
+  visibility: hidden;
+}
+
+.gameEval {
+  position: absolute;
+  right: -5px; /* this and the next fix some pv showing at the right of the eval */
+  padding-right: 5px;
+  bottom: 0px;
+  z-index: 3;
+}
+
+.gameTablebase {
+  display: none;
+  padding-right: 1em;
+}
+
+.gameAnalysis {
+  white-space: nowrap;
+  text-align: left;
+}
+
+.gameAnalysisHidden {
+  visibility: hidden;
+}
+
+.gameFlagAndMoves {
+  position: absolute;
+  bottom: 0px;
+  z-index: 2;
+  white-space: nowrap;
+}
+
+.gameFlagToMove {
+  display: inline-block;
+  border-style: solid;
+  border-width: 1px;
+}
+
+.gameShowFen {
+  display: inline-block;
+  overflow: hidden;
+}
+
+.gameMoves {
+  white-space: nowrap;
+}
+
+</style>
+
+<style type="text/css">
+
+/* for dynamically redefined variables */
+
+</style>
+
+<!-- AppCheck: fonts -->
+
+
+<script type="text/javascript">
+"use strict";
+
+var thisParamString = window.location.search || window.location.hash;
+
+var thisRegExp;
+
+var fenString;
+thisRegExp = /(&|\?)(fenString|fs)=([^&]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   fenString = unescape(thisParamString.match(thisRegExp)[3]);
+}
+// action on fenString postponed after definying pgnText in the html body
+
+var defaultAnalysisSeconds = 13;
+var analysisSeconds = defaultAnalysisSeconds;
+var minAnalysisSeconds = 3;
+var maxAnalysisSeconds = 313;
+thisRegExp = /(&|\?)(analysisSeconds|as)=([1-9][0-9]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   analysisSeconds = parseInt(unescape(thisParamString.match(thisRegExp)[3]), 10);
+   if (analysisSeconds < minAnalysisSeconds) { analysisSeconds = minAnalysisSeconds; }
+   if (analysisSeconds > maxAnalysisSeconds) { analysisSeconds = maxAnalysisSeconds; }
+   defaultAnalysisSeconds = analysisSeconds;
+}
+
+var disableEngine;
+thisRegExp = /(&|\?)(disableEngine|de)=([^&]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   disableEngine = unescape(thisParamString.match(thisRegExp)[3]);
+}
+disableEngine = ((disableEngine == "true") || (disableEngine == "t"));
+// action on disableEngine postponed at the end of this file when all engine functions are ready
+
+var disableInputs;
+thisRegExp = /(&|\?)(disableInputs|di)=([^&]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   disableInputs = unescape(thisParamString.match(thisRegExp)[3]);
+}
+disableInputs = ((disableInputs == "true") || (disableInputs == "t"));
+
+var autoUpdate;
+thisRegExp = /(&|\?)(autoUpdate|au)=([^&]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   autoUpdate = unescape(thisParamString.match(thisRegExp)[3]);
+}
+autoUpdate = ((autoUpdate == "true") || (autoUpdate == "t"));
+
+
+var lightColorHex = "#F4F4F4";
+thisRegExp = /(&|\?)(lightColorHex|lch)=([0-9A-F]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   lightColorHex = "#" + unescape(thisParamString.match(thisRegExp)[3]);
+}
+var darkColorHex = "#DDDDDD";
+thisRegExp = /(&|\?)(darkColorHex|dch)=([0-9A-F]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   darkColorHex = "#" + unescape(thisParamString.match(thisRegExp)[3]);
+}
+var highlightColorHex = "#BBBBBB";
+thisRegExp = /(&|\?)(highlightColorHex|hch)=([0-9A-F]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   highlightColorHex = "#" + unescape(thisParamString.match(thisRegExp)[3]);
+}
+var fontMovesColorHex = "#000000";
+thisRegExp = /(&|\?)(fontMovesColorHex|fmch)=([0-9A-F]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   fontMovesColorHex = "#" + unescape(thisParamString.match(thisRegExp)[3]);
+}
+var controlTextColorHex = "#BBBBBB";
+thisRegExp = /(&|\?)(controlTextColorHex|ctch)=([0-9A-F]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   controlTextColorHex = "#" + unescape(thisParamString.match(thisRegExp)[3]);
+}
+var backgroundColorHex = lightColorHex;
+thisRegExp = /(&|\?)(backgroundColorHex|bch)=([0-9A-F]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   backgroundColorHex = "#" + unescape(thisParamString.match(thisRegExp)[3]);
+}
+
+var framePaddingRatio = 1;
+thisRegExp = /(&|\?)(framePaddingRatio|fpr)=([0-9.]+)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   framePaddingRatio = parseFloat(unescape(thisParamString.match(thisRegExp)[3]));
+}
+
+var squareSize;
+thisRegExp = /(&|\?)(squareSize|ss)=([1-9][0-9]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   squareSize = parseInt(unescape(thisParamString.match(thisRegExp)[3]), 10);
+}
+
+var pieceSizeOptions = new Array(20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 52, 56, 60, 64, 72, 80, 88, 96, 112, 128, 144, 300);
+function defaultPieceSize(squareSize) {
+   var targetPieceSize = Math.floor(0.8 * squareSize);
+   for (var ii=(pieceSizeOptions.length-1); ii>=0; ii--) {
+      if (pieceSizeOptions[ii] <= targetPieceSize) { return pieceSizeOptions[ii]; }
+   }
+   return pieceSizeOptions[0];
+}
+var pieceSize;
+thisRegExp = /(&|\?)(pieceSize|ps)=([1-9][0-9]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   pieceSize = parseInt(unescape(thisParamString.match(thisRegExp)[3]), 10);
+}
+
+// undocumented feature
+var fixedPieceImageSize;
+thisRegExp = /(&|\?)(fixedPieceImageSize|fpis)=([1-9][0-9]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   fixedPieceImageSize = parseInt(unescape(thisParamString.match(thisRegExp)[3]), 10);
+}
+
+var pieceFont = "alpha";
+thisRegExp = /(&|\?)(pieceFont|pf)=([^&]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   pieceFont = unescape(thisParamString.match(thisRegExp)[3]);
+   if (pieceFont == "a") { pieceFont = "alpha"; }
+   if (pieceFont == "m") { pieceFont = "merida"; }
+   if (pieceFont == "u") { pieceFont = "uscf"; }
+   if ((pieceFont != "alpha") && (pieceFont != "merida") && (pieceFont != "uscf")) { pieceFont = "alpha"; }
+}
+
+var fontMovesSize;
+thisRegExp = /(&|\?)(fontMovesSize|fms)=([1-9][0-9]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   fontMovesSize = parseInt(unescape(thisParamString.match(thisRegExp)[3]), 10);
+}
+var fontCommentsSize;
+thisRegExp = /(&|\?)(fontCommentsSize|fcs)=([1-9][0-9]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   fontCommentsSize = parseInt(unescape(thisParamString.match(thisRegExp)[3]), 10);
+}
+
+thisRegExp = /(&|\?)(help|h)=(t|true)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   document.write("<PRE>");
+   document.write("URL parameters\n");
+   document.write("\n");
+   document.write(" - fenString = FEN position to analyze\n");
+   document.write(" - analysisSeconds = analysis timeout in seconds (default 13)\n");
+   document.write(" - disableEngine = true | false (default false)\n");
+   document.write(" - disableInputs = true | false (default false)\n");
+   document.write(" - autoUpdate = true | false (default false)\n");
+   // document.write(" - autoPlay = true | false (default false)\n");
+   // document.write(" - enableLocalStorage = true | false (default false)\n");
+   // document.write(" - engineSignature = positive number (default -1)\n");
+   document.write("\n");
+   document.write(" - squareSize = size of square (default selects square size based on window size)\n");
+   document.write(" - pieceSize = size of pieces | default (default selects piece size based on square size)\n");
+   // document.write(" - fixedPieceImageSize = size of piece images (default as size of pieces)\n");
+   document.write(" - pieceFont = alpha | merida | uscf (default alpha)\n");
+   document.write("\n");
+   document.write(" - lightColorHex = light square color hex code, like FF0000 (default F4F4F4)\n");
+   document.write(" - darkColorHex = dark square color hex code, like FF0000 (default DDDDDD)\n");
+   document.write(" - highlightColorHex = highlight color hex code, like FF0000 (default BBBBBB)\n");
+   document.write(" - backgroundColorHex = page background color hex code, like FF0000 (default as lightColorHex)\n");
+   document.write(" - controlTextColorHex = control buttons text color hex code, like FF0000 (default BBBBBB)\n");
+   document.write(" - fontMovesColorHex = moves color hex code, like FF0000 (default 000000)\n");
+   document.write("\n");
+   document.write(" - fontMovesSize = moves font size (default selects moves font size based on square size)\n");
+   document.write(" - fontCommentsSize = analysis comments font size (default selects comments font size based on square size)\n");
+   document.write("\n");
+   document.write(" - framePaddingRatio = frame padding as a square ratio (default 1)\n");
+   document.write("\n");
+   document.write(" - help = true\n");
+   document.write("\n");
+   document.write("</PRE>");
+}
+
+
+// undocumented feature
+var autoPlay;
+thisRegExp = /(&|\?)(autoPlay|ap)=([^&]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   autoPlay = unescape(thisParamString.match(thisRegExp)[3]);
+}
+autoPlay = ((autoPlay == "true") || (autoPlay == "t"));
+
+// undocumented feature
+var enableLocalStorage;
+thisRegExp = /(&|\?)(enableLocalStorage|els)=([^&]*)(&|$)/i;
+if (thisParamString.match(thisRegExp) !== null) {
+   enableLocalStorage = unescape(thisParamString.match(thisRegExp)[3]);
+}
+enableLocalStorage = ((enableLocalStorage == "true") || (enableLocalStorage == "t"));
+
+
+function myRulesLength(sheet) {
+   if (sheet.cssRules) { return sheet.cssRules.length; }
+   if (sheet.rules) { return sheet.rules.length; }
+   return null;
+}
+
+function myInsertRule(sheet, selector, declaration) {
+   if (sheet.insertRule) { sheet.insertRule(selector + "{ " + declaration + " }", myRulesLength(sheet)); }
+   else if (sheet.addRule) { sheet.addRule(selector, declaration); }
+}
+
+function myDeleteRule(sheet, index) {
+   if (sheet.deleteRule) { sheet.deleteRule(index); }
+   else if (sheet.removeRule) { sheet.removeRule(index); }
+}
+
+var mySheet = document.styleSheets[0];
+myInsertRule(mySheet, "body", "color: " + fontMovesColorHex + "; background: " + backgroundColorHex + ";");
+myInsertRule(mySheet, "a", "color: " + fontMovesColorHex + ";");
+myInsertRule(mySheet, ".boardTable", "background: " + lightColorHex + ";");
+myInsertRule(mySheet, ".whiteSquare", "background: " + lightColorHex + ";");
+myInsertRule(mySheet, ".highlightWhiteSquare", "background: " + highlightColorHex + ";");
+myInsertRule(mySheet, ".blackSquare", "background: " + darkColorHex + ";");
+myInsertRule(mySheet, ".highlightBlackSquare", "background: " + highlightColorHex + ";");
+myInsertRule(mySheet, ".gameCustomButtons", "color: " + controlTextColorHex + ";");
+myInsertRule(mySheet, ".gameFlagToMove", "border-color: " + fontMovesColorHex + ";");
+myInsertRule(mySheet, ".gameEval", "background: " + backgroundColorHex + ";");
+
+var oldSquareSizeCss;
+function myOnResize() {
+
+   if (!fixedPieceImageSize && oldSquareSizeCss) { return; }
+
+   var sheet = document.styleSheets[1];
+   var oldRules = myRulesLength(sheet);
+
+   var squareSizeCss;
+   if (typeof(squareSize) != "undefined") { squareSizeCss = squareSize; }
+   else {
+      var ww = 0, wh = 0;
+      if (window.innerWidth && window.innerHeight) { ww = window.innerWidth; wh = window.innerHeight; }
+      else if (document.documentElement && document.documentElement.clientWidth) { ww = document.documentElement.clientWidth; wh = document.documentElement.clientHeight; }
+      else if (document.body && document.body.clientWidth) { ww = document.body.clientWidth; wh = document.body.clientHeight; }
+      if (Math.min(ww, wh) > 0) {
+         squareSizeCss = Math.floor(Math.min(ww / (8 + 2 * framePaddingRatio), wh / (10 + 2 * framePaddingRatio)));
+      } else {
+         squareSizeCss = 30;
+      }
+   }
+   if (squareSizeCss < 20) { squareSizeCss = 20; }
+
+   if (squareSizeCss === oldSquareSizeCss) { return; }
+
+   var framePaddingCss = framePaddingRatio * squareSizeCss;
+   var pieceSizeCss = typeof(pieceSize) != "undefined" ? pieceSize : defaultPieceSize(squareSizeCss);
+   var fontMovesSizeCss = typeof(fontMovesSize) != "undefined" ? fontMovesSize : Math.ceil(squareSizeCss * 11 / 30);
+   var fontCommentsSizeCss = typeof(fontCommentsSize) != "undefined" ? fontCommentsSize : Math.ceil(squareSizeCss * 19 / 30);
+
+   myInsertRule(sheet, "body", "padding: " + framePaddingCss + "px;" + (wh ? " height: " + (wh - 2 * framePaddingCss) + "px;" : ""));
+   myInsertRule(sheet, ".boardTable", "width: " + (squareSizeCss * 8) + "px; height: " + (squareSizeCss * 8) + "px;");
+   myInsertRule(sheet, ".pieceImage", "width: " + pieceSizeCss + "px; height: " + pieceSizeCss + "px;");
+   myInsertRule(sheet, ".whiteSquare", "width: " + squareSizeCss + "px; height: " + squareSizeCss + "px;");
+   myInsertRule(sheet, ".highlightWhiteSquare", "width: " + squareSizeCss + "px; height: " + squareSizeCss + "px;");
+   myInsertRule(sheet, ".blackSquare", "width: " + squareSizeCss + "px; height: " + squareSizeCss + "px;");
+   myInsertRule(sheet, ".highlightBlackSquare", "width: " + squareSizeCss + "px; height: " + squareSizeCss + "px;");
+   myInsertRule(sheet, ".container", "width: " + (squareSizeCss * 8) + "px;");
+   myInsertRule(sheet, ".gameCustomButtons", "height: " + squareSizeCss + "px; padding-bottom: " + Math.floor(squareSizeCss / 6) + "px; font-size: " + fontMovesSizeCss + "px; margin-left: " + Math.floor((2 * squareSizeCss - 5 * Math.floor(squareSizeCss * 0.4)) / 2) + "px;");
+   myInsertRule(sheet, ".gameButtonCell", "width: " + squareSizeCss + "px;");
+   myInsertRule(sheet, ".gameButtonSpacer", "width: " + Math.floor(squareSizeCss * 0.4) + "px;");
+   myInsertRule(sheet, ".gameAnalysis", "height: " + squareSizeCss + "px;");
+   myInsertRule(sheet, ".gameFlagToMove", "height: " + Math.floor(fontMovesSizeCss / 2) + "px; width: " + Math.floor(fontMovesSizeCss / 2) + "px;");
+   myInsertRule(sheet, ".gameShowFen", "width: " + (squareSizeCss - 2 * Math.floor(squareSizeCss / 3)) + "px; margin-left:" + Math.floor(squareSizeCss / 3) + "px; margin-right:" + Math.floor(squareSizeCss / 3) + "px;");
+   myInsertRule(sheet, ".gameMoves", "font-size: " + fontMovesSizeCss + "px;");
+   myInsertRule(sheet, ".gameTablebase", "font-size: " + fontMovesSizeCss + "px;");
+   myInsertRule(sheet, ".gameEval", "padding-left: " + squareSizeCss + "px; font-size: " + fontCommentsSizeCss + "px;");
+
+   SetImagePath("images/" + pieceFont + "/" + (fixedPieceImageSize ? fixedPieceImageSize : pieceSizeCss));
+
+   for (var ii = 0; ii < oldRules; ii++) { myDeleteRule(sheet, 0); }
+
+   var theObj;
+   if (theObj = document.getElementById("boardTable")) { theObj.style.height = (8 * squareSizeCss) + "px"; }
+
+   oldSquareSizeCss = squareSizeCss;
+}
+
+</script>
+
+<script src="pgn4web.js" type="text/javascript"></script>
+<!-- patch: fonts folder: if the "fonts" folder is relocated please update the next line accordingly -->
+<script src="fonts/chess-informant-NAG-symbols.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+"use strict";
+
+SetImageType("png");
+SetHighlightOption(false);
+SetShortcutKeysEnabled(true);
+myOnResize();
+
+<!-- AppCheck: myOnOrientationchange -->
+
+
+</script>
+
+</head>
+
+<body onResize="myOnResize();">
+
+<!-- paste your PGN below and make sure you dont specify an external source with SetPgnUrl() -->
+<form style="display: none;"><textarea style="display: none;" id="pgnText">
+
+</textarea></form>
+<!-- paste your PGN above and make sure you dont specify an external source with SetPgnUrl() -->
+
+<center>
+<div class="container">
+<div id="GameBoard"></div>
+<table id="GameCustomButtons" class="gameCustomButtons gameCustomButtonsHidden" cellspacing="0" cellpadding="0" border="0"><tr valign="bottom">
+<td id="GameAnalysisFlag" class="gameButtonCell" align="center" onclick="clickedGameAnalysisFlag(this, event);">&nbsp;</td>
+<td class="gameButtonSpacer"></td>
+<td class="gameButtonCell" align="center" onclick="clickedButtonStart(this, event);" title="go to start">&lt;&lt;</td>
+<td class="gameButtonSpacer"></td>
+<td class="gameButtonCell" align="center" onclick="clickedButtonBackward(this, event);" title="move backward">&lt;</td>
+<td class="gameButtonSpacer"></td>
+<td class="gameButtonCell" align="center" onclick="clickedButtonForward(this, event);" title="move forward">&gt;</td>
+<td class="gameButtonSpacer"></td>
+<td class="gameButtonCell" align="center" onclick="clickedButtonEnd(this, event);" title="go to end">&gt;&gt;</td>
+<td class="gameButtonSpacer"></td>
+<td id="GameAutoUpdateFlag" class="gameButtonCell" align="center" onclick="clickedGameAutoUpdateFlag(this, event);">&nbsp;</td>
+</tr></table>
+<div class="gameAnalysis gameAnalysisHidden" id="GameAnalysis">
+<div class="gameEval" id="GameEval" onclick="clickedGameEval(this, event);">&nbsp;</div>
+</div>
+<div class="gameFlagAndMoves">
+<span class="gameFlagToMove" id="GameFlagToMove" onclick="clickedGameFlagToMove(this, event);"></span><span class="gameShowFen" onclick="clickedGameShowFen(this, event);">&nbsp;</span><span class="gameTablebase" id="GameTablebase" onclick="clickedGameTablebase(this, event);" title="probe endgame tablebase">&perp;</span><span id="GameMoves" class="gameMoves" onclick="clickedGameMoves(this, event);">&nbsp;</span>&nbsp;
+</div>
+</div>
+</center>
+
+<script type="text/javascript">
+"use strict";
+
+var theObj;
+
+if (typeof(fenString) == "undefined") { fenString = FenStringStart; }
+if (theObj = document.getElementById("pgnText")) {
+   theObj.innerHTML = '[Setup "1"]\n[FEN "' + fenString + '"]\n';
+}
+
+
+function clickedButtonStart(t,e) {
+   if (e.shiftKey) {
+      analysisSeconds = analysisSeconds <= defaultAnalysisSeconds ? minAnalysisSeconds : defaultAnalysisSeconds;
+   } else {
+      if (CurrentPly > StartPlyVar[0]) { GoToMove(StartPlyVar[0], 0); }
+   }
+}
+
+function clickedButtonBackward(t,e) {
+   if (e.shiftKey) {
+      analysisSeconds = Math.max(Math.floor(analysisSeconds / 1.15), minAnalysisSeconds);
+   } else {
+     if (CurrentPly > StartPlyVar[0]) { GoToMove(CurrentPly - 1); }
+   }
+}
+
+function clickedButtonForward(t,e) {
+   if (e.shiftKey) {
+      analysisSeconds = Math.min(Math.ceil(analysisSeconds * 1.15), maxAnalysisSeconds);
+   } else {
+      if (CurrentPly < StartPlyVar[0] + PlyNumberVar[0]) { GoToMove(CurrentPly + 1); }
+   }
+}
+
+function clickedButtonEnd(t,e) {
+   if (e.shiftKey) {
+      analysisSeconds = analysisSeconds >= defaultAnalysisSeconds ? maxAnalysisSeconds : defaultAnalysisSeconds;
+   } else {
+      if (CurrentPly < StartPlyVar[0] + PlyNumberVar[0]) { GoToMove(StartPlyVar[0] + PlyNumberVar[0], 0); }
+   }
+}
+
+function clickedGameMoves(t,e) {
+   if (e.shiftKey) {
+      save_cache_to_localStorage();
+   } else {
+      var candidateMove = t.innerHTML.replace(/^\s*(\S+).*$/, "$1");
+      if (candidateMove) { addPly(candidateMove); }
+   }
+}
+
+function clickedGameEval(t,e) {
+   if (e.shiftKey) {
+      if (!disableEngine) {
+         displayHelp("informant_symbols");
+      }
+   } else {
+      setDisableEngine(!disableEngine);
+   }
+}
+
+var maxMenInTablebase = 0;
+var minMenInTablebase = 3;
+function probeTablebase() {}
+
+
+// DeploymentCheck: tablebase glue code
+
+// end DeploymentCheck
+
+
+function clickedGameTablebase() {
+   var menPosition = CurrentFEN().replace(/\s.*$/, "").replace(/[0-9\/]/g, "").length;
+   if ((menPosition >= minMenInTablebase) && (menPosition <= maxMenInTablebase)) {
+      probeTablebase();
+   } else {
+      myAlert("warning: endgame tablebase only supports positions with " + minMenInTablebase + " to " + maxMenInTablebase + " men");
+   }
+}
+
+function updateTablebaseFlag() {
+   var menPosition = CurrentFEN().replace(/\s.*$/, "").replace(/[0-9\/]/g, "").length;
+   var theObj = document.getElementById("GameTablebase");
+   var showTablebase = (menPosition >= minMenInTablebase) && (menPosition <= maxMenInTablebase) && (!g_initErrors) && (!disableEngine);
+   if (theObj) {
+     theObj.style.display = showTablebase ? "inline" : "none";
+   }
+}
+
+
+function clickedGameAutoUpdateFlag(t,e) {
+   if (openerCheck()) {
+      autoUpdate = !autoUpdate;
+      if ((autoUpdate) && ((CurrentFEN() !== window.opener.CurrentFEN()) || (!g_backgroundEngine && !disableEngine))) {
+         window.opener.showEngineAnalysisBoard(disableEngine);
+      }
+
+<!-- AppCheck: clickedGameAutoUpdateFlag -->
+
+   }
+   updateGameAutoUpdateFlag();
+}
+
+function clickedGameAnalysisFlag(t,e) {
+   if (e.shiftKey) {
+      cache_clear();
+      clear_cache_from_localStorage();
+   } else {
+      if (g_backgroundEngine) {
+         StopBackgroundEngine();
+      } else {
+         if (openerCheck()) {
+            window.opener.showEngineAnalysisBoard(disableEngine);
+         } else {
+            StartEngineAnalysis();
+         }
+      }
+   }
+}
+
+function clickedGameFlagToMove(t,e) {
+   if (e.shiftKey) {
+      if (autoPlay) { stopAutoPlay(); }
+      else { startAutoPlay(); }
+   } else {
+      if ((!autoPlay) && (!IsCheck(PieceCol[MoveColor][0], PieceRow[MoveColor][0], MoveColor))) {
+         if ((CurrentPly > StartPly) && (Moves[CurrentPly - 1] == "--")) { MoveBackward(1); }
+         else { addPly("--"); }
+      }
+   }
+}
+
+function clickedGameShowFen(t, e) {
+   if (e.shiftKey) { displayFenData(); }
+   else if (PlyNumber > 0) {
+      var oldCurrentPly = CurrentPly;
+      MoveBackward(CurrentPly - StartPly, true);
+      displayFenData(true);
+      MoveForward(oldCurrentPly - CurrentPly);
+   }
+}
+
+function pgn4web_handleKey(e) {
+  var keycode, colRow, colRowList, theObj;
+
+  if (!e) { e = window.event; }
+
+  keycode = e.keyCode;
+
+  if (e.altKey || e.ctrlKey || e.metaKey) { return true; }
+
+  if (!shortcutKeysEnabled) { return true; }
+
+  switch (keycode) {
+
+    case 32: // space
+      if (theObj = document.getElementById("GameMoves")) {
+        clickedGameMoves(theObj, {shiftKey: false});
+      }
+      break;
+
+    case 189: // dash
+      if (colRowList = prompt("Enter shortcut square coordinates to click:", "")) {
+        colRowList = colRowList.toUpperCase().replace(/[^A-Z0-9]/g,"");
+        while (colRow = colRowFromSquare(colRowList)) {
+          boardOnClick[colRow.col][colRow.row]({"id": "img_tcol" + colRow.col + "trow" + colRow.row}, e);
+          colRowList = colRowList.substr(2);
+        }
+      }
+      break;
+
+    case 90: // z
+      if (e.shiftKey) { window.open(pgn4web_project_url); }
+      else { displayDebugInfo(); }
+      break;
+
+    case 37: // left-arrow
+    case 74: // j
+      backButton(e);
+      break;
+
+    case 38: // up-arrow
+    case 72: // h
+      startButton(e);
+      break;
+
+    case 39: // right-arrow
+    case 75: // k
+      forwardButton(e);
+      break;
+
+    case 40: // down-arrow
+    case 76: // l
+      endButton(e);
+      break;
+
+<!-- AppCheck: pgn4web_handleKey -->
+
+    case 82: // r
+      setDisableEngine(true);
+      break;
+
+    case 89: // y
+      setDisableEngine(false);
+      break;
+
+    case 70: // f
+      clickedGameFlagToMove(null, {shiftKey: false});
+      break;
+
+    default:
+      return true;
+  }
+  return stopEvProp(e);
+}
+
+
+var pgn4web_chess_engine_id = "garbochess-pgn4web-" + pgn4web_version;
+
+var engineWorker = "libs/garbochess/garbochess.js";
+
+var g_backgroundEngine;
+var g_topNodesPerSecond = 0;
+var g_ev = "";
+var g_pv = "";
+var g_depth = "";
+var g_nodes = "";
+var g_initErrors = 0;
+var g_lastFenError = "";
+
+function InitializeBackgroundEngine() {
+   var theObj;
+
+   if (!g_backgroundEngine) {
+      try {
+          g_backgroundEngine = new Worker(engineWorker);
+          g_backgroundEngine.addEventListener("message", function (e) {
+             var theObj;
+             if ((e.data.match("^pv")) && (fenString == CurrentFEN())) {
+                var matches = e.data.substr(3, e.data.length - 3).match(/Ply:(\d+) Score:(-*\d+) Nodes:(\d+) NPS:(\d+) (.*)/);
+                if (matches) {
+                   g_depth = parseInt(matches[1], 10);
+                   if (isNaN(g_ev = parseInt(matches[2], 10))) {
+                      g_ev = "";
+                   } else {
+                      var maxEv = 99.9;
+                      g_ev = Math.round(g_ev / 100) / 10;
+                      if (g_ev < -maxEv) { g_ev = -maxEv; } else if (g_ev > maxEv) { g_ev = maxEv; }
+                      if (fenString.indexOf(" b ") !== -1) { g_ev = -g_ev; }
+                   }
+                   g_nodes = parseInt(matches[3], 10);
+                   var nodesPerSecond = parseInt(matches[4], 10);
+                   g_topNodesPerSecond = Math.max(nodesPerSecond, g_topNodesPerSecond);
+                   g_pv = matches[5].replace(/(^\s+|\s*[x+=]|\s+$)/g, "").replace(/\s*stalemate/, "=").replace(/\s*checkmate/, "#"); // patch: pgn notation: remove/add '+' 'x' '=' chars for full chess informant style or pgn style for the game text
+                   validateSearchWithCache();
+                   if (theObj = document.getElementById("GameEval")) {
+                      theObj.innerHTML = ev2NAG(g_ev);
+                      theObj.title = (g_ev > 0 ? " +" : " ") + g_ev + (g_ev == Math.floor(g_ev) ? ".0 " : " ");
+                   }
+                   if (theObj = document.getElementById("GameMoves")) {
+                      theObj.innerHTML = g_pv;
+                      theObj.title = g_pv;
+                   }
+                   updateGameAnalysisFlag();
+                   if (detectGameEnd(g_pv, "")) { StopBackgroundEngine(); }
+                }
+             } else if (e.data.match("^message Invalid FEN")) {
+                if (theObj = document.getElementById("GameEval")) {
+                   theObj.innerHTML = NAG[2];
+                   theObj.title = "?";
+                }
+                if (theObj = document.getElementById("GameMoves")) {
+                   theObj.innerHTML = "invalid position";
+                   theObj.title = e.data.replace(/^message /, "");
+                }
+                if (fenString != g_lastFenError) {
+                   g_lastFenError = fenString;
+                   myAlert("error: engine: " + e.data.replace(/^message /, "") + "\n" + fenString, false);
+                }
+             }
+          }, false);
+          g_initErrors = 0;
+          return true;
+      } catch(e) {
+         if (theObj = document.getElementById("GameEval")) {
+            theObj.innerHTML = useNAGeval ? translateNAGs("$255") + "<span class='NAGs'>&nbsp;&nbsp;&nbsp;</span>" + translateNAGs("$147") : "X X";
+            theObj.title = "engine analysis unavailable";
+         }
+         if (theObj = document.getElementById("GameMoves")) {
+            theObj.innerHTML = "&nbsp;";
+            theObj.title = "";
+         }
+         if (!g_initErrors++) { myAlert("error: engine exception " + e); }
+         updateTablebaseFlag();
+         return false;
+      }
+   }
+}
+
+
+var moderateDefiniteThreshold = 1.85;
+var slightModerateThreshold = 0.85;
+var equalSlightThreshold = 0.25;
+
+var useNAGeval = (NAGstyle != 'default');
+function ev2NAG(ev) {
+   if ((ev === null) || (ev === "") || (isNaN(ev = parseFloat(ev)))) { return ""; }
+   if (!useNAGeval) { return (ev > 0 ? "+" : "") + ev + (ev == Math.floor(ev) ? ".0" : ""); }
+   if (ev < -moderateDefiniteThreshold) { return NAG[19]; } // -+
+   if (ev >  moderateDefiniteThreshold) { return NAG[18]; } // +-
+   if (ev < -slightModerateThreshold)   { return NAG[17]; } // -/+
+   if (ev >  slightModerateThreshold)   { return NAG[16]; } // +/-
+   if (ev < -equalSlightThreshold)      { return NAG[15]; } // =/+
+   if (ev >  equalSlightThreshold)      { return NAG[14]; } // +/=
+   return NAG[11];                                          // =
+}
+
+
+var localStorage_supported;
+try { localStorage_supported = ((enableLocalStorage) && ("localStorage" in window) && (window["localStorage"] !== null)); }
+catch (e) { localStorage_supported = false; }
+
+var cache_local_storage_prefix = "pgn4web_chess_engine_cache_"; // default "pgn4web_chess_engine_cache_"
+
+function load_cache_from_localStorage() {
+   if (!localStorage_supported) { return; }
+   if (pgn4web_chess_engine_id != localStorage[cache_local_storage_prefix + "id"]) {
+      clear_cache_from_localStorage();
+      localStorage[cache_local_storage_prefix + "id"] = pgn4web_chess_engine_id;
+      return;
+   }
+   if (cache_pointer = localStorage[cache_local_storage_prefix + "pointer"]) {
+      cache_pointer = parseInt(cache_pointer, 10) % cache_max;
+   } else { cache_pointer = -1; }
+   if (cache_fen = localStorage[cache_local_storage_prefix + "fen"]) {
+      cache_fen = cache_fen.split(",");
+   } else { cache_fen = new Array(); }
+   if (cache_ev = localStorage[cache_local_storage_prefix + "ev"]) {
+      cache_ev = cache_ev.split(",").map(parseFloat);
+      if (typeof(cache_ev.map == "function")) { cache_ev = cache_ev.map(parseFloat); }
+   } else { cache_ev = new Array(); }
+   if (cache_pv = localStorage[cache_local_storage_prefix + "pv"]) {
+      cache_pv = cache_pv.split(",");
+   } else { cache_pv = new Array(); }
+   if (cache_depth = localStorage[cache_local_storage_prefix + "depth"]) {
+      cache_depth = cache_depth.split(",");
+      if (typeof(cache_depth.map == "function")) { cache_depth = cache_depth.map(parseFloat); }
+   } else { cache_depth = new Array(); }
+   cache_needs_sync = 0;
+   if ((cache_fen.length !== cache_ev.length) || (cache_fen.length !== cache_pv.length) || (cache_fen.length !== cache_depth.length)) {
+      clear_cache_from_localStorage();
+      cache_clear();
+   }
+}
+
+function save_cache_to_localStorage() {
+   if (!localStorage_supported) { return; }
+   if (!cache_needs_sync) { return; }
+   localStorage[cache_local_storage_prefix + "pointer"] = cache_pointer;
+   localStorage[cache_local_storage_prefix + "fen"] = cache_fen.toString();
+   localStorage[cache_local_storage_prefix + "ev"] = cache_ev.toString();
+   localStorage[cache_local_storage_prefix + "pv"] = cache_pv.toString();
+   localStorage[cache_local_storage_prefix + "depth"] = cache_depth.toString();
+   cache_needs_sync = 0;
+}
+
+function clear_cache_from_localStorage() {
+   if (!localStorage_supported) { return; }
+   localStorage.removeItem(cache_local_storage_prefix + "pointer");
+   localStorage.removeItem(cache_local_storage_prefix + "fen");
+   localStorage.removeItem(cache_local_storage_prefix + "ev");
+   localStorage.removeItem(cache_local_storage_prefix + "pv");
+   localStorage.removeItem(cache_local_storage_prefix + "depth");
+   localStorage.removeItem(cache_local_storage_prefix + "nodes"); // backward compatibility
+   cache_needs_sync++;
+}
+
+function cacheDebugInfo() {
+   var dbg = "";
+   if (localStorage_supported) {
+      dbg += " cache=";
+      try {
+         dbg += num2string(localStorage[cache_local_storage_prefix + "pointer"].length + localStorage[cache_local_storage_prefix + "fen"].length + localStorage[cache_local_storage_prefix + "ev"].length + localStorage[cache_local_storage_prefix + "pv"].length + localStorage[cache_local_storage_prefix + "depth"].length);
+      } catch(e) {
+         dbg += "0";
+      }
+   }
+   return dbg;
+}
+
+var cache_pointer = -1;
+var cache_max = 2000; // ~ 16 games of 60 moves ~ 256KB of local storage
+var cache_fen = new Array();
+var cache_ev = new Array();
+var cache_pv = new Array();
+var cache_depth = new Array();
+
+var cache_needs_sync = 0;
+
+load_cache_from_localStorage();
+
+function validateSearchWithCache() {
+   var id = cache_fen_lastIndexOf(fenString);
+   if (id == -1) {
+      cache_last = cache_pointer = (cache_pointer + 1) % cache_max;
+      cache_fen[cache_pointer] = fenString.replace(/\s+\d+\s+\d+\s*$/, "");
+      cache_ev[cache_pointer] = g_ev;
+      cache_pv[cache_pointer] = g_pv;
+      cache_depth[cache_pointer] = g_depth;
+      cache_needs_sync++;
+   } else {
+      if (g_depth > cache_depth[id]) {
+         cache_ev[id] = g_ev;
+         cache_pv[id] = g_pv;
+         cache_depth[id] = g_depth;
+         cache_needs_sync++;
+      } else {
+         g_ev = parseFloat(cache_ev[id]);
+         g_pv = cache_pv[id];
+         g_depth = parseInt(cache_depth[id], 10);
+      }
+   }
+   if (cache_needs_sync > cache_max / 10) { save_cache_to_localStorage(); }
+}
+
+var cache_last = 0;
+function cache_fen_lastIndexOf(fenString) {
+   fenString = fenString.replace(/\s+\d+\s+\d+\s*$/, "");
+   if (fenString === cache_fen[cache_last]) { return cache_last; }
+   if (typeof(cache_fen.lastIndexOf) == "function") { return (cache_last = cache_fen.lastIndexOf(fenString)); }
+   for (var n = cache_fen.length - 1; n >= 0; n--) {
+      if (fenString === cache_fen[n]) { return (cache_last = n); }
+   }
+   return -1;
+}
+
+function cache_clear() {
+   cache_pointer = -1;
+   cache_fen = new Array();
+   cache_ev = new Array();
+   cache_pv = new Array();
+   cache_depth = new Array();
+}
+
+
+function StopBackgroundEngine() {
+   if (analysisTimeout) { clearTimeout(analysisTimeout); }
+   if (g_backgroundEngine) {
+      g_backgroundEngine.terminate();
+      g_backgroundEngine = null;
+      updateGameAnalysisFlag();
+      if ((autoPlay) && (g_pv !== "")) {
+         if (detectGameEnd(g_pv, CurrentFEN()) === true) {
+            stopAutoPlay();
+         } else {
+            addPly(g_pv.replace(/^\s*(\S+).*$/, "$1"));
+         }
+      }
+      g_pv = "";
+   }
+   updateTablebaseFlag();
+}
+
+var analysisTimeout;
+function setAnalysisTimeout(seconds) {
+   if (analysisTimeout) { clearTimeout(analysisTimeout); }
+   analysisTimeout = setTimeout("analysisTimeout = null; save_cache_to_localStorage(); StopBackgroundEngine();", seconds * 1000);
+}
+
+function StartEngineAnalysis() {
+   StopBackgroundEngine();
+   if (InitializeBackgroundEngine()) {
+      fenString = CurrentFEN();
+      g_backgroundEngine.postMessage("position " + fenString);
+      g_backgroundEngine.postMessage("analyze");
+      setAnalysisTimeout(analysisSeconds);
+   }
+   updateTablebaseFlag();
+}
+
+
+function openerCheck(skipSignature) {
+   try { // bugfix: Opera generating bogus security error
+      return ((typeof(window.opener) == "object") && (window.opener !== null) && (!window.opener.closed) && (typeof(window.opener.pgn4web_engineWinSignature) != "undefined") && ((window.opener.pgn4web_engineWinSignature === engineSignature) || (skipSignature)));
+   } catch(e) { return false; }
+}
+
+function updateGameAnalysisFlag() {
+   var theObj = document.getElementById("GameAnalysisFlag");
+   if (theObj = document.getElementById("GameAnalysisFlag")) {
+      if (g_backgroundEngine) {
+         theObj.innerHTML = "=";
+         theObj.title = "pause engine analysis";
+      } else {
+         if ((openerCheck()) && (CurrentFEN() != window.opener.CurrentFEN())) {
+            theObj.innerHTML = "+";
+            theObj.title = "update analysis board";
+         } else if (disableEngine) {
+            theObj.innerHTML = "&nbsp;";
+            theObj.title = "";
+         } else {
+            theObj.innerHTML = "&middot;";
+            theObj.title = "restart engine analysis";
+         }
+      }
+   }
+}
+
+function updateGameAutoUpdateFlag() {
+   var theObj = document.getElementById("GameAutoUpdateFlag");
+   if (theObj) {
+      if (openerCheck()) {
+         if (autoUpdate) {
+            theObj.innerHTML = "=";
+            theObj.title = "pause auto updating analysis board";
+         } else {
+            theObj.innerHTML = "+";
+            theObj.title = "start auto updating analysis board";
+         }
+
+<!-- AppCheck: updateGameAutoUpdateFlag -->
+
+      } else {
+         theObj.innerHTML = "&nbsp;";
+         theObj.title = "";
+      }
+   }
+}
+
+function updateGameFlagToMove() {
+   var theObj = document.getElementById("GameFlagToMove");
+   if (theObj) {
+      theObj.style.backgroundColor = CurrentPly % 2 ? "black" : "white";
+      theObj.title = (CurrentPly % 2 ? "black" : "white") + " to move" + (autoPlay ? ": autoplay" : "");
+   }
+}
+
+
+var firstCustomFunctionOnPgnTextLoad = true;
+function customFunctionOnPgnTextLoad() {
+   if (firstCustomFunctionOnPgnTextLoad) {
+      firstCustomFunctionOnPgnTextLoad = false;
+      setDisableEngine(disableEngine);
+      var theObj;
+      if (theObj = document.getElementById("GameAnalysis")) {
+         theObj.className = "gameAnalysis";
+      }
+      if ((!disableInputs) && (!autoPlay) && (theObj = document.getElementById("GameCustomButtons"))) {
+         theObj.className = "gameCustomButtons";
+      }
+
+      // undocumented parameter for internal use after pgn4web has started
+      thisRegExp = /(&|\?)(engineSignature|es)=([1-9][0-9]*)(&|$)/i;
+      if (thisParamString.match(thisRegExp) !== null) {
+         engineSignature = parseInt(unescape(thisParamString.match(thisRegExp)[3]), 10);
+      }
+      updateGameAnalysisFlag();
+      updateGameAutoUpdateFlag();
+   }
+}
+
+function customFunctionOnMove() {
+   var theObj;
+
+   updateGameFlagToMove();
+
+   if (!disableEngine) {
+      var id = cache_fen_lastIndexOf(CurrentFEN());
+      if (theObj = document.getElementById("GameMoves")) {
+         theObj.innerHTML = (id != -1) ? cache_pv[id] : "";
+         theObj.title = "";
+      }
+      if (theObj = document.getElementById("GameEval")) {
+         theObj.innerHTML = (id != -1) ? ev2NAG(parseFloat(cache_ev[id])) : "";
+         theObj.title = "";
+      }
+      StartEngineAnalysis();
+   }
+
+   if (clickFromCol !== "") {
+      highlightSquare("abcdefgh".indexOf(clickFromCol), "12345678".indexOf(clickFromRow), false);
+   }
+   clickFromCol = "";
+   clickFromRow = "";
+   clickFromPiece = "";
+
+   updateTablebaseFlag();
+   updateGameAnalysisFlag();
+   updateGameAutoUpdateFlag();
+}
+
+function customDebugInfo() {
+   var dbg = "autoUpdate=" + autoUpdate;
+   dbg += " engine=";
+   if (disableEngine) { dbg += "disabled"; }
+   else if (!window.Worker) { dbg += "unavailable"; }
+   else { dbg += (g_backgroundEngine ? (autoPlay ? "autoplay" : "pondering") : "idle") + " analysisSeconds=" + analysisSeconds + " topNodesPerSecond=" + num2string(g_topNodesPerSecond) + cacheDebugInfo(); }
+   return dbg;
+}
+
+function num2string(num) {
+   var unit = "";
+   if (num >= Math.pow(10, 12)) { num = Math.round(num / Math.pow(10, 11)) / 10;  unit = "T"; }
+   else if (num >= Math.pow(10, 9)) { num = Math.round(num / Math.pow(10, 8)) / 10;  unit = "G"; }
+   else if (num >= Math.pow(10, 6)) { num = Math.round(num / Math.pow(10, 5)) / 10; unit = "M"; }
+   else if (num >= Math.pow(10, 3)) { num = Math.round(num / Math.pow(10, 2)) / 10; unit = "K"; }
+   if ((unit !== "") && (num === Math.floor(num))) { num += ".0"; }
+   return num + unit;
+}
+
+
+var overwrittenPly = "";
+var overwrittenPlyNumber;
+function addPly(thisPly) {
+   if (!thisPly) { return; }
+   if ((PlyNumber < CurrentPly + 1 - StartPly) || (thisPly !== Moves[CurrentPly])) {
+      overwrittenPly = Moves[CurrentPly];
+      Moves[CurrentPly] = MovesVar[0][CurrentPly] = thisPly;
+      overwrittenPlyNumber = PlyNumber;
+      PlyNumber = PlyNumberVar[0] = CurrentPly + 1 - StartPly;
+   } else {
+      overwrittenPly = "";
+   }
+   MoveForward(1);
+}
+
+function customFunctionOnAlert(msg) {
+   if (msg.indexOf("error: invalid ply") !== 0) { return; }
+   stopAlertPrompt();
+   if (overwrittenPly === "") { return; }
+   Moves[CurrentPly] = MovesVar[0][CurrentPly] = overwrittenPly;
+   PlyNumber = PlyNumberVar[0] = overwrittenPlyNumber;
+   overwrittenPly = "";
+}
+
+for (var cc=0; cc<8; cc++) { for (var rr=0; rr<8; rr++) {
+   boardShortcut("ABCDEFGH".charAt(cc) + "12345678".charAt(rr), "explore variations by clicking from/to squares for the intended move", detectClick, false);
+} }
+
+var doubleclickH8Timeout = null;
+var clickFromCol = "";
+var clickFromRow = "";
+var clickFromPiece = "";
+function detectClick(t,e) {
+   if (disableInputs) { return; }
+   var matches = t.id.match(/img_tcol([0-7])trow([0-7])/);
+   if (!matches) { return; }
+   var thisCol = IsRotated ? 7 - matches[1] : matches[1];
+   var thisColChar = "abcdefgh".charAt(thisCol);
+   var thisRow = IsRotated ? matches[2] : 7 - matches[2];
+   var thisRowChar = "12345678".charAt(thisRow);
+   if (e !== null) {
+      if (doubleclickH8Timeout !== null) {
+         clearTimeout(doubleclickH8Timeout);
+         doubleclickH8Timeout = null;
+         if ((thisColChar == "h") && (thisRowChar == "8")) {
+            displayHelp();
+            return;
+         }
+      }
+      if ((thisColChar == "h") && (thisRowChar == "8")) {
+         doubleclickH8Timeout = setTimeout('doubleclickH8Timeout = null;', 333);
+      }
+   }
+   if (clickFromCol !== "") {
+      var thisCurrentPly = CurrentPly;
+      setTimeout('highlightSquare("abcdefgh".indexOf("' + clickFromCol + '"), "12345678".indexOf("' + clickFromRow + '"), false);', 77);
+      var clickToCol = thisColChar;
+      var clickToRow = thisRowChar;
+      if ((clickFromCol !== clickToCol) || (clickFromRow !== clickToRow)) {
+         var thisMove = clickFromPiece + clickFromCol + clickFromRow + clickToCol + clickToRow;
+         if (thisMove == "Ke1g1") { thisMove = "O-O"; }
+         else if (thisMove == "Ke1c1") { thisMove = "O-O-O"; }
+         else if (thisMove == "Ke8g8") { thisMove = "O-O"; }
+         else if (thisMove == "Ke8c8") { thisMove = "O-O-O"; }
+         else if (("KQRBN".indexOf(thisMove.charAt(0)) == -1) && (thisMove.charAt(3) == (CurrentPly % 2 ? "1" : "8"))) {
+            thisMove += "Q";
+         }
+         if (autoPlay) { stopAutoPlay(); }
+         addPly(thisMove);
+      }
+      clickFromCol = clickFromRow = clickFromPiece = "";
+      if (CurrentPly === thisCurrentPly) {
+         detectClick({id: "img_tcol" + matches[1] + "trow" + matches[2]}, null);
+      }
+   } else if ((CurrentPly > StartPly) && (matches = Moves[CurrentPly - 1].match(new RegExp("^(.*" + thisColChar + thisRowChar + ")([QRBN])$", "")))) {
+      MoveBackward(1);
+      addPly(matches[1] + "RBNQ".charAt("QRBN".indexOf(matches[2])));
+   } else {
+      cc = CurrentPly % 2;
+      for (var ii=0; ii<16; ii++) {
+         if ((PieceCol[cc][ii] == thisCol) && (PieceRow[cc][ii] == thisRow)) {
+            if (PieceType[cc][ii] != -1) {
+               clickFromPiece = " KQRBNP".charAt(PieceType[cc][ii]);
+               if (clickFromPiece == "P") { clickFromPiece = ""; }
+               clickFromCol = thisColChar;
+               clickFromRow = thisRowChar;
+               setTimeout('highlightSquare(' + thisCol + ', ' + thisRow + ', true);', 77);
+            }
+         }
+      }
+   }
+}
+
+function detectGameEnd(pv, FEN) {
+   if ((pv !== "") && (pv.match(/^[#=]/))) { return true; }
+   var matches = FEN.match(/\s*\S+\s+\S+\s+\S+\s+\S+\s+(\d+)\s+\S+\s*/);
+   if (matches) {
+      if (parseInt(matches[1], 10) > 100) { return true; }
+   }
+   return false;
+}
+
+function startAutoPlay() {
+   if ((disableEngine) || (!window.Worker)) { return; }
+   var theObj = document.getElementById("GameCustomButtons");
+   if (theObj) {
+      theObj.className = "gameCustomButtons gameCustomButtonsHidden";
+   }
+   autoPlay = true;
+   updateGameFlagToMove();
+   if (autoUpdate) {
+      autoUpdate = false;
+      updateGameAutoUpdateFlag();
+   }
+   if (!g_backgroundEngine) { StartEngineAnalysis(); }
+}
+
+function stopAutoPlay() {
+   autoPlay = false;
+   StopBackgroundEngine();
+   updateGameFlagToMove();
+   var theObj = document.getElementById("GameCustomButtons");
+   if ((!disableInputs) && (!autoPlay) && (theObj)) {
+      theObj.className = "gameCustomButtons";
+   }
+}
+
+
+var engineSignature = -1;
+
+function updateFEN(newFEN) {
+   if (autoPlay) { stopAutoPlay(); }
+   var theObj = document.getElementById("pgnText");
+   if (theObj) {
+      theObj.innerHTML = '[Setup "1"]\n[FEN "' + newFEN + '"]\n';
+   }
+   firstStart = true;
+   start_pgn4web();
+}
+
+function setDisableEngine(de) {
+   if (disableEngine = de) {
+      if (autoPlay) { stopAutoPlay(); }
+      else { StopBackgroundEngine(); }
+      var theObj;
+      if (theObj = document.getElementById("GameEval")) {
+         theObj.innerHTML = useNAGeval ? translateNAGs("$147") : "X";
+         theObj.title = "engine analysis disabled";
+      }
+      if (theObj = document.getElementById("GameMoves")) {
+         theObj.innerHTML = "";
+         theObj.title = "";
+      }
+      updateGameAnalysisFlag();
+   } else {
+      StartEngineAnalysis();
+   }
+}
+
+function sameEngineDisabled(engineDisabled) {
+   return ((typeof(engineDisabled) == "undefined") || (engineDisabled && disableEngine) || (!engineDisabled && !disableEngine));
+}
+
+
+function customFunctionOnTouch(deltaX, deltaY) {
+   if (disableInputs) { return; }
+   if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < 13) { return; }
+   if (Math.abs(deltaY) > 1.5 * Math.abs(deltaX)) { // vertical up or down
+      GoToMove(StartPlyVar[CurrentVar] + (deltaY > 0 ? PlyNumberVar[CurrentVar] : 0));
+   } else if (Math.abs(deltaX) > 1.5 * Math.abs(deltaY)) { // horizontal left or right
+      GoToMove(CurrentPly + sign(deltaX));
+   }
+}
+
+// touchGestures_helpActions unchanged
+touchGestures_helpText = [ "go to variation end", "go to variation start", "move forward", "move backward" ];
+
+<!-- AppCheck: footer -->
+
+</script>
+
+</body>
+
+</html>

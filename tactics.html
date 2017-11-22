@@ -1,0 +1,149 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2015 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<title>Solve chess tactics!</title>
+
+<link href="tactics.css" type="text/css" rel="stylesheet" />
+
+<style type="text/css">
+
+.newButton {
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  font-size: 9px;
+  width: 80px;
+  vertical-align: middle;
+  text-align: center;
+  background-color: #f2d798;
+  border-color: #c9ad6f;
+  border-style: double;
+  border-width: 3px;
+  border-radius: 0px;
+}
+
+</style>
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+<script src="pgn4web.js" type="text/javascript"></script>
+<script type="text/javascript">
+"use strict";
+
+SetPgnUrl("tactics.pgn");
+SetImagePath("images/uscf/24");
+SetInitialGame("random"); // number of game to be shown at load, from 1 (default); values (keep the quotes) of "first", "last", "random" are accepted; other string values assumed as PGN search string
+SetShortcutKeysEnabled(false);
+
+clearShortcutSquares("BCDEFGH", "1234567");
+clearShortcutSquares("A", "123456");
+boardShortcut("H8", "hint", function(t,e){ hint(); });
+
+function hint() {
+  alert("hint: the solution's main line is " + PlyNumber + " ply long");
+}
+
+function gup(name) {
+  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  var regexS = "[\\?&]"+name+"=([^&#]*)";
+  regexS = regexS+"(?!.*"+regexS+")"; // matches the LAST occurrence
+  var regex = new RegExp( regexS, "i" );
+  var results = regex.exec( window.location.href );
+  if (results === null) { return ""; }
+  else { return decodeURIComponent(results[1]); }
+}
+
+var assignedInitialGame = gup('n');
+if (assignedInitialGame) { SetInitialGame(assignedInitialGame); }
+
+function customFunctionOnPgnGameLoad() {
+  var theObj = document.getElementById('GameNumber');
+  if (theObj) { theObj.innerHTML = (currentGame+1); }
+}
+
+</script>
+
+</head>
+
+<body>
+
+<!-- paste your PGN below and make sure you dont specify an external source with SetPgnUrl() -->
+<form style="display: none;"><textarea style="display: none;" id="pgnText">
+
+</textarea></form>
+<!-- paste your PGN above and make sure you dont specify an external source with SetPgnUrl() -->
+
+<center>
+<table width=508 cellspacing=0 cellpadding=0 border=0>
+
+<tr>
+<td width=246 rowspan=3 valign=top>
+<div id="GameBoard"></div>
+</td>
+
+<td width=16 rowspan=3>
+</td>
+
+<td width=246 height=40 valign=top>
+
+<table width=246 cellspacing=0 cellpadding=0 border=0>
+<tr>
+<td width=50%>
+<div style="text-align: left; font-size: 14px;">#<span id="GameNumber"></span></div>
+</td>
+<td width=50%>
+<div style="text-align: right;">&nbsp;<span id="task" style="font-size: 14px; background: yellow;">&nbsp;<span id="GameSideToMove"></span>&nbsp;to&nbsp;move&nbsp;</span></div>
+</td>
+</tr>
+</table>
+
+</td>
+
+<tr>
+<td width=246 height=166 valign=middle>
+<div id="solution" style="font-size: 14px; text-align: left; visibility: hidden">
+<span id="GameText"></span> <span class="move" id="GameResult"></span>
+</div>
+
+</td>
+</tr>
+
+<tr>
+<td width=246 height=40 valign=bottom>
+
+<form style="display: inline">
+<table cellspacing=0 cellpadding=0 border=0>
+<tr>
+<td width=80px valign=top>
+<input type=button value="move back" title="click here to move back one ply when looking at the solution" class="newButton" onClick="javascript: GoToMove(CurrentPly - 1); if (StartPly == CurrentPly) {document.getElementById('task').style.visibility = 'visible';}" onFocus="this.blur()">
+</td>
+<td width=4px>
+</td>
+<td width=80px valign=top>
+<input type=button value="show solution" title="click here to show the solution and step through the main line" class="newButton" onClick="javascript:GoToMove(CurrentPly + 1); document.getElementById('solution').style.visibility = 'visible';document.getElementById('task').style.visibility = 'hidden';" onFocus="this.blur()">
+</td>
+<td width=4px>
+</td>
+<td width=80px valign=top>
+<input type=button value="next puzzle" title="click here to load the next puzzle" class="newButton" onClick="javascript: document.getElementById('solution').style.visibility = 'hidden'; document.getElementById('task').style.visibility = 'visible'; Init(Math.floor(Math.random()*numberOfGames));" onFocus="this.blur()">
+</td>
+</tr>
+</table>
+</form>
+
+</td>
+</tr>
+
+</table>
+</center>
+
+</body>
+</html>
