@@ -37,7 +37,16 @@
     SetLiveBroadcast(1, true, false, false, false); // set live broadcast; parameters are delay (refresh delay in minutes, 0 means no broadcast, default 0) alertFlag (if true, displays debug error messages, default false) demoFlag (if true starts broadcast demo mode, default false) stepFlag (if true, autoplays updates in steps, default false) endlessFlag (if true, keeps polling for new moves even after all games are finished)
 
   </script>
-
+  
+<script type="text/javascript">
+  (function(d) {
+    var cwjs, id='chatwing-js';  if(d.getElementById(id)) {return;}
+    cwjs = d.createElement('script'); cwjs.type = 'text/javascript'; cwjs.async = true; cwjs.id = id
+    cwjs.src = "//chatwing.com/code/14254840-d09d-11e7-b1f0-3329454d070c/embedded";
+    d.getElementsByTagName('head')[0].appendChild(cwjs);
+  })(document);
+</script>
+  
 <style type="text/css">
 
 html, body {
@@ -207,7 +216,10 @@ iframe support required to display the chess puzzler
 
 
 <!-- DeploymentCheck: blog entries -->
-
+<div id="chatwing-embedded-14254840-d09d-11e7-b1f0-3329454d070c"></div>
+<!-- Begin chatwing.com chatbox -->
+<iframe src="https://chatwing.com/chatbox/14254840-d09d-11e7-b1f0-3329454d070c" width="240" height="370" frameborder="0" scrolling="0">Please contact us at info@chatwing.com if you cant embed the chatbox</iframe>
+<!-- End chatwing.com chatbox -->
 <!-- end DeploymentCheck -->
 
 
