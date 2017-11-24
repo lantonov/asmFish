@@ -27,16 +27,16 @@ if (location.search == "?alternative") { document.write('<script src="chess-info
 <script type="text/javascript">
    "use strict";
 
-   SetPgnUrl("chess-informant-sample.pgn"); // if set, this has precedence over the inline PGN in the HTML file
-// SetImagePath("images");
-// SetImageType("png");
-// SetHighlightOption(true); // true or false
-// SetGameSelectorOptions(null, false, 0, 0, 0, 15, 15, 0, 10); // (head, num, chEvent, chSite, chRound, chWhite, chBlack, chResult, chDate);
+// SetPgnUrl("chess-informant-sample.pgn"); // if set, this has precedence over the inline PGN in the HTML file
+   SetImagePath("images");
+   SetImageType("png");
+   SetHighlightOption(true); // true or false
+   SetGameSelectorOptions(null, false, 0, 0, 0, 15, 15, 0, 10); // (head, num, chEvent, chSite, chRound, chWhite, chBlack, chResult, chDate);
    SetCommentsIntoMoveText(true);
    SetCommentsOnSeparateLines(false);
-// SetAutoplayDelay(1000); // milliseconds
-// SetAutostartAutoplay(false);
-// SetAutoplayNextGame(false); // if set, move to the next game at the end of the current game during autoplay
+   SetAutoplayDelay(1000); // milliseconds
+   SetAutostartAutoplay(false);
+   SetAutoplayNextGame(false); // if set, move to the next game at the end of the current game during autoplay
    SetInitialGame(3); // number of game to be shown at load, from 1 (default); values (keep the quotes) of "first", "last", "random" are accepted; other string values assumed as PGN search string
    SetInitialVariation(3); // halfmove number to be shown at load, 0 (default) for main variation
    SetInitialHalfmove(32,false); // halfmove number to be shown at load, 0 (default) for start position; values (keep the quotes) of "start", "end", "random", "comment" (go to first comment or variation), "variation" (go to the first variation) are also accepted. Second parameter if true applies the setting to every selected game instead of startup only
@@ -50,6 +50,182 @@ if (location.search == "?alternative") { document.write('<script src="chess-info
 
 <!-- paste your PGN below and make sure you dont specify an external source with SetPgnUrl() -->
 <form style="display: none;"><textarea style="display: none;" id="pgnText">
+[Event "1.b4/h3/e3..."]
+[Site "?"]
+[Date "1995.??.??"]
+[Round "?"]
+[White "A00"]
+[Black "?"]
+[Result "*"]
+[ECO "A00"]
+[PlyCount "40"]
+[EventDate "1995.??.??"]
+[EventType "game"]
+
+1. e3 (1. g4 d5 (1... e5 2. c4 {See A20} (2. Bg2 h5 3. gxh5 Qg5 4. Bf3 Qh4 5.
+Nc3 Nf6 6. e4 Bc5 7. d4 Bxd4 8. Qe2 Bxc3+ 9. bxc3 Nxh5 $17 {
+Skembris-Mariotti, Budva 1981})) 2. h3 (2. Bg2 c6 3. h3 (3. e4 dxe4 4. Nc3 Nf6
+5. h3 $14) 3... h5 4. g5 h4 (4... e5 5. d4 e4 6. f3 f5 7. gxf6 Nxf6 $17 {
+Gheorghiu}) 5. e4 dxe4 6. Nc3 Qa5 7. Nxe4 Bf5 8. Nc3 e6 9. Be4 Nd7 10. Qe2 Bb4
+11. Bxf5 Qxf5 12. Ne4 O-O-O 13. a3 Bf8 14. d3 Kb8 15. Bd2 Ne7 16. Nf3 Ng6 17.
+O-O-O Nb6 18. Nc3 Bc5 19. Rdg1 Nd5 20. Rg4 $14 {Skembris-Gheoghiu, Skopje 1984}
+) 2... e5 3. Bg2 c5 (3... c6 4. d4 e4 5. c4 Na6 6. Nc3 Nc7 7. f3 f5 8. cxd5
+cxd5 9. Qb3 Bd6 10. Kf1 Ne7 11. g5 Rb8 12. h4 b5 13. Nh3 Bd7 14. Bf4 Bc6 15. e3
+Ne6 16. Ne2 Ng6 17. Rc1 Rb6 18. Rxc6 Rxc6 19. Qxd5 Qd7 20. fxe4 fxe4 $13 {
+Basman-King, Brighton 1986}) 4. e3 Nc6 5. Ne2 Be6 6. Ng3 Bd6 7. d3 Qd7 8. Nc3
+Nge7 9. Nh5 O-O 10. e4 d4 11. Nd5 Kh8 12. Ndf6 gxf6 13. Qf3 f5 14. Nf6 Qd8 15.
+g5 Ng8 16. Nxh7 f4 17. Qh5 Kg7 18. Nf6 Re8 19. Qh7+ Kf8 20. Qxg8+ Ke7 $16 {
+Barua-Huq, Dhaka 1985}) (1. b4 e5 (1... Nf6 2. Nf3 (2. Bb2 e6 3. b5 Be7 4. Nf3
+O-O 5. e3 b6 6. d4 (6. Be2 Bb7 7. O-O d5 8. d3 c5 9. Nbd2 Nbd7 10. c4 Bd6 11.
+Re1 Qc7 $11 12. Bf1 dxc4 13. Nxc4 Bxf3 14. gxf3 Bxh2+ 15. Kh1 Be5 16. Nxe5 Nxe5
+17. f4 Ng6 18. Qf3 Rad8 19. Be2 Rd5 20. Qh3 Rfd8 $17 {Miles-Ribli, London 1984}
+) 6... Bb7 7. Bd3 c5 8. O-O d6 9. dxc5 bxc5 10. c4 Nbd7 11. Nbd2 d5 12. a4 Qc7
+13. Qc2 Bd6 14. h3 Rac8 15. Rfd1 Ne5 16. Nxe5 Bxe5 17. Nf3 Bxb2 18. Qxb2 d4 19.
+exd4 Bxf3 20. gxf3 Qf4 21. Be2 Qh4 22. dxc5 Rxc5 23. Qd4 Qg5+ 24. Kh2 {
+Rogers J-Martin, Great Britain 1991}) 2... g6 3. a3 Bg7 4. Bb2 O-O 5. c4 d6 6.
+d3 e5 7. Nbd2 Qe7 8. g3 c6 9. Bg2 Nh5 10. O-O f5 11. e4 f4 12. d4 c5 13. dxe5
+dxe5 14. bxc5 Nc6 15. Nb3 Be6 16. Qc2 g5 17. Rfd1 g4 18. Ne1 f3 19. Bf1 Nf6 20.
+Rd6 Bf7 $11 {Khmelnitsky-Kruppa, Budapest 1990}) (1... c6 2. Bb2 Qb6 (2... d5
+3. e3 Qb6 4. a3 a5 5. Bd4 Qc7 6. f4 axb4 7. axb4 Rxa1 8. Bxa1 Nd7 9. Nf3 Ngf6
+10. Qc1 e6 11. Qb2 b5 12. Be2 Be7 13. Nc3 O-O 14. Nd1 Qa7 15. Qb1 Bb7 16. Bd4
+Qa3 17. c3 Ne4 18. O-O f5 19. Nf2 Ra8 20. Nxe4 fxe4 $15 {
+Hort-Angantysson, Germany 1985}) 3. a3 a5 4. c4 d6 5. Nc3 Nf6 6. b5 g6 7. Rb1
+Qd8 8. g3 Bg7 9. Bg2 O-O 10. Nf3 d5 11. bxc6 bxc6 12. O-O Ba6 13. cxd5 cxd5 14.
+d3 Nc6 15. Qa4 Rc8 16. Rfc1 e6 17. Nd1 Qd7 18. Bc3 h6 19. Bxa5 Nxa5 20. Qxa5
+Rxc1 $14 {Yudasin-Epishin, New York 1990}) 2. Bb2 (2. a3 d5 (2... a5 3. Bb2 e4
+4. c4 Nf6 5. Qb3 Na6 6. bxa5 Nc5 7. Qc2 d6 8. e3 Bf5 9. Nf3 Bd7 10. Nd4 Ba4 11.
+Qc3 Ng4 $17 {Forgacs-Forintos, Hungary 1981}) (2... c5 3. Bb2 e4 4. e3 Nf6 5.
+bxc5 Bxc5 6. Bxf6 Qxf6 7. Nc3 Qe5 8. Bc4 Nc6 9. Nge2 b6 10. Bd5 (10. Nf4 Na5
+11. Bd5 Bb7 12. Qh5 $16) 10... f5 11. O-O Bd6 12. Ng3 Ba6 13. f4 Qf6 14. Nge2
+Rc8 15. g4 Ne7 16. Bb3 Qg6 17. Rf2 fxg4 18. Ng3 Rxc3 19. dxc3 Bc5 20. Qd2 $14 {
+Ermenkov-Adorjan, Riga 1981}) 3. e3 Nf6 4. Bb2 Bd6 (4... Qd6 5. d3 Nbd7 6. Nf3
+c6 7. Be2 g6 8. c4 Bg7 9. cxd5 cxd5 10. O-O O-O 11. Nc3 a6 12. Rc1 b6 13. Qc2
+Bb7 14. h3 d4 15. Nd1 $2 (15. Ne4 Bxe4 16. dxe4 dxe3 17. fxe3 b5 18. Rfd1 Qb6
+$15 {Uhlmann}) 15... Rac8 16. Qb1 Nd5 17. Re1 dxe3 18. fxe3 b5 19. Bf1 N7b6 20.
+Nd2 Na4 $17 {Lalic-Uhlmann, Sarajevo 1980}) 5. c4 c6 6. Nf3 Qe7 7. Nc3 d4 8.
+Ne2 Bg4 9. exd4 Bxf3 10. gxf3 exd4 11. Bxd4 a5 12. c5 Be5 13. Bxe5 Qxe5 14. d4
+Qe6 15. bxa5 O-O 16. Qd2 Re8 17. Rb1 Re7 18. Rg1 Nbd7 19. Rg3 Nh5 20. Rg5 h6
+21. Rg1 $15 {Welling-Sadler, Oostende 1991}) 2... Bxb4 3. Bxe5 Nf6 4. c4 (4.
+Nf3 Nc6 5. Bb2 d5 6. g3 O-O 7. Bg2 Re8 8. O-O Bf5 9. a3 Bc5 10. d4 Bf8 11. Nbd2
+Na5 12. Re1 h6 13. c4 dxc4 14. Ne5 Be6 15. Rc1 c6 16. Ndxc4 Nxc4 17. Nxc4 Bd5
+18. f3 Bxc4 19. Rxc4 Re3 20. Bc1 Nd5 $13 {Dumpor-Ghitescu, Biel 1986}) 4... O-O
+(4... Nc6 5. Bb2 O-O 6. e3 d5 7. Nf3 Re8 8. cxd5 Qxd5 9. Be2 Bf5 10. a3 Ba5 11.
+O-O Rad8 12. d4 Ne4 13. Qc1 Qd6 14. Rd1 Be6 15. Nbd2 Bd5 16. Nc4 Qh6 17. Nfe5
+Nxe5 18. dxe5 Bb6 19. Nxb6 cxb6 20. Bf3 Qg6 $11 {
+Miralles-Spiridonov, Burgas 1985}) 5. e3 d5 (5... Re8 6. Nf3 Bf8 7. Be2 g6 8.
+O-O Bg7 9. Bb2 c5 10. Nc3 Nc6 11. Rb1 d5 12. Nxd5 Nxd5 13. cxd5 Qxd5 14. Bxg7
+Kxg7 15. d4 cxd4 16. Nxd4 Nxd4 17. exd4 Bf5 18. Bf3 Be4 19. Bxe4 Rxe4 20. Qb3
+Qxb3 $15 {Volke-Vaganian, Germany 1994}) 6. Nf3 c5 (6... Be7 7. Bb2 c5 8. Be2
+Nc6 9. cxd5 Nxd5 10. O-O Bf6 11. Qc1 Ndb4 12. Bxf6 Qxf6 13. Nc3 Bf5 14. a3 Na6
+15. Na4 Na5 16. Ra2 Rac8 17. Qb2 Qc6 18. Bb5 Qd6 19. Qc3 Qd8 $11 {
+Volke-Schaefer, Germany 1994}) (6... Re8 7. Bb2 Nc6 8. cxd5 Nxd5 9. Be2 Bd6 10.
+O-O Ne5 11. Nc3 Nxc3 12. Bxc3 Bf5 13. Nd4 Bd3 14. f4 Bxe2 15. Qxe2 Ng6 16. Rab1
+Rb8 17. Qf3 c6 18. Qh5 Be7 19. f5 Nf8 20. Qg4 $14 {Volke-Meister, Germany 1994}
+) 7. cxd5 Nxd5 8. Be2 Nc6 9. Bb2 Bg4 10. O-O Qe7 11. Qc2 Rfd8 12. a3 Ba5 13.
+Rc1 b6 14. Qa4 Bd7 15. Qc4 Bf5 16. Nc3 Nxc3 17. Bxc3 Bxc3 18. Rxc3 Be4 19. d3
+Bd5 20. Qf4 Rd6 $15 {Miralles-Gulko, Marseille 1986}) (1. Nc3 d5 (1... e5 2.
+Nf3 (2. Nh3 Nf6 3. d4 exd4 4. Qxd4 Nc6 5. Qa4 Bb4 6. Bd2 d5 7. a3 Bxc3 8. Bxc3
+Bxh3 9. gxh3 Ne4 10. Bg2 Nxc3 11. bxc3 g5 12. O-O O-O 13. Qb5 Rb8 14. Qxd5 Qf6
+15. Qf3 Qxf3 16. Bxf3 Ne5 17. Kg2 b6 18. Rfd1 Rfd8 19. h4 Kf8 20. Rd4 b5 $11 {
+Rivas Pastor-Reshevsky, Palma de Mallorca 1989}) (2. d4 exd4 3. Qxd4 Nf6 4. g4
+Nc6 5. Qe3+ Be7 6. g5 Ng4 7. Qe4 Nb4 8. Nd5 Nxd5 9. Qxd5 d6 10. f4 c6 11. Qd4
+h6 12. Qxg7 Kd7 13. Nf3 Kc7 14. Qxf7 hxg5 15. fxg5 Rf8 16. Qb3 Bf5 17. Rg1 Qd7
+18. Bd2 Rae8 19. h3 Ne5 20. Nxe5 dxe5 21. O-O-O $18 {
+Cs Horvath-Lukacs, Budapest 1994}) 2... Nc6 3. d4 (3. g3 d5 4. d3 Nf6 5. Bg2
+Be7 6. O-O O-O 7. Bg5 Be6 8. e4 d4 9. Ne2 h6 10. Bd2 Qd7 11. b4 a6 12. Qb1 Bg4
+13. c4 dxc3 14. Bxc3 Nh7 15. Re1 Bxf3 16. Bxf3 Rfd8 17. Rd1 Ng5 18. Bg2 Qg4 19.
+Qb2 Rd6 20. f4 Nf3+ 21. Kf2 Nxh2 22. Rh1 $13 {Rodriguez-Handoko, Jakarta 1993})
+3... exd4 4. Nxd4 Nf6 5. Bg5 Bb4 (5... Bc5 6. e3 h6 7. Bh4 O-O 8. Nf5 d5 9. Qf3
+Bxf5 10. Qxf5 Bb4 11. Bd3 Qd7 12. O-O-O Qxf5 13. Bxf5 Bxc3 14. bxc3 Ne7 15. Bd3
+c6 16. f3 Rfe8 17. g4 Nd7 18. Bg3 Ng6 19. Rhe1 Nge5 20. Be2 $14 {
+Conquest-Smeikal, Ostrava 1994}) 6. Qd3 O-O 7. Nxc6 bxc6 8. Qd4 Be7 9. O-O-O c5
+10. Qa4 d6 11. e4 Bd7 12. Qa5 Nxe4 13. Bxe7 Qxe7 14. Nxe4 Qxe4 15. Qxc7 Bf5 16.
+Bd3 Qf4+ 17. Kb1 Rfc8 18. Qa5 Be6 19. Qd2 Qf6 20. c3 Rab8 $15 {
+Merstrovic-Rosentalis, Biel 1990}) (1... c5 2. Nf3 Nc6 (2... d5 {See 1...d5})
+3. g3 g6 4. Bg2 Bg7 5. O-O e5 6. d3 {See A07}) 2. e4 (2. Nf3 c5 (2... Nf6 3. d3
+Bg4 4. g3 d4 5. Ne4 Nxe4 6. dxe4 Bxf3 7. exf3 e5 8. Bc4 Nd7 9. f4 Bc5 10. Bd2
+Qf6 11. Qe2 O-O-O 12. O-O-O Rhe8 13. Rhe1 exf4 14. gxf4 g6 15. Qd3 Kb8 16. e5
+Qg7 17. Qb3 f6 18. Bf7 Re7 19. e6 Bd6 20. c3 $16 {
+Mestrovic-Lalic, Sarajevo 1988}) 3. d4 (3. e4 d4 {See 2.e4} (3... dxe4 4. Nxe4
+Qa5 5. Bc4 e6 6. Qe2 Be7 7. O-O Nf6 8. d4 cxd4 9. Nxd4 O-O 10. Bg5 Qd8 11. Rad1
+Nxe4 12. Nc6 Nc3 13. bxc3 Nxc6 14. Rxd8 Rxd8 15. Bxe7 Nxe7 16. Bd3 Nd5 17. Qe4
+Nf6 18. Qh4 h6 19. f4 h5 20. Rf3 $16 {Ligterink-Kouatly, Cannes 1990})) 3...
+cxd4 (3... Nf6 4. Bg5 Ne4 5. Bd2 cxd4 6. Nxd4 Nxd2 7. Qxd2 e5 8. Nb3 d4 9. Ne4
+f5 10. Ng3 Nc6 11. e3 dxe3 12. Qxd8+ Kxd8 13. fxe3 Bb4+ 14. c3 Be7 15. Bc4 e4
+16. Nd4 Ne5 17. Ne6+ Bxe6 18. Bxe6 g6 19. Ke2 Kc7 20. Rhd1 Nd3 $15 {
+Bosch-Van Wely, Nederland 1994}) 4. Qxd4 Nf6 5. e4 Nc6 6. Bb5 Bd7 7. Bxc6 Bxc6
+8. exd5 Nxd5 9. Ne5 Nxc3 10. Nxc6 Qd5 11. Qxd5 Nxd5 12. Ne5 Nb4 13. Kd1 f6 14.
+Bd2 e6 15. c3 Nd5 16. Nd3 Rc8 17. Re1 Kf7 18. Re4 Be7 19. c4 Nb6 20. b3 Nd7 $14
+{Ermenkov-Ghinda, Praha 1986}) 2... dxe4 (2... d4 3. Nce2 c5 (3... e5 4. Nf3 (
+4. d3 g6 5. g3 Bg7 6. Bg2 Ne7 7. f4 c5 8. Nh3 Nbc6 9. Nf2 O-O 10. h4 h5 11. O-O
+Be6 12. fxe5 Nxe5 13. Nf4 Bd7 14. c4 Bg4 15. Qc2 Qd6 16. Kh1 Bh6 17. Bd2 Kg7
+18. a3 a5 19. b3 Rh8 20. Rae1 $13 {Ermenkov-Kalesis, Balkan 1994}) 4... Bd6 5.
+Ng3 Nf6 6. Bc4 O-O 7. O-O c5 8. d3 Nc6 9. a4 Be6 10. Bxe6 fxe6 11. Nd2 Ne7 12.
+Nc4 Ng6 13. Nh5 Bc7 14. g3 Kh8 15. Nxf6 gxf6 16. Bh6 Rf7 17. f4 exf4 18. gxf4
+f5 19. e5 Qd7 20. Qh5 Rg8 $15 {Mestrovic-Romanishin, Sarajevo 1988}) 4. Ng3 (4.
+f4 Nc6 5. Nf3 Nf6 6. d3 Bg4 7. Neg1 e5 8. h3 Bxf3 9. Nxf3 exf4 10. Bxf4 Bd6 11.
+g3 O-O 12. Qd2 Nh5 13. O-O-O Nxg3 14. Rg1 Nxf1 15. Rdxf1 Bxf4 16. Qxf4 f6 17.
+Rg3 Rf7 18. Rfg1 Kh8 19. Ng5 Re7 20. Ne6 Qb8 $11 {Watson-Rodriguez, Sochi 1988}
+) 4... Nc6 5. Bc4 (5. Nf3 g6 (5... a6 6. a4 h5 7. h4 Nf6 8. d3 e5 9. Bg5 Be7
+10. Nd2 g6 11. Be2 Be6 12. c4 Ng4 13. Bxe7 Qxe7 14. Nf3 Qf6 15. Qb3 Nb4 16. Qd1
+Ke7 17. Qc1 Qf4 18. Nf1 f6 19. N1d2 Kd6 20. g3 Qh6 $15 {
+Bisguier-Ivanov I, New York 1990}) 6. Bb5 Qb6 7. a4 Bg7 8. O-O e5 9. c3 Nge7
+10. cxd4 cxd4 11. d3 O-O 12. b3 a6 13. Bc4 Na5 14. Ba3 Nxc4 15. bxc4 Qc7 16.
+Qb3 a5 17. Rfb1 Ra6 18. Qb5 Rc6 19. Nd2 h5 20. Nb3 h4 $14 {
+Hoffman-Wojtkiewicz, Manhattan 1989}) 5... Nf6 6. d3 h5 7. h4 Bg4 8. N1e2 b5 9.
+Bb3 g6 10. a4 a6 11. Bg5 Bg7 12. Qd2 O-O 13. Nf4 Ne5 14. Nh3 Bxh3 15. Rxh3 Qd7
+16. Kf1 c4 17. Ba2 Rac8 18. Bf4 Nfg4 19. a5 Kh7 20. Kg1 Rc6 $17 {
+Mortazavi-Flear, Eastbourne 1990}) 3. Nxe4 e5 (3... Nd7 4. d4 (4. Bc4 Ngf6 5.
+Nxf6+ Nxf6 6. Nf3 e6 7. Qe2 c5 8. a4 Be7 9. Ne5 O-O 10. O-O Qd4 11. Re1 Bd6 12.
+Nf3 Qg4 13. h3 Qh5 14. Ne5 Qxe2 15. Rxe2 Bxe5 16. Rxe5 b6 17. d3 Bb7 18. Re2
+Nd5 19. Bd2 a6 20. f4 Rfe8 $11) 4... Ngf6 5. Nxf6+ Nxf6 6. Nf3 Bf5 7. c3 e6 8.
+Ne5 Be7 9. Qb3 Qc8 10. Be2 O-O 11. g4 Be4 12. f3 Bd5 13. c4 Bc6 14. Bf4 Qe8 15.
+Nxc6 Qxc6 16. O-O-O Bd6 17. Bg3 a6 18. Kb1 Rab8 19. g5 Ne8 20. Bd3 $14 {
+Rogers-Lukacs, Budapest 1991}) 4. Bc4 (4. Nf3 Nf6 5. Nxf6+ Qxf6 6. Qe2 Nc6 7.
+d4 Bg4 8. dxe5 Qf5 9. Bd2 Bxf3 10. Qxf3 Qxf3 11. gxf3 Nxe5 12. O-O-O O-O-O 13.
+Bh3+ Kb8 14. f4 Nc4 15. Be3 Rxd1+ 16. Rxd1 Bd6 17. Rg1 g6 18. Bf1 Nxe3 19. fxe3
+Re8 20. Kd2 Rxe3 $15 {Mestrovic-Honfi, Wien 1990}) 4... Nc6 5. d3 Be7 6. Nf3
+Nf6 7. h3 Nxe4 8. dxe4 Qxd1+ 9. Kxd1 Bc5 10. c3 Bxf2 11. Rf1 Bb6 12. b4 f6 13.
+Nh4 Ne7 14. Kc2 Bd7 15. g4 Bc6 16. Bd3 Ba4+ 17. Kb2 O-O-O 18. Bc2 Bb5 19. Rh1
+g5 20. Ng2 Ng6 $17 {Djuurhus-Van Riemsdijk, Novi Sad (ol) 1990}) (1. h3 d5 (
+1... e5 2. a3 d5 3. c4 (3. d3 c6 (3... c5 4. g4 Nc6 5. Bg2 (5. Nf3 Nge7 6. Nc3
+f6 7. Rg1 Be6 8. e4 Qd7 9. Nh4 dxe4 10. Nxe4 Ng6 11. Nxg6 hxg6 12. c3 O-O-O 13.
+Be3 b6 14. b4 f5 15. Ng5 Bd5 16. gxf5 gxf5 17. Qa4 Nb8 18. Qc2 Qc7 19. b5 g6
+20. c4 Bg8 $15 {Basman-Gurevich, London 1994}) 5... Nge7 6. Nc3 d4 7. Ne4 Ng6
+8. Nf3 Be7 9. g5 f5 10. gxf6 gxf6 11. h4 Rg8 12. c4 Be6 13. Qa4 Qa5+ 14. Qxa5
+Nxa5 15. Rb1 Nb3 16. Bh6 Nh8 17. Bf1 Nf7 18. Bc1 Rb8 19. Nfd2 Nxc1 20. Rxc1 b5
+$15 {Basman-Oll, London 1994}) 4. Nf3 Bd6 5. c4 Nf6 6. Nc3 d4 7. Ne4 Nxe4 8.
+dxe4 a5 9. e3 dxe3 10. Bxe3 Qe7 11. Be2 a4 12. Qc2 Nd7 13. O-O Bc5 14. Rad1
+Bxe3 15. fxe3 Nc5 16. Kh2 Be6 17. Qc3 f6 18. Bd3 Qc7 19. Nh4 Qa5 20. Qc2 O-O-O
+$17 {Basman-Speelman, Britain 1990}) 3... c6 (3... d4 4. d3 a5 5. g4 Nc6 6. Bg2
+Nge7 7. Nd2 Ng6 8. Be4 Be7 9. Ngf3 Bd7 10. Nf1 Nh4 11. Nxh4 Bxh4 12. Ng3 g6 13.
+Rg1 Bg5 14. Bd2 O-O 15. Qc1 Bxd2+ 16. Qxd2 Qh4 17. Nh5 Kh8 18. Qh6 Rg8 19.
+O-O-O Ne7 20. f4 Bc6 21. f5 Bxe4 22. dxe4 gxh5 23. f6 Rg6 $19 {
+Basman-Kumaran, London 1994}) 4. cxd5 (4. Qc2 Be6 5. Nf3 Nd7 6. e3 dxc4 7. Bxc4
+Bxc4 8. Qxc4 Ngf6 9. Nc3 Bd6 10. g4 Nb6 11. Qb3 Qe7 12. Ng5 h5 13. gxh5 Rxh5
+14. h4 Nbd5 15. d3 Nxc3 16. bxc3 e4 17. d4 Nh7 18. Nxh7 Rxh7 19. Rb1 O-O-O 20.
+d5 cxd5 $15 {Basman-Ivanov, London 1994}) 4... cxd5 5. g4 Ne7 6. d3 Nbc6 7. Nc3
+g6 8. Nf3 Bg7 9. g5 Be6 10. Bg2 Qd7 11. Bd2 Nd4 12. Rc1 Rc8 13. e3 Ndc6 14. b4
+b6 15. h4 Bg4 16. b5 Na5 17. Qa4 O-O 18. h5 Rfd8 19. hxg6 hxg6 20. Rh4 Be6 $15
+{Basman-Watson, Britain 1990}) 2. b4 e5 3. a3 Bd6 4. e3 Nd7 5. c4 dxc4 6. Bxc4
+a5 7. b5 Ngf6 8. Nc3 O-O 9. Qc2 Nc5 10. Nge2 e4 11. Nd4 Be5 12. Nce2 Nd3+ 13.
+Bxd3 exd3 14. Qxd3 c5 15. bxc6 bxc6 16. Qc2 Ba6 17. Bb2 Rb8 18. Bc3 Qd5 19. f3
+Rfe8 20. e4 Qd7 $15 {Basman-Wells, Britain 1991}) 1... e5 (1... g6 2. f4 Bg7 3.
+Nf3 c5 (3... d6 4. Be2 e5 5. d3 exf4 6. exf4 Ne7 7. O-O O-O 8. Na3 c5 9. c3
+Nbc6 10. Kh1 d5 11. Nc2 d4 12. c4 Re8 13. Ng5 Nf5 14. Ne4 b6 15. Bf3 Bb7 16. g3
+Ne3 17. Bxe3 dxe3 18. Qe2 Bxb2 19. Rab1 Bd4 20. g4 Kh8 $15 {
+Nenashev-Timoschenko, USSR 1988}) (3... Nf6 4. Be2 O-O 5. d3 d5 {See A03}) 4.
+Be2 Nf6 5. O-O O-O 6. a4 Nc6 7. d3 d5 {See A03}) (1... Nf6 2. b3 (2. c4 c5 {
+See A 30}) 2... e5 (2... g6 3. Bb2 Bg7 4. d4 c5 5. Nf3 O-O 6. Bd3 b6 7. Nbd2
+Bb7 8. O-O d6 9. c4 e6 10. Re1 Nbd7 11. a3 d5 12. Qe2 Re8 13. Rac1 Ne4 14. Nf1
+Qe7 15. cxd5 Bxd5 16. Bc4 Bxc4 17. Qxc4 Rac8 18. Rc2 Nd6 19. Qe2 cxd4 20. exd4
+Rxc2 $15 {Hort-Stohl, Tilburg 1992}) 3. Bb2 d6 4. d3 g6 5. g3 Bg4 6. f3 Be6 7.
+Bg2 c6 8. Ne2 h5 9. h3 Bh6 10. Qd2 Nbd7 11. f4 Qc7 12. c4 O-O-O 13. Nbc3 Kb8
+14. O-O-O d5 15. cxd5 Nxd5 16. Nxd5 cxd5+ 17. Kb1 f6 18. Rc1 Qd6 19. Qa5 Bg7
+20. Ba3 Qb6 $15 {Kristjannson-Dolmatov, Reykjavik 1990}) 2. d4 Nc6 3. Nf3 e4 4.
+Nfd2 f5 5. c4 Nf6 6. Nc3 g6 7. a3 Bg7 8. b4 O-O 9. Be2 d5 10. Bb2 Ne7 11. g3 c6
+12. b5 Kh8 13. a4 Be6 14. Ba3 Re8 15. Rb1 f4 16. gxf4 Nf5 17. bxc6 bxc6 18. c5
+Nh4 19. Nb3 Rf8 20. Kd2 Bh6 $15 {Bellin-Chandler, Britain 1988} *
 
 </textarea></form>
 <!-- paste your PGN above and make sure you dont specify an external source with SetPgnUrl() -->
