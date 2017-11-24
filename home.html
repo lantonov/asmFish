@@ -185,7 +185,7 @@ function activate_menu_subitem(theObject, link, addToLiveLinks) {
 var theObj;
 if (theObj = document.getElementById("board_generator_link")) { theObj.href = pgn4web_generator_url; }
 var liveLinks = new Array();
-if (theObj = document.getElementById("live_analysis_link")) { activate_menu_subitem(theObj, "live.html?m=a", true); }
+if (theObj = document.getElementById("live_analysis_link")) { activate_menu_subitem(theObj, "analysis.html?m=a", true); }
 if (theObj = document.getElementById("live_fullscreen_link")) { activate_menu_subitem(theObj, pgn4web_live_pointer_url + "/live-fullscreen.html?scf=t", true); }
 if (theObj = document.getElementById("live_mosaic_link")) { activate_menu_subitem(theObj, pgn4web_live_pointer_url + "/live-mosaic.html", true); }
 if (theObj = document.getElementById("live_results_link")) { activate_menu_subitem(theObj, pgn4web_live_pointer_url + "/live-results.html", true); }
