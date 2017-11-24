@@ -1,0 +1,219 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="expires" content="Fri, 24 Nov 2017 00:00:00 GMT">
+
+<title>chess puzzler</title>
+
+<!-- debug info
+
+#182.928
+
+end of debug info -->
+
+<style type="text/css">
+
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  padding: 0;
+  background: transparent;
+}
+
+.container {
+  width: 240px;
+  height: 270px;
+  border-style: outset;
+  border-width: 1px;
+  border-color: #C6CEC3;
+}
+
+.boardTable {
+  width: 240px;
+  height: 240px;
+  border-width: 0px;
+}
+
+.pieceImage {
+  width: 22px;
+  height: 22px;
+}
+
+.whiteSquare,
+.blackSquare,
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  width: 28px;
+  height: 28px;
+  border-style: solid;
+  border-width: 1px;
+}
+
+.whiteSquare,
+.highlightWhiteSquare {
+  border-color: #EFF4EC;
+  background: #EFF4EC;
+}
+
+.blackSquare,
+.highlightBlackSquare {
+  border-color: #C6CEC3;
+  background: #C6CEC3;
+}
+
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  border-style: inset;
+}
+
+.buttonTable {
+  width: 240px;
+  height: 30px;
+  background-color: #EFF4EC;
+}
+
+.buttonCell {
+  width: 120px;
+  height: 30px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.buttonCellLink {
+  font-family: sans-serif;
+  font-size: 12px;
+  font-weight: 900;
+  color: #888888;
+  text-decoration: none;
+}
+
+.sidetomoveBox {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #888888;
+}
+
+</style>
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+<script src="pgn4web.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+"use strict";
+
+SetImagePath("images/merida/22");
+SetShortcutKeysEnabled(false);
+
+function displayPuzzlerHelp() {
+  var puzzlerHelp = "pgn4web chess puzzler" + "\n\n";
+  puzzlerHelp += "- the white or black small square below the chessboard's left side indicates the side to move" + "\n\n";
+  puzzlerHelp += "- show the puzzler's solution step by step on the chessboard by clicking the > button below the chessboard's right side" + "\n\n";
+  puzzlerHelp += "- step backwards one move by clicking the < button below the chessboard's left side" + "\n\n";
+  puzzlerHelp += "click OK for more information, including how to add the chess puzzler to a website or blog";
+  if (confirm(puzzlerHelp)) { window.open("http://pgn4web-project.casaschi.net/wiki/Example_Puzzler/", "_blank"); }
+}
+
+boardShortcut("F8", "chess puzzler help", function(t,e){ displayPuzzlerHelp(); });
+clearShortcutSquares("E", "8");
+clearShortcutSquares("BCDEFGH", "7");
+clearShortcutSquares("ABCDEFGH", "23456");
+clearShortcutSquares("BCFG", "1");
+
+function solutionSoFar() {
+  var sol = "";
+  for (var thisPly = StartPly; thisPly < CurrentPly; thisPly++) {
+    var moveCount = Math.floor(thisPly/2)+1;
+    if ((thisPly % 2 === 0) || (thisPly === StartPly)) {
+      sol += (Math.floor(thisPly/2)+1) + ".";
+      if (thisPly % 2) { sol += ".."; }
+      sol += " ";
+    }
+    sol += Moves[thisPly] + " ";
+  }
+  return sol;
+}
+
+function customFunctionOnMove() {
+  var res, outcome;
+
+  if (CurrentPly == StartPly) {
+    document.getElementById("leftButtonLink").innerHTML = "<span class='sidetomoveBox' style='background-color:" + (CurrentPly % 2 ? "black" : "white" ) + ";'></span>";
+    document.getElementById("leftButton").title = ((CurrentPly % 2) ? "Black" : "White") + " to play: find the best move";
+  } else {
+    document.getElementById("leftButtonLink").innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;&nbsp;&nbsp;&nbsp;";
+    document.getElementById("leftButton").title = "click < to step backwards one move";
+  }
+
+  if (CurrentPly == StartPly+PlyNumber) {
+    switch (res = gameResult[currentGame]) {
+      case "1-0": outcome = "white wins"; break;
+      case "0-1": outcome = "black wins"; break;
+      case "1/2-1/2": outcome = "draw"; break;
+      default: outcome = "end"; res = "*"; break;
+    }
+    document.getElementById("rightButtonLink").innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;" + res + "&nbsp;&nbsp;&nbsp;&nbsp;";
+    document.getElementById("rightButton").title = solutionSoFar() + " ..." + outcome;
+  } else {
+    document.getElementById("rightButtonLink").innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;&gt;&nbsp;&nbsp;&nbsp;&nbsp;";
+    if (CurrentPly == StartPly) {
+      document.getElementById("rightButton").title = "click > to show the puzzler's solution step by step on the chessboard";
+    } else {
+      document.getElementById("rightButton").title = solutionSoFar() + " ...click > to continue showing the puzzler's solution step by step on the chessboard";
+    }
+  }
+
+}
+
+</script>
+
+<!-- DeploymentCheck: google analytics code -->
+
+<!-- end DeploymentCheck -->
+
+</head>
+
+<body>
+
+<!-- paste your PGN below and make sure you dont specify an external source with SetPgnUrl() -->
+<form style="display: none;"><textarea style="display: none;" id="pgnText">
+
+[Result "1-0"]
+[SetUp "1"]
+[FEN "5q1k/2p3Rp/1p1rnP2/p4p2/2Q5/PP2P3/1B3P1P/7K w - - 0 1"]
+
+1. Qxe6 Rxe6 2. f7 h6 3. Rg8+ Kh7 4. Rxf8 Kg6 1-0
+
+
+</textarea></form>
+<!-- paste your PGN above and make sure you dont specify an external source with SetPgnUrl() -->
+
+<center>
+<div class="container">
+<div id="GameBoard"></div>
+<table class="buttonTable" border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td id="leftButton" title="" class="buttonCell" onClick="javascript:GoToMove(CurrentPly - 1);" align="center" valign="middle">
+<a id="leftButtonLink" class="buttonCellLink" href="javascript:void(0);" onfocus="blur();"></a>
+</td>
+<td id="rightButton" title="" class="buttonCell" onClick="javascript:GoToMove(CurrentPly + 1);" align="center" valign="middle">
+<a id="rightButtonLink" class="buttonCellLink" href="javascript:void(0);" onfocus="blur();"></a>
+</td>
+</tr>
+</table>
+</div>
+</center>
+
+</body>
+
+</html>
