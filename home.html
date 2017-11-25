@@ -25,78 +25,7 @@
   })(document);
 </script>
   
-<style type="text/css">
-.html, .body {
-  margin: 0px;
-  padding: 0px;
-}
-body {
-  color: black;
-  background: url("images/fish-pond.jpg");
-  font-family: sans-serif;
-  padding: 1.75em;
-}
-a {
-  color: white;
-  text-decoration: none;
-}
-a:hover, a:active {
-  color: red;
-}
-.menu_heading {
-  font-weight: bold;
-  margin-left: 0px;
-  margin-right: 2em;
-  margin-top: 1.5em;
-  margin-bottom: 0px;
-  white-space: nowrap;
-  color: blue;
-}
-.menu_item {
-  font-weight: bold;
-  margin-left: 1.25em;
-  margin-right: 2em;
-  margin-top: 0.5em;
-  margin-bottom: 0px;
-  white-space: nowrap;
-}
-.menu_subitem {
-  display: none;
-  font-size: 0.8em;
-  margin-left: 1em;
-  margin-top: 0.5em;
-  white-space: nowrap;
-}
-.banner {
-  font-size: 1.5em;
-  font-weight: bold;
-  letter-spacing: 0.1em;
-  word-spacing: 0.1em;
-  line-height: 1.4em;
-  margin-bottom: 0.1em;
-  white-space: nowrap;
-  text-align: center;
-  color: white;
-}
-.iframe_area {
-  display: block;
-  margin: 0;
-  margin-right: 1em;
-  background-color: #EDE8D5;
-  box-shadow: 0px 0px 20px #663300;
-  border-style: solid;
-  border-color: #EDE8D5;
-  border-width: 13px;
-  border-radius: 10px;
-}
-.positionLink {
-  display:block;
-  width:708px;
-  height:0.5em;
-  margin-right:1em;
-}
-</style>
-
+<link href="home.css" type="text/css" rel="stylesheet" />
 <link rel="icon" sizes="16x16" href="pawn.ico" />
 
 
@@ -113,7 +42,7 @@ a:hover, a:active {
 <h1 style="margin:0px; padding:2%; text-align:center; color: red; background: white; opacity: 0.5;">
 The Fish Pond
 </h1>
-<div class="banner">Unassuming site<br/>for talk, games, tourneys, and other frolics</div>
+<div class="banner">talk, games, tourneys, and other frolics</div>
 <table border="0" cellpadding="0" cellspacing="0" width="99.9%"><tbody>
 <tr>
 <td align="left" valign="top">
@@ -121,6 +50,7 @@ The Fish Pond
 <div class="menu_heading"><a href="https://github.com/lantonov/asmFish">asmFish&nbsp;GitHub&nbsp;site</a></div>
 <div class="menu_item"><a id="board_generator_link" title="online service adding an interactive chessboard to your website or your blog" href=".">board&nbsp;generator</a></div>
 <div class="menu_item"><a title="Chess Informant Openings" href="chess-informant-template.html">opening&nbsp;studies</a></div>
+<div class="menu_item"><a title="Game collections" href="collection-example.html">collection</a></div>
 <div class="menu_item"><a title="online service for viewing chess games from *.PGN files, from links to *.PGN URLs and from PGN text" href="analysis.html">analysis&nbsp;board</a></div>
 <div class="menu_item"><a title="puzzler" href="chess-puzzler.html">puzzle</a></div>
 <div class="menu_item"><a id="live_link" title="online service broadcasting live games from current chess events" href="live.html" onclick="location.href = liveLinks[Math.floor(liveLinks.length * Math.random())]; return false;">live&nbsp;broadcast</a><a id="live_analysis_link" class="menu_subitem" title="live broadcast analysis view" href=".">analysis&nbsp;view</a><a id="live_fullscreen_link" class="menu_subitem" title="live broadcast fullscreen view" href=".">fullscreen&nbsp;view</a><a id="live_mosaic_link" class="menu_subitem" title="live broadcast mosaic view with multiple chessboards" href=".">mosaic&nbsp;view</a><a id="live_results_link" class="menu_subitem" title="live broadcast results view" href=".">results&nbsp;view</a><a id="live_games_web_app_link" class="menu_subitem" title="live games web app installation" href=".">web&nbsp;app</a></div>
@@ -147,11 +77,9 @@ The Fish Pond
 
 </td>
 <td align="center" valign="top" width="100%">
-<div class="iframe_area" style="width: 510px">
-<iframe height='726' width='500' frameborder='0' scrolling='yes' marginheight='0' marginwidth='0' src='board.html?am=g&amp;d=3000&amp;ss=40&amp;ps=d&amp;pf=d&amp;lcs=W_iH&amp;dcs=MHW2&amp;bbcs=$$$$&amp;hm=s&amp;hcs=RKim&amp;bd=h&amp;hd=j&amp;md=f&amp;tm=0&amp;fhcs=$$$$&amp;fhs=16&amp;fmcs=$$$$&amp;fccs=v71$&amp;hmcs=RKim&amp;fms=16&amp;fcs=m&amp;cd=i&amp;bcs=____&amp;fp=0&amp;hl=f&amp;fh=726&amp;fw=489&amp;pe=6607$zlax9RvgC476LokunyZ1tDY04jLNE0ilhO$QxfacKCLZ2feKolX9pNgYVM73wfMf40L3b4coaKNYmr1bovTjQzKUTcnz1O2XJKGHVmRoBDEG80otD6f9UsuAMXJ4coaE6V_9P1btj4co7IuaD3ubb9pNlrkkZIVSOV09$j9_Z9$bT9pNkW7KmSNYlP1cGfEG86TbexmSNICSRj1bDTDD9pMnmZrKMY5rLtnMgh_gCaLufeLQCDWWoeAiIwY_DOjZyeeKcSvQ6X5r64guHQOteWc5d$9wKz57__Zfne4nf62cCVLac59$o2u7bg__XvLtTq$rbRuCY0vgK34_9_XfJYA0ftnprhK_36QDjeZjPuYEzT1ZHY5mCYDpZZ2D6SMrgnuPqQ0uNK_3aKofoLe79C3G_M0Yp42_A56_7Mb_Df19nvKUm_x4SHDnLebjC3G_M0Yp42_A26_pQb_D8N1_lhK_3aKofwvtfUd8m_x2VP96_9peZLxr6sQEy_6Y2$fcgz4_9_XfJYA0A$XMzTAuZ7eGfDuXDdeZbpr6gzBuUnuPtU0uNK_3aKofvLtfUd8m_x2VP96_5buXohr6gzJuT_DL19kSF1_AuZ7mtNw5$Xvsd8m_x2VP96_95eZLppL_D8mtDaZk_TwsW93n2N68M9_Xfulwf_UfM_R68CY5vfbzN1_AuZ7mtNwxvtfUd8m_x2VP96_996_nQb_D18MnmXG_M1WRj7L6z2EM9_Xfulwf_Ugw_MJivVciCZeVd$wQEz4_9_XfJYA5b0UwEM9_Xfulwf_Uig_NcivVBO_6XHpQ0uNK_3aKofnLtfUd8m_x2VP96_9peZbxo_fj10zYfmXG_M1WRj490U2zTAuZ7eGfDuXDn_WhzTdw8V_M_a0FrvKUm_x4SHDbne79C3G_M0Yp42_A56_79BuPd$vpEdfmXG_M1WRj452O48M9_Xfulwf_Ug0_RzieV3FzTHaZk_TwsW9340U68M9_Xfulwf_UfM_NcieV0L77N1_AuZ7mtNyBvXwNrhK_36QDjeZjjeZgNo_fbAN1_lhK_3aKofOftfUd8m_x2VP96_9d6_7ob_DbD13RfmXG_M1WRjrP6B5C3G_M0Yp42_A36_nQb_D1SN1_lhK_3aKogy$tfUd8m_x2VP96_9neZLkd2Dg1KXuP5b10FIpvKUm_x4SHDbnDebjC3G_M0Yp42_A26_n9C1LV3By_6Y6FIpvKUm_x4SHDTj6B9ixk_TvZI1w_NB2_HdivWQEO_6Y0z$v9GlDaZk_TwsW90RvXMNrhK_36QAxw_Nyw_N68CY1TXJvKUm_x4SHD9L6z2EM9_Xfulwf_UfM_R3ieV2b0$kprvKUm_x4SHDbMfebUd8m_x2VP96_a436_95BuPsprvKUm_x4SHD9P6z2EM9_Xfulwf_UfM_N2ieV2n02I3fmXG_M1WRj5bnebUd8m_x2VP96_996_abbBuP0cn_fmXG_M1WRjrL6B9ixk_TvZI1w_NBy_B4ivVbi6ZeV2p04NgDaZk_TwsW927j2O68M9_Xfulwf_UnDv_Wm8CY$MbfmXG_M1WRj452O48M9_Xfulwf_Ug0_NwjOZvS$fAx1_AuZ7mtNvN50UB8M9_Xfulwf_Ugf_Unvsb_DshU0uNK_3aKogLLtfdC3G_M0Yp42_Ad6_7gd2GI6eXuP5904Np7aZk_TwsW927P6B9ixk_TvZI1w_NMfD_U68CY2RDaZk_TwsW91z0U$VrhK_36QDjeZjfuXLsd2GFlKXuP5r02E3fmXG_M1WRj5nvebjC3G_M0YonDuXEv_TMjOZwW34_9_XfJYA0h$XvFrhK_36QDjeZjbuXy3OZvLT30tM0uNK_3aKofdn6zdixk_TvZI1w_Nxw_NM0jOZwQez4_9_XfJYA66$XwNrhK_36QDjeZjnuXnPTdYh9_M_fwf38TvKUm_x4SHDbDD6B9ixk_TvZI1w_NMiw_N3ivV4g6ZeV9pvKUm_x4SHDTve7rC3G_M0Yp42_A56_bob_Dfn3shc0uNK_3aKofogLebcd8m_x2VNMf_Ugw_NyzOZxAsTvKUm_x4SHDPnebjC3G_M0Yp42_Ad6_5Qb_Dfv33GK34_9_XfJYA0fTebjC3G_M0Yp42_Axxw_N0POZvap7aZk_TwsW9b2vXvFrhK_36QDjeZjbuYwhr6fIX_M_fwv71Rk0uNK_3aKofTnebod8m_x2VNMf_Ui0_R0POZwUCV1_AuZ7mtNyh$XwNrhK_36QDjeZjfuXLsb_Dgv3me5vKUm_x4SHDbDj6B5C3G_M0Yp42_Axwy_I5BuP0kDp1_AuZ7mtNyBvXvsd8m_x2VP96_97eZLxo_fyf7WVI2fmXG_M1WRj5j92Obixk_TvZI1w_NMg0_N5ieV6jxDaZk_TwsW960LtfdC3G_M0Yp42_A36_56ieV3r0$ilDaZk_TwsW92592O3ixk_TvZI1w_Nxw_NO2zOZwSMj4_9_XfJYA5J0U0jTAuZ7eGfDuXDn_W0jOZw0f7iQ0uNK_3aKofogLebUd8m_x2VP96_9peZfEb_AyIsTvKUm_x4SHDUDe7rC3G_M0Yp42_A36_56ieV3d$vaoj4_9_XfJYA2C$XMzTAuZ7eGfDuXDv_U18CY6lJa1_AuZ7mtNyfTe7rC3G_M0Yp42_A26_7Qb_Dfd01u7aZk_TwsW90LTebod8m_x2VP96_95eZnkb_DWIN1_lhK_3aKogG$tfUd8m_x2VP96_97eZbkd2KjBCeXuPbj06HfmXG_M1WRj5gvebgd8m_x2VP96_97eZbpra2Kp7_M_grzU0uNK_3aKogELe7rC3G_M0Yp42_A36_p6ivVWkE6ZeV5501lDaZk_TwsW92940Ux8M9_Xfull96_9neZj6ieV1pvKUm_x4SHD960U0jTAuZ7eGfDuXDn_Ui3OZwx$f3QF1_AuZ7mtNvMI0U2zTAuZ7eGfDuXDDuXHLpo_fbCF1_AuZ7mtNyy$XyzTAuZ7eGfDuXDv_UvVr6gID_M_fMv7WfF1_AuZ7mtNvR4$XLPTAuZ7eGfDuXHjfuXwNr6fIH_M_gQEEN1_AuZ7mtNwLLtgNrhK_36QDjeZjjeZPNo_fO$71RN1_AuZ7mtNvR50UB8LHAuZ7eGfDuXEv_Ug3OZxUcN1_AuZ7mtNwLLtfkd8m_x2VP96_97eZnUb_DoD3sDN1_AuZ7mtNvRA$XMhra8m_x2VP96_996_7Mb_DVQgN1_AuZ7mtNvNvTe79C3G_M0Yp42_A36_bQd2KlHuT_DoL3sXN1_AuZ7mtNw1yvtlbgd8m_x2VP96_9beZLEb_DVPU0uNK_3aKofoC$XwNrhK_36QDjeZjfuXoNo_fLD30cpvKUm_x4SHDfw$tfdBHAuZ7eGfDuXDDuXvFo_gSs67aZk_TwsW92n92N1EM9_Xfulwf_Ug0_N5ivVVi6W_6Y26$gPy7aZk_TwsW8nvsvebjC3G_M0Yp42_A26_nMb_DWg34_9_XfJYA0J90U$VrhK_36QDjeZjbuXwzOZwvT3dQDx1_AuZ7mtNlbfnebMd8m_x2VP96_97eZMFo_fWjy7aZk_TwsW92nf6z4ixk_TvZI1w_Nxw_R0POZy1v7YF1_AuZ7mtNlbMvebjC3G_M0Yp42_A42_H5C0P9CeXuP23M0uNK_3aKofoLDe79C3G_M0Yp42_A36_7jC0QSteXuPnb1erl4_9_XfJYA2d90UxzTAuZ7eGfDuXDn_U28CY6sJfmXG_M1WRj56n2N68M9_Xfulwf_Ugw_N68Ls5hU_yZy1$a$IHvKUm_x4SHDLDnebcd8m_x2VP96_97eZjod2DkduT_D5hU0uNK_3aKofyh$XwNrhK_36QDjeZjnuXnsb_AB5$wG34_9_XfJYA2bn2O48M9_Xfulwf_Ugf_UwECY0bfmXG_M1WRj79T6z2EM9_Xfulwf_UfM_RwPOZy5$a$x7vKUm_x4SHDnTvebgd8m_x2VP96_97eZjob_DVgN1_AuZ7mtNw$UvtfUd8m_x2VP96_9beZj6ieVbp02lAwuNK_3aKogyivtnEd8m_x2VP96_95eZfkb_DsSx1_AuZ7mtNwBB0U2zTAuZ7eGfDuXDL_TMjOZy6$fWfP4ZHAuZ7mtNy0ivtoxrhK_36QDjeZjfuXozOZvy7aZk_TwsW95rj2N68M9_Xfulwf_UfM_N48CY51vfWTP4ZHAuZ7mtNy2yvtnxrhK_36QDjeZjjeZndBuPdPQ0uNK_3aKogwg$tgNrhK_36QDjeZjbuXDNr6msD_M_gwL1OFi7aZk_TwsW9cdb2O3ixk_TvZI1w_Nwy_B4ieV0zXfmXG_M1WRjnnne76ixk_TvZI1w_Nx2_IpBuPn6$xUbNLKUm_x4SHDPd60UxzTAuZ7eGfDuXDDuXy3OZwRx7aZk_TwsW9b4b2O48M9_Xfulwf_Ugw_N0POZyhv7shc0uG8m_x4SHDTqftnprhK_36QDjeZjbuXDNo_fVPx1_AuZ7mtNy2C$XvFrhK_36QDjeZjbuXnFo_gDL7hU0uG8m_x4SHDUvDebcd8m_x2VP96_996_b6ivVWkUCZeV0FErvKUm_x4SHDnjd2Nbixk_TvZI1w_Nxw_O2ieVc7$HsFXN1_AuZ7mtNyC1vXLPTAuZ7eGfDuXDn_TNzOZwQDSV1_AuZ7mtNy5J0U0jTAuZ7eGfDuXDv_W1zTdY7k_yZlpn1dE5vKUm_x4SHD9Lvebcd8m_x2VP96_95eZjMd2GFgKXuPdQiUZvKUm_x4SHDMLr6zpC3G_M0Yp42_A42_Ax48CY5H$wQc34_9_XfJYA0lwLtnprhK_36QDjeZjjeZgNo_fWkc6V1_AuZ7mtNyhx$XvFrhK_36QDjeZjjeZlbjBuPpP1aFEDvKUm_x4SHD9Pd2MEM9_Xfulwf_Ugf_Ugho_fcHF1_AuZ7mtNygxvXwNrhK_36QDjeZjjeZnppL_DQL3sDp1_AuZ7mtNwO5vXLPTAuZ7eGfDuXDn_UC8CY6jC7aZk_TwsW9crn6zdixk_TvZI1w_Nwy_z5C1LWK6ZeVc4$v8e34_9_XfJYA$UBvXMhrhK_36QDjeZjjeZPEb_D5pU0uNK_3aKogM2$Xvsd8m_x2VP96_95eZl9pBuPpr06prvKUm_x4SHD64b2N68M9_Xfulwf_Ugf_U1zOZvqOz4_9_XfJYA6c72O48M9_Xfulwf_UfM_Mzil6gFn_M_gDr15JfmXG_M1WRj5UEfebod8m_x2VP96_97eZoFo_fckGz4_9_XfJYA0hBvXvsd8m_x2VP96_996_acpBuPrj06pIrvKUm_x4SHDnjnDe7rC3G_M0Yp42_A42_HrBuPshgZvKUm_x4SHD9Lj6zdixk_TvZI1w_Nwy_AycieVd504Nq7aZk_TwsW9c7j92Obixk_TvZI1w_Nwy_IdieVdZg0uNK_3aKofkELebcd8m_x2VP96_996_a5rBuPrf1$xr_fmXG_M1WRjpfDj6z4ixk_TvZI1w_Nxw_MHieVazC7aZk_TwsW92br92N0PTAuZ7eGfDuXDn_UoGzOZyy$f4mtDaZk_TwsW957TjT6BnC3G_M0Yp42_Ab6_b9BuPsYF1_AuZ7mtNvO61vXvFrhK_36QDjeZl996_7Qd2Kun_M_gO$7Jho0uNK_3aKofM0gz0UC8M9_Xfulwf_Ugf_W$Vr6fFn_M_grfF1_AuZ7mtNvO61vXHgFrhK_36QDjeZjbuXDxr6jYuT_DUD303M0uNK_3aKofM0h30W58M9_Xfulwf_UfM_MwPTdwjM_yZvx7aYo9_XfJYA145n2N68M9_Xfulwf_Ugw_N48CY6d$xVE3fmXG_M1WRjbfjy$tMFrhK_36QDjeZjjeZbdBuPsXyXHaZk_TwsW93pjP6zpC3G_M0Yp42_A42_z9ivWsIO_6Y61vgrzN1_AuZ7mtNwx1zd0W2zTAuZ7eGfDuXDDuYENpLWrgCZeVdQtg0uNK_3aKofyhwvXvPTAuZ7eGfDuXDn_Ux8LsJRU_yZyyv7Xk0uNK_3aKofM0ld0Wh8LHAuZ7eGfDuXDDuXLsb_DVXU0uNK_3aKofM65n2MC8M9_Xfulwf_Ugf_UijTdYtoZ_M_gLr1edoDW0uNK_3aKoa579LT6Idixk_TvZI1w_Nxw_RA8CY6pZrvKUm_x4SHDnyB6$XwhrhK_36QDjeZjjeZjgb_D9j0$kudfmVNk_TwsW9579PD6I2EM9_Xfulwf_Ugf_TO8CY1tDaZk_TwsW957UELe7cd8m_x2VP96_996_9pC0RWqCZeV1y$lm8TvKUm_x4SHDnvGh$YM3TAuZ7eGfDuXDDuYEhr6tKr_M_gsHF1_AuZ7mtNwx1I72Ncixk_TvZI1w_Nxw_NMg3OZvE$7JFCF1_AuZ7mtNwx1In2S0PTAuZ7eGfDuXDDuXnPTdwqQ_yZxVyz4_9_XfJYA234pT6BbC1Nk_TvZI1w_Nxw_Nx8LsJDk_yZvEv7WWz4_9_XfJYA234pT6C5ixk_TvZI1w_Nxw_R0PTdS8r_M_grPU0uG8m_x4SHDnvGivtPEd8m_x2VP96_996_97C0RWomZeV1H$xUaz4_9_XfJYA234pr2LW3TAuZ7eGfDuXDDuYyzQw_gsfF1_AuZ7mtNwx1J90TrdC3G_M0Yp42_A42_A2ivWsgO_6Y0lvgrfF1_AuZ7mtNwx1J90TMA8M9_Xfull96_95eZbkd2IMduT_DJprvKUm_x4SHDnvGx$Xd6ixk_TvZI1w_Nxw_NxzOZvGv7JSN1_AuZ7mtNwx1J72NLMyixk_TvZI1w_Nxw_NvVo_gsgN1_AuZ7mtNwx1Jn2REM9_Xfulwf_Ugf_Ugho_fjj1$FrvKUm_x4SHAy34rL6y7Ud8m_x2VP96_95eZfpr6fIV_M_grPU0uNK_3aKofM0md0TrdC3G_M0Yp42_A42_A2ivWsIO_6XH9r06uduZvKUm_x4SHDnvGC$Xo0jTAuZ7eGfDuXDDuXDEb_Dbtjla4v0'>your web browser and/or your host do not support iframes as required to display the chessboard</iframe>
+<div class="iframe_area" style="width: 250px">
+<iframe height='315' width='250' frameborder='0' scrolling='yes' marginheight='0' marginwidth='0' src="mini.html"></iframe>
 </div>
-
-        
         </td>
 </tr>
 
@@ -185,3 +113,4 @@ if (theObj = document.getElementById("email_link")) { theObj.href = "mailto:" + 
 </body>
 
 </html>
+
