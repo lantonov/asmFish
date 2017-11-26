@@ -112,8 +112,18 @@ body {
 <script type="text/javascript">
 "use strict";
 
-SetImagePath("images/merida/22");
-SetShortcutKeysEnabled(false);
+  SetPgnUrl("https://lantonov.github.io/asmFish/tactics.pgn"); // if set, this has precedence over the inline PGN in the HTML file
+  SetImagePath("images/merida/39");
+  SetImageType("png");
+  SetHighlightOption(true);
+//  SetGameSelectorOptions(null, true, 15, 15, 3, 15, 15, 3, 10); // (head, num, chEvent, chSite, chRound, chWhite, chBlack, chResult, chDate);
+  SetCommentsIntoMoveText(true); // if changing this line, set accordingly the visibility of object with ID = "GameAnnotator"
+  SetCommentsOnSeparateLines(false);
+  SetAutoplayDelay(1000); // milliseconds
+  SetAutostartAutoplay(false);
+  SetAutoplayNextGame(false);
+  SetShortcutKeysEnabled(true);
+  SetInitialGame("random"); // number of game to be shown at load, from 1 (default); values (keep the quotes) of "first", "last", "random" are accepted; other string values assumed as PGN search string
 
 function displayPuzzlerHelp() {
   var puzzlerHelp = "pgn4web chess puzzler" + "\n\n";
@@ -187,13 +197,6 @@ function customFunctionOnMove() {
 
 <!-- paste your PGN below and make sure you dont specify an external source with SetPgnUrl() -->
 <form style="display: none;"><textarea style="display: none;" id="pgnText">
-
-[Result "1-0"]
-[SetUp "1"]
-[FEN "5q1k/2p3Rp/1p1rnP2/p4p2/2Q5/PP2P3/1B3P1P/7K w - - 0 1"]
-
-1. Qxe6 Rxe6 2. f7 h6 3. Rg8+ Kh7 4. Rxf8 Kg6 1-0
-
 
 </textarea></form>
 <!-- paste your PGN above and make sure you dont specify an external source with SetPgnUrl() -->
