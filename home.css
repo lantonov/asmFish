@@ -4,7 +4,7 @@
 }
 body {
   color: black;
-  background: url("images/fish-pond.jpg");
+  background: url("images/fish-pond.jpg") center;
   font-family: sans-serif;
   padding: 1.75em;
 }
