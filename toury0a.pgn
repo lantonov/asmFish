@@ -525,7 +525,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 813]
+[""]
 
 1.Nf3 d5 
 2.c4 d4 
@@ -627,7 +627,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 971]
+[""]
 
 1.Nf3 Nf6 
 2.g3 d5 
@@ -733,7 +733,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 971]
+[""]
 
 1.Nf3 Nf6 
 2.g3 d5 
@@ -859,7 +859,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 1081]
+[""]
 
 1.Nf3 e6 
 2.c4 d5 
@@ -921,7 +921,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 1081]
+[""]
 
 1.Nf3 e6 
 2.c4 d5 
@@ -973,7 +973,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 1369]
+[""]
 
 1.c4 d6 
 2.g3 e5 
@@ -1037,7 +1037,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 1369]
+[""]
 
 1.c4 d6 
 2.g3 e5 
@@ -1118,7 +1118,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 3034]
+[""]
 
 1.d4 g6 
 2.c4 Bg7 
@@ -1212,7 +1212,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 3034]
+[""]
 
 1.d4 g6 
 2.c4 Bg7 
@@ -1306,7 +1306,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 3865]
+[""]
 
 1.d4 Nf6 
 2.c4 e5 
@@ -1345,7 +1345,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 3865]
+[""]
 
 1.d4 Nf6 
 2.c4 e5 
@@ -1488,7 +1488,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 4066]
+[""]
 
 1.d4 Nf6 
 2.c4 c5 
@@ -1549,7 +1549,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 4066]
+[""]
 
 1.d4 Nf6 
 2.c4 c5 
@@ -1714,7 +1714,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 4099]
+[""]
 
 1.d4 Nf6 
 2.c4 c5 
@@ -1846,7 +1846,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 4099]
+[""]
 
 1.d4 Nf6 
 2.c4 c5 
@@ -1972,7 +1972,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 4344]
+[""]
 
 1.d4 g6 
 2.c4 c5 
@@ -2019,7 +2019,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 4344]
+[""]
 
 1.d4 g6 
 2.c4 c5 
@@ -2071,7 +2071,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 4375]
+[""]
 
 1.d4 Nf6 
 2.c4 c5 
@@ -2200,7 +2200,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 4375]
+[""]
 
 1.d4 Nf6 
 2.c4 c5 
@@ -2276,7 +2276,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 4511]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -2333,7 +2333,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 4511]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -2397,7 +2397,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 4571]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -2497,7 +2497,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 4571]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -2539,7 +2539,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 4740]
+[""]
 
 1.d4 f5 
 2.g3 g6 
@@ -2679,7 +2679,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 4740]
+[""]
 
 1.d4 f5 
 2.g3 g6 
@@ -2720,7 +2720,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 4989]
+[""]
 
 1.d4 f5 
 2.g3 g6 
@@ -2901,7 +2901,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 4989]
+[""]
 
 1.d4 f5 
 2.g3 g6 
@@ -2958,7 +2958,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 5468]
+[""]
 
 1.e4 d5 
 2.exd5 Nf6 
@@ -2991,7 +2991,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 5468]
+[""]
 
 1.e4 d5 
 2.exd5 Nf6 
@@ -3026,7 +3026,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 5777]
+[""]
 
 1.e4 Nf6 
 2.e5 Nd5 
@@ -3099,7 +3099,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 5777]
+[""]
 
 1.e4 Nf6 
 2.e5 Nd5 
@@ -3205,7 +3205,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 6184]
+[""]
 
 1.e4 d6 
 2.Nf3 g6 
@@ -3253,7 +3253,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 6184]
+[""]
 
 1.e4 d6 
 2.Nf3 g6 
@@ -3369,7 +3369,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 6343]
+[""]
 
 1.e4 c6 
 2.Nc3 d5 
@@ -3422,7 +3422,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 6343]
+[""]
 
 1.e4 c6 
 2.Nc3 d5 
@@ -3563,7 +3563,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 6412]
+[""]
 
 1.e4 c6 
 2.d4 d5 
@@ -3630,7 +3630,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 6412]
+[""]
 
 1.e4 c6 
 2.d4 d5 
@@ -3682,7 +3682,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 7738]
+[""]
 
 1.e4 c5 
 2.Nf3 Nf6 
@@ -3752,7 +3752,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 7738]
+[""]
 
 1.e4 c5 
 2.Nf3 Nf6 
@@ -3889,7 +3889,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 8233]
+[""]
 
 1.e4 c5 
 2.Nf3 Nc6 
@@ -3937,7 +3937,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 8233]
+[""]
 
 1.e4 c5 
 2.Nf3 Nc6 
@@ -3983,7 +3983,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 9450]
+[""]
 
 1.e4 c5 
 2.Nf3 e6 
@@ -4024,7 +4024,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 9450]
+[""]
 
 1.e4 c5 
 2.Nf3 e6 
@@ -4178,7 +4178,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 9714]
+[""]
 
 1.e4 c5 
 2.Nf3 Nc6 
@@ -4231,7 +4231,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 9714]
+[""]
 
 1.e4 c5 
 2.Nf3 Nc6 
@@ -4311,7 +4311,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 10683]
+[""]
 
 1.e4 c5 
 2.Ne2 Nc6 
@@ -4412,7 +4412,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 10683]
+[""]
 
 1.e4 c5 
 2.Ne2 Nc6 
@@ -4530,7 +4530,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 10796]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -4665,7 +4665,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 10796]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -4770,7 +4770,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 10808]
+[""]
 
 1.e4 c5 
 2.Nf3 Nc6 
@@ -4889,7 +4889,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 10808]
+[""]
 
 1.e4 c5 
 2.Nf3 Nc6 
@@ -5048,7 +5048,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 10815]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -5114,7 +5114,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 10815]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -5173,7 +5173,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 10833]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -5285,7 +5285,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 10833]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -5448,7 +5448,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 11435]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -5509,7 +5509,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 11435]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -5590,7 +5590,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 11613]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -5675,7 +5675,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 11613]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -5757,7 +5757,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 12011]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -5805,7 +5805,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 12011]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -5853,7 +5853,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 12012]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -5935,7 +5935,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 12012]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -5971,7 +5971,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 12018]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -6064,7 +6064,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 12018]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -6110,7 +6110,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 12019]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -6176,7 +6176,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 12019]
+[""]
 
 1.e4 c5 
 2.Nf3 d6 
@@ -6239,7 +6239,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 12739]
+[""]
 
 1.e4 e6 
 2.d4 d5 
@@ -6271,7 +6271,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 12739]
+[""]
 
 1.e4 e6 
 2.d4 d5 
@@ -6303,7 +6303,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 12749]
+[""]
 
 1.e4 e6 
 2.d4 d5 
@@ -6361,7 +6361,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 12749]
+[""]
 
 1.e4 e6 
 2.d4 d5 
@@ -6391,7 +6391,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 12750]
+[""]
 
 1.e4 e6 
 2.d4 d5 
@@ -6452,7 +6452,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 12750]
+[""]
 
 1.e4 e6 
 2.d4 d5 
@@ -6555,7 +6555,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 12861]
+[""]
 
 1.e4 e6 
 2.d4 d5 
@@ -6618,7 +6618,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 12861]
+[""]
 
 1.e4 e6 
 2.d4 d5 
@@ -6724,7 +6724,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13110]
+[""]
 
 1.e4 e6 
 2.d4 d5 
@@ -6792,7 +6792,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13110]
+[""]
 
 1.e4 e6 
 2.d4 d5 
@@ -6839,7 +6839,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13122]
+[""]
 
 1.e4 e6 
 2.d4 d5 
@@ -6867,7 +6867,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13122]
+[""]
 
 1.e4 e6 
 2.d4 d5 
@@ -6981,7 +6981,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13255]
+[""]
 
 1.e4 e5 
 2.d4 exd4 
@@ -7077,7 +7077,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13255]
+[""]
 
 1.e4 e5 
 2.d4 exd4 
@@ -7146,7 +7146,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13278]
+[""]
 
 1.e4 e5 
 2.Bc4 Bc5 
@@ -7177,7 +7177,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13278]
+[""]
 
 1.e4 e5 
 2.Bc4 Bc5 
@@ -7208,7 +7208,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13489]
+[""]
 
 1.e4 e5 
 2.Nc3 Nf6 
@@ -7235,7 +7235,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13489]
+[""]
 
 1.e4 e5 
 2.Nc3 Nf6 
@@ -7262,7 +7262,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13525]
+[""]
 
 1.e4 e5 
 2.f4 d5 
@@ -7333,7 +7333,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13525]
+[""]
 
 1.e4 e5 
 2.f4 d5 
@@ -7419,7 +7419,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13532]
+[""]
 
 1.e4 e5 
 2.f4 d5 
@@ -7531,7 +7531,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13532]
+[""]
 
 1.e4 e5 
 2.f4 d5 
@@ -7637,7 +7637,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13629]
+[""]
 
 1.e4 e5 
 2.f4 exf4 
@@ -7745,7 +7745,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13629]
+[""]
 
 1.e4 e5 
 2.f4 exf4 
@@ -7791,7 +7791,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13635]
+[""]
 
 1.e4 e5 
 2.f4 exf4 
@@ -7833,7 +7833,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13635]
+[""]
 
 1.e4 e5 
 2.f4 exf4 
@@ -7874,7 +7874,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13636]
+[""]
 
 1.e4 e5 
 2.f4 exf4 
@@ -7946,7 +7946,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13636]
+[""]
 
 1.e4 e5 
 2.f4 exf4 
@@ -7986,7 +7986,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13639]
+[""]
 
 1.e4 e5 
 2.f4 exf4 
@@ -8109,7 +8109,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13639]
+[""]
 
 1.e4 e5 
 2.f4 exf4 
@@ -8232,7 +8232,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13778]
+[""]
 
 1.e4 e5 
 2.Nf3 Nf6 
@@ -8270,7 +8270,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13778]
+[""]
 
 1.e4 e5 
 2.Nf3 Nf6 
@@ -8355,7 +8355,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13795]
+[""]
 
 1.e4 e5 
 2.Nf3 Nf6 
@@ -8384,7 +8384,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13795]
+[""]
 
 1.e4 e5 
 2.Nf3 Nf6 
@@ -8413,7 +8413,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13859]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -8472,7 +8472,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13859]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -8584,7 +8584,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13953]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -8765,7 +8765,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13953]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -8815,7 +8815,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13957]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -8869,7 +8869,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13957]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -8928,7 +8928,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13985]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -8988,7 +8988,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 13985]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -9088,7 +9088,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14013]
+[""]
 
 1.e4 e5 
 2.Nc3 Nc6 
@@ -9147,7 +9147,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14013]
+[""]
 
 1.e4 e5 
 2.Nc3 Nc6 
@@ -9306,7 +9306,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14015]
+[""]
 
 1.e4 e5 
 2.Nc3 Nc6 
@@ -9406,7 +9406,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14015]
+[""]
 
 1.e4 e5 
 2.Nc3 Nc6 
@@ -9465,7 +9465,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14020]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -9626,7 +9626,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14020]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -9746,7 +9746,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14037]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -9832,7 +9832,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14037]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -10009,7 +10009,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14062]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -10133,7 +10133,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14062]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -10165,7 +10165,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14128]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -10277,7 +10277,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14128]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -10318,7 +10318,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14145]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -10443,7 +10443,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14145]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -10527,7 +10527,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14155]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -10595,7 +10595,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14155]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -10648,7 +10648,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14378]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -10679,7 +10679,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14378]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -10710,7 +10710,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14582]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -10825,7 +10825,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 14582]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -10937,7 +10937,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 15015]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -11047,7 +11047,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 15015]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -11139,7 +11139,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 15234]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -11203,7 +11203,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 15234]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -11271,7 +11271,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 15749]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -11323,7 +11323,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 15749]
+[""]
 
 1.e4 e5 
 2.Nf3 Nc6 
@@ -11386,7 +11386,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 16795]
+[""]
 
 1.d4 d5 
 2.c4 Bf5 
@@ -11535,7 +11535,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 16795]
+[""]
 
 1.d4 d5 
 2.c4 Bf5 
@@ -11677,7 +11677,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 18283]
+[""]
 
 1.d4 d5 
 2.c4 e6 
@@ -11810,7 +11810,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 18283]
+[""]
 
 1.d4 d5 
 2.c4 e6 
@@ -11850,7 +11850,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 18542]
+[""]
 
 1.d4 d5 
 2.c4 e6 
@@ -11926,7 +11926,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 18542]
+[""]
 
 1.d4 d5 
 2.c4 e6 
@@ -12001,7 +12001,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 18745]
+[""]
 
 1.d4 d5 
 2.c4 e6 
@@ -12074,7 +12074,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 18745]
+[""]
 
 1.d4 d5 
 2.c4 e6 
@@ -12112,7 +12112,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 19100]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -12252,7 +12252,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 19100]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -12345,7 +12345,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 19434]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -12478,7 +12478,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 19434]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -12524,7 +12524,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20001]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -12577,7 +12577,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20001]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -12669,7 +12669,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20105]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -12746,7 +12746,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20105]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -12808,7 +12808,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20163]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -12861,7 +12861,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20163]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -12927,7 +12927,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20178]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -13021,7 +13021,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20178]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -13057,7 +13057,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20209]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -13140,7 +13140,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20209]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -13237,7 +13237,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20214]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -13314,7 +13314,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20214]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -13446,7 +13446,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20433]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -13498,7 +13498,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20433]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -13569,7 +13569,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20700]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -13680,7 +13680,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20700]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -13742,7 +13742,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20709]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -13809,7 +13809,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20709]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -13863,7 +13863,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20712]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -13905,7 +13905,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20712]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -13947,7 +13947,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20714]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -13990,7 +13990,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20714]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -14041,7 +14041,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20715]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -14192,7 +14192,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20715]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -14253,7 +14253,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20717]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -14290,7 +14290,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20717]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -14332,7 +14332,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20718]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -14396,7 +14396,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20718]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -14582,7 +14582,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20720]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -14623,7 +14623,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20720]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -14721,7 +14721,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20721]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -14782,7 +14782,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20721]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -14832,7 +14832,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20722]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -14882,7 +14882,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20722]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -14935,7 +14935,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20723]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -15105,7 +15105,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20723]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -15154,7 +15154,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20725]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -15225,7 +15225,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20725]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -15343,7 +15343,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20726]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -15431,7 +15431,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20726]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -15490,7 +15490,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20730]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -15546,7 +15546,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20730]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -15601,7 +15601,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20731]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -15655,7 +15655,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20731]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -15691,7 +15691,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20874]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -15744,7 +15744,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20874]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -15834,7 +15834,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20991]
+[""]
 
 1.d4 Nf6 
 2.c4 d5 
@@ -15941,7 +15941,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 20991]
+[""]
 
 1.d4 Nf6 
 2.c4 d5 
@@ -16064,7 +16064,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 21548]
+[""]
 
 1.d4 Nf6 
 2.c4 Nc6 
@@ -16195,7 +16195,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 21548]
+[""]
 
 1.d4 Nf6 
 2.c4 Nc6 
@@ -16300,7 +16300,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 21603]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -16371,7 +16371,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 21603]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -16544,7 +16544,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 21883]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -16593,7 +16593,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 21883]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -16731,7 +16731,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 22264]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -16800,7 +16800,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 22264]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -17015,7 +17015,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 22600]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -17097,7 +17097,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 22600]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -17204,7 +17204,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 22661]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -17282,7 +17282,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 22661]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -17319,7 +17319,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 22966]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -17361,7 +17361,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 22966]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -17467,7 +17467,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 23012]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -17569,7 +17569,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 23012]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -17689,7 +17689,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 24111]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -17743,7 +17743,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 24111]
+[""]
 
 1.d4 Nf6 
 2.c4 e6 
@@ -17806,7 +17806,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 24333]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -17854,7 +17854,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 24333]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -17972,7 +17972,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 24384]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -18114,7 +18114,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 24384]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -18223,7 +18223,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 24407]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -18339,7 +18339,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 24407]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -18438,7 +18438,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 24417]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -18495,7 +18495,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 24417]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -18543,7 +18543,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 24955]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -18665,7 +18665,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 24955]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -18779,7 +18779,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 25023]
+[""]
 
 1.c4 g6 
 2.d4 Nf6 
@@ -18811,7 +18811,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 25023]
+[""]
 
 1.c4 g6 
 2.d4 Nf6 
@@ -18927,7 +18927,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 25127]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -18967,7 +18967,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 25127]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -19019,7 +19019,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 25192]
+[""]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -19085,7 +19085,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 25192]
+[Game "25192"]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -19187,7 +19187,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 25197]
+[Game "25197"]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -19220,7 +19220,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 25197]
+[Game "25197"]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -19253,7 +19253,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 25201]
+[Game "25201"]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -19335,7 +19335,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 25201]
+[Game "25201"]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -19455,7 +19455,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 25207]
+[Game "25207"]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -19505,7 +19505,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 25207]
+[Game "25207"]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -19600,7 +19600,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 25218]
+[Game "25218"]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -19693,7 +19693,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 25218]
+[Game "25218"]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -19830,7 +19830,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 25476]
+[Game "25476"]
 
 1.d4 Nf6 
 2.c4 g6 
@@ -19911,7 +19911,7 @@
 [TimeControl "7200+1"]
 [Device "tolino tab 8"]
 [Setup "1"]
-[Game 25476]
+[Game "25476"]
 
 1.d4 Nf6 
 2.c4 g6 
