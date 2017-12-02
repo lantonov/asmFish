@@ -55,6 +55,7 @@ a:hover, a:active {
   display: block;
   margin: 0;
   margin-right: 1em;
+  opacity: 0.8;
   background-color: #EDE8D5;
   box-shadow: 0px 0px 20px #663300;
   border-style: solid;
