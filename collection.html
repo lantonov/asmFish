@@ -134,28 +134,45 @@ document.write(simpleHtmlentities(pgnTitle));
 </td>
 
 <td class="containerCell" width=50% style="text-align: left;">
+<table cellpadding=0 cellspacing=0 border=0>
+<tr valign=top>
 
-<table>
-<tr><td class="label">date</td><td><span id="GameDate"></span>&nbsp;</td></tr>
-<tr><td class="label">site</td><td><span style="white-space: nowrap;" id="GameSite"></span>&nbsp;</td></tr>
-<tr><td colspan=2 class="rowSpace"></td></tr>
-<tr><td class="label">event</td><td><span style="white-space: nowrap;" id="GameEvent"></span>&nbsp;</td></tr>
-<tr><td class="label">round</td><td><span id="GameRound"></span>&nbsp;</td></tr>
-<tr><td colspan=2 class="rowSpace"></td></tr>
-<tr><td class="label">white</td><td class="boldItem"><span style="white-space: nowrap;" id="GameWhite"></span>&nbsp;</td></tr>
-<tr><td class="label">black</td><td class="boldItem"><span style="white-space: nowrap;" id="GameBlack"></span>&nbsp;</td></tr>
-<tr><td colspan=2 class="rowSpace"></td></tr>
-<tr><td class="label">result</td><td class="boldItem"><span id="GameResult"></span>&nbsp;</td></tr>
-<tr><td colspan=2 class="rowSpace"></td></tr>
-<tr><td class="label">last</td><td class="move"><span id="GameLastMove"></span>&nbsp; &nbsp;<span id="GameLastVariations"></span></td></tr>
-<tr><td class="label">next</td><td class="move"><span id="GameNextMove"></span>&nbsp; &nbsp;<span id="GameNextVariations"></span></td></tr>
+<td width=380>
+<div id="GameSelector"></div>
+<div id="GameSearch"></div>
+<p></p>
+<div id="GameBoard"></div>
+<p></p>
+<div id="GameButtons"></div>
+</td>
+
+<span class="label">Event:</span> <span id="GameEvent"></span>
+<br>
+<span class="label">Site:</span> <span id="GameSite"></span>
+<br>
+<span class="label">Round:</span> <span id="GameRound"></span>
+<br>
+<span class="label">Date:</span> <span id="GameDate"></span>
+<p></p>
+<span class="label">White:</span> <span id="GameWhite"></span>
+<br>
+<span class="label">Black:</span> <span id="GameBlack"></span>
+<br>
+<span class="label">Result:</span> <span id="GameResult"></span>
+<p>
+<span class="label">Side to move:</span> <span id="GameSideToMove"></span>
+<br>
+<span class="label">Last move:</span> <span id="GameLastMove"></span>&nbsp; <span class="label">variations:</span> <span id="GameLastVariations"></span>
+<br>
+<span class="label">Next move:</span> <span id="GameNextMove"></span>&nbsp; <span class="label">variations:</span> <span id="GameNextVariations"></span>
+<p></p>
+<span class="label">Move comment:</span><br><span id="GameLastComment"></span>
 <!--
 <tr><td class="label">side</td><td><span id="GameSideToMove"></span>&nbsp;</td></tr>
 -->
-<tr><td colspan=2 class="rowSpace"></td></tr>
-<tr><td class="label">game</td><td><span id=currGm>0</span>&nbsp;(<span id=numGm>0</span>)</td></tr>
-<tr><td class="label">archive</td>
-<td>
+<span class="label">game <span id=currGm>0</span> (<span id=numGm>0</span>)<br>
+<span class="label">archive</span>
+
 <script type="text/javascript">
   if (pgnFilename) {
     document.write('<a class="linkItem" href="' + pgnFilename + '">' + pgnFilename + '</a>');
@@ -183,5 +200,3 @@ document.write(simpleHtmlentities(pgnTitle));
 </body>
 
 </html>
-
-
