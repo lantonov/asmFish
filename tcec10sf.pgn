@@ -3884,7 +3884,7 @@ Rb8+,250.00,,,White,wins,by,adjudication:,TCEC,win,rule
 { WhiteEngineOptions: Protocol=UCI; Hash=16384; Threads=43; SyzygyPath=C:/Syzygy/; Move Overhead=1000; OwnBook=false; Ponder=false;, BlackEngineOptions: Protocol=UCI; Hash=16384; Threads=43; SyzygyPath=C:/Syzygy/; OwnBook=false; Ponder=false; }
 1. Nf3 { book } e6 { book } 2. c4 { book } Nf6 { book } 3. g3 { book }
 b6 { book } 4. Bg2 { book } d5 { book }
-5. cxd5 (5... cxd5 6. exd5 d4 7. Be7 Bf4 8. O-O Nc3 9. c6 O-O 10. Nbd7 Qb3 11. Nh5 Bd2 12. Bb7 Rad1 13. Nhf6 Bf4 14. Nh5 Bc1 15. Nhf6 Nd2 16. Re8 e4 17. dxe4 Ndxe4 18. Nxe4 Nxe4 19. Nf6 Nc5 20. Bxc5 dxc5 21. Qe7 cxb6 22. axb6 Bd2 23.Nd5 Rfe1 24. Qd6 Rxe8+ 25. Rxe8 Be3){ d=36, pd=exd5, mt=00:04:06, tl=01:26:43, s=54400 kN/s, n=13391900000, tb=3, R50=50, wv=0.37, }
+5. cxd5 (5 cxd5 exd5 6. d4 Be7 7. Bf4 O-O 8. Nc3 c6 9. O-O Nbd7 10. Qb3 Nh5 11. Bd2 Bb7 12. Rad1 Nhf6 13. Bf4 Nh5 14. Bc1 Nhf6 15. Nd2 Re8 16. e4 dxe4 17. Ndxe4 Nxe4 18. Nxe4 Nf6 19. Nc5 Bxc5 20. dxc5 Qe7 21. cxb6 axb6 22. Bd2 Nd5 23. Rfe1 Qd6 24. Rxe8+ Rxe8 25. Be3){ d=36, pd=exd5, mt=00:04:06, tl=01:26:43, s=54400 kN/s, n=13391900000, tb=3, R50=50, wv=0.37, }
 exd5 { d=27, pd=O-O, mt=00:01:12, tl=01:29:37, s=13620 kN/s, n=983979633 }, (exd5 O-O Bb7 Nc3 Be7 d4 O-O Qc2 Re8 Bf4 Bd6 e3 Na6 Rfd1 Nb4 Qb3 Na6 Rac1 c6 Bxd6 Qxd6 Ne5 c5 Bf3 Nc7 Nb5 Qe7 Nxc7), {tb=0, R50=50, wv=0.32, }
 6. Nc3 { d=37, mt=00:04:48, tl=01:22:05, s=54396 kN/s, n=15690304020 }, (Nc3), {tb=74, R50=50, wv=0.32, }
 Be7 { d=27, pd=d4, mt=00:00:56, tl=01:28:50, s=14289 kN/s, n=811888763 }, (Be7 d4 O-O O-O Bb7 Bf4 Na6 Qc2 Bd6 e3 c5 Rfd1 Nb4 Qb1 Bxf4 exf4 h6 Ne5 Re8 dxc5 bxc5 a3 Na6 b4 Rc8 b5 Nc7 Qc2 c4), {tb=0, R50=50, wv=0.23, }
