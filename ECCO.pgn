@@ -22,8 +22,10 @@
 [Black "FishTest"]
 [Result "0-1"]
 [ECO "C58"]
-[WhiteElo "2894"]
-[BlackElo "3237"]
+[Opening "Two Knights Defense"]
+[PlyCount "114"]
+[Termination "checkmate"]
 [TimeControl "180"]
+[Variation "Colman Variation"]
 
-1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Na5 6. Bb5+ c6 7. dxc6bxc6 8. Qf3 Be7 9. Bd3 O-O 10. Nc3 Rb8 11. O-O Rb4 12. Qd1 h6 13. Nge4 Nh714. f3 f5 15. a3 Rd4 16. Nf2 Ng5 17. b4 e4 18. fxe4 fxe4 19. Be2 Bd6 20.bxa5 Rxf2 21. Rxf2 e3 22. Bc4+ Rxc4 23. dxe3 Rxc3 24. Qd4 Rc5 25. Bb2 Qc726. h4 Rd5 27. Qc4 Bh2+ 28. Kh1 Bg3 29. Rd2 Be6 30. Rxd5 Bxd5 31. Qd4 Ne432. c4 Nf2+ 33. Kg1 Be4 34. Rf1 c5 35. Qxg7+ Qxg7 36. Bxg7 Kxg7 37. Rxf2Bxf2+ 38. Kxf2 Bd3 39. Kf3 Bxc4 40. Ke4 Kg6 41. Ke5 Be6 42. e4 c4 43. Kf4Kh5 44. Ke5 c3 45. Kxe6 c2 46. e5 c1=Q 47. a4 Qd1 48. a6 Kg4 49. Kf7 Kf550. e6 Qd5 51. g4+ Ke5 52. a5 Qxe6+ 53. Kg7 Qxg4+ 54. Kf7 h5 55. Ke7 Qg7+56. Ke8 Ke6 57. Kd8 Qd7# {GrandDroid checkmated} 0-1
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Na5 6. Bb5+ c6 7. dxc6bxc6 8. Qf3 Be7 9. Bd3 O-O 10. Nc3 Rb8 11. O-O Rb4 12. Qd1 h6 13. Nge4 Nh7 14. f3 f5 15. a3 Rd4 16. Nf2 Ng5 17. b4 e4 18. fxe4 fxe4 19. Be2 Bd6 20.bxa5 Rxf2 21. Rxf2 e3 22. Bc4+ Rxc4 23. dxe3 Rxc3 24. Qd4 Rc5 25. Bb2 Qc7 26. h4 Rd5 27. Qc4 Bh2+ 28. Kh1 Bg3 29. Rd2 Be6 30. Rxd5 Bxd5 31. Qd4 Ne4 32. c4 Nf2+ 33. Kg1 Be4 34. Rf1 c5 35. Qxg7+ Qxg7 36. Bxg7 Kxg7 37. Rxf2 Bxf2+ 38. Kxf2 Bd3 39. Kf3 Bxc4 40. Ke4 Kg6 41. Ke5 Be6 42. e4 c4 43. Kf4 Kh5 44. Ke5 c3 45. Kxe6 c2 46. e5 c1=Q 47. a4 Qd1 48. a6 Kg4 49. Kf7 Kf5 50. e6 Qd5 51. g4+ Ke5 52. a5 Qxe6+ 53. Kg7 Qxg4+ 54. Kf7 h5 55. Ke7 Qg7+ 56. Ke8 Ke6 57. Kd8 Qd7# {GrandDroid checkmated} 0-1
