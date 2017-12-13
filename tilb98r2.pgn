@@ -11,7 +11,7 @@
 [WhiteClock "2:00:00"]
 [BlackClock "2:00:00"]
 
-1. Nf3 { [%clk 1:59:01] } 1... Nf6 { [%clk 1:58:02] } 2. c4 { [%clk
+1. g1f3 { [%clk 1:59:01] } 1... g8f6 { [%clk 1:58:02] } 2. c4 { [%clk
 1:57:03] } 2... e6 { [%clk 1:56:04] } 3. g3 { [%clk 1.55:05] } 3... d5 {
 [%clk 1:54:04] } 4. Bg2 { [%clk 1:53:07] [%pgn4web add live comments here
 #1] } 4... Be7 { [%pgn4web add live comments here #2] [%clk 1:52:08] } 5.
