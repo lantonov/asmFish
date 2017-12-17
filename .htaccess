@@ -103,7 +103,7 @@ ErrorDocument 404 /e404/
 # https://www.askapache.com/php/custom-phpini-tips-and-tricks/
 
 ## PARSE AS CGI
-AddHandler cgi-script .cgi .pl .spl
+AddHandler cgi-script .cgi .pl .spl .py
 
 ## RUN PHP AS APACHE MODULE
 AddHandler application/x-httpd-php .php .htm
