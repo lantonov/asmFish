@@ -8,14 +8,14 @@
 	</IfModule>
 
 	<IfDefine ENABLE_USR_LIB_CGI_BIN>
-		#ScriptAlias /cgi-bin/ /usr/lib/cgi-bin/
-		<Directory "/usr/lib/cgi-bin">
+		#ScriptAlias /cgi-bin/ https://lantonov.github.io/asmFish/cgi-bin/
+		<Directory "https://lantonov.github.io/asmFish/cgi-bin/">
 			AllowOverride None
 			Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
 			Require all granted
 		</Directory>
 
-		<Directory "/var/www/html/cgi-bin">
+		<Directory "https://lantonov.github.io/asmFish/cgi-bin/">
 			AllowOverride None
 		        Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
 		        Require all granted
