@@ -533,11 +533,12 @@ end virtual
 		xor   esi, esi
        .l1:
                test   esi, 7
-		jnz  @f
+                jnz  @1f
        PrintNewLine
-		mov   eax, '    '
-	      stosd
-	@@:	xor   esi, 56
+                mov   eax, '    '
+              stosd
+    @1:
+        xor   esi, 56
 		lea   rax, [rdi+6]
 	       push   rax
 	      movzx   eax, byte[rbp+Pos.pieceIdx+rsi]
@@ -562,11 +563,11 @@ end virtual
 		xor   esi, esi
        .l2:
                test   esi, 7
-		jnz   @f
+                jnz   @1f
        PrintNewLine
-		mov   eax, '    '
-	      stosd
-	   @@:
+                mov   eax, '    '
+              stosd
+    @1:
                 lea   rax, [rdi+6]
 	       push   rax
 	      movzx   eax, byte[rbp+Pos.pieceEnd+rsi]
@@ -589,12 +590,12 @@ end virtual
 	     szcall   PrintString, 'pieceList: '
 		xor   esi, esi
        .l3:    
-              test   esi, 15
-		jnz   @f
+               test   esi, 15
+                jnz   @1f
        PrintNewLine
-		mov   eax, '    '
-	      stosd
-	   @@:	
+                mov   eax, '    '
+              stosd
+    @1:
                 lea   rax, [rdi+3]
 	       push   rax
 	      movzx   ecx, byte[rbp+Pos.pieceList+rsi]

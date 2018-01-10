@@ -8,7 +8,7 @@ end if
 
 balign 16
 DisplayOutput:
-Output:         rb 1024
+Output:         rb 4096
 
 if USE_WEAKNESS
         balign  16

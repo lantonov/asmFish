@@ -131,14 +131,24 @@ macro PrintNL
 end macro
 
 ; lazy way to put an address of a string into a register
-macro lstring reg, target, Mes
-  local m
+macro lstring reg*, Mes*, target
+  local m, over
+  match ,target
+            adr  reg, m
+              b  over
+    m:
+        db Mes
+        db 0
+         balign  4
+    over:
+  else
             adr  reg, m
               b  target
     m:
         db Mes
         db 0
          balign  4
+  end match
 end macro
 
 macro PushAll
