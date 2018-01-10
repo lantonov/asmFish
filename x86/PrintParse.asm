@@ -436,18 +436,20 @@ end virtual
 
 if VERBOSE > 0
 PrintBitboardCompact:
-	       push   rsi
-		mov   rsi, rcx
-	@@:    test   rsi, rsi
-		 jz   @f
-		bsf   rcx, rsi
-	       blsr   rsi, rsi, rax
-	       call   PrintSquare
-		mov   al, ' '
-	      stosb
-		jmp   @b
-	@@:	pop   rsi
-		ret
+           push  rsi
+            mov  rsi, rcx
+    @1:
+           test  rsi, rsi
+             jz  @2f
+            bsf  rcx, rsi
+          _blsr  rsi, rsi, rax
+           call  PrintSquare
+            mov  al, ' '
+          stosb
+            jmp  @1b
+    @2:
+            pop  rsi
+            ret
 end if
 
 ;;;;;;;;;;;;; square ;;;;;;;;;;;;;;;;

@@ -695,7 +695,7 @@ WriteLine:
            _lea  x6, ioBuffer
             ldr  x2, [x6, IOBuffer.log]
             tbz  x2, 63, .logger
-              b  _Os_WriteOut
+              b  Os_WriteOut
 .logger:
             stp  x29, x30, [sp, -16]!
             stp  x1, x27, [sp, -16]!
@@ -719,7 +719,7 @@ WriteLine:
              bl  Os_FileWrite
             ldp  x1, x27, [sp], 16
             ldp  x29, x30, [sp], 16
-              b  _Os_WriteOut
+              b  Os_WriteOut
             
 Log_Init:
     ; in: x1 address of file string

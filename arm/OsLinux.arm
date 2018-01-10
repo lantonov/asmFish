@@ -479,9 +479,9 @@ Os_VirtualFree:
             ret
 
 
-_Os_WriteOut_Output:
+Os_WriteOut_Output:
            _lea  x1, Output
-_Os_WriteOut:
+Os_WriteOut:
     ; in: x1 address of string start
     ;     x27 address of string end
             stp  x29, x30, [sp, -16]!
@@ -492,7 +492,7 @@ _Os_WriteOut:
             ldp  x29, x30, [sp], 16
             ret
 
-_Os_WriteError:
+Os_WriteError:
     ; in: x1 address of string start
     ;     x27 address of string end
             stp  x29, x30, [sp, -16]!
@@ -579,9 +579,9 @@ Os_ParseCommandLine:
 
 
 Failed_sys_mmap:
-        lstring  x27, Failed, "sys_mmap failed"
+        lstring  x27, "sys_mmap failed", Failed
 Failed_sys_fstat:
-        lstring  x27, Failed, "sys_fstat failed"
+        lstring  x27, "sys_fstat failed", Failed
 Failed_sys_futex_EventSignal:
            _lea  x27, sz_error_sys_futex_EventSignal
               b  Failed
