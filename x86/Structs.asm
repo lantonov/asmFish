@@ -498,13 +498,19 @@ struct IOBuffer
 ends
 sizeof.IOBuffer.tmpBuffer = 512
 
+; structure for 64-bit multiplication operations
+struct BigNumber
+   lo_dword     rd 1
+   hi_dword     rd 1
+ends
+
 ; structures for books
 
 struct Book
  buffer        rq 1
  seed          rq 1
- entryCount   rd 1
- failCount    rd 1
+ entryCount   rq 1
+ failCount    rq 1
  bookDepth    rd 1
  ownBook      rb 1
  bestBookMove rb 1

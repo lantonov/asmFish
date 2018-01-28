@@ -1,17 +1,20 @@
 
 Book_Create:
-           push  rbx
+           push  rcx
+		   push  rbx
             lea  rbx, [book]
            call  Os_GetTime
             xor  rdx, rax
              or  rdx, 1
-            xor  eax, eax
             mov  qword[rbx+Book.seed], rdx
-            mov  dword[rbx+Book.entryCount], eax
+			xor  rcx, rcx
+            mov  qword[rbx+Book.entryCount], rcx
+			xor  eax, eax
             mov  qword[rbx+Book.buffer], rax
             mov  byte[rbx+Book.ownBook], al
             mov  dword[rbx+Book.bookDepth], 100
             pop  rbx
+			pop  rcx
 
 Book_Refresh:
             mov  dword[book.failCount], 0
@@ -20,16 +23,20 @@ Book_Refresh:
 Book_Destroy:
            push  rbx
             lea  rbx, [book]
-            mov  rcx, qword[rbx+Book.buffer]
-           imul  edx, dword[rbx+Book.entryCount], sizeof.BookEntry
+		    
+            mov  rdx, qword[rbx+Book.entryCount]
+			mov  qword[bigOperand], rdx
+			mov  ebx, sizeof.BookEntry
+           call  big_multiply		
+		    mov  rdx, qword[bigResult]
+	   lea   rbx, [book]
+           mov   rcx, qword[rbx+Book.buffer]
            call  Os_VirtualFree
-            xor  eax, eax
-            mov  dword[rbx+Book.entryCount], eax
+            xor  rax, rax
+            mov  qword[rbx+Book.entryCount], rax
             mov  qword[rbx+Book.buffer], rax
             pop  rbx
             ret
-
-
 
 Book_Load:
     ; in: rsi file string
@@ -57,32 +64,47 @@ Book_Load:
             mov  r15, rax
             mov  rcx, rax
            call  Os_FileSize
-            cmp  rax, 1 shl 28
+		    mov  rbx, (1 shl 40) ; Let's impose 1 TB limit on filesize 
+            cmp  rax, rbx
             jae  .FailedAndClose
-            cmp  eax, 16
+            cmp  eax, sizeof.PolyglotEntry
              jb  .FailedAndClose
            test  eax, 15
             jnz  .FailedAndClose
-            shr  eax, 4
-            mov  dword[book.entryCount], eax
+		    
+		; divide file size by 16 (the size of a polyglot entry) to get num entries
+            shr  rax, 4       
+            mov  qword[book.entryCount], rax
     ; space for reading
-           imul  ecx, dword[book.entryCount], 16
+            mov  qword[bigOperand], rax
+	    mov  ebx, sizeof.PolyglotEntry
+           call  big_multiply		
+	    mov  rcx, qword[bigResult]
+	 ; save rcx for upcoming call to Os_FileRead
+	   push rcx
            call  Os_VirtualAlloc
             mov  r14, rax
-           imul  ecx, dword[book.entryCount], sizeof.BookEntry
+			
+	    mov  ebx, sizeof.BookEntry
+           call  big_multiply		
+	    mov  rcx, qword[bigResult]
            call  Os_VirtualAlloc
             mov  qword[book.buffer], rax
+		
+    ; restore value for os_FileRead
+            pop  rcx
+	    mov  r8, rcx	
     ; read polyglot book into r14
             mov  rcx, r15
             mov  rdx, r14
-           imul  r8d, dword[book.entryCount], 16
+    
            call  Os_FileRead
            test  eax, eax
              jz  .Failed
     ; get the entries
             mov  rsi, r14
             mov  rdi, qword[book.buffer]
-            mov  ecx, dword[book.entryCount]
+            mov  rcx, qword[book.entryCount]
             xor  r12, r12
             xor  r8, r8
             xor  r9, r9
@@ -104,7 +126,7 @@ Book_Load:
           lodsd             ; learn
             sub  ecx, 1
             jnz  .NextEntry
-            mov  eax, dword[book.entryCount]
+            mov  rax, qword[book.entryCount]
            push  r9 rax
             lea  rcx, [.sz_format1]
             mov  rdx, rsp
@@ -120,7 +142,11 @@ Book_Load:
     @1:
     ; free space r14
             mov  rcx, r14
-           imul  edx, dword[book.entryCount], 16
+	    mov  rdx, qword[book.entryCount]
+	    mov  qword[bigOperand], rdx
+	    mov  ebx, 16
+           call  big_multiply		
+	    mov  rdx, qword[bigResult]
            call  Os_VirtualFree
     ; start "in book"
            call  Book_Refresh
@@ -210,7 +236,12 @@ end virtual
                 mov   r13, rax
         ; r13 is the key we want
                 mov   r15, qword[book.buffer]
-               imul   r14d, dword[book.entryCount], sizeof.BookEntry
+		mov   rbx, qword[book.entryCount]
+		mov   qword[bigOperand], rbx
+		mov   ebx, sizeof.BookEntry
+	       call   big_multiply		
+	        mov   r14, qword[bigResult]
+               
                 add   r14, r15
         ; r14 is the address of the end of the book
         ; r15 is the address of the start of the book
