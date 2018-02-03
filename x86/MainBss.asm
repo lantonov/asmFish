@@ -1,11 +1,4 @@
 ; todo: see if the order/alignment of these variables affects performance
-
-              align   64
-bigOperand BigNumber
-
-              align   64
-bigResult  BigNumber
-
               align   16
 Output 	  rb 4096  ; output buffer has static allocation
 if DEBUG = 1

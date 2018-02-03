@@ -93,7 +93,6 @@ include 'Structs.asm'
 include 'AvxMacros.asm'
 include 'BasicMacros.asm'
 include 'Debug.asm'
-include 'BigMultiply.asm'
 
 ; engine macros
 include 'AttackMacros.asm'
