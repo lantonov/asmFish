@@ -8,11 +8,11 @@ OtherCheck		= (( 10 shl 16) + ( 10))
 CloseEnemies		= ((  7 shl 16) + (  0))
 PawnlessFlank		= (( 20 shl 16) + ( 80))
 ThreatByHangingPawn	= (( 71 shl 16) + ( 61))
-ThreatBySafePawn        = ((192 shl 16) + (175))
+ThreatBySafePawn        = ((175 shl 16) + (168))
 ThreatByRank		= (( 16 shl 16) + (  3))
-Hanging 		= (( 48 shl 16) + ( 27))
-ThreatByPawnPush	= (( 38 shl 16) + ( 22))
-HinderPassedPawn	= ((  7 shl 16) + (  0))
+Hanging 		= (( 52 shl 16) + ( 30))
+ThreatByPawnPush	= (( 47 shl 16) + ( 26))
+HinderPassedPawn	= ((  8 shl 16) + (  1))
 LongRangedBishop        =  (22 shl 16)  +  0
 TrappedBishopA1H1       =  (50 shl 16)  + 50
 
@@ -870,8 +870,8 @@ macro EvalThreats Us
   local ThreatMinorLoop, ThreatMinorDone, ThreatRookLoop, ThreatRookDone
   local ThreatMinorSkipPawn, ThreatRookSkipPawn
 
-        ThreatByKing0   = (( 3 shl 16) + ( 62))
-        ThreatByKing1   = (( 9 shl 16) + (138))
+        ThreatByKing0   = (( 3 shl 16) + ( 65))
+        ThreatByKing1   = (( 9 shl 16) + (145))
 
   if Us = White
 	;addsub		equ add
