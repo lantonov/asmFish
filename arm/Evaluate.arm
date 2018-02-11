@@ -1,20 +1,21 @@
-
-MinorBehindPawn     = (( 16 shl 16) + (  0))
-BishopPawns         = ((  8 shl 16) + ( 12))
-RookOnPawn          = ((  8 shl 16) + ( 24))
-TrappedRook         = (( 92 shl 16) + (  0))
-WeakQueen           = (( 50 shl 16) + ( 10))
-OtherCheck          = (( 10 shl 16) + ( 10))
-CloseEnemies        = ((  7 shl 16) + (  0))
-PawnlessFlank       = (( 20 shl 16) + ( 80))
-ThreatByHangingPawn = (( 71 shl 16) + ( 61))
-ThreatBySafePawn    = ((192 shl 16) + (175))
-ThreatByRank        = (( 16 shl 16) + (  3))
-Hanging             = (( 48 shl 16) + ( 27))
-ThreatByPawnPush    = (( 38 shl 16) + ( 22))
-HinderPassedPawn    = ((  7 shl 16) + (  0))
-LongRangedBishop        =  (22 shl 16)  +  0
-TrappedBishopA1H1       =  (50 shl 16)  + 50
+MinorBehindPawn 	= ( 16 shl 16) + (  0)
+BishopPawns		= (  8 shl 16) + ( 12)
+LongRangedBishop        = ( 22 shl 16) + (  0)
+RookOnPawn		= (  8 shl 16) + ( 24)
+TrappedRook		= ( 92 shl 16) + (  0)
+WeakQueen		= ( 50 shl 16) + ( 10)
+OtherCheck		= ( 10 shl 16) + ( 10)
+CloseEnemies		= (  7 shl 16) + (  0)
+PawnlessFlank		= ( 20 shl 16) + ( 80)
+ThreatByHangingPawn	= ( 71 shl 16) + ( 61)
+ThreatBySafePawn        = (192 shl 16) + (175)
+ThreatByRank		= ( 16 shl 16) + (  3)
+Hanging 		= ( 48 shl 16) + ( 27)
+WeakUnopposedPawn       = (  5 shl 16) + ( 25)
+ThreatByPawnPush	= ( 38 shl 16) + ( 22)
+ThreatByAttackOnQueen   = ( 38 shl 16) + ( 22)
+HinderPassedPawn	= (  7 shl 16) + (  0)
+TrappedBishopA1H1       = ( 50 shl 16) + ( 50)
 
 LazyThreshold = 1500
 
@@ -162,7 +163,10 @@ macro EvalPieces Us, Pt
   end if
 
             mov  w0, 0
-            str  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + Pt)]
+            str  xzr, [sp, EvalInfo.attackedBy + 8*(8*Us + Pt)]
+  if Pt = Queen
+            str  xzr, [sp, EvalInfo.attackedBy + 8*(8*Us + QUEEN_DIAGONAL)]
+  end if
 
             add  x25, x20, Pos.pieceList + 16*(8*Us + Pt)
            ldrb  w24, [x20, Pos.pieceList + 16*(8*Us + Pt)]
@@ -213,6 +217,16 @@ NoPinned:
             orr  AttackedBy_Us, AttackedBy_Us, x0
             orr  AttackedBy2_Us, AttackedBy2_Us, x1
             str  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + Pt)]
+
+  if Pt = Queen
+           _lea  x6, BishopAttacksPDEP
+            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + QUEEN_DIAGONAL)]
+            ldr  x0, [x6, x24, lsl 3]
+            and  x0, x0, x9
+            orr  x0, x0, x4
+            str  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + QUEEN_DIAGONAL)]
+  end if
+
 
             ldr  x4, [sp, EvalInfo.kingRing + 8*Them]
             tst  x9, x4
@@ -1109,7 +1123,6 @@ ThreatRookDone:
          Addsub  Us, w26, w26, w0
 
 WeakDone:
-    WeakUnopposedPawn = (5 shl 16) + 25
             ldr  x1, [x20, Pos.typeBB + 8*Rook]
             ldr  x4, [x20, Pos.typeBB + 8*Queen]
             orr  x1, x1, x4
@@ -1137,23 +1150,34 @@ WeakDone:
             orr  x0, x0, x2
         ShiftBB  Up, x0, x0
 
-            mvn  x2, x8
-            and  x0, x0, x2
+            bic  x0, x0, x8
             bic  x0, x0, AttackedBy_ThemPawn
-            mvn  x2, AttackedBy_Them
-            orr  x2, x2, AttackedBy_Us
+            orn  x2, AttackedBy_Us, AttackedBy_Them
             and  x0, x0, x2
 
-            mov  x2, x0
+        ShiftBB  Right, x2, x0
         ShiftBB  Left, x0, x0
-        ShiftBB  Right, x2, x2
             orr  x0, x0, x2
             and  x0, x0, Pieces_Them
             bic  x0, x0, AttackedBy_UsPawn
          Popcnt  x0, x0, x2
           mov32  w4, ThreatByPawnPush
-            mul  w0, w0, w4
-         Addsub  Us, w26, w26, w0
+      Muladdsub  Us, w26, w0, w4, w26
+
+            ldp  x2, x3, [sp, EvalInfo.attackedBy+8*(8*Us+Bishop)]
+            ldr  x1, [sp, EvalInfo.attackedBy+8*(8*Them+QUEEN_DIAGONAL)]
+            ldr  x4, [sp, EvalInfo.attackedBy+8*(8*Them+Queen)]
+            bic  x0, AttackedBy2_Us, AttackedBy2_Them
+            bic  x0, x0, Pieces_Us
+            and  x2, x2, x1
+            bic  x1, x4, x1
+            and  x1, x1, x3
+            orr  x2, x2, x1
+            and  x0, x0, x2
+         Popcnt  x0, x0, x2
+          mov32  w4, ThreatByAttackOnQueen
+      Muladdsub  Us, w26, w0, w4, w26
+
 end macro
 
 
