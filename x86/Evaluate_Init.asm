@@ -77,12 +77,6 @@ Evaluate_Init:
 	      stosq
 	      stosq
 
-
-                lea   rsi, [.PawnsSet]
-                lea   rdi, [PawnsSet]
-                mov   ecx, 9
-          rep movsd
-
                 lea   rsi, [.QueenMinorsImbalance]
                 lea   rdi, [QueenMinorsImbalance]
                 mov   ecx, 16
@@ -296,8 +290,6 @@ Evaluate_Init:
 
 
 
-.PawnsSet:
-        dd 24, -32, 107, -51, 117, -9, -126, -21, 31
 
 .QueenMinorsImbalance:
         dd 31, -8, -15, -25, -5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0

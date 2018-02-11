@@ -2150,13 +2150,7 @@ end macro
 
             add  x8, sp, 4*0
             add  x9, sp, 4*8
-            ldr  w0, [x8, 4*Pawn]
-           _lea  x6, PawnsSet
-            ldr  w0, [x6, x0, lsl 2]
-            ldr  w1, [x9, 4*Pawn]
-           _lea  x6, PawnsSet
-            ldr  w1, [x6, x1, lsl 2]
-            sub  w0, w0, w1
+            mov  w0, 0
             mov  w25, 0
 .ColorLoop:
             mov  w3, -1
