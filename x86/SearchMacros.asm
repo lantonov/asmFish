@@ -1511,9 +1511,9 @@ Display 2, "Search returning %i0%n"
           movzx   ecx, byte[rbp+Pos.board+rax]
             shl   ecx, 6
             lea   r15d, [rax+rcx]
+    ; r15d = offset of [piece_on(prevSq),prevSq]
            test   dl, dl
             jnz   .ReturnTTValue_UpdateStatsDone
-    ; r15d = offset of [piece_on(prevSq),prevSq]
     UpdateStats   r12d, 0, 0, r11d, r10d, r15
 .ReturnTTValue_UpdateStatsDone:
             mov   eax, edi
