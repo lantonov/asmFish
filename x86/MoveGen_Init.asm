@@ -281,9 +281,9 @@ Init_Attacks:
 		mov   r9d, dword[RookAttacksMOFF+4*rbx]
   if DEBUG
                 cmp   qword[r9+8*rcx], -1
-                 je   @f
+                 je   @1f
              Assert   e, rax, qword[r9+8*rcx], 'bad rook magic'
-        @@:
+        @1:
   end if
 		mov   qword[r9+8*rcx], rax
 		sub   rdx, qword[RookAttacksPEXT+8*rbx]
@@ -301,9 +301,9 @@ Init_Attacks:
 		mov   r9d, dword[BishopAttacksMOFF+4*rbx]
   if DEBUG
                 cmp   qword[r9+8*rcx], -1
-                 je   @f
+                 je   @1f
              Assert   e, rax, qword[r9+8*rcx], 'bad bishop magic'
-        @@:
+        @1:
   end if
 		mov   qword[r9+8*rcx], rax
 		sub   rdx, qword[BishopAttacksPEXT+8*rbx]

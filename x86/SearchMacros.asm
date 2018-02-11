@@ -363,8 +363,8 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
                 cmp   r8d, 4*VALUE_KNOWN_WIN-1
                 jae   .8skip
     end if
-                sub   eax, esi
-                 js   .8skip
+                cmp   eax, esi
+                 jl   .8skip
 
     if USE_MATEFINDER = 1
                 mov   edx, dword[.depth]
@@ -1513,8 +1513,11 @@ Display 2, "Search returning %i0%n"
             lea   r15d, [rax+rcx]
     ; r15d = offset of [piece_on(prevSq),prevSq]
            test   dl, dl
-            jnz   .ReturnTTValue_UpdateStatsDone
+            jnz   .ReturnTTValue_UpdateCaptureStats
     UpdateStats   r12d, 0, 0, r11d, r10d, r15
+;            jmp   .ReturnTTValue_UpdateStatsDone
+.ReturnTTValue_UpdateCaptureStats:
+;    UpdateCaptureStats  r12d, 0, 0, r11d, r10d
 .ReturnTTValue_UpdateStatsDone:
             mov   eax, edi
             lea   r10d, [r10+2*(r13+1)+1]

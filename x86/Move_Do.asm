@@ -304,8 +304,8 @@ end if
 		 or   rdi, r14		; rdi = all pieces
 		and   r15, qword[rbp+Pos.typeBB+8*King]
 		and   r14, qword[rbp+Pos.typeBB+8*King]
-		bsf   r15, r15		; r15 = our king
-		bsf   r14, r14		; r14 = their king
+             _tzcnt   r15, r15	        ; r15 = our king
+             _tzcnt   r14, r14	        ; r14 = their king
 
 	       test   eax, eax
 		jnz   .MoveIsCheck

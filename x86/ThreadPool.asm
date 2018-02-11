@@ -228,8 +228,6 @@ if USE_SYZYGY
 	      cmovg   ecx, edx
 		mov   dword[Tablebase_Cardinality], eax
 		mov   dword[Tablebase_ProbeDepth], ecx
-		cmp   dword[options.multiPV], 1
-		jne   .check_tb_ret
 	; filter moves
 		mov   rcx, qword[rbp+Pos.typeBB+8*White]
 		 or   rcx, qword[rbp+Pos.typeBB+8*Black]
@@ -240,7 +238,10 @@ if USE_SYZYGY
 		sub   eax, ecx
 		sar   eax, 31
 		 or   al, byte[rbx+State.castlingRights]
-		 jz   .check_tb
+		jnz   .check_tb_ret
+                cmp   dword[options.multiPV], 1
+                 je   .check_tb
+
 .check_tb_ret:
 		mov   qword[rbp+Pos.state], rbx ; Thread_Think uses Pos.state
 end if

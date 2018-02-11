@@ -121,7 +121,7 @@ Neighbours_True__Lever_False:
   if Us = White
             cmp   ecx, SQ_A5
             jae   Neighbours_True__Lever_False__RelRank_big
-            bsf   rax, rax
+         _tzcnt   rax, rax
   else
             cmp   ecx, SQ_A5
              jb   Neighbours_True__Lever_False__RelRank_big
@@ -221,7 +221,7 @@ NoPassed:
           _andn   r8, r14, r8
              jz   Done
 PopLoop:
-            bsf   r9, r8
+         _tzcnt   r9, r8
             xor   eax, eax
             mov   r9, qword[PawnAttacks+8*(64*Us+r9)]
             and   r9, r14

@@ -545,17 +545,16 @@ KingSafetyDoneRet:
             and  w1, w1, 15
             add  w1, w1, w27
 
-            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + King)]
-            bic  x8, x4, AttackedBy2_Us
-            and  x8, x8, AttackedBy_Them
-    ; x8=kingOnlyDefended
+            bic  x0, AttackedBy_Them, AttackedBy2_Us
+            ldp  x7, x9, [sp, EvalInfo.attackedBy + 8*(8*Us + Queen)]
+            orr  x8, x7, x9
+            bic  x8, AttackedBy_Us, x8
+            bic  x8, x0, x8
+    ; x7 = attackedBy[Us][QUEEN]
+    ; x8 = weak
 
-            orr  x9, Pieces_Them, AttackedBy_Us
-            ldr  x4, [sp, EvalInfo.kingRing + 8*Us]
-            bic  x9, x4, x9
-            and  x9, x9, AttackedBy_Them
-    ; x9=undefended
-            orr  x9, x9, x8
+            ldr  x9, [sp, EvalInfo.kingRing + 8*Us]
+            and  x9, x9, x8
             cmp  w1, 2
             blo  AllDone
 
@@ -587,10 +586,10 @@ KingSafetyDoneRet:
            csel  w0, w2, w0, mi
             sub  w27, w27, w0, asr 3
     ; w27 = kingDanger
+
             and  x8, x8, AttackedBy2_Them
-            bic  x8, AttackedBy_Us, x8
-            orr  x8, x8, Pieces_Them
-            mvn  x8, x8
+            orn  x8, x8, AttackedBy_Us
+            bic  x8, x8, Pieces_Them
     ; x8 = safe
 
             and  x0, Pieces_Them, x19
@@ -611,19 +610,11 @@ KingSafetyDoneRet:
             orr  x0, x10, x2
             ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + Queen)]
             and  x0, x0, x4
-           ands  x0, x0, x8
+            and  x0, x0, x8
+           bics  x0, x0, x7
           mov32  w4, QueenCheck
             add  w1, w27, w4
            csel  w27, w1, w27, ne
-
-    ; For other pieces, also consider the square safe if attacked twice,
-    ; and only defended by a queen.
-            orr  x0, AttackedBy2_Us, Pieces_Them
-            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + Queen)]
-            bic  x0, x4, x0
-            and  x0, x0, AttackedBy2_Them
-    ; x8 = safe
-            orr  x8, x8, x0
 
     ; x10 = b1 & ei.attackedBy[Them][ROOK]
             ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Them + Rook)]

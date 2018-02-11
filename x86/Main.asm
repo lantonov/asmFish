@@ -52,7 +52,7 @@ if USE_BOOK
            call  Book_Create
 end if
 if USE_WEAKNESS
-	       call  Weakness_Create
+	   call  Weakness_Create
 end if
 
     ; command line could contain commands
@@ -85,6 +85,8 @@ end if
             mov  rcx, qword[ioBuffer.inputBuffer]
             mov  rdx, qword[ioBuffer.inputBufferSizeB]
            call  Os_VirtualFree
+
+         Assert  e, qword[DebugBalance], 0, "DebugBalance != 0"
 
             xor  ecx, ecx
            call  Os_ExitProcess
