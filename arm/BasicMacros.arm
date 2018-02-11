@@ -120,6 +120,15 @@ macro addsub? T, A, B, C, D:0
     end if    
 end macro
 
+macro muladdsub? T, A, B, C, D
+    if T = White
+           madd  A, B, C, D     ; A = D + B*C
+    else
+           msub  A, B, C, D     ; A = D - B*C
+    end if
+end macro
+
+
 macro PrintNewLine
             mov  w0, 10
            strb  w0, [x27], 1
