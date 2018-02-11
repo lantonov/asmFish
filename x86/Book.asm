@@ -7,7 +7,7 @@ Book_Create:
              or  rdx, 1
             xor  eax, eax
             mov  qword[rbx+Book.seed], rdx
-            mov  dword[rbx+Book.entryCount], eax
+            mov  qword[rbx+Book.entryCount], rax
             mov  qword[rbx+Book.buffer], rax
             mov  byte[rbx+Book.ownBook], al
             mov  dword[rbx+Book.bookDepth], 100
@@ -21,10 +21,10 @@ Book_Destroy:
            push  rbx
             lea  rbx, [book]
             mov  rcx, qword[rbx+Book.buffer]
-           imul  edx, dword[rbx+Book.entryCount], sizeof.BookEntry
+           imul  rdx, qword[rbx+Book.entryCount], sizeof.BookEntry
            call  Os_VirtualFree
             xor  eax, eax
-            mov  dword[rbx+Book.entryCount], eax
+            mov  qword[rbx+Book.entryCount], rax
             mov  qword[rbx+Book.buffer], rax
             pop  rbx
             ret
@@ -32,9 +32,24 @@ Book_Destroy:
 
 
 Book_Load:
+
+virtual at rsp
+ .unsortedCount   rq 1
+ .zeroWeightCount rq 1
+ .bufferCount rq 1
+ .buffer      rq 1
+ .hFile    rq 1
+ .lend     rb 0
+end virtual
+.localsize = ((.lend-rsp+15) and (-16))
+
+           push   rbx rsi rdi r12 r13 r14 r15
+     _chkstk_ms   rsp, .localsize
+            sub   rsp, .localsize
+
     ; in: rsi file string
-           push  rbx rsi rdi r14 r15
            call  Book_Destroy
+
     ; find terminator and replace it with null
            call  SkipSpaces
             mov  rcx, rsi
@@ -42,57 +57,63 @@ Book_Load:
             add  rcx, 1
             cmp  byte[rcx], ' '
             jae  @1b
-            mov  byte[rcx], 0
+            xor  eax, eax
+            mov  byte[rcx], al
+            mov  qword[.unsortedCount], rax
+            mov  qword[.zeroWeightCount], rax
+
     ; if <empty>, dont do anything
-            lea  rdi, [Output]
             lea  rcx, [sz_empty]
            call  CmpString
            test  eax, eax
             jnz  .Return_NoPrint
+
     ; try to open file
             mov  rcx, rsi
            call  Os_FileOpenRead
             cmp  rax, -1
-             je  .Failed
-            mov  r15, rax
+             je  .OpenFail
+            mov  qword[.hFile], rax
             mov  rcx, rax
            call  Os_FileSize
-            cmp  rax, 1 shl 28
-            jae  .FailedAndClose
-            cmp  eax, 16
-             jb  .FailedAndClose
            test  eax, 15
-            jnz  .FailedAndClose
-            shr  eax, 4
-            mov  dword[book.entryCount], eax
-    ; space for reading
-           imul  ecx, dword[book.entryCount], 16
-           call  Os_VirtualAlloc
-            mov  r14, rax
-           imul  ecx, dword[book.entryCount], sizeof.BookEntry
+            jnz  .SizeFail
+            shr  rax, 4
+             jz  .SizeFail
+            mov  qword[book.entryCount], rax
+
+           imul  rcx, rax, sizeof.BookEntry
            call  Os_VirtualAlloc
             mov  qword[book.buffer], rax
-    ; read polyglot book into r14
-            mov  rcx, r15
-            mov  rdx, r14
-           imul  r8d, dword[book.entryCount], 16
-           call  Os_FileRead
-           test  eax, eax
-             jz  .Failed
-    ; get the entries
-            mov  rsi, r14
-            mov  rdi, qword[book.buffer]
-            mov  ecx, dword[book.entryCount]
-            xor  r12, r12
-            xor  r8, r8
-            xor  r9, r9
+            mov  rdi, rax
+
+    ; read at most 16M entries (256 MB) at a time
+            mov  rcx, qword[book.entryCount]
+            mov  rax, 1 shl 24
+            cmp  rcx, rax
+          cmova  rcx, rax
+            mov  qword[.bufferCount], rcx
+            shl  rcx, 4
+           call  Os_VirtualAlloc
+            mov  qword[.buffer], rax
+
+            xor  r12, r12       ; previous key
+            xor  r13, r13
+            xor  r14, r14
+.ReadNext:
+            cmp  r13, qword[book.entryCount]
+            jae  .ReadDone
+            cmp  r13, r14
+            jae  .LoadNextChunk
+.LoadNextChunkRet:
+            mov  rsi, qword[.buffer]
 .NextEntry:
           lodsq             ; key
           bswap  rax
           stosq
-            cmp  rax, r8
-            adc  r12, 0
-            mov  r8, rax
+            cmp  rax, r12
+            adc  qword[.unsortedCount], 0
+            mov  r12, rax
           lodsw             ; move
            xchg  al, ah
           stosw
@@ -100,53 +121,98 @@ Book_Load:
            xchg  al, ah
           stosw
             cmp  ax, 1
-            adc  r9, 0
+            adc  qword[.zeroWeightCount], 0
           lodsd             ; learn
-            sub  ecx, 1
-            jnz  .NextEntry
-            mov  eax, dword[book.entryCount]
-           push  r9 rax
-            lea  rcx, [.sz_format1]
-            mov  rdx, rsp
-            xor  r8, r8
+            add  r13, 1
+            cmp  r13, r14
+             jb  .NextEntry
+            jmp  .ReadNext
+.ReadDone:
+
             lea  rdi, [Output]
+
+            lea  rcx, [.sz_format_entries]
+            lea  rdx, [book.entryCount]
+            xor  r8, r8
            call  PrintFancy
-            pop  rax r9
-    ; check if all entries are ordered
-           test  r12, r12
-             jz  @1f
-            lea  rcx, [.sz_format2]
-           call  PrintString
-    @1:
-    ; free space r14
-            mov  rcx, r14
-           imul  edx, dword[book.entryCount], 16
+
+            lea  rcx, [.sz_format_zeroweight]
+            lea  rdx, [.zeroWeightCount]
+            xor  r8, r8
+            cmp  r8, qword[rdx]
+             je  @1f
+           call  PrintFancy
+        @1:
+
+            lea  rcx, [.sz_format_unsorted]
+            lea  rdx, [.unsortedCount]
+            xor  r8, r8
+            cmp  r8, qword[rdx]
+             je  @1f
+           call  PrintFancy
+        @1:
+
+            mov  rcx, qword[.buffer]
+           imul  rdx, qword[.bufferCount], 16
            call  Os_VirtualFree
+
     ; start "in book"
            call  Book_Refresh
 .Return:
            call  WriteLine_Output
 .Return_NoPrint:
-            pop  r15 r14 rdi rsi rbx
+
+            add  rsp, .localsize
+            pop  r15 r14 r13 r12 rdi rsi rbx
             ret
 
-.FailedAndClose:
-            mov  rcx, r15
+.LoadNextChunk:
+            mov  r8, qword[book.entryCount]
+            sub  r8, r13
+            cmp  r8, qword[.bufferCount]
+          cmova  r8, qword[.bufferCount]
+            lea  r14, [r13 + r8]
+            mov  rcx, qword[.hFile]
+            mov  rdx, qword[.buffer]
+            shl  r8, 4
+           call  Os_FileRead
+           test  eax, eax
+            jnz  .LoadNextChunkRet
+.ReadFail:
+            mov  rcx, qword[.buffer]
+           imul  rdx, qword[.bufferCount], 16
+           call  Os_VirtualFree
+            mov  rcx, qword[.hFile]
            call  Os_FileClose
-.Failed:
-            lea  rcx, [.sz_format3]
+            lea  rcx, [.sz_format_read]
+            lea  rdi, [Output]
+
+.PrintAndClose:
            call  PrintString
            call  Book_Destroy
             jmp  .Return
 
-.sz_format1:
-    db 'info string %i0 entries in book (%i1 entries have zero weight)%n', 0
-.sz_format2:
-    db 'info string undefined behaviour from unsorted keys'
+.SizeFail:
+            mov  rcx, qword[.hFile]
+           call  Os_FileClose
+.OpenFail:
+            lea  rcx, [.sz_format_bad]
+            lea  rdi, [Output]
+            jmp  .PrintAndClose
+
+
+.sz_format_entries:
+    db 'info string %i0 entries in book%n', 0
+.sz_format_zeroweight:
+    db 'info string %i0 entries have zero weight%n', 0
+.sz_format_unsorted:
+    db 'info string undefined behaviour from %i0 unsorted keys%n',0
+.sz_format_bad:
+    db 'info string bad bookfile'
     NewLineData
     db 0
-.sz_format3:
-    db 'info string bad bookfile'
+.sz_format_read:
+    db 'info string could not read bookfile'
     NewLineData
     db 0
 
@@ -183,7 +249,7 @@ end virtual
             add  rsi, sizeof.ExtMove
             mov  ecx, dword[rsi + ExtMove.move]
            test  ecx, ecx
-             jz  .LegaLoopDone
+             jz  .LegalLoopDone
            call  Move_GivesCheck
             mov  ecx, dword[rsi+ExtMove.move]
             mov  byte[rbx+State.givesCheck], al
@@ -204,13 +270,13 @@ end virtual
             mov  ecx, dword[rsi+ExtMove.move]
            call  Move_Undo
             jmp  .LegalLoop
-.LegaLoopDone:
+.LegalLoopDone:
 
                call   Position_PolyglotKey
                 mov   r13, rax
         ; r13 is the key we want
                 mov   r15, qword[book.buffer]
-               imul   r14d, dword[book.entryCount], sizeof.BookEntry
+               imul   r14, qword[book.entryCount], sizeof.BookEntry
                 add   r14, r15
         ; r14 is the address of the end of the book
         ; r15 is the address of the start of the book

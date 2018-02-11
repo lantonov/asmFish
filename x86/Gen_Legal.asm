@@ -15,7 +15,7 @@ Gen_Legal:
 		mov   r13d, dword[rbp+Pos.sideToMove]
 		mov   r12, qword[rbp+Pos.typeBB+8*King]
 		and   r12, qword[rbp+Pos.typeBB+8*r13]
-		bsf   r14, r12
+             _tzcnt   r14, r12
 	; r15  = pinned pieces
 	; r14d = our king square
 	; r13d = side

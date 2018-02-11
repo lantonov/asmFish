@@ -503,16 +503,15 @@ sizeof.IOBuffer.tmpBuffer = 512
 struct Book
  buffer        rq 1
  seed          rq 1
- entryCount   rd 1
+ entryCount   rq 1
  failCount    rd 1
  bookDepth    rd 1
- ownBook      rb 1
- bestBookMove rb 1
-              rb 2
- move   rd 1
- weight rd 1
- ponder rd 1
-        rd 1
+ ownBook       rb 1
+ bestBookMove  rb 1
+               rb 2
+ move          rd 1
+ weight        rd 1
+ ponder        rd 1
 ends
 
 struct PolyglotEntry

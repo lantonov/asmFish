@@ -223,9 +223,6 @@ if USE_SYZYGY
 
     ; Skip TB probing when no TB found
            _lea  x6, options
-            ldr  w4, [x6, Options.multiPV]
-            cmp  w4, 1
-            bne  .check_tb_ret
            ldrb  w2, [x6, Options.syzygy50MoveRule]
            _lea  x6, Tablebase_RootInTB
            strb  wzr, [x6]
@@ -259,7 +256,11 @@ if USE_SYZYGY
             asr  w0, w0, 31
            ldrb  w4, [x21, State.castlingRights]
             orr  w0, w0, w4
-            cbz  w0, .check_tb
+           cbnz  w0, .check_tb_ret
+            ldr  w4, [x6, Options.multiPV]
+            cmp  w4, 1
+            beq  .check_tb
+
 .check_tb_ret:
 
             str  x21, [x20, Pos.state]      ; Thread_Think uses Pos.state

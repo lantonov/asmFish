@@ -23,7 +23,7 @@ Move_IsLegal:
 		mov   r13d, dword[rbp+Pos.sideToMove]
 		mov   r11, qword[rbp+Pos.typeBB+8*King]
 		and   r11, qword[rbp+Pos.typeBB+8*r13]
-		bsf   r14, r11
+             _tzcnt   r14, r11
 	; r14 = our king square
 	; r11 = our king bitboard
 
