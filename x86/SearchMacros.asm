@@ -1513,11 +1513,8 @@ Display 2, "Search returning %i0%n"
             lea   r15d, [rax+rcx]
     ; r15d = offset of [piece_on(prevSq),prevSq]
            test   dl, dl
-            jnz   .ReturnTTValue_UpdateCaptureStats
+            jnz   .ReturnTTValue_UpdateStatsDone
     UpdateStats   r12d, 0, 0, r11d, r10d, r15
-            jmp   .ReturnTTValue_UpdateStatsDone
-.ReturnTTValue_UpdateCaptureStats:
-    UpdateCaptureStats  r12d, 0, 0, r11d, r10d
 .ReturnTTValue_UpdateStatsDone:
             mov   eax, edi
             lea   r10d, [r10+2*(r13+1)+1]
