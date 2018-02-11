@@ -138,10 +138,10 @@ Move_IsPseudoLegal:
 .Checkers:
 	; if moving P|R|B|Q and in check, filter some moves out
 		mov   rcx, qword [rbp+Pos.typeBB+8*King]
-		bsf   rax, r13
+             _tzcnt   rax, r13
 		shl   eax, 6+3
 		and   rcx, r14
-		bsf   rcx, rcx
+             _tzcnt   rcx, rcx
 		mov   rax, qword[BetweenBB+rax+8*rcx]
 		 or   rax, r13
 
@@ -320,10 +320,10 @@ Move_IsPseudoLegal:
 .PromotionCheckers:
 	; if moving P|R|B|Q and in check, filter some moves out
 		mov   rcx, qword [rbp+Pos.typeBB+8*King]
-		bsf   rax, r13
+             _tzcnt   rax, r13
 		shl   eax, 6+3
 		and   rcx, r14
-		bsf   rcx, rcx
+             _tzcnt   rcx, rcx
 		mov   rax, qword[BetweenBB+rax+8*rcx]
 		 or   rax, r13
 
@@ -374,7 +374,7 @@ Move_IsPseudoLegal:
 	; rdi = ksq = square<KING>(us)
 		mov   rdi, qword[rbp+Pos.typeBB+8*King]
 		and   rdi, r14
-		bsf   rdi, rdi
+             _tzcnt   rdi, rdi
 
 	; r15 = occupied = (pieces() ^ from ^ capsq) | to
 		btr   r15, r8

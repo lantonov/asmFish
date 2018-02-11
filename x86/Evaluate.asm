@@ -1,21 +1,21 @@
-
-MinorBehindPawn 	= (( 16 shl 16) + (  0))
-BishopPawns		= ((  8 shl 16) + ( 12))
-RookOnPawn		= ((  8 shl 16) + ( 24))
-TrappedRook		= (( 92 shl 16) + (  0))
-WeakQueen		= (( 50 shl 16) + ( 10))
-OtherCheck		= (( 10 shl 16) + ( 10))
-CloseEnemies		= ((  7 shl 16) + (  0))
-PawnlessFlank		= (( 20 shl 16) + ( 80))
-ThreatByHangingPawn	= (( 71 shl 16) + ( 61))
-ThreatBySafePawn        = ((192 shl 16) + (175))
-ThreatByRank		= (( 16 shl 16) + (  3))
-Hanging 		= (( 48 shl 16) + ( 27))
-ThreatByPawnPush	= (( 38 shl 16) + ( 22))
-HinderPassedPawn	= ((  7 shl 16) + (  0))
-LongRangedBishop        =  (22 shl 16)  +  0
-TrappedBishopA1H1       =  (50 shl 16)  + 50
-
+MinorBehindPawn 	= ( 16 shl 16) + (  0)
+BishopPawns		= (  8 shl 16) + ( 12)
+LongRangedBishop        = ( 22 shl 16) + (  0)
+RookOnPawn		= (  8 shl 16) + ( 24)
+TrappedRook		= ( 92 shl 16) + (  0)
+WeakQueen		= ( 50 shl 16) + ( 10)
+OtherCheck		= ( 10 shl 16) + ( 10)
+CloseEnemies		= (  7 shl 16) + (  0)
+PawnlessFlank		= ( 20 shl 16) + ( 80)
+ThreatByHangingPawn	= ( 71 shl 16) + ( 61)
+ThreatBySafePawn        = (192 shl 16) + (175)
+ThreatByRank		= ( 16 shl 16) + (  3)
+Hanging 		= ( 48 shl 16) + ( 27)
+WeakUnopposedPawn       = (  5 shl 16) + ( 25)
+ThreatByPawnPush	= ( 38 shl 16) + ( 22)
+ThreatByAttackOnQueen   = ( 38 shl 16) + ( 22)
+HinderPassedPawn	= (  7 shl 16) + (  0)
+TrappedBishopA1H1       = ( 50 shl 16) + ( 50)
 
 LazyThreshold = 1500
 
@@ -157,6 +157,9 @@ macro EvalPieces Us, Pt
 
 		xor   eax, eax
 		mov   qword[.ei.attackedBy+8*(8*Us+Pt)], rax
+  if Pt = Queen
+                mov   qword[.ei.attackedBy+8*(8*Us+QUEEN_DIAGONAL)], rax
+  end if
 
 		mov   r11, qword[rbp+Pos.typeBB+8*Us]
 	; r11 = our pieces
@@ -210,6 +213,12 @@ NoPinned:
 		 or   qword[.ei.attackedBy2+8*Us], rcx
 		mov   qword[.ei.attackedBy+8*(8*Us+Pt)], rax
 		mov   qword[.ei.attackedBy+8*(8*Us+0)], rdx
+
+  if Pt = Queen
+                mov   rax, qword[BishopAttacksPDEP+8*r14]
+                and   rax, r9
+                 or   qword[.ei.attackedBy+8*(8*Us+QUEEN_DIAGONAL)], rax
+  end if
 
 	       test   r9, qword[.ei.kingRing+8*Them]
 		 jz   NoKingRing	; 74.44%
@@ -401,7 +410,7 @@ NoTrappedByKing:
 		and   rax, r9
 		 jz   SkipQueenPin
 		shl   r14d, 6+3
-		bsf   rcx, rax
+             _tzcnt   rcx, rax
 QueenPinLoop:
 		mov   rcx, qword[BetweenBB+r14+8*rcx]
 	      _blsr   rax, rax, r9
@@ -489,17 +498,17 @@ KingSafetyDoneRet:
 		and   ecx, 15
                 add   ecx, edi
 
-		mov   r8, qword[.ei.attackedBy2+8*Us]
-	      _andn   r8, r8, AttackedByThem
-		mov   r9, AttackedByUs
-		not   r9
-		 or   r9, qword[.ei.attackedBy+8*(8*Us+Queen)]
-		 or   r9, qword[.ei.attackedBy+8*(8*Us+King)]
-		and   r8, r9
-	; r8 = weak
+                mov   r8, qword[.ei.attackedBy2+8*Us]
+              _andn   r8, r8, AttackedByThem
+                mov   r9, AttackedByUs
+                not   r9
+                 or   r9, qword[.ei.attackedBy+8*(8*Us+Queen)]
+                 or   r9, qword[.ei.attackedBy+8*(8*Us+King)]
+                and   r8, r9
+        ; r8 = weak
 
-		mov   r9, r8
-		and   r9, qword[.ei.kingRing+8*Us]
+                mov   r9, qword[.ei.kingRing+8*Us]
+                and   r9, r8
 	        cmp   ecx, 2
 		 jb   AllDone
 
@@ -551,16 +560,18 @@ KingSafetyDoneRet:
 	; rdx = b1 = pos.attacks_from<BISHOP>(ksq)
 		xor   PiecesUs, PiecesThem
 
+
 	; Enemy queen safe checks
 		mov   rax, r10
 		 or   rax, rdx
 		and   rax, qword[.ei.attackedBy+8*(8*Them+Queen)]
 		and   rax, r8
-		not   rax
-		 or   rax, qword[.ei.attackedBy+8*(8*Us+Queen)]
-		add   rax, 1
+                mov   rcx, qword[.ei.attackedBy+8*(8*Us+Queen)]
+                not   rcx
+               test   rax, rcx
 		lea   ecx, [rdi+QueenCheck]
 	     cmovnz   edi, ecx
+
 
 		and   r10, qword[.ei.attackedBy+8*(8*Them+Rook)]
 	; r10 = b1 & ei.attackedBy[Them][ROOK]
@@ -1014,8 +1025,6 @@ ThreatRookDone:
 
 WeakDone:
 
-        WeakUnopposedPawn = (5 shl 16) + 25
-
             mov  rcx, qword[rbp + Pos.typeBB + 8*Rook]
              or  rcx, qword[rbp + Pos.typeBB + 8*Queen]
           movzx  edx, byte[rdi + PawnEntry.weakUnopposed]
@@ -1065,6 +1074,22 @@ WeakDone:
         _popcnt  rax, rax, rdx
            imul  eax, ThreatByPawnPush
          addsub  esi, eax
+
+                mov   rax, qword[.ei.attackedBy2+8*Them]
+              _andn   rax, rax, qword[.ei.attackedBy2+8*Us]
+                mov   rcx, PiecesUs
+                not   rcx
+                and   rax, rcx
+                mov   rdx, qword[.ei.attackedBy+8*(8*Us+Bishop)]
+                mov   rcx, qword[.ei.attackedBy+8*(8*Them+QUEEN_DIAGONAL)]
+                and   rdx, rcx
+              _andn   rcx, rcx, qword[.ei.attackedBy+8*(8*Them+Queen)]
+                and   rcx, qword[.ei.attackedBy+8*(8*Us+Rook)]
+                 or   rdx, rcx
+                and   rax, rdx
+            _popcnt   rax, rax, rdx
+               imul   eax, ThreatByAttackOnQueen
+             addsub   esi, eax
 end macro
 
 

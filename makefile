@@ -19,9 +19,9 @@ bincheck:
 	diff "NEWarmfish" "armfish"
 	diff "NEWasmfish" "asmfish"
 asmquick:
-	./fasmg "x86/fish.asm" "asmfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST='popcnt'" -i "PEDANTIC=1" -i "USE_BOOK=1" -i "VERBOSE=1"; chmod 755 ./asmfish
+	./fasmg "x86/fish.asm" "asmfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST='popcnt'"; chmod 755 ./asmfish
 armquick:
-	./fasmg "arm/fish.arm" "armfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST='v8'" -i "PEDANTIC=1" -i "USE_BOOK=0" -i "VERBOSE=1"; chmod 755 ./armfish
+	./fasmg "arm/fish.arm" "armfish" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST='v8'"; chmod 755 ./armfish
 test:
 	aarch64-linux-gnu-as -o master.o -march=armv8-a+crc+crypto "arm/include/master.arm"
 	aarch64-linux-gnu-ld -o master master.o

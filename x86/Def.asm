@@ -83,6 +83,9 @@ Rook   = 5
 Queen  = 6
 King   = 7
 
+ALL_PIECES     = 0
+QUEEN_DIAGONAL = 1
+
 ; piece values
 PawnValueMg   = 171
 KnightValueMg = 764

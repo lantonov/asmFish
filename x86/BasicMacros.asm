@@ -252,61 +252,15 @@ macro _popcnt a, x, t
   end if
 end macro
 
-; a = PopCnt(x) assuming PopCnt(b)<16
-; a and t are expected to be registers
-;macro _popcnt15 a, x, t
-;
-;display 'touching pop15'
-;
-;  if CPU_HAS_POPCNT <> 0
-;	     popcnt   a, x
-;  else
-;    if a eq t
-;        err 'arguments of _popcnt15 are strange'
-;    end if
-;    match size[addr], x         ; x is memory
-;		mov   a, x
-;		mov   t, x
-;		shr   a, 1
-;		and   a, qword[Mask55]
-;		sub   t, a
-;		mov   a, t
-;		shr   t, 2
-;		and   a, qword[Mask33]
-;		and   t, qword[Mask33]
-;		add   a, t
-;	       imul   a, qword[Mask11]
-;		shr   a, 56
-;    else
-;      if a eq x   ; only have two registers to work with
-;		mov   t, x
-;		shr   t, 1
-;		and   t, qword[Mask55]
-;		sub   x, t
-;		mov   t, x
-;		shr   t, 2
-;		and   x, qword[Mask33]
-;		and   t, qword[Mask33]
-;		add   x, t
-;	       imul   x, qword[Mask01]
-;		shr   x, 56
-;      else   ; can't write to x
-;		mov   a, x
-;		mov   t, x
-;		shr   a, 1
-;		and   a, qword[Mask55]
-;		sub   t, a
-;		mov   a, t
-;		shr   t, 2
-;		and   a, qword[Mask33]
-;		and   t, qword[Mask33]
-;		add   a, t
-;	       imul   a, qword[Mask11]
-;		shr   a, 56
-;      end if
-;    end match
-;  end if
-;end macro
+; a = TrailingZeroCount(b)
+macro _tzcnt a, b
+             Assert   ne, b, 0, "Assertion b != 0 failed in _tzcnt"
+  if CPU_HAS_TZCNT
+              tzcnt   a, b
+  else
+                bsf   a, b
+  end if
+end macro
 
 
 ; a = ClearLowestBit(b)

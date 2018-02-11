@@ -13,7 +13,7 @@ Gen_Evasions:
 ; r14 = our king square
 		mov   r14, qword[rbp+Pos.typeBB+8*King]
 		and   r14, qword[rbp+Pos.typeBB+8*r13]
-		bsf   r14, r14
+             _tzcnt   r14, r14
 
 ; rsi = their sliding checkers
 		mov   rsi, qword[rbp+Pos.typeBB+8*Pawn]
