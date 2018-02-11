@@ -33,10 +33,10 @@ SetDefault 1, PEDANTIC
 SetDefault '<empty>', LOG_FILE  ; use something other than <empty> to hardcode a starting log file into the engine
 
 SetDefault 'base', VERSION_POST
+SetDefault 0, CPU_HAS_TZCNT
 SetDefault 0, CPU_HAS_POPCNT
 SetDefault 0, CPU_HAS_BMI1
 SetDefault 0, CPU_HAS_BMI2
-SetDefault 0, CPU_HAS_TZCNT ; not implemented yet
 SetDefault 0, CPU_HAS_AVX1  ; not implemented yet
 SetDefault 0, CPU_HAS_AVX2  ; not implemented yet
 

@@ -489,12 +489,13 @@ KingSafetyDoneRet:
 		and   ecx, 15
                 add   ecx, edi
 
-                mov   rax, qword[.ei.attackedBy2+8*Us]
-              _andn   rax, rax, AttackedByThem
-                mov   r8, qword[.ei.attackedBy+8*(8*Us+Queen)]
-                 or   r8, qword[.ei.attackedBy+8*(8*Us+King)]
-              _andn   r8, r8, AttackedByUs
-              _andn   r8, r8, rax
+                mov   r8, qword[.ei.attackedBy2+8*Us]
+              _andn   r8, r8, AttackedByThem
+                mov   r9, AttackedByUs
+                not   r9
+                 or   r9, qword[.ei.attackedBy+8*(8*Us+Queen)]
+                 or   r9, qword[.ei.attackedBy+8*(8*Us+King)]
+                and   r8, r9
         ; r8 = weak
 
                 mov   r9, qword[.ei.kingRing+8*Us]
@@ -517,7 +518,7 @@ KingSafetyDoneRet:
 	       test   PiecesThem, qword[rbp+Pos.typeBB+8*Queen]
 		lea   eax, [rdi-848]
 	      cmovz   edi, eax
-	; the following does edi += - 5*mg_value(score)/8 + 40
+	; the following does edi += - 9*mg_value(score)/8 + 40
 		lea   ecx, [rsi+0x08000]
                 add   edi, 40
 		sar   ecx, 16
@@ -537,7 +538,7 @@ KingSafetyDoneRet:
 		mov   r9, qword[rbp+Pos.typeBB+8*Pawn]
 		mov   rax, PiecesThem
 		and   rax, r9
-	   ShiftBB   Up, r9
+	    ShiftBB   Up, r9
 		and   r9, rax
 		 or   r9, qword[.ei.attackedBy+8*(8*Us+Pawn)]
 		not   r9
@@ -558,8 +559,7 @@ KingSafetyDoneRet:
 		and   rax, r8
                 mov   rcx, qword[.ei.attackedBy+8*(8*Us+Queen)]
                 not   rcx
-                and   rax, rcx
-
+               test   rax, rcx
 		lea   ecx, [rdi+QueenCheck]
 	     cmovnz   edi, ecx
 
