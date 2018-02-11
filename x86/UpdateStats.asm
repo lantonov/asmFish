@@ -1,3 +1,4 @@
+
 macro UpdateCmStats ss, offset, bonus32, absbonus, t1
 	; bonus32 is 32*bonus
 	; absbonus is abs(bonus)
@@ -172,3 +173,6 @@ NextCapture:
 BonusTooBig:
 Return:
 end macro
+
+
+

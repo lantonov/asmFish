@@ -22,7 +22,7 @@ local YesPinners, NoPinners, MoreThanOne
 		 jz   NoPinners
 YesPinners:
 	      _blsi   snipersSqBB, snipers
-		bsf   t, snipers
+             _tzcnt   t, snipers
 		mov   b, pieces
 		and   b, qword[s+8*t]
 		mov   t, pieces_color

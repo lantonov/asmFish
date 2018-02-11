@@ -401,7 +401,7 @@ NoTrappedByKing:
 		and   rax, r9
 		 jz   SkipQueenPin
 		shl   r14d, 6+3
-		bsf   rcx, rax
+             _tzcnt   rcx, rax
 QueenPinLoop:
 		mov   rcx, qword[BetweenBB+r14+8*rcx]
 	      _blsr   rax, rax, r9
@@ -489,17 +489,16 @@ KingSafetyDoneRet:
 		and   ecx, 15
                 add   ecx, edi
 
-		mov   r8, qword[.ei.attackedBy2+8*Us]
-	      _andn   r8, r8, AttackedByThem
-		mov   r9, AttackedByUs
-		not   r9
-		 or   r9, qword[.ei.attackedBy+8*(8*Us+Queen)]
-		 or   r9, qword[.ei.attackedBy+8*(8*Us+King)]
-		and   r8, r9
-	; r8 = weak
+                mov   rax, qword[.ei.attackedBy2+8*Us]
+              _andn   rax, rax, AttackedByThem
+                mov   r8, qword[.ei.attackedBy+8*(8*Us+Queen)]
+                 or   r8, qword[.ei.attackedBy+8*(8*Us+King)]
+              _andn   r8, r8, AttackedByUs
+              _andn   r8, r8, rax
+        ; r8 = weak
 
-		mov   r9, r8
-		and   r9, qword[.ei.kingRing+8*Us]
+                mov   r9, qword[.ei.kingRing+8*Us]
+                and   r9, r8
 	        cmp   ecx, 2
 		 jb   AllDone
 
@@ -518,7 +517,7 @@ KingSafetyDoneRet:
 	       test   PiecesThem, qword[rbp+Pos.typeBB+8*Queen]
 		lea   eax, [rdi-848]
 	      cmovz   edi, eax
-	; the following does edi += - 9*mg_value(score)/8 + 40
+	; the following does edi += - 5*mg_value(score)/8 + 40
 		lea   ecx, [rsi+0x08000]
                 add   edi, 40
 		sar   ecx, 16
@@ -538,7 +537,7 @@ KingSafetyDoneRet:
 		mov   r9, qword[rbp+Pos.typeBB+8*Pawn]
 		mov   rax, PiecesThem
 		and   rax, r9
-	    ShiftBB   Up, r9
+	   ShiftBB   Up, r9
 		and   r9, rax
 		 or   r9, qword[.ei.attackedBy+8*(8*Us+Pawn)]
 		not   r9
@@ -551,16 +550,19 @@ KingSafetyDoneRet:
 	; rdx = b1 = pos.attacks_from<BISHOP>(ksq)
 		xor   PiecesUs, PiecesThem
 
+
 	; Enemy queen safe checks
 		mov   rax, r10
 		 or   rax, rdx
 		and   rax, qword[.ei.attackedBy+8*(8*Them+Queen)]
 		and   rax, r8
-		not   rax
-		 or   rax, qword[.ei.attackedBy+8*(8*Us+Queen)]
-		add   rax, 1
+                mov   rcx, qword[.ei.attackedBy+8*(8*Us+Queen)]
+                not   rcx
+                and   rax, rcx
+
 		lea   ecx, [rdi+QueenCheck]
 	     cmovnz   edi, ecx
+
 
 		and   r10, qword[.ei.attackedBy+8*(8*Them+Rook)]
 	; r10 = b1 & ei.attackedBy[Them][ROOK]
@@ -2082,7 +2084,11 @@ end iterate
 
 		lea   r8, [rsp+4*0]	;  pieceCount[Us]
 		lea   r9, [rsp+4*8]	;  pieceCount[Them]
-		xor   eax, eax
+		mov   eax, dword[r8+4*Pawn]
+                mov   eax, dword[PawnsSet+4*rax]
+		mov   ecx, dword[r9+4*Pawn]
+                mov   ecx, dword[PawnsSet+4*rcx]
+                sub   eax, ecx
 		xor   r15d, r15d
 .ColorLoop:
 		xor   r10d, r10d	; partial index into quadatic
