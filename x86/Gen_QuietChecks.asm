@@ -16,7 +16,7 @@ Gen_QuietChecks:
 	       test   r14, r14
 		 jz   .PopLoopDone
 .PopLoop:
-		bsf   r13, r14
+             _tzcnt   r13, r14
 	      _blsr   r14, r14, rax
 	      movzx   r12d, byte[rbp+Pos.board+r13]
 		and   r12d, 7
@@ -40,7 +40,7 @@ Gen_QuietChecks:
 	       test   rsi, rsi
 		 jz   .MoveLoopDone
 .MoveLoop:
-		bsf   rax, rsi
+             _tzcnt   rax, rsi
 		 or   eax, r13d
 		mov   dword[rdi], eax
 		lea   rdi, [rdi+sizeof.ExtMove]

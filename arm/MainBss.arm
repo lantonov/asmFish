@@ -118,7 +118,6 @@ PassedFile:                 rb 4*8
 DoMaterialEval_Data:
 DoMaterialEval_Data.QuadraticOurs:     rb 4*8*6
 DoMaterialEval_Data.QuadraticTheirs:   rb 4*8*6
-PawnsSet:               rb 4*16
 QueenMinorsImbalance:   rb 4*16
 
 

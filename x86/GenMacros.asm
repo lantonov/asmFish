@@ -95,7 +95,7 @@ macro generate_promotions Type, Delta, pon7, target
             and   rsi, target
              jz   OuterDone
 Outer:
-            bsf   rdx, rsi
+         _tzcnt   rdx, rsi
   if Type = CAPTURES | Type = EVASIONS | Type = NON_EVASIONS
            imul   eax, edx, 65
             add   eax, 64*64*(MOVE_TYPE_PROM+3) - 64*Delta
@@ -172,7 +172,7 @@ generate_promotions   Type, Up, pawnsOn7, eS
   if Type = CAPTURES | Type = EVASIONS | Type = NON_EVASIONS
 	     calign   8
 .CaptureEp:
-            bsf   rax, b1
+         _tzcnt   rax, b1
             shl   eax, 6
              or   eax, edx
             mov   dword[rdi], eax
@@ -271,7 +271,7 @@ SkipDCPawns:
            test   b1, b1
              jz   SinglePushDone
 SinglePush:
-            bsf   rax, b1
+         _tzcnt   rax, b1
            imul   eax, (1 shl 6) + (1 shl 0)
             sub   eax, (Up shl 6) + (0 shl 0)
             mov   dword[rdi], eax
@@ -282,7 +282,7 @@ SinglePushDone:
            test   b2, b2
              jz   DoublePushDone
 DoublePush:
-            bsf   rax, b2
+         _tzcnt   rax, b2
            imul   eax, (1 shl 6) + (1 shl 0)
             sub   eax, ((Up+Up) shl 6)
             mov   dword[rdi], eax
@@ -313,7 +313,7 @@ DoublePushDone:
            test   b1, b1
              jz   CaptureRightDone
 CaptureRight:
-            bsf   rax, b1
+         _tzcnt   rax, b1
            imul   eax, (1 shl 6) + (1 shl 0)
             sub   eax, (Right shl 6) + (0 shl 0)
             mov   dword[rdi], eax
@@ -324,12 +324,12 @@ CaptureRightDone:
            test   b2, b2
              jz   CaptureLeftDone
 CaptureLeft:
-            bsf   rax, b2
+         _tzcnt   rax, b2
            imul   eax, (1 shl 6) + (1 shl 0)
             sub   eax, (Left shl 6) + (0 shl 0)
             mov   dword[rdi], eax
             lea   rdi, [rdi+sizeof.ExtMove]
-           _blsr   b2, b2, rcx
+          _blsr   b2, b2, rcx
             jnz   CaptureLeft
 CaptureLeftDone:
           movzx   edx, byte[rbx+State.epSquare]
@@ -341,7 +341,7 @@ CaptureLeftDone:
             jnc   .CaptureEpDone
     end if
   attacks_from_pawn   Them, b1, rdx
-            or   edx, MOVE_TYPE_EPCAP shl 12
+             or   edx, MOVE_TYPE_EPCAP shl 12
             and   b1, pawnsNotOn7
             jnz   .CaptureEp
 .CaptureEpDone:
@@ -411,7 +411,7 @@ Outer:
             and   rsi, r15
              jz   InnerDone
 Inner:
-            bsf   rax, rsi
+         _tzcnt   rax, rsi
              or   eax, edx
             mov   dword[rdi], eax
             lea   rdi, [rdi+sizeof.ExtMove]
@@ -534,13 +534,13 @@ generate_pawn_moves   Us, Type
   if Type <> QUIET_CHECKS & Type <> EVASIONS
             mov   rsi, qword[rbp+Pos.typeBB+8*King]
             and   rsi, qword[rbp+Pos.typeBB+8*Us]
-            bsf   rdx, rsi
+         _tzcnt   rdx, rsi
             mov   rcx, qword[KingAttacks+8*rdx]
             shl   edx, 6
             and   rcx, r15
              jz   KingMovesDone
 KingMoves:
-            bsf   rax, rcx
+         _tzcnt   rax, rcx
              or   eax, edx
             mov   dword[rdi], eax
             lea   rdi, [rdi+sizeof.ExtMove]

@@ -29,26 +29,18 @@ MovePick_GOOD_CAPTURES:
 		cmp   ecx, dword[rbx+State.ttMove]
 		 je   MovePick_GOOD_CAPTURES
 
+               imul   edx, dword[r14 - sizeof.ExtMove + ExtMove.value], -55
+
 		mov   r8d, ecx
 		shr   r8d, 6
 		and   r8d, 63	; r8d = from
 		mov   r9d, ecx
 		and   r9d, 63	; r9d = to
 
-	      movzx   eax, byte[rbp+Pos.board+r8]     ; eax = FROM PIECE
-	      movzx   edx, byte[rbp+Pos.board+r9]     ; edx = TO PIECE
-		mov   r10, SeeSignBitMask
-		and   eax, 7
-		and   edx, 7
-                cmp   dword[r14 - sizeof.ExtMove + ExtMove.value], 1090
-		lea   edx, [rax+8*rdx]
-                jle   @1f
-                cmp   edx, Bishop + 8*Knight
-                 je   .Positive
-        @1:
-		 bt   r10, rdx
-		jnc   .Positive
-		xor   edx, edx
+                lea   eax, [edx + 1023]
+               test   edx, edx
+              cmovs   edx, eax
+                sar   edx, 10
 	       call   SeeTestGe.HaveFromTo
 
 		mov   rdx, qword[rbx+State.endBadCaptures]

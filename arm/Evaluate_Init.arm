@@ -79,11 +79,6 @@ Evaluate_Init:
             str  x1, [x0], 8
             str  x1, [x0], 8
 
-            adr  x16, Evaluate_Init.PawnsSet
-           _lea  x17, PawnsSet
-            mov  w1, 9
-             bl  RepMovsd
-
             adr  x16, Evaluate_Init.QueenMinorsImbalance
            _lea  x17, QueenMinorsImbalance
             mov  w1, 9
@@ -299,8 +294,6 @@ Evaluate_Init.PassedRank:
 
 
 
-Evaluate_Init.PawnsSet:
-        dd 24, -32, 107, -51, 117, -9, -126, -21, 31
 
 Evaluate_Init.QueenMinorsImbalance:
         dd 31, -8, -15, -25, -5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0

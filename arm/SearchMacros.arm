@@ -326,16 +326,15 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
     ; Step 8. Null move search with verification search (is omitted in PV nodes)
   if PvNode = 0
             ldr  w2, [sp, .depth]
-            mov  w4, 35
-            mul  w0, w2, w4
             ldr  w4, [x21, State.staticEval]
-            add  w0, w0, w4
+            mov  w5, 36
+           madd  w0, w2, w5, w4
             ldr  w26, [sp, .beta]
             ldr  w1, [x20, Pos.sideToMove]
             ldr  w4, [sp, .evalu]
             cmp  w26, w4
             bgt  .8skip
-            add  w26, w26, 35*6
+            add  w26, w26, 225
     if USE_MATEFINDER = 0
             add  x6, x21, State.npMaterial
            ldrh  w1, [x6, x1, lsl 1]
@@ -353,10 +352,9 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             cmp  w8, w4
             bhs  .8skip
     end if
-            sub  w2, w2, 13*ONE_PLY
-            sub  w0, w0, w26
-           ands  w2, w2, w0
-            bmi  .8skip
+            cmp  w0, w26
+            blt  .8skip
+
     if USE_MATEFINDER
             ldr  w2, [sp, .depth]
             cmp  w2, 4
@@ -1573,9 +1571,9 @@ Display 2, "Search returning %i0n"
     ; r15d = offset of [piece_on(prevSq),prevSq]
            cbnz  w2, .ReturnTTValue_UpdateCaptureStats
     UpdateStats  w22, 0, 0, 0, w11, w10, x25
-              b  .ReturnTTValue_UpdateStatsDone
+;              b  .ReturnTTValue_UpdateStatsDone
 .ReturnTTValue_UpdateCaptureStats:
-    UpdateCaptureStats  w22, 0, 0, 0, w11, w10
+;    UpdateCaptureStats  w22, 0, 0, 0, w11, w10
 .ReturnTTValue_UpdateStatsDone:
             mov  w0, w27
             add  w10, w10, w23, lsl 1

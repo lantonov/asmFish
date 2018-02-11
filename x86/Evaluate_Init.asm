@@ -77,7 +77,6 @@ Evaluate_Init:
 	      stosq
 	      stosq
 
-
                 lea   rsi, [.QueenMinorsImbalance]
                 lea   rdi, [QueenMinorsImbalance]
                 mov   ecx, 16
@@ -288,6 +287,7 @@ Evaluate_Init:
  dd (166 shl 16) + (166)
  dd (252 shl 16) + (252)
  dd 0
+
 
 
 
