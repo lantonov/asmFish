@@ -10,9 +10,9 @@ import os
 ## set these to whatever is needed for your system
 ## the makequick command should make armfish and asmfish executables
 
-armCmd = ['qemu-aarch64', os.getcwd() + '/armfish']
-asmCmd = ['./asmfish']
-stockCmd = ['./stockfish']
+#armCmd = ['qemu-aarch64', os.getcwd() + '/armfish']
+asmCmd = ['C:\\Winboard\\asmFishW_b2e1185_bmi2.exe']
+stockCmd = ['C:\\Winboard\\stockfish-a87a100.exe']
 
 ## important! you must recompile stockfish with the following modification:
 ##  it needs to be able to respond to the "wait" command
@@ -35,8 +35,8 @@ stockCmd = ['./stockfish']
 
 # run an engine to depth 14 on a sequence of moves
 def GetData(cmd, mseq):
-    p = Popen(cmd, stdout = PIPE, stdin = PIPE, stderr = PIPE)
-    data = p.communicate(input = 'position startpos moves ' + ' '.join(mseq) + '\ngo depth 14\nwait\nquit\n')[0]
+    p = Popen(cmd, stdout = PIPE, stdin = PIPE, stderr = PIPE, encoding = 'utf8')
+    data = p.communicate(input = 'position startpos moves ' + ' '.join(str(mseq)) + '\ngo depth 14\nwait\nquit\n')[0]
     nodes = '?'
     bestmove = '?'
     for line in data.split('\n'):
@@ -51,13 +51,13 @@ def GetData(cmd, mseq):
 # generate a list of all legal moves given a sequence of moves from startpos
 def GetLegalMoves(mseq):
     p = Popen(asmCmd, stdout = PIPE, stdin = PIPE, stderr = PIPE)
-    data = p.communicate(input = 'position startpos moves ' + ' '.join(mseq) + '\nperft 1\nquit\n')[0]
+    data = p.communicate(input = b'position startpos moves ' + b' '.join(mseq) + b'\n' + b'perft 1' + b'\n' + b'quit' + b'\n')[0]
     res = []
-    for line in data.split('\n'):
-        mo = re.search('=' , line, flags=0)
+    for line in data.split(b'\n'):
+        mo = re.search('=' , str(line), flags=0)
         if mo != None:
             break
-        tokens = line.split(':');
+        tokens = line.split(b':');
         if len(tokens) > 1:
             res.append(tokens[0].strip())
     return res
@@ -79,27 +79,27 @@ for i in range(1000):
     if len(mseq)<2 or len(mseq)>200:
         mseq = GetRandMoveList()
 #        mseq = ['g2g4','a7a5','e2e4','d7d5','e4e5','d5d4','f1g2']
-    print 'testing ',
-    print(' '.join(mseq))
-    armData = GetData(armCmd, mseq)
-    print '  arm',
-    print(armData)
+    print('testing '),
+    print(' '.join(str(mseq)))
+#    armData = GetData(armCmd, mseq)
+#    print '  arm',
+#    print(armData)
     asmData = GetData(asmCmd, mseq)
-    print '  asm',
+    print('  asm'),
     print(asmData)
     stockData = GetData(stockCmd, mseq)
-    print 'stock',
+    print('stock'),
     print(stockData)
     if asmData[1] == "NONE" and armData[1]=="NONE" and stockData[1]=="(none)":
         print('PASSED')
     elif asmData != stockData:
         print('FAILED1')
         break
-    elif armData[1] != '?' and asmData != armData:
-        print('FAILED2')
-        break
+#    elif armData[1] != '?' and asmData != armData:
+#        print('FAILED2')
+#        break
     else:
-        print 'PASSED ', i+1, '/ 1000'
+        print('PASSED ', i+1, '/ 1000')
 
     if asmData[1]=="NONE":
         mseq = []
