@@ -1,17 +1,19 @@
 
 Options_Init:
-            lea  rdx, [options]
+            lea   rdx, [options]
             mov   byte[rdx + Options.displayInfoMove], -1
-            mov  dword[rdx + Options.contempt], 0
-            mov  dword[rdx + Options.threads], 1
-            mov  dword[rdx + Options.hash], 16
+            mov   dword[rdx + Options.contempt], 0
+            mov   dword[rdx + Options.threads], 1
+            mov   dword[rdx + Options.hash], 16
             mov   byte[rdx + Options.ponder], 0
-            mov  dword[rdx + Options.multiPV], 1
-            mov  dword[rdx + Options.moveOverhead], 50
+            mov   dword[rdx + Options.multiPV], 1
+			mov   dword[rdx+Options.moveOverhead], 30
+			mov   dword[rdx+Options.minThinkTime], 20
+			mov   dword[rdx+Options.slowMover], 89
             mov   byte[rdx + Options.chess960], 0
-            mov  dword[rdx + Options.syzygyProbeDepth], 1
+            mov   dword[rdx + Options.syzygyProbeDepth], 1
             mov   byte[rdx + Options.syzygy50MoveRule], -1
-            mov  dword[rdx + Options.syzygyProbeLimit], 6
+            mov   dword[rdx + Options.syzygyProbeLimit], 6
             mov   byte[rdx + Options.largePages], 0
 
             lea  rcx, [rdx + Options.hashPathBuffer]
@@ -68,7 +70,7 @@ UciNewGame:
             mov  rcx, qword[UciLoop.th1.rootPos.stateTable]
             mov  rdx, qword[UciLoop.th1.rootPos.stateEnd]
             sub  rdx, rcx
-           call  Os_VirtualFree
+            call  Os_VirtualFree
             xor  eax, eax
             lea  rbp, [UciLoop.th1.rootPos]
             mov  qword[UciLoop.th1.rootPos.state], rax
@@ -76,10 +78,10 @@ UciNewGame:
             mov  qword[UciLoop.th1.rootPos.stateEnd], rax
             lea  rsi, [szStartFEN]
             xor  ecx, ecx
-           call  Position_ParseFEN
-           call  Search_Clear
+            call  Position_ParseFEN
+            call  Search_Clear
 if USE_BOOK
-           call  Book_Refresh
+            call  Book_Refresh
 end if
             jmp  UciGetInput
 
@@ -587,7 +589,7 @@ UciParseMoves:
 .done:
             pop  rdi rcx rbx
             ret
-
+	
 
 
 ;;;;;;;;;;;;
@@ -680,6 +682,9 @@ UciSetOption:
             lea  rbx, [.Log]
            test  eax, eax
             jnz  .CheckValue
+	        lea   rcx, [sz_slowmover]
+	        lea   rbx, [.SlowMover]
+	    
 
 if USE_SYZYGY = 1
             lea  rcx, [sz_syzygypath]
@@ -975,10 +980,14 @@ end if
             jmp  UciGetInput
 .MoveOverhead:
            call  ParseInteger
-  ClampUnsigned  eax, 0, 5000
+  ClampSigned    eax, 0, 5000
             mov  dword[options.moveOverhead], eax
             jmp  UciGetInput
-
+.MinThinkTime:
+	       call  ParseInteger
+  ClampSigned    eax, 0, 5000
+            mov  dword[options.minThinkTime], eax
+	        jmp  UciGetInput
 .Log:
     ; if path is <empty>, send NULL to init
             lea  rcx, [sz_empty]
@@ -996,8 +1005,11 @@ end if
 .LogPathDone:
            call  Log_Init
             jmp  UciGetInput
-
-
+.SlowMover:
+	       call  ParseInteger
+  ClampUnsigned  eax, 0, 1000
+            mov  dword[options.slowMover], eax
+			jmp  UciGetInput
 
 if USE_SYZYGY = 1
 .SyzygyProbeDepth:
@@ -1145,7 +1157,9 @@ UciBench:
            call  CmpString
            test  eax, eax
             jnz  .parse_hash
-            jmp  .parse_done
+           call  CmpString
+           test  eax, eax
+	        jmp .parse_done
 
 .parse_hash:
             lea  rdi, [.parse_threads]
