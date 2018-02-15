@@ -1,4 +1,4 @@
-         calign   64
+         calign   32
 CheckTime:
         ; we must:
         ;   set signals stop if the search is to be aborted (soon)
