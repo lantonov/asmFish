@@ -248,8 +248,8 @@ struct Options
 	    rb 2
  multiPV    rd 1
  chess960	rd 1
-                rd 1
-                rd 1
+ minThinkTime	rd 1
+ slowMover	rd 1
  moveOverhead	rd 1
  contempt	  rd 1
  ponder 	  rb 1
@@ -490,7 +490,7 @@ struct IOBuffer
  inputBuffer	  rq 1	; address of string from stdin to parse
  inputBufferSizeB rq 1	; byte capacity of inputBuffer
  log              rq 1
- tmp_i		rd 1
+ tmp_i	       	rd 1
  tmp_j		rd 1
             rq 1
  tmpBuffer	    rb 512
