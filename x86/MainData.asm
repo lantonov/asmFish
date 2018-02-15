@@ -78,7 +78,11 @@ szGreetingEnd:
     NewLineData
     db 'option name Contempt type spin default 0 min -100 max 100'
     NewLineData
-    db 'option name MoveOverhead type spin default 50 min 0 max 5000'
+	db 'option name MoveOverhead type spin default 30 min 0 max 5000'
+    NewLineData
+    db 'option name MinThinkTime type spin default 20 min 0 max 5000'
+    NewLineData
+	db 'option name SlowMover type spin default 89 min 10 max 1000'
     NewLineData
 
 if USE_SYZYGY
@@ -211,6 +215,7 @@ sz_priority     db 'priority',0
 sz_position     db 'position',0
 sz_movestogo        db 'movestogo',0
 sz_setoption        db 'setoption',0
+sz_slowmover		db 'slowmover',0
 sz_ponderhit        db 'ponderhit',0
 sz_ucinewgame       db 'ucinewgame',0
 sz_clear_hash       db 'clear hash',0
@@ -218,6 +223,7 @@ sz_largepages       db 'largepages',0
 sz_searchmoves      db 'searchmoves',0
 sz_nodeaffinity     db 'nodeaffinity',0
 sz_moveoverhead     db 'moveoverhead',0
+sz_minthinktime 	db 'minthinktime',0
 sz_uci_chess960     db 'uci_chess960',0
 
 if USE_SYZYGY

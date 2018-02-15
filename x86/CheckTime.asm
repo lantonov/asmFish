@@ -1,11 +1,16 @@
-         calign   16
+         calign   64
 CheckTime:
-    ; we must:
-    ;   set signals stop if the search is to be aborted (soon)
-    ;   and determine a good resetCnt to send to all threads
-    ;     lower values of resetCnt lead to to better resolution but increased polling
-    ;     conversely for higher values of resetCnt
+        ; we must:
+        ;   set signals stop if the search is to be aborted (soon)
+        ;   and determine a good resetCnt to send to all threads
+        ;     lower values of resetCnt lead to to better resolution but increased polling
+        ;     conversely for higher values of resetCnt
+
+;ProfileInc CheckTime
+
            push   rbx rsi rdi
+; AssertStackAligned   'CheckTime'
+
 	; if MAX_RESETCNT is exactly calls to search per second
 	; then this value of resetCnt should put us back here in 1 second
 	; this is obviously too much when using time mgmt
@@ -67,15 +72,16 @@ Display 1, ' resetCnt: %i6%n'
            call   ThreadPool_NodesSearched_TbHits
             add   rax, 1
 .Reset4Nodes:
-    ; rdi is target nodes
-    ; rax is elapsed nodes
-            sub   rdi, rax
-             jb   .Stop
-    ; if rdi nodes are remaining, attemp to put us back here rdi/3 nodes later
-    ; the division is by 6 because half of the nodes are from qsearch
-    ; the values of rdi at this point are in geometric progression
-    ; this ends 'go nodes 1000000' with 1000053 nodes
-    ; with 22 calls to CheckTime
+        ; rdi is target nodes
+        ; rax is elapsed nodes
+                sub   rdi, rax
+                 js   .Stop
+
+        ; if rdi nodes are remaining, attemp to put us back here rdi/3 nodes later
+        ; the division is by 6 because half of the nodes are from qsearch
+        ; the values of rdi at this point are in geometric progression
+        ; this ends 'go nodes 1000000' with 1000053 nodes
+        ; with 22 calls to CheckTime
 Display 1, 'nodes remaining: %I7%n'
             mov   rax, (1 shl 63)/3
             mul   rdi               ; rdx = rdi/6
