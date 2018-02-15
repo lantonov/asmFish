@@ -7,7 +7,9 @@ Options_Init:
             mov  dword[rdx + Options.hash], 16
             mov   byte[rdx + Options.ponder], 0
             mov  dword[rdx + Options.multiPV], 1
-            mov  dword[rdx + Options.moveOverhead], 50
+			mov   dword[rdx+Options.moveOverhead], 30
+			mov   dword[rdx+Options.minThinkTime], 20
+			mov   dword[rdx+Options.slowMover], 89
             mov   byte[rdx + Options.chess960], 0
             mov  dword[rdx + Options.syzygyProbeDepth], 1
             mov   byte[rdx + Options.syzygy50MoveRule], -1
@@ -680,6 +682,9 @@ UciSetOption:
             lea  rbx, [.Log]
            test  eax, eax
             jnz  .CheckValue
+	    lea   rcx, [sz_slowmover]
+	    lea   rbx, [.SlowMover]
+	    
 
 if USE_SYZYGY = 1
             lea  rcx, [sz_syzygypath]
@@ -978,7 +983,11 @@ end if
   ClampUnsigned  eax, 0, 5000
             mov  dword[options.moveOverhead], eax
             jmp  UciGetInput
-
+.MinThinkTime:
+	    call  ParseInteger
+  ClampUnsigned  eax, 0, 5000
+            mov  dword[options.minThinkTime], eax
+	    jmp  UciGetInput
 .Log:
     ; if path is <empty>, send NULL to init
             lea  rcx, [sz_empty]
@@ -996,8 +1005,11 @@ end if
 .LogPathDone:
            call  Log_Init
             jmp  UciGetInput
-
-
+.SlowMover:
+	   call  ParseInteger
+  ClampUnsigned  eax, 0, 1000
+            mov  dword[options.slowMover], eax
+	    jmp  UciGetInput
 
 if USE_SYZYGY = 1
 .SyzygyProbeDepth:
