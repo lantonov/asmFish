@@ -273,6 +273,11 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		mov   al, byte[rbx+State.skipEarlyPruning]
 	       test   al, al
 		jnz   .moves_loop
+		xor   rcx,rcx
+		mov   ecx, dword[rbp+Pos.sideToMove]
+		movzx   ecx, word[rbx+State.npMaterial+2*rcx]
+		test   ecx, ecx
+		jz   .moves_loop
 
 
 	    ; Step 6. Razoring (skipped	when in	check)
@@ -321,18 +326,8 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		jge   ._7skip
 		add   edx, eax
 		cmp   edx, dword[.beta]
-		 jl   ._7skip
-    if USE_MATEFINDER =	0
-	      movzx   ecx, word[rbx+State.npMaterial+2*rcx]
-	       test   ecx, ecx
-		jnz   .Return
-    else
-		mov   ecx, dword[rbx+State.npMaterial]
-	       test   ecx, 0x0FFFF
-		 jz   ._7skip
-		shr   ecx, 16
-		jnz   .Return
-    end	if
+		jl   ._7skip
+		jge  .Return
 ._7skip:
   end if
 
@@ -344,25 +339,9 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 	       imul   eax, edx,	36
 		add   eax, dword[rbx+State.staticEval]
 		mov   esi, dword[.beta]
-		mov   ecx, dword[rbp+Pos.sideToMove]
 		cmp   esi, dword[.evalu]
 		 jg   .8skip
 		add   esi, 225
-    if USE_MATEFINDER =	0
-	      movzx   ecx, word[rbx+State.npMaterial+2*rcx]
-	       test   ecx, ecx
-		 jz   .8skip
-    else
-		mov   r8d, dword[.evalu]
-		mov   ecx, dword[rbx+State.npMaterial]
-	       test   ecx, 0x0FFFF
-		 jz   .8skip
-		shr   ecx, 16
-		 jz   .8skip
-		add   r8d, 2*VALUE_KNOWN_WIN-1
-		cmp   r8d, 4*VALUE_KNOWN_WIN-1
-		jae   .8skip
-    end	if
 		cmp   eax, esi
 		 jl   .8skip
 
