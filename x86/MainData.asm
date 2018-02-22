@@ -14,13 +14,13 @@
 
 
 
-             calign    16
+ calign    16
 constd:
-._0p03	 dq 0.03
-._0p505	 dq 0.505
-._1p0	 dq 1.0
-._628p0	 dq 628.0
-._1p3    dq 1.3
+ ._0p03    dq 0.03
+ ._0p505   dq 0.505
+ ._1p0     dq 1.0
+ ._628p0   dq 628.0
+ ._1p3     dq 1.3
 
 if CPU_HAS_POPCNT = 0
  Mask55    dq 0x5555555555555555
@@ -57,8 +57,8 @@ szGreetingEnd:
     db 'option name Priority type combo default none var none var normal var low var idle'
     NewLineData
 
-	db 'option name LogFile type string default <empty>'
-	NewLineData
+    db 'option name LogFile type string default <empty>'
+    NewLineData
     db 'option name TTFile type string default <empty>'
     NewLineData
     db 'option name TTSave type button'
@@ -82,7 +82,7 @@ szGreetingEnd:
     NewLineData
     db 'option name MinThinkTime type spin default 20 min 0 max 5000'
     NewLineData
-	db 'option name SlowMover type spin default 89 min 10 max 1000'
+    db 'option name SlowMover type spin default 89 min 10 max 1000'
     NewLineData
 
 if USE_SYZYGY
@@ -118,9 +118,9 @@ if USE_BOOK
     db 'option name BookDepth type spin default 100 min -10 max 100'
     NewLineData
 end if
-	db 'uciok'
+    db 'uciok'
 sz_NewLine:
-	NewLineData
+    NewLineData
 sz_NewLineEnd:
 szUciResponseEnd:
 
@@ -135,21 +135,21 @@ PieceToChar        db '.?PNBRQK??pnbrqk'
 
 
 sz_format_currmove:
-        db 'info depth %u0 currmove %m1 currmovenumber %u2%n', 0
+    db 'info depth %u0 currmove %m1 currmovenumber %u2%n', 0
 sz_format_thread:
-        db 'info string node %i0 has threads', 0
+    db 'info string node %i0 has threads', 0
 sz_format_perft1:
-        db '%m0 : %U1%n', 0
+    db '%m0 : %U1%n', 0
 sz_format_bench1:
-        db '*** bench hash %u0 threads %u1 depth %u2 ***%n', 0
+    db '*** bench hash %u0 threads %u1 depth %u2 ***%n', 0
 sz_format_bench2:
-        db '%U0: %a8nodes: %U1 %a32%U2 knps %a48%U3 ms%n', 0
+    db '%U0: %a8nodes: %U1 %a32%U2 knps %a48%U3 ms%n', 0
 sz_format_perft2:
 sz_format_bench3:
-        db '===========================%n'
-        db 'Total time (ms) : %U0%n'
-        db 'Nodes searched  : %U1%n'
-        db 'Nodes/second    : %U2%n', 0
+    db '===========================%n'
+    db 'Total time (ms) : %U0%n'
+    db 'Nodes searched  : %U1%n'
+    db 'Nodes/second    : %U2%n', 0
 
 sz_info_node_threads db 'info string node %i0 has threads',0
 sz_tt_update         db 'info string finished %U0 MB of %U1 MB%n',0
@@ -159,20 +159,20 @@ sz_error_badttfile   db 'error: could not read ttfile ',0
 sz_error_badttsize   db 'error: ttfile has funny size 0x%X0%n',0
 sz_error_middlett    db 'error: could not process whole file',0
 
-sz_error_priority  db 'error: unknown priority ',0
-sz_error_depth     db 'error: bad depth ',0
-sz_error_fen       db 'error: illegal fen',0
-sz_error_moves     db 'error: illegal move ',0
-sz_error_token     db 'error: unexpected token ',0
-sz_error_unknown   db 'error: unknown command ',0
-sz_error_think	   db 'error: setoption called while thinking',0
-sz_error_value	   db 'error: setoption has no value',0
-sz_error_name	   db 'error: setoption has no name',0
-sz_error_option    db 'error: unknown option ',0
-sz_error_hashsave  db 'error: could not save hash file ',0
-sz_error_affinity1 db 'error: parsing affinity failed after "',0
-sz_error_affinity2 db '"; proceeding as "all"',0
-sz_empty           db '<empty>',0
+sz_error_priority    db 'error: unknown priority ',0
+sz_error_depth       db 'error: bad depth ',0
+sz_error_fen         db 'error: illegal fen',0
+sz_error_moves       db 'error: illegal move ',0
+sz_error_token       db 'error: unexpected token ',0
+sz_error_unknown     db 'error: unknown command ',0
+sz_error_think       db 'error: setoption called while thinking',0
+sz_error_value       db 'error: setoption has no value',0
+sz_error_name        db 'error: setoption has no name',0
+sz_error_option      db 'error: unknown option ',0
+sz_error_hashsave    db 'error: could not save hash file ',0
+sz_error_affinity1   db 'error: parsing affinity failed after "',0
+sz_error_affinity2   db '"; proceeding as "all"',0
+sz_empty             db '<empty>',0
 
 sz_go           db 'go',0
 sz_all          db 'all',0
@@ -213,40 +213,40 @@ sz_contempt     db 'contempt',0
 sz_weakness     db 'weakness',0
 sz_priority     db 'priority',0
 sz_position     db 'position',0
-sz_movestogo        db 'movestogo',0
-sz_setoption        db 'setoption',0
-sz_slowmover		db 'slowmover',0
-sz_ponderhit        db 'ponderhit',0
-sz_ucinewgame       db 'ucinewgame',0
-sz_clear_hash       db 'clear hash',0
-sz_largepages       db 'largepages',0
-sz_searchmoves      db 'searchmoves',0
-sz_nodeaffinity     db 'nodeaffinity',0
-sz_moveoverhead     db 'moveoverhead',0
-sz_minthinktime 	db 'minthinktime',0
-sz_uci_chess960     db 'uci_chess960',0
+sz_movestogo    db 'movestogo',0
+sz_setoption    db 'setoption',0
+sz_slowmover    db 'slowmover',0
+sz_ponderhit    db 'ponderhit',0
+sz_ucinewgame   db 'ucinewgame',0
+sz_clear_hash   db 'clear hash',0
+sz_largepages   db 'largepages',0
+sz_searchmoves  db 'searchmoves',0
+sz_nodeaffinity db 'nodeaffinity',0
+sz_moveoverhead db 'moveoverhead',0
+sz_minthinktime db 'minthinktime',0
+sz_uci_chess960 db 'uci_chess960',0
 
 if USE_SYZYGY
-sz_syzygypath       db 'syzygypath',0
-sz_syzygyprobedepth db 'syzygyprobedepth',0
-sz_syzygy50moverule db 'syzygy50moverule',0
-sz_syzygyprobelimit db 'syzygyprobelimit',0
+sz_syzygypath         db 'syzygypath',0
+sz_syzygyprobedepth   db 'syzygyprobedepth',0
+sz_syzygy50moverule   db 'syzygy50moverule',0
+sz_syzygyprobelimit   db 'syzygyprobelimit',0
 end if
 
 if USE_WEAKNESS
-sz_uci_limitstrength    db 'uci_limitstrength',0
-sz_uci_elo              db 'uci_elo',0
+sz_uci_limitstrength  db 'uci_limitstrength',0
+sz_uci_elo            db 'uci_elo',0
 end if
 
 if USE_VARIETY
-sz_variety      db 'variety',0
+sz_variety       db 'variety',0
 end if
 
 if USE_BOOK
-sz_ownbook      db 'ownbook',0
-sz_bookfile     db 'bookfile',0
-sz_bookdepth    db 'bookdepth',0
-sz_bestbookmove db 'bestbookmove',0
+sz_ownbook       db 'ownbook',0
+sz_bookfile      db 'bookfile',0
+sz_bookdepth     db 'bookdepth',0
+sz_bestbookmove  db 'bestbookmove',0
 end if
 
 BenchFens: ;fens must be separated by one or more space char
