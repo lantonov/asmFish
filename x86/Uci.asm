@@ -688,9 +688,12 @@ UciSetOption:
 	    lea  rbx, [.Log]
 	   test  eax, eax
 	    jnz  .CheckValue
-	    lea  rcx, [sz_slowmover]
-	    lea  rbx, [.SlowMover]
-	    
+
+	    lea   rcx, [sz_slowmover]
+	   call   CmpStringCaseless
+	    lea   rbx, [.SlowMover]
+	   test   eax, eax
+	    jnz   .CheckValue
 
 if USE_SYZYGY = 1
 	    lea  rcx, [sz_syzygypath]
