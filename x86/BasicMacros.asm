@@ -14,38 +14,38 @@ rdid equ edi
 ; lazy way to put an address of a string into a register
 macro lstring reg, target, Mes
   local m
-            lea  reg, [m]
-            jmp  target
+	    lea  reg, [m]
+	    jmp  target
     m:
-        db Mes
-        db 0
+	db Mes
+	db 0
 end macro
 
 
 macro PrintNL
   if VERSION_OS = 'W'
-            mov  al, 13
-          stosb
+	    mov  al, 13
+	  stosb
   end if
-            mov  al, 10
-          stosb
+	    mov  al, 10
+	  stosb
 end macro
 
 
 macro PrintNewLine
   if VERSION_OS = 'W'
-                mov   al, 13
-              stosb
+		mov   al, 13
+	      stosb
   end if
-                mov   al, 10
-              stosb
+		mov   al, 10
+	      stosb
 end macro
 
 macro NewLineData
   if VERSION_OS = 'W'
-        db 13
+	db 13
   end if
-        db 10
+	db 10
 end macro
 
 macro IntegerStringData number
@@ -63,7 +63,7 @@ local value, pos, digit, disp
     pos = pos/10
     disp = disp or digit
     if disp <> 0 | pos = 1
-        db '0' + digit
+	db '0' + digit
     end if
   end repeat
 end macro
@@ -88,16 +88,16 @@ macro BuildTimeData
       month = month + 1
     end if
   end iterate
-        db '0' + (year / 1000) 
-        db '0' + (year mod 1000) / 100
-        db '0' + (year mod 100) / 10
-        db '0' + (year mod 10)
-        db '-'
-        db '0' + (month / 10)
-        db '0' + (month mod 10)
-        db '-'
-        db '0' + (day / 10)
-        db '0' + (day mod 10)
+	db '0' + (year / 1000) 
+	db '0' + (year mod 1000) / 100
+	db '0' + (year mod 100) / 10
+	db '0' + (year mod 10)
+	db '-'
+	db '0' + (month / 10)
+	db '0' + (month mod 10)
+	db '-'
+	db '0' + (day / 10)
+	db '0' + (day mod 10)
 end macro
 
 
@@ -108,11 +108,11 @@ end macro
 ;  and the function fxn is called on it
 macro szcall fxn, m
   local message, over
-		lea   rcx, [message]
-		jmp   over
+		lea  rcx, [message]
+		jmp  over
    message:   db m
 	      db 0
-   over:       call   fxn
+   over:       call  fxn
 end macro
 
 
@@ -194,42 +194,42 @@ macro _popcnt a, x, t
 	     popcnt   a, x
   else
     if a eq t
-        err 'arguments of _popcnt15 are strange'
+	err 'arguments of _popcnt15 are strange'
     end if
     match size[addr], x         ; x is memory
-                mov   a, x
-                mov   t, x
-                shr   a, 1
-                and   a, qword[Mask55]
-                sub   t, a
-                mov   a, t
-                shr   t, 2
-                and   a, qword[Mask33]
-                and   t, qword[Mask33]
-                add   a, t
-                mov   t, a
-                shr   a, 4
-                add   a, t
-                and   a, qword[Mask0F]
-               imul   a, qword[Mask01]
-                shr   a, 56
+		mov   a, x
+		mov   t, x
+		shr   a, 1
+		and   a, qword[Mask55]
+		sub   t, a
+		mov   a, t
+		shr   t, 2
+		and   a, qword[Mask33]
+		and   t, qword[Mask33]
+		add   a, t
+		mov   t, a
+		shr   a, 4
+		add   a, t
+		and   a, qword[Mask0F]
+	       imul   a, qword[Mask01]
+		shr   a, 56
     else
       if a eq x   ; only have two registers to work with
-                mov   t, a
-                shr   t, 1
-                and   t, qword[Mask55]
-                sub   a, t
-                mov   t, a
-                shr   t, 2
-                and   a, qword[Mask33]
-                and   t, qword[Mask33]
-                add   a, t
-                mov   t, a
-                shr   t, 4
-                add   a, t
-                and   a, qword[Mask0F]
-               imul   a, qword[Mask01]
-                shr   a, 56
+		mov   t, a
+		shr   t, 1
+		and   t, qword[Mask55]
+		sub   a, t
+		mov   t, a
+		shr   t, 2
+		and   a, qword[Mask33]
+		and   t, qword[Mask33]
+		add   a, t
+		mov   t, a
+		shr   t, 4
+		add   a, t
+		and   a, qword[Mask0F]
+	       imul   a, qword[Mask01]
+		shr   a, 56
       else   ; can't write to x
 		mov   a, x
 		mov   t, x
@@ -254,11 +254,11 @@ end macro
 
 ; a = TrailingZeroCount(b)
 macro _tzcnt a, b
-             Assert   ne, b, 0, "Assertion b != 0 failed in _tzcnt"
+	     Assert   ne, b, 0, "Assertion b != 0 failed in _tzcnt"
   if CPU_HAS_TZCNT
-              tzcnt   a, b
+	      tzcnt   a, b
   else
-                bsf   a, b
+		bsf   a, b
   end if
 end macro
 
@@ -268,14 +268,14 @@ end macro
 ; none of a, b, t can be memory
 macro _blsr a, b, t
   if CPU_HAS_BMI1
-	       blsr  a, b
+	       blsr   a, b
   else
     if a eq b
-		lea  t, [a-1]
-		and  a, t
+		lea   t, [a-1]
+		and   a, t
     else
-		lea  a, [b-1]
-		and  a, b
+		lea   a, [b-1]
+		and   a, b
     end if
   end if
 end macro
@@ -304,31 +304,31 @@ end macro
 ; sign and zero flags are handled consistently
 macro _andn a, b, c
   if CPU_HAS_BMI1
-	       andn  a, b, c
+	       andn   a, b, c
   else
     match size[addr], c
       if a eq b
-		not  a
-		and  a, c
+		not   a
+		and   a, c
       else
-		mov  a, b
-		not  a
-		and  a, c
+		mov   a, b
+		not   a
+		and   a, c
       end if
     else
       if b eq c
-        err 'arguments of andn are strange'
+	err 'arguments of andn are strange'
       else if a eq c
-		not  b
-		and  a, b
-		not  b
+		not   b
+		and   a, b
+		not   b
       else if a eq b
-		not  a
-		and  a, c
+		not   a
+		and   a, c
       else
-		mov  a, b
-		not  a
-		and  a, c
+		mov   a, b
+		not   a
+		and   a, c
       end if
     end match
   end if
@@ -340,23 +340,23 @@ end macro
 macro _pdep y, x, m, b, t, tm
   local start, skip, done
   if CPU_HASH_BMI2 <> 0
-	       pdep  y, x, m
+	       pdep   y, x, m
   else
-		mov  tm, m
-		xor  y, y
-		lea  b, [y+1]
-	       test  tm, tm
-		 jz  done
-       start:   mov  t, tm
-		neg  t
-		and  t, tm
-	       test  x, b
-		 jz  skip
-		 or  y, t
-       skip:	lea  t, [tm-1]
-		add  b, b
-		and  tm, t
-		jnz  start
+		mov   tm, m
+		xor   y, y
+		lea   b, [y+1]
+	       test   tm, tm
+		 jz   done
+       start:   mov   t, tm
+		neg   t
+		and   t, tm
+	       test   x, b
+		 jz   skip
+		 or   y, t
+       skip:	lea   t, [tm-1]
+		add   b, b
+		and   tm, t
+		jnz   start
        done:
   end if
 end macro
@@ -366,24 +366,24 @@ end macro
 macro _pext y, x, m, b, t, tm
   local start, skip, done
   if CPU_HASH_BMI2 <> 0
-	       pext  y, x, m
+	       pext   y, x, m
   else
-		mov  tm, m
-		xor  y, y
-		lea  b, [y+1]
-	       test  tm, tm
-		 jz  done
-       start:   mov  t, tm
-		neg  t
-		and  t, tm
-	       test  t, x
-		lea  t, [tm-1]
-		 jz  skip
-		 or  y, b
-       skip:	add  b, b
-		and  tm, t
-		jnz  start
-       done:
-  end if
-end macro
+		mov   tm, m
+		xor   y, y
+		lea   b, [y+1]
+	       test   tm, tm
+		 jz   done
+       start:   mov   t, tm
+		neg   t
+		and   t, tm
+	       test   t, x
+		lea   t, [tm-1]
+		 jz   skip
+		 or   y, b
+       skip:	add   b, b
+		and   tm, t
+		jnz   start
+	      done:
+    end  if
+end  macro
 
