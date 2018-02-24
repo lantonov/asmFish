@@ -260,7 +260,7 @@ psq equ r11d
 		xor   ecx, 1
 		add   ecx, 2
 		cmp   edx, ecx
-		 ja  .Return
+		 ja   .Return
 @@:
 
 
