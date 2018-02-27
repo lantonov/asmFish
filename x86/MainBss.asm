@@ -57,10 +57,10 @@ if CPU_HAS_BMI2 = 0
   RookAttacksIMUL     rq 64
 end if
 PawnAttacks:
-WhitePawnAttacks    rq 64     ; bitboards
-BlackPawnAttacks    rq 64     ; bitboards
-KnightAttacks       rq 64     ; bitboards
-KingAttacks         rq 64     ; bitboards
+WhitePawnAttacks      rq 64     ; bitboards
+BlackPawnAttacks      rq 64     ; bitboards
+KnightAttacks         rq 64     ; bitboards
+KingAttacks           rq 64     ; bitboards
 
 
 ;;;;;;;;;;;;;;;;;;; bitboards ;;;;;;;;;;;;;;;;;;;;;
