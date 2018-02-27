@@ -22,15 +22,15 @@ end virtual
 		lea   rbp, [rcx+Thread.rootPos]
 		mov   rbx, qword[rbp+Pos.state]
 
-        xor   eax, eax
+		xor   eax, eax
 		mov   dword[.lastBestMove], eax
 		mov   dword[.lastBestMoveDepth], eax
 		mov   dword[.alpha], -VALUE_INFINITE
 		mov   dword[.beta], +VALUE_INFINITE
 		mov   dword[.delta], -VALUE_INFINITE
 		mov   dword[.bestValue], -VALUE_INFINITE
-        mov   rax, qword 1.0
-        mov   qword[.timeReduction], rax
+		mov   rax, qword 1.0
+		mov   qword[.timeReduction], rax
 
 	; clear the search stack
 		lea   rdx, [rbx-5*sizeof.State]
@@ -134,11 +134,11 @@ if USE_WEAKNESS
 end if
 
 if USE_VARIETY
-            mov  dword[rbp - Thread.rootPos + Thread.extra], 0
-            mov  dword[rbp - Thread.rootPos + Thread.randSeed + 4*0], dword 0.1
-            mov  dword[rbp - Thread.rootPos + Thread.randSeed + 4*1], dword 0.2
-            mov  dword[rbp - Thread.rootPos + Thread.randSeed + 4*2], dword 0.4
-            mov  dword[rbp - Thread.rootPos + Thread.randSeed + 4*3], dword 0.6
+		mov   dword[rbp - Thread.rootPos + Thread.extra], 0
+		mov   dword[rbp - Thread.rootPos + Thread.randSeed + 4*0], dword 0.1
+		mov   dword[rbp - Thread.rootPos + Thread.randSeed + 4*1], dword 0.2
+		mov   dword[rbp - Thread.rootPos + Thread.randSeed + 4*2], dword 0.4
+		mov   dword[rbp - Thread.rootPos + Thread.randSeed + 4*3], dword 0.6
 end if
 
 	; MultiPV loop. We perform a full root search for each PV line
@@ -152,8 +152,8 @@ end if
 	       test   al, al
 		jnz   .multipv_done
 
-        ; Reset UCI info selDepth for each depth and each PV line
-                mov   byte[rbp-Thread.rootPos+Thread.selDepth], al
+	; Reset UCI info selDepth for each depth and each PV line
+		mov   byte[rbp-Thread.rootPos+Thread.selDepth], al
 
 	; Reset aspiration window starting size
 	       imul   r8d, r14d, sizeof.RootMove
@@ -177,7 +177,7 @@ end if
     .reset_window_done:
 
 	; Start with a small aspiration window and, in the case of a fail high/low,
-        ; re-search with a bigger window until we're not failing high/low anymore.
+	; re-search with a bigger window until we're not failing high/low anymore.
 .search_loop:
 		mov   ecx, dword[.alpha]
 		mov   edx, dword[.beta]
@@ -186,7 +186,7 @@ end if
 	       call   Search_Root ; rootPos is in rbp, ss is in rbx
 		mov   r12d, eax
 		mov   dword[.bestValue], eax
-                mov   qword[rbp+Pos.state], rbx
+		mov   qword[rbp+Pos.state], rbx
 
 	       imul   ecx, r14d, sizeof.RootMove
 		add   rcx, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
@@ -209,7 +209,7 @@ end if
 		cmp   r12d, dword[.beta]
 		 jl   .dont_print_pv
 	@@:
-               call   Os_GetTime
+	       call   Os_GetTime
 		sub   rax, qword[time.startTime]
 if VERBOSE = 0
 		cmp   rax, 3000
@@ -312,10 +312,10 @@ end if
 
 		mov   rax, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
 		mov   eax, dword[rax+RootMove.pv+4*0]
-        cmp   eax, dword[.lastBestMove]
-         je  @1f
-        mov   dword[.lastBestMove], eax
-        mov   dword[.lastBestMoveDepth], r15d
+		cmp   eax, dword[.lastBestMove]
+		 je   @1f
+		mov   dword[.lastBestMove], eax
+		mov   dword[.lastBestMoveDepth], r15d
     @1:
 
 	; Have we found a "mate in x"
@@ -341,18 +341,18 @@ end if
 		sub   rax, qword[time.startTime]
 		mov   qword[.elapsed], rax
 
-            xor  r10d, r10d
-            cmp  r12d, VALUE_DRAW
-            jne  @1f
-            mov  ecx, dword[limits.time + 4*rdx]
-            sub  ecx, eax
-            xor  edx, 1
-            cmp  ecx, dword[limits.time + 4*rdx]
-            jle  @1f
-           call  PvIsDraw
-            mov  r10d, eax
+		xor   r10d, r10d
+		cmp   r12d, VALUE_DRAW
+		jne   @1f
+		mov   ecx, dword[limits.time + 4*rdx]
+		sub   ecx, eax
+		xor   edx, 1
+		cmp   ecx, dword[limits.time + 4*rdx]
+		jle   @1f
+	       call   PvIsDraw
+		mov   r10d, eax
     @1:
-            mov  r11, qword[.elapsed]
+		mov   r11, qword[.elapsed]
     ; r10d = thinkHard
 	; r11 = Time.elapsed()
 
@@ -374,54 +374,54 @@ end if
 	 _vcvtsi2sd   xmm3, xmm3, eax
 	; xmm3 = improvingFactor
 
-        _vmovsd  xmm0, qword[rbp - Thread.rootPos + Thread.bestMoveChanges]
-            lea  r9d, [r10d + 1]
-     _vcvtsi2sd  xmm2, xmm2, r9d
-        _vaddsd  xmm2, xmm2, xmm0
+	    _vmovsd   xmm0, qword[rbp - Thread.rootPos + Thread.bestMoveChanges]
+		lea   r9d, [r10d + 1]
+	 _vcvtsi2sd   xmm2, xmm2, r9d
+	    _vaddsd   xmm2, xmm2, xmm0
 	; xmm2 = unstablePvFactor
 
-        _vmovsd  xmm0, qword[constd._1p0]
-            mov  ecx, dword[.lastBestMoveDepth]
-           test  r10d, r10d
-            jnz  @2f
+	    _vmovsd   xmm0, qword[constd._1p0]
+		mov   ecx, dword[.lastBestMoveDepth]
+	       test   r10d, r10d
+		jnz   @2f
   iterate i, 3, 4, 5
-            lea  eax, [i*rcx]
-            cmp  eax, r15d
-            jge  @1f
-        _vmulsd  xmm0, xmm0, qword[constd._1p3]
+		lea   eax, [i*rcx]
+		cmp   eax, r15d
+		jge   @1f
+	    _vmulsd   xmm0, xmm0, qword[constd._1p3]
     @1:
   end iterate
     @2:
-        _vmovsd  xmm4, qword[rbp - Thread.rootPos + Thread.previousTimeReduction]
-       _vsqrtsd  xmm4, xmm4, xmm4
-        _vdivsd  xmm4, xmm4, xmm0
-        _vmulsd  xmm2, xmm2, xmm4
-        _vmovsd  qword[.timeReduction], xmm0
+	    _vmovsd   xmm4, qword[rbp - Thread.rootPos + Thread.previousTimeReduction]
+	   _vsqrtsd   xmm4, xmm4, xmm4
+	    _vdivsd   xmm4, xmm4, xmm0
+	    _vmulsd   xmm2, xmm2, xmm4
+	    _vmovsd   qword[.timeReduction], xmm0
 
-            mov  r8, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
-	    _vmulsd  xmm2, xmm2, xmm3
-	 _vcvtsi2sd  xmm0, xmm0, r11d
-	    _vmulsd  xmm0, xmm0, qword[constd._628p0]
-	 _vcvtsi2sd  xmm1, xmm1, dword[time.optimumTime]
-	    _vmulsd  xmm1, xmm1, xmm2
-            add  r8, sizeof.RootMove
-            cmp  r8, qword[rbp+Pos.rootMovesVec+RootMovesVec.ender]
-             je  .set_stop
-       _vcomisd  xmm0, xmm1
-            jbe  .id_loop
+		mov   r8, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
+	    _vmulsd   xmm2, xmm2, xmm3
+	 _vcvtsi2sd   xmm0, xmm0, r11d
+	    _vmulsd   xmm0, xmm0, qword[constd._628p0]
+	 _vcvtsi2sd   xmm1, xmm1, dword[time.optimumTime]
+	    _vmulsd   xmm1, xmm1, xmm2
+		add   r8, sizeof.RootMove
+		cmp   r8, qword[rbp+Pos.rootMovesVec+RootMovesVec.ender]
+		 je   .set_stop
+	   _vcomisd   xmm0, xmm1
+		jbe   .id_loop
     .set_stop:
-            mov  al, byte[limits.ponder]
-           test  al, al
-            jnz  @1f
-            mov  byte[signals.stop], -1
-            jmp  .id_loop
+		mov   al, byte[limits.ponder]
+	       test   al, al
+		jnz   @1f
+		mov   byte[signals.stop], -1
+		jmp   .id_loop
     @1:
-            mov  byte[signals.stopOnPonderhit], -1
-            jmp  .id_loop
+		mov   byte[signals.stopOnPonderhit], -1
+		jmp   .id_loop
 
 .id_loop_done:
-            mov  rax, qword[.timeReduction]
-            mov  qword[rbp - Thread.rootPos + Thread.previousTimeReduction], rax
+		mov   rax, qword[.timeReduction]
+		mov   qword[rbp - Thread.rootPos + Thread.previousTimeReduction], rax
 
 ;GD_String <db 'Thread_Think returning',10>
 
@@ -432,55 +432,55 @@ end if
 
 
 PvIsDraw:
-           push  rsi rdi r15
-            mov  rdi, qword[rbp + Pos.rootMovesVec + RootMovesVec.table]
-            mov  r15d, dword[rdi + RootMove.pvSize]
+	       push   rsi rdi r15
+		mov   rdi, qword[rbp + Pos.rootMovesVec + RootMovesVec.table]
+		mov   r15d, dword[rdi + RootMove.pvSize]
 
-             or  esi, -1
+		 or   esi, -1
 .do_loop:
-            add  esi, 1
-            cmp  esi, r15d
-            jae  .do_done
-            mov  ecx, dword[rdi + RootMove.pv + 4*rsi]
-	       call  Move_GivesCheck
-            mov  ecx, dword[rdi + RootMove.pv + 4*rsi]
-            mov  byte[rbx+State.givesCheck], al
-	       call  Move_Do__Tablebase_ProbeAB
-            jmp  .do_loop
+		add   esi, 1
+		cmp   esi, r15d
+		jae   .do_done
+		mov   ecx, dword[rdi + RootMove.pv + 4*rsi]
+	       call   Move_GivesCheck
+		mov   ecx, dword[rdi + RootMove.pv + 4*rsi]
+		mov   byte[rbx+State.givesCheck], al
+	       call   Move_Do__Tablebase_ProbeAB
+		jmp   .do_loop
 .do_done:
-            mov  eax, r15d
-           call  _PosIsDraw
+		mov   eax, r15d
+	       call   _PosIsDraw
 
-            mov  esi, r15d
-            mov  r15d, eax
+		mov   esi, r15d
+		mov   r15d, eax
 .undo_loop:
-            sub  esi, 1
-             js  .undo_done
-            mov  ecx, dword[rdi + RootMove.pv + 4*rsi]
-	       call  Move_Undo
-            jmp  .undo_loop
+		sub   esi, 1
+		 js   .undo_done
+		mov   ecx, dword[rdi + RootMove.pv + 4*rsi]
+	       call   Move_Undo
+		jmp   .undo_loop
 .undo_done:
-            mov  eax, r15d
-            pop  r15 rdi rsi
-            ret
+		mov   eax, r15d
+		pop   r15 rdi rsi
+		ret
 
 
 _PosIsDraw:
-    ; in : eax ply
+    ; in     : eax ply
     ; out: eax boole
-           push  rdi
-          movzx  edx,  word[rbx+State.rule50]
-          movzx  ecx,  word[rbx+State.pliesFromNull]
-            mov  r8, qword[rbx+State.key]
+	       push   rdi
+	      movzx   edx,  word[rbx+State.rule50]
+	      movzx   ecx,  word[rbx+State.pliesFromNull]
+		mov   r8, qword[rbx+State.key]
       PosIsDraw  .yes_draw, .cold, .coldreturn
 .no_draw:
-            xor  eax, eax
-            pop  rdi
-            ret
+		xor   eax, eax
+		pop   rdi
+		ret
 .yes_draw:
-            mov  eax, 1
-            pop  rdi
-            ret
+		mov   eax, 1
+		pop   rdi
+		ret
 
 .cold:
  PosIsDraw_Cold  .yes_draw, .coldreturn
@@ -499,25 +499,25 @@ MainThread_Think:
 
 		mov   eax, dword[options.contempt]
 		cdq
-		imul  eax, PawnValueEg  ; options.contempt * PawnValueEg ---> [edx:eax]
+	       imul   eax, PawnValueEg  ; options.contempt * PawnValueEg ---> [edx:eax]
 		mov   ecx, 100 
-		idiv  ecx               ; [edx:eax]/100 -->  EAX gets quotient, EDX gets remainder.
-		                        ; eax holds contempt value (ignore remainder in edx)
-		                        ; Next, we construct mg/eg contempt score
+	       idiv   ecx               ; [edx:eax]/100 -->  EAX gets quotient, EDX gets remainder.
+					; eax holds contempt value (ignore remainder in edx)
+					; Next, we construct mg/eg contempt score
 		mov   ecx,eax           ; ecx represents mg value now (i.e., the contempt value just calculated)
 		shr   eax, 1            ; contempt / 2 => weaken the contempt for the endgame (eg value)
 		shl   ecx, 16           ; move mg contempt into upper 16 bits
 		add   ecx, eax          ; layer in eg value to get overall "Score"
 
 		mov   eax, dword[rbp+Pos.sideToMove]
-		test  eax,eax ;
-		jz   .save_contempt_score ; if white, save score as it currently is
+	       test   eax,eax ;
+		 jz   .save_contempt_score ; if white, save score as it currently is
 		
 		; black contempt scoring requires we negate the score first before saving it in ContemptScore
 		neg   ecx
 		
 .save_contempt_score:
-		mov dword[ContemptScore], ecx
+		mov   dword[ContemptScore], ecx
 		add   byte[mainHash.date], 4
 
 if USE_WEAKNESS
@@ -536,27 +536,27 @@ end if
 		 je   .mate
 
 if USE_BOOK
-        ; if we are pondering then we still want to search
-        ; even if the result of the search will be discarded
-                xor   esi, esi
-                mov   dword[book.move], esi
-                mov   dword[book.weight], esi
-                mov   dword[book.ponder], esi
-                cmp   sil, byte[limits.infinite]
-                jne   @f
-                cmp   sil, byte[book.ownBook]
-                 je   @f
-                cmp   rsi, qword[book.buffer]
-                 je   @f
-               call   Book_GetMove
-                mov   dword[book.move], eax
-                mov   dword[book.weight], edx
-                mov   dword[book.ponder], ecx
-                cmp   sil, byte[limits.ponder]
-                jne   @f
-               test   eax, eax
-                jnz   .search_done
-        @@:
+	; if we are pondering then we still want to search
+	; even if the result of the search will be discarded
+		xor   esi, esi
+		mov   dword[book.move], esi
+		mov   dword[book.weight], esi
+		mov   dword[book.ponder], esi
+		cmp   sil, byte[limits.infinite]
+		jne   @f
+		cmp   sil, byte[book.ownBook]
+		 je   @f
+		cmp   rsi, qword[book.buffer]
+		 je   @f
+	       call   Book_GetMove
+		mov   dword[book.move], eax
+		mov   dword[book.weight], edx
+		mov   dword[book.ponder], ecx
+		cmp   sil, byte[limits.ponder]
+		jne   @f
+	       test   eax, eax
+		jnz   .search_done
+	@@:
 end if
 
 	; start workers
@@ -603,11 +603,11 @@ end if
 	.workers_done2:
 
 if USE_BOOK
-        ; must do after waiting for workers
-        ; since ponder could have started the workers
-                mov   esi, dword[book.move]
-               test   esi, esi
-                jnz   .play_book_move
+	; must do after waiting for workers
+	; since ponder could have started the workers
+		mov   esi, dword[book.move]
+	       test   esi, esi
+		jnz   .play_book_move
 end if
 
 	; check for mate again
@@ -676,122 +676,122 @@ end if
 if USE_BOOK
 .play_book_move:
     ; esi book move
-            lea   rdi, [Output]
-            mov   rax, 'info str'
-          stosq
-            mov   eax, 'ing '
-          stosd
-            mov   rax, 'playing '
-          stosq
-            mov   rax, 'book mov'
-          stosq
-            mov   rax, 'e weight'
-          stosq
-            mov   al, ' '
-          stosb
-            mov   eax, dword[book.weight]
-           call   PrintUnsignedInteger
-        PrintNL
-           call   WriteLine_Output
-            lea   rdi, [Output]
-            mov   rax, 'bestmove'
-          stosq
-            mov   al, ' '
-          stosb
-            mov   ecx, esi
-          movzx   edx, byte[rbp+Pos.chess960]
-           call   PrintUciMove
-            mov   ecx, dword[book.ponder]
-           test   ecx, ecx
-             jz   .NoBookPonder
-            mov   rax, ' ponder '
-          stosq
-          movzx   edx, byte[rbp+Pos.chess960]
-           call   PrintUciMove
+		lea   rdi, [Output]
+		mov   rax, 'info str'
+	      stosq
+		mov   eax, 'ing '
+	      stosd
+		mov   rax, 'playing '
+	      stosq
+		mov   rax, 'book mov'
+	      stosq
+		mov   rax, 'e weight'
+	      stosq
+		mov   al, ' '
+	      stosb
+		mov   eax, dword[book.weight]
+	       call   PrintUnsignedInteger
+	PrintNL
+	       call   WriteLine_Output
+		lea   rdi, [Output]
+		mov   rax, 'bestmove'
+	      stosq
+		mov   al, ' '
+	      stosb
+		mov   ecx, esi
+	      movzx   edx, byte[rbp+Pos.chess960]
+	       call   PrintUciMove
+		mov   ecx, dword[book.ponder]
+	       test   ecx, ecx
+		 jz   .NoBookPonder
+		mov   rax, ' ponder '
+	      stosq
+	      movzx   edx, byte[rbp+Pos.chess960]
+	       call   PrintUciMove
 .NoBookPonder:
-        PrintNL
-           call   WriteLine_Output
-            jmp   .return
+	PrintNL
+	       call   WriteLine_Output
+		jmp   .return
 end if
 
 
 .mate:
-            lea  rdi, [Output]
-            mov  rax, 'info dep'
-          stosq
-            mov  rax, 'th 0 sco'
-          stosq
-            mov  eax, 're '
-          stosd
-            sub  rdi, 1
-            cmp  qword[rbx+State.checkersBB], 1
-            sbb  ecx, ecx
-            and  ecx, VALUE_DRAW + VALUE_MATE
-            sub  ecx, VALUE_MATE
-           call  PrintScore_Uci
-        PrintNL
-            cmp  byte[options.displayInfoMove], 0
-             je  .return
-           call  WriteLine_Output
-            jmp  .search_done
+		lea   rdi, [Output]
+		mov   rax, 'info dep'
+	      stosq
+		mov   rax, 'th 0 sco'
+	      stosq
+		mov   eax, 're '
+	      stosd
+		sub   rdi, 1
+		cmp   qword[rbx+State.checkersBB], 1
+		sbb   ecx, ecx
+		and   ecx, VALUE_DRAW + VALUE_MATE
+		sub   ecx, VALUE_MATE
+	       call   PrintScore_Uci
+	PrintNL
+		cmp   byte[options.displayInfoMove], 0
+		 je   .return
+	       call   WriteLine_Output
+		jmp   .search_done
 
 .mate_bestmove:
-            lea  rdi, [Output]
-            mov  rax, 'bestmove'
-          stosq
-            mov  rax, ' NONE'
-          stosq
-            sub  rdi, 3
-        PrintNL
-            cmp  byte[options.displayInfoMove], 0
-             je  .return
-           call  WriteLine_Output
-            jmp  .return
+		lea   rdi, [Output]
+		mov   rax, 'bestmove'
+	      stosq
+		mov   rax, ' NONE'
+	      stosq
+		sub   rdi, 3
+	PrintNL
+		cmp   byte[options.displayInfoMove], 0
+		 je   .return
+	       call   WriteLine_Output
+		jmp   .return
 
 
 
 
 DisplayMove_Uci:
     ; in: rcx address of best thread
-           push  rbp rsi rdi
-            lea  rbp, [rcx+Thread.rootPos]
+	       push   rbp rsi rdi
+		lea   rbp, [rcx+Thread.rootPos]
 
-            cmp  byte[options.displayInfoMove], 0
-             je  .return
+		cmp   byte[options.displayInfoMove], 0
+		 je   .return
 
 	; print best move and ponder move
-            lea  rdi, [Output]
-            mov  rax, 'bestmove'
-          stosq
-            mov  al, ' '
-          stosb
-            mov  rcx, qword[rbp + Pos.rootMovesVec + RootMovesVec.table]
-            mov  ecx, dword[rcx + 0*sizeof.RootMove + RootMove.pv + 4*0]
-           call  PrintUciMove
+		lea   rdi, [Output]
+		mov   rax, 'bestmove'
+	      stosq
+		mov   al, ' '
+	      stosb
+		mov   rcx, qword[rbp + Pos.rootMovesVec + RootMovesVec.table]
+		mov   ecx, dword[rcx + 0*sizeof.RootMove + RootMove.pv + 4*0]
+	       call   PrintUciMove
 
-            mov  rcx, qword[rbp + Pos.rootMovesVec + RootMovesVec.table]
-            mov  eax, dword[rcx + 0*sizeof.RootMove + RootMove.pvSize]
-            cmp  eax, 2
-             jb  .get_ponder_from_tt
+		mov   rcx, qword[rbp + Pos.rootMovesVec + RootMovesVec.table]
+		mov   eax, dword[rcx + 0*sizeof.RootMove + RootMove.pvSize]
+		cmp   eax, 2
+		 jb   .get_ponder_from_tt
 .have_ponder_from_tt:
-            mov  rax, ' ponder '
-          stosq
-            mov  ecx, dword[rcx + 0*sizeof.RootMove + RootMove.pv + 4*1]
-           call  PrintUciMove
+		mov   rax, ' ponder '
+	      stosq
+		mov   ecx, dword[rcx + 0*sizeof.RootMove + RootMove.pv + 4*1]
+	       call   PrintUciMove
 .skip_ponder:
-        PrintNL
-           call  WriteLine_Output
+	PrintNL
+	       call   WriteLine_Output
 .return:
-            pop  rdi rsi rbp
-            ret
+		pop   rdi rsi rbp
+		ret
 
 .get_ponder_from_tt:
-            mov  rcx, rbp
-           call  ExtractPonderFromTT
-            mov  rcx, qword[rbp + Pos.rootMovesVec + RootMovesVec.table]
-           test  eax, eax
-            jnz  .have_ponder_from_tt
-            jmp  .skip_ponder
+		mov   rcx, rbp
+	       call   ExtractPonderFromTT
+		mov   rcx, qword[rbp + Pos.rootMovesVec + RootMovesVec.table]
+	       test   eax, eax
+		jnz   .have_ponder_from_tt
+		jmp   .skip_ponder
 
 
 ExtractPonderFromTT:
@@ -884,8 +884,8 @@ end virtual
 
 ;	     Assert   ne, r10d, 0, 'assertion dword[.multiPV]!=0 in Position_WriteOutUciInfo failed'
 
-            cmp  byte[options.displayInfoMove], 0
-             je  .return
+		cmp   byte[options.displayInfoMove], 0
+		 je   .return
 
 if USE_SPAMFILTER
 		cmp   r9, SPAMFILTER_DELAY
@@ -900,7 +900,7 @@ if USE_HASHFULL
     end if
 	       call   MainHash_HashFull
 	@@:
-                mov   dword[.hashfull], eax
+		mov   dword[.hashfull], eax
 end if
 
 	       call   ThreadPool_NodesSearched_TbHits
@@ -919,13 +919,13 @@ end if
 .multipv_loop:
 	       imul   esi, r15d, sizeof.RootMove
 		add   rsi, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
-                mov   ecx, dword[rsi+RootMove.score]
-                cmp   ecx, -VALUE_INFINITE
-              setne   cl
+		mov   ecx, dword[rsi+RootMove.score]
+		cmp   ecx, -VALUE_INFINITE
+	      setne   cl
 		xor   eax, eax
 		cmp   r15d, dword[rbp-Thread.rootPos+Thread.PVIdx]
 	      setbe   al
-                and   eax, ecx
+		and   eax, ecx
 
 		mov   ecx, dword[.depth]
 		sub   ecx, 1
@@ -950,7 +950,7 @@ end if
 	      stosq
 		mov   eax, 'h '
 	      stosw
-	        mov   eax, dword[rsi+RootMove.selDepth]
+		mov   eax, dword[rsi+RootMove.selDepth]
 	       call   PrintUnsignedInteger
 
 		mov   al, ' '
@@ -1018,49 +1018,49 @@ end if
 	       call   PrintUnsignedInteger
 
 if USE_HASHFULL
-            mov  ecx, dword[.hashfull]
-           test  ecx, ecx
-             js  @1f
-            mov  rax, ' hashful'
-          stosq
-            mov  ax, 'l '
-          stosw
-            mov  eax, ecx
-           call  PrintUnsignedInteger
+		mov   ecx, dword[.hashfull]
+	       test   ecx, ecx
+		 js   @1f
+		mov   rax, ' hashful'
+	      stosq
+		mov   ax, 'l '
+	      stosw
+		mov   eax, ecx
+	       call   PrintUnsignedInteger
     @1:
 end if
 if USE_SYZYGY
-            mov  rax, ' tbhits '
-          stosq
-            mov  rax, qword[.tbHits]
-           call  PrintUnsignedInteger
+		mov   rax, ' tbhits '
+	      stosq
+		mov   rax, qword[.tbHits]
+	       call   PrintUnsignedInteger
 end if
-            mov  eax, ' pv'
-          stosd
-            sub  rdi, 1
-            mov  r13d, dword[rsi+RootMove.pvSize]
-            lea  r12, [rsi+RootMove.pv]
-            lea  r13, [r12+4*r13]
+		mov   eax, ' pv'
+	      stosd
+		sub   rdi, 1
+		mov   r13d, dword[rsi+RootMove.pvSize]
+		lea   r12, [rsi+RootMove.pv]
+		lea   r13, [r12+4*r13]
 .next_move:
-            mov  al, ' '
-            cmp  r12, r13
-            jae  .moves_done
-          stosb
-            mov  ecx, dword[r12]
-           call  PrintUciMove
-            add  r12, 4
-            jmp  .next_move
+		mov   al, ' '
+		cmp   r12, r13
+		jae   .moves_done
+	      stosb
+		mov   ecx, dword[r12]
+	       call   PrintUciMove
+		add   r12, 4
+		jmp   .next_move
 .moves_done:
-        PrintNL
-            lea  rcx, [.output]
-           call  WriteLine
+	PrintNL
+		lea   rcx, [.output]
+	       call   WriteLine
 .multipv_cont:
-            add  r15d, 1
-            cmp  r15d, dword[.multiPV]
-             jb  .multipv_loop
+		add   r15d, 1
+		cmp   r15d, dword[.multiPV]
+		 jb   .multipv_loop
 .return:
-            add  rsp, .localsize
-            pop  r15 r14 r13 r12 rdi rsi rbx
+		add   rsp, .localsize
+		pop   r15 r14 r13 r12 rdi rsi rbx
 DisplayMove_None:
 DisplayInfo_None:
-            ret
+		ret

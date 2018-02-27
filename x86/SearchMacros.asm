@@ -276,9 +276,9 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		jnz   .moves_loop
 		xor   rcx,rcx
 		mov   ecx, dword[rbp+Pos.sideToMove]
-		movzx   ecx, word[rbx+State.npMaterial+2*rcx]
-		test   ecx, ecx
-		jz   .moves_loop
+	      movzx   ecx, word[rbx+State.npMaterial+2*rcx]
+	       test   ecx, ecx
+		 jz   .moves_loop
 
 
 	    ; Step 6. Razoring (skipped	when in	check)
@@ -327,7 +327,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		jge   ._7skip
 		add   edx, eax
 		cmp   edx, dword[.beta]
-		jl   ._7skip
+		 jl   ._7skip
 		jge  .Return
 ._7skip:
   end if
@@ -1369,33 +1369,33 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		jne   .20TTStore
 		cmp   byte[rbx+State.capturedPiece], 0
 		jne   .20TTStore
-		imul   r11d,	r10d, -32
-		cmp   r10d,	324
+	       imul   r11d, r10d, -32
+		cmp   r10d, 324
 		jae   .20TTStore
-		UpdateCmStats   (rbx-1*sizeof.State), r15, r11d, r10d, r8
+      UpdateCmStats   (rbx-1*sizeof.State), r15, r11d, r10d, r8
 		jmp   .20TTStore
 .20Mate:
-		mov dword[.valueDraw], VALUE_DRAW ; allows for cmovz later
+		mov   dword[.valueDraw], VALUE_DRAW ; allows for cmovz later
 		mov   rax, qword[rbx+State.checkersBB]
 		mov   ecx, dword[rbp+Pos.sideToMove]  ; the side getting mated
-		movzx edi, byte[rbx+State.ply]
+	      movzx   edi, byte[rbx+State.ply]
 		sub   edi, VALUE_MATE ; game over
-		test  rax, rax
-		cmovz edi, dword[.valueDraw]
-		test   r14d, r14d
-		cmovnz edi, dword[.alpha]
-		jmp .20TTStore
+	       test   rax, rax
+	      cmovz   edi, dword[.valueDraw]
+	       test   r14d, r14d
+	     cmovnz   edi, dword[.alpha]
+		jmp   .20TTStore
 .20CheckBonus:
     ; we already checked that bestMove = 0
 		lea   edx, [r13-3*ONE_PLY]
-		or   edx, esi
-		js   .20TTStore
+		 or   edx, esi
+		 js   .20TTStore
 		cmp   byte[rbx+State.capturedPiece], 0
 		jne   .20TTStore
-		imul   r11d,	r10d, 32
-		cmp   r10d,	324
+	       imul   r11d, r10d, 32
+		cmp   r10d, 324
 		jae   .20TTStore
-      UpdateCmStats   (rbx-1*sizeof.State),	r15, r11d, r10d, r8
+      UpdateCmStats   (rbx-1*sizeof.State), r15, r11d, r10d, r8
 .20TTStore:
     ; edi = bestValue
 		mov   r9, qword[.posKey]
@@ -1403,7 +1403,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		mov   r8, qword[.tte]
 		shr   r9, 48
 		mov   edx, edi
-		test   r14d, r14d
+	       test   r14d, r14d
 		jnz   .ReturnBestValue
 		cmp   ecx, 2*VALUE_MATE_IN_MAX_PLY
 		jae   .20ValueToTT
@@ -1450,8 +1450,8 @@ Display	2, "Search returning %i0%n"
 .AbortSearch_PlyBigger:
 		mov   rcx, qword[rbx+State.checkersBB]
 		mov   eax, VALUE_DRAW
-	    test   rcx, rcx
-		jz   .Return
+	       test   rcx, rcx
+		 jz   .Return
 	       call   Evaluate
 		jmp   .Return
 	 calign	  8
@@ -1489,26 +1489,26 @@ Display	2, "Search returning %i0%n"
 		and   eax, 63
 	      movzx   ecx, byte[rbp+Pos.board+rax]
 		shl   ecx, 6
-		lea   r15d,	[rax+rcx]
+		lea   r15d, [rax+rcx]
     ; r15d = offset of [piece_on(prevSq),prevSq]
 	       test   dl, dl
 		jnz   .ReturnTTValue_UpdateCaptureStats
-	UpdateStats   r12d,	0, 0, r11d, r10d, r15
+	UpdateStats   r12d, 0, 0, r11d, r10d, r15
 ;		jmp   .ReturnTTValue_UpdateStatsDone
 .ReturnTTValue_UpdateCaptureStats:
 ;UpdateCaptureStats   r12d, 0, 0, r11d,	r10d
 .ReturnTTValue_UpdateStatsDone:
 		mov   eax, edi
-		lea   r10d,	[r10+2*(r13+1)+1]
+		lea   r10d, [r10+2*(r13+1)+1]
     ; r10d = penalty
 		cmp   dword[rbx-1*sizeof.State+State.moveCount], 1
 		jne   .Return
 		cmp   byte[rbx+State.capturedPiece], 0
 		jne   .Return
-	       imul   r11d,	r10d, -32
-		cmp   r10d,	324
+	       imul   r11d, r10d, -32
+		cmp   r10d, 324
 		jae   .Return
-  UpdateCmStats	  (rbx-1*sizeof.State),	r15, r11d, r10d, r8
+      UpdateCmStats   (rbx-1*sizeof.State), r15, r11d, r10d, r8
 		mov   eax, edi
 		jmp   .Return
 .ReturnTTValue_Penalty:
