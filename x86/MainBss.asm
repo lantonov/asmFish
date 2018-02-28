@@ -128,8 +128,6 @@ DoMaterialEval_Data:
 .QuadraticOurs:            rd 8*6
 .QuadraticTheirs:          rd 8*6
 QueenMinorsImbalance       rd 16
-ContemptScore              rd 1
-Reserved                   rd 1 ; explicitly pad to 64-bit alignment. Can be used.
 
 
 ;;;;;;;;;;;;;; data for endgames ;;;;;;;;;;;;;;
