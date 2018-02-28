@@ -619,7 +619,7 @@ KingSafetyDoneRet:
 		mov   eax, edi
 		shr   eax, 4		    ; kingDanger / 16
 		sub   esi, eax
-	       imul   edi, edi         ; kingDanger * kingDanger
+	    imul   edi, edi         ; kingDanger * kingDanger
 		shr   edi, 12           ; previous / 4096
 		shl   edi, 16
 		sub   esi, edi
@@ -878,8 +878,8 @@ macro EvalThreats Us
 
   if Us	= White
 	;addsub		equ add
-	macro addsub   a, b
-		 add   a, b
+	macro addsub a,	b
+		add  a,	b
 	end macro
 
 	AttackedByUs	equ r12
@@ -895,8 +895,8 @@ macro EvalThreats Us
 	TRank7BB        = Rank7BB
   else
 	;addsub		equ sub
-	macro addsub   a, b
-		 sub   a, b
+	macro addsub a,	b
+		sub  a,	b
 	end macro
 	AttackedByUs	equ r13
 	AttackedByThem	equ r12
@@ -931,8 +931,8 @@ macro EvalThreats Us
 		and   r9, PiecesUs
 		and   r9, PiecesPawn
 		mov   rdx, r9
-	    ShiftBB   Right, r9, rcx
-	    ShiftBB   Left, rdx, rcx
+	   ShiftBB   Right, r9, rcx
+	   ShiftBB   Left, rdx, rcx
 		 or   r9, rdx
 		and   r9, r8
 	; r9 = safeThreats
@@ -956,7 +956,7 @@ SafeThreatsDone:
 	; r8 = defended (= pos.pieces(Them) & ~pos.pieces(PAWN) & stronglyProtected)
 	      _andn   r9, r9, PiecesThem
 		and   r9, AttackedByUs
-	; r9 = weak (stronglyProtected variable is not used anymore)
+	; r9 = weak  (stronglyProtected variable is not used anymore)
 		 or   r8, r9
 	; r8 = defended | weak
 		 jz   WeakDone
@@ -1533,7 +1533,7 @@ end virtual
 .DoMaterialEvalReturn:
 	       imul   eax, 0x00010001
 		add   dword[.ei.score],	eax
-		mov   eax, dword[ContemptScore]
+		mov eax, dword[ContemptScore]
 		add   dword[.ei.score],	eax
 	       test   ecx, ecx
 	;ProfileCond   nz, HaveSpecializedEval
@@ -1575,8 +1575,8 @@ end virtual
 		mov   rdx, rax
 		mov   r13, rax
 	; r13 = all pieces
-	    ShiftBB   DELTA_S, rax
-	    ShiftBB   DELTA_N, rdx
+	   ShiftBB   DELTA_S, rax
+	   ShiftBB   DELTA_N, rdx
 		and   r8, qword[rbp+Pos.typeBB+8*Pawn]
 		and   r9, qword[rbp+Pos.typeBB+8*Pawn]
 		 or   rax, rcx
