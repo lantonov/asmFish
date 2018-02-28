@@ -82,7 +82,6 @@ struct EvalInfo
  kingAdjacentZoneAttacksCount rd 2
  score	   rd 1
 	   rd 1
- contempt   rd 1
  me   rq 1
  pi   rq 1
 ends

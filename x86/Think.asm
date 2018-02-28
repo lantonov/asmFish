@@ -342,7 +342,8 @@ end if
 		mov   qword[.elapsed], rax
 
             xor  r10d, r10d
-            cmp  r12d, VALUE_DRAW
+            mov  edx, dword[rbp + Pos.sideToMove]
+            cmp  r12d, dword[DrawValue + 4*rdx]
             jne  @1f
             mov  ecx, dword[limits.time + 4*rdx]
             sub  ecx, eax
@@ -499,25 +500,16 @@ MainThread_Think:
 
 		mov   eax, dword[options.contempt]
 		cdq
-		imul  eax, PawnValueEg  ; options.contempt * PawnValueEg ---> [edx:eax]
-		mov   ecx, 100 
-		idiv  ecx               ; [edx:eax]/100 -->  EAX gets quotient, EDX gets remainder.
-		                        ; eax holds contempt value (ignore remainder in edx)
-		                        ; Next, we construct mg/eg contempt score
-		mov   ecx,eax           ; ecx represents mg value now (i.e., the contempt value just calculated)
-		shr   eax, 1            ; contempt / 2 => weaken the contempt for the endgame (eg value)
-		shl   ecx, 16           ; move mg contempt into upper 16 bits
-		add   ecx, eax          ; layer in eg value to get overall "Score"
-
+	       imul   eax, PawnValueEg
+		mov   ecx, 100
+	       idiv   ecx
+		mov   ecx, eax
 		mov   eax, dword[rbp+Pos.sideToMove]
-		test  eax,eax ;
-		jz   .save_contempt_score ; if white, save score as it currently is
-		
-		; black contempt scoring requires we negate the score first before saving it in ContemptScore
 		neg   ecx
-		
-.save_contempt_score:
-		mov dword[ContemptScore], ecx
+		mov   dword[DrawValue+4*rax], ecx
+		xor   eax, 1
+		neg   ecx
+		mov   dword[DrawValue+4*rax], ecx
 		add   byte[mainHash.date], 4
 
 if USE_WEAKNESS

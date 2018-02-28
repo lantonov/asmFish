@@ -617,10 +617,10 @@ KingSafetyDoneRet:
 	       test   edi, edi
 		 js   AllDone
 		mov   eax, edi
-		shr   eax, 4		    ; kingDanger / 16
+		shr   eax, 4		    ; kingDanger>=0 here
 		sub   esi, eax
-	    imul   edi, edi         ; kingDanger * kingDanger
-		shr   edi, 12           ; previous / 4096
+	       imul   edi, edi
+		shr   edi, 12
 		shl   edi, 16
 		sub   esi, edi
 
@@ -1532,8 +1532,6 @@ end virtual
 		jne   DoMaterialEval	; 0.87%
 .DoMaterialEvalReturn:
 	       imul   eax, 0x00010001
-		add   dword[.ei.score],	eax
-		mov eax, dword[ContemptScore]
 		add   dword[.ei.score],	eax
 	       test   ecx, ecx
 	;ProfileCond   nz, HaveSpecializedEval
