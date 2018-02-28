@@ -1,6 +1,6 @@
 
 Evaluate_Init:
-	       push   rbx rsi rdi
+	       push  rbx rsi rdi
 
 
 		lea   rsi, [.MobilityBonus_Knight]
@@ -63,8 +63,8 @@ Evaluate_Init:
 		mov   ecx, 8*(6+6)
 	  rep movsd
 
-	        xor   ecx,ecx
-		mov   dword[ContemptScore], ecx  ; akin to StockFish's: "Score Eval::Contempt = SCORE_ZERO;"
+	    xor ecx,ecx
+		mov dword[ContemptScore], ecx  ; akin to StockFish's: "Score Eval::Contempt = SCORE_ZERO;"
 
 		lea   rdi, [KingFlank]
 		mov   rax, (FileABB or FileBBB or FileCBB or FileDBB)
