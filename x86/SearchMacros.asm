@@ -35,6 +35,7 @@ macro search RootNode, PvNode
     .value		rd 1
     .evalu		rd 1
     .nullValue		rd 1
+    .valueDraw rd 1
     .futilityValue	rd 1
     .extension		rd 1
     .success		rd 1	; for tb
@@ -681,7 +682,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		lea   eax, [8*rax+rcx]
 		shl   eax, 6
 		mov   dword[.reductionOffset], eax
-		xor   eax, eax 
+		xor   eax, eax
 		mov   byte[.skipQuiets], al
 		mov   dword[.ttCapture], eax
 
@@ -1360,7 +1361,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 	UpdateStats   r12d, .quietsSearched, dword[.quietCount], r11d, r10d, r15
 		jmp   .20Quiet_UpdateStatsDone
 .20Quiet_UpdateCaptureStats:
- UpdateCaptureStats   r12d, .capturesSearched, dword[.captureCount],	r11d, r10d
+		UpdateCaptureStats   r12d, .capturesSearched, dword[.captureCount],	r11d, r10d
 .20Quiet_UpdateStatsDone:
 		lea   r10d, [r10+2*(r13+1)+1]
     ; r10d = penalty
@@ -1368,29 +1369,30 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		jne   .20TTStore
 		cmp   byte[rbx+State.capturedPiece], 0
 		jne   .20TTStore
-	       imul   r11d,	r10d, -32
+		imul   r11d,	r10d, -32
 		cmp   r10d,	324
 		jae   .20TTStore
-      UpdateCmStats   (rbx-1*sizeof.State), r15, r11d, r10d, r8
+		UpdateCmStats   (rbx-1*sizeof.State), r15, r11d, r10d, r8
 		jmp   .20TTStore
 .20Mate:
+		mov dword[.valueDraw], VALUE_DRAW ; allows for cmovz later
 		mov   rax, qword[rbx+State.checkersBB]
-		mov   ecx, dword[rbp+Pos.sideToMove]
-	      movzx   edi, byte[rbx+State.ply]
+		
+		movzx edi, byte[rbx+State.ply]
 		sub   edi, VALUE_MATE
-	       test   rax, rax
-	      cmovz   edi, dword[DrawValue+4*rcx]
-	       test   r14d,	r14d
-	     cmovnz   edi, dword[.alpha]
-		jmp   .20TTStore
+		test  rax, rax
+		cmovz edi, dword[.valueDraw]
+		test   r14d, r14d
+		cmovnz edi, dword[.alpha]
+		jmp .20TTStore
 .20CheckBonus:
     ; we already checked that bestMove = 0
 		lea   edx, [r13-3*ONE_PLY]
-		 or   edx, esi
-		 js   .20TTStore
+		or   edx, esi
+		js   .20TTStore
 		cmp   byte[rbx+State.capturedPiece], 0
 		jne   .20TTStore
-	       imul   r11d,	r10d, 32
+		imul   r11d,	r10d, 32
 		cmp   r10d,	324
 		jae   .20TTStore
       UpdateCmStats   (rbx-1*sizeof.State),	r15, r11d, r10d, r8
@@ -1401,7 +1403,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		mov   r8, qword[.tte]
 		shr   r9, 48
 		mov   edx, edi
-	       test   r14d,	r14d
+		test   r14d, r14d
 		jnz   .ReturnBestValue
 		cmp   ecx, 2*VALUE_MATE_IN_MAX_PLY
 		jae   .20ValueToTT
@@ -1447,16 +1449,14 @@ Display	2, "Search returning %i0%n"
 	 calign   8
 .AbortSearch_PlyBigger:
 		mov   rcx, qword[rbx+State.checkersBB]
-		mov   eax, dword[rbp+Pos.sideToMove]
-		mov   eax, dword[DrawValue+4*rax]
-	       test   rcx, rcx
-		 jz   .Return
+		mov   eax, VALUE_DRAW
+	    test   rcx, rcx
+		jz   .Return
 	       call   Evaluate
 		jmp   .Return
 	 calign	  8
 .AbortSearch_PlySmaller:
-		mov   eax, dword[rbp+Pos.sideToMove]
-		mov   eax, dword[DrawValue+4*rax]
+		mov   eax, VALUE_DRAW
 		jmp   .Return
   end if
   if PvNode = 0

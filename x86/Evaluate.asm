@@ -617,10 +617,10 @@ KingSafetyDoneRet:
 	       test   edi, edi
 		 js   AllDone
 		mov   eax, edi
-		shr   eax, 4		    ; kingDanger>=0 here
+		shr   eax, 4	       ; kingDanger / 16
 		sub   esi, eax
-	       imul   edi, edi
-		shr   edi, 12
+	        imul  edi, edi         ; kingDanger * kingDanger
+		shr   edi, 12          ; previous / 4096
 		shl   edi, 16
 		sub   esi, edi
 
@@ -1543,6 +1543,7 @@ end virtual
 		jne   Evaluate_Cold.DoPawnEval	 ; 6.34%
 .DoPawnEvalReturn:
 		add   eax, dword[.ei.score]
+		add   eax, dword[ContemptScore]
 		mov   dword[.ei.score], eax
 
 
