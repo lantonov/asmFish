@@ -553,13 +553,12 @@ KingSafetyDoneRet:
 		not   r9
 	; r9 = other
 
-		xor   PiecesUs,	PiecesThem
-	RookAttacks   r10, r11,	PiecesUs, rax
-	; r10 =	b1 = pos.attacks_from<ROOK  >(ksq)
-      BishopAttacks   rdx, r11,	PiecesUs, rax
-	; rdx =	b1 = pos.attacks_from<BISHOP>(ksq)
-		xor   PiecesUs,	PiecesThem
-
+		mov   rcx, qword[rbp+Pos.typeBB+8*Queen]
+		and   rcx, PiecesUs
+		xor   rcx, PiecesUs
+		xor   rcx, PiecesThem
+		RookAttacks   r10, r11, rcx, rax
+		BishopAttacks rdx, r11, rcx, rax
 
 	; Enemy	queen safe checks
 		mov   rax, r10
