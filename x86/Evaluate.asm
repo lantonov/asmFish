@@ -4,7 +4,6 @@ LongRangedBishop        = ( 22 shl 16) + (  0)
 RookOnPawn		= (  8 shl 16) + ( 24)
 TrappedRook		= ( 92 shl 16) + (  0)
 WeakQueen		= ( 50 shl 16) + ( 10)
-OtherCheck		= ( 10 shl 16) + ( 10)
 CloseEnemies		= (  7 shl 16) + (  0)
 PawnlessFlank		= ( 20 shl 16) + ( 80)
 ThreatByHangingPawn	= ( 71 shl 16) + ( 61)
@@ -516,17 +515,12 @@ KingSafetyDoneRet:
 	       imul   eax, dword[.ei.kingAdjacentZoneAttacksCount+4*Them], 102
 		add   edi, eax
 
-	    _popcnt   rax, r9, rcx
-	       imul   eax, 191
-		add   edi, eax
-		mov   rdx, qword[.ei.pinnedPieces+8*Us]
-		neg   rdx
-		sbb   eax, eax
-		and   eax, 143
-		add   edi, eax
-	       test   PiecesThem, qword[rbp+Pos.typeBB+8*Queen]
-		lea   eax, [rdi-848]
-	      cmovz   edi, eax
+		_popcnt rax, r9, rcx
+		imul    eax, 191
+		add     edi, eax
+		test    PiecesThem, qword[rbp+Pos.typeBB+8*Queen]
+		lea     eax, [rdi-848]
+		cmovz   edi, eax
 	; the following	does edi += - 9*mg_value(score)/8 + 40
 		lea   ecx, [rsi+0x08000]
 		add   edi, 40
@@ -547,11 +541,7 @@ KingSafetyDoneRet:
 		mov   r9, qword[rbp+Pos.typeBB+8*Pawn]
 		mov   rax, PiecesThem
 		and   rax, r9
-	    ShiftBB   Up, r9
-		and   r9, rax
-		 or   r9, qword[.ei.attackedBy+8*(8*Us+Pawn)]
-		not   r9
-	; r9 = other
+		xor r9, r9 ; other = 0
 
 		mov   rcx, qword[rbp+Pos.typeBB+8*Queen]
 		and   rcx, PiecesUs
@@ -582,35 +572,42 @@ KingSafetyDoneRet:
 
 
 	; Enemy rooks safe and other checks
-	       test   r10, r8
-		lea   eax, [rdi+RookCheck]
-	     cmovnz   edi, eax
-		jnz   RookDone
-	       test   r10, r9
-		lea   eax, [rsi-OtherCheck]
-	     cmovnz   esi, eax
-    RookDone:
+		test   r10, r8
+		lea    eax, [rdi+RookCheck]
+		cmovnz edi, eax
+		jnz    RookDone
+		or     r9, r10
+  RookDone:
 
 	; Enemy bishops safe and other checks
-	       test   rdx, r8
-		lea   eax, [rdi+BishopCheck]
-	     cmovnz   edi, eax
-		jnz   BishopDone
-	       test   rdx, r9
-		lea   eax, [rsi-OtherCheck]
-	     cmovnz   esi, eax
-    BishopDone:
+		test   rdx, r8
+		lea    eax, [rdi+BishopCheck]
+		cmovnz edi, eax
+		jnz    BishopDone
+		or     r9, rdx 
+  BishopDone:
 
 	; Enemy knights safe and other checks
-	       test   rcx, r8
-		lea   eax, [rdi+KnightCheck]
-	     cmovnz   edi, eax
-		jnz   KnightDone
-	       test   rcx, r9
-		lea   eax, [rsi-OtherCheck]
-	     cmovnz   esi, eax
-    KnightDone:
+		test   rcx, r8
+		lea    eax, [rdi+KnightCheck]
+		cmovnz edi, eax
+		jnz    KnightDone
+		test   rcx, r9
+		or     r9, rcx 
+  KnightDone:
 
+		mov   r10, qword[rbp+Pos.typeBB+8*Pawn]
+		mov   rax, PiecesThem
+		and   rax, r10
+
+		ShiftBB Up, r10
+		and   r10, rax
+		or    r10, qword[.ei.attackedBy+8*(8*Us+Pawn)]
+		not   r10
+		and   r9, r10
+		or    rdx, r9
+		imul  eax, 143
+		add   edi, eax
 
 	; Compute the king danger score and subtract it from the evaluation
 	       test   edi, edi
