@@ -4,7 +4,6 @@ LongRangedBishop        = ( 22 shl 16) + (  0)
 RookOnPawn		= (  8 shl 16) + ( 24)
 TrappedRook		= ( 92 shl 16) + (  0)
 WeakQueen		= ( 50 shl 16) + ( 10)
-; OtherCheck		= ( 10 shl 16) + ( 10)
 CloseEnemies		= (  7 shl 16) + (  0)
 PawnlessFlank		= ( 20 shl 16) + ( 80)
 ThreatByHangingPawn	= ( 71 shl 16) + ( 61)
@@ -594,14 +593,7 @@ KingSafetyDoneRet:
 		or     r9, rcx 
   KnightDone:
 
-		mov   r10, qword[rbp+Pos.typeBB+8*Pawn]
-		mov   rax, PiecesThem
-		and   rax, r10
-
-		ShiftBB Up, r10
-		and   r10, rax
-		or    r10, qword[.ei.attackedBy+8*(8*Us+Pawn)]
-		not   r10
+		mov   r10, qword[.ei.mobilityArea+8*Them]
 		and   r9, r10
 		
 		mov   rdx, qword[.ei.pinnedPieces+8*Us]
