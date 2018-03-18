@@ -1434,6 +1434,7 @@ end virtual
 		sar   eax, 1	     ;
 		xor   eax, ecx
 		sub   eax, ecx
+		add   eax, Eval_Tempo
 Display 2, "Lazy Eval returning %i0%n"
 		add   rsp, sizeof.EvalInfo
 		pop   r15 r14 r13 r12 rdi rsi rbx
@@ -1833,6 +1834,7 @@ HaveSpecializedEval:
 		mov   eax, dword[EndgameEval_FxnTable+4*rax]
 		and   ecx, 1
 		call   rax
+		add   eax, Eval_Tempo
 Display 2, "Special Eval returned %i0%n"
 		add   rsp, sizeof.EvalInfo
 		pop   r15 r14 r13 r12 rdi rsi rbx
