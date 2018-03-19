@@ -2133,8 +2133,6 @@ end iterate
 		cmp   r14d, Queen
 		jbe   .Piece1Loop
 
-.NoQueenImbalance:
-
 		xchg   r8, r9
 		add   r15d, 1
 		cmp   r15d, 2
