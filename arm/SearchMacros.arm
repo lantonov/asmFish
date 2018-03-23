@@ -256,6 +256,12 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
 .StaticValueDone:
            ldrb  w0, [x21, State.skipEarlyPruning]
            cbnz  w0, .moves_loop
+			mov  x1, 0
+            ldr  x1, [x20, Pos.sideToMove]
+            add  x6, x21, x1, lsl 1
+           ldrh  w1, [x6, State.npMaterial]
+			cbz  w1, .moves_loop
+
     ; Step 6. Razoring (skipped when in check)
   if PvNode = 0
             ldr  w2, [sp, .depth]
@@ -310,6 +316,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             ldr  w4, [sp, .beta]
             cmp  w2, w4
             blt  .7skip
+	    bge  .Return
     if USE_MATEFINDER = 0
             add  x6, x21, x1, lsl 1
            ldrh  w1, [x6, State.npMaterial]
@@ -330,7 +337,6 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             mov  w5, 36
            madd  w0, w2, w5, w4
             ldr  w26, [sp, .beta]
-            ldr  w1, [x20, Pos.sideToMove]
             ldr  w4, [sp, .evalu]
             cmp  w26, w4
             bgt  .8skip
