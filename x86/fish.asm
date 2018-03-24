@@ -264,7 +264,7 @@ else if VERSION_OS = 'X'
 
  interpreter '/usr/lib/dyld'
  uses '/usr/lib/libSystem.B.dylib' (1.0.0, 1225.0.0)
-   import _clock_gettime, '_clock_gettime'
+  ;import _clock_gettime, '_clock_gettime'
    import _close, '_close'
    import _exit, '_exit'
    import _fstat, '_fstat'
