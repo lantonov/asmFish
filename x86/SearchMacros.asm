@@ -451,8 +451,9 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		lea   edx, [rcx+1]
 	      movzx   r9d, byte[.cutNode]
 		not   r9d		; not used in qsearch case
-
+		push   r10
 		call   r12
+		pop    r10
 
 		neg   eax
 		mov   byte[rbx+State.skipEarlyPruning],	0
@@ -509,9 +510,9 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 	      cmovl   r8d, eax
 		lea   ecx, [rdx-1]
 		xor   r9d, r9d
-		push r10
+		push  r10
 	       call   r12
-		pop r10
+		pop   r10 
 		mov   byte[rbx+State.skipEarlyPruning],	0
 	; Now, reset "pair" and "nmp_ply" using values in r10
 	; thisThread->pair = pair
