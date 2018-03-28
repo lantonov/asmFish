@@ -613,12 +613,12 @@ KingSafetyDoneRet:
             mvn  x9, x9
     ; x9 = other
 
-            eor  Pieces_Us, Pieces_Us, Pieces_Them
-    RookAttacks  x10, x11, Pieces_Us, x0, x4
-    ; x10 = b1 = pos.attacks_from<ROOK  >(ksq)
-  BishopAttacks  x2, x11, Pieces_Us, x0, x4
-    ; r2 = b1 = pos.attacks_from<BISHOP>(ksq)
-            eor  Pieces_Us, Pieces_Us, Pieces_Them
+			ldr   x1, [x20, Pos.typeBB + 8*Queen]
+			and   x1, x1, Pieces_Us
+			eor   x1, x1, Pieces_Us
+			eor   x1, x1, Pieces_Them
+			RookAttacks  x10, x11, x1, x0, x4
+			BishopAttacks  x2, x11, x1, x0, x4
 
     ; Enemy queen safe checks
             orr  x0, x10, x2
