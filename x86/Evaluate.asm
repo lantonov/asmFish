@@ -589,7 +589,6 @@ KingSafetyDoneRet:
 		lea    eax, [rdi+KnightCheck]
 		cmovnz edi, eax
 		jnz    KnightDone
-		test   rcx, r9
 		or     r9, rcx 
   KnightDone:
 

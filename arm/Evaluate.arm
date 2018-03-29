@@ -4,7 +4,6 @@ LongRangedBishop        = ( 22 shl 16) + (  0)
 RookOnPawn		= (  8 shl 16) + ( 24)
 TrappedRook		= ( 92 shl 16) + (  0)
 WeakQueen		= ( 50 shl 16) + ( 10)
-OtherCheck		= ( 10 shl 16) + ( 10)
 CloseEnemies		= (  7 shl 16) + (  0)
 PawnlessFlank		= ( 20 shl 16) + ( 80)
 ThreatByHangingPawn	= ( 71 shl 16) + ( 61)
@@ -582,11 +581,6 @@ KingSafetyDoneRet:
             mov  w4, 191
             mul  w0, w0, w4
             add  w27, w27, w0
-            ldr  x2, [sp, EvalInfo.pinnedPieces + 8*Us]
-            tst  x2, x2
-            mov  w4, 143
-           csel  w0, w4, wzr, ne
-            add  w27, w27, w0
             ldr  x4, [x20, Pos.typeBB + 8*Queen]
             tst  Pieces_Them, x4
             sub  w0, w27, 848
@@ -607,18 +601,15 @@ KingSafetyDoneRet:
     ; x8 = safe
 
             and  x0, Pieces_Them, x19
-        ShiftBB  Up, x9, x19
-            and  x9, x9, x0
-            orr  x9, x9, AttackedBy_UsPawn
-            mvn  x9, x9
+            eor  x9, x9, x9
     ; x9 = other
 
-			ldr   x1, [x20, Pos.typeBB + 8*Queen]
-			and   x1, x1, Pieces_Us
-			eor   x1, x1, Pieces_Us
-			eor   x1, x1, Pieces_Them
-			RookAttacks  x10, x11, x1, x0, x4
-			BishopAttacks  x2, x11, x1, x0, x4
+            ldr   x1, [x20, Pos.typeBB + 8*Queen]
+            and   x1, x1, Pieces_Us
+            eor   x1, x1, Pieces_Us
+            eor   x1, x1, Pieces_Them
+            RookAttacks  x10, x11, x1, x0, x4
+            BishopAttacks  x2, x11, x1, x0, x4
 
     ; Enemy queen safe checks
             orr  x0, x10, x2
@@ -648,10 +639,7 @@ KingSafetyDoneRet:
             add  w0, w27, w4
            csel  w27, w0, w27, ne
             bne  RookDone
-            tst  x10, x9
-          mov32  w4, OtherCheck
-            sub  w0, w26, w4
-           csel  w26, w0, w26, ne
+            orr x9, x9, x10
 RookDone:
     ; Enemy bishops safe and other checks
             tst  x2, x8
@@ -659,10 +647,7 @@ RookDone:
             add  w0, w27, w4
            csel  w27, w0, w27, ne
             bne  BishopDone
-            tst  x2, x9
-          mov32  w4, OtherCheck
-            sub  w0, w26, w4
-           csel  w26, w0, w26, ne
+            orr x9, x9, x2
 BishopDone:
     ; Enemy knights safe and other checks
             tst  x1, x8
@@ -670,11 +655,26 @@ BishopDone:
             add  w0, w27, w4
            csel  w27, w0, w27, ne
             bne  KnightDone
-            tst  x1, x9
-          mov32  w4, OtherCheck
-            sub  w0, w26, w4
-           csel  w26, w0, w26, ne
+            orr  x9, x9, x1
 KnightDone:
+
+           ldr  x10, [x20, Pos.typeBB + 8*Pawn]
+           mov  x4, Pieces_Them
+           and  x4, x4, x10
+            
+           ShiftBB  Up, x10, x10
+           and  x10, x10, x4
+           orr  x10, x10, AttackedBy_UsPawn
+           mvn  x10, x10
+           and  x9, x9, x10
+           
+           ldr  x2, [sp, EvalInfo.pinnedPieces + 8*Us]
+           orr x2, x2, x9
+           
+           _popcnt x4, x2, x1
+           mov  w1, 143
+           mul  w4, w4, w1
+           add  w27, w27, w4
     ; Compute the king danger score and subtract it from the evaluation
            tbnz  w27, 31, AllDone
             sub  w26, w26, w27, lsr 4
@@ -2245,4 +2245,3 @@ end macro
             ldp  x24, x25, [sp], 16
             ldp  x22, x23, [sp], 16
               b  Evaluate.DoMaterialEvalReturn
-
