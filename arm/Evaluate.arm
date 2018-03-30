@@ -658,14 +658,7 @@ BishopDone:
             orr  x9, x9, x1
 KnightDone:
 
-           ldr  x10, [x20, Pos.typeBB + 8*Pawn]
-           mov  x4, Pieces_Them
-           and  x4, x4, x10
-            
-           ShiftBB  Up, x10, x10
-           and  x10, x10, x4
-           orr  x10, x10, AttackedBy_UsPawn
-           mvn  x10, x10
+           ldr  x10, [sp, EvalInfo.mobilityArea + 8*Them]
            and  x9, x9, x10
            
            ldr  x2, [sp, EvalInfo.pinnedPieces + 8*Us]
