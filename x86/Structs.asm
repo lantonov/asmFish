@@ -385,9 +385,9 @@ struct Thread
  failedLow	  rb 1
           rb 1
 		  rb 1
-		  rb 1
+ nmp_ply          rb 1
+ pair             rb 1
  selDepth         rb 1
-		  rb 1
  nodes		rq 1
  tbHits 	rq 1
 if USE_VARIETY = 1

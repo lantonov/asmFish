@@ -87,7 +87,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		mov   dword[.bestValue], -VALUE_INFINITE
 	      movzx   r12d, byte[rbx-1*sizeof.State+State.ply]
 		add   r12d, 1
-		mov   byte[rbx+State.ply], r12l
+		mov   byte[rbx+State.ply], r12b
 
   if PvNode = 1
 	      movzx   eax, byte[rbp-Thread.rootPos+Thread.selDepth]
@@ -354,54 +354,62 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		cmp   esi, dword[.evalu]
 		 jg   .8skip
 		add   esi, 225
-    if USE_MATEFINDER =	0
-	      movzx   ecx, word[rbx+State.npMaterial+2*rcx]
-	       test   ecx, ecx
-		 jz   .8skip
-    else
-		mov   r8d, dword[.evalu]
-		mov   ecx, dword[rbx+State.npMaterial]
-	       test   ecx, 0x0FFFF
-		 jz   .8skip
-		shr   ecx, 16
-		 jz   .8skip
-		add   r8d, 2*VALUE_KNOWN_WIN-1
-		cmp   r8d, 4*VALUE_KNOWN_WIN-1
-		jae   .8skip
-    end	if
 		cmp   eax, esi
 		 jl   .8skip
-
-    if USE_MATEFINDER =	1
-		mov   edx, dword[.depth]
-		cmp   edx, 4
-		jbe   .8do
-		sub   rsp, MAX_MOVES*sizeof.ExtMove
-		mov   rdi, rsp
-	       call   Gen_Legal
-		xor   ecx, ecx
-		xor   eax, eax
-		mov   rdx, rsp
-		cmp   rdx, rdi
-		jae   .8loopdone
-    .8loop:
-		mov   r8d, [rdx+ExtMove.move]
-		shr   r8d, 6
-		and   r8d, 63
-		cmp   byte[rbp+Pos.board+r8], King
-	       sete   r8l
-		add   ecx, r8d
-		add   rdx, sizeof.ExtMove
-		add   eax, 1
-		cmp   rdx, rdi
-		 jb   .8loop
-    .8loopdone:
-		add   rsp, MAX_MOVES*sizeof.ExtMove
-	       test   ecx, ecx
-		 jz   .8skip
-		cmp   eax, 6
-		 jb   .8skip
-    end	if
+		; && (ss->ply >= nmp_ply || ss->ply % 2 == pair)) 
+		
+		mov   r12b, byte[rbx-1*sizeof.State+State.ply]
+		mov   dl, byte[rbp-Thread.rootPos+Thread.nmp_ply]
+		cmp   r12b, dl
+		jge   .8do
+		
+		mov   r12b, byte[rbx-1*sizeof.State+State.ply]
+		mov   dl, byte[rbp-Thread.rootPos+Thread.pair]
+		and   r12b, 1 ; ss->ply % 2
+		cmp   r12b, dl
+		jne   .8skip
+		
+    ; if USE_MATEFINDER =	1
+		; mov   r8d, dword[.evalu]
+		; mov   ecx, dword[rbx+State.npMaterial]
+	       ; test   ecx, 0x0FFFF
+		 ; jz   .8skip
+		; shr   ecx, 16
+		 ; jz   .8skip
+		; add   r8d, 2*VALUE_KNOWN_WIN-1
+		; cmp   r8d, 4*VALUE_KNOWN_WIN-1
+		; jae   .8skip
+    ; end	if
+    ; if USE_MATEFINDER =	1
+		; mov   edx, dword[.depth]
+		; cmp   edx, 4
+		; jbe   .8do
+		; sub   rsp, MAX_MOVES*sizeof.ExtMove
+		; mov   rdi, rsp
+	       ; call   Gen_Legal
+		; xor   ecx, ecx
+		; xor   eax, eax
+		; mov   rdx, rsp
+		; cmp   rdx, rdi
+		; jae   .8loopdone
+    ; .8loop:
+		; mov   r8d, [rdx+ExtMove.move]
+		; shr   r8d, 6
+		; and   r8d, 63
+		; cmp   byte[rbp+Pos.board+r8], King
+	       ; sete   r8l
+		; add   ecx, r8d
+		; add   rdx, sizeof.ExtMove
+		; add   eax, 1
+		; cmp   rdx, rdi
+		 ; jb   .8loop
+    ; .8loopdone:
+		; add   rsp, MAX_MOVES*sizeof.ExtMove
+	       ; test   ecx, ecx
+		 ; jz   .8skip
+		; cmp   eax, 6
+		 ; jb   .8skip
+    ; end	if
 
 .8do:
 		mov   eax, CmhDeadOffset
@@ -421,11 +429,12 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		add   ecx, 823
 		sar   ecx, 8
 		add   eax, ecx
+		mov   r14d, eax ; save R
 
 	     Assert   ge, eax, 0, 'assertion eax >= 0 failed in	Search'
 
 		mov   esi, dword[.depth]
-		sub   esi, eax
+		sub   esi, r14d
 	; esi = depth-R
 
 	       call   Move_DoNull
@@ -442,7 +451,10 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		lea   edx, [rcx+1]
 	      movzx   r9d, byte[.cutNode]
 		not   r9d		; not used in qsearch case
-	       call   r12
+		push   r10
+		call   r12
+		pop    r10
+
 		neg   eax
 		mov   byte[rbx+State.skipEarlyPruning],	0
 		xor   dword[rbp+Pos.sideToMove], 1	  ;undo	null move
@@ -463,6 +475,30 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		lea   ecx, [rdx+VALUE_KNOWN_WIN-1]
 		cmp   ecx, 2*(VALUE_KNOWN_WIN-1)
 		jbe   .Return
+		; esi = depth-R
+	    ; Do verification at high depths 
+		add   r14d, ONE_PLY ; R += ONE_PLY
+	    ; // disable null move pruning for side to move
+	    ; int nmp_ply = thisThread->nmp_ply;
+	    ; int pair = thisThread->pair;
+		xor   r10w, r10w
+		mov   r10b, byte[rbp-Thread.rootPos+Thread.nmp_ply]
+		shl   r10w, 8
+		mov   r10b, byte[rbp-Thread.rootPos+Thread.pair]
+	    ; r10w holds cpp int values for later
+		; r10w breakdown = 16 bits
+		;    "nmp_ply" 	 =  upper 8 bits
+		;     "pair"	 =  lower 8 bits
+		mov   esi, dword[.depth]
+		sub   esi, r14d
+		imul  eax, esi, 3
+		sar   eax, 2
+		add   eax, r12d
+		mov   byte[rbp-Thread.rootPos+Thread.nmp_ply], al
+		mov   eax, r12d
+		and   eax, 1 ; ss->ply % 2
+		xor   eax, 1 ;(ss->ply % 2) == 0;
+		mov   byte[rbp-Thread.rootPos+Thread.pair], al
 .8check:
 		mov   byte[rbx+State.skipEarlyPruning],	-1
 		mov   r8d, esi
@@ -474,8 +510,19 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 	      cmovl   r8d, eax
 		lea   ecx, [rdx-1]
 		xor   r9d, r9d
+		push  r10
 	       call   r12
+		pop   r10 
 		mov   byte[rbx+State.skipEarlyPruning],	0
+	; Now, reset "pair" and "nmp_ply" using values in r10
+	; thisThread->pair = pair
+		mov   byte[rbp-Thread.rootPos+Thread.pair], r10b
+		shr   r10w, 8
+	; thisThread->nmp_ply = nmp_ply
+		mov   byte[rbp-Thread.rootPos+Thread.nmp_ply], r10b
+		xor   r10w, r10w
+	; if (v >= beta)
+	; return nullValue
 		cmp   eax, dword[.beta]
 		mov   eax, edi
 		jge   .Return
