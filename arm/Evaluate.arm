@@ -1497,6 +1497,7 @@ Evaluate_Cold:
             asr  w0, w0, 1
             eor  w0, w0, w1
             sub  w0, w0, w1
+            add  w0, w0, Eval_Tempo
 Display 2, "Lazy Eval returning %i0%n"
             add  sp, sp, sizeof.EvalInfo
             ldp  x21, x30, [sp], 16
@@ -1901,6 +1902,7 @@ HaveSpecializedEval:
             ldr  x0, [x6, x0, lsl 3]
             and  w1, w1, 1
             blr  x0
+            add  x0, x0, Eval_Tempo
 Display 2, "Special Eval returned %i0%n"
             add  sp, sp, sizeof.EvalInfo
             ldp  x21, x30, [sp], 16
