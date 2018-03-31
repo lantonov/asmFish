@@ -2207,19 +2207,6 @@ end macro
             add  w10, w10, 8*4
             cmp  w24, Queen
             bls  .Piece1Loop
-    ; Special handling of Queen vs. Minors
-            ldr  w2, [x8, 4*Queen]
-            ldr  w4, [x9, 4*Queen]
-           _lea  x6, QueenMinorsImbalance
-            ldr  w1, [x9, 4*Knight]
-            cmp  w2, 1
-           ccmp  w4, wzr, 0, eq
-            bne  .NoQueenImbalance
-            ldr  w4, [x9, 4*Bishop]
-            add  w1, w1, w4
-            ldr  w2, [x6, x1, lsl 2]
-           msub  w0, w3, w2, w0
-.NoQueenImbalance:
             mov  x4, x8
             mov  x8, x9
             mov  x9, x4
