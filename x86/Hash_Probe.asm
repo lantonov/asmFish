@@ -9,9 +9,11 @@ MainHash_Probe:
 
 ;ProfileInc MainHash_Probe
 
-		mov   rax, qword[mainHash.mask]
-		and   rax, rcx
-		shl   rax, 5
+		mov   eax, dword[mainHash.clusterCount]
+                mul   ecx
+                shl   rdx, 5
+                mov   rax, rdx
+
 		mov   r8, rcx
 		shr   rcx, 48
 		add   rax, qword[mainHash.table]

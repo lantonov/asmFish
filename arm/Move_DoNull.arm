@@ -52,10 +52,11 @@ Move_DoNull.epsq_ret:
             str  xzr, [x21, State.checkersBB]
 
            _lea  x6, mainHash
-            ldr  x4, [x6, MainHash.mask]
+            ldr  w4, [x6, MainHash.clusterCount]
             ldr  x5, [x6, MainHash.table]
-            and  x8, x8, x4
-            add  x8, x5, x8, lsl 5
+          umull  x4, w4, w8
+            lsr  x4, x4, 32
+            add  x8, x5, x4, lsl 5
            prfm  PLDL1KEEP, [x8]
 
             str  x21, [x20, Pos.state]

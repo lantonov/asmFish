@@ -3,15 +3,12 @@ MainHash_Create:
                 stp  x21, x30, [sp, -16]!
                 stp  x26, x27, [sp, -16]!
                _lea  x21, mainHash
-                mov  w26, 16
-                str  w26, [x21, MainHash.sizeMB]
-                lsl  x26, x26, 20
-                mov  x1, x26
+                mov  w26, 16            ; initial size in MiB
+                lsl  x26, x26, 20 - 5   ; cluster count
+                lsl  x1, x26, 5         ; number of bytes
                  bl  Os_VirtualAlloc
-                lsr  x26, x26, 5
-                sub  x26, x26, 1
                 str  x0, [x21, MainHash.table]
-                str  x26, [x21, MainHash.mask]
+                str  x26, [x21, MainHash.clusterCount]
                 str  xzr, [x21, MainHash.lpSize]
                strb  wzr, [x21, MainHash.date]
                 ldp  x26, x27, [sp], 16
@@ -25,40 +22,32 @@ MainHash_ReadOptions:
                 stp  x26, x27, [sp, -16]!
                _lea  x29, mainHash
                _lea  x20, options
-                ldr  w1, [x20, Options.hash]
-                mov  x2, MAX_HASH_LOG2MB
-                clz  x0, x1
-                eor  x0, x0, 63
-                cmp  x0, x2
-               csel  x0, x2, x0, hi
-                mov  x26, 1
-                lsl  x26, x26, x0
+                ldr  w26, [x20, Options.hash]
+                lsl  x26, x26, 20 - 5
+        ; x26 = newClusterCount
                 ldr  x27, [x29, MainHash.lpSize]
-               ldrb  w21, [x20, Options.largePages]
-                ldr  w4, [x29, MainHash.sizeMB]
+              ldrsb  w21, [x20, Options.largePages]
+                ldr  w4, [x29, MainHash.clusterCount]
                 cmp  w26, w4
                 bne  .NoMatch
                 tst  x27, x27
                cset  w0, eq
-                eor  w0, w0, w27
+                eor  w0, w0, w21
                tbnz  w0, 0, .Skip
 .NoMatch:
                  bl  MainHash_Free
-                str  w26, [x29, MainHash.sizeMB]
-                lsl  x26, x26, 20
-                cbz  w21, MainHash_ReadOptions.NoLP
-                mov  x1, x26
+                lsl  x1, x26, 5
+        ; x1 = number of bytes in hash table
+                cbz  w21, .NoLP
+.LP:
                  bl  Os_VirtualAlloc_LargePages
                cbnz  x0, .Done
 .NoLP:
-                mov  x1, x26
                  bl  Os_VirtualAlloc
                 mov  x2, 0
 .Done:
-                lsr  x26, x26, 5
-                sub  x26, x26, 1
                 str  x0, [x29, MainHash.table]
-                str  x26, [x29, MainHash.mask]
+                str  x26, [x29, MainHash.clusterCount]
                 str  x2, [x29, MainHash.lpSize]
                strb  wzr, [x29, MainHash.date]
                  bl  MainHash_DisplayInfo
@@ -74,7 +63,8 @@ MainHash_DisplayInfo:
                 sub  sp, sp, 64
                _lea  x27, Output
                _lea  x6, mainHash
-                ldr  x0, [x6, MainHash.sizeMB]
+                ldr  x0, [x6, MainHash.clusterCount]
+                lsr  x0, x0, 20 - 5
                 ldr  x1, [x6, MainHash.lpSize]
                _lea  x2, LargePageMinSize
                 ldr  x2, [x2]
@@ -99,9 +89,9 @@ MainHash_DisplayInfo:
 
 MainHash_Clear:
                _lea  x0, mainHash
-                ldr  w1, [x0, MainHash.sizeMB]
+                ldr  x1, [x0, MainHash.clusterCount]
                 ldr  x17, [x0, MainHash.table]
-                lsl  x1, x1, 20-3
+                lsl  x1, x1, 2  ; 4 qwords in a cluster, qword = 8 bytes
                 mov  x0, 0
                   b  RepStosq
 
@@ -112,14 +102,14 @@ MainHash_Free:
                _lea  x29, mainHash
                 ldr  x1, [x29, MainHash.table]
                 ldr  x0, [x29, MainHash.lpSize]
-                ldr  w2, [x29, MainHash.sizeMB]
-                lsl  x2, x2, 20
+                ldr  w2, [x29, MainHash.clusterCount]
+                lsl  x2, x2, 5
                 tst  x0, x0
                csel  x2, x0, x2, ne
                  bl  Os_VirtualFree
                 str  xzr, [x29, MainHash.table]
                 str  xzr, [x29, MainHash.lpSize]
-                str  xzr, [x29, MainHash.sizeMB]
+                str  xzr, [x29, MainHash.clusterCount]
                 ldp  x29, x30, [sp], 16
                 ret
 
