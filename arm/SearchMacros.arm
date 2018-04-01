@@ -347,10 +347,19 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             cmp  w26, w4
             bgt  .8skip
             add  w26, w26, 225
+
     if USE_MATEFINDER = 0
-            add  x6, x21, State.npMaterial
-           ldrh  w1, [x6, x1, lsl 1]
-            cbz  w1, .8skip
+            ldr  w1, [x21, State.ply]
+            add  x4, x20, -Thread.rootPos
+            ldr  w4, [x4, Thread.nmp_ply]
+            cmp  w1, w4
+            bge  @1f
+            and  w1, w1, 1
+            add  x4, x20, -Thread.rootPos
+            ldr  w4, [x4, Thread.pair]
+            cmp  w1, w4
+            bne  .8skip
+        @1:
     else
             ldr  w8, [sp, .evalu]
             ldr  w1, [x21, State.npMaterial]
@@ -460,6 +469,23 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             cmp  w1, w4, lsl 1
             bls  .Return
 .8check:
+            sub  w26, w26, 1
+            add  x7, x20, -Thread.rootPos
+            ldr  w23, [x7, Thread.nmp_ply]
+            ldr  w24, [x7, Thread.pair]
+            add  w0, w26, w26, lsl 1
+            add  w8, w0, 3
+            tst  w26, w26
+           csel  w0, w8, w0, mi
+            asr  w0, w0, 2
+            ldr  w4, [x21, State.ply]
+            add  w0, w0, w4
+            str  w0, [x7, Thread.nmp_ply]
+            ldr  w0, [x21, State.ply]
+            and  w0, w0, 1
+            eor  w0, w0, 1
+            str  w0, [x7, Thread.pair]
+
             mov  w4, -1
            strb  w4, [x21, State.skipEarlyPruning]
             mov  w8, w26
@@ -472,6 +498,11 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             sub  w1, w2, 1
             mov  w9, 0
             blr  x22
+
+            add  x7, x20, -Thread.rootPos
+            str  w23, [x7, Thread.nmp_ply]
+            str  w24, [x7, Thread.pair]
+
            strb  wzr, [x21, State.skipEarlyPruning]
             ldr  w4, [sp, .beta]
             cmp  w0, w4
