@@ -183,6 +183,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 	; Step 4. transposition	table look up
 		mov   ecx, dword[rbx+State.excludedMove]
 		mov   dword[.excludedMove], ecx
+                shl   rcx, 16
 		xor   rcx, qword[rbx+State.key]
 		mov   qword[.posKey], rcx
 	       call   MainHash_Probe
@@ -1026,10 +1027,10 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		xor   rax, qword[Zobrist_Pieces+r14+8*r12]
 		xor   rax, qword[Zobrist_Pieces+r14+8*r13]
 		xor   rax, qword[Zobrist_Pieces+r15+8*r13]
-		and   rax, qword[mainHash.mask]
-		shl   rax, 5
-		add   rax, qword[mainHash.table]
-	prefetchnta   [rax]
+                mul   dword[mainHash.clusterCount]
+		shl   rdx, 5
+		add   rdx, qword[mainHash.table]
+	prefetchnta   [rdx]
 		shr   r14d, 6+3
 		shr   r15d, 6+3
 

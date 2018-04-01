@@ -817,7 +817,7 @@ end if
 	    jmp  UciGetInput
 .Hash:
 	   call  ParseInteger
-  ClampUnsigned  eax, 1, 1 shl MAX_HASH_LOG2MB
+  ClampUnsigned  eax, 1, MAX_HASH
 	    mov  ecx, eax
 	    mov  dword[options.hash], eax
 	    mov  byte[options.changed], -1
@@ -1172,7 +1172,7 @@ UciBench:
 	    lea  rdi, [.parse_threads]
 	   call  SkipSpaces
 	   call  ParseInteger
-  ClampUnsigned  eax, 1, 1 shl MAX_HASH_LOG2MB
+  ClampUnsigned  eax, 1, MAX_HASH
 	    mov  r14d, eax
 	    jmp  .parse_loop
 .parse_threads:

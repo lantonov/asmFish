@@ -45,7 +45,7 @@ szGreetingEnd:
     db 'id author TypingALot'
     NewLineData
     db 'option name Hash type spin default 16 min 1 max '
-    IntegerStringData (1 shl MAX_HASH_LOG2MB)
+    IntegerStringData MAX_HASH
     NewLineData
     db 'option name LargePages type check default false'
     NewLineData

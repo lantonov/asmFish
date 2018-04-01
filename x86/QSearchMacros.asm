@@ -376,10 +376,10 @@ end if
 		xor   rax, qword[Zobrist_Pieces+r14+8*rcx]
 		xor   rax, qword[Zobrist_Pieces+r14+8*rdx]
 		xor   rax, qword[Zobrist_Pieces+r15+8*rdx]
-		and   rax, qword[mainHash.mask]
-		shl   rax, 5
-		add   rax, qword[mainHash.table]
-	prefetchnta   [rax]
+		mul   dword[mainHash.clusterCount]
+		shl   rdx, 5
+		add   rdx, qword[mainHash.table]
+	prefetchnta   [rdx]
 
 
 	; check for legality

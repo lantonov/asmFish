@@ -361,9 +361,10 @@ Display 2, "QSearch<0,0>(alpha=%i1, beta=%i2, depth=%i8) called%n"
             add  x6, x6, x25
             ldr  x4, [x6, x2, lsl 3]
             eor  x0, x0, x4
-           _lea  x6, mainHash + MainHash.mask
-            ldr  x4, [x6]
-            and  x0, x0, x4
+           _lea  x6, mainHash + MainHash.clusterCount
+            ldr  w4, [x6]
+          umull  x0, w0, w4
+            lsr  x0, x0, 32
             lsl  x0, x0, 5
            _lea  x6, mainHash + MainHash.table
             ldr  x4, [x6]

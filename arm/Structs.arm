@@ -5,13 +5,13 @@ sizeof.rw = 2
 sizeof.rd = 4
 sizeof.rq = 8
 
-MainHash.___ = 0
-MainHash.table = 0 + MainHash.___
-MainHash.mask = 1*sizeof.rq + MainHash.table
-MainHash.lpSize = 1*sizeof.rq + MainHash.mask
-MainHash.sizeMB = 1*sizeof.rq + MainHash.lpSize
-MainHash.date = 1*sizeof.rd + MainHash.sizeMB
-sizeof.MainHash = 1*sizeof.rb + 3*sizeof.rb + MainHash.date
+struct MainHash
+ table	rq 1
+ clusterCount   rq 1
+ lpSize rq 1	; 0 if large pages are not in use, otherwise the allocation size
+ date	rb 1
+	rb 7
+ends
 
 MainHashEntry.___ = 0
 MainHashEntry.genBound = 0 + MainHashEntry.___
