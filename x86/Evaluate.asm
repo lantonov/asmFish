@@ -177,14 +177,13 @@ NextPiece:
 		mov   r9, qword[KnightAttacks+8*r14]
   else if Pt = Bishop
 		mov   rax, qword[rbp+Pos.typeBB+8*Queen]
-		and   rax, r11
 		xor   rax, r13
       BishopAttacks   r9, r14, rax, rdx
   else if Pt = Rook
-		mov   rax, qword[rbp+Pos.typeBB+8*Queen]
-		or   rax, r12
-		and   rax, r11
-		xor   rax, r13
+                mov   rax, r12
+                and   rax, r11
+                xor   rax, r13
+		xor   rax, qword[rbp+Pos.typeBB+8*Queen]
 	RookAttacks   r9, r14, rax, rdx
   else if Pt = Queen
        QueenAttacks   r9, r14, r13, rax, rdx
