@@ -159,6 +159,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             ldr  w1, [x21, State.excludedMove]
             str  w1, [sp, .excludedMove]
             ldr  x4, [x21, State.key]
+            lsl  x1, x1, 16
             eor  x1, x1, x4
             str  x1, [sp, .posKey]
              bl  MainHash_Probe
@@ -1031,12 +1032,14 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             ldr  x4, [x6, x23, lsl 3]
             eor  x0, x0, x4
            _lea  x6, mainHash
-            ldr  x4, [x6, MainHash.mask]
-            and  x0, x0, x4
+            ldr  w4, [x6, MainHash.clusterCount]
+          umull  x0, w0, w4
+            lsr  x0, x0, 32
             lsl  x0, x0, 5
             ldr  x4, [x6, MainHash.table]
             add  x0, x0, x4
            prfm  PLDL1KEEP, [x0]
+
     ; Check for legality just before making the move
   if RootNode = 0
             ldr  w1, [sp, .move]

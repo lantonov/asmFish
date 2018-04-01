@@ -1,8 +1,10 @@
 MainHash_Probe:
+        ; x1 key
            _lea  x6, mainHash
-            ldr  x4, [x6, MainHash.mask]
+            ldr  w4, [x6, MainHash.clusterCount]
             ldr  x0, [x6, MainHash.table]
-            and  x4, x4, x1
+          umull  x4, w4, w1
+            lsr  x4, x4, 32
             lsr  x1, x1, 48
             add  x0, x0, x4, lsl 5
            ldrb  w11, [x6, MainHash.date]

@@ -254,7 +254,7 @@ anol:
                 add  x3, sp, 32*8
                  bl  PrintFancy
                 lea  x1, DisplayOutput
-                 bl  _Os_WriteOut
+                 bl  Os_WriteOut
 ;                lea  x1, DisplayLock
 ;                 bl  Os_MutexUnlock
              PopAll

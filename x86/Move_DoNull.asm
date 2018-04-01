@@ -48,10 +48,11 @@ end if
                 mov   dword[rbx+State.epSquare], edx
                 mov   qword[rbx+State.checkersBB], rcx
 
-                and   r8, qword[mainHash.mask]
-                shl   r8, 5
-                add   r8, qword[mainHash.table]
-        prefetchnta   [r8]
+                mov   eax, r8d
+                mul   dword[mainHash.clusterCount]
+                shl   rdx, 5
+                add   rdx, qword[mainHash.table]
+        prefetchnta   [rdx]
 
 if DEBUG
                push   rcx

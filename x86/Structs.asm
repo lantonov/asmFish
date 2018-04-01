@@ -8,11 +8,10 @@
 
 struct MainHash
  table	rq 1
- mask	rq 1
+ clusterCount   rq 1
  lpSize rq 1	; 0 if large pages are not in use, otherwise the allocation size
- sizeMB rd 1
  date	rb 1
-	rb 3
+	rb 7
 ends
 
 struct MainHashEntry	; 8 bytes
