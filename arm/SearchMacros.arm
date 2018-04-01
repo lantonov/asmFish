@@ -59,7 +59,10 @@ macro Search PvNode, RootNode
             str  w2, [sp, .beta]
             str  w8, [sp, .depth]
            strb  w9, [sp, .cutNode]
+
 Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
+
+        ; Step 1. initialize node
             mov  w0, 0
             str  w0, [sp, .moveCount]
             str  w0, [sp, .quietCount]
@@ -68,16 +71,18 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             str  w0, [x21, State.history]
             mov  w4, -VALUE_INFINITE
             str  w4, [sp, .bestValue]
-           ldrb  w22, [x21, -1*sizeof.State + State.ply]
-            add  w22, w22, 1
-           strb  w22, [x21, State.ply]
+           ldrb  w22, [x21, State.ply]
+            add  w2, w22, 1
+           strb  w2, [x21, 1*sizeof.State + State.ply]
   if PvNode = 1
             add  x6, x20, -Thread.rootPos
            ldrb  w0, [x6, Thread.selDepth]
-            cmp  w0, w22
-           csel  w0, w22, w0, lo
+            cmp  w0, w2
+           csel  w0, w2, w0, lo
            strb  w0, [x6, Thread.selDepth]
-  end if        
+  end if
+    ; w22 = ss->ply
+
     ; callsCnt counts down as in master
     ; resetCnt, if nonzero, contains the count to which callsCnt should be reset
             add  x6, x20, -Thread.rootPos
@@ -95,6 +100,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             bpl  .dontchecktime
              bl  CheckTime  ; CheckTime sets resetCalls for all threads
 .dontchecktime:
+
   if RootNode = 0
     ; Step 2. check for aborted search and immediate draws
            ldrh  w2, [x21, State.rule50]
@@ -1659,14 +1665,14 @@ Display 2,"Tablebase_Probe_WDL returned %i0%n"
             add  w2, w0, w0
             and  w2, w2, w1
             mov  w27, w2
-          mov32  w8, -VALUE_MATE + MAX_PLY
+          mov32  w8, -VALUE_MATE + MAX_PLY + 1
            ldrb  w9, [x21, State.ply]
             add  w9, w9, w8
             cmp  w0, w1
            csel  w2, w8, w2, lt
            csel  w27, w9, w27, lt
             neg  w1, w1
-          mov32  w8, VALUE_MATE - MAX_PLY
+          mov32  w8, VALUE_MATE - MAX_PLY - 1
             neg  w9, w9
             cmp  w0, w1
            csel  w2, w8, w2, gt
