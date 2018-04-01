@@ -373,7 +373,10 @@ struct Thread
  numaNode	 rq 1
  bestMoveChanges rq 1
  previousTimeReduction rq 1
-                 rq 1
+
+ nmp_ply rd 1
+ pair    rd 1
+
  PVIdx		 rd 1
  previousScore	 rd 1
  completedDepth  rd 1
