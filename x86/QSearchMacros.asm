@@ -84,8 +84,7 @@ end if
 		mov   dword[.depth], r8d
              Assert   le, r8d, 0, 'assertion depth<=0 failed in qsearch'
 
-	      movzx   eax, byte[rbx-1*sizeof.State+State.ply]
-		add   eax, 1
+	      movzx   eax, byte[rbx+State.ply]
 		xor   edx, edx
 	if PvNode = 1
 		lea   r8, [._pv]
@@ -94,10 +93,11 @@ end if
 		mov   qword[rbx+1*sizeof.State+State.pv], r8
 		mov   dword[r9], edx
 	end if
+		lea   ecx, [rax + 1]
                 mov   dword[.moveCount], 2
 		mov   dword[.bestMove], edx
 		mov   dword[rbx+State.currentMove], edx
-		mov   byte[rbx+State.ply], al
+		mov   byte[rbx + 1*sizeof.State + State.ply], cl
 
 	; check for instant draw or max ply
 	      movzx   edx, word[rbx+State.rule50]
@@ -120,6 +120,8 @@ end if
 	     cmovle   r12d, eax
 		mov   dword[.ttDepth], r12d
 	end if
+
+             Assert   b, byte[rbx+State.ply], MAX_PLY, 'assertion 0 <= ss->ply < MAX_PLY failed in Search'
 
 	; transposition table lookup
 		mov   rcx, qword[rbx+State.key]

@@ -75,6 +75,10 @@ macro search RootNode, PvNode
 	     Assert   b, al, 2,	'assertion .cutNode == 0 or -1 failed in Search'
   end if
 
+  if RootNode = 1
+             Assert   e, byte[rbx+State.ply], 0, 'assertion ss->ply == 0 failed in SearchRoot'
+  end if
+
 Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 
 	; Step 1. initialize node
@@ -85,14 +89,17 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		mov   dword[rbx+State.moveCount], eax
 		mov   dword[rbx+State.history],	eax
 		mov   dword[.bestValue], -VALUE_INFINITE
-	      movzx   r12d, byte[rbx-1*sizeof.State+State.ply]
-		add   r12d, 1
-		mov   byte[rbx+State.ply], r12l
+
+	      movzx   r12d, byte[rbx + State.ply]
+		lea   edx, [r12 + 1]
+	        mov   byte[rbx + 1*sizeof.State + State.ply], dl
+        ; edx = ss->ply + 1  ( = (ss + 1)->ply )
+        ; r12d = ss->ply
 
   if PvNode = 1
 	      movzx   eax, byte[rbp-Thread.rootPos+Thread.selDepth]
-		cmp   eax, r12d
-	      cmovb   eax, r12d
+		cmp   eax, edx
+	      cmovb   eax, edx
 		mov   byte[rbp-Thread.rootPos+Thread.selDepth],	al
   end if
 
@@ -145,6 +152,8 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		jge   .Return
   end if
 
+             Assert   b, r12d, MAX_PLY, 'assertion 0 <= ss->ply < MAX_PLY failed in Search'
+
 		xor   eax, eax
 		mov   ecx, CmhDeadOffset
 		add   rcx, qword[rbp+Pos.counterMoveHistory]
@@ -169,6 +178,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		 or   r15d, eax
 	; if r15d <0, don't do tb probe
   end if
+
 
 	; Step 4. transposition	table look up
 		mov   ecx, dword[rbx+State.excludedMove]
@@ -1599,14 +1609,14 @@ Display	2,"Tablebase_Probe_WDL returned	%i0%n"
 		lea   edx, [2*rax]
 		and   edx, ecx
 		mov   edi, edx
-		mov   r8d, -VALUE_MATE + MAX_PLY
+		mov   r8d, -VALUE_MATE + MAX_PLY + 1
 	      movzx   r9d, byte[rbx+State.ply]
 		add   r9d, r8d
 		cmp   eax, ecx
 	      cmovl   edx, r8d
 	      cmovl   edi, r9d
 		neg   ecx
-		mov   r8d, VALUE_MATE -	MAX_PLY
+		mov   r8d, VALUE_MATE -	MAX_PLY - 1
 		neg   r9d
 		cmp   eax, ecx
 	      cmovg   edx, r8d
