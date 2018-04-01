@@ -672,7 +672,7 @@ UciSetOption.LargePages:
 UciSetOption.Hash:
              bl  ParseInteger
             mov  w4, 1
-            mov  w5, 1 shl MAX_HASH_LOG2MB
+            mov  w5, MAX_HASH
   ClampUnsigned  w0, w4, w5
            _lea  x16, options
             str  w0, [x16, Options.hash]
@@ -932,7 +932,7 @@ UciBench.parse_hash:
              bl  SkipSpaces
              bl  ParseInteger
             mov  w4, 1
-            mov  w5, 1 shl MAX_HASH_LOG2MB
+            mov  w5, MAX_HASH
   ClampUnsigned  w0, w4, w5
             mov  w24, w0
               b  UciBench.parse_loop
