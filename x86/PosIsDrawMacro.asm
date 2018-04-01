@@ -40,10 +40,10 @@ coldreturnlabel:
 		 jb   noDraw
 	       imul   r10, rdx, -sizeof.State	; r10 = end
 		mov   r9, -4*sizeof.State	; r9 = i
-		sub   eax, 6			; eax = ply-i-2
+		sub   eax, 5			; eax = ply-i-1
 		xor   ecx, ecx			; ecx = -cnt
 CheckNext:
-		cdq				; get the sign of ply-i-2
+		cdq				; get the sign of ply-i-1
 		cmp   r8, qword[rbx+r9+State.key]
 		jne   KeysDontMatch
 		cmp   ecx, edx			; 1+cnt + (ply-1>i) == 2 is the same as
