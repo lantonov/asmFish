@@ -65,8 +65,7 @@ Display 2, "QSearch<0,0>(alpha=%i1, beta=%i2, depth=%i8) called%n"
             str  w2, [sp, .beta]
             str  w8, [sp, .depth]
 
-           ldrb  w0, [x21, -1*sizeof.State + State.ply]
-            add  w0, w0, 1
+           ldrb  w0, [x21, State.ply]
             mov  w2, 0
   if PvNode = 1
             add  x8, sp, .pv
@@ -76,10 +75,11 @@ Display 2, "QSearch<0,0>(alpha=%i1, beta=%i2, depth=%i8) called%n"
             str  w2, [x9]
   end if
             mov  w4, 2
+            add  w1, w0, 1
             str  w4, [sp, .moveCount]
             str  w2, [sp, .bestMove]
             str  w2, [x21, State.currentMove]
-           strb  w0, [x21, State.ply]
+           strb  w1, [x21, 1*sizeof.State + State.ply]
 
     ; check for instant draw or max ply
            ldrh  w2, [x21, State.rule50]
