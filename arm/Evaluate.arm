@@ -6,7 +6,6 @@ TrappedRook		= ( 92 shl 16) + (  0)
 WeakQueen		= ( 50 shl 16) + ( 10)
 CloseEnemies		= (  7 shl 16) + (  0)
 PawnlessFlank		= ( 20 shl 16) + ( 80)
-ThreatByHangingPawn	= ( 71 shl 16) + ( 61)
 ThreatBySafePawn        = (192 shl 16) + (175)
 ThreatByRank		= ( 16 shl 16) + (  3)
 Hanging 		= ( 48 shl 16) + ( 27)
@@ -1007,13 +1006,6 @@ macro EvalThreats Us
             orr  x9, x9, x2
             and  x9, x9, x8
     ; x9 = safeThreats
-            eor  x8, x8, x9
-            cmp  x8, 0
-          csetm  w0, ne
-          mov32  w4, ThreatByHangingPawn
-            and  w0, w0, w4
-         AddSub  Us, w26, w26, w0
-
          Popcnt  x1, x9, x0
           mov32  w4, ThreatBySafePawn
             mul  w1, w1, w4
