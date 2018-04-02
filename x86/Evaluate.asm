@@ -6,7 +6,6 @@ TrappedRook		= ( 92 shl 16) + (  0)
 WeakQueen		= ( 50 shl 16) + ( 10)
 CloseEnemies		= (  7 shl 16) + (  0)
 PawnlessFlank		= ( 20 shl 16) + ( 80)
-ThreatByHangingPawn	= ( 71 shl 16) + ( 61)
 ThreatBySafePawn        = (192 shl 16) + (175)
 ThreatByRank		= ( 16 shl 16) + (  3)
 Hanging 		= ( 48 shl 16) + ( 27)
@@ -924,10 +923,6 @@ macro EvalThreats Us
 		or   r9, rdx
 		and   r9, r8
 	; r9 = safeThreats
-		xor   r8, r9
-		lea   eax, [rsi	+ ThreatByHangingPawn*(Them-Us)]
-		cmovnz   esi, eax
-
 		_popcnt   rcx, r9, rax
 		imul   ecx, ThreatBySafePawn
 		addsub   esi, ecx
@@ -2158,7 +2153,6 @@ restore WeakQueen
 restore OtherCheck
 restore CloseEnemies
 restore PawnlessFlank
-restore ThreatByHangingPawn
 restore ThreatByRank
 restore Hanging
 restore ThreatByPawnPush
