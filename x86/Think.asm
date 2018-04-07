@@ -506,7 +506,13 @@ MainThread_Think:
 		                        ; eax holds contempt value (ignore remainder in edx)
 		                        ; Next, we construct mg/eg contempt score
 		mov   ecx,eax           ; ecx represents mg value now (i.e., the contempt value just calculated)
-		shr   eax, 1            ; contempt / 2 => weaken the contempt for the endgame (eg value)
+
+
+;		shr   eax, 1            ; contempt / 2 => weaken the contempt for the endgame (eg value)
+                cdq             ; this 
+                sub  eax, edx   ; divides eax by 2
+                sar  eax, 1     ; as a SIGNED dword
+
 		shl   ecx, 16           ; move mg contempt into upper 16 bits
 		add   ecx, eax          ; layer in eg value to get overall "Score"
 

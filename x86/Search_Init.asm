@@ -79,12 +79,6 @@ Search_Init:
 		cmp   ebp, 16
 		 jb   .FutilityLoop
 
-
-                lea   rsi, [.RazorMargin]
-                lea   rdi, [RazorMargin]
-                mov   ecx, 4
-          rep movsd
-
                 lea   rsi, [._CaptureOrPromotion_or]
                 lea   rdi, [_CaptureOrPromotion_or]
                 mov   ecx, 8    ; copy both or and and
@@ -105,7 +99,6 @@ Search_Init:
 .constd_1p78    dq 1.78
 .constd_2p0     dq 2.0
 
-.RazorMargin             dd 0, 570, 603, 554
 ._CaptureOrPromotion_or  db  0,-1,-1, 0
 ._CaptureOrPromotion_and db -1,-1,-1, 0
 
