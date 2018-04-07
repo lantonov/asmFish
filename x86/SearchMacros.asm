@@ -370,8 +370,8 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
                 cmp   ecx, dword[rbp - Thread.rootPos + Thread.nmp_ply]
                 jge   @1f
                 and   ecx, 1
-                cmp   ecx, dword[rbp - Thread.rootPos + Thread.pair]
-                jne   .8skip
+                cmp   ecx, dword[rbp - Thread.rootPos + Thread.nmp_odd]
+                 je   .8skip
         @1:
     else
 		mov   r8d, dword[.evalu]
@@ -472,27 +472,26 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		mov   edi, eax
 	; edi = nullValue
 
-		mov   ecx, dword[.depth]
-		cmp   ecx, 12*ONE_PLY
-		jge   .8check
 		lea   ecx, [rdx+VALUE_KNOWN_WIN-1]
 		cmp   ecx, 2*(VALUE_KNOWN_WIN-1)
-		jbe   .Return
+		 ja   .8check
+
+		mov   ecx, dword[.depth]
+		cmp   ecx, 12*ONE_PLY
+		 jl   .Return
+                cmp   dword[rbp - Thread.rootPos + Thread.nmp_ply], 0
+                jne   .Return
 .8check:
-                sub   esi, 1    ; R += ONE_PLY
-                mov   r13d, dword[rbp - Thread.rootPos + Thread.nmp_ply]
-                mov   r14d, dword[rbp - Thread.rootPos + Thread.pair]
-                lea   eax, [3*rsi]
-                lea   r8d, [rax+3]
-               test   esi, esi
-              cmovs   eax, r8d
-                sar   eax, 2    ; eax = 3 * (depth-R) / 4
-                add   eax, dword[rbx + State.ply]
-                mov   dword[rbp - Thread.rootPos + Thread.nmp_ply], eax
-                mov   eax, dword[rbx + State.ply]
-                and   eax, 1
-                xor   eax, 1
-                mov   dword[rbp - Thread.rootPos + Thread.pair], eax                
+                lea  eax, [3*rsi]
+                lea  r8d, [rax + 3]
+               test  esi, esi
+              cmovs  eax, r8d
+                sar  eax, 2    ; eax = 3 * (depth-R) / 4
+                mov  ecx, dword[rbx + State.ply]
+                add  eax, ecx
+                and  ecx, 1
+                mov  dword[rbp - Thread.rootPos + Thread.nmp_ply], eax
+                mov  dword[rbp - Thread.rootPos + Thread.nmp_odd], ecx
 
 		mov   byte[rbx+State.skipEarlyPruning],	-1
 		mov   r8d, esi
@@ -505,8 +504,10 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		lea   ecx, [rdx-1]
 		xor   r9d, r9d
 	       call   r12
-                mov   dword[rbp - Thread.rootPos + Thread.nmp_ply], r13d
-                mov   dword[rbp - Thread.rootPos + Thread.pair], r14d
+                xor  ecx, ecx
+                ;mov  dword[rbp - Thread.rootPos + Thread.nmp_ply], ecx
+                ;mov  dword[rbp - Thread.rootPos + Thread.nmp_odd], ecx
+                mov  qword[rbp - Thread.rootPos + Thread.nmp_ply], rcx
 		mov   byte[rbx+State.skipEarlyPruning],	0
 		cmp   eax, dword[.beta]
 		mov   eax, edi
