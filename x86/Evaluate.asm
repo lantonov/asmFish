@@ -1482,6 +1482,7 @@ end virtual
 		mov   qword[.ei.pi], rdi
 
 		mov   eax, dword[rbx+State.psq]
+		add   eax, dword[ContemptScore]
 		mov   dword[.ei.score], eax
 
 		mov   r12, qword[rbp+Pos.typeBB+8*Queen]
@@ -1539,7 +1540,6 @@ end virtual
 		jne   Evaluate_Cold.DoPawnEval	 ; 6.34%
 .DoPawnEvalReturn:
 		add   eax, dword[.ei.score]
-		add   eax, dword[ContemptScore]
 		mov   dword[.ei.score], eax
 
 

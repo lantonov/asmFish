@@ -298,8 +298,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		cmp   edx, 4*ONE_PLY
 		jge   .6skip
 		mov   ecx, dword[.evalu]
-		mov   eax, dword[RazorMargin+4*rdx]
-		add   eax, ecx
+		lea   eax, [ecx + 600]
 		cmp   eax, dword[.alpha]
 		 jg   .6skip
     if USE_MATEFINDER =	1
@@ -316,7 +315,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 	       call   QSearch_NonPv_NoCheck
 		jmp   .Return
 .6b:
-		sub   ecx, dword[RazorMargin+4*rdx]
+		sub   ecx, 600
 		lea   edx, [rcx+1]
 		mov   esi, ecx
 	       call   QSearch_NonPv_NoCheck
@@ -1504,20 +1503,24 @@ Display	2, "Search returning %i0%n"
 		mov   dword[rbx+State.moveCount], eax
 		mov   dword[.moveCount], eax
 		jmp   .MovePickLoop
+
   if RootNode = 0
-	 calign   8
+
+             calign  8
 .AbortSearch_PlyBigger:
-		mov   rcx, qword[rbx+State.checkersBB]
-		mov   eax, VALUE_DRAW
-	    test   rcx, rcx
-		jz   .Return
-	       call   Evaluate
-		jmp   .Return
-	 calign	  8
+		mov  rcx, qword[rbx + State.checkersBB]
+		xor  eax, eax  ; mov eax, VALUE_DRAW
+               test  rcx, rcx
+                 jz  .Return
+	       call  Evaluate
+		jmp  .Return
+
+             calign   8
 .AbortSearch_PlySmaller:
-		mov   eax, VALUE_DRAW
-		jmp   .Return
+                xor  eax, eax  ;mov   eax, VALUE_DRAW
+                jmp  .Return
   end if
+
   if PvNode = 0
 	 calign   8
 .ReturnTTValue:
