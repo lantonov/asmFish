@@ -2,7 +2,7 @@ Options_Init:
            _lea  x1, options
             mov  w0, -1
            strb  w0, [x1, Options.displayInfoMove]
-            mov  w0, 0
+            mov  w0, 20
             str  w0, [x1, Options.contempt]
             mov  w0, 1
             str  w0, [x1, Options.threads]

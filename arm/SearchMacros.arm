@@ -263,11 +263,10 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
 .StaticValueDone:
            ldrb  w0, [x21, State.skipEarlyPruning]
            cbnz  w0, .moves_loop
-			mov  x1, 0
-            ldr  x1, [x20, Pos.sideToMove]
+            ldr  w1, [x20, Pos.sideToMove]
             add  x6, x21, x1, lsl 1
            ldrh  w1, [x6, State.npMaterial]
-			cbz  w1, .moves_loop
+            cbz  w1, .moves_loop
 
     ; Step 6. Razoring (skipped when in check)
   if PvNode = 0
@@ -1476,14 +1475,11 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
               b  .20TTStore
 .20Mate:
             ldr  x0, [x21, State.checkersBB]
-            ldr  w1, [x20, Pos.sideToMove]
            ldrb  w27, [x21, State.ply]
             mov  w4, VALUE_MATE
             sub  w27, w27, w4
             tst  x0, x0
-           _lea  x6, DrawValue
-            ldr  w4, [x6, x1, lsl 2]
-           csel  w27, w4, w27, eq
+           csel  w27, wzr, w27, eq
             tst  w24, w24
             ldr  w4, [sp, .alpha]
            csel  w27, w4, w27, ne
@@ -1559,16 +1555,12 @@ Display 2, "Search returning %i0n"
   if RootNode = 0
 .AbortSearch_PlyBigger:
             ldr  x1, [x21, State.checkersBB]
-            ldr  w0, [x20, Pos.sideToMove]
-           _lea  x6, DrawValue
-            ldr  w0, [x6, x0, lsl 2]
+            mov  w0, 0
             cbz  x1, .Return
              bl  Evaluate
               b  .Return
 .AbortSearch_PlySmaller:
-            ldr  w0, [x20, Pos.sideToMove]
-           _lea  x6, DrawValue
-            ldr  w0, [x6, x0, lsl 2]
+            mov  w0, 0
               b  .Return
   end if
   if PvNode = 0
