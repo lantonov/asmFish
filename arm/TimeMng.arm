@@ -1,146 +1,201 @@
-remaining:
-           _lea  x6, limits
-            add  x7, x6, x21, lsl 2
-            ldr  w0, [x7, Limits.time]
-            ldr  w1, [x7, Limits.incr]
-           _lea  x7, options
-            ldr  w2, [x7, Options.moveOverhead]
-            ldr  w3, [x6, Limits.movestogo]
-
-            cmp  w0, 0
-            ble  .L17
-          scvtf  d1, w1
-            sub  w1, w4, 25
-          scvtf  d0, w1
-           _lea  x1, .LC3
-           fmov  d4, 1.0e+0
-          scvtf  d5, w0
-            ldr  d2, [x1]
-           _lea  x1, .LC4
-            ldr  d3, [x1]
-           _lea  x1, .LC0
-           fmul  d2, d0, d2
-          fmsub  d0, d0, d2, d3
-            ldr  d2, [x1]
-          fcmpe  d0, d2
-          fcsel  d0, d0, d2, gt
-           fmul  d1, d1, d0
-            cbz  w3, .L5
-            cmp  w5, 0
-           fmov  d2, 6.0e+0
-            mov  w1, 50
-          fcsel  d2, d2, d4, ne
-            cmp  w3, 49
-           csel  w1, w3, w1, le
-            cmp  w4, 40
-          scvtf  d0, w1
-           fdiv  d0, d2, d0
-           fmov  d2, 1.5e+0
-            bgt  .L24
-            sub  w4, w4, 20
-           _lea  x1, .LC5
-          scvtf  d2, w4
-            ldr  d3, [x1]
-           _lea  x1, .LC6
-            ldr  d6, [x1]
-           fmul  d3, d2, d3
-          fmsub  d2, d2, d3, d6
-.L24:
-            cmp  w3, 1
-           fmul  d2, d0, d2
-            ble  .L10
-           fmov  d0, 7.5e-1
-          fcmpe  d2, d0
-          fcsel  d2, d2, d0, mi
-.L10:
-           fmov  d0, 8.5e+0
-           fmul  d0, d5, d0
-           fdiv  d0, d1, d0
-           fadd  d0, d0, d4
-           fmul  d0, d0, d2
-.L13:
-          fcmpe  d0, d4
-           fmov  d1, 1.0e+0
-          fcsel  d0, d0, d1, mi
-           subs  w0, w0, w2
-           csel  w0, w0, wzr, pl
-          scvtf  d1, w0
-           fmul  d0, d1, d0
-         fcvtzs  w0, d0
-            ret
-.L5:
-            mov  w1, 20
-          scvtf  d2, w4
-            cmp  w5, 0
-            mul  w1, w4, w1
-          scvtf  d3, w1
-           _lea  x1, .LC7
-            ldr  d0, [x1]
-           _lea  x1, .LC1
-           fadd  d2, d2, d0
-           fdiv  d2, d3, d2
-            ldr  d3, [x1]
-           _lea  x1, .LC2
-            ldr  d0, [x1]
-          fcsel  d3, d0, d3, eq
-           fdiv  d0, d1, d5
-           fadd  d2, d2, d4
-           fadd  d0, d0, d2
-           fmul  d0, d0, d3
-              b  .L13
-.L17:
-            mov  w0, 0
-            ret
-.LC0:
-  dd 0
-  dd 1078689792
-.LC1:
-  dd 515396076
-  dd 1068624773
-.LC2:
-  dd 2954937500
-  dd 1066494066
-.LC3:
-  dd 3951369912
-  dd 1069463633
-.LC4:
-  dd 0
-  dd 1079902208
-.LC5:
-  dd 3539053052
-  dd 1062232653
-.LC6:
-  dd 2576980378
-  dd 1072798105
-.LC7:
-  dd 0
-  dd 1082081280
-
-
-
+MoveHorizon = 50
 
 TimeMng_Init:
-            stp  x21, x30, [sp, -16]!
-            stp  x22, x23, [sp, -16]!
-            mov  w21, w1
-            mov  w22, w2
-           _lea  x23, time
-           _lea  x6, limits
-            ldr  x0, [x6, Limits.startTime]
-            str  x0, [x23, Time.startTime]
-            mov  w4, w22
-            mov  w5, 0
-             bl  remaining
-           _lea  x6, options
-            add  x1, x0, x0, lsr 2
-           ldrb  w4, [x6, Options.ponder]
-            tst  w4, w4
-           csel  x0, x1, x0, ne
-            str  x0, [x23, Time.optimumTime]
-            mov  w4, w22
-            mov  w5, 1
-             bl  remaining
-            str  x0, [x23, Time.maximumTime]
-            ldp  x22, x23, [sp], 16
-            ldp  x21, x30, [sp], 16
-            ret
+
+virtual at 0
+  .ply   rd 1
+  .lend  rb 0
+end virtual
+.localsize = ((.lend+15) and (-16))
+
+                stp  x21, x30, [sp, -16]!
+                stp  x26, x27, [sp, -16]!
+                stp  x22, x23, [sp, -16]!
+                stp  x24, x25, [sp, -16]!
+                sub  sp, sp, TimeMng_Init.localsize
+
+                mov  w26, w1
+                str  w2, [sp, TimeMng_Init.ply]
+
+               _lea  x6, limits
+                ldr  x0, [x6, Limits.startTime]
+               _lea  x6, time
+                str  x0, [x6, Time.startTime]
+
+               _lea  x6, limits + Limits.time
+                ldr  w0, [x6, x26, lsl 2]
+               _lea  x6, options
+                ldr  w1, [x6, Options.minThinkTime]
+                cmp  w0, w1
+               csel  w0, w1, w0, lo
+                mov  w22, w0
+                mov  w23, w0
+
+               _lea  x6, limits
+                ldr  w0, [x6, Limits.movestogo]
+                mov  w1, MoveHorizon
+                tst  w0, w0
+               csel  w0, w1, w0, eq
+                cmp  w0, w1
+               csel  w0, w1, w0, hi
+                mov  w24, w0
+
+                mov  w27, 0
+
+TimeMng_Init.loop:
+                add  w27, w27, 1
+                cmp  w27, w24
+                bhi  TimeMng_Init.loopdone
+
+                mov  w0, 40
+                cmp  w0, w27
+               csel  w0, w27, w0, hi
+                add  w0, w0, 2
+               _lea  x6, options
+                ldr  w2, [x6, Options.moveOverhead]
+                mul  x0, x0, x2
+               _lea  x6, limits + Limits.time
+                ldr  w1, [x6, x26, lsl 2]
+                sub  x1, x1, x0
+               _lea  x6, limits + Limits.incr
+                ldr  w0, [x6, x26, lsl 2]
+                sub  w2, w27, 1
+                mul  x0, x0, x2
+               adds  x1, x1, x0
+               csel  x1, xzr, x1, mi
+                mov  x21, x1
+
+                mov  w2, w27
+                ldr  w8, [sp, TimeMng_Init.ply]
+               fmov  d4, 1.0
+               fmov  d5, xzr
+                 bl  TimeMng_Init.remaining
+               _lea  x6, options
+                ldr  w2, [x6, Options.minThinkTime]
+                add  x0, x0, x2
+                cmp  x22, x0
+               csel  x22, x0, x22, hi
+
+                mov  x1, x21
+                mov  w2, w27
+                ldr  w8, [sp, TimeMng_Init.ply]
+                ldr  d4, TimeMng_Init.MaxRatio
+                ldr  d5, TimeMng_Init.StealRatio
+                 bl  TimeMng_Init.remaining
+               _lea  x6, options
+                ldr  w2, [x6, Options.minThinkTime]
+                add  w0, w0, w2
+                cmp  x23, x0
+               csel  x23, x0, x23, hi
+                  b  TimeMng_Init.loop
+
+TimeMng_Init.loopdone:
+
+               _lea  x6, options
+               ldrb  w0, [x6, Options.ponder]
+                cbz  w0, TimeMng_Init.noponder
+                add  x22, x22, x22, lsr 2
+
+TimeMng_Init.noponder:
+
+               _lea  x6, time
+                str  x22, [x6, Time.optimumTime]
+                str  x23, [x6, Time.maximumTime]
+Display 1, "optimumTime: %I22 maximumTime: %I23\n"
+                add  sp, sp, TimeMng_Init.localsize
+                ldp  x24, x25, [sp], 16
+                ldp  x22, x23, [sp], 16
+                ldp  x26, x27, [sp], 16
+                ldp  x21, x30, [sp], 16
+                ret
+
+
+TimeMng_Init.remaining:
+
+                stp  x29, x30, [sp, -16]!
+
+               fmov  d2, xzr
+              scvtf  d3, x1
+                 bl  TimeMng_Init.move_importance
+               _lea  x6, options
+                ldr  w4, [x6, Options.slowMover]
+              scvtf  d1, w4
+               fmul  d6, d0, d1
+                ldr  d7, TimeMng_Init.constd.100p0
+               fdiv  d6, d6, d7
+               fmov  d2, xzr
+                add  w1, w8, w2, lsl 1
+
+TimeMng_Init.otherLoop:
+
+                add  w8, w8, 2
+                cmp  w8, w1
+                bhs  TimeMng_Init.otherDone
+                 bl  TimeMng_Init.move_importance
+               fadd  d2, d2, d0
+                  b  TimeMng_Init.otherLoop
+
+TimeMng_Init.otherDone:
+
+               fmul  d4, d4, d6
+               fmul  d5, d5, d2
+               fadd  d0, d4, d2
+               fdiv  d4, d4, d0
+               fadd  d5, d5, d6
+               fadd  d0, d6, d2
+               fdiv  d5, d5, d0
+               fmin  d4, d4, d5
+               fmul  d3, d3, d4
+             fcvtzs  x0, d3
+                ldp  x29, x30, [sp], 16
+                ret
+
+TimeMng_Init.move_importance:
+
+                stp  x1, x30, [sp, -16]!
+                stp  x2, x8, [sp, -16]!
+                stp  d1, d2, [sp, -16]!
+                stp  d3, d4, [sp, -16]!
+                stp  d5, d6, [sp, -16]!
+              scvtf  d0, w8
+                ldr  d1, TimeMng_Init.XShift
+                ldr  d2, TimeMng_Init.XScale
+               fsub  d0, d0, d1
+               fdiv  d0, d0, d2
+                 bl  Math_exp_d_d
+               fmov  d2, 1.0
+               fadd  d0, d0, d2
+                ldr  d1, TimeMng_Init.mSkew
+                 bl  Math_pow_d_dd
+                ldr  d1, TimeMng_Init.mind
+               fadd  d0, d0, d1
+                ldp  d5, d6, [sp], 16
+                ldp  d3, d4, [sp], 16
+                ldp  d1, d2, [sp], 16
+                ldp  x2, x8, [sp], 16
+                ldp  x1, x30, [sp], 16
+                ret
+
+        
+TimeMng_Init.XShift:
+        dd 858993459
+        dd 1078801203
+TimeMng_Init.XScale:
+        dd 687194767
+        dd 1075744604
+TimeMng_Init.mSkew:
+        dd 1133871366
+        dd -1077449589
+TimeMng_Init.MaxRatio:
+        dd 4123168604
+        dd 1075600424
+TimeMng_Init.StealRatio:
+        dd 1717986918
+        dd 1071015526
+TimeMng_Init.mind:
+        dd   0
+        dd   1048576
+TimeMng_Init.constd.100p0:
+        dd   0
+        dd   1079574528
+
