@@ -1551,8 +1551,11 @@ Evaluate:
             ldr  x25, [x27, PawnEntry.key]
             str  x27, [sp, EvalInfo.pi]
 
-            ldr  w0, [x21, State.psq]
-            str  w0, [sp, EvalInfo.score]
+                ldr  w0, [x21, State.psq]
+               _lea  x4, Eval_Contempt
+                ldr  w4, [x4]
+                add  w0, w0, w4
+                str  w0, [sp, EvalInfo.score]
 
             ldr  x22, [x20, Pos.typeBB + 8*Queen]
             ldr  x23, [x20, Pos.typeBB + 8*Rook]

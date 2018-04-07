@@ -35,7 +35,6 @@ macro search RootNode, PvNode
     .value		rd 1
     .evalu		rd 1
     .nullValue		rd 1
-    .valueDraw rd 1
     .futilityValue	rd 1
     .extension		rd 1
     .success		rd 1	; for tb
@@ -1433,13 +1432,11 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		UpdateCmStats   (rbx-1*sizeof.State), r15, r11d, r10d, r8
 		jmp   .20TTStore
 .20Mate:
-		mov dword[.valueDraw], VALUE_DRAW ; allows for cmovz later
 		mov   rax, qword[rbx+State.checkersBB]
-		
 		movzx edi, byte[rbx+State.ply]
 		sub   edi, VALUE_MATE
 		test  rax, rax
-		cmovz edi, dword[.valueDraw]
+		cmovz edi, eax          ; cmovz edi, VALUE_DRAW
 		test   r14d, r14d
 		cmovnz edi, dword[.alpha]
 		jmp .20TTStore
