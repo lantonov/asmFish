@@ -1453,6 +1453,7 @@ Evaluate_Cold:
 
 .DoPawnEval:
             mov  x17, 0
+            mov  x14, 0
       EvalPawns  White
             str  w26, [x27, PawnEntry.score]
       EvalPawns  Black
@@ -1468,7 +1469,8 @@ Evaluate_Cold:
          Popcnt  x2, x2, x9
             str  x8, [x27, PawnEntry.key]
             str  w0, [x27, PawnEntry.score]
-           strb  w1, [x27, PawnEntry.asymmetry]
+            add  w14, w14, w1
+           strb  w14, [x27, PawnEntry.asymmetry]
            strb  w2, [x27, PawnEntry.openFiles]
            strb  w17, [x27, PawnEntry.weakUnopposed]
               b  Evaluate.DoPawnEvalReturn
