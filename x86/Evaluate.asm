@@ -6,13 +6,13 @@ TrappedRook		= ( 92 shl 16) + (  0)
 WeakQueen		= ( 50 shl 16) + ( 10)
 CloseEnemies		= (  7 shl 16) + (  0)
 PawnlessFlank		= ( 20 shl 16) + ( 80)
-ThreatBySafePawn        = (192 shl 16) + (175)
+ThreatBySafePawn        = (175 shl 16) + (168)
 ThreatByRank		= ( 16 shl 16) + (  3)
-Hanging 		= ( 48 shl 16) + ( 27)
+Hanging                 = ( 52 shl 16) + ( 30)
 WeakUnopposedPawn       = (  5 shl 16) + ( 25)
-ThreatByPawnPush	= ( 38 shl 16) + ( 22)
-ThreatByAttackOnQueen   = ( 38 shl 16) + ( 22)
-HinderPassedPawn	= (  7 shl 16) + (  0)
+ThreatByPawnPush        = ( 47 shl 16) + ( 26)
+ThreatByAttackOnQueen   = ( 42 shl 16) + ( 21)
+HinderPassedPawn        = (  8 shl 16) + (  1)
 TrappedBishopA1H1       = ( 50 shl 16) + ( 50)
 
 LazyThreshold = 1500
@@ -871,8 +871,8 @@ macro EvalThreats Us
   local ThreatMinorLoop, ThreatMinorDone, ThreatRookLoop, ThreatRookDone
   local ThreatMinorSkipPawn, ThreatRookSkipPawn
 
-	ThreatByKing0	= (( 3 shl 16) + ( 62))
-	ThreatByKing1	= (( 9 shl 16) + (138))
+        ThreatByKing0 = (( 3 shl 16) + ( 65))
+        ThreatByKing1 = (( 9 shl 16) + (145))
 
   if Us	= White
 	;addsub		equ add
@@ -1219,37 +1219,38 @@ NextPawn:
 		and   rcx, qword[ForwardBB+8*(64*Them+s)]
 		and   rax, rcx
 
-		or   rcx, -1
-		test   PiecesUs, rax
-		cmovz   rcx, AttackedByUs
-		and   r10, rcx
+                 or  rcx, -1
+               test  PiecesThem, rax
+              cmovz  rcx, AttackedByThem
+                 or  rcx, PiecesThem
+                and  r11, rcx
+        ; r11 = unsafeSquares
+                 or  rcx, -1
+               test  PiecesUs, rax
+              cmovz  rcx, AttackedByUs
+                and  r10, rcx
+        ; r10 = defendedSquares
 
-		or   rcx, -1
-		test   PiecesThem, rax
-		cmovz   rcx, AttackedByThem
-		or   rcx, PiecesThem
-		and   r11, rcx
-
-		bt   r11, r8
-		sbb   eax, eax
-		neg   r11
-		sbb   edx, edx
-		lea   edx, [5*rdx]
-		lea   eax, [rdx+4*rax+9]
-	; eax = k/2
-		xor   edx, edx
-		bt   r10, r8
-		adc   edx, edx
-		xor   r10, qword[ForwardBB+8*(64*Us+s)]
-		cmp   r10, 1
-		adc   edx, edx
-		add   eax, edx
-	; eax = k/2
-		add   edi, edi
-		imul   eax, edi
+                xor  eax, eax
+                 bt  r11, r8
+                mov  edx, 9
+	     cmovnc  eax, edx
+               test  r11, r11
+                mov  edx, 20
+              cmovz  eax, edx
+	; eax = k
+                xor  edx, edx
+                 bt  r10, r8
+                adc  edx, edx
+                xor  r10, qword[ForwardBB+8*(64*Us+s)]
+                cmp  r10, 1
+                adc  edx, edx
+                lea  eax, [rax + 2*rdx]
+	; eax = k
+               imul  eax, edi
 AddToBonus:
-		imul   eax, 0x00010001
-		add   esi, eax
+               imul  eax, 0x00010001
+                add  esi, eax
 
 Continue:		
 	; r8d = blockSq
