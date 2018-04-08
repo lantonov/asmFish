@@ -2,7 +2,7 @@ Options_Init:
            _lea  x1, options
             mov  w0, -1
            strb  w0, [x1, Options.displayInfoMove]
-            mov  w0, 20
+            mov  w0, OPTIONS_CONTEMPT_DEFAULT
             str  w0, [x1, Options.contempt]
             mov  w0, 1
             str  w0, [x1, Options.threads]
@@ -801,8 +801,8 @@ UciSetOption.Ponder:
 
 UciSetOption.Contempt:
              bl  ParseInteger
-            mov  w4, -100
-            mov  w5, 100
+            mov  w4, OPTIONS_CONTEMPT_MIN
+            mov  w5, OPTIONS_CONTEMPT_MAX
     ClampSigned  w0, w4, w5
            _lea  x16, options
             str  w0, [x16, Options.contempt]

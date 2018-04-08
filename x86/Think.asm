@@ -64,6 +64,23 @@ end virtual
 	      cmova   eax, ecx
 		mov   dword[.multiPV], eax
 
+        ; set initial contemp
+               imul  eax, dword[options.contempt], PawnValueEg
+                mov  ecx, 100
+                cdq
+               idiv  ecx
+                mov  ecx, eax
+                cdq
+                sub  eax, edx
+                sar  eax, 1
+                shl  ecx, 16
+                add  ecx, eax
+                mov  eax, dword[rbp+Pos.sideToMove]
+                neg  eax
+                xor  ecx, eax
+                sub  ecx, eax
+                mov  dword[Eval_Contempt], ecx
+
 	; id loop
 		mov   r15d, dword[rbp-Thread.rootPos+Thread.rootDepth]	 ; this should be set to 0 by ThreadPool_StartThinking
 .id_loop:
@@ -174,6 +191,33 @@ end if
 	      cmovg   eax, ecx
 		mov   dword[.beta], eax
 		mov   dword[.delta], edx
+
+        ; Adjust contempt based on current situation
+                mov  eax, dword[.bestValue]
+                mov  ecx, 10
+                cdq
+               idiv  ecx
+        ClampSigned  eax, -50, 50
+                mov  r8d, eax
+
+               imul  eax, dword[options.contempt], PawnValueEg
+                mov  ecx, 100
+                cdq
+               idiv  ecx
+                add  eax, r8d
+
+                mov  ecx, eax
+                cdq
+                sub  eax, edx
+                sar  eax, 1
+                shl  ecx, 16
+                add  ecx, eax
+                mov  eax, dword[rbp+Pos.sideToMove]
+                neg  eax
+                xor  ecx, eax
+                sub  ecx, eax
+                mov  dword[Eval_Contempt], ecx
+
     .reset_window_done:
 
 	; Start with a small aspiration window and, in the case of a fail high/low,
@@ -481,33 +525,6 @@ MainThread_Think:
 		mov   edx, dword[rbp+Pos.gamePly]
 	       call   TimeMng_Init
 
-		mov   eax, dword[options.contempt]
-		cdq
-		imul  eax, PawnValueEg  ; options.contempt * PawnValueEg ---> [edx:eax]
-		mov   ecx, 100 
-		idiv  ecx               ; [edx:eax]/100 -->  EAX gets quotient, EDX gets remainder.
-		                        ; eax holds contempt value (ignore remainder in edx)
-		                        ; Next, we construct mg/eg contempt score
-		mov   ecx,eax           ; ecx represents mg value now (i.e., the contempt value just calculated)
-
-
-;		shr   eax, 1            ; contempt / 2 => weaken the contempt for the endgame (eg value)
-                cdq             ; this 
-                sub  eax, edx   ; divides eax by 2
-                sar  eax, 1     ; as a SIGNED dword
-
-		shl   ecx, 16           ; move mg contempt into upper 16 bits (this is opposite to current master)
-		add   ecx, eax          ; layer in eg value to get overall "Score"
-
-		mov   eax, dword[rbp+Pos.sideToMove]
-		test  eax, eax ;
-		jz   .save_contempt_score ; if white, save score as it currently is
-		
-		; black contempt scoring requires we negate the score first before saving it in ContemptScore
-		neg   ecx
-		
-.save_contempt_score:
-                mov   dword[Eval_Contempt], ecx
 		add   byte[mainHash.date], 4
 
 if USE_WEAKNESS
