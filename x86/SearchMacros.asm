@@ -294,33 +294,23 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 
 	    ; Step 6. Razoring (skipped	when in	check)
   if PvNode = 0
-		mov   edx, dword[.depth]
-		cmp   edx, 3*ONE_PLY
-		jge   .6skip
-		mov   ecx, dword[.evalu]
-		lea   eax, [ecx + RazorMargin]
-		cmp   eax, dword[.alpha]
-		 jg   .6skip
+		mov  edx, dword[.depth]
+                mov  ecx, dword[.alpha]
+		cmp  edx, 1*ONE_PLY
+		 jg  .6skip
+		lea  eax, [ecx - RazorMargin]
+		cmp  eax, dword[.evalu]
+		 jl  .6skip
     if USE_MATEFINDER =	1
-		lea   eax, [rcx+2*VALUE_KNOWN_WIN-1]
-		cmp   eax, 4*VALUE_KNOWN_WIN-1
-		jae   .6skip
+		lea  eax, [rcx + 2*VALUE_KNOWN_WIN - 1]
+		cmp  eax, 4*VALUE_KNOWN_WIN - 1
+		jae  .6skip
     end	if
-		mov   ecx, dword[.alpha]
-		xor   r8d, r8d
-		cmp   edx, ONE_PLY
-		 jg   .6b
-.6a:
-		mov   edx, dword[.beta]
-	       call   QSearch_NonPv_NoCheck
-		jmp   .Return
-.6b:
-		sub   ecx, RazorMargin
-		lea   edx, [rcx+1]
-		mov   esi, ecx
-	       call   QSearch_NonPv_NoCheck
-		cmp   eax, esi
-		jle   .Return
+		;mov  ecx, dword[.alpha] already here
+		lea  edx, [rcx + 1]
+                xor  r8d, r8d
+	       call  QSearch_NonPv_NoCheck
+                jmp  .Return
 .6skip:
   end if
 
