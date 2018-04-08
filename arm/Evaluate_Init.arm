@@ -66,6 +66,9 @@ Evaluate_Init:
             mov  x2, 4*8*(6+6)
              bl  MemoryCopy
 
+               _lea  x0, Eval_Contempt
+                str  wzr, [x0]
+
            _lea  x0, KingFlank
             mov  x1, FileABB or FileBBB or FileCBB or FileDBB
             str  x1, [x0], 8

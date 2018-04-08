@@ -87,10 +87,8 @@ IsPawnMasks:	   rb 1*16
         balign 4096
 Reductions:	         rb 4*2*2*64*64
 FutilityMoveCounts:      rb 4*16*2
-RazorMargin:             rb 4*4
 _CaptureOrPromotion_or:  rb 1*4
 _CaptureOrPromotion_and: rb 1*4
-DrawValue:	         rb 4*2    ; it is updated when threads start to think
 SeeSignBitMask:          rb 8
 
 
@@ -119,6 +117,7 @@ DoMaterialEval_Data:
 DoMaterialEval_Data.QuadraticOurs:     rb 4*8*6
 DoMaterialEval_Data.QuadraticTheirs:   rb 4*8*6
 QueenMinorsImbalance:   rb 4*16
+Eval_Contempt           rd 1
 
 
 ; data for endgames

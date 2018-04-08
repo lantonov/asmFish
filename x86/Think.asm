@@ -342,7 +342,7 @@ end if
 		mov   qword[.elapsed], rax
 
             xor  r10d, r10d
-			cmp  r12d, VALUE_DRAW
+           test  r12d, r12d     ; cmp  r12d, VALUE_DRAW
             jne  @1f
 	    mov  edx, dword[rbp + Pos.sideToMove]
             mov  ecx, dword[limits.time + 4*rdx]
@@ -506,8 +506,14 @@ MainThread_Think:
 		                        ; eax holds contempt value (ignore remainder in edx)
 		                        ; Next, we construct mg/eg contempt score
 		mov   ecx,eax           ; ecx represents mg value now (i.e., the contempt value just calculated)
-		shr   eax, 1            ; contempt / 2 => weaken the contempt for the endgame (eg value)
-		shl   ecx, 16           ; move mg contempt into upper 16 bits
+
+
+;		shr   eax, 1            ; contempt / 2 => weaken the contempt for the endgame (eg value)
+                cdq             ; this 
+                sub  eax, edx   ; divides eax by 2
+                sar  eax, 1     ; as a SIGNED dword
+
+		shl   ecx, 16           ; move mg contempt into upper 16 bits (this is opposite to current master)
 		add   ecx, eax          ; layer in eg value to get overall "Score"
 
 		mov   eax, dword[rbp+Pos.sideToMove]
@@ -518,7 +524,7 @@ MainThread_Think:
 		neg   ecx
 		
 .save_contempt_score:
-		mov dword[ContemptScore], ecx
+                mov   dword[Eval_Contempt], ecx
 		add   byte[mainHash.date], 4
 
 if USE_WEAKNESS

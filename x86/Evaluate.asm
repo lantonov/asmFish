@@ -229,8 +229,10 @@ NoKingRing:
 
 		mov   rax, qword[.ei.mobilityArea+8*Us]
 		and   rax, r9
-		_popcnt   r10, rax, rcx
-		addsub   esi, dword[MobilityBonus+4*r10]
+            _popcnt   r10, rax, rcx
+                mov   eax, dword[MobilityBonus + 4*r10]
+             addsub   dword[.ei.mobilityDiff], eax
+             addsub   esi, eax
 
 		lea   eax, [8*r8]
 		movzx   eax, byte[SquareDistance+8*rax+r14]
@@ -602,8 +604,17 @@ KingSafetyDoneRet:
 
 	; Compute the king danger score and subtract it from the evaluation
 
-		test  edi, edi
-		js    AllDone
+                mov   ecx, dword[.ei.mobilityDiff]
+		add   ecx, 0x08000
+		sar   ecx, 16
+		cmp   edi, 0
+		jle   AllDone
+        if Us = White
+                sub   edi, ecx
+        else
+                add   edi, ecx
+        end if
+                 js   AllDone
 		mov   eax, edi
 		shr   eax, 4		; kingDanger / 16
 		sub   esi, eax
@@ -1471,6 +1482,7 @@ end virtual
 		mov   qword[.ei.pi], rdi
 
 		mov   eax, dword[rbx+State.psq]
+		add   eax, dword[Eval_Contempt]
 		mov   dword[.ei.score], eax
 
 		mov   r12, qword[rbp+Pos.typeBB+8*Queen]
@@ -1491,6 +1503,7 @@ end virtual
 		mov   qword[.ei.attackedBy+8*(8*White+King)], rax
 		mov   qword[.ei.attackedBy+8*(8*Black+0   )], rcx
 		mov   qword[.ei.attackedBy+8*(8*Black+King)], rdx
+                mov   dword[.ei.mobilityDiff], ecx
 
 		mov   rax, qword[rbp+Pos.typeBB+8*White]
 		mov   rdx, qword[rbp+Pos.typeBB+8*Black]
@@ -1527,7 +1540,6 @@ end virtual
 		jne   Evaluate_Cold.DoPawnEval	 ; 6.34%
 .DoPawnEvalReturn:
 		add   eax, dword[.ei.score]
-		add   eax, dword[ContemptScore]
 		mov   dword[.ei.score], eax
 
 
@@ -1593,7 +1605,6 @@ end virtual
 		mov   r12, qword[rbp+Pos.typeBB+8*Queen]
 	 EvalPieces   White, Queen
 	 EvalPieces   Black, Queen
-
 
 		mov   r14, qword[rbp+Pos.typeBB+8*White]
 		mov   r15, qword[rbp+Pos.typeBB+8*Black]

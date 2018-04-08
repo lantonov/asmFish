@@ -263,11 +263,10 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
 .StaticValueDone:
            ldrb  w0, [x21, State.skipEarlyPruning]
            cbnz  w0, .moves_loop
-			mov  x1, 0
-            ldr  x1, [x20, Pos.sideToMove]
+            ldr  w1, [x20, Pos.sideToMove]
             add  x6, x21, x1, lsl 1
            ldrh  w1, [x6, State.npMaterial]
-			cbz  w1, .moves_loop
+            cbz  w1, .moves_loop
 
     ; Step 6. Razoring (skipped when in check)
   if PvNode = 0
@@ -275,9 +274,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             cmp  w2, 4*ONE_PLY
             bge  .6skip
             ldr  w1, [sp, .evalu]
-           _lea  x6, RazorMargin
-            ldr  w0, [x6, x2, lsl 2]
-            add  w0, w0, w1
+            add  w0, w1, 600
             ldr  w4, [sp, .alpha]
             cmp  w0, w4
             bgt  .6skip
@@ -297,9 +294,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
              bl  QSearch_NonPv_NoCheck
               b  .Return
 .6b:
-           _lea  x6, RazorMargin
-            ldr  w4, [x6, x2, lsl 2]
-            sub  w1, w1, w4
+            sub  w1, w1, 600
             add  w2, w1, 1
             mov  w26, w1
              bl  QSearch_NonPv_NoCheck
@@ -357,9 +352,9 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             bge  @1f
             and  w1, w1, 1
             add  x4, x20, -Thread.rootPos
-            ldr  w4, [x4, Thread.pair]
+            ldr  w4, [x4, Thread.nmp_odd]
             cmp  w1, w4
-            bne  .8skip
+            beq  .8skip
         @1:
     else
             ldr  w8, [sp, .evalu]
@@ -460,32 +455,29 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             cmp  w0, w4
            csel  w0, w2, w0, ge
             mov  w27, w0
-    ; edi = nullValue
-            ldr  w1, [sp, .depth]
-            cmp  w1, 12*ONE_PLY
-            bge  .8check
-            mov  w4, VALUE_KNOWN_WIN-1
-            add  w1, w2, w4
-            mov  w4, VALUE_KNOWN_WIN-1
-            cmp  w1, w4, lsl 1
-            bls  .Return
+        ; w27 = nullValue
+                add  x7, x20, -Thread.rootPos
+                mov  w4, VALUE_KNOWN_WIN-1
+                add  w1, w2, w4
+                cmp  w1, w4, lsl 1
+                bhi  .8check
+                ldr  w1, [sp, .depth]
+                cmp  w1, 12*ONE_PLY
+                blt  .Return
+                ldr  w4, [x7, Thread.nmp_ply]
+               cbnz  w4, .Return
 .8check:
-            sub  w26, w26, 1
-            add  x7, x20, -Thread.rootPos
-            ldr  w23, [x7, Thread.nmp_ply]
-            ldr  w24, [x7, Thread.pair]
-            add  w0, w26, w26, lsl 1
-            add  w8, w0, 3
-            tst  w26, w26
-           csel  w0, w8, w0, mi
-            asr  w0, w0, 2
-            ldr  w4, [x21, State.ply]
-            add  w0, w0, w4
-            str  w0, [x7, Thread.nmp_ply]
-            ldr  w0, [x21, State.ply]
-            and  w0, w0, 1
-            eor  w0, w0, 1
-            str  w0, [x7, Thread.pair]
+                add  x7, x20, -Thread.rootPos
+                add  w0, w26, w26, lsl 1
+                add  w8, w0, 3
+                tst  w26, w26
+               csel  w0, w8, w0, mi
+                asr  w0, w0, 2
+                ldr  w1, [x21, State.ply]
+                add  w0, w0, w1
+                and  w1, w1, 1
+                str  w0, [x7, Thread.nmp_ply]
+                str  w1, [x7, Thread.nmp_odd]
 
             mov  w4, -1
            strb  w4, [x21, State.skipEarlyPruning]
@@ -500,9 +492,8 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             mov  w9, 0
             blr  x22
 
-            add  x7, x20, -Thread.rootPos
-            str  w23, [x7, Thread.nmp_ply]
-            str  w24, [x7, Thread.pair]
+                add  x7, x20, -Thread.rootPos
+                str  xzr, [x7, Thread.nmp_ply]
 
            strb  wzr, [x21, State.skipEarlyPruning]
             ldr  w4, [sp, .beta]
@@ -1484,14 +1475,11 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
               b  .20TTStore
 .20Mate:
             ldr  x0, [x21, State.checkersBB]
-            ldr  w1, [x20, Pos.sideToMove]
            ldrb  w27, [x21, State.ply]
             mov  w4, VALUE_MATE
             sub  w27, w27, w4
             tst  x0, x0
-           _lea  x6, DrawValue
-            ldr  w4, [x6, x1, lsl 2]
-           csel  w27, w4, w27, eq
+           csel  w27, wzr, w27, eq
             tst  w24, w24
             ldr  w4, [sp, .alpha]
            csel  w27, w4, w27, ne
@@ -1567,16 +1555,12 @@ Display 2, "Search returning %i0n"
   if RootNode = 0
 .AbortSearch_PlyBigger:
             ldr  x1, [x21, State.checkersBB]
-            ldr  w0, [x20, Pos.sideToMove]
-           _lea  x6, DrawValue
-            ldr  w0, [x6, x0, lsl 2]
+            mov  w0, 0
             cbz  x1, .Return
              bl  Evaluate
               b  .Return
 .AbortSearch_PlySmaller:
-            ldr  w0, [x20, Pos.sideToMove]
-           _lea  x6, DrawValue
-            ldr  w0, [x6, x0, lsl 2]
+            mov  w0, 0
               b  .Return
   end if
   if PvNode = 0

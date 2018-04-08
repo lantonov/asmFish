@@ -80,7 +80,7 @@ struct EvalInfo
  kingAttackersWeight rd 2
  kingAdjacentZoneAttacksCount rd 2
  score	   rd 1
-	   rd 1
+ mobilityDiff   rd 1
  me   rq 1
  pi   rq 1
 ends
@@ -188,7 +188,7 @@ _stack_start rb 0
  moveCount	  rd 1
  staticEval	  rd 1
  history	  rd 1
- ply		   rb 1
+ ply		  rb 1
  skipEarlyPruning rb 1
 		  rb 2
 _stack_end rb 0
@@ -209,9 +209,10 @@ _movepick_start rb 0
 _movepick_end rb 0
 ends
 
-;if (sizeof.State and 15)
-; err
-;end if
+; sizeof.State should be divisible by 16
+if (sizeof.State and 15)
+ err
+end if
 
 
 ;;;;;;;;;;;;;;;;;;;;
@@ -372,10 +373,8 @@ struct Thread
  numaNode	 rq 1
  bestMoveChanges rq 1
  previousTimeReduction rq 1
-
  nmp_ply rd 1
- pair    rd 1
-
+ nmp_odd rd 1
  PVIdx		 rd 1
  previousScore	 rd 1
  completedDepth  rd 1

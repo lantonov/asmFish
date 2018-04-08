@@ -59,20 +59,21 @@ sizeof.MoveStats = 0 + 16*64*sizeof.rd + MoveStats.___
 CounterMoveHistoryStats.___ = 0
 sizeof.CounterMoveHistoryStats = 0 + 16*64*16*64*sizeof.rd + CounterMoveHistoryStats.___
 
-EvalInfo.___ = 0
-EvalInfo.attackedBy = 0 + EvalInfo.___
-EvalInfo.attackedBy2 = 16*sizeof.rq + EvalInfo.attackedBy
-EvalInfo.pinnedPieces = 2*sizeof.rq + EvalInfo.attackedBy2
-EvalInfo.mobilityArea = 2*sizeof.rq + EvalInfo.pinnedPieces
-EvalInfo.kingRing = 2*sizeof.rq + EvalInfo.mobilityArea
-EvalInfo.kingAttackersCount = 2*sizeof.rq + EvalInfo.kingRing
-EvalInfo.kingAttackersWeight = 2*sizeof.rd + EvalInfo.kingAttackersCount
-EvalInfo.kingAdjacentZoneAttacksCount = 2*sizeof.rd + EvalInfo.kingAttackersWeight
-EvalInfo.ksq = 2*sizeof.rd + EvalInfo.kingAdjacentZoneAttacksCount
-EvalInfo.me = 2*sizeof.rd + EvalInfo.ksq
-EvalInfo.pi = 1*sizeof.rq + EvalInfo.me
-EvalInfo.score = 1*sizeof.rq + EvalInfo.pi
-sizeof.EvalInfo = 1*sizeof.rd + 1*sizeof.rd + 2*sizeof.rd + EvalInfo.score
+struct EvalInfo
+ attackedBy   rq 16
+ attackedBy2  rq 2
+ pinnedPieces rq 2
+ mobilityArea rq 2
+ kingRing     rq 2
+ kingAttackersCount  rd 2
+ kingAttackersWeight rd 2
+ kingAdjacentZoneAttacksCount rd 2
+ ksq rd 2
+ me   rq 1
+ pi   rq 1
+ score	   rd 1
+ mobilityDiff   rd 1
+ends
 
 EndgameMapEntry.___ = 0
 EndgameMapEntry.key = 0 + EndgameMapEntry.___
@@ -196,8 +197,8 @@ struct Options
 	    rb 2
  multiPV    rd 1
  chess960	rd 1
-                rd 1
-                rd 1
+ minThinkTime	rd 1
+ slowMover	rd 1
  moveOverhead	rd 1
  contempt	  rd 1
  ponder 	  rb 1
@@ -268,10 +269,8 @@ end if
  numaNode	 rq 1
  bestMoveChanges rq 1
  previousTimeReduction rq 1
-
  nmp_ply rd 1
- pair    rd 1
-
+ nmp_odd rd 1
  PVIdx		 rd 1
  previousScore	 rd 1
  completedDepth  rd 1

@@ -81,10 +81,6 @@ Search_Init:
             cmp  w20, 16
             bne  Search_Init.L6
 
-           _lea  x0, RazorMargin
-            adr  x1, Search_Init.RazorMargin
-            mov  x2, 4*4
-             bl  MemoryCopy
            _lea  x0, _CaptureOrPromotion_or
             adr  x1, Search_Init._CaptureOrPromotion_or
             mov  x2, 8      ; copy both or and and
@@ -134,8 +130,6 @@ Search_Init:
         dd   858993459
         dd   1074213683
 
-.RazorMargin:
-        dd 483, 570, 603, 554
 ._CaptureOrPromotion_or:
         db 0,-1,-1, 0
 ._CaptureOrPromotion_and:

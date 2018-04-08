@@ -377,10 +377,7 @@ end if
 
             mov  w10, 0
             ldr  w2, [x20, Pos.sideToMove]
-           _lea  x6, DrawValue
-            ldr  w4, [x6, x2, lsl 2]
-            cmp  w22, w4
-            bne  @1f
+           cbnz  w22, @1f
            _lea  x6, limits + Limits.time
             ldr  w1, [x6, x2, lsl 2]
             sub  w1, w1, w0
@@ -559,24 +556,26 @@ MainThread_Think:
             ldr  w2, [x20, Pos.gamePly]
              bl  TimeMng_Init
 
-           _lea  x6, options
-            ldr  w0, [x6, Options.contempt]
-            mov  w1, PawnValueEg
-            mul  w0, w0, w1
-            mov  w1, 100
-           sdiv  w0, w0, w1
-            mov  w1, w0
-            ldr  w0, [x20, Pos.sideToMove]
-            neg  w1, w1
-           _lea  x6, DrawValue
-            str  w1, [x6, x0, lsl 2]
-            eor  x0, x0, 1
-            neg  w1, w1
-            str  w1, [x6, x0, lsl 2]
-           _lea  x6, mainHash
-            ldr  w4, [x6, MainHash.date]
-            add  w4, w4, 4
-            str  w4, [x6, MainHash.date]
+               _lea  x6, options
+                ldr  w0, [x6, Options.contempt]
+                mov  w1, PawnValueEg
+                mul  w0, w0, w1
+                mov  w1, 100
+               sdiv  w0, w0, w1
+                mov  w1, 2
+               sdiv  w1, w0, w1
+                add  w0, w1, w0, lsl 16
+                neg  w1, w0
+                ldr  w4, [x20, Pos.sideToMove]
+                tst  w4, w4
+               csel  w0, w1, w0, ne
+               _lea  x6, Eval_Contempt
+                str  w0, [x6]
+
+               _lea  x6, mainHash
+                ldr  w4, [x6, MainHash.date]
+                add  w4, w4, 4
+                str  w4, [x6, MainHash.date]
 
 
 if USE_WEAKNESS

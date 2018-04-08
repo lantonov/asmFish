@@ -253,7 +253,10 @@ NoKingRing:
          Popcnt  x10, x0, x1
            _lea  x6, MobilityBonus
             ldr  w4, [x6, x10, lsl 2]
+            ldr  w5, [sp, EvalInfo.mobilityDiff]
          AddSub  Us, w26, w26, w4
+         AddSub  Us, w5, w5, w4
+            str  w5, [sp, EvalInfo.mobilityDiff]
 
            _lea  x6, SquareDistance
             add  x4, x24, x8, lsl 6
@@ -668,13 +671,24 @@ KnightDone:
            mov  w1, 143
            mul  w4, w4, w1
            add  w27, w27, w4
+
     ; Compute the king danger score and subtract it from the evaluation
-           tbnz  w27, 31, AllDone
-            sub  w26, w26, w27, lsr 4
-            mul  w27, w27, w27
-            lsr  w27, w27, 12
-            sub  w26, w26, w27, lsl 16
-              b  AllDone
+                ldr   w1, [sp, EvalInfo.mobilityDiff]
+                add   w1, w1, 0x08000
+                asr   w1, w1, 16
+                cmp   w27, wzr
+                ble   AllDone
+        if Us = White
+               subs   w27, w27, w1
+        else
+               adds   w27, w27, w1
+        end if
+                bmi   AllDone
+                sub   w26, w26, w27, lsr 4
+                mul   w27, w27, w27
+                lsr   w27, w27, 12
+                sub   w26, w26, w27, lsl 16
+                  b   AllDone
 
 DoKingSafety:
     ; rdi = address of PawnEntry
@@ -1537,8 +1551,11 @@ Evaluate:
             ldr  x25, [x27, PawnEntry.key]
             str  x27, [sp, EvalInfo.pi]
 
-            ldr  w0, [x21, State.psq]
-            str  w0, [sp, EvalInfo.score]
+                ldr  w0, [x21, State.psq]
+               _lea  x4, Eval_Contempt
+                ldr  w4, [x4]
+                add  w0, w0, w4
+                str  w0, [sp, EvalInfo.score]
 
             ldr  x22, [x20, Pos.typeBB + 8*Queen]
             ldr  x23, [x20, Pos.typeBB + 8*Rook]
@@ -1557,6 +1574,8 @@ Evaluate:
             ldr  x2, [x6, x2, lsl 3]
             str  x0, [sp, EvalInfo.attackedBy + 8*(8*White + King)]
             str  x2, [sp, EvalInfo.attackedBy + 8*(8*Black + King)]
+
+            str  wzr, [sp, EvalInfo.mobilityDiff]
 
             ldr  x4, [x21, State.blockersForKing + 8*White]
             and  x0, x28, x4

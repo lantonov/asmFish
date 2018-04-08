@@ -212,8 +212,7 @@ ThreadPool_StartThinking:
             mov  w4, MIN_RESETCNT   ; check time asap
             str  w4, [x24, Thread.callsCnt]
             str  wzr, [x24, Thread.nmp_ply]
-            mov  w4, -1
-            str  w4, [x24, Thread.pair]
+            str  wzr, [x24, Thread.nmp_odd]
             add  x1, x24, Thread.rootPos
              bl  Position_CopyToSearch
 
@@ -300,8 +299,7 @@ end if
           mov32  w4, MAX_RESETCNT
             str  w4, [x26, Thread.callsCnt]
             str  wzr, [x26, Thread.nmp_ply]
-            mov  w4, -1
-            str  w4, [x26, Thread.pair]
+            str  wzr, [x26, Thread.nmp_odd]
 
             ldr  x0, [x26, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.table]
             ldr  x2, [x24, Thread.rootPos + Pos.rootMovesVec + RootMovesVec.table]
