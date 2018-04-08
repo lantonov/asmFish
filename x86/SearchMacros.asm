@@ -1,3 +1,4 @@
+RazorMargin = 590
 
 macro search RootNode, PvNode
 	; in:
@@ -294,10 +295,10 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 	    ; Step 6. Razoring (skipped	when in	check)
   if PvNode = 0
 		mov   edx, dword[.depth]
-		cmp   edx, 4*ONE_PLY
+		cmp   edx, 3*ONE_PLY
 		jge   .6skip
 		mov   ecx, dword[.evalu]
-		lea   eax, [ecx + 600]
+		lea   eax, [ecx + RazorMargin]
 		cmp   eax, dword[.alpha]
 		 jg   .6skip
     if USE_MATEFINDER =	1
@@ -314,7 +315,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 	       call   QSearch_NonPv_NoCheck
 		jmp   .Return
 .6b:
-		sub   ecx, 600
+		sub   ecx, RazorMargin
 		lea   edx, [rcx+1]
 		mov   esi, ecx
 	       call   QSearch_NonPv_NoCheck
