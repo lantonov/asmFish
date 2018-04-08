@@ -574,6 +574,8 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 	GetNextMove
 		mov   dword[.move], eax
 		mov   ecx, eax
+                mov   r13d, dword[.rbeta]
+        ; r13d = rbeta
 	       test   eax, eax
 		 jz   .9moveloop_done
 	       call   Move_IsLegal
@@ -598,21 +600,39 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		mov   ecx, dword[.move]
 		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__ProbCut
-		mov   ecx, dword[.rbeta]
-		mov   edi, ecx
-		neg   ecx
-		lea   edx, [rcx+1]
-		mov   r8d, dword[.depth]
-		sub   r8d, 4*ONE_PLY
-	      movzx   r9d, byte[.cutNode]
-		not   r9d
-	       call   Search_NonPv
-		neg   eax
-		mov   esi, eax
+
+                mov  edi, dword[.depth]
+                cmp  edi, 5 * ONE_PLY
+                 je  .9do_regular
+		mov  ecx, r13d
+		neg  ecx
+		lea  edx, [rcx+1]
+		mov  r8d, ONE_PLY
+	      movzx  r9d, byte[.cutNode]
+		not  r9d
+		mov  byte[rbx+State.skipEarlyPruning],	-1
+	       call  Search_NonPv
+		neg  eax
+                mov  esi, eax
+		mov  byte[rbx+State.skipEarlyPruning],	0
+                cmp  eax, r13d
+                 jl  .9after_search
+.9do_regular:
+		mov  ecx, r13d
+		neg  ecx
+		lea  edx, [rcx+1]
+		lea  r8d, [rdi - 4*ONE_PLY]
+	      movzx  r9d, byte[.cutNode]
+		not  r9d
+	       call  Search_NonPv
+		neg  eax
+                mov  esi, eax
+.9after_search:
+
 		mov   ecx, dword[.move]
 	       call   Move_Undo
 		mov   eax, esi
-		cmp   esi, edi
+		cmp   esi, r13d
 		 jl   .9moveloop
 		jmp   .Return
 
