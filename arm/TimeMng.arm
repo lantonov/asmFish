@@ -178,20 +178,15 @@ TimeMng_Init.move_importance:
 
         
 TimeMng_Init.XShift:
-        dd 858993459
-        dd 1078801203
+        dq 64.5
 TimeMng_Init.XScale:
-        dd 687194767
-        dd 1075744604
+        dq 6.85
 TimeMng_Init.mSkew:
-        dd 1133871366
-        dd -1077449589
+        dq -0.171
 TimeMng_Init.MaxRatio:
-        dd 4123168604
-        dd 1075600424
+        dq 7.3
 TimeMng_Init.StealRatio:
-        dd 1717986918
-        dd 1071015526
+        dq 0.34
 TimeMng_Init.mind:
         dd   0
         dd   1048576
