@@ -187,7 +187,7 @@ _stack_start rb 0
  killers	 rd 2
  moveCount	  rd 1
  staticEval	  rd 1
- history	  rd 1
+ statScore        rd 1
  ply		  rb 1
  skipEarlyPruning rb 1
 		  rb 2
@@ -209,9 +209,8 @@ _movepick_start rb 0
 _movepick_end rb 0
 ends
 
-; sizeof.State should be divisible by 16
-if (sizeof.State and 15)
- err
+if sizeof.State and 15
+ err "sizeof.State should be divisible by 16"
 end if
 
 

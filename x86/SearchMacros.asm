@@ -87,7 +87,6 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		mov   dword[.quietCount], eax
 		mov   dword[.captureCount], eax
 		mov   dword[rbx+State.moveCount], eax
-		mov   dword[rbx+State.history],	eax
 		mov   dword[.bestValue], -VALUE_INFINITE
 
 	      movzx   r12d, byte[rbx + State.ply]
@@ -163,6 +162,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		mov   qword[rbx+0*sizeof.State+State.counterMoves], rcx
 		mov   byte[rbx+1*sizeof.State+State.skipEarlyPruning], al
 		mov   qword[rbx+2*sizeof.State+State.killers], rax
+		mov   dword[rbx + 2*sizeof.State + State.statScore], eax
 
   if USE_SYZYGY	& RootNode = 0
 	; get a	count of the piece for tb
@@ -1142,7 +1142,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		add   rax, qword[rbp+Pos.history]
 		mov   eax, dword[rax+4*rcx]
 		sub   eax, 4000
-		mov   ecx, dword[rbx-2*sizeof.State+State.history]
+		mov   ecx, dword[rbx-2*sizeof.State+State.statScore]
 		add   eax, dword[r9+4*rdx]
 		add   eax, dword[r10+4*rdx]
 		add   eax, dword[r11+4*rdx]
@@ -1156,7 +1156,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		and   edx, eax
 		shr   edx, 31
 		add   edi, edx
-		mov   dword[rbx	- 1*sizeof.State + State.history], eax
+		mov   dword[rbx	- 1*sizeof.State + State.statScore], eax
 
 		cdq
 		mov   ecx, 20000
