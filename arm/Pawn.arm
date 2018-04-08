@@ -2,6 +2,7 @@ macro EvalPawns Us
 	; in  x20 address of Pos struct
 	;     x27 address of pawn table entry
         ;     x17 byte[x27, PawnEntry.weakUnopposed]
+        ;     x14 byte[x27, PawnEntry.asymmetry]
 	; out w26 score
   local Them, Up, Right, Left
   local Isolated0, Isolated1, Backward0, Backward1, Doubled
@@ -112,10 +113,6 @@ NextPiece:
             cbz  x9, Neighbours_False
 Neighbours_True:
             tst  x0, x24
-           _lea  x6, Lever
-            ldr  w4, [x6, x22, lsl 2]
-           csel  w0, w4, wzr, ne
-            add  w26, w26, w0
             bne  Neighbours_True__Lever_True
 Neighbours_True__Lever_False:
             orr  x0, x9, x10
@@ -145,12 +142,7 @@ Neighbours_True__Lever_False__RelRank_small:
               b  Continue
 
 Neighbours_False:
-            tst  x0, x24
-           _lea  x6, Lever
-            ldr  w4, [x6, x22, lsl 2]
-           csel  w0, w4, wzr, ne
-            add  w26, w26, w0
-          mov32  w2, -Isolated
+         _mov32  w2, -Isolated
             add  w12, w11, 1
               b  Continue
 
@@ -204,9 +196,12 @@ Continue:
             mov  x0, 1
             lsl  x0, x0, x1
             orr  x15, x15, x0
+        ; w2 is either 0, or 1 and will be added to byte[x27, PawnEntry.asymmetry]
+            mov  w2, 1
               b  Done
 NoPassed:
             add  w0, w1, Up
+            mov  w2, 0
             mov  x4, 1
             lsl  x4, x4, x0
             eor  x22, x22, x4
@@ -228,15 +223,18 @@ PopLoop:
            _lea  x6, PawnAttacks + 8*(64*Us)
             ldr  x9, [x6, x9, lsl 3]
             and  x9, x9, x24
-            sub  x2, x9, 1
-           ands  x2, x2, x9
+            sub  x11, x9, 1
+           ands  x11, x11, x9
            cset  w0, eq
+            orr  w2, w2, w0
             lsl  x0, x0, x1
             orr  x15, x15, x0
             sub  x0, x8, 1
             and  x8, x8, x0
            cbnz  x8, PopLoop
 Done:
+            add  w14, w14, w2
+
            ldrb  w1, [x25]
             cmp  w1, 64
             blo  NextPiece

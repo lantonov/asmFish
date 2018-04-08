@@ -1,9 +1,9 @@
 MoveHorizon = 50
-MaxRatio    = 7.09
-StealRatio  = 0.35
-XScale      = 7.64
-XShift      = 58.4
-mSkew       = -0.183
+MaxRatio    = 7.3
+StealRatio  = 0.34
+XScale      = 6.85
+XShift      = 64.5
+mSkew       = -0.171
 
 TimeMng_Init:
 	; in: ecx color us

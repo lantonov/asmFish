@@ -150,6 +150,7 @@ Init_BetweenBB_LineBB:
 
 Init_SquareDistance_DistanceRingBB:
            _lea  x16, SquareDistance
+           _lea  x19, SquareDistance_Cap5
            _lea  x17, DistanceRingBB
             mov  x15, 0
 .Next1:
@@ -165,8 +166,12 @@ Init_SquareDistance_DistanceRingBB:
           csneg  x2, x2, x2, pl
             cmp  x0, x2
            csel  x0, x0, x2, hi
+            mov  w2, 5
+            cmp  w2, w0
+           csel  w2, w0, w2, hi
             add  x4, x14, x15, lsl 6
            strb  w0, [x16, x4]
+           strb  w2, [x19, x4]
            subs  x0, x0, 1
            cset  x2, hs
             lsl  x2, x2, x14

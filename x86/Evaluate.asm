@@ -6,13 +6,13 @@ TrappedRook		= ( 92 shl 16) + (  0)
 WeakQueen		= ( 50 shl 16) + ( 10)
 CloseEnemies		= (  7 shl 16) + (  0)
 PawnlessFlank		= ( 20 shl 16) + ( 80)
-ThreatBySafePawn        = (192 shl 16) + (175)
+ThreatBySafePawn        = (175 shl 16) + (168)
 ThreatByRank		= ( 16 shl 16) + (  3)
-Hanging 		= ( 48 shl 16) + ( 27)
+Hanging                 = ( 52 shl 16) + ( 30)
 WeakUnopposedPawn       = (  5 shl 16) + ( 25)
-ThreatByPawnPush	= ( 38 shl 16) + ( 22)
-ThreatByAttackOnQueen   = ( 38 shl 16) + ( 22)
-HinderPassedPawn	= (  7 shl 16) + (  0)
+ThreatByPawnPush        = ( 47 shl 16) + ( 26)
+ThreatByAttackOnQueen   = ( 42 shl 16) + ( 21)
+HinderPassedPawn        = (  8 shl 16) + (  1)
 TrappedBishopA1H1       = ( 50 shl 16) + ( 50)
 
 LazyThreshold = 1500
@@ -233,6 +233,7 @@ NoKingRing:
                 mov   eax, dword[MobilityBonus + 4*r10]
              addsub   dword[.ei.mobilityDiff], eax
              addsub   esi, eax
+        ; r10 = mob
 
 		lea   eax, [8*r8]
 		movzx   eax, byte[SquareDistance+8*rax+r14]
@@ -358,40 +359,24 @@ NoEnemyPawnBonus:
 		jmp   NoTrappedByKing
 NoOpenFileBonus:
 
-		mov   ecx, r14d
-		and   ecx, 7
-		mov   eax, r8d
-		cmp   r10d, 4
-		jae   NoTrappedByKing
-		mov   edx, eax
-		and   eax, 7
-		sub   ecx, eax
-		sub   eax, 4
-		xor   ecx, eax
-		js   NoTrappedByKing
-		mov   ecx, r8d
-		and   ecx, 7
-		mov   edx, ecx
-		mov   eax, r14d
-		and   eax, 7
-		sub   ecx, eax
-		sub   ecx, 1
-		sar   ecx, 31
-		sub   edx, ecx
-		xor   eax, eax
-		bts   eax, edx
-		sub   eax, 1
-		xor   eax, ecx
-		test   al, byte[rdi+PawnEntry.semiopenFiles+1*Us]
-		jnz   NoTrappedByKing
-		movzx   eax, byte[rbx+State.castlingRights]
-		and   eax, 3 shl (2*Us)
-		setz   al
-		add   eax, 1
-		imul   r10d, 22*65536
-		sub   r10d, TrappedRook
-		imul   r10d, eax
-		addsub   esi, r10d
+		mov  eax, r14d
+		and  eax, 7
+                mov  edx, r8d
+                and  edx, 7
+                sub  eax, edx
+                sub  edx, 4
+                cmp  r10d, 4
+                jae  NoTrappedByKing
+                xor  eax, edx
+                 js  NoTrappedByKing
+              movzx  eax, byte[rbx+State.castlingRights]
+                and  eax, 3 shl (2*Us)
+               setz  al
+                add  eax, 1
+               imul  r10d, 22*65536
+                sub  r10d, TrappedRook
+               imul  r10d, eax
+             addsub  esi, r10d
 NoTrappedByKing:
 
   else if Pt = Queen
@@ -871,8 +856,8 @@ macro EvalThreats Us
   local ThreatMinorLoop, ThreatMinorDone, ThreatRookLoop, ThreatRookDone
   local ThreatMinorSkipPawn, ThreatRookSkipPawn
 
-	ThreatByKing0	= (( 3 shl 16) + ( 62))
-	ThreatByKing1	= (( 9 shl 16) + (138))
+        ThreatByKing0 = (( 3 shl 16) + ( 65))
+        ThreatByKing1 = (( 9 shl 16) + (145))
 
   if Us	= White
 	;addsub		equ add
@@ -1152,7 +1137,7 @@ NextPawn:
   if Us = Black
 		xor   ecx, 7
   end if
-	; ecx = r+1
+	; ecx = r
 		mov   esi, dword[PassedRank+4*rcx]
 	; esi = (mbonus, ebonus)
 
@@ -1166,11 +1151,9 @@ NextPawn:
 		imul   eax, HinderPassedPawn
 		subadd   dword[.ei.score], eax
 
-		lea   edi, [rcx-2]
-		sub   ecx, 1
-		imul   edi, ecx
+                mov  edi, dword[RankFactor + 4*rcx]
 	; ecx = r
-	; edi = rr = r*(r-1)
+        ; edi = RankFactor[r]
 
 
   if Us = White
@@ -1180,10 +1163,8 @@ NextPawn:
 		cmp   r8d, SQ_A6+Up
 		jae   Continue
   end if
-	; at this point rr!=0
+	; at this point edi!=0
 
-
-	; ecx is free because s = r8-Up
 	s equ (r8-Up)
 
 		movzx   eax, byte[rbp+Pos.pieceList+16*(8*Them+King)]
@@ -1191,9 +1172,9 @@ NextPawn:
 		shl   eax, 6
 		shl   edx, 6
 		xor   r10d, r10d
-		movzx   r11d, byte[SquareDistance+rdx+r8+Up]
-		movzx   eax, byte[SquareDistance+rax+r8]
-		movzx   edx, byte[SquareDistance+rdx+r8]
+		movzx   r11d, byte[SquareDistance_Cap5+rdx+r8+Up]
+		movzx   eax, byte[SquareDistance_Cap5+rax+r8]
+		movzx   edx, byte[SquareDistance_Cap5+rdx+r8]
 		lea   eax, [5*rax]
   if Us = White
 		cmp   r8d, SQ_A7+Up
@@ -1204,7 +1185,7 @@ NextPawn:
   end if
 		lea   edx, [2*rdx+r10]
 		sub   eax, edx
-		imul   eax, edi
+               imul  eax, edi
 		add   esi, eax
 
 		mov   r10, qword[ForwardBB+8*(64*Us+s)]
@@ -1223,37 +1204,38 @@ NextPawn:
 		and   rcx, qword[ForwardBB+8*(64*Them+s)]
 		and   rax, rcx
 
-		or   rcx, -1
-		test   PiecesUs, rax
-		cmovz   rcx, AttackedByUs
-		and   r10, rcx
+                 or  rcx, -1
+               test  PiecesThem, rax
+              cmovz  rcx, AttackedByThem
+                 or  rcx, PiecesThem
+                and  r11, rcx
+        ; r11 = unsafeSquares
+                 or  rcx, -1
+               test  PiecesUs, rax
+              cmovz  rcx, AttackedByUs
+                and  r10, rcx
+        ; r10 = defendedSquares
 
-		or   rcx, -1
-		test   PiecesThem, rax
-		cmovz   rcx, AttackedByThem
-		or   rcx, PiecesThem
-		and   r11, rcx
-
-		bt   r11, r8
-		sbb   eax, eax
-		neg   r11
-		sbb   edx, edx
-		lea   edx, [5*rdx]
-		lea   eax, [rdx+4*rax+9]
-	; eax = k/2
-		xor   edx, edx
-		bt   r10, r8
-		adc   edx, edx
-		xor   r10, qword[ForwardBB+8*(64*Us+s)]
-		cmp   r10, 1
-		adc   edx, edx
-		add   eax, edx
-	; eax = k/2
-		add   edi, edi
-		imul   eax, edi
+                xor  eax, eax
+                 bt  r11, r8
+                mov  edx, 9
+	     cmovnc  eax, edx
+               test  r11, r11
+                mov  edx, 20
+              cmovz  eax, edx
+	; eax = k
+                xor  edx, edx
+                 bt  r10, r8
+                adc  edx, edx
+                xor  r10, qword[ForwardBB+8*(64*Us+s)]
+                cmp  r10, 1
+                adc  edx, edx
+                lea  eax, [rax + 2*rdx]
+	; eax = k
+               imul  eax, edi
 AddToBonus:
-		imul   eax, 0x00010001
-		add   esi, eax
+               imul  eax, 0x00010001
+                add  esi, eax
 
 Continue:		
 	; r8d = blockSq
@@ -1404,6 +1386,7 @@ end virtual
 		calign   16
 .DoPawnEval:
 		mov   byte[rdi + PawnEntry.weakUnopposed], 0
+                mov   byte[rdi+PawnEntry.asymmetry], 0
 		mov   qword[rbp+Pos.state], rbx
 		EvalPawns   White
 		mov   dword[rdi+PawnEntry.score], esi
@@ -1421,7 +1404,7 @@ end virtual
 		_popcnt   rdx, rdx, r9
 		mov   qword[rdi+PawnEntry.key], r8
 		mov   dword[rdi+PawnEntry.score], eax
-		mov   byte[rdi+PawnEntry.asymmetry], cl
+		add   byte[rdi+PawnEntry.asymmetry], cl
 		mov   byte[rdi+PawnEntry.openFiles], dl
 		jmp   Evaluate.DoPawnEvalReturn
 
@@ -1438,7 +1421,6 @@ end virtual
 		sar   eax, 1	     ;
 		xor   eax, ecx
 		sub   eax, ecx
-		add   eax, Eval_Tempo
 Display 2, "Lazy Eval returning %i0%n"
 		add   rsp, sizeof.EvalInfo
 		pop   r15 r14 r13 r12 rdi rsi rbx
@@ -1838,7 +1820,6 @@ HaveSpecializedEval:
 		mov   eax, dword[EndgameEval_FxnTable+4*rax]
 		and   ecx, 1
 		call   rax
-		add   eax, Eval_Tempo
 Display 2, "Special Eval returned %i0%n"
 		add   rsp, sizeof.EvalInfo
 		pop   r15 r14 r13 r12 rdi rsi rbx

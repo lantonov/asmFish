@@ -1,3 +1,5 @@
+RazorMargin = 590
+
 macro Search PvNode, RootNode
   if RootNode = 1 & PvNode = 0
     err 'bad params to search'
@@ -68,7 +70,6 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             str  w0, [sp, .quietCount]
             str  wzr, [sp, .captureCount]
             str  w0, [x21, State.moveCount]
-            str  w0, [x21, State.history]
             mov  w4, -VALUE_INFINITE
             str  w4, [sp, .bestValue]
            ldrb  w22, [x21, State.ply]
@@ -141,6 +142,8 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             str  x1, [x21, 0*sizeof.State + State.counterMoves]
            strb  w0, [x21, 1*sizeof.State + State.skipEarlyPruning]
             str  x0, [x21, 2*sizeof.State + State.killers]
+            str  w0, [x21, 2*sizeof.State + State.statScore]
+
   if USE_SYZYGY = 1 & RootNode = 0
             ldr  x0, [x20, Pos.typeBB+8*White]
             ldr  x4, [x20, Pos.typeBB+8*Black]
@@ -271,12 +274,12 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
     ; Step 6. Razoring (skipped when in check)
   if PvNode = 0
             ldr  w2, [sp, .depth]
-            cmp  w2, 4*ONE_PLY
-            bge  .6skip
-            ldr  w1, [sp, .evalu]
-            add  w0, w1, 600
-            ldr  w4, [sp, .alpha]
-            cmp  w0, w4
+            cmp  w2, 1*ONE_PLY
+            bgt  .6skip
+            ldr  w4, [sp, .evalu]
+            add  w0, w4, RazorMargin
+            ldr  w1, [sp, .alpha]
+            cmp  w0, w1
             bgt  .6skip
     if USE_MATEFINDER = 1
             mov  w4, 2*VALUE_KNOWN_WIN - 1
@@ -285,21 +288,11 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             cmp  w0, w4
             bhs  .6skip
     end if
-            ldr  w1, [sp, .alpha]
+            ;ldr  w1, [sp, .alpha] is already here
+            add  w2, w1, 1
             mov  w8, 0
-            cmp  w2, ONE_PLY
-            bgt  .6b
-.6a:
-            ldr  w2, [sp, .beta]
              bl  QSearch_NonPv_NoCheck
               b  .Return
-.6b:
-            sub  w1, w1, 600
-            add  w2, w1, 1
-            mov  w26, w1
-             bl  QSearch_NonPv_NoCheck
-            cmp  w0, w26
-            ble  .Return
 .6skip:
   end if
     ; Step 7. Futility pruning: child node (skipped when in check)
@@ -566,6 +559,8 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
     GetNextMove
             str  w0, [sp, .move]
             mov  w1, w0
+            ldr  w23, [sp, .rbeta]
+        ; w23 = rbeta
             cbz  w0, .9moveloop_done
              bl  Move_IsLegal
             cbz  w0, .9moveloop
@@ -584,23 +579,38 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             ldr  w1, [sp, .move]
            strb  w0, [x21, State.givesCheck]
              bl  Move_Do__ProbCut
-            ldr  w1, [sp, .rbeta]
-            mov  w27, w1
-            neg  w1, w1
-            add  w2, w1, 1
-            ldr  w8, [sp, .depth]
-            sub  w8, w8, 4*ONE_PLY
-           ldrb  w9, [sp, .cutNode]
-            mvn  w9, w9
-             bl  Search_NonPv
-            neg  w0, w0
-            mov  w26, w0
-            ldr  w1, [sp, .move]
-             bl  Move_Undo
-            mov  w0, w26
-            cmp  w26, w27
-            blt  .9moveloop
-              b  .Return
+
+                ldr  w27, [sp, .depth]
+                cmp  w27, 5 * ONE_PLY
+                beq  .9do_regular
+                neg  w1, w23
+                add  w2, w1, 1
+                mov  w8, ONE_PLY
+               ldrb  w9, [sp, .cutNode]
+                mvn  w9, w9
+                mov  w4, -1
+               strb  w4, [x21, State.skipEarlyPruning]
+                 bl  Search_NonPv
+                neg  w26, w0
+               strb  wzr, [x21, State.skipEarlyPruning]
+                cmp  w26, w23
+                blt  .9after_search
+.9do_regular:
+                neg  w1, w23
+                add  w2, w1, 1
+                sub  w8, w27, 4*ONE_PLY
+               ldrb  w9, [sp, .cutNode]
+                mvn  w9, w9
+                 bl  Search_NonPv
+                neg  w26, w0
+.9after_search:
+
+                ldr  w1, [sp, .move]
+                 bl  Move_Undo
+                mov  w0, w26
+                cmp  w26, w23
+                blt  .9moveloop
+                  b  .Return
 .9moveloop_done:
 .9skip:
   end if
@@ -1138,7 +1148,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             ldr  w0, [x0, x1, lsl 2]
             sub  w0, w0, 4000
             add  x6, x21, -2*sizeof.State
-            ldr  w1, [x6, State.history]
+            ldr  w1, [x6, State.statScore]
             ldr  w4, [x9, x2, lsl 2]
             add  w0, w0, w4
             ldr  w4, [x10, x2, lsl 2]
@@ -1151,7 +1161,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             sub  w27, w27, w1, lsr 31
             and  w2, w2, w0
             add  w27, w27, w2, lsr 31
-            str  w0, [x21, -1*sizeof.State + State.history]
+            str  w0, [x21, -1*sizeof.State + State.statScore]
 
             mov  w1, 20000
            sdiv  w0, w0, w1

@@ -64,6 +64,23 @@ end virtual
 	      cmova   eax, ecx
 		mov   dword[.multiPV], eax
 
+        ; set initial contemp
+               imul  eax, dword[options.contempt], PawnValueEg
+                mov  ecx, 100
+                cdq
+               idiv  ecx
+                mov  ecx, eax
+                cdq
+                sub  eax, edx
+                sar  eax, 1
+                shl  ecx, 16
+                add  ecx, eax
+                mov  eax, dword[rbp+Pos.sideToMove]
+                neg  eax
+                xor  ecx, eax
+                sub  ecx, eax
+                mov  dword[Eval_Contempt], ecx
+
 	; id loop
 		mov   r15d, dword[rbp-Thread.rootPos+Thread.rootDepth]	 ; this should be set to 0 by ThreadPool_StartThinking
 .id_loop:
@@ -109,7 +126,7 @@ end virtual
 .age_out:
 	; Age out PV variability metric
 	    _vmovsd   xmm0, qword[rbp-Thread.rootPos+Thread.bestMoveChanges]
-	    _vmulsd   xmm0, xmm0, qword[constd._0p505]
+	    _vmulsd   xmm0, xmm0, qword[constd._0p517]
 		mov   byte[rbp-Thread.rootPos+Thread.failedLow], 0
 	    _vmovsd   qword[rbp-Thread.rootPos+Thread.bestMoveChanges], xmm0
 
@@ -174,6 +191,33 @@ end if
 	      cmovg   eax, ecx
 		mov   dword[.beta], eax
 		mov   dword[.delta], edx
+
+        ; Adjust contempt based on current situation
+                mov  eax, dword[.bestValue]
+                mov  ecx, 10
+                cdq
+               idiv  ecx
+        ClampSigned  eax, -50, 50
+                mov  r8d, eax
+
+               imul  eax, dword[options.contempt], PawnValueEg
+                mov  ecx, 100
+                cdq
+               idiv  ecx
+                add  eax, r8d
+
+                mov  ecx, eax
+                cdq
+                sub  eax, edx
+                sar  eax, 1
+                shl  ecx, 16
+                add  ecx, eax
+                mov  eax, dword[rbp+Pos.sideToMove]
+                neg  eax
+                xor  ecx, eax
+                sub  ecx, eax
+                mov  dword[Eval_Contempt], ecx
+
     .reset_window_done:
 
 	; Start with a small aspiration window and, in the case of a fail high/low,
@@ -340,59 +384,40 @@ end if
 	       call   Os_GetTime
 		sub   rax, qword[time.startTime]
 		mov   qword[.elapsed], rax
-
-            xor  r10d, r10d
-           test  r12d, r12d     ; cmp  r12d, VALUE_DRAW
-            jne  @1f
-	    mov  edx, dword[rbp + Pos.sideToMove]
-            mov  ecx, dword[limits.time + 4*rdx]
-            sub  ecx, eax
-            xor  edx, 1
-            cmp  ecx, dword[limits.time + 4*rdx]
-            jle  @1f
-           call  PvIsDraw
-            mov  r10d, eax
-    @1:
-            mov  r11, qword[.elapsed]
-    ; r10d = thinkHard
-	; r11 = Time.elapsed()
+                mov  r11, rax
+        ; r11 = Time.elapsed()
 
 		xor   eax, eax
 		cmp   al, byte[rbp-Thread.rootPos+Thread.failedLow]
 	      setne   al
 	       imul   eax, 119
-		add   eax, 357
+		add   eax, 306
 		mov   ecx, r12d
 		sub   ecx, dword[rbp-Thread.rootPos+Thread.previousScore]
 	       imul   ecx, 6
 		sub   eax, ecx
-		mov   edx, 229
+		mov   edx, 246
 		cmp   eax, edx
 	      cmovl   eax, edx
-		mov   edx, 715
+		mov   edx, 832
 		cmp   eax, edx
 	      cmovg   eax, edx
 	 _vcvtsi2sd   xmm3, xmm3, eax
 	; xmm3 = improvingFactor
 
-        _vmovsd  xmm0, qword[rbp - Thread.rootPos + Thread.bestMoveChanges]
-            lea  r9d, [r10d + 1]
-     _vcvtsi2sd  xmm2, xmm2, r9d
-        _vaddsd  xmm2, xmm2, xmm0
+        _vmovsd  xmm2, qword[rbp - Thread.rootPos + Thread.bestMoveChanges]
+        _vaddsd  xmm2, xmm2, qword[constd._1p0]
 	; xmm2 = unstablePvFactor
 
         _vmovsd  xmm0, qword[constd._1p0]
             mov  ecx, dword[.lastBestMoveDepth]
-           test  r10d, r10d
-            jnz  @2f
   iterate i, 3, 4, 5
             lea  eax, [i*rcx]
             cmp  eax, r15d
             jge  @1f
-        _vmulsd  xmm0, xmm0, qword[constd._1p3]
+        _vmulsd  xmm0, xmm0, qword[constd._1p25]
     @1:
   end iterate
-    @2:
         _vmovsd  xmm4, qword[rbp - Thread.rootPos + Thread.previousTimeReduction]
        _vsqrtsd  xmm4, xmm4, xmm4
         _vdivsd  xmm4, xmm4, xmm0
@@ -402,7 +427,7 @@ end if
             mov  r8, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
 	    _vmulsd  xmm2, xmm2, xmm3
 	 _vcvtsi2sd  xmm0, xmm0, r11d
-	    _vmulsd  xmm0, xmm0, qword[constd._628p0]
+	    _vmulsd  xmm0, xmm0, qword[constd._581p0]
 	 _vcvtsi2sd  xmm1, xmm1, dword[time.optimumTime]
 	    _vmulsd  xmm1, xmm1, xmm2
             add  r8, sizeof.RootMove
@@ -431,60 +456,62 @@ end if
 		ret
 
 
-
+if 0
 PvIsDraw:
-           push  rsi rdi r15
-            mov  rdi, qword[rbp + Pos.rootMovesVec + RootMovesVec.table]
-            mov  r15d, dword[rdi + RootMove.pvSize]
+    ; out: eax boole 0 or 1
+               push  rsi rdi r15
+                mov  rdi, qword[rbp + Pos.rootMovesVec + RootMovesVec.table]
+                mov  r15d, dword[rdi + RootMove.pvSize]
 
-             or  esi, -1
+                 or  esi, -1
 .do_loop:
-            add  esi, 1
-            cmp  esi, r15d
-            jae  .do_done
-            mov  ecx, dword[rdi + RootMove.pv + 4*rsi]
-	       call  Move_GivesCheck
-            mov  ecx, dword[rdi + RootMove.pv + 4*rsi]
-            mov  byte[rbx+State.givesCheck], al
-	       call  Move_Do__Tablebase_ProbeAB
-            jmp  .do_loop
+                add  esi, 1
+                cmp  esi, r15d
+                jae  .do_done
+                mov  ecx, dword[rdi + RootMove.pv + 4*rsi]
+               call  Move_GivesCheck
+                mov  ecx, dword[rdi + RootMove.pv + 4*rsi]
+                mov  byte[rbx+State.givesCheck], al
+               call  Move_Do__Tablebase_ProbeAB
+                jmp  .do_loop
 .do_done:
-            mov  eax, r15d
-           call  _PosIsDraw
+                mov  eax, r15d
+               call  _PosIsDraw
 
-            mov  esi, r15d
-            mov  r15d, eax
+                mov  esi, r15d
+                mov  r15d, eax
 .undo_loop:
-            sub  esi, 1
-             js  .undo_done
-            mov  ecx, dword[rdi + RootMove.pv + 4*rsi]
-	       call  Move_Undo
-            jmp  .undo_loop
+                sub  esi, 1
+                 js  .undo_done
+                mov  ecx, dword[rdi + RootMove.pv + 4*rsi]
+               call  Move_Undo
+                jmp  .undo_loop
 .undo_done:
-            mov  eax, r15d
-            pop  r15 rdi rsi
-            ret
-
+                mov  eax, r15d
+                pop  r15 rdi rsi
+                ret
 
 _PosIsDraw:
     ; in : eax ply
     ; out: eax boole
-           push  rdi
-          movzx  edx,  word[rbx+State.rule50]
-          movzx  ecx,  word[rbx+State.pliesFromNull]
-            mov  r8, qword[rbx+State.key]
-      PosIsDraw  .yes_draw, .cold, .coldreturn
+               push  rdi
+              movzx  edx,  word[rbx+State.rule50]
+              movzx  ecx,  word[rbx+State.pliesFromNull]
+                mov  r8, qword[rbx+State.key]
+          PosIsDraw  .yes_draw, .cold, .coldreturn
 .no_draw:
-            xor  eax, eax
-            pop  rdi
-            ret
+                xor  eax, eax
+                pop  rdi
+                ret
 .yes_draw:
-            mov  eax, 1
-            pop  rdi
-            ret
+                mov  eax, 1
+                pop  rdi
+                ret
 
 .cold:
  PosIsDraw_Cold  .yes_draw, .coldreturn
+
+end if
 
 
 MainThread_Think:
@@ -498,33 +525,6 @@ MainThread_Think:
 		mov   edx, dword[rbp+Pos.gamePly]
 	       call   TimeMng_Init
 
-		mov   eax, dword[options.contempt]
-		cdq
-		imul  eax, PawnValueEg  ; options.contempt * PawnValueEg ---> [edx:eax]
-		mov   ecx, 100 
-		idiv  ecx               ; [edx:eax]/100 -->  EAX gets quotient, EDX gets remainder.
-		                        ; eax holds contempt value (ignore remainder in edx)
-		                        ; Next, we construct mg/eg contempt score
-		mov   ecx,eax           ; ecx represents mg value now (i.e., the contempt value just calculated)
-
-
-;		shr   eax, 1            ; contempt / 2 => weaken the contempt for the endgame (eg value)
-                cdq             ; this 
-                sub  eax, edx   ; divides eax by 2
-                sar  eax, 1     ; as a SIGNED dword
-
-		shl   ecx, 16           ; move mg contempt into upper 16 bits (this is opposite to current master)
-		add   ecx, eax          ; layer in eg value to get overall "Score"
-
-		mov   eax, dword[rbp+Pos.sideToMove]
-		test  eax, eax ;
-		jz   .save_contempt_score ; if white, save score as it currently is
-		
-		; black contempt scoring requires we negate the score first before saving it in ContemptScore
-		neg   ecx
-		
-.save_contempt_score:
-                mov   dword[Eval_Contempt], ecx
 		add   byte[mainHash.date], 4
 
 if USE_WEAKNESS

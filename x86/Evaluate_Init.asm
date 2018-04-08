@@ -20,11 +20,6 @@ Evaluate_Init:
 		mov   ecx, 28
 	  rep movsd
 
-		lea   rsi, [.Lever]
-		lea   rdi, [Lever]
-		mov   ecx, 8
-	  rep movsd
-
 		lea   rsi, [.ShelterWeakness]
 		lea   rdi, [ShelterWeakness]
 		mov   ecx, 2*8*8
@@ -66,6 +61,11 @@ Evaluate_Init:
                 xor  ecx,ecx
                 mov  dword[Eval_Contempt], ecx  ; akin to StockFish's: "Score Eval::Contempt = SCORE_ZERO;"
 
+                lea  rsi, [.RankFactor]
+                lea  rdi, [RankFactor]
+                mov  ecx, 8
+          rep movsd
+
 		lea   rdi, [KingFlank]
 		mov   rax, (FileABB or FileBBB or FileCBB or FileDBB)
 	      stosq
@@ -88,6 +88,8 @@ Evaluate_Init:
 
 
              calign   4
+.RankFactor:
+ dd 0, 0, 0, 2, 7, 12, 19, 0
 
 .MobilityBonus_Knight:
  dd (-75 shl 16) + (-76)
@@ -163,16 +165,6 @@ Evaluate_Init:
  dd (113 shl 16) + (206)
  dd (116 shl 16) + (212)
 
-.Lever:
- dd (0 shl 16) + (0)
- dd (0 shl 16) + (0)
- dd (0 shl 16) + (0)
- dd (0 shl 16) + (0)
- dd (17 shl 16) + (16)
- dd (33 shl 16) + (32)
- dd (0 shl 16) + (0)
- dd (0 shl 16) + (0)
-
 
 .Doubled:
  dd (0 shl 16) + (0)
@@ -189,24 +181,24 @@ Evaluate_Init:
 ; to avoid an anoying min(f,FILE_H-f) in ShelterStorm
 .ShelterWeakness:
 .ShelterWeakness_No:
- dd  97,  17,   9,  44,  84,  87,  99, 0
- dd 106,   6,  33,  86,  87, 104, 112, 0
- dd 101,   2,  65,  98,  58,  89, 115, 0
- dd  73,   7,  54,  73,  84,  83, 111, 0
- dd  73,   7,  54,  73,  84,  83, 111, 0
- dd 101,   2,  65,  98,  58,  89, 115, 0
- dd 106,   6,  33,  86,  87, 104, 112, 0
- dd  97,  17,   9,  44,  84,  87,  99, 0
+ dd  98, 20, 11, 42,  83,  84, 101, 0
+ dd 103,  8, 33, 86,  87, 105, 113, 0
+ dd 100,  2, 65, 95,  59,  89, 115, 0
+ dd  72,  6, 52, 74,  83,  84, 112, 0
+ dd  72,  6, 52, 74,  83,  84, 112, 0
+ dd 100,  2, 65, 95,  59,  89, 115, 0
+ dd 103,  8, 33, 86,  87, 105, 113, 0
+ dd  98, 20, 11, 42,  83,  84, 101, 0
 
 .ShelterWeakness_Yes:
- dd 104,  20,   6,  27,  86,  93,  82, 0
- dd 123,   9,  34,  96, 112,  88,  75, 0
- dd 120,  25,  65,  91,  66,  78, 117, 0
- dd  81,   2,  47,  63,  94,  93, 104, 0
- dd  81,   2,  47,  63,  94,  93, 104, 0
- dd 120,  25,  65,  91,  66,  78, 117, 0
- dd 123,   9,  34,  96, 112,  88,  75, 0
- dd 104,  20,   6,  27,  86,  93,  82, 0
+ dd 105, 19,  3, 27,  85,  93,  84, 0
+ dd 121,  7, 33, 95, 112,  86,  72, 0
+ dd 121, 26, 65, 90,  65,  76, 117, 0
+ dd  79,  0, 45, 65,  94,  92, 105, 0
+ dd  79,  0, 45, 65,  94,  92, 105, 0
+ dd 121, 26, 65, 90,  65,  76, 117, 0
+ dd 121,  7, 33, 95, 112,  86,  72, 0
+ dd 105, 19,  3, 27,  85,  93,  84, 0
 
 .StormDanger:
  dd 4,	 73, 132, 46, 31 ,  0,0,0
@@ -249,21 +241,21 @@ Evaluate_Init:
 .Threat_Minor:
  dd (0 shl 16) + (0)
  dd (0 shl 16) + (0)
- dd (0 shl 16) + (33)
- dd (45 shl 16) + (43)
- dd (46 shl 16) + (47)
- dd (72 shl 16) + (107)
- dd (48 shl 16) + (118)
+ dd (0 shl 16) + (31)
+ dd (39 shl 16) + (42)
+ dd (57 shl 16) + (44)
+ dd (68 shl 16) + (112)
+ dd (47 shl 16) + (120)
  dd (0 shl 16) + (0)
 
 .Threat_Rook:
  dd (0 shl 16) + (0)
  dd (0 shl 16) + (0)
- dd (0 shl 16) + (25)
- dd (40 shl 16) + (62)
- dd (40 shl 16) + (59)
- dd (0 shl 16) + (34)
- dd (35 shl 16) + (48)
+ dd (0 shl 16) + (24)
+ dd (38 shl 16) + (71)
+ dd (38 shl 16) + (61)
+ dd (0 shl 16) + (38)
+ dd (36 shl 16) + (38)
  dd (0 shl 16) + (0)
 
 
@@ -282,11 +274,11 @@ Evaluate_Init:
 .PassedRank:
  dd 0
  dd (5 shl 16) + (7)
- dd (5 shl 16) + (14)
- dd (31 shl 16) + (38)
- dd (73 shl 16) + (73)
- dd (166 shl 16) + (166)
- dd (252 shl 16) + (252)
+ dd (5 shl 16) + (13)
+ dd (32 shl 16) + (42)
+ dd (70 shl 16) + (70)
+ dd (172 shl 16) + (170)
+ dd (217 shl 16) + (269)
  dd 0
 
 

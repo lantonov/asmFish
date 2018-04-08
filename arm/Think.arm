@@ -68,6 +68,24 @@ end virtual
            csel  w0, w1, w0, hi
             str  w0, [sp, .multiPV]
 
+        ; set initial contemp
+               _lea  x6, options
+                ldr  w0, [x6, Options.contempt]
+                mov  w1, PawnValueEg
+                mul  w0, w0, w1
+                mov  w1, 100
+               sdiv  w0, w0, w1
+                mov  w1, 2
+               sdiv  w1, w0, w1
+                add  w0, w1, w0, lsl 16
+                neg  w1, w0
+                ldr  w4, [x20, Pos.sideToMove]
+                tst  w4, w4
+               csel  w0, w1, w0, ne
+               _lea  x6, Eval_Contempt
+                str  w0, [x6]
+
+
             add  x6, x20, -Thread.rootPos + Thread.rootDepth
            ldar  w25, [x6]
 .id_loop:
@@ -115,7 +133,7 @@ end virtual
     ; Age out PV variability metric
             add  x6, x20, -Thread.rootPos
             ldr  d0, [x6, Thread.bestMoveChanges]
-           _lea  x4, constd._0p505
+           _lea  x4, constd._0p517
             ldr  d1, [x4]
            fmul  d0, d0, d1
            strb  wzr, [x6, Thread.failedLow]
@@ -182,6 +200,32 @@ end if
            csel  w0, w1, w0, gt
             str  w0, [sp, .beta]
             str  w2, [sp, .delta]
+
+                ldr  w0, [sp, .bestValue]
+                mov  w1, 10
+               sdiv  w8, w0, w1
+                mov  w4, -50
+                mov  w5, 50
+        ClampSigned  w8, w4, w5
+
+               _lea  x6, options
+                ldr  w0, [x6, Options.contempt]
+                mov  w1, PawnValueEg
+                mul  w0, w0, w1
+                mov  w1, 100
+               sdiv  w0, w0, w1
+                add  w0, w0, w8
+
+                mov  w1, 2
+               sdiv  w1, w0, w1
+                add  w0, w1, w0, lsl 16
+                neg  w1, w0
+                ldr  w4, [x20, Pos.sideToMove]
+                tst  w4, w4
+               csel  w0, w1, w0, ne
+               _lea  x6, Eval_Contempt
+                str  w0, [x6]
+
 
 .reset_window_done:
     ; Start with a small aspiration window and, in the case of a fail high/low,
@@ -372,24 +416,8 @@ end if
              bl  Os_GetTime
            _lea  x6, time
             ldr  x4, [x6, Time.startTime]
-            sub  x0, x0, x4
-            str  x0, [sp, .elapsed]
-
-            mov  w10, 0
-            ldr  w2, [x20, Pos.sideToMove]
-           cbnz  w22, @1f
-           _lea  x6, limits + Limits.time
-            ldr  w1, [x6, x2, lsl 2]
-            sub  w1, w1, w0
-            eor  w2, w2, 1
-            ldr  w4, [x6, x2, lsl 2]
-            cmp  w1, w4
-            ble  @1f
-             bl  PvIsDraw
-            mov  w10, w0
-    @1:
-            ldr  x11, [sp, .elapsed]
-    ; r10 = thinkHard
+            sub  x11, x0, x4
+            str  x11, [sp, .elapsed]
     ; r11 = Time.elapsed()
 
             add  x7, x20, -Thread.rootPos
@@ -397,15 +425,15 @@ end if
             mov  w5, 119
             tst  w4, w4
            csel  w0, w5, wzr, ne
-            add  w0, w0, 357
+            add  w0, w0, 306
             ldr  w4, [x7, Thread.previousScore]
             sub  w1, w22, w4
             add  w1, w1, w1, lsl 1
             sub  w0, w0, w1, lsl 1
-            mov  w2, 229
+            mov  w2, 246
             cmp  w0, w2
            csel  w0, w2, w0, lt
-            mov  w2, 715
+            mov  w2, 832
             cmp  w0, w2
            csel  w0, w2, w0, gt
           scvtf  d3, w0
@@ -413,26 +441,23 @@ end if
 
 
             add  x6, x20, -Thread.rootPos
-            ldr  d0, [x6, Thread.bestMoveChanges]
-            add  w9, w10, 1
-          scvtf  d2, w9
+            ldr  d2, [x6, Thread.bestMoveChanges]
+           fmov  d0, 1.0
            fadd  d2, d2, d0
 ; d2 = unstablePvFactor
 
-           fmov  d0, 1.0
+           ;fmov  d0, 1.0       its already 1.0
             ldr  w1, [sp, .lastBestMoveDepth]
-           cbnz  w10, @2f
   iterate i, 3, 4, 5
             mov  w4, i
             mul  w0, w4, w1
             cmp  w0, w25
             bge  @1f
-           _lea  x6, constd._1p3
+           _lea  x6, constd._1p25       ; TODO: 1.25 can probably be loaded directly
             ldr  d6, [x6]
            fmul  d0, d0, d6
     @1:
   end iterate
-    @2:
             add  x7, x20, -Thread.rootPos
             ldr  d4, [x7, Thread.previousTimeReduction]
           fsqrt  d4, d4
@@ -443,7 +468,7 @@ end if
             ldr  x8, [x20, Pos.rootMovesVec + RootMovesVec.table]
            fmul  d2, d2, d3
           ucvtf  d0, w11
-           _lea  x6, constd._628p0
+           _lea  x6, constd._581p0
             ldr  d4, [x6]
            fmul  d0, d0, d4
            _lea  x6, time
@@ -481,7 +506,7 @@ end if
             ldp  x20, x30, [sp], 16
             ret
 
-
+if 0
 PvIsDraw:
             stp  x26, x27, [sp, -16]!
             stp  x25, x30, [sp, -16]!
@@ -540,7 +565,7 @@ _PosIsDraw:
             ret
 .cold:
  PosIsDraw_Cold  .yes_draw, .coldreturn
-
+end if
 
 MainThread_Think:
     ; in: x1 address of Thread struct   should be mainThread
@@ -555,22 +580,6 @@ MainThread_Think:
             ldr  w1, [x20, Pos.sideToMove]
             ldr  w2, [x20, Pos.gamePly]
              bl  TimeMng_Init
-
-               _lea  x6, options
-                ldr  w0, [x6, Options.contempt]
-                mov  w1, PawnValueEg
-                mul  w0, w0, w1
-                mov  w1, 100
-               sdiv  w0, w0, w1
-                mov  w1, 2
-               sdiv  w1, w0, w1
-                add  w0, w1, w0, lsl 16
-                neg  w1, w0
-                ldr  w4, [x20, Pos.sideToMove]
-                tst  w4, w4
-               csel  w0, w1, w0, ne
-               _lea  x6, Eval_Contempt
-                str  w0, [x6]
 
                _lea  x6, mainHash
                 ldr  w4, [x6, MainHash.date]

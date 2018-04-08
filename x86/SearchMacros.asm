@@ -1,3 +1,4 @@
+RazorMargin = 590
 
 macro search RootNode, PvNode
 	; in:
@@ -86,7 +87,6 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		mov   dword[.quietCount], eax
 		mov   dword[.captureCount], eax
 		mov   dword[rbx+State.moveCount], eax
-		mov   dword[rbx+State.history],	eax
 		mov   dword[.bestValue], -VALUE_INFINITE
 
 	      movzx   r12d, byte[rbx + State.ply]
@@ -162,6 +162,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		mov   qword[rbx+0*sizeof.State+State.counterMoves], rcx
 		mov   byte[rbx+1*sizeof.State+State.skipEarlyPruning], al
 		mov   qword[rbx+2*sizeof.State+State.killers], rax
+		mov   dword[rbx + 2*sizeof.State + State.statScore], eax
 
   if USE_SYZYGY	& RootNode = 0
 	; get a	count of the piece for tb
@@ -293,33 +294,23 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 
 	    ; Step 6. Razoring (skipped	when in	check)
   if PvNode = 0
-		mov   edx, dword[.depth]
-		cmp   edx, 4*ONE_PLY
-		jge   .6skip
-		mov   ecx, dword[.evalu]
-		lea   eax, [ecx + 600]
-		cmp   eax, dword[.alpha]
-		 jg   .6skip
+		mov  edx, dword[.depth]
+                mov  ecx, dword[.alpha]
+		cmp  edx, 1*ONE_PLY
+		 jg  .6skip
+		lea  eax, [ecx - RazorMargin]
+		cmp  eax, dword[.evalu]
+		 jl  .6skip
     if USE_MATEFINDER =	1
-		lea   eax, [rcx+2*VALUE_KNOWN_WIN-1]
-		cmp   eax, 4*VALUE_KNOWN_WIN-1
-		jae   .6skip
+		lea  eax, [rcx + 2*VALUE_KNOWN_WIN - 1]
+		cmp  eax, 4*VALUE_KNOWN_WIN - 1
+		jae  .6skip
     end	if
-		mov   ecx, dword[.alpha]
-		xor   r8d, r8d
-		cmp   edx, ONE_PLY
-		 jg   .6b
-.6a:
-		mov   edx, dword[.beta]
-	       call   QSearch_NonPv_NoCheck
-		jmp   .Return
-.6b:
-		sub   ecx, 600
-		lea   edx, [rcx+1]
-		mov   esi, ecx
-	       call   QSearch_NonPv_NoCheck
-		cmp   eax, esi
-		jle   .Return
+		;mov  ecx, dword[.alpha] already here
+		lea  edx, [rcx + 1]
+                xor  r8d, r8d
+	       call  QSearch_NonPv_NoCheck
+                jmp  .Return
 .6skip:
   end if
 
@@ -583,6 +574,8 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 	GetNextMove
 		mov   dword[.move], eax
 		mov   ecx, eax
+                mov   r13d, dword[.rbeta]
+        ; r13d = rbeta
 	       test   eax, eax
 		 jz   .9moveloop_done
 	       call   Move_IsLegal
@@ -607,21 +600,39 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		mov   ecx, dword[.move]
 		mov   byte[rbx+State.givesCheck], al
 	       call   Move_Do__ProbCut
-		mov   ecx, dword[.rbeta]
-		mov   edi, ecx
-		neg   ecx
-		lea   edx, [rcx+1]
-		mov   r8d, dword[.depth]
-		sub   r8d, 4*ONE_PLY
-	      movzx   r9d, byte[.cutNode]
-		not   r9d
-	       call   Search_NonPv
-		neg   eax
-		mov   esi, eax
+
+                mov  edi, dword[.depth]
+                cmp  edi, 5 * ONE_PLY
+                 je  .9do_regular
+		mov  ecx, r13d
+		neg  ecx
+		lea  edx, [rcx+1]
+		mov  r8d, ONE_PLY
+	      movzx  r9d, byte[.cutNode]
+		not  r9d
+		mov  byte[rbx+State.skipEarlyPruning],	-1
+	       call  Search_NonPv
+		neg  eax
+                mov  esi, eax
+		mov  byte[rbx+State.skipEarlyPruning],	0
+                cmp  eax, r13d
+                 jl  .9after_search
+.9do_regular:
+		mov  ecx, r13d
+		neg  ecx
+		lea  edx, [rcx+1]
+		lea  r8d, [rdi - 4*ONE_PLY]
+	      movzx  r9d, byte[.cutNode]
+		not  r9d
+	       call  Search_NonPv
+		neg  eax
+                mov  esi, eax
+.9after_search:
+
 		mov   ecx, dword[.move]
 	       call   Move_Undo
 		mov   eax, esi
-		cmp   esi, edi
+		cmp   esi, r13d
 		 jl   .9moveloop
 		jmp   .Return
 
@@ -1131,7 +1142,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		add   rax, qword[rbp+Pos.history]
 		mov   eax, dword[rax+4*rcx]
 		sub   eax, 4000
-		mov   ecx, dword[rbx-2*sizeof.State+State.history]
+		mov   ecx, dword[rbx-2*sizeof.State+State.statScore]
 		add   eax, dword[r9+4*rdx]
 		add   eax, dword[r10+4*rdx]
 		add   eax, dword[r11+4*rdx]
@@ -1145,7 +1156,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		and   edx, eax
 		shr   edx, 31
 		add   edi, edx
-		mov   dword[rbx	- 1*sizeof.State + State.history], eax
+		mov   dword[rbx	- 1*sizeof.State + State.statScore], eax
 
 		cdq
 		mov   ecx, 20000
