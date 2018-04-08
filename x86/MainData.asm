@@ -76,9 +76,16 @@ szGreetingEnd:
 
     db 'option name MultiPV type spin default 1 min 1 max 224'
     NewLineData
-    db 'option name Contempt type spin default 0 min -100 max 100'
-    NewLineData
-	db 'option name MoveOverhead type spin default 30 min 0 max 5000'
+
+	db 'option name Contempt type spin default '
+	IntegerStringData OPTIONS_CONTEMPT_DEFAULT
+        db ' min '
+	IntegerStringData OPTIONS_CONTEMPT_MIN
+        db ' max '
+	IntegerStringData OPTIONS_CONTEMPT_MAX
+	NewLineData
+
+    db 'option name MoveOverhead type spin default 30 min 0 max 5000'
     NewLineData
     db 'option name MinThinkTime type spin default 20 min 0 max 5000'
     NewLineData

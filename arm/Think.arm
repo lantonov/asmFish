@@ -68,6 +68,24 @@ end virtual
            csel  w0, w1, w0, hi
             str  w0, [sp, .multiPV]
 
+        ; set initial contemp
+               _lea  x6, options
+                ldr  w0, [x6, Options.contempt]
+                mov  w1, PawnValueEg
+                mul  w0, w0, w1
+                mov  w1, 100
+               sdiv  w0, w0, w1
+                mov  w1, 2
+               sdiv  w1, w0, w1
+                add  w0, w1, w0, lsl 16
+                neg  w1, w0
+                ldr  w4, [x20, Pos.sideToMove]
+                tst  w4, w4
+               csel  w0, w1, w0, ne
+               _lea  x6, Eval_Contempt
+                str  w0, [x6]
+
+
             add  x6, x20, -Thread.rootPos + Thread.rootDepth
            ldar  w25, [x6]
 .id_loop:
@@ -182,6 +200,32 @@ end if
            csel  w0, w1, w0, gt
             str  w0, [sp, .beta]
             str  w2, [sp, .delta]
+
+                ldr  w0, [sp, .bestValue]
+                mov  w1, 10
+               sdiv  w8, w0, w1
+                mov  w4, -50
+                mov  w5, 50
+        ClampSigned  w8, w4, w5
+
+               _lea  x6, options
+                ldr  w0, [x6, Options.contempt]
+                mov  w1, PawnValueEg
+                mul  w0, w0, w1
+                mov  w1, 100
+               sdiv  w0, w0, w1
+                add  w0, w0, w8
+
+                mov  w1, 2
+               sdiv  w1, w0, w1
+                add  w0, w1, w0, lsl 16
+                neg  w1, w0
+                ldr  w4, [x20, Pos.sideToMove]
+                tst  w4, w4
+               csel  w0, w1, w0, ne
+               _lea  x6, Eval_Contempt
+                str  w0, [x6]
+
 
 .reset_window_done:
     ; Start with a small aspiration window and, in the case of a fail high/low,
@@ -536,22 +580,6 @@ MainThread_Think:
             ldr  w1, [x20, Pos.sideToMove]
             ldr  w2, [x20, Pos.gamePly]
              bl  TimeMng_Init
-
-               _lea  x6, options
-                ldr  w0, [x6, Options.contempt]
-                mov  w1, PawnValueEg
-                mul  w0, w0, w1
-                mov  w1, 100
-               sdiv  w0, w0, w1
-                mov  w1, 2
-               sdiv  w1, w0, w1
-                add  w0, w1, w0, lsl 16
-                neg  w1, w0
-                ldr  w4, [x20, Pos.sideToMove]
-                tst  w4, w4
-               csel  w0, w1, w0, ne
-               _lea  x6, Eval_Contempt
-                str  w0, [x6]
 
                _lea  x6, mainHash
                 ldr  w4, [x6, MainHash.date]
