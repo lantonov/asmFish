@@ -149,8 +149,8 @@ State.excludedMove      = 1*sizeof.rd + State.currentMove
 State.killers           = 1*sizeof.rd + State.excludedMove
 State.moveCount         = 2*sizeof.rd + State.killers
 State.staticEval        = 1*sizeof.rd + State.moveCount
-State.history           = 1*sizeof.rd + State.staticEval
-State.ply               = 1*sizeof.rd + State.history
+State.statScore         = 1*sizeof.rd + State.staticEval
+State.ply               = 1*sizeof.rd + State.statScore
 State.skipEarlyPruning  = 1*sizeof.rb + State.ply
 State._stack_end        = 1*sizeof.rb + 2*sizeof.rb + State.skipEarlyPruning
 State._movepick_start   = 0           + State._stack_end
@@ -169,7 +169,7 @@ State._movepick_end     = 2*sizeof.rd + State.mpKillers
 sizeof.State            = 0           + State._movepick_end
 
 if sizeof.State and 15
- err "sizeof.State is not divisible by 16"
+ err "sizeof.State should be divisible by 16"
 end if
 
 Limits.___ = 0

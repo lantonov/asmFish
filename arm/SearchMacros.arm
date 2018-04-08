@@ -70,7 +70,6 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             str  w0, [sp, .quietCount]
             str  wzr, [sp, .captureCount]
             str  w0, [x21, State.moveCount]
-            str  w0, [x21, State.history]
             mov  w4, -VALUE_INFINITE
             str  w4, [sp, .bestValue]
            ldrb  w22, [x21, State.ply]
@@ -143,6 +142,8 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             str  x1, [x21, 0*sizeof.State + State.counterMoves]
            strb  w0, [x21, 1*sizeof.State + State.skipEarlyPruning]
             str  x0, [x21, 2*sizeof.State + State.killers]
+            str  w0, [x21, 2*sizeof.State + State.statScore]
+
   if USE_SYZYGY = 1 & RootNode = 0
             ldr  x0, [x20, Pos.typeBB+8*White]
             ldr  x4, [x20, Pos.typeBB+8*Black]
@@ -1147,7 +1148,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             ldr  w0, [x0, x1, lsl 2]
             sub  w0, w0, 4000
             add  x6, x21, -2*sizeof.State
-            ldr  w1, [x6, State.history]
+            ldr  w1, [x6, State.statScore]
             ldr  w4, [x9, x2, lsl 2]
             add  w0, w0, w4
             ldr  w4, [x10, x2, lsl 2]
@@ -1160,7 +1161,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             sub  w27, w27, w1, lsr 31
             and  w2, w2, w0
             add  w27, w27, w2, lsr 31
-            str  w0, [x21, -1*sizeof.State + State.history]
+            str  w0, [x21, -1*sizeof.State + State.statScore]
 
             mov  w1, 20000
            sdiv  w0, w0, w1
