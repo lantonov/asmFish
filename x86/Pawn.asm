@@ -31,6 +31,7 @@ macro EvalPawns Us
   Backward     = (24 shl 16) + (12)
 
   Doubled     = ((18 shl 16) + (38))
+
             xor   eax, eax
             mov   qword[rdi+PawnEntry.passedPawns+8*Us], rax
             mov   qword[rdi+PawnEntry.pawnAttacksSpan+8*Us], rax
@@ -111,9 +112,7 @@ NextPiece:
            test   r9, r9
              jz   Neighbours_False
 Neighbours_True:
-            and   rax, r14
-         cmovnz   eax, dword[Lever+4*r12]
-            lea   esi, [rsi+rax]
+           test   rax, r14
             jnz   Neighbours_True__Lever_True
 Neighbours_True__Lever_False:
             mov   rax, r9
@@ -141,9 +140,6 @@ Neighbours_True__Lever_False__RelRank_small:
          cmovnz   r10d, eax
             jmp   Continue
 Neighbours_False:
-            and   rax, r14
-         cmovnz   eax, dword[Lever+4*r12]
-            add   esi, eax
             mov   edx, -Isolated
             lea   r10d, [r11 + 1]
             jmp   Continue
