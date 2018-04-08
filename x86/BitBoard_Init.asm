@@ -189,18 +189,22 @@ Init_SquareDistance_DistanceRingBB:
 		xor   edx, ecx
 		sub   edx, ecx
 
-		cmp   eax, edx
-	      cmovb   eax, edx
-	       imul   ecx, r15d, 64
-		mov   byte[SquareDistance+rcx+r14], al
+		cmp  eax, edx
+	      cmovb  eax, edx
+	       imul  ecx, r15d, 64
+                mov  edx, 5
+                cmp  edx, eax
+              cmova  edx, eax
+		mov  byte[SquareDistance + rcx + r14], al
+		mov  byte[SquareDistance_Cap5 + rcx + r14], dl
 
 		sub   eax, 1
-		 js   @f
+		 js   @1f
 		lea   rax, [8*r15+rax]
 		mov   rdx, qword[DistanceRingBB+8*rax]
 		bts   rdx, r14
 		mov   qword[DistanceRingBB+8*rax], rdx
-	@@:
+	@1:
 		add   r14d, 1
 		cmp   r14d, 64
 		 jb   .Next2

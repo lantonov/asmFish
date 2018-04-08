@@ -1152,7 +1152,7 @@ NextPawn:
   if Us = Black
 		xor   ecx, 7
   end if
-	; ecx = r+1
+	; ecx = r
 		mov   esi, dword[PassedRank+4*rcx]
 	; esi = (mbonus, ebonus)
 
@@ -1166,11 +1166,9 @@ NextPawn:
 		imul   eax, HinderPassedPawn
 		subadd   dword[.ei.score], eax
 
-		lea   edi, [rcx-2]
-		sub   ecx, 1
-		imul   edi, ecx
+                mov  edi, dword[RankFactor + 4*rcx]
 	; ecx = r
-	; edi = rr = r*(r-1)
+        ; edi = RankFactor[r]
 
 
   if Us = White
@@ -1180,10 +1178,8 @@ NextPawn:
 		cmp   r8d, SQ_A6+Up
 		jae   Continue
   end if
-	; at this point rr!=0
+	; at this point edi!=0
 
-
-	; ecx is free because s = r8-Up
 	s equ (r8-Up)
 
 		movzx   eax, byte[rbp+Pos.pieceList+16*(8*Them+King)]
@@ -1191,9 +1187,9 @@ NextPawn:
 		shl   eax, 6
 		shl   edx, 6
 		xor   r10d, r10d
-		movzx   r11d, byte[SquareDistance+rdx+r8+Up]
-		movzx   eax, byte[SquareDistance+rax+r8]
-		movzx   edx, byte[SquareDistance+rdx+r8]
+		movzx   r11d, byte[SquareDistance_Cap5+rdx+r8+Up]
+		movzx   eax, byte[SquareDistance_Cap5+rax+r8]
+		movzx   edx, byte[SquareDistance_Cap5+rdx+r8]
 		lea   eax, [5*rax]
   if Us = White
 		cmp   r8d, SQ_A7+Up
@@ -1204,7 +1200,7 @@ NextPawn:
   end if
 		lea   edx, [2*rdx+r10]
 		sub   eax, edx
-		imul   eax, edi
+               imul  eax, edi
 		add   esi, eax
 
 		mov   r10, qword[ForwardBB+8*(64*Us+s)]

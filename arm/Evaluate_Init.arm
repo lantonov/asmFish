@@ -69,6 +69,11 @@ Evaluate_Init:
                _lea  x0, Eval_Contempt
                 str  wzr, [x0]
 
+            adr  x16, .RankFactor
+           _lea  x17, RankFactor
+            mov  w1, 8
+             bl  RepMovsd
+
            _lea  x0, KingFlank
             mov  x1, FileABB or FileBBB or FileCBB or FileDBB
             str  x1, [x0], 8
@@ -91,6 +96,11 @@ Evaluate_Init:
             ret
 
         balign 8
+
+.RankFactor:
+ dd 0, 0, 0, 2, 6, 11, 16, 0
+
+
 Evaluate_Init.SeeSignBitMask: ; 0x7c00406070787c7c
  dd  0x70787c7c
  dd  0x7c004060
