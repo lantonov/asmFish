@@ -12,11 +12,11 @@ Options_Init:
            strb  w0, [x1, Options.ponder]
             mov  w0, 1
             str  w0, [x1, Options.multiPV]
-            mov  w0, 50
+            mov  w0, 30
             str  w0, [x1, Options.moveOverhead]
             mov  w0, 20
  	    str  w0, [x1, Options.minThinkTime]
-            mov  w0, 89
+            mov  w0, OPTIONS_SLOWMOVER_DEFAULT
  	    str  w0, [x1, Options.slowMover]
             mov  w0, 0
            strb  w0, [x1, Options.chess960]

@@ -22,6 +22,7 @@ CURRMOVE_MIN_TIME = 3000
 OPTIONS_CONTEMPT_MIN     = -100
 OPTIONS_CONTEMPT_DEFAULT = 18
 OPTIONS_CONTEMPT_MAX     = 100
+OPTIONS_SLOWMOVER_DEFAULT = 84
 
 ; some bounds
 MAX_MOVES = 224	; maximum number of pseudo legal moves for any position

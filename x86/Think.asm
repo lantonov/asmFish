@@ -126,7 +126,7 @@ end virtual
 .age_out:
 	; Age out PV variability metric
 	    _vmovsd   xmm0, qword[rbp-Thread.rootPos+Thread.bestMoveChanges]
-	    _vmulsd   xmm0, xmm0, qword[constd._0p505]
+	    _vmulsd   xmm0, xmm0, qword[constd._0p517]
 		mov   byte[rbp-Thread.rootPos+Thread.failedLow], 0
 	    _vmovsd   qword[rbp-Thread.rootPos+Thread.bestMoveChanges], xmm0
 
@@ -391,15 +391,15 @@ end if
 		cmp   al, byte[rbp-Thread.rootPos+Thread.failedLow]
 	      setne   al
 	       imul   eax, 119
-		add   eax, 357
+		add   eax, 306
 		mov   ecx, r12d
 		sub   ecx, dword[rbp-Thread.rootPos+Thread.previousScore]
 	       imul   ecx, 6
 		sub   eax, ecx
-		mov   edx, 229
+		mov   edx, 246
 		cmp   eax, edx
 	      cmovl   eax, edx
-		mov   edx, 715
+		mov   edx, 832
 		cmp   eax, edx
 	      cmovg   eax, edx
 	 _vcvtsi2sd   xmm3, xmm3, eax
@@ -415,7 +415,7 @@ end if
             lea  eax, [i*rcx]
             cmp  eax, r15d
             jge  @1f
-        _vmulsd  xmm0, xmm0, qword[constd._1p3]
+        _vmulsd  xmm0, xmm0, qword[constd._1p25]
     @1:
   end iterate
         _vmovsd  xmm4, qword[rbp - Thread.rootPos + Thread.previousTimeReduction]
@@ -427,7 +427,7 @@ end if
             mov  r8, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
 	    _vmulsd  xmm2, xmm2, xmm3
 	 _vcvtsi2sd  xmm0, xmm0, r11d
-	    _vmulsd  xmm0, xmm0, qword[constd._605p0]
+	    _vmulsd  xmm0, xmm0, qword[constd._581p0]
 	 _vcvtsi2sd  xmm1, xmm1, dword[time.optimumTime]
 	    _vmulsd  xmm1, xmm1, xmm2
             add  r8, sizeof.RootMove
