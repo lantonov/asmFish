@@ -112,10 +112,6 @@ NextPiece:
             cbz  x9, Neighbours_False
 Neighbours_True:
             tst  x0, x24
-           _lea  x6, Lever
-            ldr  w4, [x6, x22, lsl 2]
-           csel  w0, w4, wzr, ne
-            add  w26, w26, w0
             bne  Neighbours_True__Lever_True
 Neighbours_True__Lever_False:
             orr  x0, x9, x10
@@ -145,12 +141,7 @@ Neighbours_True__Lever_False__RelRank_small:
               b  Continue
 
 Neighbours_False:
-            tst  x0, x24
-           _lea  x6, Lever
-            ldr  w4, [x6, x22, lsl 2]
-           csel  w0, w4, wzr, ne
-            add  w26, w26, w0
-          mov32  w2, -Isolated
+         _mov32  w2, -Isolated
             add  w12, w11, 1
               b  Continue
 
