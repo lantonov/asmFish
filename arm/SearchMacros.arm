@@ -1,3 +1,5 @@
+RazorMargin = 590
+
 macro Search PvNode, RootNode
   if RootNode = 1 & PvNode = 0
     err 'bad params to search'
@@ -271,10 +273,10 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
     ; Step 6. Razoring (skipped when in check)
   if PvNode = 0
             ldr  w2, [sp, .depth]
-            cmp  w2, 4*ONE_PLY
+            cmp  w2, 3*ONE_PLY
             bge  .6skip
             ldr  w1, [sp, .evalu]
-            add  w0, w1, 600
+            add  w0, w1, RazorMargin
             ldr  w4, [sp, .alpha]
             cmp  w0, w4
             bgt  .6skip
@@ -294,7 +296,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
              bl  QSearch_NonPv_NoCheck
               b  .Return
 .6b:
-            sub  w1, w1, 600
+            sub  w1, w1, RazorMargin
             add  w2, w1, 1
             mov  w26, w1
              bl  QSearch_NonPv_NoCheck
