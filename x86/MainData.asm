@@ -17,10 +17,10 @@
  calign    16
 constd:
  ._0p03    dq 0.03
- ._0p505   dq 0.505
+ ._0p517   dq 0.517
  ._1p0     dq 1.0
- ._605p0   dq 605.0
- ._1p3     dq 1.3
+ ._581p0   dq 581.0
+ ._1p25    dq 1.25
 
 if CPU_HAS_POPCNT = 0
  Mask55    dq 0x5555555555555555
@@ -89,8 +89,11 @@ szGreetingEnd:
     NewLineData
     db 'option name MinThinkTime type spin default 20 min 0 max 5000'
     NewLineData
-    db 'option name SlowMover type spin default 89 min 10 max 1000'
-    NewLineData
+
+        db 'option name SlowMover type spin default '
+	IntegerStringData OPTIONS_SLOWMOVER_DEFAULT
+        db ' min 10 max 1000'
+        NewLineData
 
 if USE_SYZYGY
     db 'option name SyzygyProbeDepth type spin default 1 min 1 max 100'

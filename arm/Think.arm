@@ -133,7 +133,7 @@ end virtual
     ; Age out PV variability metric
             add  x6, x20, -Thread.rootPos
             ldr  d0, [x6, Thread.bestMoveChanges]
-           _lea  x4, constd._0p505
+           _lea  x4, constd._0p517
             ldr  d1, [x4]
            fmul  d0, d0, d1
            strb  wzr, [x6, Thread.failedLow]
@@ -425,15 +425,15 @@ end if
             mov  w5, 119
             tst  w4, w4
            csel  w0, w5, wzr, ne
-            add  w0, w0, 357
+            add  w0, w0, 306
             ldr  w4, [x7, Thread.previousScore]
             sub  w1, w22, w4
             add  w1, w1, w1, lsl 1
             sub  w0, w0, w1, lsl 1
-            mov  w2, 229
+            mov  w2, 246
             cmp  w0, w2
            csel  w0, w2, w0, lt
-            mov  w2, 715
+            mov  w2, 832
             cmp  w0, w2
            csel  w0, w2, w0, gt
           scvtf  d3, w0
@@ -453,7 +453,7 @@ end if
             mul  w0, w4, w1
             cmp  w0, w25
             bge  @1f
-           _lea  x6, constd._1p3
+           _lea  x6, constd._1p25       ; TODO: 1.25 can probably be loaded directly
             ldr  d6, [x6]
            fmul  d0, d0, d6
     @1:
@@ -468,7 +468,7 @@ end if
             ldr  x8, [x20, Pos.rootMovesVec + RootMovesVec.table]
            fmul  d2, d2, d3
           ucvtf  d0, w11
-           _lea  x6, constd._605p0
+           _lea  x6, constd._581p0
             ldr  d4, [x6]
            fmul  d0, d0, d4
            _lea  x6, time
