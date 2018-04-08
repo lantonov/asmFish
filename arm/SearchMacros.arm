@@ -273,12 +273,12 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
     ; Step 6. Razoring (skipped when in check)
   if PvNode = 0
             ldr  w2, [sp, .depth]
-            cmp  w2, 3*ONE_PLY
-            bge  .6skip
-            ldr  w1, [sp, .evalu]
-            add  w0, w1, RazorMargin
-            ldr  w4, [sp, .alpha]
-            cmp  w0, w4
+            cmp  w2, 1*ONE_PLY
+            bgt  .6skip
+            ldr  w4, [sp, .evalu]
+            add  w0, w4, RazorMargin
+            ldr  w1, [sp, .alpha]
+            cmp  w0, w1
             bgt  .6skip
     if USE_MATEFINDER = 1
             mov  w4, 2*VALUE_KNOWN_WIN - 1
@@ -287,21 +287,11 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             cmp  w0, w4
             bhs  .6skip
     end if
-            ldr  w1, [sp, .alpha]
+            ;ldr  w1, [sp, .alpha] is already here
+            add  w2, w1, 1
             mov  w8, 0
-            cmp  w2, ONE_PLY
-            bgt  .6b
-.6a:
-            ldr  w2, [sp, .beta]
              bl  QSearch_NonPv_NoCheck
               b  .Return
-.6b:
-            sub  w1, w1, RazorMargin
-            add  w2, w1, 1
-            mov  w26, w1
-             bl  QSearch_NonPv_NoCheck
-            cmp  w0, w26
-            ble  .Return
 .6skip:
   end if
     ; Step 7. Futility pruning: child node (skipped when in check)
