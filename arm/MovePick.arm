@@ -204,28 +204,27 @@ MovePick_QUIET_GEN.SortDone:
 
 MovePick_QUIETS:
 ;Display 2, "MovePick_QUIETS"
-            ldr  w0, [x24]
-            cmp  x24, x25
-            bhs  MovePick_QUIETS.WhileDone
-            ldr  w4, [x24, ExtMove.value]
-            and  w4, w4, w26
-           tbnz  w4, 31, MovePick_QUIETS.WhileDone
-            add  x24, x24, sizeof.ExtMove
-            ldr  w4, [x21, State.ttMove]
-            cmp  w0, w4
-            beq  MovePick_QUIETS
-            ldr  w4, [x21, State.mpKillers + 4*0]
-            cmp  w0, w4
-            beq  MovePick_QUIETS
-            ldr  w4, [x21, State.mpKillers + 4*1]
-            cmp  w0, w4
-            beq  MovePick_QUIETS
-            ldr  w4, [x21, State.countermove]
-            cmp  w0, w4
-            beq  MovePick_QUIETS
-             br  x29
+                ldr  w3, [x21, State.mpKillers + 4*0]
+                ldr  w4, [x21, State.mpKillers + 4*1]
+               tbnz  w26, 31, .WhileDone
+        @1:
+                ldr  w0, [x24, ExtMove.move]
+                cmp  x24, x25
+                bhs  .WhileDone
+                ldr  w5, [x21, State.ttMove]
+                ldr  w6, [x21, State.countermove]
+                add  x24, x24, sizeof.ExtMove
+                cmp  w0, w3
+                beq  @1b
+                cmp  w0, w4
+                beq  @1b
+                cmp  w0, w5
+                beq  @1b
+                cmp  w0, w6
+                beq  @1b
+                 br  x29
 
-MovePick_QUIETS.WhileDone:
+    .WhileDone:
 ;Display 2, "MovePick_QUIETS.WhileDone"
             adr  x2, MovePick_BAD_CAPTURES
             str  x2, [x21, State.stage]
