@@ -109,7 +109,6 @@ MobilityBonus_Knight rd 16
 MobilityBonus_Bishop rd 16
 MobilityBonus_Rook   rd 16
 MobilityBonus_Queen  rd 32
-Lever                      rd 8
 ShelterWeakness:
 ShelterWeakness_No         rd 8*8
 ShelterWeakness_Yes        rd 8*8

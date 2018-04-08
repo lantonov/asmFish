@@ -23,10 +23,6 @@ Evaluate_Init:
             mov  x2, 4*28
              bl  MemoryCopy
 
-           _lea  x0, Lever
-            adr  x1, Evaluate_Init.Lever
-            mov  x2, 4*8
-             bl  MemoryCopy
            _lea  x0, ShelterWeakness
             adr  x1, Evaluate_Init.ShelterWeakness
             mov  x2, 4*2*8*8
@@ -178,16 +174,6 @@ Evaluate_Init.MobilityBonus_Queen:
  dd (109 shl 16) + (191)
  dd (113 shl 16) + (206)
  dd (116 shl 16) + (212)
-
-Evaluate_Init.Lever:
- dd (0 shl 16) + (0)
- dd (0 shl 16) + (0)
- dd (0 shl 16) + (0)
- dd (0 shl 16) + (0)
- dd (17 shl 16) + (16)
- dd (33 shl 16) + (32)
- dd (0 shl 16) + (0)
- dd (0 shl 16) + (0)
 
 
 Evaluate_Init.Doubled:
