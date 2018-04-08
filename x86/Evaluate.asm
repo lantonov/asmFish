@@ -1386,6 +1386,7 @@ end virtual
 		calign   16
 .DoPawnEval:
 		mov   byte[rdi + PawnEntry.weakUnopposed], 0
+                mov   byte[rdi+PawnEntry.asymmetry], 0
 		mov   qword[rbp+Pos.state], rbx
 		EvalPawns   White
 		mov   dword[rdi+PawnEntry.score], esi
@@ -1403,7 +1404,7 @@ end virtual
 		_popcnt   rdx, rdx, r9
 		mov   qword[rdi+PawnEntry.key], r8
 		mov   dword[rdi+PawnEntry.score], eax
-		mov   byte[rdi+PawnEntry.asymmetry], cl
+		add   byte[rdi+PawnEntry.asymmetry], cl
 		mov   byte[rdi+PawnEntry.openFiles], dl
 		jmp   Evaluate.DoPawnEvalReturn
 
