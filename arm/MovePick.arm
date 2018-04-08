@@ -359,27 +359,25 @@ MovePick_CHECKS.IfDone:
 
 MovePick_RECAPTURES_GEN:
 ;Display 2, "MovePick_RECAPTURES_GEN"
-            ldr  x27, [x21, -1*sizeof.State + State.endMoves]
-            mov  x24, x27
-             bl  Gen_Captures
-            mov  x25, x27
-            mov  x23, x24
-  ScoreCaptures  x23, x27
-            adr  x2, MovePick_RECAPTURES
-            str  x2, [x21, State.stage]
+                ldr  x27, [x21, -1*sizeof.State + State.endMoves]
+                mov  x24, x27
+                 bl  Gen_Captures
+                mov  x25, x27
+                adr  x2, MovePick_RECAPTURES
+                str  x2, [x21, State.stage]
 
 
 MovePick_RECAPTURES:
 ;Display 2, "MovePick_RECAPTURES"
-            cmp  x24, x25
-            beq  MovePick_RECAPTURES.WhileDone
-       PickBest  x24, x23, x25
-            mov  w0, w1
-            and  w1, w1, 63
-            ldr  w4, [x21, State.recaptureSquare]
-            cmp  w1, w4
-            bne  MovePick_RECAPTURES
-             br  x29
+                cmp  x24, x25
+                beq  MovePick_RECAPTURES.WhileDone
+                ldr  w0, [x24, ExtMove.move]
+                and  w1, w0, 63
+                ldr  w4, [x21, State.recaptureSquare]
+                add  x24, x24, sizeof.ExtMove
+                cmp  w1, w4
+                bne  MovePick_RECAPTURES
+                 br  x29
 
 MovePick_RECAPTURES.WhileDone:
             mov  w0, 0
