@@ -66,6 +66,11 @@ Evaluate_Init:
                 xor  ecx,ecx
                 mov  dword[Eval_Contempt], ecx  ; akin to StockFish's: "Score Eval::Contempt = SCORE_ZERO;"
 
+                lea  rsi, [.RankFactor]
+                lea  rdi, [RankFactor]
+                mov  ecx, 8
+          rep movsd
+
 		lea   rdi, [KingFlank]
 		mov   rax, (FileABB or FileBBB or FileCBB or FileDBB)
 	      stosq
@@ -88,6 +93,8 @@ Evaluate_Init:
 
 
              calign   4
+.RankFactor:
+ dd 0, 0, 0, 2, 6, 11, 16, 0
 
 .MobilityBonus_Knight:
  dd (-75 shl 16) + (-76)

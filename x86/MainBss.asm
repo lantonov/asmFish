@@ -68,6 +68,7 @@ KingAttacks         rq 64     ; bitboards
 BetweenBB       rq 64*64
 LineBB          rq 64*64
 SquareDistance  rb 64*64
+SquareDistance_Cap5  rb 64*64
 DistanceRingBB  rq 8*64
 ForwardBB       rq 2*64
 PawnAttackSpan  rq 2*64
@@ -126,6 +127,8 @@ DoMaterialEval_Data:
 .QuadraticOurs:            rd 8*6
 .QuadraticTheirs:          rd 8*6
 QueenMinorsImbalance       rd 16
+RankFactor              rd 8
+
 Eval_Contempt              rd 1
 Reserved                   rd 1 ; explicitly pad to 64-bit alignment. Can be used.
 
