@@ -12,9 +12,8 @@ constd._0p505:
 constd._0p03:
         dd 3951369912
         dd 1067366481
-constd._628p0:
-        dd 0
-        dd 1082368000
+constd._605p0:
+        dq 605.0
 
 constd._1p3 dq 1.3
 

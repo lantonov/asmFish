@@ -372,24 +372,8 @@ end if
              bl  Os_GetTime
            _lea  x6, time
             ldr  x4, [x6, Time.startTime]
-            sub  x0, x0, x4
-            str  x0, [sp, .elapsed]
-
-            mov  w10, 0
-            ldr  w2, [x20, Pos.sideToMove]
-           cbnz  w22, @1f
-           _lea  x6, limits + Limits.time
-            ldr  w1, [x6, x2, lsl 2]
-            sub  w1, w1, w0
-            eor  w2, w2, 1
-            ldr  w4, [x6, x2, lsl 2]
-            cmp  w1, w4
-            ble  @1f
-             bl  PvIsDraw
-            mov  w10, w0
-    @1:
-            ldr  x11, [sp, .elapsed]
-    ; r10 = thinkHard
+            sub  x11, x0, x4
+            str  x11, [sp, .elapsed]
     ; r11 = Time.elapsed()
 
             add  x7, x20, -Thread.rootPos
@@ -413,15 +397,13 @@ end if
 
 
             add  x6, x20, -Thread.rootPos
-            ldr  d0, [x6, Thread.bestMoveChanges]
-            add  w9, w10, 1
-          scvtf  d2, w9
+            ldr  d2, [x6, Thread.bestMoveChanges]
+           fmov  d0, 1.0
            fadd  d2, d2, d0
 ; d2 = unstablePvFactor
 
-           fmov  d0, 1.0
+           ;fmov  d0, 1.0       its already 1.0
             ldr  w1, [sp, .lastBestMoveDepth]
-           cbnz  w10, @2f
   iterate i, 3, 4, 5
             mov  w4, i
             mul  w0, w4, w1
@@ -432,7 +414,6 @@ end if
            fmul  d0, d0, d6
     @1:
   end iterate
-    @2:
             add  x7, x20, -Thread.rootPos
             ldr  d4, [x7, Thread.previousTimeReduction]
           fsqrt  d4, d4
@@ -443,7 +424,7 @@ end if
             ldr  x8, [x20, Pos.rootMovesVec + RootMovesVec.table]
            fmul  d2, d2, d3
           ucvtf  d0, w11
-           _lea  x6, constd._628p0
+           _lea  x6, constd._605p0
             ldr  d4, [x6]
            fmul  d0, d0, d4
            _lea  x6, time
@@ -481,7 +462,7 @@ end if
             ldp  x20, x30, [sp], 16
             ret
 
-
+if 0
 PvIsDraw:
             stp  x26, x27, [sp, -16]!
             stp  x25, x30, [sp, -16]!
@@ -540,7 +521,7 @@ _PosIsDraw:
             ret
 .cold:
  PosIsDraw_Cold  .yes_draw, .coldreturn
-
+end if
 
 MainThread_Think:
     ; in: x1 address of Thread struct   should be mainThread
