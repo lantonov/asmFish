@@ -2,7 +2,7 @@ Options_Init:
            _lea  x1, options
             mov  w0, -1
            strb  w0, [x1, Options.displayInfoMove]
-            mov  w0, 0
+            mov  w0, 20
             str  w0, [x1, Options.contempt]
             mov  w0, 1
             str  w0, [x1, Options.threads]
@@ -14,6 +14,10 @@ Options_Init:
             str  w0, [x1, Options.multiPV]
             mov  w0, 50
             str  w0, [x1, Options.moveOverhead]
+            mov  w0, 20
+ 	    str  w0, [x1, Options.minThinkTime]
+            mov  w0, 89
+ 	    str  w0, [x1, Options.slowMover]
             mov  w0, 0
            strb  w0, [x1, Options.chess960]
             mov  w0, 1
@@ -590,6 +594,16 @@ UciSetOption.Read:
             adr  x21, UciSetOption.MoveOverhead
            cbnz  w0, UciSetOption.CheckValue
 
+               _lea  x1, sz_minthinktime
+                 bl  CmpStringCaseless
+                adr  x21, UciSetOption.MinThinkTime
+               cbnz  w0, UciSetOption.CheckValue
+
+               _lea   x1, sz_slowmover
+                 bl   CmpStringCaseless
+                adr   x21, UciSetOption.SlowMover
+               cbnz   w0, UciSetOption.CheckValue
+
            _lea  x1, sz_uci_chess960
              bl  CmpStringCaseless
             adr  x21, UciSetOption.Chess960
@@ -802,6 +816,24 @@ UciSetOption.MoveOverhead:
            _lea  x16, options
             str  w0, [x16, Options.moveOverhead]
               b  UciGetInput
+
+UciSetOption.MinThinkTime:
+                 bl   ParseInteger
+                mov   w4, 0
+                mov   w5, 5000
+      ClampUnsigned   w0, w4, w5
+               _lea   x16, options
+                str   w0, [x16, Options.minThinkTime]
+                  b   UciGetInput
+ 
+UciSetOption.SlowMover:
+                 bl   ParseInteger
+                mov   w4, 0
+                mov   w5, 1000
+        ClampSigned   w0, w4, w5
+               _lea   x16, options
+                str   w0, [x16, Options.slowMover]
+                  b   UciGetInput
 
 UciSetOption.Log:
            _lea  x1, sz_empty

@@ -97,10 +97,8 @@ IsPawnMasks:	   rb 16
               align   4096
 Reductions	        rd 2*2*64*64
 FutilityMoveCounts      rd 16*2
-RazorMargin             rd 4
 _CaptureOrPromotion_or  rb 4
 _CaptureOrPromotion_and rb 4
-DrawValue	        rd 2    ; it is updated when threads start to think
 
 
 ;;;;;;;;;;;;;;;;;;;; data for evaluation ;;;;;;;;;;;;;;;;;;;;
@@ -128,7 +126,7 @@ DoMaterialEval_Data:
 .QuadraticOurs:            rd 8*6
 .QuadraticTheirs:          rd 8*6
 QueenMinorsImbalance       rd 16
-ContemptScore              rd 1
+Eval_Contempt              rd 1
 Reserved                   rd 1 ; explicitly pad to 64-bit alignment. Can be used.
 
 

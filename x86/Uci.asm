@@ -2,7 +2,7 @@
 Options_Init:
 	    lea  rdx, [options]
 	    mov  byte[rdx + Options.displayInfoMove], -1
-	    mov  dword[rdx + Options.contempt], 0
+	    mov  dword[rdx + Options.contempt], 20
 	    mov  dword[rdx + Options.threads], 1
 	    mov  dword[rdx + Options.hash], 16
 	    mov  byte[rdx + Options.ponder], 0

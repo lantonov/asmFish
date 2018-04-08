@@ -35,7 +35,6 @@ macro search RootNode, PvNode
     .value		rd 1
     .evalu		rd 1
     .nullValue		rd 1
-    .valueDraw rd 1
     .futilityValue	rd 1
     .extension		rd 1
     .success		rd 1	; for tb
@@ -298,8 +297,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		cmp   edx, 4*ONE_PLY
 		jge   .6skip
 		mov   ecx, dword[.evalu]
-		mov   eax, dword[RazorMargin+4*rdx]
-		add   eax, ecx
+		lea   eax, [ecx + 600]
 		cmp   eax, dword[.alpha]
 		 jg   .6skip
     if USE_MATEFINDER =	1
@@ -316,7 +314,7 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 	       call   QSearch_NonPv_NoCheck
 		jmp   .Return
 .6b:
-		sub   ecx, dword[RazorMargin+4*rdx]
+		sub   ecx, 600
 		lea   edx, [rcx+1]
 		mov   esi, ecx
 	       call   QSearch_NonPv_NoCheck
@@ -370,8 +368,8 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
                 cmp   ecx, dword[rbp - Thread.rootPos + Thread.nmp_ply]
                 jge   @1f
                 and   ecx, 1
-                cmp   ecx, dword[rbp - Thread.rootPos + Thread.pair]
-                jne   .8skip
+                cmp   ecx, dword[rbp - Thread.rootPos + Thread.nmp_odd]
+                 je   .8skip
         @1:
     else
 		mov   r8d, dword[.evalu]
@@ -472,27 +470,26 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		mov   edi, eax
 	; edi = nullValue
 
-		mov   ecx, dword[.depth]
-		cmp   ecx, 12*ONE_PLY
-		jge   .8check
 		lea   ecx, [rdx+VALUE_KNOWN_WIN-1]
 		cmp   ecx, 2*(VALUE_KNOWN_WIN-1)
-		jbe   .Return
+		 ja   .8check
+
+		mov   ecx, dword[.depth]
+		cmp   ecx, 12*ONE_PLY
+		 jl   .Return
+                cmp   dword[rbp - Thread.rootPos + Thread.nmp_ply], 0
+                jne   .Return
 .8check:
-                sub   esi, 1    ; R += ONE_PLY
-                mov   r13d, dword[rbp - Thread.rootPos + Thread.nmp_ply]
-                mov   r14d, dword[rbp - Thread.rootPos + Thread.pair]
-                lea   eax, [3*rsi]
-                lea   r8d, [rax+3]
-               test   esi, esi
-              cmovs   eax, r8d
-                sar   eax, 2    ; eax = 3 * (depth-R) / 4
-                add   eax, dword[rbx + State.ply]
-                mov   dword[rbp - Thread.rootPos + Thread.nmp_ply], eax
-                mov   eax, dword[rbx + State.ply]
-                and   eax, 1
-                xor   eax, 1
-                mov   dword[rbp - Thread.rootPos + Thread.pair], eax                
+                lea  eax, [3*rsi]
+                lea  r8d, [rax + 3]
+               test  esi, esi
+              cmovs  eax, r8d
+                sar  eax, 2    ; eax = 3 * (depth-R) / 4
+                mov  ecx, dword[rbx + State.ply]
+                add  eax, ecx
+                and  ecx, 1
+                mov  dword[rbp - Thread.rootPos + Thread.nmp_ply], eax
+                mov  dword[rbp - Thread.rootPos + Thread.nmp_odd], ecx
 
 		mov   byte[rbx+State.skipEarlyPruning],	-1
 		mov   r8d, esi
@@ -505,8 +502,10 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		lea   ecx, [rdx-1]
 		xor   r9d, r9d
 	       call   r12
-                mov   dword[rbp - Thread.rootPos + Thread.nmp_ply], r13d
-                mov   dword[rbp - Thread.rootPos + Thread.pair], r14d
+                xor  ecx, ecx
+                ;mov  dword[rbp - Thread.rootPos + Thread.nmp_ply], ecx
+                ;mov  dword[rbp - Thread.rootPos + Thread.nmp_odd], ecx
+                mov  qword[rbp - Thread.rootPos + Thread.nmp_ply], rcx
 		mov   byte[rbx+State.skipEarlyPruning],	0
 		cmp   eax, dword[.beta]
 		mov   eax, edi
@@ -1433,13 +1432,11 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		UpdateCmStats   (rbx-1*sizeof.State), r15, r11d, r10d, r8
 		jmp   .20TTStore
 .20Mate:
-		mov dword[.valueDraw], VALUE_DRAW ; allows for cmovz later
 		mov   rax, qword[rbx+State.checkersBB]
-		
 		movzx edi, byte[rbx+State.ply]
 		sub   edi, VALUE_MATE
 		test  rax, rax
-		cmovz edi, dword[.valueDraw]
+		cmovz edi, eax          ; cmovz edi, VALUE_DRAW
 		test   r14d, r14d
 		cmovnz edi, dword[.alpha]
 		jmp .20TTStore
@@ -1503,20 +1500,24 @@ Display	2, "Search returning %i0%n"
 		mov   dword[rbx+State.moveCount], eax
 		mov   dword[.moveCount], eax
 		jmp   .MovePickLoop
+
   if RootNode = 0
-	 calign   8
+
+             calign  8
 .AbortSearch_PlyBigger:
-		mov   rcx, qword[rbx+State.checkersBB]
-		mov   eax, VALUE_DRAW
-	    test   rcx, rcx
-		jz   .Return
-	       call   Evaluate
-		jmp   .Return
-	 calign	  8
+		mov  rcx, qword[rbx + State.checkersBB]
+		xor  eax, eax  ; mov eax, VALUE_DRAW
+               test  rcx, rcx
+                 jz  .Return
+	       call  Evaluate
+		jmp  .Return
+
+             calign   8
 .AbortSearch_PlySmaller:
-		mov   eax, VALUE_DRAW
-		jmp   .Return
+                xor  eax, eax  ;mov   eax, VALUE_DRAW
+                jmp  .Return
   end if
+
   if PvNode = 0
 	 calign   8
 .ReturnTTValue:

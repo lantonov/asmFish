@@ -201,8 +201,8 @@ end virtual
 		mov   byte[r14+Thread.selDepth], al
                 mov   dword[r14+Thread.resetCnt], eax
                 mov   dword[r14+Thread.callsCnt], MIN_RESETCNT  ; check time asap
-                mov   dword[r14+Thread.nmp_ply], 0
-                mov   dword[r14+Thread.pair], -1
+                mov   dword[r14+Thread.nmp_ply], eax
+                mov   dword[r14+Thread.nmp_odd], eax
 		lea   rcx, [r14+Thread.rootPos]
 	       call   Position_CopyToSearch
 
@@ -274,8 +274,8 @@ end if
 		mov   byte[rsi+Thread.selDepth], al
                 mov   dword[rsi+Thread.resetCnt], eax
                 mov   dword[rsi+Thread.callsCnt], MAX_RESETCNT  ; main thread already has min
-                mov   dword[rsi+Thread.nmp_ply], 0
-                mov   dword[rsi+Thread.pair], -1
+                mov   dword[rsi+Thread.nmp_ply], eax
+                mov   dword[rsi+Thread.nmp_odd], eax
 
 	; copy the filtered moves of main thread to worker thread
 		mov   rax, qword[rsi+Thread.rootPos.rootMovesVec.table]
