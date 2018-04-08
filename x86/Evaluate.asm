@@ -233,6 +233,7 @@ NoKingRing:
                 mov   eax, dword[MobilityBonus + 4*r10]
              addsub   dword[.ei.mobilityDiff], eax
              addsub   esi, eax
+        ; r10 = mob
 
 		lea   eax, [8*r8]
 		movzx   eax, byte[SquareDistance+8*rax+r14]
@@ -358,40 +359,24 @@ NoEnemyPawnBonus:
 		jmp   NoTrappedByKing
 NoOpenFileBonus:
 
-		mov   ecx, r14d
-		and   ecx, 7
-		mov   eax, r8d
-		cmp   r10d, 4
-		jae   NoTrappedByKing
-		mov   edx, eax
-		and   eax, 7
-		sub   ecx, eax
-		sub   eax, 4
-		xor   ecx, eax
-		js   NoTrappedByKing
-		mov   ecx, r8d
-		and   ecx, 7
-		mov   edx, ecx
-		mov   eax, r14d
-		and   eax, 7
-		sub   ecx, eax
-		sub   ecx, 1
-		sar   ecx, 31
-		sub   edx, ecx
-		xor   eax, eax
-		bts   eax, edx
-		sub   eax, 1
-		xor   eax, ecx
-		test   al, byte[rdi+PawnEntry.semiopenFiles+1*Us]
-		jnz   NoTrappedByKing
-		movzx   eax, byte[rbx+State.castlingRights]
-		and   eax, 3 shl (2*Us)
-		setz   al
-		add   eax, 1
-		imul   r10d, 22*65536
-		sub   r10d, TrappedRook
-		imul   r10d, eax
-		addsub   esi, r10d
+		mov  eax, r14d
+		and  eax, 7
+                mov  edx, r8d
+                and  edx, 7
+                sub  eax, edx
+                sub  edx, 4
+                cmp  r10d, 4
+                jae  NoTrappedByKing
+                xor  eax, edx
+                 js  NoTrappedByKing
+              movzx  eax, byte[rbx+State.castlingRights]
+                and  eax, 3 shl (2*Us)
+               setz  al
+                add  eax, 1
+               imul  r10d, 22*65536
+                sub  r10d, TrappedRook
+               imul  r10d, eax
+             addsub  esi, r10d
 NoTrappedByKing:
 
   else if Pt = Queen
