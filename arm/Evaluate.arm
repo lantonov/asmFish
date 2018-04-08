@@ -257,6 +257,7 @@ NoKingRing:
          AddSub  Us, w26, w26, w4
          AddSub  Us, w5, w5, w4
             str  w5, [sp, EvalInfo.mobilityDiff]
+        ; x10 = mob
 
            _lea  x6, SquareDistance
             add  x4, x24, x8, lsl 6
@@ -406,40 +407,24 @@ NoEnemyPawnBonus:
               b  NoTrappedByKing
 NoOpenFileBonus:
 
-            and  w1, w24, 7
-            mov  w0, w8
-            cmp  w10, 4
-            bhs  NoTrappedByKing
-            mov  w2, w0
-            and  w0, w0, 7
-            sub  w1, w1, w0
-            sub  w0, w0, 4
-            eor  w1, w1, w0
-           tbnz  w1, 31, NoTrappedByKing
-            and  w1, w8, 7
-            mov  w2, w1
-            and  w0, w24, 7
-            sub  w1, w1, w0
-            sub  w1, w1, 1
-            asr  w1, w1, 31
-            sub  w2, w2, w1
-            mov  w0, 1
-            lsl  w0, w0, w2
-            sub  w0, w0, 1
-            eor  w0, w0, w1
-           ldrb  w4, [x27, PawnEntry.semiopenFiles + 1*Us]
-            tst  w0, w4
-            bne  NoTrappedByKing
-           ldrb  w0, [x21, State.castlingRights]
-            tst  w0, 3 shl (2*Us)
-            mov  w4, 1
-           cinc  w0, w4, eq
-            mov  w4, 22*65536
-            mul  w10, w10, w4
-          mov32  w4, TrappedRook
-            sub  w10, w10, w4
-            mul  w10, w10, w0
-         AddSub  Us, w26, w26, w10
+                and  w0, w24, 7
+                and  w2, w8, 7
+                sub  w0, w0, w2
+                sub  w2, w2, 4
+                cmp  w10, 4
+                bhs  NoTrappedByKing
+                eor  w0, w0, w2
+               tbnz  w0, 31, NoTrappedByKing
+               ldrb  w0, [x21, State.castlingRights]
+                tst  w0, 3 shl (2*Us)
+                mov  w4, 1
+               cinc  w0, w4, eq
+                mov  w4, 22*65536
+                mul  w10, w10, w4
+             _mov32  w4, TrappedRook
+                sub  w10, w10, w4
+                mul  w10, w10, w0
+             AddSub  Us, w26, w26, w10
 NoTrappedByKing:
 
  else if Pt = Queen
