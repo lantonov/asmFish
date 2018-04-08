@@ -189,20 +189,21 @@ MovePick_QUIET_GEN:
 
 
 MovePick_QUIETS:
-		mov   eax, dword[r14]
-		cmp   r14, r15
-		jae   .WhileDone
-               test   esi, dword[r14+ExtMove.value]
-                 js   .WhileDone
-		add   r14, sizeof.ExtMove
-		cmp   eax, dword[rbx+State.ttMove]
-		 je   MovePick_QUIETS
-		cmp   eax, dword[rbx+State.mpKillers+4*0]
-		 je   MovePick_QUIETS
-		cmp   eax, dword[rbx+State.mpKillers+4*1]
-		 je   MovePick_QUIETS
-		cmp   eax, dword[rbx+State.countermove]
-		 je   MovePick_QUIETS
+               test  esi, esi
+                 js  .WhileDone
+        @1:
+		mov  eax, dword[r14 + ExtMove.move]
+		cmp  r14, r15
+		jae  .WhileDone
+		add  r14, sizeof.ExtMove
+		cmp  eax, dword[rbx + State.ttMove]
+		 je  @1b
+		cmp  eax, dword[rbx + State.mpKillers + 4*0]
+		 je  @1b
+		cmp  eax, dword[rbx + State.mpKillers + 4*1]
+		 je  @1b
+		cmp  eax, dword[rbx + State.countermove]
+		 je  @1b
 		ret
 
 	     calign   16, MovePick_BAD_CAPTURES
