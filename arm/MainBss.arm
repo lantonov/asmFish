@@ -58,6 +58,7 @@ BishopAttacksPDEP:   rb 8*64
 BetweenBB:	   rb 8*64*64
 LineBB:            rb 8*64*64
 SquareDistance:    rb 64*64
+SquareDistance_Cap5    rb 64*64
 DistanceRingBB:    rb 8*8*64
 ForwardBB:	   rb 8*2*64
 PawnAttackSpan:    rb 8*2*64
@@ -99,7 +100,6 @@ MobilityBonus_Knight:   rb 4*16
 MobilityBonus_Bishop:   rb 4*16
 MobilityBonus_Rook:     rb 4*16
 MobilityBonus_Queen:    rb 4*32
-Lever:                  rb 4*8
 ShelterWeakness:
 ShelterWeakness_No         rd 8*8
 ShelterWeakness_Yes        rd 8*8
@@ -117,6 +117,7 @@ DoMaterialEval_Data:
 DoMaterialEval_Data.QuadraticOurs:     rb 4*8*6
 DoMaterialEval_Data.QuadraticTheirs:   rb 4*8*6
 QueenMinorsImbalance:   rb 4*16
+RankFactor              rd 8
 Eval_Contempt           rd 1
 
 

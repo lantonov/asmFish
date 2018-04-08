@@ -6,13 +6,13 @@ TrappedRook		= ( 92 shl 16) + (  0)
 WeakQueen		= ( 50 shl 16) + ( 10)
 CloseEnemies		= (  7 shl 16) + (  0)
 PawnlessFlank		= ( 20 shl 16) + ( 80)
-ThreatBySafePawn        = (192 shl 16) + (175)
+ThreatBySafePawn        = (175 shl 16) + (168)
 ThreatByRank		= ( 16 shl 16) + (  3)
-Hanging 		= ( 48 shl 16) + ( 27)
+Hanging 		= ( 52 shl 16) + ( 30)
 WeakUnopposedPawn       = (  5 shl 16) + ( 25)
-ThreatByPawnPush	= ( 38 shl 16) + ( 22)
-ThreatByAttackOnQueen   = ( 38 shl 16) + ( 22)
-HinderPassedPawn	= (  7 shl 16) + (  0)
+ThreatByPawnPush	= ( 47 shl 16) + ( 26)
+ThreatByAttackOnQueen   = ( 42 shl 16) + ( 21)
+HinderPassedPawn	= (  8 shl 16) + (  1)
 TrappedBishopA1H1       = ( 50 shl 16) + ( 50)
 
 LazyThreshold = 1500
@@ -257,6 +257,7 @@ NoKingRing:
          AddSub  Us, w26, w26, w4
          AddSub  Us, w5, w5, w4
             str  w5, [sp, EvalInfo.mobilityDiff]
+        ; x10 = mob
 
            _lea  x6, SquareDistance
             add  x4, x24, x8, lsl 6
@@ -406,40 +407,24 @@ NoEnemyPawnBonus:
               b  NoTrappedByKing
 NoOpenFileBonus:
 
-            and  w1, w24, 7
-            mov  w0, w8
-            cmp  w10, 4
-            bhs  NoTrappedByKing
-            mov  w2, w0
-            and  w0, w0, 7
-            sub  w1, w1, w0
-            sub  w0, w0, 4
-            eor  w1, w1, w0
-           tbnz  w1, 31, NoTrappedByKing
-            and  w1, w8, 7
-            mov  w2, w1
-            and  w0, w24, 7
-            sub  w1, w1, w0
-            sub  w1, w1, 1
-            asr  w1, w1, 31
-            sub  w2, w2, w1
-            mov  w0, 1
-            lsl  w0, w0, w2
-            sub  w0, w0, 1
-            eor  w0, w0, w1
-           ldrb  w4, [x27, PawnEntry.semiopenFiles + 1*Us]
-            tst  w0, w4
-            bne  NoTrappedByKing
-           ldrb  w0, [x21, State.castlingRights]
-            tst  w0, 3 shl (2*Us)
-            mov  w4, 1
-           cinc  w0, w4, eq
-            mov  w4, 22*65536
-            mul  w10, w10, w4
-          mov32  w4, TrappedRook
-            sub  w10, w10, w4
-            mul  w10, w10, w0
-         AddSub  Us, w26, w26, w10
+                and  w0, w24, 7
+                and  w2, w8, 7
+                sub  w0, w0, w2
+                sub  w2, w2, 4
+                cmp  w10, 4
+                bhs  NoTrappedByKing
+                eor  w0, w0, w2
+               tbnz  w0, 31, NoTrappedByKing
+               ldrb  w0, [x21, State.castlingRights]
+                tst  w0, 3 shl (2*Us)
+                mov  w4, 1
+               cinc  w0, w4, eq
+                mov  w4, 22*65536
+                mul  w10, w10, w4
+             _mov32  w4, TrappedRook
+                sub  w10, w10, w4
+                mul  w10, w10, w0
+             AddSub  Us, w26, w26, w10
 NoTrappedByKing:
 
  else if Pt = Queen
@@ -968,8 +953,8 @@ macro EvalThreats Us
   local ThreatMinorSkipPawn, ThreatRookSkipPawn
 
 
-        ThreatByKing0 = (( 3 shl 16) + ( 62))
-        ThreatByKing1 = (( 9 shl 16) + (138))
+        ThreatByKing0 = (( 3 shl 16) + ( 65))
+        ThreatByKing1 = (( 9 shl 16) + (145))
 
   if Us = White
 	AttackedBy_Us       = x12
@@ -1241,12 +1226,11 @@ NextPawn:
             ldr  w4, [sp, EvalInfo.score]
          AddSub  Them, w4, w4, w0
             str  w4, [sp, EvalInfo.score]
-
-            sub  w27, w1, 2
-            sub  w1, w1, 1
+           _lea  x27, RankFactor
+            ldr  w27, [x27, x1, lsl 2]
     ; w1 = r
-    ; w27 = rr = r*(r-1)
-            mul  w27, w27, w1
+    ; w27 = rr = RankFactor[r]
+
  if Us = White
             cmp  w8, SQ_A4 + Up
             blo  Continue
@@ -1254,24 +1238,23 @@ NextPawn:
             cmp  w8, SQ_A6 + Up
             bhs  Continue
  end if
-    ; at this point rr!=0
+    ; at this point w27!=0
 
-    ; w1 is free because s = r8-Up
             ldr  w0, [sp, EvalInfo.ksq + 4*Them]
             ldr  w2, [sp, EvalInfo.ksq + 4*Us]
             lsl  w0, w0, 6
             lsl  w2, w2, 6
             mov  w10, 0
-           _lea  x6, SquareDistance
+           _lea  x6, SquareDistance_Cap5
             add  x6, x6, x8
             add  x6, x6, x2
             add  x6, x6, Up
            ldrb  w11, [x6]
-           _lea  x6, SquareDistance
+           _lea  x6, SquareDistance_Cap5
             add  x6, x6, x8
             add  x6, x6, x0
            ldrb  w0, [x6]
-           _lea  x6, SquareDistance
+           _lea  x6, SquareDistance_Cap5
             add  x6, x6, x8
             add  x6, x6, x2
            ldrb  w2, [x6]
@@ -1313,41 +1296,39 @@ NextPawn:
             and  x1, x1, x4
             and  x0, x0, x1
 
-            mov  x1, -1
-            tst  Pieces_Us, x0
-           csel  x1, AttackedBy_Us, x1, eq
-            and  x10, x10, x1
+                mov  x1, -1
+                tst  Pieces_Them, x0
+                csel  x1, AttackedBy_Them, x1, eq
+                orr  x1, x1, Pieces_Them
+                and  x11, x11, x1
+        ; x11 = unsafeSquares
+                mov  x1, -1
+                tst  Pieces_Us, x0
+               csel  x1, AttackedBy_Us, x1, eq
+                and  x10, x10, x1
+        ; x10 = defendedSquares
 
-            mov  x1, -1
-            tst  Pieces_Them, x0
-           csel  x1, AttackedBy_Them, x1, eq
-            orr  x1, x1, Pieces_Them
-            and  x11, x11, x1
-
-            mov  x4, 1
-            lsl  x4, x4, x8
-            tst  x11, x4
-          csetm  w0, ne
-            cmp  x11, 0
-          csetm  w2, ne
-            add  w2, w2, w2, lsl 2
-            add  w0, w2, w0, lsl 2
-            add  w0, w0, 9
-    ; w0 = k/2
-            mov  x4, 1
-            lsl  x4, x4, x8
-            tst  x10, x4
-           cset  w2, ne
-           _lea  x6, ForwardBB + 8*(64*Us - Up)
-            ldr  x4, [x6, x8, lsl 3]
-            eor  x10, x10, x4
-            cmp  x10, 0
-           cinc  w4, w2, eq
-            add  w2, w2, w4
-            add  w0, w0, w2
-    ; w0 = k/2
-            add  w27, w27, w27
-            mul  w0, w0, w27
+                mov  x4, 1
+                lsl  x4, x4, x8
+        ; x4 = blockSq bitboard
+                tst  x11, x4
+                mov  w5, 9
+               csel  w0, w5, wzr, eq
+                tst  x11, x11
+                mov  w5, 20
+               csel  w0, w5, w0, eq
+        ; w0 = k
+                tst  x10, x4
+               cset  w2, ne
+               _lea  x6, ForwardBB + 8*(64*Us - Up)
+                ldr  x4, [x6, x8, lsl 3]
+                eor  x10, x10, x4
+                cmp  x10, 0
+               cinc  w4, w2, eq
+                add  w2, w2, w4
+                add  w0, w0, w2, lsl 1
+        ; w0 = k
+                mul  w0, w0, w27
 AddToBonus:
             add  w0, w0, w0, lsl 16
             add  w26, w26, w0
@@ -1472,6 +1453,7 @@ Evaluate_Cold:
 
 .DoPawnEval:
             mov  x17, 0
+            mov  x14, 0
       EvalPawns  White
             str  w26, [x27, PawnEntry.score]
       EvalPawns  Black
@@ -1487,7 +1469,8 @@ Evaluate_Cold:
          Popcnt  x2, x2, x9
             str  x8, [x27, PawnEntry.key]
             str  w0, [x27, PawnEntry.score]
-           strb  w1, [x27, PawnEntry.asymmetry]
+            add  w14, w14, w1
+           strb  w14, [x27, PawnEntry.asymmetry]
            strb  w2, [x27, PawnEntry.openFiles]
            strb  w17, [x27, PawnEntry.weakUnopposed]
               b  Evaluate.DoPawnEvalReturn
@@ -1504,7 +1487,6 @@ Evaluate_Cold:
             asr  w0, w0, 1
             eor  w0, w0, w1
             sub  w0, w0, w1
-            add  w0, w0, Eval_Tempo
 Display 2, "Lazy Eval returning %i0%n"
             add  sp, sp, sizeof.EvalInfo
             ldp  x21, x30, [sp], 16
@@ -1914,7 +1896,6 @@ HaveSpecializedEval:
             ldr  x0, [x6, x0, lsl 3]
             and  w1, w1, 1
             blr  x0
-            add  x0, x0, Eval_Tempo
 Display 2, "Special Eval returned %i0%n"
             add  sp, sp, sizeof.EvalInfo
             ldp  x21, x30, [sp], 16

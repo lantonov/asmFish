@@ -18,6 +18,12 @@ SPAMFILTER_DELAY = 100
 ; if USE_CURRMOVE, don't print current move info before this number of ms
 CURRMOVE_MIN_TIME = 3000
 
+; options options
+OPTIONS_CONTEMPT_MIN     = -100
+OPTIONS_CONTEMPT_DEFAULT = 18
+OPTIONS_CONTEMPT_MAX     = 100
+OPTIONS_SLOWMOVER_DEFAULT = 84
+
 ; some bounds
 MAX_MOVES = 224	; maximum number of pseudo legal moves for any position
 AVG_MOVES = 96	; safe average number of moves per position, used for memory allocation

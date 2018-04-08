@@ -31,6 +31,7 @@ macro EvalPawns Us
   Backward     = (24 shl 16) + (12)
 
   Doubled     = ((18 shl 16) + (38))
+
             xor   eax, eax
             mov   qword[rdi+PawnEntry.passedPawns+8*Us], rax
             mov   qword[rdi+PawnEntry.pawnAttacksSpan+8*Us], rax
@@ -111,9 +112,7 @@ NextPiece:
            test   r9, r9
              jz   Neighbours_False
 Neighbours_True:
-            and   rax, r14
-         cmovnz   eax, dword[Lever+4*r12]
-            lea   esi, [rsi+rax]
+           test   rax, r14
             jnz   Neighbours_True__Lever_True
 Neighbours_True__Lever_False:
             mov   rax, r9
@@ -141,9 +140,6 @@ Neighbours_True__Lever_False__RelRank_small:
          cmovnz   r10d, eax
             jmp   Continue
 Neighbours_False:
-            and   rax, r14
-         cmovnz   eax, dword[Lever+4*r12]
-            add   esi, eax
             mov   edx, -Isolated
             lea   r10d, [r11 + 1]
             jmp   Continue
@@ -203,9 +199,12 @@ Continue:
             mov   eax, 1
             shl   rax, cl
              or   qword[rdi+PawnEntry.passedPawns+8*Us], rax
+        ; edx is either 0, or 1 and will be added to byte[rdi + PawnEntry.asymmetry]
+            mov   edx, 1
             jmp   Done
 NoPassed:
             lea   eax, [rcx+Up]
+            xor   edx, edx
             btc   r12, rax
   if Us eq White
             shl   r8, 8
@@ -225,13 +224,16 @@ PopLoop:
             xor   eax, eax
             mov   r9, qword[PawnAttacks+8*(64*Us+r9)]
             and   r9, r14
-          _blsr   rdx, r9
+          _blsr   r11, r9
            setz   al                
+             or   edx, eax
             shl   rax, cl
              or   qword[rdi+PawnEntry.passedPawns+8*Us], rax
           _blsr   r8, r8, rax
             jnz   PopLoop
 Done:
+            add   byte[rdi + PawnEntry.asymmetry], dl
+
           movzx   ecx, byte[r15]
             cmp   ecx, 64
              jb   NextPiece

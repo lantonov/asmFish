@@ -189,20 +189,21 @@ MovePick_QUIET_GEN:
 
 
 MovePick_QUIETS:
-		mov   eax, dword[r14]
-		cmp   r14, r15
-		jae   .WhileDone
-               test   esi, dword[r14+ExtMove.value]
-                 js   .WhileDone
-		add   r14, sizeof.ExtMove
-		cmp   eax, dword[rbx+State.ttMove]
-		 je   MovePick_QUIETS
-		cmp   eax, dword[rbx+State.mpKillers+4*0]
-		 je   MovePick_QUIETS
-		cmp   eax, dword[rbx+State.mpKillers+4*1]
-		 je   MovePick_QUIETS
-		cmp   eax, dword[rbx+State.countermove]
-		 je   MovePick_QUIETS
+               test  esi, esi
+                 js  .WhileDone
+        @1:
+		mov  eax, dword[r14 + ExtMove.move]
+		cmp  r14, r15
+		jae  .WhileDone
+		add  r14, sizeof.ExtMove
+		cmp  eax, dword[rbx + State.ttMove]
+		 je  @1b
+		cmp  eax, dword[rbx + State.mpKillers + 4*0]
+		 je  @1b
+		cmp  eax, dword[rbx + State.mpKillers + 4*1]
+		 je  @1b
+		cmp  eax, dword[rbx + State.countermove]
+		 je  @1b
 		ret
 
 	     calign   16, MovePick_BAD_CAPTURES
@@ -333,27 +334,26 @@ MovePick_CHECKS:
 
 	     calign   16, MovePick_RECAPTURES
 MovePick_RECAPTURES_GEN:
-		mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
-		mov   r14, rdi
-	       call   Gen_Captures
-		mov   r15, rdi
-		mov   r13, r14
-      ScoreCaptures   r13, rdi
-		lea   rdx, [MovePick_RECAPTURES]
-		mov   qword[rbx+State.stage], rdx
+		mov  rdi, qword[rbx-1*sizeof.State+State.endMoves]
+		mov  r14, rdi
+	       call  Gen_Captures
+		mov  r15, rdi
+		lea  rdx, [MovePick_RECAPTURES]
+		mov  qword[rbx+State.stage], rdx
 
 
 MovePick_RECAPTURES:
-		cmp   r14, r15
-		 je   .WhileDone
-	   PickBest   r14, r13, r15
-		mov   eax, ecx
-		and   ecx, 63
-		cmp   ecx, dword[rbx+State.recaptureSquare]
-		jne   MovePick_RECAPTURES
+		cmp  r14, r15
+		 je  .WhileDone
+                mov  ecx, dword[r14 + ExtMove.move]
+                mov  eax, ecx
+		and  ecx, 63
+                lea  r14, [r14 + sizeof.ExtMove]
+		cmp  ecx, dword[rbx + State.recaptureSquare]
+		jne  MovePick_RECAPTURES
 		ret
     .WhileDone:
-		xor   eax, eax
+		xor  eax, eax
 		ret
 
 

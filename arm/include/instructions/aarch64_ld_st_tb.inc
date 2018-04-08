@@ -470,6 +470,7 @@ iterate <instr, code1, code2, code3, code4, code5>, ldp, 0xa8400000, 0x6c400000,
             aarch64.parse_adr_f4 3, c
             dd code2 + @adr.encode + (@op1.data shl 10) + (@op0.data shl 0)
         else if (@op0.type and @type_wn_wzr) & (@op1.type and @type_wn_wzr)
+; FIXME: this case seems to be broken
             aarch64.parse_adr_f4 2, c
             dd code3 + @adr.encode + (@op1.data shl 10) + (@op0.data shl 0)
         else if (@op0.type and @type_sn) & (@op1.type and @type_sn)

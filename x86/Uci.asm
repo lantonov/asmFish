@@ -2,14 +2,14 @@
 Options_Init:
 	    lea  rdx, [options]
 	    mov  byte[rdx + Options.displayInfoMove], -1
-	    mov  dword[rdx + Options.contempt], 20
+	    mov  dword[rdx + Options.contempt], OPTIONS_CONTEMPT_DEFAULT
 	    mov  dword[rdx + Options.threads], 1
 	    mov  dword[rdx + Options.hash], 16
 	    mov  byte[rdx + Options.ponder], 0
 	    mov  dword[rdx + Options.multiPV], 1
 	    mov  dword[rdx+Options.moveOverhead], 30
 	    mov  dword[rdx+Options.minThinkTime], 20
-	    mov  dword[rdx+Options.slowMover], 89
+	    mov  dword[rdx+Options.slowMover], OPTIONS_SLOWMOVER_DEFAULT
 	    mov  byte[rdx + Options.chess960], 0
 	    mov  dword[rdx + Options.syzygyProbeDepth], 1
 	    mov  byte[rdx + Options.syzygy50MoveRule], -1
@@ -984,7 +984,7 @@ end if
 	    jmp  UciGetInput
 .Contempt:
 	   call  ParseInteger
-    ClampSigned  eax, -100, 100
+    ClampSigned  eax, OPTIONS_CONTEMPT_MIN, OPTIONS_CONTEMPT_MAX
 	    mov  dword[options.contempt], eax
 	    jmp  UciGetInput
 .MoveOverhead:
