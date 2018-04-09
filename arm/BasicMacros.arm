@@ -338,7 +338,7 @@ macro BuildTimeData
   day = time/(24*3600)
   day = day - (day + 365)/(3*365+366) 
   year = 1970 + day/365
-  day = day mod 365 + 1
+  day = day mod 365
   month = 1
   if year mod 4 = 0
     febdays = 29
