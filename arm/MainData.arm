@@ -24,7 +24,7 @@ szGreeting:
 	db VERSION_PRE
 	db VERSION_OS
 	db '_'
-	BuildTimeData
+	db '9'
 	db '_'
 	db VERSION_POST
 	NewLineData

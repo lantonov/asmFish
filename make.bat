@@ -84,13 +84,13 @@ echo.
 goto menu 
  
 :arm
-cd LinuxOS_binaries
+cd AndroidOS_binaries
 if exist arm* del arm*
 cd ..
 set include=arm\include\
 ECHO === Building ARM Executables ===
 "fasmg.exe" "arm\fish.arm" "armFishL_%datestamp%_v8" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'v8'" %debug%
-copy armFishL_%datestamp%_v8 LinuxOS_binaries
+copy armFishL_%datestamp%_v8 AndroidOS_binaries
 echo.
 goto menu
  
@@ -129,40 +129,44 @@ goto menu
 :matefinder
 
 :: Windows
-cd Matefinder_binaries
+cd WindowsOS_binaries
 if exist mateFishW* del mateFishW*
 cd ..
 set include=x86\include\
 ECHO === Building Windows Matefinder Executables ===
 "fasmg.exe" "x86\fish.asm" "mateFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
 "fasmg.exe" "x86\fish.asm" "mateFishW_%datestamp%_bmi2.exe" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishW* Matefinder_binaries
+copy mateFishW* WindowsOS_binaries
 echo.
 
 :: Linux
-cd Matefinder_binaries
+cd LinuxOS_binaries
 if exist mateFishL* del mateFishL*
 cd ..
 set include=x86\include\
 ECHO === Building Linux Matefinder Executables ===
 "fasmg.exe" "x86\fish.asm" "mateFishL_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
 "fasmg.exe" "x86\fish.asm" "mateFishL_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishL_%datestamp%_popcnt Matefinder_binaries
-copy mateFishL_%datestamp%_bmi2 Matefinder_binaries
+copy mateFishL_%datestamp%_popcnt LinuxOS_binaries
+copy mateFishL_%datestamp%_bmi2 LinuxOS_binaries
+
+cd AndroidOS_binaries
+if exist mateFishL* del mateFishL*
+cd ..
 set include=arm\include\
 "fasmg.exe" "arm\fish.arm" "mateFishL_%datestamp%_v8" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'v8'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishL_%datestamp%_v8 Matefinder_binaries
+copy mateFishL_%datestamp%_v8 AndroidOS_binaries
 echo.
 
 :: Mac
 set include=x86\include\
-cd Matefinder_binaries
+cd MacOS_binaries
 if exist mateFishX* del mateFishX*
 cd ..
 ECHO === Building MacOS Matefinder Executables ===
 "fasmg.exe" "x86\fish.asm" "mateFishX_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
 "fasmg.exe" "x86\fish.asm" "mateFishX_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishX_* Matefinder_binaries
+copy mateFishX_* MacOS_binaries
 echo.
 goto menu
 
@@ -208,13 +212,13 @@ echo.
  
  
 
-cd LinuxOS_binaries
+cd AndroidOS_binaries
 if exist arm* del arm*
 cd ..
 set include=arm\include\
 ECHO === Building ARM Executables ===
 "fasmg.exe" "arm\fish.arm" "armFishL_%datestamp%_v8" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'v8'" %debug%
-copy armFishL_%datestamp%_v8 LinuxOS_binaries
+copy armFishL_%datestamp%_v8 AndroidOS_Binaries
 echo.
 
  
@@ -252,47 +256,51 @@ echo.
  
 
 :: Windows
-cd Matefinder_binaries
+cd WindowsOS_binaries
 if exist mateFishW* del mateFishW*
 cd ..
 set include=x86\include\
 ECHO === Building Windows Matefinder Executables ===
 "fasmg.exe" "x86\fish.asm" "mateFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
 "fasmg.exe" "x86\fish.asm" "mateFishW_%datestamp%_bmi2.exe" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishW* Matefinder_binaries
+copy mateFishW* WindowsOS_binaries
 echo.
 
 :: Linux
-cd Matefinder_binaries
+cd LinuxOS_Binaries
 if exist mateFishL* del mateFishL*
 cd ..
 set include=x86\include\
 ECHO === Building Linux Matefinder Executables ===
 "fasmg.exe" "x86\fish.asm" "mateFishL_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
 "fasmg.exe" "x86\fish.asm" "mateFishL_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishL_%datestamp%_popcnt Matefinder_binaries
-copy mateFishL_%datestamp%_bmi2 Matefinder_binaries
+copy mateFishL_%datestamp%_popcnt LinuxOS_Binaries
+copy mateFishL_%datestamp%_bmi2 LinuxOS_Binaries
+
+cd AndroidOS_Binaries
+if exist mateFishL* del mateFishL*
+cd ..
 set include=arm\include\
 "fasmg.exe" "arm\fish.arm" "mateFishL_%datestamp%_v8" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'v8'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishL_%datestamp%_v8 Matefinder_binaries
+copy mateFishL_%datestamp%_v8 AndroidOS_binaries
 echo.
 
 :: Mac
 set include=x86\include\
-cd Matefinder_binaries
+cd MacOS_binaries
 if exist mateFishX* del mateFishX*
 cd ..
 ECHO === Building MacOS Matefinder Executables ===
 "fasmg.exe" "x86\fish.asm" "mateFishX_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
 "fasmg.exe" "x86\fish.asm" "mateFishX_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishX_* Matefinder_binaries
+copy mateFishX_* MacOS_binaries
 echo.
 goto:eof
 
 :WinPopcnt
 ECHO === Building Windows POPCNT Executable ===
 cd WindowsOS_binaries
-if exist asm* del asm*
+if exist asmFishW_*_popcnt.exe del asmFishW_*_popcnt.exe
 cd ..
 set include=x86\include\
 "fasmg.exe" "x86\fish.asm" "asmFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" %debug%
@@ -304,7 +312,7 @@ goto menu
 :WinBmi2
 ECHO === Building Windows BMI2 Executable ===
 cd WindowsOS_binaries
-if exist asm* del asm*
+if exist asmFishW_*_bmi2.exe del asmFishW_*_bmi2.exe
 cd ..
 set include=x86\include\
 "fasmg.exe" "x86\fish.asm" "asmFishW_%datestamp%_bmi2.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'bmi2'" %debug%
@@ -317,7 +325,8 @@ goto menu
 for /f "tokens=2 delims==" %%a in ('wmic OS Get localdatetime /value') do set "dt=%%a"
 set "YY=%dt:~2,2%" & set "YYYY=%dt:~0,4%" & set "MM=%dt:~4,2%" & set "DD=%dt:~6,2%"
 set "HH=%dt:~8,2%" & set "Min=%dt:~10,2%" & set "Sec=%dt:~12,2%"
-set "datestamp=%YYYY%-%MM%-%DD%" & set "timestamp=%HH%%Min%%Sec%" & set "fullstamp=%YYYY%-%MM%-%DD%_%HH%%Min%%Sec%"
+::set "datestamp=%YYYY%-%MM%-%DD%" & set "timestamp=%HH%%Min%%Sec%" & set "fullstamp=%YYYY%-%MM%-%DD%_%HH%%Min%%Sec%"
+set "datestamp=9"
 goto:eof
 
 :debug
