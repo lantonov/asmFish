@@ -162,7 +162,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             ldr  w1, [x21, State.excludedMove]
             str  w1, [sp, .excludedMove]
             ldr  x4, [x21, State.key]
-            lsl  x1, x1, 16
+           sbfm  x1, x1, 48, 15
             eor  x1, x1, x4
             str  x1, [sp, .posKey]
              bl  MainHash_Probe
@@ -649,8 +649,25 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             str  x0, [sp, .tte]
             str  x1, [sp, .ltte]
            strb  w2, [sp, .ttHit]
-            lsr  w1, w1, 16
-            str  w1, [sp, .ttMove]
+                asr  x27, x1, 48
+                lsr  w1, w1, 16
+                str  w1, [sp, .ttMove]
+
+                mov  w4, VALUE_MATE_IN_MAX_PLY
+                mov  w5, VALUE_NONE
+                add  w8, w27, w4
+                cbz  w2, @1f
+                cmp  w27, w5
+                beq  @1f
+                cmp  w8, w5, lsl 1
+                blo  @1f
+                ldr  w8, [x21, State.ply]
+                asr  w9, w27, 31
+                eor  w8, w8, w9
+                add  w27, w27, w9
+                sub  w27, w27, w8
+        @1:
+                str  w27, [sp, .ttValue]
 .10skip:
 .moves_loop:    ; this is actually not the head of the loop
     ; The data at tte could have been changed by

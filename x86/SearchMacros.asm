@@ -79,7 +79,7 @@ macro search RootNode, PvNode
              Assert   e, byte[rbx+State.ply], 0, 'assertion ss->ply == 0 failed in SearchRoot'
   end if
 
-Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
+Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 
 	; Step 1. initialize node
 		xor   eax, eax
@@ -183,9 +183,11 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 	; Step 4. transposition	table look up
 		mov   ecx, dword[rbx+State.excludedMove]
 		mov   dword[.excludedMove], ecx
-                shl   rcx, 16
+                shl   ecx, 16
+             movsxd   rcx, ecx
 		xor   rcx, qword[rbx+State.key]
 		mov   qword[.posKey], rcx
+
 	       call   MainHash_Probe
 		mov   qword[.tte], rax
 		mov   qword[.ltte], rcx
@@ -674,8 +676,27 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 		mov   qword[.tte], rax
 		mov   qword[.ltte], rcx
 		mov   byte[.ttHit], dl
+                mov   rdi, rcx
+                sar   rdi, 48
 		shr   ecx, 16
 		mov   dword[.ttMove], ecx
+
+		lea  r8d, [rdi+VALUE_MATE_IN_MAX_PLY]
+	       test  edx, edx
+		 jz  @1f
+		cmp  edi, VALUE_NONE
+		 je  @1f
+		cmp  r8d, 2*VALUE_MATE_IN_MAX_PLY
+		 jb  @1f
+	      movzx  r8d, byte[rbx+State.ply]
+		mov  r9d, edi
+		sar  r9d, 31
+		xor  r8d, r9d
+		add  edi, r9d
+		sub  edi, r8d
+        @1:
+		mov  dword[.ttValue], edi
+
 .10skip:
 
 
