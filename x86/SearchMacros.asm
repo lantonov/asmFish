@@ -676,8 +676,27 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   qword[.tte], rax
 		mov   qword[.ltte], rcx
 		mov   byte[.ttHit], dl
+                mov   rdi, rcx
+                sar   rdi, 48
 		shr   ecx, 16
 		mov   dword[.ttMove], ecx
+
+		lea  r8d, [rdi+VALUE_MATE_IN_MAX_PLY]
+	       test  edx, edx
+		 jz  @1f
+		cmp  edi, VALUE_NONE
+		 je  @1f
+		cmp  r8d, 2*VALUE_MATE_IN_MAX_PLY
+		 jb  @1f
+	      movzx  r8d, byte[rbx+State.ply]
+		mov  r9d, edi
+		sar  r9d, 31
+		xor  r8d, r9d
+		add  edi, r9d
+		sub  edi, r8d
+        @1:
+		mov  dword[.ttValue], edi
+
 .10skip:
 
 
