@@ -79,7 +79,7 @@ macro search RootNode, PvNode
              Assert   e, byte[rbx+State.ply], 0, 'assertion ss->ply == 0 failed in SearchRoot'
   end if
 
-Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
+Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 
 	; Step 1. initialize node
 		xor   eax, eax
@@ -183,9 +183,11 @@ Display	2, "Search(alpha=%i1, beta=%i2,	depth=%i8, cutNode=%i9)	called%n"
 	; Step 4. transposition	table look up
 		mov   ecx, dword[rbx+State.excludedMove]
 		mov   dword[.excludedMove], ecx
-                shl   rcx, 16
+                shl   ecx, 16
+             movsxd   rcx, ecx
 		xor   rcx, qword[rbx+State.key]
 		mov   qword[.posKey], rcx
+
 	       call   MainHash_Probe
 		mov   qword[.tte], rax
 		mov   qword[.ltte], rcx
