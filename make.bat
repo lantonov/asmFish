@@ -11,12 +11,11 @@ echo    EXECUTABLES
 echo    ===========
 echo.
 echo    1 - All
-echo    2 - Windows [ p - popcnt ^| b - bmi2 ]
+echo    2 - Windows
 echo    3 - Linux
 echo    4 - Mac
 echo    5 - ARM
 echo    6 - Base
-echo    7 - Matefinder
 echo.  
 echo    D - Toggle Debug Mode
 echo    Q - Quit
@@ -128,46 +127,46 @@ goto menu
  
 :matefinder
 
-:: Windows
-cd WindowsOS_binaries
-if exist mateFishW* del mateFishW*
-cd ..
-set include=x86\include\
-ECHO === Building Windows Matefinder Executables ===
-"fasmg.exe" "x86\fish.asm" "mateFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
-"fasmg.exe" "x86\fish.asm" "mateFishW_%datestamp%_bmi2.exe" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishW* WindowsOS_binaries
-echo.
+REM :: Windows
+REM cd WindowsOS_binaries
+REM if exist mateFishW* del mateFishW*
+REM cd ..
+REM set include=x86\include\
+REM ECHO === Building Windows Matefinder Executables ===
+REM "fasmg.exe" "x86\fish.asm" "mateFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
+REM "fasmg.exe" "x86\fish.asm" "mateFishW_%datestamp%_bmi2.exe" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
+REM copy mateFishW* WindowsOS_binaries
+REM echo.
 
-:: Linux
-cd LinuxOS_binaries
-if exist mateFishL* del mateFishL*
-cd ..
-set include=x86\include\
-ECHO === Building Linux Matefinder Executables ===
-"fasmg.exe" "x86\fish.asm" "mateFishL_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
-"fasmg.exe" "x86\fish.asm" "mateFishL_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishL_%datestamp%_popcnt LinuxOS_binaries
-copy mateFishL_%datestamp%_bmi2 LinuxOS_binaries
+REM :: Linux
+REM cd LinuxOS_binaries
+REM if exist mateFishL* del mateFishL*
+REM cd ..
+REM set include=x86\include\
+REM ECHO === Building Linux Matefinder Executables ===
+REM "fasmg.exe" "x86\fish.asm" "mateFishL_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
+REM "fasmg.exe" "x86\fish.asm" "mateFishL_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
+REM copy mateFishL_%datestamp%_popcnt LinuxOS_binaries
+REM copy mateFishL_%datestamp%_bmi2 LinuxOS_binaries
 
-cd AndroidOS_binaries
-if exist mateFishL* del mateFishL*
-cd ..
-set include=arm\include\
-"fasmg.exe" "arm\fish.arm" "mateFishL_%datestamp%_v8" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'v8'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishL_%datestamp%_v8 AndroidOS_binaries
-echo.
+REM cd AndroidOS_binaries
+REM if exist mateFishL* del mateFishL*
+REM cd ..
+REM set include=arm\include\
+REM "fasmg.exe" "arm\fish.arm" "mateFishL_%datestamp%_v8" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'v8'" -i "USE_MATEFINDER = 1" %debug%
+REM copy mateFishL_%datestamp%_v8 AndroidOS_binaries
+REM echo.
 
-:: Mac
-set include=x86\include\
-cd MacOS_binaries
-if exist mateFishX* del mateFishX*
-cd ..
-ECHO === Building MacOS Matefinder Executables ===
-"fasmg.exe" "x86\fish.asm" "mateFishX_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
-"fasmg.exe" "x86\fish.asm" "mateFishX_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishX_* MacOS_binaries
-echo.
+REM :: Mac
+REM set include=x86\include\
+REM cd MacOS_binaries
+REM if exist mateFishX* del mateFishX*
+REM cd ..
+REM ECHO === Building MacOS Matefinder Executables ===
+REM "fasmg.exe" "x86\fish.asm" "mateFishX_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
+REM "fasmg.exe" "x86\fish.asm" "mateFishX_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
+REM copy mateFishX_* MacOS_binaries
+REM echo.
 goto menu
 
 :all
@@ -254,47 +253,46 @@ copy asmFishX_%datestamp%_base MacOS_binaries
 echo.
 
  
+REM :: Windows
+REM cd WindowsOS_binaries
+REM if exist mateFishW* del mateFishW*
+REM cd ..
+REM set include=x86\include\
+REM ECHO === Building Windows Matefinder Executables ===
+REM "fasmg.exe" "x86\fish.asm" "mateFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
+REM "fasmg.exe" "x86\fish.asm" "mateFishW_%datestamp%_bmi2.exe" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
+REM copy mateFishW* WindowsOS_binaries
+REM echo.
 
-:: Windows
-cd WindowsOS_binaries
-if exist mateFishW* del mateFishW*
-cd ..
-set include=x86\include\
-ECHO === Building Windows Matefinder Executables ===
-"fasmg.exe" "x86\fish.asm" "mateFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
-"fasmg.exe" "x86\fish.asm" "mateFishW_%datestamp%_bmi2.exe" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishW* WindowsOS_binaries
-echo.
+REM :: Linux
+REM cd LinuxOS_Binaries
+REM if exist mateFishL* del mateFishL*
+REM cd ..
+REM set include=x86\include\
+REM ECHO === Building Linux Matefinder Executables ===
+REM "fasmg.exe" "x86\fish.asm" "mateFishL_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
+REM "fasmg.exe" "x86\fish.asm" "mateFishL_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
+REM copy mateFishL_%datestamp%_popcnt LinuxOS_Binaries
+REM copy mateFishL_%datestamp%_bmi2 LinuxOS_Binaries
 
-:: Linux
-cd LinuxOS_Binaries
-if exist mateFishL* del mateFishL*
-cd ..
-set include=x86\include\
-ECHO === Building Linux Matefinder Executables ===
-"fasmg.exe" "x86\fish.asm" "mateFishL_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
-"fasmg.exe" "x86\fish.asm" "mateFishL_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishL_%datestamp%_popcnt LinuxOS_Binaries
-copy mateFishL_%datestamp%_bmi2 LinuxOS_Binaries
+REM cd AndroidOS_Binaries
+REM if exist mateFishL* del mateFishL*
+REM cd ..
+REM set include=arm\include\
+REM "fasmg.exe" "arm\fish.arm" "mateFishL_%datestamp%_v8" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'v8'" -i "USE_MATEFINDER = 1" %debug%
+REM copy mateFishL_%datestamp%_v8 AndroidOS_binaries
+REM echo.
 
-cd AndroidOS_Binaries
-if exist mateFishL* del mateFishL*
-cd ..
-set include=arm\include\
-"fasmg.exe" "arm\fish.arm" "mateFishL_%datestamp%_v8" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'v8'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishL_%datestamp%_v8 AndroidOS_binaries
-echo.
-
-:: Mac
-set include=x86\include\
-cd MacOS_binaries
-if exist mateFishX* del mateFishX*
-cd ..
-ECHO === Building MacOS Matefinder Executables ===
-"fasmg.exe" "x86\fish.asm" "mateFishX_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
-"fasmg.exe" "x86\fish.asm" "mateFishX_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishX_* MacOS_binaries
-echo.
+REM :: Mac
+REM set include=x86\include\
+REM cd MacOS_binaries
+REM if exist mateFishX* del mateFishX*
+REM cd ..
+REM ECHO === Building MacOS Matefinder Executables ===
+REM "fasmg.exe" "x86\fish.asm" "mateFishX_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
+REM "fasmg.exe" "x86\fish.asm" "mateFishX_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
+REM copy mateFishX_* MacOS_binaries
+REM echo.
 goto:eof
 
 :WinPopcnt
