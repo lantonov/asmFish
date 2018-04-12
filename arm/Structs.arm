@@ -73,7 +73,13 @@ struct EvalInfo
  pi   rq 1
  score	   rd 1
  mobilityDiff   rd 1
+ ; Add 8 bytes to pad EvalInfo to 16-byte boundary
+      rb 8
 ends
+; Assert
+if sizeof.EvalInfo and 15
+ err "sizeof.EvalInfo should be divisible by 16"
+end if
 
 EndgameMapEntry.___ = 0
 EndgameMapEntry.key = 0 + EndgameMapEntry.___
