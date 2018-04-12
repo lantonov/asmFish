@@ -159,7 +159,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             ldr  w1, [x21, State.excludedMove]
             str  w1, [sp, .excludedMove]
             ldr  x4, [x21, State.key]
-            lsl  x1, x1, 16
+           sbfm  x1, x1, 48, 15
             eor  x1, x1, x4
             str  x1, [sp, .posKey]
              bl  MainHash_Probe
