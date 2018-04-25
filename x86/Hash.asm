@@ -34,15 +34,19 @@ MainHash_ReadOptions:
     @1:
     ; free current
            call  MainHash_Free
-           imul  rcx, rsi, 32
-    ; rcx = number of bytes in hash table
            test  ebx, 1
              jz  .NoLP
 .LP:
+           imul  rcx, rsi, 32    ; rcx = number of bytes in hash table
            call  Os_VirtualAlloc_LargePages
            test  rax, rax
             jnz  .Done
+           ; Note by Moha:
+           ;	Os_VirtualAlloc_LargePages
+           ;	obviously may clobber rcx			;
+           ;	so reload it before calling Os_VirtualAlloc
 .NoLP:
+           imul  rcx, rsi, 32    ; rcx = number of bytes in hash table
            call  Os_VirtualAlloc
             xor  edx, edx
 .Done:
