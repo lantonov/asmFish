@@ -41,6 +41,7 @@ macro search RootNode, PvNode
     .extension		rd 1
     .success		rd 1	; for tb
     .rbeta		rd 1
+	.probCutCount	rd 1
     .moved_piece_to_sq	rd 1
     .reductionOffset	rd 1
     .skipQuiets		    rb 1    ; -1 for true
@@ -582,6 +583,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   qword[rbx+State.stage], r15
 		mov   dword[rbx+State.ttMove], edi
 
+		mov    dword[.probCutCount], 0
 .9moveloop:
 		xor   esi, esi
 	GetNextMove
@@ -595,6 +597,11 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 	       test   eax, eax
 		 jz   .9moveloop
 
+		mov    r12d, dword[.depth]
+		sub    r12d, 3
+		cmp    dword[.probCutCount], r12d
+		jge   .9moveloop_done
+		add    dword[.probCutCount], 1
 		mov   ecx, dword[.move]
 		mov   dword[rbx+State.currentMove], ecx
 		mov   eax, ecx
