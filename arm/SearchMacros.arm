@@ -31,6 +31,7 @@ macro Search PvNode, RootNode
     .extension          rd 1
     .success            rd 1    ; for tb
     .rbeta              rd 1
+	.probCutCount       rd 1
     .moved_piece_to_sq  rd 1
     .reductionOffset    rd 1
     .skipQuiets             rb 1    ; -1 for true
@@ -570,6 +571,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
 .9NoTTMove:
             str  x25, [x21, State.stage]
             str  w27, [x21, State.ttMove]
+            str  wzr, [sp, .probCutCount]
 .9moveloop:
             mov  w26, 0
     GetNextMove
@@ -580,6 +582,13 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             cbz  w0, .9moveloop_done
              bl  Move_IsLegal
             cbz  w0, .9moveloop
+            ldr  w22,[sp, .depth]
+            sub  w22, w22, 3
+            ldr  w0, [sp, .probCutCount]
+            cmp  w0, w22
+            bge  .9moveloop
+            add  w0, w0, 1
+            str  w0, [sp, .probCutCount]
             ldr  w1, [sp, .move]
             str  w1, [x21, State.currentMove]
            ubfx  w0, w1, 6, 6
