@@ -50,7 +50,7 @@ cd WindowsOS_binaries
 if exist asm* del asm*
 cd ..
 set include=x86\include\
-:: "fasmg.exe" "x86\fish.asm" "asmFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" %debug%
+"fasmg.exe" "x86\fish.asm" "asmFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" %debug%
 "fasmg.exe" "x86\fish.asm" "asmFishW_%datestamp%_bmi2.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'bmi2'" %debug%
 copy asmFishW_%datestamp%_popcnt.exe WindowsOS_binaries
 copy asmFishW_%datestamp%_bmi2.exe WindowsOS_binaries
