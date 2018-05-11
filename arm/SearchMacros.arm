@@ -1,4 +1,5 @@
-RazorMargin = 590
+RazorMargin1 = 590
+RazorMargin2 = 604
 
 macro Search PvNode, RootNode
   if RootNode = 1 & PvNode = 0
@@ -30,6 +31,7 @@ macro Search PvNode, RootNode
     .extension          rd 1
     .success            rd 1    ; for tb
     .rbeta              rd 1
+	.probCutCount       rd 1
     .moved_piece_to_sq  rd 1
     .reductionOffset    rd 1
     .skipQuiets             rb 1    ; -1 for true
@@ -274,12 +276,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
     ; Step 6. Razoring (skipped when in check)
   if PvNode = 0
             ldr  w2, [sp, .depth]
-            cmp  w2, 1*ONE_PLY
-            bgt  .6skip
-            ldr  w4, [sp, .evalu]
-            add  w0, w4, RazorMargin
-            ldr  w1, [sp, .alpha]
-            cmp  w0, w1
+            cmp  w2, 2*ONE_PLY
             bgt  .6skip
     if USE_MATEFINDER = 1
             mov  w4, 2*VALUE_KNOWN_WIN - 1
@@ -288,13 +285,33 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             cmp  w0, w4
             bhs  .6skip
     end if
-            ;ldr  w1, [sp, .alpha] is already here
+            cmp  w2, ONE_PLY
+            bne  @1f            
+            ldr  w4, [sp, .evalu]
+            add  w0, w4, RazorMargin1
+            ldr  w1, [sp, .alpha]
+            cmp  w0, w1
+            bgt  @1f  
             add  w2, w1, 1
             mov  w8, 0
-             bl  QSearch_NonPv_NoCheck
-              b  .Return
+            bl  QSearch_NonPv_NoCheck
+            b  .Return
+@1:
+            ldr  w4, [sp, .evalu]
+            add  w0, w4, RazorMargin2
+            ldr  w1, [sp, .alpha]
+            cmp  w0, w1
+            bgt  .6skip            
+            mov  w8, 0
+            sub  w1, w1, RazorMargin2  
+            add  w2, w1, 1
+            mov  w26, w1
+            bl  QSearch_NonPv_NoCheck
+            cmp  w0, w26
+            ble  .Return
 .6skip:
   end if
+  
     ; Step 7. Futility pruning: child node (skipped when in check)
   if (RootNode = 0 & USE_MATEFINDER = 0) | (PvNode = 0 & USE_MATEFINDER = 1)
             ldr  w2, [sp, .depth]
@@ -554,6 +571,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
 .9NoTTMove:
             str  x25, [x21, State.stage]
             str  w27, [x21, State.ttMove]
+            str  wzr, [sp, .probCutCount]
 .9moveloop:
             mov  w26, 0
     GetNextMove
@@ -564,6 +582,13 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             cbz  w0, .9moveloop_done
              bl  Move_IsLegal
             cbz  w0, .9moveloop
+            ldr  w22,[sp, .depth]
+            sub  w22, w22, 3
+            ldr  w0, [sp, .probCutCount]
+            cmp  w0, w22
+            bge  .9moveloop
+            add  w0, w0, 1
+            str  w0, [sp, .probCutCount]
             ldr  w1, [sp, .move]
             str  w1, [x21, State.currentMove]
            ubfx  w0, w1, 6, 6
