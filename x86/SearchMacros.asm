@@ -1,4 +1,5 @@
-RazorMargin = 590
+RazorMargin1 = 590
+RazorMargin2 = 604
 
 macro search RootNode, PvNode
 	; in:
@@ -40,6 +41,7 @@ macro search RootNode, PvNode
     .extension		rd 1
     .success		rd 1	; for tb
     .rbeta		rd 1
+	.probCutCount	rd 1
     .moved_piece_to_sq	rd 1
     .reductionOffset	rd 1
     .skipQuiets		    rb 1    ; -1 for true
@@ -293,30 +295,40 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		test   ecx, ecx
 		jz   .moves_loop
 
-
 	    ; Step 6. Razoring (skipped	when in	check)
   if PvNode = 0
-		mov  edx, dword[.depth]
-                mov  ecx, dword[.alpha]
-		cmp  edx, 1*ONE_PLY
-		 jg  .6skip
-		lea  eax, [ecx - RazorMargin]
+		mov   edx, dword[.depth] 
+		cmp   edx, 2*ONE_PLY 
+		jg    .6skip
+	if USE_MATEFINDER =	1
+		lea   eax, [rcx+2*VALUE_KNOWN_WIN-1]
+		cmp   eax, 4*VALUE_KNOWN_WIN-1
+		jae   .6skip
+	end	if
+		mov  ecx, dword[.alpha]
+		cmp  edx, ONE_PLY
+		jne  @1f
+		lea  eax, [ecx - RazorMargin1]
+		cmp  eax, dword[.evalu]
+		jl   @1f
+		lea  edx, [rcx + 1]
+		xor  r8d, r8d
+		   call  QSearch_NonPv_NoCheck
+		jmp  .Return
+@1:
+		lea  eax, [ecx - RazorMargin2]
 		cmp  eax, dword[.evalu]
 		 jl  .6skip
-    if USE_MATEFINDER =	1
-		lea  eax, [rcx + 2*VALUE_KNOWN_WIN - 1]
-		cmp  eax, 4*VALUE_KNOWN_WIN - 1
-		jae  .6skip
-    end	if
-		;mov  ecx, dword[.alpha] already here
-		lea  edx, [rcx + 1]
-                xor  r8d, r8d
-	       call  QSearch_NonPv_NoCheck
-                jmp  .Return
+		xor   r8d, r8d
+		sub   ecx, RazorMargin2
+		lea   edx, [rcx+1]
+		mov   esi, ecx
+	       call   QSearch_NonPv_NoCheck
+		cmp   eax, esi
+		jle   .Return
 .6skip:
   end if
-
-
+  
 	    ; Step 7. Futility pruning:	child node (skipped when in check)
   if (RootNode = 0 & USE_MATEFINDER = 0) | (PvNode = 0 & USE_MATEFINDER	= 1)
 		mov   edx, dword[.depth]
@@ -571,6 +583,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   qword[rbx+State.stage], r15
 		mov   dword[rbx+State.ttMove], edi
 
+		mov    dword[.probCutCount], 0
 .9moveloop:
 		xor   esi, esi
 	GetNextMove
@@ -584,6 +597,11 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 	       test   eax, eax
 		 jz   .9moveloop
 
+		mov    r12d, dword[.depth]
+		sub    r12d, 3
+		cmp    dword[.probCutCount], r12d
+		jge   .9moveloop_done
+		add    dword[.probCutCount], 1
 		mov   ecx, dword[.move]
 		mov   dword[rbx+State.currentMove], ecx
 		mov   eax, ecx
