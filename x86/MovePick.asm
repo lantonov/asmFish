@@ -240,9 +240,21 @@ MovePick_ALL_EVASIONS:
 		mov   r15, rdi
 		mov   r12, r14
       ScoreEvasions   r12, r15
-		lea   rdx, [MovePick_REMAINING]
+		lea   rdx, [MovePick_REMAINING_EVASIONS]
 		mov   qword[rbx+State.stage], rdx
-		jmp   MovePick_REMAINING
+		jmp   MovePick_REMAINING_EVASIONS
+
+MovePick_REMAINING_EVASIONS:
+		cmp   r14, r15
+		jae   .WhileDone
+	   PickBest   r14, r13, r15
+		mov   eax, ecx
+		cmp   ecx, dword[rbx+State.ttMove]
+		 je   MovePick_REMAINING_EVASIONS
+		ret
+    .WhileDone:
+		xor   eax, eax
+		ret
 
 	     calign   8
 MovePick_QSEARCH_WITH_CHECKS:
@@ -288,10 +300,18 @@ MovePick_QCAPTURES_NO_CHECKS_GEN:
 MovePick_REMAINING:
 		cmp   r14, r15
 		jae   .WhileDone
-	   PickBest   r14, r13, r15
+	  PickBest   r14, r13, r15
 		mov   eax, ecx
 		cmp   ecx, dword[rbx+State.ttMove]
 		 je   MovePick_REMAINING
+		 and  ecx, 63
+ 		 cmp  ecx, dword[rbx + State.recaptureSquare]
+ 		 je   @f
+		mov   edx, dword[rbx + State.depth]
+		cmp   edx, DEPTH_QS_RECAPTURES
+		jle   MovePick_REMAINING
+
+	@@:
 		ret
     .WhileDone:
 		xor   eax, eax
@@ -307,6 +327,13 @@ MovePick_QCAPTURES_CHECKS:
 		mov   eax, ecx
 		cmp   ecx, dword[rbx+State.ttMove]
 		 je   MovePick_QCAPTURES_CHECKS
+ 		 and  ecx, 63
+ 		 cmp  ecx, dword[rbx + State.recaptureSquare]
+ 		 je   @f
+		 mov  edx, dword[rbx+State.depth]
+		 cmp  edx, DEPTH_QS_RECAPTURES
+		 jle  MovePick_QCAPTURES_CHECKS
+	@@:
 		ret
 
 	     calign   16, MovePick_CHECKS
@@ -328,37 +355,6 @@ MovePick_CHECKS:
     .IfDone:
 		xor   eax, eax
 		ret
-
-
-
-
-	     calign   16, MovePick_RECAPTURES
-MovePick_RECAPTURES_GEN:
-		mov  rdi, qword[rbx-1*sizeof.State+State.endMoves]
-		mov  r14, rdi
-	       call  Gen_Captures
-		mov  r15, rdi
-		lea  rdx, [MovePick_RECAPTURES]
-		mov  qword[rbx+State.stage], rdx
-
-
-MovePick_RECAPTURES:
-		cmp  r14, r15
-		 je  .WhileDone
-                mov  ecx, dword[r14 + ExtMove.move]
-                mov  eax, ecx
-		and  ecx, 63
-                lea  r14, [r14 + sizeof.ExtMove]
-		cmp  ecx, dword[rbx + State.recaptureSquare]
-		jne  MovePick_RECAPTURES
-		ret
-    .WhileDone:
-		xor  eax, eax
-		ret
-
-
-
-
 
 	     calign   8
 MovePick_PROBCUT:
