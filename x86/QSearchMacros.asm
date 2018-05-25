@@ -238,25 +238,37 @@ end if
 		lea   r14, [MovePick_EVASIONS]
 	else
 		mov   edx, dword[.depth]
+    mov   dword[rbx+State.depth], edx
+    mov   eax, dword[rbx-1*sizeof.State+State.currentMove]
+    and   eax, 63
+    mov   dword[rbx+State.recaptureSquare], eax
+
 		lea   r15, [MovePick_QCAPTURES_CHECKS_GEN]
+    cmp   edx, DEPTH_QS_RECAPTURES
 		lea   r14, [MovePick_QSEARCH_WITH_CHECKS]
 		cmp   edx, DEPTH_QS_NO_CHECKS
 		 jg   .MovePickInitGo
 		lea   r15, [MovePick_QCAPTURES_NO_CHECKS_GEN]
 		lea   r14, [MovePick_QSEARCH_WITHOUT_CHECKS]
-		cmp   edx, DEPTH_QS_RECAPTURES
-		 jg   .MovePickInitGo
-		lea   r15, [MovePick_RECAPTURES_GEN]
-		mov   eax, dword[rbx-1*sizeof.State+State.currentMove]
-		and   eax, 63
-		mov   dword[rbx+State.recaptureSquare], eax
-		xor   edi, edi
-		jmp   .MovePickNoTTMove
 	end if
-    .MovePickInitGo:
+
+.MovePickInitGo:
 		mov   edi, ecx
-	       test   ecx, ecx
+	  test   ecx, ecx
 		 jz   .MovePickNoTTMove
+     mov   eax, dword[rbx-1*sizeof.State+State.currentMove]
+     and   eax, 63
+     mov   edx, ecx
+     and   edx, 63
+     cmp   eax, edx
+      je   @f
+     mov   edx, dword[.depth]
+     cmp   edx, DEPTH_QS_RECAPTURES
+     jg    @f
+     xor  edi, edi
+     jmp  .MovePickNoTTMove
+
+@@:
 	       call   Move_IsPseudoLegal
 	       test   rax, rax
 	      cmovz   edi, eax
