@@ -13,7 +13,7 @@ MovePick_CAPTURES_GEN:
 		mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   r14, rdi
 		mov   qword[rbx+State.endBadCaptures], rdi
-	       call   Gen_Captures
+		call   Gen_Captures
 		mov   r15, rdi
 		mov   r13, r14
       ScoreCaptures   r13, rdi
@@ -29,7 +29,7 @@ MovePick_GOOD_CAPTURES:
 		cmp   ecx, dword[rbx+State.ttMove]
 		 je   MovePick_GOOD_CAPTURES
 
-               imul   edx, dword[r14 - sizeof.ExtMove + ExtMove.value], -55
+		imul   edx, dword[r14 - sizeof.ExtMove + ExtMove.value], -55
 
 		mov   r8d, ecx
 		shr   r8d, 6
@@ -37,14 +37,14 @@ MovePick_GOOD_CAPTURES:
 		mov   r9d, ecx
 		and   r9d, 63	; r9d = to
 
-                lea   eax, [edx + 1023]
-               test   edx, edx
-              cmovs   edx, eax
-                sar   edx, 10
-	       call   SeeTestGe.HaveFromTo
+		lea   eax, [edx + 1023]
+		test   edx, edx
+		cmovs   edx, eax
+		sar   edx, 10
+		call   SeeTestGe.HaveFromTo
 
 		mov   rdx, qword[rbx+State.endBadCaptures]
-	       test   eax, eax
+		test   eax, eax
 		 jz   .Negative
 	.Positive:
 		mov   eax, edi
@@ -65,18 +65,18 @@ MovePick_GOOD_CAPTURES:
 		mov   eax, edi
 		mov   ecx, edi
 		and   eax, 63
-	      movzx   eax, byte[rbp+Pos.board+rax]
-	       test   edi, edi
+		movzx   eax, byte[rbp+Pos.board+rax]
+		test   edi, edi
 		 jz   MovePick_KILLERS
 		cmp   edi, dword[rbx+State.ttMove]
 		 je   MovePick_KILLERS
 		cmp   edi, MOVE_TYPE_EPCAP shl 12
 		jae   .special
-	       test   eax, eax
+		test   eax, eax
 		jnz   MovePick_KILLERS
     .check:
-	       call   Move_IsPseudoLegal
-	       test   rax, rax
+		call   Move_IsPseudoLegal
+		test   rax, rax
 		 jz   MovePick_KILLERS
 		mov   eax, edi
 		ret
@@ -92,18 +92,18 @@ MovePick_KILLERS:
 		mov   eax, edi
 		mov   ecx, edi
 		and   eax, 63
-	      movzx   eax, byte[rbp+Pos.board+rax]
-	       test   edi, edi
+		movzx   eax, byte[rbp+Pos.board+rax]
+		test   edi, edi
 		 jz   MovePick_KILLERS2
 		cmp   edi, dword[rbx+State.ttMove]
 		 je   MovePick_KILLERS2
 		cmp   edi, MOVE_TYPE_EPCAP shl 12
 		jae   .special
-	       test   eax, eax
+		test   eax, eax
 		jnz   MovePick_KILLERS2
     .check:
-	       call   Move_IsPseudoLegal
-	       test   rax, rax
+		call   Move_IsPseudoLegal
+		test   rax, rax
 		 jz   MovePick_KILLERS2
 		mov   eax, edi
 		ret
@@ -119,8 +119,8 @@ MovePick_KILLERS2:
 		mov   eax, edi
 		mov   ecx, edi
 		and   eax, 63
-	      movzx   eax, byte[rbp+Pos.board+rax]
-	       test   edi, edi
+		movzx   eax, byte[rbp+Pos.board+rax]
+		test   edi, edi
 		 jz   MovePick_QUIET_GEN
 		cmp   edi, dword[rbx+State.ttMove]
 		 je   MovePick_QUIET_GEN
@@ -130,11 +130,11 @@ MovePick_KILLERS2:
 		 je   MovePick_QUIET_GEN
 		cmp   edi, MOVE_TYPE_EPCAP shl 12
 		jae   .special
-	       test   eax, eax
+		test   eax, eax
 		jnz   MovePick_QUIET_GEN
     .check:
-	       call   Move_IsPseudoLegal
-	       test   rax, rax
+		call   Move_IsPseudoLegal
+		test   rax, rax
 		 jz   MovePick_QUIET_GEN
 		mov   eax, edi
 		ret
@@ -146,52 +146,51 @@ MovePick_QUIET_GEN:
 		mov   rdi, qword[rbx+State.endBadCaptures]
 		mov   r14, rdi
 		mov   r12, rdi
-	       call   Gen_Quiets
+		call   Gen_Quiets
 		mov   r15, rdi
 	ScoreQuiets   r12, rdi
 
         ; partial insertion sort
-                lea   r10, [r14+sizeof.ExtMove]
-               imul   edx, dword[rbx+State.depth], -4000
-                mov   r8, r10
-                cmp   r10, r15
+		lea   r10, [r14+sizeof.ExtMove]
+		imul   edx, dword[rbx+State.depth], -4000
+		mov   r8, r10
+		cmp   r10, r15
                 jae   .SortDone
 .SortLoop:
-                mov   edi, dword[r8+ExtMove.value]
-                mov   r9, qword[r8+ExtMove.move]
-                cmp   edi, edx
-                 jl   .SortLoopSkip
-                mov   rax, qword[r10]
-                mov   qword[r8], rax
-                mov   rcx, r10
-                cmp   r10, r14
-                 je   .SortInnerDone
+		mov   edi, dword[r8+ExtMove.value]
+		mov   r9, qword[r8+ExtMove.move]
+		cmp   edi, edx
+		jl   .SortLoopSkip
+		mov   rax, qword[r10]
+		mov   qword[r8], rax
+		mov   rcx, r10
+		cmp   r10, r14
+		je   .SortInnerDone
 .SortInner:
-                mov   r11, qword[rcx-sizeof.ExtMove]
-                lea   rax, [rcx-sizeof.ExtMove]
-                cmp   edi, dword[rcx-sizeof.ExtMove+ExtMove.value]
-                jle   .SortInnerDone
-                mov   qword[rcx], r11
-                mov   rcx, rax
-                cmp   rax, r14
-                jne   .SortInner
+		mov   r11, qword[rcx-sizeof.ExtMove]
+		lea   rax, [rcx-sizeof.ExtMove]
+		cmp   edi, dword[rcx-sizeof.ExtMove+ExtMove.value]
+		jle   .SortInnerDone
+		mov   qword[rcx], r11
+		mov   rcx, rax
+		cmp   rax, r14
+		jne   .SortInner
 .SortInnerDone:
-                add   r10, sizeof.ExtMove
-                mov   qword[rcx], r9
+		add   r10, sizeof.ExtMove
+		mov   qword[rcx], r9
 .SortLoopSkip:
-                add   r8, sizeof.ExtMove
-                cmp   r8, r15
-                 jb   .SortLoop
+		add   r8, sizeof.ExtMove
+		cmp   r8, r15
+		jb   .SortLoop
 .SortDone:
 
 		lea   rdx, [MovePick_QUIETS]
 		mov   qword[rbx+State.stage], rdx
 
-
 MovePick_QUIETS:
-               test  esi, esi
-                 js  .WhileDone
-        @1:
+		test  esi, esi
+		js  .WhileDone
+            @1:
 		mov  eax, dword[r14 + ExtMove.move]
 		cmp  r14, r15
 		jae  .WhileDone
@@ -236,7 +235,7 @@ MovePick_EVASIONS:
 MovePick_ALL_EVASIONS:
 		mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   r14, rdi
-	       call   Gen_Evasions
+		call   Gen_Evasions
 		mov   r15, rdi
 		mov   r12, r14
       ScoreEvasions   r12, r15
@@ -250,7 +249,7 @@ MovePick_REMAINING_EVASIONS:
 	   PickBest   r14, r13, r15
 		mov   eax, ecx
 		cmp   ecx, dword[rbx+State.ttMove]
-		 je   MovePick_REMAINING_EVASIONS
+		je    MovePick_REMAINING_EVASIONS
 		ret
     .WhileDone:
 		xor   eax, eax
@@ -268,7 +267,7 @@ MovePick_QSEARCH_WITH_CHECKS:
 MovePick_QCAPTURES_CHECKS_GEN:
 		mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   r14, rdi
-	       call   Gen_Captures
+		call   Gen_Captures
 		mov   r15, rdi
 		mov   r13, r14
       ScoreCaptures   r13, rdi
@@ -289,7 +288,7 @@ MovePick_QSEARCH_WITHOUT_CHECKS:
 MovePick_QCAPTURES_NO_CHECKS_GEN:
 		mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   r14, rdi
-	       call   Gen_Captures
+		call   Gen_Captures
 		mov   r15, rdi
 		mov   r13, r14
       ScoreCaptures   r13, rdi
@@ -300,13 +299,15 @@ MovePick_QCAPTURES_NO_CHECKS_GEN:
 MovePick_REMAINING:
 		cmp   r14, r15
 		jae   .WhileDone
-	  PickBest   r14, r13, r15
+	   PickBest   r14, r13, r15
 		mov   eax, ecx
 		cmp   ecx, dword[rbx+State.ttMove]
-		 je   MovePick_REMAINING
-		 and  ecx, 63
- 		 cmp  ecx, dword[rbx + State.recaptureSquare]
- 		 je   @f
+		je    MovePick_REMAINING
+		and   ecx, 63  ; to_sq(move) = ecx
+		mov   edx, dword[rbx-1*sizeof.State+State.currentMove]
+		and   edx, 63  ; recaptureSquare = edx
+		cmp   ecx, edx
+ 		je    @f
 		mov   edx, dword[rbx + State.depth]
 		cmp   edx, DEPTH_QS_RECAPTURES
 		jle   MovePick_REMAINING
@@ -317,8 +318,6 @@ MovePick_REMAINING:
 		xor   eax, eax
 		ret
 
-
-
 	     calign   16
 MovePick_QCAPTURES_CHECKS:
 		cmp   r14, r15
@@ -326,13 +325,15 @@ MovePick_QCAPTURES_CHECKS:
 	   PickBest   r14, r13, r15
 		mov   eax, ecx
 		cmp   ecx, dword[rbx+State.ttMove]
-		 je   MovePick_QCAPTURES_CHECKS
- 		 and  ecx, 63
- 		 cmp  ecx, dword[rbx + State.recaptureSquare]
- 		 je   @f
-		 mov  edx, dword[rbx+State.depth]
-		 cmp  edx, DEPTH_QS_RECAPTURES
-		 jle  MovePick_QCAPTURES_CHECKS
+		je   MovePick_QCAPTURES_CHECKS
+		and   ecx, 63  ; to_sq(move) = ecx
+		mov   edx, dword[rbx-1*sizeof.State+State.currentMove]
+		and   edx, 63  ; recaptureSquare = edx
+		cmp   ecx, edx
+		je    @f
+		mov   edx, dword[rbx+State.depth]
+		cmp   edx, DEPTH_QS_RECAPTURES
+		jle   MovePick_QCAPTURES_CHECKS
 	@@:
 		ret
 
@@ -340,7 +341,7 @@ MovePick_QCAPTURES_CHECKS:
     .WhileDone:
 		mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   r14, rdi
-	       call   Gen_QuietChecks
+		call   Gen_QuietChecks
 		mov   r15, rdi
 		lea   rdx, [MovePick_CHECKS]
 		mov   qword[rbx+State.stage], rdx
@@ -369,7 +370,7 @@ MovePick_PROBCUT:
 MovePick_PROBCUT_GEN:
 		mov   rdi, qword[rbx-1*sizeof.State+State.endMoves]
 		mov   r14, rdi
-	       call   Gen_Captures
+		call   Gen_Captures
 		mov   r15, rdi
 		mov   r13, r14
       ScoreCaptures   r13, rdi
