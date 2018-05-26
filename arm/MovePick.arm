@@ -1,6 +1,5 @@
 
 MovePick_MAIN_SEARCH:
-;Display 2, "MovePick_MAIN_SEARCH"
             ldr  x25, [x21, -1*sizeof.State + State.endMoves]
             ldr  w0, [x21, State.ttMove]
             adr  x2, MovePick_CAPTURES_GEN
@@ -8,7 +7,6 @@ MovePick_MAIN_SEARCH:
              br  x29
 
 MovePick_CAPTURES_GEN:
-;Display 2, "MovePick_CAPTURES_GEN"
             ldr  x27, [x21, -1*sizeof.State + State.endMoves]
             mov  x24, x27
             str  x27, [x21, State.endBadCaptures]
@@ -20,7 +18,6 @@ MovePick_CAPTURES_GEN:
             str  x2, [x21, State.stage]
 
 MovePick_GOOD_CAPTURES:
-;Display 2, "MovePick_GOOD_CAPTURES"
             cmp  x24, x25
             beq  MovePick_GOOD_CAPTURES.WhileDone
        PickBest  x24, x23, x25
@@ -44,19 +41,16 @@ MovePick_GOOD_CAPTURES:
             cbz  w0, MovePick_GOOD_CAPTURES.Negative
 
 MovePick_GOOD_CAPTURES.Positive:
-;Display 2, "MovePick_GOOD_CAPTURES.Positive"
             mov  w0, w27
              br  x29
 
 MovePick_GOOD_CAPTURES.Negative:
-;Display 2, "MovePick_GOOD_CAPTURES.Negative"
             str  w27, [x2, ExtMove.move]
             add  x2, x2, sizeof.ExtMove
             str  x2, [x21, State.endBadCaptures]
               b  MovePick_GOOD_CAPTURES
 
 MovePick_GOOD_CAPTURES.WhileDone:
-;Display 2, "MovePick_GOOD_CAPTURES.WhileDone"
             adr  x2, MovePick_KILLERS
             str  x2, [x21, State.stage]
 
@@ -74,19 +68,16 @@ MovePick_GOOD_CAPTURES.WhileDone:
            cbnz  w0, MovePick_KILLERS
 
 MovePick_GOOD_CAPTURES.check:
-;Display 2, "MovePick_GOOD_CAPTURES.check"
              bl  Move_IsPseudoLegal
             cbz  x0, MovePick_KILLERS
             mov  w0, w27
              br  x29
 
 MovePick_GOOD_CAPTURES.special:
-;Display 2, "MovePick_GOOD_CAPTURES.special"
             cmp  w27, MOVE_TYPE_CASTLE shl 12
             bhs  MovePick_GOOD_CAPTURES.check
 
 MovePick_KILLERS:
-;Display 2, "MovePick_KILLERS"
             adr  x2, MovePick_KILLERS2
             str  x2, [x21, State.stage]
             ldr  w27, [x21, State.mpKillers + 4*1]
@@ -103,19 +94,16 @@ MovePick_KILLERS:
            cbnz  w0, MovePick_KILLERS2
 
 MovePick_KILLERS.check:
-;Display 2, "MovePick_KILLERS.check"
              bl  Move_IsPseudoLegal
             cbz  x0, MovePick_KILLERS2
             mov  w0, w27
              br  x29
 
 MovePick_KILLERS.special:
-;Display 2, "MovePick_KILLERS.special"
             cmp  w27, MOVE_TYPE_CASTLE shl 12
             bhs  MovePick_KILLERS.check
 
 MovePick_KILLERS2:
-;Display 2, "MovePick_KILLERS2"
             adr  x2, MovePick_QUIET_GEN
             str  x2, [x21, State.stage]
             ldr  w27, [x21, State.countermove]
@@ -138,20 +126,17 @@ MovePick_KILLERS2:
            cbnz  w0, MovePick_QUIET_GEN
 
 MovePick_KILLERS2.check:
-;Display 2, "MovePick_KILLERS2.check"
              bl  Move_IsPseudoLegal
             cbz  x0, MovePick_QUIET_GEN
             mov  w0, w27
              br  x29
 
 MovePick_KILLERS2.special:
-;Display 2, "MovePick_KILLERS2.special"
             cmp  w27, MOVE_TYPE_CASTLE shl 12
             bhs  MovePick_KILLERS2.check
 
 
 MovePick_QUIET_GEN:
-;Display 2, "MovePick_QUIET_GEN"
             ldr  x27, [x21, State.endBadCaptures]
             mov  x24, x27
             mov  x22, x27
@@ -203,7 +188,6 @@ MovePick_QUIET_GEN.SortDone:
             str  x2, [x21, State.stage]
 
 MovePick_QUIETS:
-;Display 2, "MovePick_QUIETS"
                 ldr  w3, [x21, State.mpKillers + 4*0]
                 ldr  w4, [x21, State.mpKillers + 4*1]
                tbnz  w26, 31, .WhileDone
@@ -225,13 +209,11 @@ MovePick_QUIETS:
                  br  x29
 
     .WhileDone:
-;Display 2, "MovePick_QUIETS.WhileDone"
             adr  x2, MovePick_BAD_CAPTURES
             str  x2, [x21, State.stage]
             ldr  x24, [x21, -1*sizeof.State + State.endMoves]
 
 MovePick_BAD_CAPTURES:
-;Display 2, "MovePick_BAD_CAPTURES"
             ldr  w0, [x24]
             ldr  x4, [x21, State.endBadCaptures]
             cmp  x24, x4
@@ -240,12 +222,10 @@ MovePick_BAD_CAPTURES:
              br  x29
 
 MovePick_BAD_CAPTURES.IfDone:
-;Display 2, "MovePick_BAD_CAPTURES.IfDone"
             mov  w0, 0
              br  x29
 
 MovePick_EVASIONS:
-;Display 2, "MovePick_EVASIONS"
             ldr  x25, [x21, -1*sizeof.State + State.endMoves]
             ldr  w0, [x21, State.ttMove]
             adr  x2, MovePick_ALL_EVASIONS
@@ -253,20 +233,30 @@ MovePick_EVASIONS:
              br  x29
 
 MovePick_ALL_EVASIONS:
-;Display 2, "MovePick_ALL_EVASIONS"
             ldr  x27, [x21, -1*sizeof.State + State.endMoves]
             mov  x24, x27
              bl  Gen_Evasions
             mov  x25, x27
             mov  x22, x24
   ScoreEvasions  x22, x25
-            adr  x2, MovePick_REMAINING
+            adr  x2, MovePick_REMAINING_EVASIONS
             str  x2, [x21, State.stage]
-              b  MovePick_REMAINING
+              b  MovePick_REMAINING_EVASIONS
 
+MovePick_REMAINING_EVASIONS:
+            cmp  x24, x25
+            bhs  MovePick_REMAINING_EVASIONS.WhileDone
+       PickBest  x24, x23, x25
+            mov  w0, w1
+            ldr  w4, [x21, State.ttMove]
+            cmp  w1, w4
+            beq  MovePick_REMAINING_EVASIONS
+             br  x29
+MovePick_REMAINING_EVASIONS.WhileDone:
+            mov  w0, 0
+             br  x29
 
 MovePick_QSEARCH_WITH_CHECKS:
-;Display 2, "MovePick_QSEARCH_WITH_CHECKS"
             ldr  x25, [x21, -1*sizeof.State + State.endMoves]
             ldr  w0, [x21, State.ttMove]
             adr  x2, MovePick_QCAPTURES_CHECKS_GEN
@@ -274,7 +264,6 @@ MovePick_QSEARCH_WITH_CHECKS:
              br  x29
 
 MovePick_QCAPTURES_CHECKS_GEN:
-;Display 2, "MovePick_QCAPTURES_CHECKS_GEN"
             ldr  x27, [x21, -1*sizeof.State + State.endMoves]
             mov  x24, x27
              bl  Gen_Captures
@@ -286,7 +275,6 @@ MovePick_QCAPTURES_CHECKS_GEN:
               b  MovePick_QCAPTURES_CHECKS
 
 MovePick_QSEARCH_WITHOUT_CHECKS:
-;Display 2, "MovePick_QSEARCH_WITHOUT_CHECKS"
             ldr  x25, [x21, -1*sizeof.State + State.endMoves]
             ldr  w0, [x21, State.ttMove]
             adr  x2, MovePick_QCAPTURES_NO_CHECKS_GEN
@@ -294,7 +282,6 @@ MovePick_QSEARCH_WITHOUT_CHECKS:
              br  x29
 
 MovePick_QCAPTURES_NO_CHECKS_GEN:
-;Display 2, "MovePick_QCAPTURES_NO_CHECKS_GEN"
             ldr  x27, [x21, -1*sizeof.State + State.endMoves]
             mov  x24, x27
              bl  Gen_Captures
@@ -305,7 +292,6 @@ MovePick_QCAPTURES_NO_CHECKS_GEN:
             str  x2, [x21, State.stage]
 
 MovePick_REMAINING:
-;Display 2, "MovePick_REMAINING"
             cmp  x24, x25
             bhs  MovePick_REMAINING.WhileDone
        PickBest  x24, x23, x25
@@ -313,16 +299,22 @@ MovePick_REMAINING:
             ldr  w4, [x21, State.ttMove]
             cmp  w1, w4
             beq  MovePick_REMAINING
+            and  w1, w1, 63  ; tp_sq(move) = w1
+            ldr  w3, [x21, -1*sizeof.State + State.currentMove]
+            and  w3, w3, 63  ; recaptureSquare = w3
+            cmp  w1, w3
+            beq  @f
+            ldr  w2, [x21, State.depth]
+            cmp  w2, DEPTH_QS_RECAPTURES
+            ble  MovePick_REMAINING
+        @@:
              br  x29
 
 MovePick_REMAINING.WhileDone:
-;Display 2, "MovePick_REMAINING.WhileDone"
             mov  w0, 0
              br  x29
 
-
 MovePick_QCAPTURES_CHECKS:
-;Display 2, "MovePick_QCAPTURES_CHECKS"
             cmp  x24, x25
             bhs  MovePick_QCAPTURES_CHECKS.WhileDone
        PickBest  x24, x23, x25
@@ -330,6 +322,15 @@ MovePick_QCAPTURES_CHECKS:
             ldr  w4, [x21, State.ttMove]
             cmp  w1, w4
             beq  MovePick_QCAPTURES_CHECKS
+            and  w1, w1, 63  ; to_sq(move) = w1
+            ldr  w3, [x21, -1*sizeof.State + State.currentMove]
+            and  w3, w3, 63  ; recaptureSquare = w3
+            cmp  w1, w3
+            beq  @f
+            ldr  w2, [x21, State.depth]
+            cmp  w2, DEPTH_QS_RECAPTURES
+            ble  MovePick_QCAPTURES_CHECKS
+        @@:
              br  x29
 
 MovePick_QCAPTURES_CHECKS.WhileDone:
@@ -341,7 +342,6 @@ MovePick_QCAPTURES_CHECKS.WhileDone:
             str  x2, [x21, State.stage]
 
 MovePick_CHECKS:
-;Display 2, "MovePick_CHECKS"
             ldr  w0, [x24]
             cmp  x24, x25
             bhs  MovePick_CHECKS.IfDone
@@ -355,36 +355,7 @@ MovePick_CHECKS.IfDone:
             mov  w0, 0
              br  x29
 
-
-MovePick_RECAPTURES_GEN:
-;Display 2, "MovePick_RECAPTURES_GEN"
-                ldr  x27, [x21, -1*sizeof.State + State.endMoves]
-                mov  x24, x27
-                 bl  Gen_Captures
-                mov  x25, x27
-                adr  x2, MovePick_RECAPTURES
-                str  x2, [x21, State.stage]
-
-
-MovePick_RECAPTURES:
-;Display 2, "MovePick_RECAPTURES"
-                cmp  x24, x25
-                beq  MovePick_RECAPTURES.WhileDone
-                ldr  w0, [x24, ExtMove.move]
-                and  w1, w0, 63
-                ldr  w4, [x21, State.recaptureSquare]
-                add  x24, x24, sizeof.ExtMove
-                cmp  w1, w4
-                bne  MovePick_RECAPTURES
-                 br  x29
-
-MovePick_RECAPTURES.WhileDone:
-            mov  w0, 0
-             br  x29
-
-
 MovePick_PROBCUT:
-;Display 2, "MovePick_PROBCUT"
             ldr  x25, [x21, -1*sizeof.State + State.endMoves]
             ldr  w0, [x21, State.ttMove]
             adr  x2, MovePick_PROBCUT_GEN
@@ -392,7 +363,6 @@ MovePick_PROBCUT:
              br  x29
 
 MovePick_PROBCUT_GEN:
-;Display 2, "MovePick_PROBCUT_GEN"
             ldr  x27, [x21, -1*sizeof.State+State.endMoves]
             mov  x24, x27
              bl  Gen_Captures
@@ -403,7 +373,6 @@ MovePick_PROBCUT_GEN:
             str  x2, [x21, State.stage]
 
 MovePick_PROBCUT_2:
-;Display 2, "MovePick_PROBCUT_2"
             cmp  x24, x25
             beq  MovePick_PROBCUT_2.WhileDone
        PickBest  x24, x23, x25
@@ -421,4 +390,3 @@ MovePick_PROBCUT_2:
 MovePick_PROBCUT_2.WhileDone:
             mov  w0, 0
              br  x29
-

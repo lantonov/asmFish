@@ -36,7 +36,7 @@ virtual at 0
   .ttHit                    rb 1
                             rb 7
 if PvNode = 1
-  .pv		        rd MAX_PLY+1
+  .pv               rd MAX_PLY+1
 end if
   .lend             rb 0
 end virtual
@@ -174,7 +174,7 @@ Display 2, "QSearch<0,0>(alpha=%i1, beta=%i2, depth=%i8) called%n"
             cmp  w0, w4
             bne  @f
              bl  Evaluate
-    @@:
+        @@:
             mov  x1, 0
             str  w0, [x21, State.staticEval]
             cmp  w27, w0
@@ -189,7 +189,7 @@ Display 2, "QSearch<0,0>(alpha=%i1, beta=%i2, depth=%i8) called%n"
             tst  w1, w4
            csel  w0, w27, w0, ne
               b  .StaticValueDone
-        
+
 .StaticValueNoTTHit:
             ldr  w0, [x21, -1*sizeof.State + State.staticEval]
             neg  w0, w0
@@ -198,7 +198,7 @@ Display 2, "QSearch<0,0>(alpha=%i1, beta=%i2, depth=%i8) called%n"
             cmp  w2, w4
             beq  @f
              bl  Evaluate
-    @@:
+        @@:
             str  w0, [x21, State.staticEval]
 
 .StaticValueDone:
@@ -224,24 +224,29 @@ Display 2, "QSearch<0,0>(alpha=%i1, beta=%i2, depth=%i8) called%n"
             adr  x24, MovePick_EVASIONS
   else
             ldr  w2, [sp, .depth]
+            str  w2, [x21, State.depth]
             adr  x25, MovePick_QCAPTURES_CHECKS_GEN
             adr  x24, MovePick_QSEARCH_WITH_CHECKS
             cmp  w2, DEPTH_QS_NO_CHECKS
             bgt  .MovePickInitGo
             adr  x25, MovePick_QCAPTURES_NO_CHECKS_GEN
             adr  x24, MovePick_QSEARCH_WITHOUT_CHECKS
-            cmp  w2, DEPTH_QS_RECAPTURES
-            bgt  .MovePickInitGo
-            adr  x25, MovePick_RECAPTURES_GEN
-            ldr  w0, [x21, -1*sizeof.State + State.currentMove]
-            and  w0, w0, 63
-            str  w0, [x21, State.recaptureSquare]
-            mov  w27, 0
-              b  .MovePickNoTTMove
   end if
+
 .MovePickInitGo:
             mov  w27, w1
             cbz  w1, .MovePickNoTTMove
+            and  w2, w1, 63  ; to_sq(ttm) = w2
+            ldr  w0, [x21, -1*sizeof.State + State.currentMove]
+            and  w0, w0, 63  ; recaptureSquare = w0
+            cmp  w2, w0
+            beq  @f
+            ldr  w2, [sp, .depth]
+            cmp  w2, DEPTH_QS_RECAPTURES
+            bgt  @f
+            mov  w27, 0
+            b   .MovePickNoTTMove
+        @@:
              bl  Move_IsPseudoLegal
             tst  x0, x0
            csel  w27, w0, w27, eq
@@ -379,7 +384,7 @@ Display 2, "QSearch<0,0>(alpha=%i1, beta=%i2, depth=%i8) called%n"
             add  w4, w4, w2
             str  w4, [sp, .moveCount]
             cbz  w0, .MovePickLoop
-    
+
     ; make the move
             ldr  w1, [sp, .move]
             str  w1, [x21, State.currentMove]
