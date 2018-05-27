@@ -21,6 +21,7 @@ constd:
  ._1p0     dq 1.0
  ._581p0   dq 581.0
  ._1p25    dq 1.25
+ ._3p22    dq 3.22
 
 if CPU_HAS_POPCNT = 0
  Mask55    dq 0x5555555555555555

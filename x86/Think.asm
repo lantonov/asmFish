@@ -64,7 +64,7 @@ end virtual
 	      cmova   eax, ecx
 		mov   dword[.multiPV], eax
 
-        ; set initial contemp
+        ; set initial contempt
                imul  eax, dword[options.contempt], PawnValueEg
                 mov  ecx, 100
                 cdq
@@ -193,30 +193,59 @@ end if
 		mov   dword[.delta], edx
 
         ; Adjust contempt based on current situation
-                mov  eax, dword[.bestValue]
-                mov  ecx, 10
-                cdq
-               idiv  ecx
-        ClampSigned  eax, -50, 50
-                mov  r8d, eax
-
-               imul  eax, dword[options.contempt], PawnValueEg
-                mov  ecx, 100
-                cdq
-               idiv  ecx
-                add  eax, r8d
-
-                mov  ecx, eax
-                cdq
-                sub  eax, edx
-                sar  eax, 1
-                shl  ecx, 16
-                add  ecx, eax
-                mov  eax, dword[rbp+Pos.sideToMove]
-                neg  eax
-                xor  ecx, eax
-                sub  ecx, eax
-                mov  dword[Eval_Contempt], ecx
+		mov   ecx, 70
+		mov   eax, dword[.bestValue]
+		cmp   eax, 500
+		mov   r8d, ecx
+		jg    @f
+		mov   ecx, -70
+		cmp   eax, -500
+		mov   r8d, ecx
+		jl    @f
+		mov   r9d, eax
+		mov   ecx, 10
+		cdq
+		idiv  ecx
+		mov   r8d, eax
+		test  r9d, r9d
+		setg  al
+		movzx  eax, al
+		mov  edx, r9d
+		shr  edx, 31
+		sub  eax, edx
+		mov  r10d, eax
+		mov  eax, r9d
+		sar  eax, 31
+		mov  ecx, r9d
+		xor  ecx, eax
+		sub  ecx, eax
+		add  ecx, 1
+		mov  r11d, ecx
+		pxor  xmm0, xmm0
+		cvtsi2sd  xmm0, r11d
+		call  Math_Log_d_d
+		_vmulsd  xmm0, xmm0, qword[constd._3p22]
+		roundsd xmm0, xmm0, 0
+		cvttsd2si  r12d, xmm0
+		imul  r12d, r10d
+		add  r8d, r12d
+	    @@:
+		imul  eax, dword[options.contempt], PawnValueEg
+		mov  ecx, 100
+		cdq
+		idiv  ecx
+		add  eax, r8d
+		mov  ecx, eax
+		cdq
+		sub  eax, edx
+		sar  eax, 1
+		shl  ecx, 16
+		add  ecx, eax
+		mov  eax, dword[rbp+Pos.sideToMove]
+		neg  eax
+		xor  ecx, eax
+		sub  ecx, eax
+		mov  dword[Eval_Contempt], ecx
 
     .reset_window_done:
 
