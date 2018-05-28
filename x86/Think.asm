@@ -226,10 +226,10 @@ end if
 		call  Math_Log_d_d
 		_vmulsd  xmm0, xmm0, qword[constd._3p22]
 		roundsd xmm0, xmm0, 0
-		cvttsd2si  r12d, xmm0
-		imul  r12d, r10d
-		add  r8d, r12d
-	    @@:
+		cvttsd2si  r11d, xmm0
+		imul  r11d, r10d
+		add  r8d, r11d
+	@@:
 		imul  eax, dword[options.contempt], PawnValueEg
 		mov  ecx, 100
 		cdq
