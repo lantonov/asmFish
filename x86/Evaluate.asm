@@ -1,3 +1,4 @@
+KnightOnQueen     = (21 shl 16) + (11)
 MinorBehindPawn 	= ( 16 shl 16) + (  0)
 BishopPawns		= (  8 shl 16) + ( 12)
 LongRangedBishop        = ( 22 shl 16) + (  0)
@@ -928,6 +929,7 @@ SafeThreatsDone:
 		mov   r9, qword[.ei.attackedBy2+8*Us]
 		_andn   r9, r9, qword[.ei.attackedBy2+8*Them]
 		or   r9, qword[.ei.attackedBy+8*(8*Them+Pawn)]
+    mov  r10, r9 ; save for later
 	; r9 = stronglyProtected
 		mov   r8, PiecesPawn
 		_andn   r8, r8, PiecesThem
@@ -935,7 +937,7 @@ SafeThreatsDone:
 	; r8 = defended (= pos.pieces(Them) & ~pos.pieces(PAWN) & stronglyProtected)
 		_andn   r9, r9, PiecesThem
 		and   r9, AttackedByUs
-	; r9 = weak  (stronglyProtected variable is not used anymore)
+	; r9 = weak  (stronglyProtected is used later as r10)
 		or   r8, r9
 	; r8 = defended | weak
 		jz   WeakDone
@@ -1069,8 +1071,28 @@ WeakDone:
 		_popcnt   rax, rax,	rdx
 		imul   eax, ThreatByAttackOnQueen
 		addsub   esi, eax
-end macro
 
+; // Bonus for knight threats on enemy queen
+		movzx ecx, byte[rbp+Pos.pieceEnd+(8*Them+Queen)]
+		and   ecx, 15
+		cmp  ecx, 1
+		jne  @f
+		mov    rax, qword[.ei.attackedBy+8*(8*Us+Knight)]
+		movzx  r8, byte[rbp+Pos.pieceList+16*(8*Them+Queen)]
+		; r8 = queen sq
+		and    rax, qword[KnightAttacks+8*r8]
+		mov  r8, qword[rbp+Pos.typeBB+8*King]
+		or   r8, PiecesPawn
+		and  r8, PiecesUs
+		not  r8
+		and  rax, r8
+		not  r10 ; ~stronglyProtected
+		and  rax, r10
+		_popcnt  rax, rax, rdx
+		imul   eax, KnightOnQueen
+		addsub  esi, eax
+@@:
+end macro
 
 
 

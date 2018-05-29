@@ -221,12 +221,13 @@ end if
 		sub  ecx, eax
 		add  ecx, 1
 		mov  r11d, ecx
-		pxor  xmm0, xmm0
-		cvtsi2sd  xmm0, r11d
+		_vpxor  xmm0, xmm0, xmm0
+		_vcvtsi2sd  xmm0, xmm0, r11d
 		call  Math_Log_d_d
 		_vmulsd  xmm0, xmm0, qword[constd._3p22]
-		roundsd xmm0, xmm0, 0
-		cvttsd2si  r11d, xmm0
+		call  Math_Round_d_d
+		; roundsd xmm0, xmm0, 0
+		_vcvttsd2si  r11d, xmm0
 		imul  r11d, r10d
 		add  r8d, r11d
 	@@:

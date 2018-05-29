@@ -94,6 +94,27 @@ Math_Log_d_d:
             pop   rbx
             ret
 
+Math_Round_d_d:
+  ; xmm0 = Round[xmm0]
+            push   rbx
+             sub   rsp, 32
+         _vmovsd   qword[rsp+8H], xmm0
+           fwait
+          fnstcw   word[rsp+1CH]     ; save precision
+           fwait
+          fnstcw   word[rsp+1EH]
+             and   word[rsp+1EH], 0xF3FF     ; round nearest
+              or   word[rsp+1EH], 0x0300     ; 80 bit precision
+           fldcw   word[rsp+1EH]
+             fld   qword[rsp+8H]
+         frndint
+            fstp   qword[rsp+8H]
+           fldcw   word[rsp+1CH]     ; restore precision
+         _vmovsd   xmm0, qword[rsp+8H]
+            add    rsp, 32
+            pop    rbx
+            ret
+
 
 if USE_WEAKNESS
 Math_Lerp:
