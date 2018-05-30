@@ -1,3 +1,4 @@
+KnightOnQueen       = ( 21 shl 16) + ( 11)
 MinorBehindPawn 	= ( 16 shl 16) + (  0)
 BishopPawns		= (  8 shl 16) + ( 12)
 LongRangedBishop        = ( 22 shl 16) + (  0)
@@ -1014,13 +1015,14 @@ SafeThreatsDone:
 
             bic  x9, AttackedBy2_Them, AttackedBy2_Us
             orr  x9, x9, AttackedBy_ThemPawn
+            mov  x5, x9 ; save stronglyProtected for later
     ; x9 = stronglyProtected
             bic  x8, Pieces_Them, Pieces_Pawn
             and  x8, x8, x9
     ; x8 = defended (= pos.pieces(Them) & ~pos.pieces(PAWN) & stronglyProtected)
             bic  x9, Pieces_Them, x9
             and  x9, x9, AttackedBy_Us
-    ; x9 = weak  (stronglyProtected variable is not used anymore)
+    ; x9 = weak  (stronglyProtected variable is used later as x5)
             orr  x8, x8, x9
     ; x8 = defended or weak
             cbz  x8, WeakDone
@@ -1163,6 +1165,26 @@ WeakDone:
           mov32  w4, ThreatByAttackOnQueen
       Muladdsub  Us, w26, w0, w4, w26
 
+    ; // Bonus for knight threats on enemy queen
+            ldrb w1, [x20, Pos.pieceEnd + (8*Them+Queen)]
+            and  w1, w1, 15
+            cmp  w1, 1
+            bne  @f
+            ldr  x0, [sp, EvalInfo.attackedBy+8*(8*Us+Knight)]
+            ldrb w8, [x20, Pos.pieceList + 16*(8*Them + Queen)]
+            ; w8 = queen sq
+            _lea  x6, KnightAttacks
+            ldr  x9, [x6, x8, lsl 3] ; x9 = qword[KnightAttacks+8*r8]
+            and  x0, x0, x9
+            ldr   x8, [x20, Pos.typeBB + 8*King]
+            orr  x8, x8, Pieces_Pawn   
+            and  x8, x8, Pieces_Us
+            bic  x0, x0, x8 ; dest=x0, and(x0), not(x8)
+            bic  x0, x0, x5 ; dest=x0, and(x0), not(x10)
+            Popcnt x0, x0, x2
+            mov32  w4, KnightOnQueen
+            Muladdsub  Us, w26, w0, w4, w26
+        @@:
 end macro
 
 
