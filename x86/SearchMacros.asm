@@ -245,11 +245,12 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   dword [.evalu], eax
 		mov   dword[rbx+State.staticEval], eax
 		mov   rcx, qword[rbx+State.checkersBB]
-	       test   rcx, rcx
+		mov   byte[.improving],	1
+		test   rcx, rcx
 		jnz   .moves_loop
 		mov   edx, dword[rbx-1*sizeof.State+State.currentMove]
-	      movsx   eax, word[.ltte+MainHashEntry.eval_]
-	       test   r13d, r13d
+		movsx   eax, word[.ltte+MainHashEntry.eval_]
+		test   r13d, r13d
 		jnz   .StaticValueYesTTHit
 .StaticValueNoTTHit:
 		mov   eax, dword[rbx-1*sizeof.State+State.staticEval]
@@ -257,8 +258,8 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		add   eax, 2*Eval_Tempo
 		mov   r12, qword[.tte]
 		cmp   edx, MOVE_NULL
-		 je   @1f
-	       call   Evaluate
+		je   @1f
+		call   Evaluate
 	@1:
 		mov   r8d, eax
 		mov   dword[rbx+State.staticEval], eax
@@ -276,18 +277,31 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		xor   ecx, ecx
 		mov   dword[rbx+State.staticEval], eax
 		cmp   edi, eax
-	       setg   cl
+		setg   cl
 		add   ecx, BOUND_UPPER
 		cmp   edi, VALUE_NONE
-		 je   @1f
-	       test   cl, byte[.ltte+MainHashEntry.genBound]
-	     cmovnz   eax, edi
+		je   @1f
+		test   cl, byte[.ltte+MainHashEntry.genBound]
+		cmovnz   eax, edi
 	@1:
 		mov   dword[.evalu], eax
 .StaticValueDone:
 
+		mov   edx, dword[rbx-0*sizeof.State+State.staticEval]
+		mov   ecx, dword[rbx-2*sizeof.State+State.staticEval]
+		cmp   edx, ecx
+		setge   al
+		cmp   edx, VALUE_NONE
+		sete   dl
+		cmp   ecx, VALUE_NONE
+		sete   cl
+		or   al, dl
+		or   al, cl
+		Assert   b, al, 2,	'assertion al<2	in Search failed'
+		mov   byte[.improving],	al   ; should be 0 or 1
+
 		mov   al, byte[rbx+State.skipEarlyPruning]
-	       test   al, al
+		test   al, al
 		jnz   .moves_loop
 		xor   rcx,rcx
 		mov   ecx, dword[rbp+Pos.sideToMove]
@@ -297,8 +311,8 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 
 	    ; Step 6. Razoring (skipped	when in	check)
   if PvNode = 0
-		mov   edx, dword[.depth] 
-		cmp   edx, 2*ONE_PLY 
+		mov   edx, dword[.depth]
+		cmp   edx, 2*ONE_PLY
 		jg    .6skip
 	if USE_MATEFINDER =	1
 		lea   eax, [rcx+2*VALUE_KNOWN_WIN-1]
@@ -328,14 +342,21 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		jle   .Return
 .6skip:
   end if
-  
+
 	    ; Step 7. Futility pruning:	child node (skipped when in check)
   if (RootNode = 0 & USE_MATEFINDER = 0) | (PvNode = 0 & USE_MATEFINDER	= 1)
 		mov   edx, dword[.depth]
 		mov   ecx, dword[rbp+Pos.sideToMove]
 		cmp   edx, 7*ONE_PLY
 		jge   ._7skip
-	       imul   edx, -150
+
+		mov   al, byte[.improving]
+		mov   r8d, -175
+		cmp   al, 1
+		jne    @f
+		mov    r8d, -125
+@@:
+		imul  edx, r8d
 		mov   eax, dword[.evalu]
 		cmp   eax, VALUE_KNOWN_WIN
 		jge   ._7skip
@@ -379,7 +400,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
     else
 		mov   r8d, dword[.evalu]
 		mov   ecx, dword[rbx+State.npMaterial]
-	       test   ecx, 0x0FFFF
+		test   ecx, 0x0FFFF
 		 jz   .8skip
 		shr   ecx, 16
 		 jz   .8skip
@@ -396,7 +417,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		jbe   .8do
 		sub   rsp, MAX_MOVES*sizeof.ExtMove
 		mov   rdi, rsp
-	       call   Gen_Legal
+		call   Gen_Legal
 		xor   ecx, ecx
 		xor   eax, eax
 		mov   rdx, rsp
@@ -407,15 +428,15 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		shr   r8d, 6
 		and   r8d, 63
 		cmp   byte[rbp+Pos.board+r8], King
-	       sete   r8l
+		sete  r8b
 		add   ecx, r8d
 		add   rdx, sizeof.ExtMove
 		add   eax, 1
 		cmp   rdx, rdi
-		 jb   .8loop
+		jb   .8loop
     .8loopdone:
 		add   rsp, MAX_MOVES*sizeof.ExtMove
-	       test   ecx, ecx
+		test   ecx, ecx
 		 jz   .8skip
 		cmp   eax, 6
 		 jb   .8skip
@@ -431,36 +452,36 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		sub   eax, dword[.beta]
 		mov   ecx, PawnValueMg
 		xor   edx, edx
-	       idiv   ecx
+		idiv  ecx
 		mov   ecx, 3
 		cmp   eax, ecx
-	      cmovg   eax, ecx
-	       imul   ecx, dword[.depth], 67
+		cmovg eax, ecx
+		imul  ecx, dword[.depth], 67
 		add   ecx, 823
 		sar   ecx, 8
 		add   eax, ecx
 
-	     Assert   ge, eax, 0, 'assertion eax >= 0 failed in	Search'
+		Assert   ge, eax, 0, 'assertion eax >= 0 failed in	Search'
 
 		mov   esi, dword[.depth]
 		sub   esi, eax
 	; esi = depth-R
 
-	       call   Move_DoNull
+		call   Move_DoNull
 		mov   byte[rbx+State.skipEarlyPruning],	-1
 		mov   r8d, esi
 		xor   eax, eax
 		lea   r12, [QSearch_NonPv_NoCheck]
 		lea   rcx, [Search_NonPv]
 		cmp   esi, ONE_PLY
-	     cmovge   r12, rcx
-	      cmovl   r8d, eax
+		cmovge   r12, rcx
+		cmovl   r8d, eax
 		mov   ecx, dword[.beta]
 		neg   ecx
 		lea   edx, [rcx+1]
-	      movzx   r9d, byte[.cutNode]
+		movzx   r9d, byte[.cutNode]
 		not   r9d		; not used in qsearch case
-	       call   r12
+		call   r12
 		neg   eax
 		mov   byte[rbx+State.skipEarlyPruning],	0
 		xor   dword[rbp+Pos.sideToMove], 1	  ;undo	null move
@@ -482,19 +503,19 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   ecx, dword[.depth]
 		cmp   ecx, 12*ONE_PLY
 		 jl   .Return
-                cmp   dword[rbp - Thread.rootPos + Thread.nmp_ply], 0
-                jne   .Return
+		cmp   dword[rbp - Thread.rootPos + Thread.nmp_ply], 0
+		jne   .Return
 .8check:
-                lea  eax, [3*rsi]
-                lea  r8d, [rax + 3]
-               test  esi, esi
-              cmovs  eax, r8d
-                sar  eax, 2    ; eax = 3 * (depth-R) / 4
-                mov  ecx, dword[rbx + State.ply]
-                add  eax, ecx
-                and  ecx, 1
-                mov  dword[rbp - Thread.rootPos + Thread.nmp_ply], eax
-                mov  dword[rbp - Thread.rootPos + Thread.nmp_odd], ecx
+		lea   eax, [3*rsi]
+		lea   r8d, [rax + 3]
+		test  esi, esi
+		cmovs eax, r8d
+		sar   eax, 2    ; eax = 3 * (depth-R) / 4
+		mov   ecx, dword[rbx + State.ply]
+		add   eax, ecx
+		and   ecx, 1
+		mov   dword[rbp - Thread.rootPos + Thread.nmp_ply], eax
+		mov   dword[rbp - Thread.rootPos + Thread.nmp_odd], ecx
 
 		mov   byte[rbx+State.skipEarlyPruning],	-1
 		mov   r8d, esi
@@ -502,15 +523,13 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		lea   r12, [QSearch_NonPv_NoCheck]
 		lea   rcx, [Search_NonPv]
 		cmp   esi, ONE_PLY
-	     cmovge   r12, rcx
-	      cmovl   r8d, eax
+		cmovge   r12, rcx
+		cmovl   r8d, eax
 		lea   ecx, [rdx-1]
 		xor   r9d, r9d
-	       call   r12
-                xor  ecx, ecx
-                ;mov  dword[rbp - Thread.rootPos + Thread.nmp_ply], ecx
-                ;mov  dword[rbp - Thread.rootPos + Thread.nmp_odd], ecx
-                mov  qword[rbp - Thread.rootPos + Thread.nmp_ply], rcx
+		call   r12
+		xor  ecx, ecx
+		mov  qword[rbp - Thread.rootPos + Thread.nmp_ply], rcx
 		mov   byte[rbx+State.skipEarlyPruning],	0
 		cmp   eax, dword[.beta]
 		mov   eax, edi
@@ -557,25 +576,25 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   edx, ecx
 		and   edx, 63
 		shr   eax, 12
-	      movzx   edx, byte[rbp+Pos.board+rdx]
+		movzx   edx, byte[rbp+Pos.board+rdx]
 		xor   edi, edi
-	       test   ecx, ecx
+		test   ecx, ecx
 		 jz   .9NoTTMove
 		cmp   eax, MOVE_TYPE_CASTLE
 		 je   .9NoTTMove
 		cmp   eax, MOVE_TYPE_EPCAP
 		 je   @1f
-	       test   edx, edx
+		test   edx, edx
 		 jz   .9NoTTMove
 	@1:
 		mov   ecx, dword[.ttMove]
-	       call   Move_IsPseudoLegal
-	       test   rax, rax
+		call   Move_IsPseudoLegal
+		test   rax, rax
 		 jz   .9NoTTMove
 		mov   ecx, dword[.ttMove]
 		mov   edx, dword[rbx+State.threshold]
-	       call   SeeTestGe
-	       test   eax, eax
+		call   SeeTestGe
+		test   eax, eax
 		 jz   .9NoTTMove
 		mov   edi, dword[.ttMove]
 		lea   r15, [MovePick_PROBCUT]
@@ -589,12 +608,12 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 	GetNextMove
 		mov   dword[.move], eax
 		mov   ecx, eax
-                mov   r13d, dword[.rbeta]
+		mov   r13d, dword[.rbeta]
         ; r13d = rbeta
-	       test   eax, eax
+		test   eax, eax
 		 jz   .9moveloop_done
-	       call   Move_IsLegal
-	       test   eax, eax
+		call   Move_IsLegal
+		test   eax, eax
 		 jz   .9moveloop
 
 		mov    r12d, dword[.depth]
@@ -608,7 +627,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		shr   eax, 6
 		and   eax, 63
 		and   ecx, 63
-	      movzx   eax, byte[rbp+Pos.board+rax]
+		movzx   eax, byte[rbp+Pos.board+rax]
 		shl   eax, 6
 		add   eax, ecx
 		shl   eax, 2+4+6
@@ -616,44 +635,44 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   qword[rbx+State.counterMoves], rax
 
 		mov   ecx, dword[.move]
-	       call   Move_GivesCheck
+		call   Move_GivesCheck
 		mov   ecx, dword[.move]
 		mov   byte[rbx+State.givesCheck], al
-	       call   Move_Do__ProbCut
+		call   Move_Do__ProbCut
 
-                mov  edi, dword[.depth]
-                cmp  edi, 5 * ONE_PLY
-                 je  .9do_regular
+		mov  edi, dword[.depth]
+		cmp  edi, 5 * ONE_PLY
+		je  .9do_regular
 		mov  ecx, r13d
 		neg  ecx
 		lea  edx, [rcx+1]
 		mov  r8d, ONE_PLY
-	      movzx  r9d, byte[.cutNode]
+		movzx  r9d, byte[.cutNode]
 		not  r9d
 		mov  byte[rbx+State.skipEarlyPruning],	-1
-	       call  Search_NonPv
+		call  Search_NonPv
 		neg  eax
-                mov  esi, eax
+		mov  esi, eax
 		mov  byte[rbx+State.skipEarlyPruning],	0
-                cmp  eax, r13d
-                 jl  .9after_search
+		cmp  eax, r13d
+		jl  .9after_search
 .9do_regular:
 		mov  ecx, r13d
 		neg  ecx
 		lea  edx, [rcx+1]
 		lea  r8d, [rdi - 4*ONE_PLY]
-	      movzx  r9d, byte[.cutNode]
+		movzx  r9d, byte[.cutNode]
 		not  r9d
-	       call  Search_NonPv
+		call  Search_NonPv
 		neg  eax
-                mov  esi, eax
+		mov  esi, eax
 .9after_search:
 
 		mov   ecx, dword[.move]
-	       call   Move_Undo
+		call   Move_Undo
 		mov   eax, esi
 		cmp   esi, r13d
-		 jl   .9moveloop
+		jl   .9moveloop
 		jmp   .Return
 
 .9moveloop_done:
@@ -664,7 +683,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
     ; Step 10. Internal iterative deepening (skipped when in check)
 		mov   r8d, dword[.depth]
 		mov   ecx, dword[.ttMove]
-	       test   ecx, ecx
+		test   ecx, ecx
 		jnz   .10skip
 		cmp   r8d, 6*ONE_PLY
 		 jl   .10skip
@@ -674,9 +693,9 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
   if PvNode = 1
 		mov   ecx, dword[.alpha]
 		mov   edx, dword[.beta]
-	      movzx   r9d, byte[.cutNode]
+		movzx   r9d, byte[.cutNode]
 		mov   byte[rbx+State.skipEarlyPruning],	-1
-	       call   Search_Pv
+		call   Search_Pv
   else
 		mov   eax, dword[rbx+State.staticEval]
 		add   eax, 256
@@ -684,29 +703,29 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		 jl   .10skip
 		mov   ecx, dword[.alpha]
 		mov   edx, dword[.beta]
-	      movzx   r9d, byte[.cutNode]
+		movzx   r9d, byte[.cutNode]
 		mov   byte[rbx+State.skipEarlyPruning],	-1
-	       call   Search_NonPv
+		call   Search_NonPv
   end if
 		mov   byte[rbx+State.skipEarlyPruning],	0
 		mov   rcx, qword[.posKey]
-	       call   MainHash_Probe
+		call   MainHash_Probe
 		mov   qword[.tte], rax
 		mov   qword[.ltte], rcx
 		mov   byte[.ttHit], dl
-                mov   rdi, rcx
-                sar   rdi, 48
+		mov   rdi, rcx
+		sar   rdi, 48
 		shr   ecx, 16
 		mov   dword[.ttMove], ecx
 
 		lea  r8d, [rdi+VALUE_MATE_IN_MAX_PLY]
-	       test  edx, edx
+		test  edx, edx
 		 jz  @1f
 		cmp  edi, VALUE_NONE
 		 je  @1f
 		cmp  r8d, 2*VALUE_MATE_IN_MAX_PLY
 		 jb  @1f
-	      movzx  r8d, byte[rbx+State.ply]
+		movzx  r8d, byte[rbx+State.ply]
 		mov  r9d, edi
 		sar  r9d, 31
 		xor  r8d, r9d
@@ -716,7 +735,6 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov  dword[.ttValue], edi
 
 .10skip:
-
 
 .moves_loop:        ; this is actually not the head of the loop
     ; The data at tte could have been changed by
@@ -749,42 +767,30 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		lea   r15, [MovePick_CAPTURES_GEN]
 		lea   r14, [MovePick_ALL_EVASIONS]
 		mov   edi, ecx
-	       test   ecx, ecx
+		test   ecx, ecx
 		 jz   .NoTTMove
-	       call   Move_IsPseudoLegal
-	       test   rax, rax
-	      cmovz   edi, eax
+		call   Move_IsPseudoLegal
+		test   rax, rax
+		cmovz   edi, eax
 		 jz   .NoTTMove
 		lea   r15, [MovePick_MAIN_SEARCH]
 		lea   r14, [MovePick_EVASIONS]
 .NoTTMove:
 		mov   r8, qword[rbx+State.checkersBB]
 		mov   rax, qword[rbx+State.killers]
-	       test   r8, r8
-	     cmovnz   r15, r14
+		test   r8, r8
+		cmovnz  r15, r14
 		mov   qword[rbx+State.mpKillers], rax
 		mov   dword[rbx+State.ttMove], edi
 		mov   qword[rbx+State.stage], r15
 		mov   eax, dword[.bestValue]
 		mov   dword[.value], eax
-		mov   edx, dword[rbx-0*sizeof.State+State.staticEval]
-		mov   ecx, dword[rbx-2*sizeof.State+State.staticEval]
-		cmp   edx, ecx
-	      setge   al
-		cmp   edx, VALUE_NONE
-	       sete   dl
-		cmp   ecx, VALUE_NONE
-	       sete   cl
-		 or   al, dl
-		 or   al, cl
-	     Assert   b, al, 2,	'assertion al<2	in Search failed'
-		mov   byte[.improving],	al   ; should be 0 or 1
-		mov   esi, 63
-	      movzx   eax, byte[.improving]
-		mov   edx, dword[.depth]
-		mov   ecx, edx
-		cmp   edx, esi
-	      cmova   ecx, esi
+		mov    esi, 63
+		movzx  eax, byte[.improving]
+		mov    edx, dword[.depth]
+		mov    ecx, edx
+		cmp    edx, esi
+		cmova   ecx, esi
 		lea   eax, [8*rax]
 		lea   eax, [8*rax+rcx]
 		shl   eax, 6
@@ -799,27 +805,27 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
   else
 		mov   ecx, dword[.depth]
 		cmp   ecx, 8*ONE_PLY
-	      setge   al
+		setge   al
 		mov   edx, dword[.ttMove]
-	       test   edx, edx
-	      setne   cl
+		test   edx, edx
+		setne   cl
 		and   al, cl
 		mov   edx, dword[.ttValue]
 		cmp   edx, VALUE_NONE
-	      setne   cl
+		setne   cl
 		and   al, cl
 		mov   edx, dword[.excludedMove]
-	       test   edx, edx
-	       setz   cl
+		test   edx, edx
+		setz   cl
 		and   al, cl
 		mov   dl, byte[.ltte+MainHashEntry.genBound]
-	       test   dl, BOUND_LOWER
-	      setnz   cl
+		test   dl, BOUND_LOWER
+		setnz   cl
 		and   al, cl
-	      movsx   edx, byte[.ltte+MainHashEntry.depth]
+		movsx   edx, byte[.ltte+MainHashEntry.depth]
 		add   edx, 3*ONE_PLY
 		cmp   edx, dword[.depth]
-	      setge   cl
+		setge   cl
 		and   al, cl
 		mov   byte[.singularExtensionNode],	al
   end if
@@ -828,7 +834,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   al, byte[.ltte+MainHashEntry.genBound]
 		and   al, BOUND_EXACT
 		cmp   al, BOUND_EXACT
-	       sete   al
+		sete   al
 		and   al, byte[.ttHit]
 		mov   dword[.pvExact], eax
   end if
@@ -836,16 +842,16 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
     ; Step 11. Loop through moves
 	 calign	  8
 .MovePickLoop:	     ; this is the head	of the loop
-	      movsx   esi, byte[.skipQuiets]
+		movsx   esi, byte[.skipQuiets]
     GetNextMove
 		mov   dword[.move],	eax
-	       test   eax, eax
+		test   eax, eax
 		 jz   .MovePickDone
 		cmp   eax, dword[.excludedMove]
 		 je   .MovePickLoop
     ; at the root search only moves in the move	list
   if RootNode =	1
-	       imul   ecx, dword[rbp-Thread.rootPos+Thread.PVIdx], sizeof.RootMove
+		imul   ecx, dword[rbp-Thread.rootPos+Thread.PVIdx], sizeof.RootMove
 		add   rcx, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
 		mov   rdx, qword[rbp+Pos.rootMovesVec+RootMovesVec.ender]
     @1:
@@ -866,9 +872,9 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   dword[.extension], eax
   if USE_CURRMOVE = 1 &	VERBOSE	< 2 & RootNode = 1
 		mov   eax, dword[rbp-Thread.rootPos+Thread.idx]
-	       test   eax, eax
+		test   eax, eax
 		jnz   .PrintCurrentMoveRet
-	       call   Os_GetTime		 ; we are only polling the timer
+		call   Os_GetTime		 ; we are only polling the timer
 		sub   rax, qword[time.startTime] ;  in the main thread at the root
 		cmp   eax, CURRMOVE_MIN_TIME
 		jge   .PrintCurrentMove
@@ -878,7 +884,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   edx, ecx
 		shr   edx, 6
 		and   edx, 63
-	      movzx   edx, byte[rbp+Pos.board+rdx]
+		movzx   edx, byte[rbp+Pos.board+rdx]
 		mov   eax, ecx
 		and   eax, 63
 		shl   edx, 6
@@ -886,15 +892,15 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   dword[.moved_piece_to_sq], edx
     ; moved_piece_to_sq	= index	of [moved_piece][to_sq(move)]
 		shr   ecx, 14
-	      movzx   eax, byte[rbp+Pos.board+rax]
+		movzx   eax, byte[rbp+Pos.board+rax]
 		 or   al, byte[_CaptureOrPromotion_or+rcx]
 		and   al, byte[_CaptureOrPromotion_and+rcx]
 		mov   byte[.captureOrPromotion], al
 		mov   ecx, dword[.move]
-	       call   Move_GivesCheck
+		call   Move_GivesCheck
 		mov   byte[rbx+State.givesCheck], al
 		mov   edi, dword[.depth]
-	      movzx   ecx, byte[.improving]
+		movzx   ecx, byte[.improving]
 		shl   ecx, 4+2
 		mov   ecx, dword[FutilityMoveCounts+rcx+4*rdi]
 		sub   ecx, dword[.moveCount]
@@ -908,21 +914,21 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
     ; Step 12. Extend checks
 		mov   al, byte[.singularExtensionNode]
 		mov   ecx, dword[.move]
-	       test   al, al
+		test   al, al
 		 jz   .12else
 		cmp   ecx, dword[.ttMove]
 		jne   .12else
-	       call   Move_IsLegal
+		call   Move_IsLegal
 		mov   edx, dword[.ttValue]
 		mov   r8d, dword[.depth]
-	      movzx   r9d, byte[.cutNode]
-	       test   eax, eax
+		movzx   r9d, byte[.cutNode]
+		test   eax, eax
 		 jz   .12else
 		mov   eax, -VALUE_MATE
 		sub   edx, r8d
 		sub   edx, r8d
 		cmp   edx, eax
-	      cmovl   edx, eax
+		cmovl   edx, eax
 		lea   ecx, [rdx-1]
 		mov   edi, edx
 		sar   r8d, 1
@@ -935,12 +941,12 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   r13, qword[rbx+State.ttMove]	    ; ttMove and Depth
 		mov   r14, qword[rbx+State.countermove]	; counter move and gives check
 		mov   r15, qword[rbx+State.mpKillers]
-	       call   Search_NonPv
+		call   Search_NonPv
 		xor   ecx, ecx
 		mov   byte[rbx+State.skipEarlyPruning],	cl
 		mov   dword[rbx+State.excludedMove], ecx
 		cmp   eax, edi
-	       setl   cl
+		setl   cl
 		mov   dword[.extension], ecx
     ; The call to search_NonPV with the	same value of ss messed	up our
     ; move picker data.	So we fix it.
@@ -951,10 +957,10 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		jmp   .12done
 .12else:
 		mov   ecx, dword[.move]
-	       test   edi, edi
+		test   edi, edi
 		 jz   .12dont_extend
     SeeSignTest	     .12extend_oneply
-	       test   eax, eax
+		test   eax, eax
 		 jz   .12dont_extend
 .12extend_oneply:
 		mov   dword[.extension], 1
@@ -967,15 +973,15 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		and   r12d, 63				; r12d = from
 		mov   r13d, dword[.move]
 		and   r13d, 63				; r13d = to
-	      movzx   r14d, byte[rbp	+ Pos.board + r12]	; r14d = from piece
-	      movzx   r15d, byte[rbp	+ Pos.board + r13]	; r15d = to piece
+		movzx   r14d, byte[rbp	+ Pos.board + r12]	; r14d = from piece
+		movzx   r15d, byte[rbp	+ Pos.board + r13]	; r15d = to piece
 
 		mov   ecx, dword[.moveCount]
 		mov   eax, dword[.extension]
 		mov   edx, dword[.depth]
 		mov   esi, 63
 		cmp   ecx, esi
-	      cmova   ecx, esi
+		cmova   ecx, esi
 		sub   eax, 1
 		add   ecx, dword[.reductionOffset]
 		add   eax, edx

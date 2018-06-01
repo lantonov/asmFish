@@ -221,6 +221,8 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             str  w0, [sp, .evalu]
             str  w0, [x21, State.staticEval]
             ldr  x1, [x21, State.checkersBB]
+            mov  w2, 1
+           strb  w2, [sp, .improving]
            cbnz  x1, .moves_loop
             ldr  w2, [x21, -1*sizeof.State + State.currentMove]
           ldrsh  w0, [sp, .ltte + MainHashEntry.eval_]
@@ -266,12 +268,28 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
    @1:
             str  w0, [sp, .evalu]
 .StaticValueDone:
-           ldrb  w0, [x21, State.skipEarlyPruning]
-           cbnz  w0, .moves_loop
-            ldr  w1, [x20, Pos.sideToMove]
-            add  x6, x21, x1, lsl 1
-           ldrh  w1, [x6, State.npMaterial]
-            cbz  w1, .moves_loop
+
+           ldr  w2, [x21, -0*sizeof.State + State.staticEval]
+           add  x6, x21, -2*sizeof.State
+           ldr  w1, [x6, State.staticEval]
+           cmp  w2, w1
+          cset  w0, ge
+           mov  w4, VALUE_NONE
+           cmp  w2, w4
+          cset  w2, eq
+           mov  w4, VALUE_NONE
+           cmp  w1, w4
+          cset  w1, eq
+           orr  w0, w0, w2
+           orr  w0, w0, w1
+          strb  w0, [sp, .improving]
+
+          ldrb  w0, [x21, State.skipEarlyPruning]
+          cbnz  w0, .moves_loop
+           ldr  w1, [x20, Pos.sideToMove]
+           add  x6, x21, x1, lsl 1
+          ldrh  w1, [x6, State.npMaterial]
+           cbz  w1, .moves_loop
 
     ; Step 6. Razoring (skipped when in check)
   if PvNode = 0
@@ -318,8 +336,13 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             ldr  w1, [x20, Pos.sideToMove]
             cmp  w2, 7*ONE_PLY
             bge  .7skip
-            mov  w4, -150
-            mul  w2, w2, w4
+            ldrb  w0, [sp, .improving]
+            mov  w8, -175
+            cmp  w0, 1
+            bne  @f
+            mov  w8, -125
+        @@:
+            mul w2, w2, w8
             ldr  w0, [sp, .evalu]
             mov  w4, VALUE_KNOWN_WIN
             cmp  w0, w4
@@ -738,20 +761,6 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             str  x25, [x21, State.stage]
             ldr  w0, [sp, .bestValue]
             str  w0, [sp, .value]
-            ldr  w2, [x21, -0*sizeof.State + State.staticEval]
-            add  x6, x21, -2*sizeof.State
-            ldr  w1, [x6, State.staticEval]
-            cmp  w2, w1
-           cset  w0, ge
-            mov  w4, VALUE_NONE
-            cmp  w2, w4
-           cset  w2, eq
-            mov  w4, VALUE_NONE
-            cmp  w1, w4
-           cset  w1, eq
-            orr  w0, w0, w2
-            orr  w0, w0, w1
-           strb  w0, [sp, .improving]
             mov  w26, 63
            ldrb  w0, [sp, .improving]
             ldr  w2, [sp, .depth]

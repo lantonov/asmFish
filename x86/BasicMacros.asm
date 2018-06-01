@@ -73,7 +73,7 @@ macro BuildTimeData
   local time, day, year, month, febdays
   time = %t
   day = time/(24*3600)
-  day = day - (day + 365)/(3*365+366) 
+  day = day - (day + 365)/(3*365+366)
   year = 1970 + day/365
   day = day mod 365 + 1
   month = 1
@@ -88,7 +88,7 @@ macro BuildTimeData
       month = month + 1
     end if
   end iterate
-	db '0' + (year / 1000) 
+	db '0' + (year / 1000)
 	db '0' + (year mod 1000) / 100
 	db '0' + (year mod 100) / 10
 	db '0' + (year mod 10)
@@ -159,17 +159,17 @@ local Lower
 end macro
 
 ;macro print description,number
-;{ 
-;   display description 
-;   value=number 
+;{
+;   display description
+;   value=number
 ;   pos=100000
 ;   repeat 6
-;      digit=value/pos 
-;      value=value-(digit*pos) 
-;      pos=pos/10 
-;      display ('0'+digit) 
-;   end repeat 
-;   display $d,$a 
+;      digit=value/pos
+;      value=value-(digit*pos)
+;      pos=pos/10
+;      display ('0'+digit)
+;   end repeat
+;   display $d,$a
 ;}
 
 ; use this macro if you are too lazy to touch beforehand the required amount of stack
@@ -339,7 +339,7 @@ end macro
 ; y = BitDeposit(x,m)
 macro _pdep y, x, m, b, t, tm
   local start, skip, done
-  if CPU_HASH_BMI2 <> 0
+  if CPU_HAS_BMI2 <> 0
 	       pdep   y, x, m
   else
 		mov   tm, m
@@ -365,7 +365,7 @@ end macro
 ; y = BitExtract(x,m)
 macro _pext y, x, m, b, t, tm
   local start, skip, done
-  if CPU_HASH_BMI2 <> 0
+  if CPU_HAS_BMI2 <> 0
 	       pext   y, x, m
   else
 		mov   tm, m
@@ -386,4 +386,3 @@ macro _pext y, x, m, b, t, tm
 	      done:
     end  if
 end  macro
-
