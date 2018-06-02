@@ -188,48 +188,23 @@ end if
 		mov   ecx, VALUE_INFINITE
 		add   eax, edx
 		cmp   eax, ecx
-	      cmovg   eax, ecx
+		cmovg   eax, ecx
 		mov   dword[.beta], eax
 		mov   dword[.delta], edx
 
         ; Adjust contempt based on current situation
-		mov   ecx, 70
-		mov   eax, dword[.bestValue]
-		cmp   eax, 500
-		mov   r8d, ecx
-		jg    @f
-		mov   ecx, -70
-		cmp   eax, -500
-		mov   r8d, ecx
-		jl    @f
-		mov   r9d, eax
-		mov   ecx, 10
-		cdq
-		idiv  ecx
-		mov   r8d, eax
-		test  r9d, r9d
-		setg  al
-		movzx  eax, al
-		mov  edx, r9d
-		shr  edx, 31
-		sub  eax, edx
-		mov  r10d, eax
-		mov  eax, r9d
-		sar  eax, 31
-		mov  ecx, r9d
-		xor  ecx, eax
-		sub  ecx, eax
-		add  ecx, 1
-		mov  r11d, ecx
+
+		mov  r11d, dword[.bestValue]
+		mov  r10d, 128
 		_vpxor  xmm0, xmm0, xmm0
-		_vcvtsi2sd  xmm0, xmm0, r11d
-		call  Math_Log_d_d
-		_vmulsd  xmm0, xmm0, qword[constd._3p22]
+		_vpxor  xmm1, xmm1, xmm1
+		_vcvtsi2sd  xmm1, xmm1, r11d ; xmm1=bestvalue
+		_vcvtsi2sd  xmm0, xmm0, r10d ; xmm0=128
+		call  Math_Arctan_d_d
+		_vmulsd  xmm0, xmm0, qword[constd._48p0]
 		call  Math_Round_d_d
 		; roundsd xmm0, xmm0, 0
-		_vcvttsd2si  r11d, xmm0
-		imul  r11d, r10d
-		add  r8d, r11d
+		_vcvttsd2si  r8d, xmm0
 	@@:
 		imul  eax, dword[options.contempt], PawnValueEg
 		mov  ecx, 100
