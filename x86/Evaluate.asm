@@ -12,7 +12,7 @@ ThreatByRank		= ( 16 shl 16) + (  3)
 Hanging                 = ( 52 shl 16) + ( 30)
 WeakUnopposedPawn       = (  5 shl 16) + ( 25)
 ThreatByPawnPush        = ( 47 shl 16) + ( 26)
-ThreatByAttackOnQueen   = ( 42 shl 16) + ( 21)
+SliderOnQueen           = ( 42 shl 16) + ( 21)
 HinderPassedPawn        = (  8 shl 16) + (  1)
 TrappedBishopA1H1       = ( 50 shl 16) + ( 50)
 
@@ -156,10 +156,6 @@ macro EvalPieces Us, Pt
 
 		xor   eax, eax
 		mov   qword[.ei.attackedBy+8*(8*Us+Pt)], rax
-  if Pt	= Queen
-		mov   qword[.ei.attackedBy+8*(8*Us+QUEEN_DIAGONAL)], rax
-  end if
-
 		mov   r11, qword[rbp+Pos.typeBB+8*Us]
 	; r11 =	our pieces
 		lea   r15, [rbp+Pos.pieceList+16*(8*Us+Pt)]
@@ -178,13 +174,13 @@ NextPiece:
   else if Pt = Bishop
 		mov   rax, qword[rbp+Pos.typeBB+8*Queen]
 		xor   rax, r13
-      BishopAttacks   r9, r14, rax, rdx
+		BishopAttacks   r9, r14, rax, rdx
   else if Pt = Rook
-                mov   rax, r12
-                and   rax, r11
-                xor   rax, r13
+		mov   rax, r12
+		and   rax, r11
+		xor   rax, r13
 		xor   rax, qword[rbp+Pos.typeBB+8*Queen]
-	RookAttacks   r9, r14, rax, rdx
+		RookAttacks   r9, r14, rax, rdx
   else if Pt = Queen
        QueenAttacks   r9, r14, r13, rax, rdx
   else
@@ -212,12 +208,6 @@ NoPinned:
 		mov   qword[.ei.attackedBy+8*(8*Us+Pt)], rax
 		mov   qword[.ei.attackedBy+8*(8*Us+0)], rdx
 
-  if Pt	= Queen
-		mov   rax, qword[BishopAttacksPDEP+8*r14]
-		and   rax, r9
-		or   qword[.ei.attackedBy+8*(8*Us+QUEEN_DIAGONAL)], rax
-  end if
-
 		test   r9, qword[.ei.kingRing+8*Them]
 		jz   NoKingRing	; 74.44%
 		add   dword[.ei.kingAttackersCount+4*Us], 1
@@ -230,12 +220,12 @@ NoKingRing:
 
 		mov   rax, qword[.ei.mobilityArea+8*Us]
 		and   rax, r9
-            _popcnt   r10, rax, rcx
-                mov   eax, dword[MobilityBonus + 4*r10]
-             addsub   dword[.ei.mobilityDiff], eax
-             addsub   esi, eax
-        ; r10 = mob
-
+		_popcnt   r10, rax, rcx
+		mov   eax, dword[MobilityBonus + 4*r10]
+		addsub   dword[.ei.mobilityDiff], eax
+		addsub   esi, eax
+		; r10 = mob
+		
 		lea   eax, [8*r8]
 		movzx   eax, byte[SquareDistance+8*rax+r14]
 		imul   eax, KingProtector_Pt
@@ -362,21 +352,21 @@ NoOpenFileBonus:
 
 		mov  eax, r14d
 		and  eax, 7
-                mov  edx, r8d
-                and  edx, 7
-                sub  eax, edx
-                sub  edx, 4
-                cmp  r10d, 4
-                jae  NoTrappedByKing
-                xor  eax, edx
-                 js  NoTrappedByKing
-              movzx  eax, byte[rbx+State.castlingRights]
-                and  eax, 3 shl (2*Us)
-               setz  al
-                add  eax, 1
-               imul  r10d, 22*65536
-                sub  r10d, TrappedRook
-               imul  r10d, eax
+		mov  edx, r8d
+		and  edx, 7
+		sub  eax, edx
+		sub  edx, 4
+		cmp  r10d, 4
+		jae  NoTrappedByKing
+		xor  eax, edx
+		js  NoTrappedByKing
+		movzx  eax, byte[rbx+State.castlingRights]
+		and  eax, 3 shl (2*Us)
+		setz  al
+		add  eax, 1
+		imul  r10d, 22*65536
+		sub  r10d, TrappedRook
+		imul  r10d, eax
              addsub  esi, r10d
 NoTrappedByKing:
 
@@ -866,11 +856,12 @@ macro EvalThreats Us
 		add  a,	b
 	end macro
 
-	AttackedByUs	equ r12
-	AttackedByThem	equ r13
-	PiecesPawn	equ r11
-	PiecesUs	equ r14
-	PiecesThem	equ r15
+	AttackedByUs			equ r12
+	AttackedByThem			equ r13
+	PiecesPawn				equ r11
+	PiecesUs				equ r14
+	PiecesThem				equ r15
+	notStronglyProtected	equ r10
 	Them            = Black
 	Up              = DELTA_N
 	Left            = DELTA_NW
@@ -882,12 +873,13 @@ macro EvalThreats Us
 	macro addsub a,	b
 		sub  a,	b
 	end macro
-	AttackedByUs	equ r13
-	AttackedByThem	equ r12
-	PiecesPawn	equ r11
-	PiecesUs	equ r15
-	PiecesThem	equ r14
-	Them		= White
+	AttackedByUs			equ r13
+	AttackedByThem			equ r12
+	PiecesPawn				equ r11
+	PiecesUs				equ r15
+	PiecesThem				equ r14
+	notStronglyProtected	equ r10
+	Them			= White
 	Up              = DELTA_S
 	Left            = DELTA_SE
 	Right           = DELTA_SW
@@ -911,7 +903,7 @@ macro EvalThreats Us
 
 		mov   r9, AttackedByThem
 		not   r9
-		or   r9, AttackedByUs
+		or    r9, AttackedByUs
 		and   r9, PiecesUs
 		and   r9, PiecesPawn
 		mov   rdx, r9
@@ -925,19 +917,19 @@ macro EvalThreats Us
 		addsub   esi, ecx
 
 SafeThreatsDone:
-
 		mov   r9, qword[.ei.attackedBy2+8*Us]
 		_andn   r9, r9, qword[.ei.attackedBy2+8*Them]
 		or   r9, qword[.ei.attackedBy+8*(8*Them+Pawn)]
-    mov  r10, r9 ; save for later
-	; r9 = stronglyProtected
+		mov  r10, r9 ; r9 = stronglyProtected
+		not  r10 ; r10 = notStronglyProtected
+
 		mov   r8, PiecesPawn
 		_andn   r8, r8, PiecesThem
 		and   r8, r9
 	; r8 = defended (= pos.pieces(Them) & ~pos.pieces(PAWN) & stronglyProtected)
 		_andn   r9, r9, PiecesThem
 		and   r9, AttackedByUs
-	; r9 = weak  (stronglyProtected is used later as r10)
+	; r9 = weak 
 		or   r8, r9
 	; r8 = defended | weak
 		jz   WeakDone
@@ -1056,41 +1048,37 @@ WeakDone:
 		imul   eax, ThreatByPawnPush
 		addsub   esi, eax
 
-		mov   rax, qword[.ei.attackedBy2+8*Them]
-		_andn   rax, rax,	qword[.ei.attackedBy2+8*Us]
-		mov   rcx, PiecesUs
-		not   rcx
-		and   rax, rcx
-		mov   rdx, qword[.ei.attackedBy+8*(8*Us+Bishop)]
-		mov   rcx, qword[.ei.attackedBy+8*(8*Them+QUEEN_DIAGONAL)]
-		and   rdx, rcx
-		_andn   rcx, rcx,	qword[.ei.attackedBy+8*(8*Them+Queen)]
-		and   rcx, qword[.ei.attackedBy+8*(8*Us+Rook)]
-		or   rdx, rcx
-		and   rax, rdx
-		_popcnt   rax, rax,	rdx
-		imul   eax, ThreatByAttackOnQueen
-		addsub   esi, eax
 
 ; // Bonus for knight threats on enemy queen
-		movzx ecx, byte[rbp+Pos.pieceEnd+(8*Them+Queen)]
-		and   ecx, 15
+		movzx  ecx, byte[rbp+Pos.pieceEnd+(8*Them+Queen)]
+		and  ecx, 15
 		cmp  ecx, 1
 		jne  @f
-		mov    rax, qword[.ei.attackedBy+8*(8*Us+Knight)]
+		mov  rax, qword[.ei.attackedBy+8*(8*Us+Knight)]
 		movzx  r8, byte[rbp+Pos.pieceList+16*(8*Them+Queen)]
-		; r8 = queen sq
-		and    rax, qword[KnightAttacks+8*r8]
-		mov  r8, qword[rbp+Pos.typeBB+8*King]
-		or   r8, PiecesPawn
-		and  r8, PiecesUs
-		not  r8
-		and  rax, r8
-		not  r10 ; ~stronglyProtected
-		and  rax, r10
+		; r8 = pos.square<QUEEN>(Them) = s
+		and  rax, qword[KnightAttacks+8*r8]
+		mov  rcx, qword[.ei.mobilityArea+8*Us]
+		and  rcx, notStronglyProtected
+		and  rax, rcx
 		_popcnt  rax, rax, rdx
 		imul   eax, KnightOnQueen
 		addsub  esi, eax
+		
+		mov  rcx, PiecesThem
+		or   rcx, PiecesUs
+		BishopAttacks  rax, r8, rcx, rdx
+		and  rax, qword[.ei.attackedBy+8*(8*Us+Bishop)]
+		RookAttacks  r9, r8, rcx, rdx
+		and  r9, qword[.ei.attackedBy+8*(8*Us+Rook)]
+		or   rax, r9
+		and  rax, qword[.ei.mobilityArea+8*Us]
+		and  rax, notStronglyProtected
+		and  rax, qword[.ei.attackedBy2+8*Us]
+		_popcnt  rax, rax, rdx
+		imul  eax, SliderOnQueen
+		addsub  esi, eax
+
 @@:
 end macro
 
