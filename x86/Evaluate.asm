@@ -1,3 +1,4 @@
+Connectivity      = (2 shl  16) + (2)
 KnightOnQueen     = (21 shl 16) + (11)
 MinorBehindPawn 	= ( 16 shl 16) + (  0)
 BishopPawns		= (  8 shl 16) + ( 12)
@@ -1080,6 +1081,15 @@ WeakDone:
 		addsub  esi, eax
 
 @@:
+		 mov  rax, qword[rbp+Pos.typeBB+8*King]
+		 or   rax, PiecesPawn
+		 and  rax, PiecesUs
+		 xor  rax, PiecesUs
+		 and  rax, qword[.ei.attackedBy+8*(8*Us+0)]
+		_popcnt  rax, rax, rdx
+		imul   eax, Connectivity
+		addsub  esi, eax
+
 end macro
 
 
