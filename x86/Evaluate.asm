@@ -1664,9 +1664,17 @@ end virtual
 		movzx   edx, byte[rdi+PawnEntry.asymmetry]
 		lea   edx, [rdx+rax-17]
 		lea   r8d, [r8+4*rax]
-		lea   r8d, [r8+8*rdx]
-
-		movsx   r9d, si
+		lea   r8d, [r8+8*rdx] 
+		
+		movzx   r9d, word[rbx+State.npMaterial+2*0]
+		movzx   ecx, word[rbx+State.npMaterial+2*1]
+		lea     r9d, [r9+rcx]
+		cmp     r9d, 1
+		sbb     r9d, r9d ; If the CF is 0, then r9d = 0.
+		and     r9d, 48		
+		lea     r8d, [r8+r9]
+		
+		movsx r9d, si
 		sar   r9d, 31
 		movsx   edi, si
 		sub   esi, r9d
