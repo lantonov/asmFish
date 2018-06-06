@@ -619,9 +619,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		test   eax, eax
 		 jz   .9moveloop
 
-		mov    r12d, dword[.depth]
-		sub    r12d, 3
-		cmp    dword[.probCutCount], r12d
+		cmp    dword[.probCutCount], 3
 		jge   .9moveloop_done
 		add    dword[.probCutCount], 1
 		mov   ecx, dword[.move]
