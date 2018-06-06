@@ -641,22 +641,29 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		call   Move_Do__ProbCut
 
 		mov  edi, dword[.depth]
-		cmp  edi, 5 * ONE_PLY
-		je  .9do_regular
-		mov  ecx, r13d
+		mov  ecx, dword[.rbeta]
 		neg  ecx
 		lea  edx, [rcx+1]
-		mov  r8d, ONE_PLY
+		xor  r8, r8
 		movzx  r9d, byte[.cutNode]
 		not  r9d
 		mov  byte[rbx+State.skipEarlyPruning],	-1
-		call  Search_NonPv
+		lea   r10, [QSearch_NonPv_InCheck]
+		lea   r11, [QSearch_NonPv_NoCheck]
+		cmp   byte[rbx-1*sizeof.State+State.givesCheck], 0
+	    cmovne   r11, r10
+		call  r11
 		neg  eax
-		mov  esi, eax
 		mov  byte[rbx+State.skipEarlyPruning],	0
-		cmp  eax, r13d
-		jl  .9after_search
-.9do_regular:
+		mov  esi, eax
+		cmp  eax, dword[.rbeta]
+		jge  @f
+		mov   ecx, dword[.move]
+		call   Move_Undo
+		mov   eax, esi
+		cmp   esi, r13d
+		jl   .9moveloop
+    @@:
 		mov  ecx, r13d
 		neg  ecx
 		lea  edx, [rcx+1]
@@ -666,7 +673,6 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		call  Search_NonPv
 		neg  eax
 		mov  esi, eax
-.9after_search:
 
 		mov   ecx, dword[.move]
 		call   Move_Undo
