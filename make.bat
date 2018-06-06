@@ -235,6 +235,7 @@ echo.
 :: Windows
 cd Matefinder_binaries
 if exist mateFishW* del mateFishW*
+if exist *base del *base
 cd ..
 set include=x86\include\
 ECHO === Building Windows Matefinder Executables ===
