@@ -245,7 +245,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   dword [.evalu], eax
 		mov   dword[rbx+State.staticEval], eax
 		mov   rcx, qword[rbx+State.checkersBB]
-		mov   byte[.improving],	1
+		mov   byte[.improving],	0
 		test   rcx, rcx
 		jnz   .moves_loop
 		mov   edx, dword[rbx-1*sizeof.State+State.currentMove]
@@ -559,8 +559,11 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 	     Assert   ne, dword[rbx-1*sizeof.State+State.currentMove], 0	, 'assertion dword[rbx-1*sizeof.State+State.currentMove] != MOVE_NONE failed in	Search.Step9'
 	     Assert   ne, dword[rbx-1*sizeof.State+State.currentMove], MOVE_NULL, 'assertion dword[rbx-1*sizeof.State+State.currentMove] != MOVE_NULL failed in	Search.Step9'
 
+		movzx ecx, byte[.improving]
+		imul  ecx, 48
 		mov   edi, dword[.beta]
-		add   edi, 200
+		add   edi, 216
+		sub   edi, ecx
 		mov   eax, VALUE_INFINITE
 		cmp   edi, eax
 	      cmovg   edi, eax
