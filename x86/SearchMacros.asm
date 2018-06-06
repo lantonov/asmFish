@@ -705,7 +705,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		call   Search_Pv
   else
 		mov   eax, dword[rbx+State.staticEval]
-		add   eax, 256
+		add   eax, 128
 		cmp   eax, dword[.beta]
 		 jl   .10skip
 		mov   ecx, dword[.alpha]
