@@ -26,19 +26,21 @@ choice /c:1234567QpbD>NUL
 :: Debug = OFF [default]
 
 :: OPTIONS
-if errorlevel 11 goto debug
-if errorlevel 10 goto WinBmi2
-if errorlevel 9 goto WinPopcnt
-if errorlevel 8 goto done
-if errorlevel 7 goto matefinder
-if errorlevel 6 goto base
-if errorlevel 5 goto arm
-if errorlevel 4 goto mac
-if errorlevel 3 goto linux
-if errorlevel 2 goto windows
 if errorlevel 1 goto allBinaries
+if errorlevel 2 goto windows
+if errorlevel 3 goto linux
+if errorlevel 4 goto mac
+if errorlevel 5 goto arm
+if errorlevel 6 goto base
+if errorlevel 7 goto matefinder
+if errorlevel 8 goto done
+if errorlevel 9 goto WinPopcnt
+if errorlevel 10 goto WinBmi2
+if errorlevel 11 goto debug
+) else (
 echo CHOICE missing
-goto done
+pause
+goto menu
 
 :allBinaries
 call:all
@@ -52,10 +54,10 @@ if exist *popcnt.exe del *popcnt.exe
 cd ..
 set include=x86\include\
 CALL:start_timer
-start /min /wait fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" %debug%
+start /min fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" %debug%
 start /min /wait fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_bmi2.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'bmi2'" %debug%
-copy asmFishW_%datestamp%_popcnt.exe WindowsOS_binaries
-copy asmFishW_%datestamp%_bmi2.exe WindowsOS_binaries
+move asmFishW_%datestamp%_popcnt.exe WindowsOS_binaries
+move asmFishW_%datestamp%_bmi2.exe WindowsOS_binaries
 echo.
 CALL:stop_timer
 echo.
@@ -68,10 +70,10 @@ cd ..
 set include=x86\include\
 CALL:start_timer
 ECHO === Building Linux Executables ===
-start /min /wait fasmg.exe "x86\fish.asm" "asmFishL_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" %debug%
+start /min fasmg.exe "x86\fish.asm" "asmFishL_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" %debug%
 start /min /wait fasmg.exe "x86\fish.asm" "asmFishL_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'bmi2'" %debug%
-copy asmFishL_%datestamp%_popcnt LinuxOS_binaries
-copy asmFishL_%datestamp%_bmi2 LinuxOS_binaries
+move asmFishL_%datestamp%_popcnt LinuxOS_binaries
+move asmFishL_%datestamp%_bmi2 LinuxOS_binaries
 echo.
 CALL:stop_timer
 echo.
@@ -84,10 +86,10 @@ cd ..
 set include=x86\include\
 CALL:start_timer
 ECHO === Building MacOS Executables ===
-start /min /wait fasmg.exe "x86\fish.asm" "asmFishX_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='X'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" %debug%
+start /min fasmg.exe "x86\fish.asm" "asmFishX_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='X'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" %debug%
 start /min /wait fasmg.exe "x86\fish.asm" "asmFishX_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='X'" -i "PEDANTIC = 1" -i "VERSION_POST = 'bmi2'" %debug%
-copy asmFishX_%datestamp%_popcnt MacOS_binaries
-copy asmFishX_%datestamp%_bmi2 MacOS_binaries
+move asmFishX_%datestamp%_popcnt MacOS_binaries
+move asmFishX_%datestamp%_bmi2 MacOS_binaries
 echo.
 CALL:stop_timer
 echo.
@@ -101,7 +103,7 @@ set include=arm\include\
 CALL:start_timer
 ECHO === Building ARM Executables ===
 start /min /wait fasmg.exe "arm\fish.arm" "armFishL_%datestamp%_v8" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'v8'" %debug%
-copy armFishL_%datestamp%_v8 LinuxOS_binaries
+move armFishL_%datestamp%_v8 LinuxOS_binaries
 echo.
 CALL:stop_timer
 echo.
@@ -114,33 +116,33 @@ if exist *base.exe del *base.exe
 cd ..
 set include=x86\include\
 CALL:start_timer
-ECHO === Building Windows Base Executable ===
-start /min /wait fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_base.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'" %debug%
-copy asmFishW_%datestamp%_base.exe WindowsOS_binaries
+ECHO === Building Windows Base Executables ===
+start /min fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_base.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'" %debug%
 start /min /wait fasmg.exe "x86\fish.asm" "mateFishW_%datestamp%_base.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishW_%datestamp%_base.exe Matefinder_binaries
+move mateFishW_%datestamp%_base.exe Matefinder_binaries
+move asmFishW_%datestamp%_base.exe WindowsOS_binaries
 echo.
 :: Linux
 cd LinuxOS_binaries
 if exist *base del *base
 cd ..
 set include=x86\include\
-ECHO === Building Linux Base Executable ===
-start /min /wait fasmg.exe "x86\fish.asm" "asmFishL_%datestamp%_base" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'" %debug%
-copy asmFishL_%datestamp%_base LinuxOS_binaries
+ECHO === Building Linux Base Executables ===
+start /min fasmg.exe "x86\fish.asm" "asmFishL_%datestamp%_base" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'" %debug%
 start /min /wait fasmg.exe "x86\fish.asm" "mateFishL_%datestamp%_base" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishL_%datestamp%_base Matefinder_binaries
+move mateFishL_%datestamp%_base Matefinder_binaries
+move asmFishL_%datestamp%_base LinuxOS_binaries
 echo.
 :: MacOS
 cd MacOS_binaries
 if exist *base del *base
 cd ..
 set include=x86\include\
-ECHO === Building MacOS Base Executable ===
-start /min /wait fasmg.exe "x86\fish.asm" "asmFishX_%datestamp%_base" -e 1000 -i "VERSION_OS='X'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'" %debug%
-copy asmFishX_%datestamp%_base MacOS_binaries
+ECHO === Building MacOS Base Executables ===
+start /min fasmg.exe "x86\fish.asm" "asmFishX_%datestamp%_base" -e 1000 -i "VERSION_OS='X'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'" %debug%
 start /min /wait fasmg.exe "x86\fish.asm" "mateFishX_%datestamp%_base" -e 1000 -i "VERSION_OS='X'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishX_%datestamp%_base Matefinder_binaries
+move mateFishX_%datestamp%_base Matefinder_binaries
+move asmFishX_%datestamp%_base MacOS_binaries
 echo.
 CALL:stop_timer
 echo.
@@ -154,9 +156,9 @@ cd ..
 set include=x86\include\
 CALL:start_timer
 ECHO === Building Windows Matefinder Executables ===
-start /min /wait fasmg.exe "x86\fish.asm" "mateFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
+start /min fasmg.exe "x86\fish.asm" "mateFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
 start /min /wait fasmg.exe "x86\fish.asm" "mateFishW_%datestamp%_bmi2.exe" -e 1000 -i "VERSION_OS='W'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishW* Matefinder_binaries
+move mateFishW* Matefinder_binaries
 echo.
 :: Linux
 cd Matefinder_binaries
@@ -164,13 +166,13 @@ if exist mateFishL* del mateFishL*
 cd ..
 set include=x86\include\
 ECHO === Building Linux Matefinder Executables ===
-start /min /wait fasmg.exe "x86\fish.asm" "mateFishL_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
-start /min /wait fasmg.exe "x86\fish.asm" "mateFishL_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
+start /min fasmg.exe "x86\fish.asm" "mateFishL_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
+start /min fasmg.exe "x86\fish.asm" "mateFishL_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
 set include=arm\include\
 start /min /wait fasmg.exe "arm\fish.arm" "mateFishL_%datestamp%_v8" -e 1000 -i "VERSION_OS='L'" -i "VERSION_POST = 'v8'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishL_%datestamp%_popcnt Matefinder_binaries
-copy mateFishL_%datestamp%_bmi2 Matefinder_binaries
-copy mateFishL_%datestamp%_v8 Matefinder_binaries
+move mateFishL_%datestamp%_popcnt Matefinder_binaries
+move mateFishL_%datestamp%_bmi2 Matefinder_binaries
+move mateFishL_%datestamp%_v8 Matefinder_binaries
 echo.
 :: Mac
 set include=x86\include\
@@ -178,9 +180,9 @@ cd Matefinder_binaries
 if exist mateFishX* del mateFishX*
 cd ..
 ECHO === Building MacOS Matefinder Executables ===
-start /min /wait fasmg.exe "x86\fish.asm" "mateFishX_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
+start /min fasmg.exe "x86\fish.asm" "mateFishX_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
 start /min /wait fasmg.exe "x86\fish.asm" "mateFishX_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
-copy mateFishX_* Matefinder_binaries
+move mateFishX_* Matefinder_binaries
 CALL:stop_timer
 echo.
 goto menu
@@ -198,8 +200,6 @@ start /min fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_popcnt.exe" -e 1000 -i
 start /min fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_bmi2.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'bmi2'" %debug%
 echo.
 
- 
-
 cd LinuxOS_binaries
 if exist asm* del asm*
 cd ..
@@ -208,8 +208,6 @@ ECHO === Building Linux Executables ===
 start /min fasmg.exe "x86\fish.asm" "asmFishL_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" %debug%
 start /min fasmg.exe "x86\fish.asm" "asmFishL_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'bmi2'" %debug%
 echo.
-
- 
 
 cd MacOS_binaries
 if exist asm* del asm*
@@ -234,8 +232,8 @@ echo.
  
 :: Windows
 cd Matefinder_binaries
-if exist mateFishW* del mateFishW*
-if exist *base del *base
+if exist *popcnt.exe del *popcnt.exe
+if exist *bmi2.exe del *bmi2.exe
 cd ..
 set include=x86\include\
 ECHO === Building Windows Matefinder Executables ===
@@ -262,15 +260,17 @@ if exist mateFishX* del mateFishX*
 cd ..
 ECHO === Building MacOS Matefinder Executables ===
 start /min fasmg.exe "x86\fish.asm" "mateFishX_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'bmi2'" -i "USE_MATEFINDER = 1" %debug%
-start /min /wait fasmg.exe "x86\fish.asm" "mateFishX_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
+start /min fasmg.exe "x86\fish.asm" "mateFishX_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='X'" -i "VERSION_POST = 'popcnt'" -i "USE_MATEFINDER = 1" %debug%
 echo.
 
 :: Windows
 cd WindowsOS_binaries
 if exist *base.exe del *base.exe
 cd ..
+cd Matefinder_binaries
+if exist *base.exe del *base.exe
 set include=x86\include\
-ECHO === Building Windows Base Executable ===
+ECHO === Building Windows Base Executables ===
 start /min fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_base.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'" %debug%
 echo.
 start /min fasmg.exe "x86\fish.asm" "mateFishW_%datestamp%_base.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'" -i "USE_MATEFINDER = 1" %debug%
@@ -280,7 +280,7 @@ cd LinuxOS_binaries
 if exist *base del *base
 cd ..
 set include=x86\include\
-ECHO === Building Linux Base Executable ===
+ECHO === Building Linux Base Executables ===
 start /min fasmg.exe "x86\fish.asm" "asmFishL_%datestamp%_base" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'" %debug%
 start /min fasmg.exe "x86\fish.asm" "mateFishL_%datestamp%_base" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'" -i "USE_MATEFINDER = 1" %debug%
 echo.
@@ -290,20 +290,10 @@ cd MacOS_binaries
 if exist *base del *base
 cd ..
 set include=x86\include\
-ECHO === Building MacOS Base Executable ===
+ECHO === Building MacOS Base Executables ===
 start /min fasmg.exe "x86\fish.asm" "asmFishX_%datestamp%_base" -e 1000 -i "VERSION_OS='X'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'" %debug%
 start /min fasmg.exe "x86\fish.asm" "mateFishX_%datestamp%_base" -e 1000 -i "VERSION_OS='X'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'" -i "USE_MATEFINDER = 1" %debug%
 echo.
-
-:: Windows
-cd WindowsOS_binaries
-if exist *base.exe del *base.exe
-cd ..
-set include=x86\include\
-ECHO === Building Windows Base Executable ===
-start /min fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_base.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'" %debug%
-echo.
-start /min /wait fasmg.exe "x86\fish.asm" "mateFishW_%datestamp%_base.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'base'" -i "USE_MATEFINDER = 1" %debug%
 
 timeout 5
 
@@ -320,6 +310,7 @@ move asmFishL_%datestamp%_base LinuxOS_binaries
 move asmFishX_%datestamp%_base MacOS_binaries
 move mateFish* Matefinder_binaries
 
+::move mateFish* Matefinder_binaries is like writing:
 ::move mateFishL_%datestamp%_popcnt Matefinder_binaries
 ::move mateFishL_%datestamp%_bmi2 Matefinder_binaries
 ::move mateFishL_%datestamp%_base Matefinder_binaries
@@ -327,7 +318,6 @@ move mateFish* Matefinder_binaries
 ::move mateFishX_%datestamp%_popcnt Matefinder_binaries
 ::move mateFishX_%datestamp%_bmi2 Matefinder_binaries
 ::move mateFishX_%datestamp%_base Matefinder_binaries
-
 
 echo. 
 CALL:stop_timer
@@ -340,8 +330,8 @@ cd WindowsOS_binaries
 if exist *popcnt.exe del *popcnt.exe
 cd ..
 set include=x86\include\
-fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" %debug%
-copy asmFishW_%datestamp%_popcnt.exe WindowsOS_binaries
+start /min /wait fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" %debug%
+move asmFishW_%datestamp%_popcnt.exe WindowsOS_binaries
 echo.
 goto menu
 
@@ -351,8 +341,8 @@ cd WindowsOS_binaries
 if exist *bmi2.exe del *bmi2.exe
 cd ..
 set include=x86\include\
-fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_bmi2.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'bmi2'" %debug%
-copy asmFishW_%datestamp%_bmi2.exe WindowsOS_binaries
+start /min /wait fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_bmi2.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'bmi2'" %debug%
+move asmFishW_%datestamp%_bmi2.exe WindowsOS_binaries
 echo.
 goto menu
 
@@ -398,3 +388,4 @@ if defined debug (SET "debug=") else (SET "debug=%default%")
 goto menu
 
 :END
+exit /b
