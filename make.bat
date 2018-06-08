@@ -198,8 +198,6 @@ start /min fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_popcnt.exe" -e 1000 -i
 start /min fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_bmi2.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'bmi2'" %debug%
 echo.
 
- 
-
 cd LinuxOS_binaries
 if exist asm* del asm*
 cd ..
@@ -209,8 +207,6 @@ start /min fasmg.exe "x86\fish.asm" "asmFishL_%datestamp%_popcnt" -e 1000 -i "VE
 start /min fasmg.exe "x86\fish.asm" "asmFishL_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'bmi2'" %debug%
 echo.
 
- 
-
 cd MacOS_binaries
 if exist asm* del asm*
 cd ..
@@ -219,8 +215,6 @@ ECHO === Building MacOS Executables ===
 start /min fasmg.exe "x86\fish.asm" "asmFishX_%datestamp%_popcnt" -e 1000 -i "VERSION_OS='X'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" %debug%
 start /min fasmg.exe "x86\fish.asm" "asmFishX_%datestamp%_bmi2" -e 1000 -i "VERSION_OS='X'" -i "PEDANTIC = 1" -i "VERSION_POST = 'bmi2'" %debug%
 echo.
- 
- 
 
 cd LinuxOS_binaries
 if exist arm* del arm*
@@ -229,8 +223,6 @@ set include=arm\include\
 ECHO === Building ARM Executables ===
 start /min fasmg.exe "arm\fish.arm" "armFishL_%datestamp%_v8" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'v8'" %debug%
 echo.
-
- 
  
 :: Windows
 cd Matefinder_binaries
@@ -328,7 +320,6 @@ move mateFish* Matefinder_binaries
 ::move mateFishX_%datestamp%_bmi2 Matefinder_binaries
 ::move mateFishX_%datestamp%_base Matefinder_binaries
 
-
 echo. 
 CALL:stop_timer
 echo.
@@ -340,7 +331,7 @@ cd WindowsOS_binaries
 if exist *popcnt.exe del *popcnt.exe
 cd ..
 set include=x86\include\
-fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" %debug%
+start /min /wait fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_popcnt.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'popcnt'" %debug%
 copy asmFishW_%datestamp%_popcnt.exe WindowsOS_binaries
 echo.
 goto menu
@@ -351,11 +342,10 @@ cd WindowsOS_binaries
 if exist *bmi2.exe del *bmi2.exe
 cd ..
 set include=x86\include\
-fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_bmi2.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'bmi2'" %debug%
+start /min /wait fasmg.exe "x86\fish.asm" "asmFishW_%datestamp%_bmi2.exe" -e 1000 -i "VERSION_OS='W'" -i "PEDANTIC = 1" -i "VERSION_POST = 'bmi2'" %debug%
 copy asmFishW_%datestamp%_bmi2.exe WindowsOS_binaries
 echo.
 goto menu
-
 
 :create_datestamp
 for /f "tokens=2 delims==" %%a in ('wmic OS Get localdatetime /value') do set "dt=%%a"
