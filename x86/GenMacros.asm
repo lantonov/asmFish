@@ -4,6 +4,14 @@ macro ShiftBB delta, b, t
             shl   b, 8
   else if delta = DELTA_S
             shr   b, 8
+  else if delta = DELTA_E
+            mov   t, not FileHBB
+            and   b, t
+            shl   b, 1
+  else if delta = DELTA_W
+            mov   t, not FileABB
+            and   b, t
+            shr   b, 1
   else if delta = DELTA_NE
             mov   t, not FileHBB
             and   b, t
