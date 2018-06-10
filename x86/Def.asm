@@ -97,13 +97,13 @@ PawnValueMg   = 171
 KnightValueMg = 764
 BishopValueMg = 826
 RookValueMg   = 1282
-QueenValueMg  = 2526
+QueenValueMg  = 2500
 
 PawnValueEg   = 240
 KnightValueEg = 848
 BishopValueEg = 891
 RookValueEg   = 1373
-QueenValueEg  = 2646
+QueenValueEg  = 2670
 
 MidgameLimit = 15258
 EndgameLimit = 3915
