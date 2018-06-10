@@ -28,50 +28,79 @@ macro EvalInit Us
   local Them, Down
   local NotUsed, PinnedLoop, NoPinned, YesPinned
 
-  if Us = White
-	Them = Black
-	Down = DELTA_S
-  else
-	Them = White
-	Down = DELTA_N
-  end if
+   if Us	= White
+	Them	= Black
+	Up		= DELTA_S
+	Down	= DELTA_N
+	West	= DELTA_W
+	East	= DELTA_E
+   else
+	Them	= White
+	Up		= DELTA_N
+	Down	= DELTA_S
+	West	= DELTA_W
+	East	= DELTA_E
+   end if
 
-
+  
 ;		Assert   e, rdi, qword[.ei.pi], 'assertion rdi = ei.pi failed in EvalInit'
-
-		movzx   ecx, word[rbx+State.npMaterial+2*Us]
-
-		movzx   eax, byte[rbp+Pos.pieceList+16*(8*Them+King)]
-  if Them = White
-		cmp   eax, SQ_A2
-		setb   al
-  else
-		cmp   eax, SQ_A8
-		setae   al
-  end if
-
-		mov   r9, qword[.ei.attackedBy+8*(8*Them+King)]
-		or   qword[.ei.attackedBy+8*(8*Them+0)], r9
-		mov   r10, qword[rdi+PawnEntry.pawnAttacks+8*Us]
-		mov   qword[.ei.attackedBy+8*(8*Us+Pawn)], r10
-		or   qword[.ei.attackedBy+8*(8*Us+0)],	r10
-	; rdx =	b
-
-		xor   r8, r8
-		xor   edx, edx
+		movzx  ecx, word[rbx+State.npMaterial+2*Us]
+		movzx  eax, byte[rbp+Pos.pieceList+16*(8*Them+King)]
+		mov    r11d, eax
+		mov    r9, qword[.ei.attackedBy+8*(8*Them+King)]
+		or     qword[.ei.attackedBy+8*(8*Them+0)], r9
+		mov    r10, qword[rdi+PawnEntry.pawnAttacks+8*Us]
+		mov    qword[.ei.attackedBy+8*(8*Us+Pawn)], r10
+		or     qword[.ei.attackedBy+8*(8*Us+0)],	r10
+		xor    r8, r8
+		xor    edx, edx
+		
 		cmp   ecx, RookValueMg + KnightValueMg
-		jb   NotUsed
+		jb    @1f
+
+		; if (relative_rank(Us, pos.square<KING>) == RANK_1)
+		if Them = White
+			cmp   eax, SQ_A2
+			setb   al
+		else
+			cmp   eax, SQ_A8
+			setae  al
+		end if
+
+		; kingRing[Us] |= shift<Up>(kingRing[Us]);
 		mov   r8, r9
 		neg   rax
-		ShiftBB   Down, r8
+		ShiftBB   Up, r8
 		and   r8, rax
-		or   r8, r9
+		or    r8, r9
+		mov   rdx, r8
+		; r8 = kingRing
+
+		; if (file_of(pos.square<KING>) == FILE_H)
+		mov  eax, r11d
+		and  eax, 7
+		cmp  eax, 7
+		jne   @f
+		ShiftBB   West, r8, rcx
+		or  r8, rdx
+		mov rdx, r8
+
+	@@:
+		; if (file_of(pos.square<KING>) == FILE_A)
+		and  r11d, 7 ; hammers r11 but saves an instruction
+		test r11d, r11d
+		jnz  @f
+		ShiftBB   East, r8, rcx
+		or  r8, rdx
+
+	@@:
 		and   r9, r10
-		_popcnt   rdx, r9, rcx
+		_popcnt   rdx, r9, rcx  
 		xor   eax, eax
 		mov   dword[.ei.kingAttackersWeight+4*Us], eax
 		mov   dword[.ei.kingAdjacentZoneAttacksCount+4*Us], eax
-NotUsed:
+
+	@1:
 		mov   qword[.ei.kingRing+8*Them], r8
 		mov   dword[.ei.kingAttackersCount+4*Us], edx
 		and   r10, qword[.ei.attackedBy+8*(8*Us+King)]
