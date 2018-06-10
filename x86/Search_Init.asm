@@ -25,6 +25,7 @@ Search_Init:
 	       call   Math_Log_d_d
 	    _vmulsd   xmm1, xmm0, xmm7
 	    _vdivsd   xmm1, xmm1, qword[.constd_1p95]
+		_vmovsd   xmm3, xmm1
 		xor   r8d, r8d
 		lea   rcx, [r13*4]
 	    _vaddsd   xmm1, xmm1, qword[.constd_0p5]
@@ -33,15 +34,15 @@ Search_Init:
 	       test   r9d, r9d
 	      cmovs   r9d, ebx
 		mov   dword[r14+rcx+8004H], r9d
-		cmp   r8d, 1
-		jle   ._0051
-	       test   sil, sil
-		 jz   ._0051
+	    test   sil, sil
+		jz   ._0051
+		comisd   xmm3, qword[.constd_1p0]
+		jbe  ._0051
 		add   r8d, 1
 ._0051:
 		mov   dword[r14+rcx+4H], r8d
 		add   r13, 1
-		cmp   r13, 63
+		cmp   r13, 3FH
 		jnz   ._0050
 		add   edi, 1
 		add   r14, 256
