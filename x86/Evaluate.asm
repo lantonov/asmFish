@@ -1,21 +1,22 @@
-Connectivity      = (3 shl  16) + (1)
-KnightOnQueen     = (21 shl 16) + (11)
-MinorBehindPawn 	= ( 16 shl 16) + (  0)
-BishopPawns		= (  8 shl 16) + ( 12)
-LongRangedBishop        = ( 22 shl 16) + (  0)
-RookOnPawn		= (  8 shl 16) + ( 24)
-TrappedRook		= ( 92 shl 16) + (  0)
-WeakQueen		= ( 50 shl 16) + ( 10)
-CloseEnemies		= (  7 shl 16) + (  0)
-PawnlessFlank		= ( 20 shl 16) + ( 80)
-ThreatBySafePawn        = (175 shl 16) + (168)
-ThreatByRank		= ( 16 shl 16) + (  3)
-Hanging                 = ( 52 shl 16) + ( 30)
-WeakUnopposedPawn       = (  5 shl 16) + ( 25)
-ThreatByPawnPush        = ( 47 shl 16) + ( 26)
-SliderOnQueen           = ( 42 shl 16) + ( 21)
-HinderPassedPawn        = (  8 shl 16) + (  1)
-TrappedBishopA1H1       = ( 50 shl 16) + ( 50)
+Overload            = ( 10 shl 16) + (  5)
+Connectivity        = (  3 shl 16) + (  1)
+KnightOnQueen       = ( 21 shl 16) + ( 11)
+MinorBehindPawn     = ( 16 shl 16) + (  0)
+BishopPawns         = (  8 shl 16) + ( 12)
+LongRangedBishop    = ( 22 shl 16) + (  0)
+RookOnPawn          = (  8 shl 16) + ( 24)
+TrappedRook         = ( 92 shl 16) + (  0)
+WeakQueen           = ( 50 shl 16) + ( 10)
+CloseEnemies        = (  7 shl 16) + (  0)
+PawnlessFlank       = ( 20 shl 16) + ( 80)
+ThreatBySafePawn    = (175 shl 16) + (168)
+ThreatByRank        = ( 16 shl 16) + (  3)
+Hanging             = ( 52 shl 16) + ( 30)
+WeakUnopposedPawn   = (  5 shl 16) + ( 25)
+ThreatByPawnPush    = ( 47 shl 16) + ( 26)
+SliderOnQueen       = ( 42 shl 16) + ( 21)
+HinderPassedPawn    = (  8 shl 16) + (  1)
+TrappedBishopA1H1   = ( 50 shl 16) + ( 50)
 
 LazyThreshold = 1500
 
@@ -1127,6 +1128,19 @@ WeakDone:
 		imul   eax, Connectivity
 		addsub  esi, eax
 
+; // Bonus for overload (non-pawn enemies attacked and defended exactly once)
+		mov    r8, PiecesPawn
+		_andn  r8, r8, PiecesThem ; r8 = nonPawnEnemies
+		and    r8, AttackedByUs
+		mov    r9, qword[.ei.attackedBy2+8*Us]
+		_andn  r8, r9, r8
+		and    r8, AttackedByThem
+		mov    r9, qword[.ei.attackedBy2+8*Them]
+		_andn  r8, r9, r8
+		_popcnt  r8, r8, rdx
+		imul   r8d, Overload
+		addsub  esi, r8d
+		
 end macro
 
 

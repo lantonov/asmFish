@@ -320,15 +320,6 @@ move asmFishL_%datestamp%_base LinuxOS_binaries
 move asmFishX_%datestamp%_base MacOS_binaries
 move mateFish* Matefinder_binaries
 
-::move mateFishL_%datestamp%_popcnt Matefinder_binaries
-::move mateFishL_%datestamp%_bmi2 Matefinder_binaries
-::move mateFishL_%datestamp%_base Matefinder_binaries
-::move mateFishL_%datestamp%_v8 Matefinder_binaries
-::move mateFishX_%datestamp%_popcnt Matefinder_binaries
-::move mateFishX_%datestamp%_bmi2 Matefinder_binaries
-::move mateFishX_%datestamp%_base Matefinder_binaries
-
-
 echo. 
 CALL:stop_timer
 echo.
