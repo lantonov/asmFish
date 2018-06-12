@@ -248,8 +248,16 @@ NoPinned:
 		add   dword[.ei.kingAdjacentZoneAttacksCount+4*Us], eax
 NoKingRing:
 
+    if Pt	= Knight | Pt =	Bishop
 		mov   rax, qword[.ei.mobilityArea+8*Us]
 		and   rax, r9
+		mov   rcx, qword[rbp+Pos.typeBB+8*Queen]
+		and   rcx, r11
+		_andn rax, rcx, rax
+	else 
+		mov   rax, qword[.ei.mobilityArea+8*Us]
+		and   rax, r9
+	end if
 		_popcnt   r10, rax, rcx
 		mov   eax, dword[MobilityBonus + 4*r10]
 		addsub   dword[.ei.mobilityDiff], eax
@@ -1109,7 +1117,7 @@ WeakDone:
 		imul  eax, SliderOnQueen
 		addsub  esi, eax
 
-@@:
+	@@:
 		 mov  rax, qword[rbp+Pos.typeBB+8*King]
 		 or   rax, PiecesPawn
 		 and  rax, PiecesUs
