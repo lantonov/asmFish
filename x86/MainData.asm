@@ -36,15 +36,20 @@ end if
 szUciResponse:
     db 'id name '
 szGreeting:
-    db VERSION_PRE
-    db VERSION_OS
-    db '_'
-    BuildTimeData
-    db '_'
-    db VERSION_POST
   if USE_MATEFINDER = 1
-    db '_'
-    db 'mf'
+	db 'mFish'
+	db VERSION_OS
+	db '_'
+	BuildTimeData
+	db '_'
+	db VERSION_POST
+  else
+	db VERSION_PRE
+	db VERSION_OS
+	db '_'
+	BuildTimeData
+	db '_'
+	db VERSION_POST
   end if
     NewLineData
 szGreetingEnd:
