@@ -191,6 +191,7 @@ Continue:
             xor   r10, rdx
             jnz   NoPassed
         _popcnt   r11, r11, r10
+            dec   r11
         _popcnt   rdx, rdx, r10
             sub   rax, r11
             sub   r9, rdx
