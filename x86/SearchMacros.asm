@@ -1,5 +1,15 @@
+; RazorMargin[] =
 RazorMargin1 = 590
 RazorMargin2 = 604
+
+; CapturePruneMargin[] =
+CapturePruneMargin0 = 0    ; 0
+CapturePruneMargin1 = 253  ; 1 * PawnValueEg * 1055 / 1000 
+CapturePruneMargin2 = 500  ; 2 * PawnValueEg * 1042 / 1000
+CapturePruneMargin3 = 693  ; 3 * PawnValueEg * 963  / 1000
+CapturePruneMargin4 = 996  ; 4 * PawnValueEg * 1038 / 1000
+CapturePruneMargin5 = 1140 ; 5 * PawnValueEg * 950  / 1000
+CapturePruneMargin6 = 1339 ; 6 * PawnValueEg * 930  / 1000
 
 macro search RootNode, PvNode
 	; in:
@@ -1014,14 +1024,14 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		jnz   .13else
 		lea   ecx, [8*r8+Pawn]
 		cmp   esi, 5000
-		jae   .13do
+		jae   @f
 		cmp   r14d, ecx
-		jne   .13do
-	       imul   r8d, 56
+		jne   @f
+		imul   r8d, 56
 		xor   r8d, r12d
 		cmp   r8d, SQ_A5
 		jae   .13else
-.13do:
+@@:
     ; Move count based pruning
 		mov   al, byte[.moveCountPruning]
 		 or   byte[.skipQuiets], al
@@ -1038,35 +1048,35 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   eax, dword[r8+4*r11]
 		mov   ecx, dword[r9+4*r11]
 		cmp   edi, 3*ONE_PLY
-		jge   .13DontSkip2
+		jge   @f
     if CounterMovePruneThreshold <> 0     ; code assumes
 	err
     end if
 		and   eax, ecx
 		 js   .MovePickLoop
-.13DontSkip2:
+	@@:
     ; Futility pruning:	parent node
 		xor   edx, edx
 		cmp   edi, 7*ONE_PLY
-		 jg   .13done
-		 je   .13check_see
-	       test   edi, edi
-	      cmovs   edi, edx
-	       imul   eax, edi, 200
+		jg    .13done
+		je    @f
+	    test  edi, edi
+	    cmovs edi, edx
+	    imul  eax, edi, 200
 		add   eax, 256
 		cmp   rdx, qword[rbx+State.checkersBB]
-		jne   .13check_see
+		jne   @f
 		add   eax, dword[rbx+State.staticEval]
 		cmp   eax, dword[.alpha]
 		jle   .MovePickLoop
-.13check_see:
+@@:
     ; Prune moves with negative	SEE at low depths
 		mov   ecx, dword[.move]
-	       imul   edx, edi,	-35
-	       imul   edx, edi
-	       call   SeeTestGe
-	       test   eax, eax
-		 jz   .MovePickLoop
+	    imul   edx, edi, -35
+	    imul   edx, edi
+	    call   SeeTestGe
+	    test   eax, eax
+		jz   .MovePickLoop
 		jmp   .13done
 .13else:
 		mov   ecx, dword[.move]
@@ -1074,10 +1084,45 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		jge   .13done
 		cmp   byte[.extension],	0
 		jne   .13done
-	       imul   edx, -PawnValueEg
-	       call   SeeTestGe
-	       test   eax, eax
-		 jz   .MovePickLoop
+
+		; Todo: The following may be restructured (to be more aesthetically pleasing)
+		; and/or reordered (for speed optimization).
+		cmp  edx, 0
+		jne  @f
+		mov  edx, -CapturePruneMargin0
+		jmp  @1f
+	@@:
+		cmp  edx, 1
+		jne  @f
+		mov  edx, -CapturePruneMargin1
+		jmp  @1f
+	@@:
+		cmp  edx, 2
+		jne  @f
+		mov  edx, -CapturePruneMargin2
+		jmp  @1f
+	@@:
+		cmp  edx, 3
+		jne  @f
+		mov  edx, -CapturePruneMargin3
+		jmp  @1f
+	@@:
+		cmp  edx, 4
+		jne  @f
+		mov  edx, -CapturePruneMargin4
+		jmp  @1f
+	@@:
+		cmp  edx, 5
+		jne  @f
+		mov  edx, -CapturePruneMargin5
+		jmp  @1f
+	@@:
+		mov  edx, -CapturePruneMargin6
+		jmp  @1f
+	@1:
+	    call   SeeTestGe
+	    test   eax, eax
+		jz   .MovePickLoop
 .13done:
   end if
 
