@@ -1401,21 +1401,21 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   ecx, dword[.move]
 		mov   rdx, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
 		lea   rdx, [rdx-sizeof.RootMove]
-.FindRootMove:
+	@@:
 		lea   rdx, [rdx+sizeof.RootMove]
 	     Assert   b, rdx, qword[rbp+Pos.rootMovesVec+RootMovesVec.ender], 'cant	find root move'
 		cmp   ecx, dword[rdx+RootMove.pv+4*0]
-		jne   .FindRootMove
+		jne   @b
 		mov   esi, 1
 		mov   r10d,	-VALUE_INFINITE
 		cmp   esi, dword[.moveCount]
-		 je   .FoundRootMove1
+		 je   @f
 		cmp   edi, dword[.alpha]
 		jle   .FoundRootMoveDone
 	    _vmovsd   xmm0,	qword[rbp-Thread.rootPos+Thread.bestMoveChanges]
 	    _vaddsd   xmm0,	xmm0, qword[constd._1p0]
 	    _vmovsd   qword[rbp-Thread.rootPos+Thread.bestMoveChanges],	xmm0
-.FoundRootMove1:
+	@@:
 		mov   r10d,	edi
 	      movzx   eax, byte[rbp-Thread.rootPos+Thread.selDepth]
 		mov   rcx, qword[rbx+1*sizeof.State+State.pv]
@@ -1436,10 +1436,10 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
     ; check for new best move
 		mov   ecx, dword[.move]
 		cmp   edi, dword[.bestValue]
-		jle   .18NoNewBestValue
+		jle   .18NoNewValue
 		mov   dword[.bestValue], edi
 		cmp   edi, dword[.alpha]
-		jle   .18NoNewAlpha
+		jle   .18NoNewValue
 		mov   dword[.bestMove],	ecx
   if PvNode = 1	& RootNode = 0
 		mov   r8, qword[rbx+0*sizeof.State+State.pv]
@@ -1460,15 +1460,19 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
   end if
   if PvNode = 1
 		cmp   edi, dword[.beta]
-		jge   .MovePickDone
+		jge   .18fail_high
 		mov   dword[.alpha], edi
-		jmp   .18NoNewBestValue
+		jmp   .18NoNewValue
   end if
 .18fail_high:
 	     Assert   ge, edi, dword[.beta], 'did not fail high	in Search'
-		jmp   .MovePickDone
-.18NoNewAlpha:
-.18NoNewBestValue:
+		mov  ecx, dword[rbx + State.statScore]
+		mov  eax, 0
+		test  ecx, ecx
+		cmovns  eax, dword[rbx + State.statScore]
+		mov  dword[rbx + State.statScore], eax
+		jmp  .MovePickDone
+.18NoNewValue:
 		mov   ecx, dword[.move]
 		mov   eax, dword[.quietCount]
 		mov   edx, dword[.captureCount]
