@@ -124,7 +124,7 @@ macro UpdateCaptureStats move, captures, captureCnt, bonusW, absbonus
 	; it also might clobber rsi
   local BonusTooBig, NextCapture, Return
 
-           imul  bonusW, absbonus, 2
+           imul  bonusW, absbonus, 32
             mov  r9, qword[rbp + Pos.captureHistory]
             cmp  absbonus, 324
             jae  BonusTooBig
