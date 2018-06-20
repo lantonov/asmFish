@@ -270,7 +270,13 @@ WhileLoop:
             and  eax, 7
             shl  ecx, 3
             add  ecx, eax
-            add  edx, dword[r8 + 4*rcx]
+            mov  eax, dword[r8 + 4*rcx]
+            mov  r9d, edx ; prepares for signed division by 16
+            mov  ecx, 16
+            cdq
+            idiv  ecx ; hammers edx
+            mov  edx, r9d ; reloads edx
+            add  edx, eax
             mov  dword[start-sizeof.ExtMove+ExtMove.value], edx
             cmp  start, ender
              jb  WhileLoop
