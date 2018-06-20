@@ -194,17 +194,30 @@ end if
 
         ; Adjust contempt based on current situation
 
+; Formula: contempt += 88 * bestValue / (abs(bestValue) + 200);
+
 		mov  r11d, dword[.bestValue]
-		mov  r10d, 128
-		_vpxor  xmm0, xmm0, xmm0
-		_vpxor  xmm1, xmm1, xmm1
-		_vcvtsi2sd  xmm1, xmm1, r11d ; xmm1=bestvalue
-		_vcvtsi2sd  xmm0, xmm0, r10d ; xmm0=128
-		call  Math_Arctan_d_d
-		_vmulsd  xmm0, xmm0, qword[constd._48p0]
-		call  Math_Round_d_d
-		; roundsd xmm0, xmm0, 0
-		_vcvttsd2si  r8d, xmm0
+		mov  eax, r11d
+		imul  r11d, 88
+
+		mov   r9d, eax
+		test  r9d, r9d
+		setg  al
+		movzx  eax, al
+		mov  edx, r9d
+		shr  edx, 31 ; isolate upper bit
+		sub  eax, edx
+		mov  eax, r9d
+		sar  eax, 31
+		mov  ecx, r9d
+		xor  ecx, eax
+		sub  ecx, eax ; ecx = abs(bestValue)
+		add  ecx, 200
+
+		mov  eax, r11d ; reload eax
+		cdq
+		idiv  ecx ; eax = 88 * bestValue / (abs(bestValue) + 200)
+		mov  r8d, eax
 	@@:
 		imul  eax, dword[options.contempt], PawnValueEg
 		mov  ecx, 100
