@@ -100,7 +100,7 @@ cd ..
 set include=arm\include\
 CALL:start_timer
 ECHO === Building ARM Executables ===
-start /min /wait fasmg.exe "arm\fish.arm" "armFishL_%datestamp%_v8" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'v8'" %debug%
+fasmg.exe "arm\fish.arm" "armFishL_%datestamp%_v8" -e 1000 -i "VERSION_OS='L'" -i "PEDANTIC = 1" -i "VERSION_POST = 'v8'" %debug%
 copy armFishL_%datestamp%_v8 LinuxOS_binaries
 echo.
 CALL:stop_timer
