@@ -1,20 +1,20 @@
-KnightOnQueen       = ( 21 shl 16) + ( 11)
-MinorBehindPawn 	= ( 16 shl 16) + (  0)
-BishopPawns		= (  8 shl 16) + ( 12)
-LongRangedBishop        = ( 22 shl 16) + (  0)
-RookOnPawn		= (  8 shl 16) + ( 24)
-TrappedRook		= ( 92 shl 16) + (  0)
-WeakQueen		= ( 50 shl 16) + ( 10)
+KnightOnQueen		= ( 21 shl 16) + ( 11)
+MinorBehindPawn		= ( 16 shl 16) + (  0)
+BishopPawns             = (  8 shl 16) + ( 12)
+LongRangedBishop	= ( 22 shl 16) + (  0)
+RookOnPawn              = (  8 shl 16) + ( 24)
+TrappedRook             = ( 92 shl 16) + (  0)
+WeakQueen               = ( 50 shl 16) + ( 10)
 CloseEnemies		= (  7 shl 16) + (  0)
 PawnlessFlank		= ( 20 shl 16) + ( 80)
-ThreatBySafePawn        = (175 shl 16) + (168)
+ThreatBySafePawn	= (175 shl 16) + (168)
 ThreatByRank		= ( 16 shl 16) + (  3)
-Hanging 		= ( 52 shl 16) + ( 30)
-WeakUnopposedPawn       = (  5 shl 16) + ( 25)
+Hanging                        = ( 52 shl 16) + ( 30)
+WeakUnopposedPawn	= (  5 shl 16) + ( 25)
 ThreatByPawnPush	= ( 47 shl 16) + ( 26)
-ThreatByAttackOnQueen   = ( 42 shl 16) + ( 21)
+SliderOnQueen		= ( 42 shl 16) + ( 21)
 HinderPassedPawn	= (  8 shl 16) + (  1)
-TrappedBishopA1H1       = ( 50 shl 16) + ( 50)
+TrappedBishopA1H1	= ( 50 shl 16) + ( 50)
 
 LazyThreshold = 1500
 
@@ -165,10 +165,6 @@ macro EvalPieces Us, Pt
 
             mov  w0, 0
             str  xzr, [sp, EvalInfo.attackedBy + 8*(8*Us + Pt)]
-  if Pt = Queen
-            str  xzr, [sp, EvalInfo.attackedBy + 8*(8*Us + QUEEN_DIAGONAL)]
-  end if
-
             add  x25, x20, Pos.pieceList + 16*(8*Us + Pt)
            ldrb  w24, [x20, Pos.pieceList + 16*(8*Us + Pt)]
             cmp  w24, 64
@@ -217,16 +213,6 @@ NoPinned:
             orr  AttackedBy_Us, AttackedBy_Us, x0
             orr  AttackedBy2_Us, AttackedBy2_Us, x1
             str  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + Pt)]
-
-  if Pt = Queen
-           _lea  x6, BishopAttacksPDEP
-            ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + QUEEN_DIAGONAL)]
-            ldr  x0, [x6, x24, lsl 3]
-            and  x0, x0, x9
-            orr  x0, x0, x4
-            str  x0, [sp, EvalInfo.attackedBy + 8*(8*Us + QUEEN_DIAGONAL)]
-  end if
-
 
             ldr  x4, [sp, EvalInfo.kingRing + 8*Them]
             tst  x9, x4
@@ -465,7 +451,7 @@ QueenPinLoop:
             orr  x2, x2, x1
            rbit  x1, x0
             clz  x1, x1
-           cbnz  x0, QueenPinLoop     
+           cbnz  x0, QueenPinLoop
             tst  x2, Pieces_All
           mov32  w4, WeakQueen
          AddSub  Them, w0, w26, w4
@@ -649,10 +635,10 @@ KnightDone:
 
            ldr  x10, [sp, EvalInfo.mobilityArea + 8*Them]
            and  x9, x9, x10
-           
+
            ldr  x2, [sp, EvalInfo.pinnedPieces + 8*Us]
            orr x2, x2, x9
-           
+
            _popcnt x4, x2, x1
            mov  w1, 143
            mul  w4, w4, w1
@@ -960,10 +946,11 @@ macro EvalThreats Us
   if Us = White
 	AttackedBy_Us       = x12
 	AttackedBy_Them     = x13
-        AttackedBy2_Us    = x14
-        AttackedBy2_Them  = x15
-        AttackedBy_UsPawn   = x16
-        AttackedBy_ThemPawn = x17
+  AttackedBy2_Us    = x14
+  AttackedBy2_Them  = x15
+  AttackedBy_UsPawn   = x16
+  AttackedBy_ThemPawn = x17
+  notStronglyProtected = x5
 	Pieces_Pawn	= x19
 	Pieces_Us	= x28
 	Pieces_Them	= x29
@@ -976,10 +963,11 @@ macro EvalThreats Us
   else
 	AttackedBy_Us       = x13
 	AttackedBy_Them     = x12
-        AttackedBy2_Us    = x15
-        AttackedBy2_Them  = x14
-        AttackedBy_UsPawn   = x17
-        AttackedBy_ThemPawn = x16
+  AttackedBy2_Us    = x15
+  AttackedBy2_Them  = x14
+  AttackedBy_UsPawn   = x17
+  AttackedBy_ThemPawn = x16
+  notStronglyProtected = x5
 	Pieces_Pawn	= x19
 	Pieces_Us	= x29
 	Pieces_Them	= x28
@@ -1151,20 +1139,6 @@ WeakDone:
           mov32  w4, ThreatByPawnPush
       Muladdsub  Us, w26, w0, w4, w26
 
-            ldp  x2, x3, [sp, EvalInfo.attackedBy+8*(8*Us+Bishop)]
-            ldr  x1, [sp, EvalInfo.attackedBy+8*(8*Them+QUEEN_DIAGONAL)]
-            ldr  x4, [sp, EvalInfo.attackedBy+8*(8*Them+Queen)]
-            bic  x0, AttackedBy2_Us, AttackedBy2_Them
-            bic  x0, x0, Pieces_Us
-            and  x2, x2, x1
-            bic  x1, x4, x1
-            and  x1, x1, x3
-            orr  x2, x2, x1
-            and  x0, x0, x2
-         Popcnt  x0, x0, x2
-          mov32  w4, ThreatByAttackOnQueen
-      Muladdsub  Us, w26, w0, w4, w26
-
     ; // Bonus for knight threats on enemy queen
             ldrb w1, [x20, Pos.pieceEnd + (8*Them+Queen)]
             and  w1, w1, 15
@@ -1172,18 +1146,37 @@ WeakDone:
             bne  @f
             ldr  x0, [sp, EvalInfo.attackedBy+8*(8*Us+Knight)]
             ldrb w8, [x20, Pos.pieceList + 16*(8*Them + Queen)]
-            ; w8 = queen sq
+            ; w8 = pos.square<QUEEN>(Them) = s
             _lea  x6, KnightAttacks
             ldr  x9, [x6, x8, lsl 3] ; x9 = qword[KnightAttacks+8*r8]
             and  x0, x0, x9
-            ldr   x8, [x20, Pos.typeBB + 8*King]
-            orr  x8, x8, Pieces_Pawn   
-            and  x8, x8, Pieces_Us
-            bic  x0, x0, x8 ; dest=x0, and(x0), not(x8)
-            bic  x0, x0, x5 ; dest=x0, and(x0), not(x10)
+            ;mov  x1, x5
+            ldr  x1, [sp, EvalInfo.mobilityArea + 8*Us]
+            bic  x1, x1, x5
+            and  x0, x0, x1
+
             Popcnt x0, x0, x2
             mov32  w4, KnightOnQueen
             Muladdsub  Us, w26, w0, w4, w26
+
+            mov  x1, Pieces_Them
+            orr  x1, x1, Pieces_Us
+            BishopAttacks  x0, x8, x1, x2, x4
+            ldr  x2, [sp, EvalInfo.attackedBy + 8*(8*Us + Bishop)]
+            and  x0, x0, x2
+            RookAttacks  x9, x8, x1, x2, x4
+            ldr  x2, [sp, EvalInfo.attackedBy + 8*(8*Us + Rook)]
+            and  x9, x9, x2
+            orr  x0, x0, x9
+            ldr  x2, [sp, EvalInfo.mobilityArea + 8*Us]
+            and  x0, x0, x2
+            bic  x0, x0, notStronglyProtected
+            ldr  x2, [sp, EvalInfo.attackedBy2 + 8*Us]
+            and  x0, x0, x2
+            _popcnt x0, x0, x2
+            mov32  w4, SliderOnQueen
+            Muladdsub  Us, w26, w0, w4, w26
+
         @@:
 end macro
 
@@ -1308,7 +1301,7 @@ NextPawn:
 
             eor  Pieces_Them, Pieces_Them, Pieces_Us
             sub  x5, x8, Up
-    RookAttacks  x0, x5, Pieces_Them, x2, x4 
+    RookAttacks  x0, x5, Pieces_Them, x2, x4
             eor  Pieces_Them, Pieces_Them, Pieces_Us
             ldr  x1, [x20, Pos.typeBB + 8*Rook]
             ldr  x4, [x20, Pos.typeBB + 8*Queen]
@@ -1843,7 +1836,7 @@ Evaluate.NotOppBishop:
             beq  Evaluate.ScaleFactorDone
          Popcnt  x1, x11, x9
             cmp  w1, 3
-            bhs  Evaluate.ScaleFactorDone        
+            bhs  Evaluate.ScaleFactorDone
             mov  w4, 7
             mov  w5, 37
            madd  w0, w1, w4, w5
