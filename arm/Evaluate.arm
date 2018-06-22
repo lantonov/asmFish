@@ -1743,6 +1743,16 @@ Evaluate.SkipSpace:
             add  w8, w8, w0, lsl 2
             add  w8, w8, w2, lsl 3
 
+           ldr  w2, [x21, State.npMaterial + 2*0]
+           sbfx  w9, w2, 0, 16
+           ldr  w2, [x21, State.npMaterial + 2*1]
+           sbfx  w1, w2, 0, 16
+           add  x9, x9, x1
+           cmp  x9, 1
+           sbc  x9, x9, x9
+           and  x9, x9, 48
+           add  x8, x8, x9
+
            sbfx  w9, w26, 0, 16
             asr  w9, w9, 31
            sbfx  w27, w26, 0, 16
