@@ -1,4 +1,4 @@
-Connectivity   =  (2 shl 16) + (2)
+Connectivity   =  (3 shl 16) + (1)
 KnightOnQueen		= ( 21 shl 16) + ( 11)
 MinorBehindPawn		= ( 16 shl 16) + (  0)
 BishopPawns             = (  8 shl 16) + ( 12)
