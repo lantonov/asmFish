@@ -2,9 +2,15 @@
 
 macro ShiftBB? delta, res, bb
  if delta = DELTA_N
-            lsl  res, bb, 8
+          lsl  res, bb, 8
  else if delta = DELTA_S
-            lsr  res, bb, 8
+          lsr  res, bb, 8
+ else if delta = DELTA_E
+          and  res, bb, AllSquares xor FileHBB
+          lsl  res, res, 1
+ else if delta = DELTA_W
+          and  res, bb, AllSquares xor FileABB
+          lsr  res, res, 1
  else if delta = DELTA_NE
 	        and  res, bb, AllSquares xor FileHBB
 	        lsl  res, res, 9

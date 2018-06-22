@@ -24,55 +24,84 @@ macro EvalInit Us
     ; in:  r13 rook + queen
     ;      r12 bishop+queen
     ;      r14 all pieces
-  local Them, Down
-  local NotUsed, PinnedLoop, NoPinned, YesPinned
+  local Them, Down, Up, West, East
+  local NotUsed, PinnedLoop, NoPinned, YesPinned, FileASkip, FileHSkip
 
   if Us = White
-	AttackedBy_Us     = x12
-	AttackedBy_Them   = x13
+        AttackedBy_Us     = x12
+        AttackedBy_Them   = x13
         AttackedBy2_Us    = x14
         AttackedBy2_Them  = x15
         AttackedBy_UsPawn = x16
         Them = Black
-        Down = DELTA_S
+        Up = DELTA_S
+        Down = DELTA_N
+        West = DELTA_W
+        East = DELTA_E
   else
-	AttackedBy_Us     = x13
+        AttackedBy_Us     = x13
         AttackedBy2_Us    = x15
         AttackedBy2_Them  = x14
-	AttackedBy_Them   = x12
+        AttackedBy_Them   = x12
         AttackedBy_UsPawn = x17
         Them = White
-        Down = DELTA_N
+        Up = DELTA_N
+        Down = DELTA_S
+        West = DELTA_W
+        East = DELTA_E
   end if
            ldrh  w1, [x21, State.npMaterial + 2*Us]
-            ldr  w0, [sp, EvalInfo.ksq + 4*Them]
+           ldr  w0, [sp, EvalInfo.ksq + 4*Them]
+           mov  w11, w0
+           ldr  x9, [sp, EvalInfo.attackedBy + 8*(8*Them + King)]
+           orr  AttackedBy_Them, AttackedBy_Them, x9
+           ldr  AttackedBy_UsPawn, [x27, PawnEntry.pawnAttacks + 8*Us]
+           orr  AttackedBy_Us, AttackedBy_Us, AttackedBy_UsPawn
+
+           mov  x8, 0
+           mov  w2, 0
+           cmp  w1,  RookValueMg + KnightValueMg
+           blo  @1f
+
+  ; if (relative_rank(Us, pos.square<KING>) == RANK_1)
   if Them = White
-            cmp  w0, SQ_A2
+           cmp  w0, SQ_A2
            cset  w0, lo
   else
-            cmp  w0, SQ_A8
+           cmp  w0, SQ_A8
            cset  w0, hs
   end if
-            ldr  x9, [sp, EvalInfo.attackedBy + 8*(8*Them + King)]
-            orr  AttackedBy_Them, AttackedBy_Them, x9
-            ldr  AttackedBy_UsPawn, [x27, PawnEntry.pawnAttacks + 8*Us]
-            orr  AttackedBy_Us, AttackedBy_Us, AttackedBy_UsPawn
 
-            mov  x8, 0
-            mov  w2, 0
-            cmp  w1,  RookValueMg + KnightValueMg
-            blo  NotUsed
+  ; if kingRing[Us] |= shift<Up>(kingRing[Us]);
             mov  x8, x9
             neg  x0, x0
-        ShiftBB  Down, x8, x8
+            ShiftBB  Up, x8, x8
             and  x8, x8, x0
             orr  x8, x8, x9
+            mov  x2, x8
+            ; x8 = kingRing
+  ; if (file_of(pos.square<KING>) == FILE_H)
+            mov  w0, w11
+            and  w0, w0, 7
+            cmp  w0, 7
+            bne  FileHSkip
+            ShiftBB  West, x8, x8
+            orr  x8, x8, x2
+            mov  x2, x8
+FileHSkip:
+  ; if (file_of(pos.square<KING> == FILE_A)
+            mov  w1, 7
+            and  w11, w11, 7
+            cbnz  w11, FileASkip
+            ShiftBB  East, x8, x8
+            orr  x8, x8, x2
+FileASkip:
             and  x9, x9, AttackedBy_UsPawn
         _popcnt  x2, x9, x1
             mov  w0, 0
             str  w0, [sp, EvalInfo.kingAttackersWeight + 4*Us]
             str  w0, [sp, EvalInfo.kingAdjacentZoneAttacksCount + 4*Us]
-NotUsed:
+@1:
             str  x8, [sp, EvalInfo.kingRing + 8*Them]
             str  w2, [sp, EvalInfo.kingAttackersCount + 4*Us]
             ldr  x4, [sp, EvalInfo.attackedBy + 8*(8*Us + King)]
