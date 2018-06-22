@@ -11,7 +11,7 @@ OPTIONS_CONTEMPT_DEFAULT = 12
 OPTIONS_CONTEMPT_MAX     = 100
 OPTIONS_SLOWMOVER_DEFAULT = 84
 
-AVG_MOVES = 96 
+AVG_MOVES = 96
 MAX_MOVES = 224
 MAX_THREADS = 256
 MAX_NUMANODES = 32
@@ -81,13 +81,13 @@ PawnValueMg   = 171
 KnightValueMg = 764
 BishopValueMg = 826
 RookValueMg   = 1282
-QueenValueMg  = 2526
+QueenValueMg  = 2500
 
 PawnValueEg   = 240
 KnightValueEg = 848
 BishopValueEg = 891
 RookValueEg   = 1373
-QueenValueEg  = 2646
+QueenValueEg  = 2670
 
 MidgameLimit = 15258
 EndgameLimit = 3915
@@ -196,4 +196,3 @@ EndgameScale_KPsK_index    = 12 ; K and pawns vs K
 EndgameScale_KPKP_index    = 13 ; KP vs KP
 
 ENDGAME_SCALE_MAX_INDEX = 16
-
