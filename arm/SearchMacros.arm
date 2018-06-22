@@ -221,7 +221,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             str  w0, [sp, .evalu]
             str  w0, [x21, State.staticEval]
             ldr  x1, [x21, State.checkersBB]
-            mov  w2, 1
+            mov  w2, 0
            strb  w2, [sp, .improving]
            cbnz  x1, .moves_loop
             ldr  w2, [x21, -1*sizeof.State + State.currentMove]
@@ -556,8 +556,12 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             cmp  w0, w4
             bhs  .9skip
     end if
+            ldrb  w1, [sp, .improving]
+            mov  w0, 48
+            mul  w1, w1, w0
             ldr  w27, [sp, .beta]
-            add  w27, w27, 200
+            add  w27, w27, 216
+            sub  w27, w27, w1
             mov  w0, VALUE_INFINITE
             cmp  w27, w0
            csel  w27, w0, w27, gt
