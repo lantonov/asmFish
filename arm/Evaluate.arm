@@ -1,3 +1,4 @@
+Connectivity   =  (2 shl 16) + (2)
 KnightOnQueen		= ( 21 shl 16) + ( 11)
 MinorBehindPawn		= ( 16 shl 16) + (  0)
 BishopPawns             = (  8 shl 16) + ( 12)
@@ -1178,6 +1179,15 @@ WeakDone:
             Muladdsub  Us, w26, w0, w4, w26
 
         @@:
+            ldr  x0, [x20, Pos.typeBB + 8*King]
+            orr  x0, x0, Pieces_Pawn
+            and  x0, x0, Pieces_Us
+            eor  x0, x0, Pieces_Us
+            ldr  x2, [sp, EvalInfo.attackedBy + 8*(8*Us + 0)]
+            and  x0, x0, x2
+            _popcnt  x0, x0, x2
+            mov32  w4, Connectivity
+            Muladdsub  Us, w26, w0, w4, w26
 end macro
 
 
