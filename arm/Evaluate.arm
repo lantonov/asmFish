@@ -265,8 +265,17 @@ NoPinned:
             str  w4, [sp, EvalInfo.kingAdjacentZoneAttacksCount + 4*Us]
 NoKingRing:
 
-            ldr  x0, [sp, EvalInfo.mobilityArea + 8*Us]
-            and  x0, x0, x9
+   if Pt = Knight | Pt = Bishop
+             ldr  x0, [sp, EvalInfo.mobilityArea + 8*Us]
+             and  x0, x0, x9
+             ldr  x1, [x20, Pos.typeBB + 8*Queen]
+             and  x1, x1, Pieces_Us
+             bic  x0, x0, x1
+   else
+             ldr  x0, [sp, EvalInfo.mobilityArea + 8*Us]
+             and  x0, x0, x9
+   end if
+
          Popcnt  x10, x0, x1
            _lea  x6, MobilityBonus
             ldr  w4, [x6, x10, lsl 2]
