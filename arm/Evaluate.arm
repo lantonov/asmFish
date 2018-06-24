@@ -1480,15 +1480,15 @@ macro EvalSpace Us
         SpaceMask      = SpaceMask and (Rank7BB or Rank6BB or Rank5BB)
   end if
 
-    ; rdx = pos.pieces(Us, PAWN)
-            and  x2, Pieces_Us, Pieces_Pawn
-
-            bic  x0, AttackedBy_Them, AttackedBy_Us
-            orr  x0, x0, AttackedBy_ThemPawn
-            orr  x0, x0, x2
-          mov64  x1, SpaceMask
-    ; rax = safe
-            bic  x0, x1, x0
+          mov64  x2, SpaceMask
+            mov  x0, Pieces_Us
+            mov  x1, AttackedBy_ThemPawn
+            and  x0, x0, Pieces_Pawn
+            bic  x0, x2, x0
+            bic  x0, x0, x1
+            mov  x2, Pieces_Us
+            and  x2, x2, Pieces_Pawn
+            mov  x1, x2
 
   if Us = White
             lsr  x1, x2, 8
