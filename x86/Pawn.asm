@@ -191,12 +191,13 @@ Continue:
             xor   r10, rdx
             jnz   NoPassed
         _popcnt   r11, r11, r10
-            dec   r11
         _popcnt   rdx, rdx, r10
+            add   rax, 1
             sub   rax, r11
             sub   r9, rdx
              or   rax, r9
-             js   NoPassed
+             js   NoPassed ; branch if the upper-most bit of rax is set
+                           ;   (i.e. did we produce a negative number from either "sub"?)
             mov   eax, 1
             shl   rax, cl
              or   qword[rdi+PawnEntry.passedPawns+8*Us], rax
