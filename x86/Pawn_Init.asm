@@ -33,7 +33,7 @@ Pawn_Init:
                idiv   ebp
                 add   eax, esi
                 mov   dword[Connected+rbx+rdi*4], eax
-                inc   rdi
+                add   rdi, 1
                 cmp   rdi, 7
                 jne   .rankLoop
                 add   r9d, 17

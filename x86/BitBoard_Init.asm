@@ -199,7 +199,7 @@ Init_SquareDistance_DistanceRingBB:
 		mov  byte[SquareDistance_Cap5 + rcx + r14], dl
 
 		sub   eax, 1
-		 js   @1f
+		js   @1f
 		lea   rax, [8*r15+rax]
 		mov   rdx, qword[DistanceRingBB+8*rax]
 		bts   rdx, r14

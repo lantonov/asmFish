@@ -48,7 +48,7 @@ macro EvalPawns Us
             add  x25, x20, Pos.pieceList + 16*(8*Us + Pawn)
             orr  x0, x0, x2
             str  x0, [x27, PawnEntry.pawnAttacks + 8*Us]
-          mov64  x0, LightSquares            
+          mov64  x0, LightSquares
             and  x0, x0, x23
         _popcnt  x0, x0, x1
           mov64  x2, DarkSquares
@@ -155,7 +155,7 @@ Continue:
         _popcnt  x9, x3, x4
             sub  w11, wzr, w11, lsl 1
             tst  x3, x3
-           cinc  w11, w11, ne 
+           cinc  w11, w11, ne
             add  w11, w11, w11, lsl 1
             add  w11, w11, w0
             add  w11, w22, w11, lsl 3
@@ -190,8 +190,12 @@ Continue:
            cbnz  x10, NoPassed
         _popcnt  x11, x11, x10
         _popcnt  x2, x2, x10
+
+; Note: x86 branches relative to sign flag (SF)
+;       ARM branches relative to carry flag (CF)
+            add  w0, w0, 1
             cmp  w0, w11
-           ccmp  w9, w2, 0, cs
+            ccmp  w9, w2, 0, cs
             bcc  NoPassed
             mov  x0, 1
             lsl  x0, x0, x1
