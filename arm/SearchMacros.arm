@@ -1500,12 +1500,19 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
   if PvNode = 1
             ldr  w4, [sp, .beta]
             cmp  w27, w4
-            bge  .MovePickDone
+            bge  .18fail_high
             str  w27, [sp, .alpha]
               b  .18NoNewBestValue
   end if
 .18fail_high:
-              b  .MovePickDone
+            ldr  w0, [x21, State.statScore]
+            cmp  w0, 0
+            csel w0, w0, wzr, ge
+            str  w0, [x21, State.statScore]
+            b  .MovePickDone
+        @1:
+            str x0, [x21, + State.statScore]
+            b  .MovePickDone
 .18NoNewAlpha:
 .18NoNewBestValue:
             ldr  w1, [sp, .move]
