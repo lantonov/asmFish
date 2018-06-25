@@ -23,8 +23,8 @@ Evaluate_Init:
             mov  x2, 4*28
              bl  MemoryCopy
 
-           _lea  x0, ShelterWeakness
-            adr  x1, Evaluate_Init.ShelterWeakness
+           _lea  x0, ShelterStrength
+            adr  x1, Evaluate_Init.ShelterStrength
             mov  x2, 4*2*8*8
              bl  MemoryCopy
            _lea  x0, StormDanger
@@ -187,29 +187,18 @@ Evaluate_Init.Doubled:
  dd (2 shl 16) + (5)
 
 
-; ShelterWeakness and StormDanger are twice as big
+; ShelterStrength and StormDanger are twice as big
 ; to avoid an anoying min(f,FILE_H-f) in ShelterStorm
-Evaluate_Init.ShelterWeakness:
-Evaluate_Init.ShelterWeakness_No:
- dd  98, 20, 11, 42,  83,  84, 101, 0
- dd 103,  8, 33, 86,  87, 105, 113, 0
- dd 100,  2, 65, 95,  59,  89, 115, 0
- dd  72,  6, 52, 74,  83,  84, 112, 0
- dd  72,  6, 52, 74,  83,  84, 112, 0
- dd 100,  2, 65, 95,  59,  89, 115, 0
- dd 103,  8, 33, 86,  87, 105, 113, 0
- dd  98, 20, 11, 42,  83,  84, 101, 0
-
-Evaluate_Init.ShelterWeakness_Yes:
- dd 105, 19,  3, 27,  85,  93,  84, 0
- dd 121,  7, 33, 95, 112,  86,  72, 0
- dd 121, 26, 65, 90,  65,  76, 117, 0
- dd  79,  0, 45, 65,  94,  92, 105, 0
- dd  79,  0, 45, 65,  94,  92, 105, 0
- dd 121, 26, 65, 90,  65,  76, 117, 0
- dd 121,  7, 33, 95, 112,  86,  72, 0
- dd 105, 19,  3, 27,  85,  93,  84, 0
-
+Evaluate_Init.ShelterStrength:
+Evaluate_Init.ShelterStrengthArray:
+dd  -9, 64, 77,  44,  4,  -1, -11, 0
+dd -15, 83, 51, -10,  1, -10, -28, 0
+dd -18, 84, 27, -12, 21,  -7, -36, 0
+dd  12, 79, 25,  19,  9,  -6, -33, 0
+dd  12, 79, 25,  19,  9,  -6, -33, 0
+dd -18, 84, 27, -12, 21,  -7, -36, 0
+dd -15, 83, 51, -10,  1, -10, -28, 0
+dd  -9, 64, 77,  44,  4,  -1, -11, 0
 
 Evaluate_Init.StormDanger:
  dd 4, 73, 132, 46, 31 ,  0,0,0
