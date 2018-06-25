@@ -201,41 +201,25 @@ end if
             str  w0, [sp, .beta]
             str  w2, [sp, .delta]
 
-            mov  w1, 70
-            ldr  w0, [sp, .bestValue]
-            cmp  w0, 500
-            mov  w8, w1
-            bgt  @f
-            mov  w1, -70
-            cmp  w0, -500
-            mov  w8, w1
-            blt  @f
+  ; Adjust contempt based on current situation
+  ; Formula: contempt += 88 * bestValue / (abs(bestValue)+200)
+            ldr  w11, [sp, .bestValue]
+            mov  w0, w11
+            mov  w1, 88
+            mul  w11, w11, w1
             mov  w9, w0
-            mov  w1, 10
-            sdiv w0, w0, w1
-            mov  w8, w0
             tst  w9, w9
             cset w0, gt
             mov  w2, w9
-            lsr  w2, w2, 31
+            lsr  w2, w2, 31 ; isolate upper bit
             sub  w0, w0, w2
-            mov  w10, w0
             mov  w0, w9
             asr  w0, w0, 31
             mov  w1, w9
             eor  w1, w1, w0
             sub  w1, w1, w0
-            add  w1, w1, 1
-            mov  w11, w1
-            eor  v0.16b, v0.16b, v0.16b
-            scvtf  d0, w11
-            bl   Math_log_d_d
-            _lea  x1, constd._3p22
-             ldr  d1, [x1]
-            fmul  d0, d0, d1
-            fcvtas  w11, d0
-            mul  w11, w11, w10
-            add  w8, w8, w11
+            add  w1, w1, 200
+            sdiv w8, w11, w1
         @@:
             _lea  x6, options
             ldr  w0, [x6, Options.contempt]
@@ -290,7 +274,7 @@ end if
             cmp  w22, w4
             ble  @1f
             ldr  w4, [sp, .beta]
-            cmp  w22, w4        
+            cmp  w22, w4
             blt  .dont_print_pv
     @1:
              bl  Os_GetTime
@@ -492,7 +476,7 @@ end if
            fdiv  d4, d4, d0
            fmul  d2, d2, d4
             str  d0, [sp, .timeReduction]
-            
+
             ldr  x8, [x20, Pos.rootMovesVec + RootMovesVec.table]
            fmul  d2, d2, d3
           ucvtf  d0, w11
@@ -871,7 +855,7 @@ DisplayMove_Uci.have_ponder_from_tt:
            strb  w0, [x27], 1
             ldr  w1, [x1, 0*sizeof.RootMove + RootMove.pv + 4*1]
              bl  PrintUciMove
-    
+
 DisplayMove_Uci.skip_ponder:
             PrintNewLine
              bl  WriteLine_Output
@@ -1128,7 +1112,7 @@ if VERBOSE < 2
            strb  w0, [x27], 1
             ldr  x0, [sp, DisplayInfo_Uci.nps]
              bl  PrintUInt
-end if      
+end if
 
 
 if USE_SYZYGY
@@ -1301,4 +1285,3 @@ DisplayInfo_Uci.return:
 DisplayMove_None:
 DisplayInfo_None:
             ret
-
