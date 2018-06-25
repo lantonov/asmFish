@@ -837,8 +837,6 @@ macro ShelterStorm Us
 	Pieces_Them = x28
  end if
 
-	MaxSafetyBonus = 258
-
             stp  x26, x27, [sp, -16]!
             stp  x11, x22, [sp, -16]!
             stp  x23, x30, [sp, -16]!
@@ -855,17 +853,23 @@ macro ShelterStorm Us
     ; r8 = b
             and  x9, Pieces_Us, x8
     ; r9 = ourPawns
+    ; w1 = file of ksq
+            and  w1, w1, 7
             and  x10, Pieces_Them, x8
     ; r10 = theirPawns
+    _lea  x6, FileBB
+
+     ldr  x2, [x6, x1, lsl 3]
+     and  x2, x2, x9
+     mov  w0, -5
+     cmp  x2, 0
+     csneg w0, w0, w0, eq
     ; w0 = saftey
-            mov  w0, MaxSafetyBonus
   if Us = Black
             eor  w23, w23, 7
   end if
     ; w23 = relative_rank(Us, ksq)+1
             add  w23, w23, 1
-    ; w1 = file of ksq
-            and  w1, w1, 7
             mov  w4, 13
             mov  w5, 2
            madd  w22, w1, w4, w5
@@ -917,7 +921,7 @@ macro ShelterStorm Us
     ; w26 = rkUs
 
             lsl  w2, w22, 5
-    ; ShelterWeakness and StormDanger are twice as big
+    ; ShelterStrength and StormDanger are twice as big
     ; to avoid an anoying min(f,FILE_H-f) in ShelterStorm
 
 
@@ -925,13 +929,13 @@ macro ShelterStorm Us
     ; esi = rkUs+1
 
            _lea  x11, StormDanger_BlockedByKing
-           _lea  x8, ShelterWeakness_No - 4*1
+           _lea  x8, ShelterStrengthArray - 4*1
             add  x8, x8, x2
             add  x11, x11, x2
             cmp  w1, w22
             add  w22, w22, 1
             bne  @1f
-           _lea  x8, ShelterWeakness_Yes - 4*1
+           _lea  x8, ShelterStrengthArray - 4*1
             add  x8, x8, x2
             cmp  w27, w23
             beq  @2f
@@ -948,7 +952,7 @@ macro ShelterStorm Us
             add  x11, x11, x2
     @2:
             ldr  w4, [x8, x26, lsl 2]
-            sub  w0, w0, w4
+            add  w0, w0, w4
             ldr  w4, [x11, x27, lsl 2]
             sub  w0, w0, w4
 

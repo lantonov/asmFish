@@ -109,9 +109,9 @@ MobilityBonus_Knight rd 16
 MobilityBonus_Bishop rd 16
 MobilityBonus_Rook   rd 16
 MobilityBonus_Queen  rd 32
-ShelterWeakness:
-ShelterWeakness_No         rd 8*8
-ShelterWeakness_Yes        rd 8*8
+ShelterStrength:
+ShelterStrengthArray rd 8*8
+rd 8*8
 StormDanger:
 StormDanger_NoFriendlyPawn rd 8*8
 StormDanger_Unblocked	   rd 8*8

@@ -747,8 +747,6 @@ macro ShelterStorm Us
 	PiecesThem	equ r14
   end if
 
-	MaxSafetyBonus = 258
-
 		push   rsi rdi r11 r12 r13
 
 
@@ -765,18 +763,23 @@ macro ShelterStorm Us
 		mov   r9, PiecesUs
 		and   r9, r8
 	; r9 = ourPawns
+  and   ecx, 7
+; ecx = file of ksq
 		mov   r10, PiecesThem
 		and   r10, r8
 	; r10 = theirPawns
-		mov   eax, MaxSafetyBonus
+    mov  rax, qword[FileBB+8*rcx]
+		and  rax, r9
+		cmp  rax, 1
+		sbb  eax, eax
+		and  eax, -10
+		add  eax, 5
 	; eax = saftey
 	if Us eq Black
 		xor   r13d, 7
 	end if
 		add   r13d, 1
 	; r13d = relative_rank(Us, ksq)+1
-		and   ecx, 7
-	; ecx = file of ksq
 		lea   r12d, [5*rcx]
 		lea   r12d, [r12+8*rcx+2]
 		shr   r12d, 4
@@ -829,31 +832,31 @@ macro ShelterStorm Us
 
 		mov   edx, r12d
 		shl   edx, 3+2
-	; ShelterWeakness and StormDanger are twice as big
-	; to avoid an anoying min(f,FILE_H-f) in ShelterStorm
+	; ShelterStrength and StormDanger are twice as big
+	; to avoid an annoying min(f,FILE_H-f) in ShelterStorm
 
 
 		add   esi, 1
 	; esi = rkUs+1
 
 		lea   r11, [StormDanger_BlockedByKing+rdx]
-		lea   r8, [ShelterWeakness_No -	4*1 + rdx]
+		lea   r8, [ShelterStrengthArray - 4*1 + rdx]
 		cmp   ecx, r12d
 		lea   r12d, [r12+1]
-		jne   TryNext
-		lea   r8, [ShelterWeakness_Yes - 4*1 + rdx]
+		jne   @f
+		lea   r8, [ShelterStrengthArray - 4*1 + rdx]
 		cmp   edi, r13d
-		je   AddStormDanger
-	TryNext:
+		je   @1f
+	@@:
 		lea   r11, [StormDanger_NoFriendlyPawn + rdx]
 		cmp   esi, 1
-		je   AddStormDanger
+		je   @1f
 		lea   r11, [StormDanger_BlockedByPawn +	rdx]
 		cmp   esi, edi
-		je   AddStormDanger
+		je   @1f
 		lea   r11, [StormDanger_Unblocked + rdx]
-	AddStormDanger:
-		sub   eax, dword[r8 + 4*rsi]
+	@1:
+		add   eax, dword[r8 + 4*rsi]
 		sub   eax, dword[r11 + 4*rdi]
   end macro
 
