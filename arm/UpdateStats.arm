@@ -114,7 +114,9 @@ macro UpdateCaptureStats move, captures, usecaptures, capturesCnt, bonusW, absbo
 	; clobbers rax, rcx, rdx, r8, r9
 	; it also might clobber rsi and change the sign of bonus32
 
-            add  bonusW, absbonus, absbonus
+            mov  w0, 32
+            mul  bonusW, absbonus, w0
+
             ldr  x9, [x20, Pos.captureHistory]
             cmp  absbonus, 324
             bhs  BonusTooBig
