@@ -702,7 +702,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   ecx, dword[.ttMove]
 		test   ecx, ecx
 		jnz   .10skip
-		cmp   r8d, 6*ONE_PLY
+		cmp   r8d, 8*ONE_PLY
 		 jl   .10skip
 		lea   r8d, [3*r8]
 		sar   r8d, 2
@@ -714,10 +714,6 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   byte[rbx+State.skipEarlyPruning],	-1
 		call   Search_Pv
   else
-		mov   eax, dword[rbx+State.staticEval]
-		add   eax, 128
-		cmp   eax, dword[.beta]
-		 jl   .10skip
 		mov   ecx, dword[.alpha]
 		mov   edx, dword[.beta]
 		movzx   r9d, byte[.cutNode]
