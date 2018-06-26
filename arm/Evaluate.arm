@@ -266,16 +266,8 @@ NoPinned:
             str  w4, [sp, EvalInfo.kingAdjacentZoneAttacksCount + 4*Us]
 NoKingRing:
 
-   if Pt = Knight | Pt = Bishop
              ldr  x0, [sp, EvalInfo.mobilityArea + 8*Us]
              and  x0, x0, x9
-             ldr  x1, [x20, Pos.typeBB + 8*Queen]
-             and  x1, x1, Pieces_Us
-             bic  x0, x0, x1
-   else
-             ldr  x0, [sp, EvalInfo.mobilityArea + 8*Us]
-             and  x0, x0, x9
-   end if
 
          Popcnt  x10, x0, x1
            _lea  x6, MobilityBonus
@@ -1718,9 +1710,20 @@ Evaluate.DoPawnEvalReturn:
             and  x2, x2, x9
             orr  x0, x0, x17
             orr  x2, x2, x16
+            
             ldr  x5, [x20, Pos.typeBB + 8*King]
+            ldr  x9, [x20, Pos.typeBB + 8*Queen]
+            
             and  x4, x5, x28
             and  x5, x5, x29
+            
+            and  x8, x9, x28
+            and  x9, x9, x29
+            
+            orr  x4, x4, x8
+            orr  x5, x5, x9
+            
+
             orr  x0, x0, x4
             orr  x2, x2, x5
             mvn  x0, x0
