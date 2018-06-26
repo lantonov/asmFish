@@ -1,8 +1,0 @@
-title: Asmfish
-description: The latest version of asmFish by Mohammed Li (04.11.2016)
-google_analytics: 
-show_downloads: true
-theme: jekyll-theme-cayman
-
-gems:
-  - jekyll-mentions
