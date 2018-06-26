@@ -43,7 +43,7 @@ macro EvalInit Us
 	East	= DELTA_E
    end if
 
-  
+
 ;		Assert   e, rdi, qword[.ei.pi], 'assertion rdi = ei.pi failed in EvalInit'
 		movzx  ecx, word[rbx+State.npMaterial+2*Us]
 		movzx  eax, byte[rbp+Pos.pieceList+16*(8*Them+King)]
@@ -55,7 +55,7 @@ macro EvalInit Us
 		or     qword[.ei.attackedBy+8*(8*Us+0)],	r10
 		xor    r8, r8
 		xor    edx, edx
-		
+
 		cmp   ecx, RookValueMg + KnightValueMg
 		jb    @1f
 
@@ -96,7 +96,7 @@ macro EvalInit Us
 
 	@@:
 		and   r9, r10
-		_popcnt   rdx, r9, rcx  
+		_popcnt   rdx, r9, rcx
 		xor   eax, eax
 		mov   dword[.ei.kingAttackersWeight+4*Us], eax
 		mov   dword[.ei.kingAdjacentZoneAttacksCount+4*Us], eax
@@ -249,22 +249,15 @@ NoPinned:
 		add   dword[.ei.kingAdjacentZoneAttacksCount+4*Us], eax
 NoKingRing:
 
-    if Pt	= Knight | Pt =	Bishop
 		mov   rax, qword[.ei.mobilityArea+8*Us]
 		and   rax, r9
-		mov   rcx, qword[rbp+Pos.typeBB+8*Queen]
-		and   rcx, r11
-		_andn rax, rcx, rax
-	else 
-		mov   rax, qword[.ei.mobilityArea+8*Us]
-		and   rax, r9
-	end if
+
 		_popcnt   r10, rax, rcx
 		mov   eax, dword[MobilityBonus + 4*r10]
 		addsub   dword[.ei.mobilityDiff], eax
 		addsub   esi, eax
 		; r10 = mob
-		
+
 		lea   eax, [8*r8]
 		movzx   eax, byte[SquareDistance+8*rax+r14]
 		imul   eax, KingProtector_Pt
@@ -494,7 +487,7 @@ macro EvalKing Us
 		Assert   e, PiecesThem, qword[rbp+Pos.typeBB+8*Them], 'assertion PiecesThem failed in EvalKing'
 
 		movzx ecx, byte[rbp+Pos.pieceList+16*(8*Us+King)]
-		mov   r11d, ecx 
+		mov   r11d, ecx
 		; r11d = our king square
 		movzx eax, byte[rbx+State.castlingRights]
 		movzx edx, byte[rdi+PawnEntry.castlingRights]
@@ -596,7 +589,7 @@ KingSafetyDoneRet:
 		lea    eax, [rdi+BishopCheck]
 		cmovnz edi, eax
 		jnz    BishopDone
-		or     r9, rdx 
+		or     r9, rdx
   BishopDone:
 
 	; Enemy knights safe and other checks
@@ -604,12 +597,12 @@ KingSafetyDoneRet:
 		lea    eax, [rdi+KnightCheck]
 		cmovnz edi, eax
 		jnz    KnightDone
-		or     r9, rcx 
+		or     r9, rcx
   KnightDone:
 
 		mov   r10, qword[.ei.mobilityArea+8*Them]
 		and   r9, r10
-		
+
 		mov   rdx, qword[.ei.pinnedPieces+8*Us]
 		or    rdx, r9
 
@@ -971,7 +964,7 @@ SafeThreatsDone:
 	; r8 = defended (= pos.pieces(Them) & ~pos.pieces(PAWN) & stronglyProtected)
 		_andn   r9, r9, PiecesThem
 		and   r9, AttackedByUs
-	; r9 = weak 
+	; r9 = weak
 		or   r8, r9
 	; r8 = defended | weak
 		jz   WeakDone
@@ -1106,7 +1099,7 @@ WeakDone:
 		_popcnt  rax, rax, rdx
 		imul   eax, KnightOnQueen
 		addsub  esi, eax
-		
+
 		mov  rcx, PiecesThem
 		or   rcx, PiecesUs
 		BishopAttacks  rax, r8, rcx, rdx
@@ -1143,7 +1136,7 @@ WeakDone:
 		_popcnt  r8, r8, rdx
 		imul   r8d, Overload
 		addsub  esi, r8d
-		
+
 end macro
 
 
@@ -1311,7 +1304,7 @@ AddToBonus:
                imul  eax, 0x00010001
                 add  esi, eax
 
-Continue:		
+Continue:
 	; r8d = blockSq
 
 	; scale down bonus for candidate passers which need more than one pawn
@@ -1632,16 +1625,31 @@ end virtual
 		or   rdx, rsi
 		and   rax, r8
 		and   rdx, r9
-              movzx   ecx, byte[rbp+Pos.pieceList+16*(8*White+King)]
-		movzx   esi, byte[rbp+Pos.pieceList+16*(8*Black+King)]
+
+		mov  rcx, qword[rbp+Pos.typeBB+8*King]
+		and  rcx, qword[rbp+Pos.typeBB+8*White]
+		mov  r8, qword[rbp+Pos.typeBB+8*Queen]
+		and  r8, qword[rbp+Pos.typeBB+8*White]
+		or   rcx, r8
+
+		mov  rsi, qword[rbp+Pos.typeBB+8*King]
+		and  rsi, qword[rbp+Pos.typeBB+8*Black]
+		mov  r9, qword[rbp+Pos.typeBB+8*Queen]
+		and  r9, qword[rbp+Pos.typeBB+8*Black]
+		or   rsi, r9
+
 		or   rax, qword[.ei.attackedBy+8*(8*Black+Pawn)]
 		or   rdx, qword[.ei.attackedBy+8*(8*White+Pawn)]
-		bts   rax, rcx
-		bts   rdx, rsi
+		
+		or   rax, rcx
+		or   rdx, rsi
+
 		not   rax
 		not   rdx
+		
 		mov   qword[.ei.mobilityArea+8*White], rax
 		mov   qword[.ei.mobilityArea+8*Black], rdx
+
 
 
 	; EvalPieces adds to esi
@@ -1716,16 +1724,16 @@ end virtual
 		movzx   edx, byte[rdi+PawnEntry.asymmetry]
 		lea   edx, [rdx+rax-17]
 		lea   r8d, [r8+4*rax]
-		lea   r8d, [r8+8*rdx] 
-		
+		lea   r8d, [r8+8*rdx]
+
 		movzx   r9d, word[rbx+State.npMaterial+2*0]
 		movzx   ecx, word[rbx+State.npMaterial+2*1]
 		lea     r9d, [r9+rcx]
 		cmp     r9d, 1
 		sbb     r9d, r9d ; If the CF is 0, then r9d = 0.
-		and     r9d, 48		
+		and     r9d, 48
 		lea     r8d, [r8+r9]
-		
+
 		movsx r9d, si
 		sar   r9d, 31
 		movsx   edi, si
