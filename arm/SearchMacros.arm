@@ -693,7 +693,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             ldr  w8, [sp, .depth]
             ldr  w1, [sp, .ttMove]
            cbnz  w1, .10skip
-            cmp  w8, 6*ONE_PLY
+            cmp  w8, 8*ONE_PLY
             blt  .10skip
             add  w8, w8, w8, lsl 1
             asr  w8, w8, 2
@@ -706,11 +706,6 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
            strb  w4, [x21, State.skipEarlyPruning]
              bl  Search_Pv
   else
-            ldr  w0, [x21, State.staticEval]
-            add  w0, w0, 128
-            ldr  w4, [sp, .beta]
-            cmp  w0, w4
-            blt  .10skip
             ldr  w1, [sp, .alpha]
             ldr  w2, [sp, .beta]
            ldrb  w9, [sp, .cutNode]
