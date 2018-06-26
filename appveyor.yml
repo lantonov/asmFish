@@ -1,0 +1,6 @@
+version: 1.0.{build}
+build_script:
+- cmd:  "set include=x86\\include\\\n  fasmg.exe \"x86\\fish.asm\" \"asmFishW_popcnt.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'popcnt'\" \n fasmg.exe \"x86\\fish.asm\" \"asmFishW_bmi2.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'bmi2'\"\n fasmg.exe \"x86\\fish.asm\" \"asmFishW_base.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'base'\" " 
+test_script:
+- cmd: "asmFishW_bmi2.exe bench \n asmFishW_popcnt.exe bench \n asmFishW_base.exe bench"
+
