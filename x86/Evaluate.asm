@@ -1578,7 +1578,6 @@ end virtual
 		imul   eax, 0x00010001
 		add   dword[.ei.score],	eax
 		test   ecx, ecx
-	;ProfileCond   nz, HaveSpecializedEval
 		jnz   HaveSpecializedEval
 
 		mov   eax, dword[rdi+PawnEntry.score]
@@ -1761,7 +1760,7 @@ end virtual
 		xor   eax, edx
 		sub   eax, edx
 		lea   eax, [r8+8*rax]
-        ; eax = initiative
+	; eax = initiative
 
 		cmp   eax, edi
 		cmovl   eax, edi
@@ -1772,20 +1771,37 @@ end virtual
 
 	; esi = score
 	; r14 = ei.pi
-	; Evaluate scale factor for the winning side
 
-		movsx   r12d, si
-		lea   r13d, [r12-1]
-		shr   r13d, 31
+	; scale_factor() computes the scale factor for the winning side
 
-		movzx   ecx, byte[r15+MaterialEntry.scalingFunction+r13]
-		movzx   eax, byte[r15+MaterialEntry.factor+r13]
-		movzx   edx, byte[r15+MaterialEntry.gamePhase]
+		movsx   r12d, si ; r12 = temp (score)
+		lea   r13d, [r12-1] ; r13d = [score-1]
+		shr   r13d, 31 ; isolates top bit,
+
+	; r13d = 1 or 0 where 1 = black's winning and 0 = white's winning
+
+		movzx ecx, byte[r15+MaterialEntry.scalingFunction+r13]
+		movzx eax, byte[r15+MaterialEntry.factor+r13]
+		movzx edx, byte[r15+MaterialEntry.gamePhase]
 		add   esi, 0x08000
 		sar   esi, 16
-		test   ecx, ecx
-		jnz   Evaluate_Cold2.HaveScaleFunction		; 1.98%
-.HaveScaleFunctionReturn:
+		test  ecx, ecx
+		jz @f
+
+; Scale Function Exists
+		mov   eax, ecx
+		shr   eax, 1
+		mov   eax, dword[EndgameScale_FxnTable+4*rax]
+		and   ecx, 1
+		call  rax
+
+; Check for Scale Factor
+		cmp   eax, SCALE_FACTOR_NONE
+		movzx  edx, byte[r15+MaterialEntry.gamePhase]
+		movzx  ecx, byte[r15+MaterialEntry.factor+r13]
+		cmove  eax, ecx
+
+@@:
 		lea   ecx, [rax-48]
 		mov   r10, qword[rbp+Pos.typeBB+8*Bishop]
 		mov   r8, qword[rbp+Pos.typeBB+8*White]
@@ -1793,7 +1809,7 @@ end virtual
 		mov   edi, dword[rbx+State.npMaterial]
 		and   r8, r10
 		and   r9, r10
-		test   ecx, not 16
+		test   ecx, -17 ; not 16
 		jnz   .ScaleFactorDone
 		_blsr   r8, r8, rcx
 		_blsr   r9, r9, rcx
@@ -1815,23 +1831,15 @@ end virtual
 		cmp   edi, (BishopValueMg shl 16) + BishopValueMg
 		cmove   eax, ecx
 		jmp   .ScaleFactorDone
+
 .NotOppBishop:
-		lea   r9d, [r12+BishopValueEg]
 		and   r11, qword[rbp+Pos.typeBB+8*r13]
-		xor   r13d, 1
-		cmp   r9d, 2*BishopValueEg+1
-		jae   .ScaleFactorDone
-		shl   r13, 4+3
-		movzx   r9d, byte[rbp+Pos.pieceList+16*(King)+r13]
-		lea   r8, [PassedPawnMask+4*r13]
-		test   r11, qword[r8+8*r9]
-		jz   .ScaleFactorDone
-		_popcnt   rcx, r11, r9
-		cmp   ecx, 3
-		jae   .ScaleFactorDone
-		imul   ecx, 7
-		add   ecx, 37
-		mov   eax, ecx
+		_popcnt   rcx, r11, r9 ;  pos.count<PAWN>(strongSide)
+		imul  ecx, 7
+		add   ecx, 40
+		cmp   eax, ecx
+		cmovg eax, ecx
+
 .ScaleFactorDone:
 	; eax = scale factor
 	; edx = phase
@@ -1868,26 +1876,11 @@ Display 2, "Eval returned %i0%n"
 		ret
 
 
-
-
 Evaluate_Cold2:
 
 virtual at rsp
  .ei EvalInfo
 end virtual
-
-.HaveScaleFunction:
-		mov   eax, ecx
-		shr   eax, 1
-		mov   eax, dword[EndgameScale_FxnTable+4*rax]
-		and   ecx, 1
-		call   rax
-Display 2, "Scale returned %i0%n"
-		cmp   eax, SCALE_FACTOR_NONE
-		movzx   edx, byte[r15+MaterialEntry.gamePhase]
-		movzx   ecx, byte[r15+MaterialEntry.factor+r13]
-		cmove   eax, ecx
-		jmp   Evaluate.HaveScaleFunctionReturn
 
 		calign   16
 .EvalPassedPawns0:
@@ -1899,8 +1892,6 @@ Display 2, "Scale returned %i0%n"
 .EvalPassedPawns1:
     EvalPassedPawns   Black
 		jmp   Evaluate.EvalPassedPawnsRet
-
-
 
 HaveSpecializedEval:
 		mov   eax, ecx
@@ -2149,28 +2140,8 @@ end iterate
 		cmp   r15d, RookValueMg
 		cmovl   eax, ecx
 		mov   byte[rsi+MaterialEntry.factor+1*Black], al
+
 .P2:
-		mov   eax, dword[rsp+4*(8*White+Pawn)]
-		cmp   eax, 1
-		jne   .P3
-		mov   ecx, r14d
-		sub   ecx, r15d
-		cmp   ecx, BishopValueMg
-		jg   .P3
-		mov   byte[rsi+MaterialEntry.factor+1*White], SCALE_FACTOR_ONEPAWN
-.P3:
-		mov   eax, dword[rsp+4*(8*Black+Pawn)]
-		cmp   eax, 1
-		jne   .P4
-		mov   ecx, r15d
-		sub   ecx, r14d
-		cmp   ecx, BishopValueMg
-		jg   .P4
-		mov   byte[rsi+MaterialEntry.factor+1*Black], SCALE_FACTOR_ONEPAWN
-.P4:
-
-
-
 		lea   r8, [rsp+4*0]	;  pieceCount[Us]
 		lea   r9, [rsp+4*8]	;  pieceCount[Them]
 		xor   eax, eax
