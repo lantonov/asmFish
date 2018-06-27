@@ -1,0 +1,500 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2017 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<title>pgn4web help</title>
+
+<style type="text/css">
+
+html {
+  height: 100%;
+  width: 100%;
+  margin: 0px;
+  padding: 0px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+body {
+  position: absolute;
+  min-height: 100%;
+  min-width: 100%;
+  font-size: 16px;
+  font-family: sans-serif;
+  color: black;
+  background: white;
+  margin: 0;
+  padding: 0;
+  text-align: justify;
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: none;
+  -ms-text-size-adjust: 100%;
+  -o-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+.everythingButFooter {
+  padding: 32px;
+  padding-bottom: 80px; /* 80 = 2 * 32 everythingButFooter.padding + 16 footer.lineHeight */
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+a.heading, a.headingSelected {
+  margin: 30px;
+  line-height: 30px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+a.heading {
+  color: #C0C0C0;
+}
+
+a.headingSelected {
+  color: black;
+}
+
+a.headingSelected:hover {
+  text-decoration: none;
+}
+
+.section {
+  display: none;
+}
+
+.informantCell {
+  font-size: 19px;
+  padding-left: 80px;
+  padding-right: 50px;
+  padding-top: 10px;
+  padding-bottom: 2px;
+}
+
+.footer {
+  position: absolute;
+  bottom: 32px;
+  width: 100%;
+  font-size: 13px;
+  line-height: 16px;
+  color: #C0C0C0;
+  text-align: right;
+  clear: both;
+}
+
+.footerLeft {
+  float: left;
+  padding-left: 32px;
+  padding-right: 32px;
+}
+
+.footerRight {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding-right: 32px;
+}
+
+
+</style>
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+</head>
+
+<body>
+
+<script type="text/javascript">
+"use strict";
+
+var sections = ["user_interface", "shortcut_keys", "shortcut_squares", "touch_gestures", "search_tool", "informant_symbols", "credits_and_license"];
+
+function showSection(section) {
+  var section2show = sections[0], theObj;
+  for (var s in sections) {
+    if (theObj = document.getElementById(sections[s] + "_section")) { theObj.style.display = ""; }
+    if (theObj = document.getElementById(sections[s] + "_heading")) { theObj.className = "heading"; }
+    if (sections[s] === section) { section2show = section; }
+  }
+  if (theObj = document.getElementById(section2show + "_section")) { theObj.style.display = "inline"; }
+  if (theObj = document.getElementById(section2show + "_heading")) { theObj.className = "headingSelected"; }
+  document.title = "pgn4web help: " + section2show.replace(/_/g, " ");
+}
+
+function print_help_row (one, two) {
+  document.write("<tr><td style='text-align:left; vertical-align:top; padding-left:40px; white-space:nowrap;'>" + one + "</td><td style='text-align:left; vertical-align:top; padding-left:20px'>" + two + "</td></tr>");
+}
+
+function updateFooter() {
+  var theObj;
+  if (opener && (typeof(opener.pgn4web_version) != "undefined")) {
+    if (theObj = document.getElementById("footerVersion")) { theObj.innerHTML = opener.pgn4web_version; }
+    if (theObj = document.getElementById("footerRight")) { theObj.innerHTML = opener.location.href; }
+  }
+}
+
+var isRotated = false;
+if (opener && (typeof(opener.IsRotated) != "undefined")) {
+  isRotated = opener.IsRotated;
+}
+
+var colorAtTheBottom = isRotated ? "Black" : "White";
+var rowNumbers = isRotated ? "87654321" : "12345678";
+var colLetters = isRotated ? "HGFEDCBA" : "ABCDEFGH";
+
+var touchGesturesSupported = !!('ontouchstart' in window);
+if (opener && (typeof(opener.touchEventEnabled) != "undefined")) {
+  touchGesturesSupported = touchGesturesSupported && opener.touchEventEnabled;
+}
+
+var touchGestures_helpIntro, touchGestures_helpActions, touchGestures_helpText;
+if (touchGesturesSupported) {
+  touchGestures_helpIntro = "The user can interact with the chessboard using touch gestures:";
+  if (opener && (typeof(opener.touchGestures_helpActions) != "undefined")) {
+    touchGestures_helpActions = opener.touchGestures_helpActions;
+  } else {
+    touchGestures_helpActions = [ "touch gestures info not available from the opener window" ];
+  }
+  if (opener && (typeof(opener.touchGestures_helpText) != "undefined")) {
+    touchGestures_helpText = opener.touchGestures_helpText;
+  } else {
+    touchGestures_helpText = [ "" ];
+  }
+} else {
+  touchGestures_helpIntro = "Touch gestures not available.<p></p>When enabled on supported touchscreen devices, touch gestures can be used to interact with the chessboard using swipe gestures.";
+  touchGestures_helpActions = [];
+  touchGestures_helpText = [];
+}
+
+</script>
+
+<div id="everythingButFooter" class="everythingButFooter">
+
+<h1 style="margin-top:0px; padding-top:0px; text-align:right;">
+<span style="float:left; color:black;">
+pgn4web help
+</span>
+<span style="width:49px; height:29px; background:url(pawns.png) -47px -15px; vertical-align:baseline; display:inline-block;"></span>
+</h1>
+
+<div style="text-align:center; margin-top:40px; margin-bottom:50px;">
+
+<script type="text/javascript">
+"use strict";
+
+for (var s in sections) {
+  document.write("<a id='" + sections[s] + "_heading' class='heading' href='javascript:void(0);' onclick='showSection(\"" + sections[s] + "\"); this.blur();'>" + sections[s].replace(/_/g, "&nbsp;") + "</a> ");
+}
+
+</script>
+
+</div>
+
+<div id="user_interface_section" class="section">
+
+pgn4web is a chess games viewer for websites, blogs and live broadcasts.
+<p></p>
+The user can interact with the chessboard <a href="javascript:void(0);" onclick="showSection('shortcut_keys');">using the keyboard</a>, <a href="javascript:void(0);" onclick="showSection('shortcut_squares');">clicking chessboard squares</a> (hovering the mouse on each square displays an help summary) or <a href="javascript:void(0);" onclick="showSection('touch_gestures');">using touch gestures</a>.
+<p></p>
+A <a href="javascript:void(0);" onclick="showSection('search_tool')">search tool</a> allows searching within the PGN games.
+<p></p>
+Errors alert messages are logged, such as failures to load PGN games, incorrect PGN games or incorrect FEN strings. When an error is encountered, a chessboard square will flash to signal the exception. The error alert log can be reviewed clicking on the flashing chessboard square.
+<p></p>
+See <a href="http://pgn4web-project.casaschi.net/wiki/" target="_blank">the pgn4web wiki</a> for more information. Please note, the wiki information always refers to <a href="http://pgn4web.casaschi.net" target="_blank">the latest version of pgn4web</a>.
+</div>
+
+
+<div id="shortcut_keys_section" class="section">
+
+The user can interact with the chessboard using the keyboard. See <a href="http://pgn4web-project.casaschi.net/wiki/EndUser_Interface/" target="_blank">the pgn4web wiki</a> for more information. Most commonly used shortcut keys:
+
+<script type="text/javascript">
+"use strict";
+
+document.write("<table style='padding:0px;' border='0'>");
+print_help_row("&nbsp;", "");
+print_help_row("&nbsp;", "");
+print_help_row("", "<b>moving through a game</b>");
+print_help_row("&nbsp;", "");
+print_help_row("h , l", "go to game start, end (also arrow-up, arrow-down)");
+print_help_row("shift-h , shift-l", "go to variation start, end (also shift-arrow-up, shift-arrow-down)");
+print_help_row("j , k", "move backward, forward (also arrow-left, arrow-right)");
+print_help_row("shift-j", "go to <span title='the parent variation is the variation from which the current variation started'>parent variation</span> (also shift-arrow-left)");
+print_help_row("shift-k", "cycle through <span title='alternative variations are moves with the same predecessor move as the last move played on the chessboard; in the game 1. e4 e5 (1... e6) (1... c5) the moves e6 and c5 are alternatives to e5'>alternative variations</span>, if any, otherwise move forward (also shift-arrow-right)");
+print_help_row("dot", "cycle through <span title='alternative variations are moves with the same predecessor move as the last move played on the chessboard; in the game 1. e4 e5 (1... e6) (1... c5) the moves e6 and c5 are alternatives to e5'>alternative variations</span>, if any");
+print_help_row("shift-dot", "<span title='in the game 1. e4 e5 (1... c5) (1... e6), shift-dot from the move e4 would step into c5'>step into the first variation</span>, if any");
+print_help_row("&nbsp;", "");
+print_help_row("i, o", "find previous, next comment or variation");
+print_help_row("shift-i, shift-o", "find previous, next variation");
+print_help_row("&nbsp;", "");
+print_help_row("u", "undo last chessboard position update (also del)");
+print_help_row("shift-u", "redo last undo (also ins)");
+print_help_row("&nbsp;", "");
+print_help_row("", "<b>autoplaying games</b>");
+print_help_row("&nbsp;", "");
+print_help_row("a", "start autoplay");
+print_help_row("0", "stop autoplay");
+print_help_row("1, 2...", "autoplay 1 sec, 2 sec...");
+print_help_row("&nbsp;", "");
+print_help_row("", "<b>selecting games</b>");
+print_help_row("&nbsp;", "");
+print_help_row("v, m", "load first, last game");
+print_help_row("b, n", "load previous, next game");
+print_help_row("c, x", "load random game, random game at random position");
+print_help_row("&nbsp;", "");
+print_help_row("", "<b>searching games</b>");
+print_help_row("&nbsp;", "");
+print_help_row("s", "search prompt");
+print_help_row("enter", "repeat last search");
+print_help_row("shift-enter", "repeat last search backward");
+print_help_row("&nbsp;", "");
+print_help_row("", "<b>managing live games broadcasts</b>");
+print_help_row("&nbsp;", "");
+print_help_row("r, y", "pause, restart live broadcast automatic refresh");
+print_help_row("t", "force games refresh during live broadcast");
+print_help_row("&nbsp;", "");
+print_help_row("", "<b>customizing chessboard and moves display</b>");
+print_help_row("&nbsp;", "");
+print_help_row("p", "toggle show comments in game text");
+print_help_row("shift-p", "toggle show comments on separate lines");
+print_help_row("g", "toggle highlighting last move");
+print_help_row("f, shift-f", "flip board, White on bottom");
+print_help_row("&nbsp;", "");
+print_help_row("&nbsp;", "<b>showing PGN source data</b>");
+print_help_row("&nbsp;", "");
+print_help_row("d", "show current game PGN source data");
+print_help_row("shift-d", "show current position FEN string");
+print_help_row("&nbsp;", "");
+print_help_row("&nbsp;", "<b>looking for help</b>");
+print_help_row("&nbsp;", "");
+print_help_row("z", "pgn4web debug info");
+print_help_row("shift-z", "pgn4web website");
+print_help_row("esc", "pgn4web help");
+print_help_row("shift-esc", "toggle enabling shortcut keys");
+print_help_row("&nbsp;", "");
+print_help_row("&nbsp;", "");
+document.write("</table>");
+
+if (opener && (typeof(opener.shortcutKeysEnabled) != "undefined")) {
+  document.write('Shortcut keys currently ' + (opener.shortcutKeysEnabled ? "enabled, disable" : "disabled, enable") + ' with shift+escape or with the associated <a href="javascript:void(0);" onclick="showSection(\'shortcut_squares\');">shortcut square</a>.\n');
+} else {
+  document.write('Shortcut keys info not available from the opener window, please check about shortcut keys with shift+escape or with the associated <a href="javascript:void(0);" onclick="showSection(\'shortcut_squares\');">shortcut square</a>.\n');
+}
+
+</script>
+
+</div>
+
+
+<div id="shortcut_squares_section" class="section">
+
+The user can interact with the chessboard clicking chessboard squares:
+<p></p>
+
+<script type="text/javascript">
+"use strict";
+
+if (opener && (typeof(opener.boardTitle) != "undefined")) {
+  document.write("<table style='padding:0px;' border='0'>");
+  print_help_row("&nbsp;", "");
+  var rowDisplayed;
+  for (var r=7; r>=0; r--) {
+    rowDisplayed = false;
+    for (var c=0; c<=7; c++) {
+      if (opener.boardTitle[c][r] !== "") {
+        print_help_row(colLetters.charAt(c) + rowNumbers.charAt(7-r), opener.boardTitle[c][r].replace(/\n.*/g, ""));
+        rowDisplayed = true;
+      }
+    }
+    if (rowDisplayed) { print_help_row("&nbsp;", ""); }
+  }
+  print_help_row("&nbsp;", "");
+  document.write("</table>");
+  document.write("Squares labeled assuming " + colorAtTheBottom + " on bottom.");
+} else {
+  document.write("shortcut squares info not available from the opener window, please hover the mouse pointer on each square of the chessboard to check for their shortcut action.");
+}
+</script>
+
+</div>
+
+
+<div id="touch_gestures_section" class="section">
+
+<script type="text/javascript">
+"use strict";
+document.write(touchGestures_helpIntro);
+if (touchGestures_helpActions.length > 0) {
+  document.write("<table style='padding:0px;' border='0'>");
+  print_help_row("&nbsp;", "");
+  for (var ii = 0; ii < touchGestures_helpActions.length; ii++) {
+    print_help_row(touchGestures_helpActions[ii], touchGestures_helpText[ii]);
+  }
+  document.write("</table>");
+}
+</script>
+
+</div>
+
+
+<div id="search_tool_section" class="section">
+
+Access the search tool either directly with the search form (if available on the web page) or via the popup search box invoked with the 's' shortcut key and/or the associated <a href="javascript:void(0);" onclick="showSection('shortcut_squares');">shortcut squares</a>.
+
+<p></p>
+For full details about the search tool (implemented as regular expression match of the text of the PGN game), please refer to <a href="http://pgn4web-project.casaschi.net/wiki/EndUser_SearchTool/" target="_blank">the pgn4web wiki</a>; please find below a sample list of useful search patterns:
+<p></p>
+<script type="text/javascript">
+"use strict";
+document.write("<table style='padding:0px;' border='0'>");
+print_help_row("something", "search for text <i>something</i> anywhere in the PGN game");
+print_help_row("White\\s*\"Somebody", "search for player <i>Somebody</i> as White");
+print_help_row("\(White|Black\)\\s*\"Somebody", "search for player <i>Somebody</i> as either White or Black");
+print_help_row("White\\s*\"Somebody.*Black\\s*\"Other", "search for <i>Somebody</i> vs <i>Other</i> games");
+print_help_row("Site\\s*\"Somewhere.*Result\\s*\"\(1-0|0-1\)", "search for games at the <i>Somewhere</i> site ending with a win");
+print_help_row("Result\\s*\"\(?!1-0\)", "search for games not ending with a White win");
+print_help_row("\\b1\\.\\s*e4\\s*e6", "search for games with moves <i>1. e4 e6</i>");
+print_help_row("\\b1\\.\\s*e4\\s*e5\(?!\\s*2\\.\\s*Nf3\)", "search for games with moves <i>1. e4 e5</i> without <i>2. Nf3</i>");
+document.write("</table>");
+
+</script>
+
+</div>
+
+
+<div id="informant_symbols_section" class="section">
+
+Chess annotations symbols as defined by <a href="http://www.chessinformant.rs" targte="_blank">the Chess Informant publishing company</a>:
+
+<script type="text/javascript">var NAG = new Array();</script>
+<script type="text/javascript">
+"use strict";
+function detectJavascriptLocation(jsre) {
+  if (typeof(jsre) == "undefined") { jsre = new RegExp("(pgn4web|pgn4web-compacted)\.js$", ""); }
+  var e = document.getElementsByTagName("script");
+  for (var i=0; i<e.length; i++) {
+    if ((e[i].src) && (e[i].src.match(jsre))) {
+      return e[i].src;
+    }
+  }
+  return "";
+}
+</script>
+<!-- patch: fonts folder: if the "fonts" folder is relocated please update the next line accordingly -->
+<script src="fonts/chess-informant-NAG-symbols.js" type="text/javascript"></script>
+<script type="text/javascript">
+"use strict";
+
+function print_NAG_row(nag, text) {
+  document.write("<tr valign='bottom'><td class='informantCell' title='$" + nag + "'>" + (NAG[nag] || "&middot;") + "</td><td>" + text + "</td></tr>");
+}
+
+document.write("<table style='padding:0px;' border='0'>");
+document.write("<tr valign='bottom'><td class='informantCell'>&nbsp;</td><td></td></tr>");
+print_NAG_row(14, "white stands slightly better");
+print_NAG_row(15, "black stands slightly better");
+print_NAG_row(16, "white has the upper hand");
+print_NAG_row(17, "black has the upper hand");
+print_NAG_row(18, "white has a decisive advantage");
+print_NAG_row(19, "black has a decisive advantage");
+print_NAG_row(11, "even");
+print_NAG_row(13, "unclear");
+print_NAG_row(44, "with compensation for the material");
+print_NAG_row(30, "development advantage");
+print_NAG_row(24, "greater board room");
+print_NAG_row(40, "with attack");
+print_NAG_row(36, "with initiative");
+print_NAG_row(130, "with counter-play");
+print_NAG_row(22, "zugzwang");
+document.write("<tr valign='bottom'><td class='informantCell'>#</td><td>mate</td></tr>");
+print_NAG_row(1, "a very good move");
+print_NAG_row(3, "an excellent move");
+print_NAG_row(2, "a mistake");
+print_NAG_row(4, "a blunder");
+print_NAG_row(5, "a move deserving attention");
+print_NAG_row(6, "a dubious move");
+print_NAG_row(140, "with the idea");
+print_NAG_row(7, "only move");
+print_NAG_row(142, "better is");
+print_NAG_row(149, "file");
+print_NAG_row(150, "diagonal");
+print_NAG_row(48, "center");
+print_NAG_row(242, "king's side");
+print_NAG_row(243, "queen's side");
+print_NAG_row(147, "weak point");
+print_NAG_row(148, "ending");
+print_NAG_row(151, "pair of bishops");
+print_NAG_row(153, "bishops of opposite colors");
+print_NAG_row(154, "bishops of the same color");
+print_NAG_row(155, "united pawns");
+print_NAG_row(157, "separated pawns");
+print_NAG_row(159, "double pawns");
+print_NAG_row(161, "passed pawn");
+print_NAG_row(163, "pawn majority");
+print_NAG_row(136, "time");
+print_NAG_row(146, "a novelty");
+print_NAG_row(145, "editorial comment");
+document.write("<tr valign='bottom'><td class='informantCell'>R</td><td>various moves</td></tr>");
+print_NAG_row(254, "with");
+print_NAG_row(255, "without");
+print_NAG_row(190, "etc");
+document.write("<tr valign='bottom'><td class='informantCell'>-</td><td>see</td></tr>");
+document.write("<tr valign='bottom'><td class='informantCell'>&nbsp;</td><td></td></tr>");
+document.write("</table>");
+
+</script>
+
+Technical note: Chess Informant symbols display requires a modern browser supporting <a href="http://en.wikipedia.org/wiki/Web_typography" target="_blank">web fonts</a>, otherwise the game notation might result garbled.
+
+</div>
+
+
+<div id="credits_and_license_section" class="section">
+
+Javascript modifications of <a href="mailto:pgn4web@casaschi.net">Paolo Casaschi</a> on code from <a href="http://ficsgames.org" target="_blank">the ficsgames database</a>, in turn likely based on code from <a href="http://www.lutanho.net/pgn/pgnviewer.html" target="_blank">the LT PGN viewer</a>.
+<p></p>
+<a href="http://ixian.com/chess/jin-piece-sets" target="_blank">PNG images from Eric De Mund</a>, licensed under <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank">creative commons attribution 4.0 international license</a>.
+<br>
+<a href="http://commons.wikimedia.org/wiki/Category:SVG_chess_pieces" target="_blank">SVG images from Colin M.L. Burnett</a>, licensed under <a href="http://www.gnu.org/copyleft/fdl.html" target="_blank">GFDL</a>, <a href="http://www.creativecommons.org/licenses/by-sa/3.0/" target="_blank">CC-BY-SA-3.0</a> or <a href="http://www.gnu.org/licenses/gpl.html" target="_blank">GPL</a>, via Wikimedia Commons.
+<br>
+<a href="http://openclipart.org/search/?query=chess+symbols+set" target="_blank">SVG images from Igor Krizanovskij</a> and <a href="http://openclipart.org/search/?query=Chess+tile" target="_blank">other SVG images</a>, dedicated to the <a href="http://creativecommons.org/publicdomain/zero/1.0/" target="_blank">Public Domain</a> as any openclipart.org content.
+<p></p>
+The figurine fonts are derived from <a href="https://fedorahosted.org/liberation-fonts/" target="_blank">the Liberation Sans</a> font released under GNU General Public License, with the addition of chess pieces from freeware fonts: the alpha2 font (Peter Strickland), the good companion font (David L. Brown), the merida font (Armando H. Marroquin), the pirate font (Klaus Wolf) and the chess usual font (Armando H. Marroquin). The original chess fonts and more details are available at <a href="http://www.enpassant.dk/chess/fonteng.htm" target="_blank">the en passant site</a>.
+The chess informant symbols font is used with permission from <a href="http://www.chessinformant.rs" target="_blank">the Chess Informant publishing company</a>. The chess ole figurin font is from <a href="http://www.chessole.de" target="_blank">the ChessOLE project</a> (David Frank).
+<p></p>
+<a href="http://forwardcoding.com/projects/ajaxchess/chess.html" target="_blank">The GarboChess javascript chess engine</a> is <a href="https://github.com/glinscott/Garbochess-JS" target="_blank">licensed by Gary Linscott</a> under BSD license.
+<p></p>
+Some functionality of specific applications of pgn4web or specific demo pages depends on third party javascript libraries, each stored in a separate subfolder with the associated credits and license information.
+<p></p>
+Remaining pgn4web code is copyright (C) 2009-2017 <a href="mailto:pgn4web@casaschi.net">Paolo Casaschi</a> and licensed under the terms of <a href="license-gpl-2.0.txt" target="_blank">the GNU General Public License version 2</a> as published by <a href="http://www.fsf.org" target="_blank">the Free Software Foundation</a>; either <a href="license-gpl-2.0.txt" target="_blank">version 2 of the License</a>, or (at your option) any later version.
+</div>
+
+</div> <!-- everythingButFooter -->
+
+<div id="footer" class="footer"><div id="footerLeft" class="footerLeft"><a href="http://pgn4web.casaschi.net" target="_blank">pgn4web</a>&nbsp;<span id="footerVersion">help</span></div><div id="footerRight" class="footerRight"></div></div>
+
+
+<script type="text/javascript">
+"use strict";
+updateFooter();
+showSection(location.search.substr(1));
+</script>
+
+</body>
+
+</html>

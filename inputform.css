@@ -1,0 +1,155 @@
+/*
+ *  pgn4web javascript chessboard
+ *  copyright (C) 2009-2015 Paolo Casaschi
+ *  see README file and http://pgn4web.casaschi.net
+ *  for credits, license and more details
+ */
+
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  padding: 5px;
+  font-family: sans-serif;
+  font-size: 14px;
+  color: #909090;
+  background: transparent;
+}
+
+a {
+  color: #909090;
+  text-decoration: none;
+}
+
+input, select {
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  border-radius: 0px;
+  color: #909090;
+}
+
+textarea, option {
+  color: #606060;
+}
+
+.boardTable {
+  width: 272px;
+  height: 272px;
+}
+
+.pieceImage {
+  width: 26px;
+  height: 26px;
+}
+
+.whiteSquare,
+.blackSquare,
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  width: 34px;
+  height: 34px;
+  border-style: none;
+}
+
+.whiteSquare,
+.highlightWhiteSquare {
+  background: #E8E8E8;
+}
+
+.blackSquare,
+.highlightBlackSquare {
+  background: #C2C9D1;
+}
+
+.whiteSquare {
+  border-color: #E8E8E8;
+}
+
+.blackSquare {
+  border-color: #C2C9D1;
+}
+
+.highlightWhiteSquare,
+.highlightBlackSquare {
+}
+
+.pgnSubmit,
+.selectControl,
+.buttonControlPlay,
+.buttonControlStop,
+.buttonControl {
+/* a "width" attribute here must use the !important flag to override default settings */
+  font-weight: bold;
+  font-size: 14px;
+  height: 21px;
+  border-style: none;
+  background-color: #E8E8E8;
+  padding: 5px;
+}
+
+.pgnSubmit {
+  text-decoration: none;
+  padding: 2px;
+}
+
+.selectControl {
+/* a "width" attribute here must use the !important flag to override default settings */
+  width: 100% !important;
+}
+
+.optionSelectControl {
+}
+
+.buttonControlSpace {
+/* a "width" attribute here must use the !important flag to override default settings */
+  background-color: #E8E8E8;
+}
+
+.searchPgnButton {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.searchPgnExpression {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.move,
+.variation,
+.comment {
+  font-size: 14px;
+}
+
+a.move,
+a.variation,
+.commentMove {
+  white-space: nowrap;
+}
+
+.move {
+}
+
+a.move {
+}
+
+.comment,
+.variation {
+}
+
+a.variation {
+}
+
+.moveOn,
+.variationOn {
+}
+
+.pgnheader {
+  padding-left: 30px;
+  line-height: 21px;
+  font-size: 14px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+

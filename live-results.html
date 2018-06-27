@@ -1,0 +1,1142 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2016 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<title>pgn4web live results</title>
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+<style type="text/css">
+
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  padding: 40px; /* defined as body.padding */
+  font-family: sans-serif;
+  font-size: 16px; /* defined as body.fontSize */
+  color: black;
+  overflow-x: hidden;
+  overflow-y: scroll;
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+  -webkit-text-size-adjust: none;
+  -moz-text-size-adjust: none;
+  -ms-text-size-adjust: none;
+  -o-text-size-adjust: none;
+  text-size-adjust: none;
+  -webkit-touch-callout: none;
+}
+
+a {
+  color: black;
+  text-decoration: none;
+}
+
+.pageHeader {
+  color: red;
+  text-decoration: none;
+}
+
+h1.pageHeader {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  padding-top: 0px;
+  padding-bottom: 10px; /* = 1/4 * body.padding */
+  white-space: nowrap;
+}
+
+.gamesAnchor {
+  display: inline-block;
+  height: 40px; /* = body.padding */
+  width: 99%;
+}
+
+.event, .round, .match, .firstTeam, .secondTeam, .score, .player, .firstPlayer, .secondPlayer, .result, .newMoves, .noNewMoves, .lastMoves {
+  white-space: nowrap;
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.eventRound, .matchScore, .game {
+  white-space: nowrap;
+}
+
+.team, .firstTeam, .secondTeam, .firstTeamScore, .secondTeamScore, .firstPlayer, .secondPlayer, .firstTeamPlayer, .secondTeamPlayer {
+  white-space: nowrap;
+}
+
+.eventRound, .event, .match, .firstTeam, .game, .firstPlayer, .secondPlayer, .firstTeamPlayer, .secondTeamPlayer {
+  margin-left: 0px;
+}
+
+.player {
+  width: 180px; /* defined as player.width */
+  margin-right: 20px; /* defined as player.marginRight */
+}
+
+.event, .firstTeam, .secondTeam, .firstPlayer, .secondPlayer {
+  padding-left: 5px; /* defined as player.paddingLeft */
+  padding-right: 5px; /* = player.paddingLeft */
+}
+
+.round, .secondTeam, .score, .newMoves, .noNewMoves, .lastMoves {
+  margin-left: 20px; /* = player.marginRight */
+}
+
+.event {
+  width: 420px; /* = defined as event.width */
+}
+
+.round {
+  text-align: right;
+  width: 50px; /* defined as round.width */
+}
+
+.match {
+  width: 380px; /* = 2 * player.width + 4 * player.paddingLeft */
+}
+
+.score {
+  width: 70px; /* = defined as score.width */
+}
+
+.result {
+  width: 70px; /* = score.width */
+}
+
+.eventRound {
+  font-size: 20px; /* = 5/4 * body.fontSize */
+  font-weight: normal;
+  margin-top: 48px; /* = 3 * body.fontSize */
+  margin-bottom: 12px; /* = 3/4 * body.fontSize */
+}
+
+.matchScore {
+  font-size: 16px; /* = body.fontSize */
+  font-weight: bold;
+  margin-top: 24px; /* = 3/2 * body.fontSize */
+  margin-bottom: 12px; /* = 3/4 * body.fontSize */
+}
+
+.game {
+  font-size: 14px; /* defined as game.fontSize */
+  font-weight: normal;
+  margin-top: 6px;
+  margin-bottom: 0px;
+}
+
+.gameItem {
+  cursor: pointer;
+}
+
+.secondTeam, .secondTeamPlayer {
+  background-color: #F4F4F4;
+  border-radius: 3px; /* = 1/4 * game.fontSize */
+}
+
+.score, .result {
+  text-align: center;
+}
+
+.newMoves, .noNewMoves {
+  font-weight: bold;
+  padding-right: 10px; /* = 1/2 * player.marginRight */
+}
+
+.noNewMoves {
+  visibility: hidden;
+}
+
+.lastMoves {
+  min-width: 180px; /* = player.width */
+}
+
+.gameLiveStatus2 {
+  display: inline-block;
+  margin-top: 48px; /* = 3 * body.fontSize */
+  padding-left: 5px; /* = player.paddingLeft */
+  font-size: 14px; /* defined as game.fontSize */
+  color: gray;
+}
+
+.gameFloatingContainer {
+  position: fixed;
+  right: 0; /* defined as gameFloatingContainer.right */
+  top: 30px; /* defined as gameFloatingContainer.top */
+  white-space: nowrap;
+  background-color: white;
+}
+
+.gameAnalysisContainer {
+  padding-top: 110px; /* = gameBoardContainer.paddingTop + 2 * (header.height + header.paddingBottom) + boardTable.borderWidth + gameBoard.paddingTop = (20 + 2 * (16 + 24) + 2 + 8) */
+  overflow: hidden;
+  width: 40px; /* defined as gameAnalysisContainer.width.closed = body.padding */
+  transition: width 1s linear;
+  -moz-transition: width 1s linear;
+  -webkit-transition: width 1s linear;
+  -o-transition: width 1s linear;
+  opacity: 0.8;
+}
+
+.gameAnalysisButtons {
+  height: 14px; /* = engine.html squareSize / 2 */
+  width: 224px; /* = gameAnalysisFrame.width */
+  margin-left: 40px; /* = body.padding */
+  margin-bottom: 14px; /* = engine.html squareSize / 2 */
+}
+
+.gameAnalysisFrame {
+  width: 224px; /* defined as gameAnalysisFrame.width = engine.html width */
+  height: 280px; /* = engine.html height */
+  margin-left: 40px; /* defined as gameAnalysisFrame.marginLeft = body.padding */
+}
+
+.gameBoardContainer {
+  width: 324px; /* defined as gameBoardContainer.width */
+  padding-top: 20px; /* defined as gameBoardContainer.paddingTop */
+  padding-bottom: 10px; /* defined as gameBoardContainer.paddingBottom */
+  padding-right: 40px; /* = body.padding */
+  padding-left: 0px;
+  margin-bottom: 16px; /* = body.fontSize */
+}
+
+.gameBoard {
+  padding-top: 8px; /* defined as gameBoard.paddingTop = 0.5 * header.height */
+  padding-bottom: 8px; /* = gameBoard.paddingTop */
+}
+
+.whiteSquare,
+.blackSquare,
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  width: 38px; /* defined as whiteSquare.bareWidth */
+  height: 38px; /* = whiteSquare.bareWidth */
+  border-style: solid;
+  border-width: 1px; /* defined as whiteSquare.borderWidth */
+  /* whiteSquare.width = whiteSquare.bareWidth + 2 * whiteSquare.borderWidth */
+}
+
+.boardTable {
+  border-style: solid;
+  border-color: #818780;
+  border-width: 2px; /* defined as boardTable.borderWidth */
+  box-shadow: 0px 0px 20px #B0B8AE;
+  width: 324px; /* = 8 * whiteSquare.width + 2 * boardTable.borderWidth */
+  height: 324px; /* = 8 * whiteSquare.width + 2 * boardTable.borderWidth */
+  background-color: #FFFFFF;
+}
+
+.pieceImage {
+  width: 32px; /* defined as pieceImage.width < whiteSquare.bareWidth */
+  height: 32px; /* = pieceImage.width */
+  cursor: pointer;
+}
+
+.whiteSquare,
+.highlightWhiteSquare {
+  background: #EFF4EC;
+  border-color: #EFF4EC;
+}
+
+.blackSquare,
+.highlightBlackSquare {
+  background: #C6CEC3;
+  border-color: #C6CEC3;
+}
+
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  border-color: #818780;
+}
+
+.selectControl {
+/* a "width" attribute here must use the !important flag to override default settings */
+  font-size: 16px; /* = body.fontSize */
+}
+
+.optionSelectControl {
+}
+
+.buttonControlPlay,
+.buttonControlStop,
+.buttonControl {
+/* a "width" attribute here must use the !important flag to override default settings */
+  font-size: 16px; /* = body.fontSize */
+  border-style: none;
+  background-color: transparent;
+}
+
+.buttonControlSpace {
+/* a "width" attribute here must use the !important flag to override default settings */
+  font-size: 16px; /* = body.fontSize */
+}
+
+.searchPgnButton {
+/* a "width" attribute here must use the !important flag to override default settings */
+  font-size: 16px; /* = body.fontSize */
+}
+
+.searchPgnExpression {
+/* a "width" attribute here must use the !important flag to override default settings */
+  font-size: 16px; /* = body.fontSize */
+}
+
+.move,
+.variation {
+  text-decoration: none;
+}
+
+.move {
+  color: black;
+}
+
+.comment,
+.variation {
+  color: gray !important;
+}
+
+a.variation {
+  color: gray !important;
+}
+
+.moveOn,
+.variationOn {
+  background: #DAF4D7;
+}
+
+.header, .footer {
+  font-size: 11px; /* defined as header.fontSize */
+  height: 16px; /* defined as header.height */
+  white-space: nowrap;
+  margin-left: 2px; /* = boardTable.borderWidth */
+  margin-right: 2px; /* = boardTable.borderWidth */
+  width: 320px; /* = 8 * whiteSquare.width */
+  text-align: center;
+}
+
+.header {
+  margin-bottom: 24px; /* defined as header.marginBottom = 1.5 * header.height */
+}
+
+.footer {
+  margin-top: 24px; /* = 1.5 * header.height */
+}
+
+.gameEvent, .gameDateAdjusted, .gameLiveStatus, .gameWhite, .gameWhiteClock, .gameBlackClock, .gameBlack {
+  display: inline-block;
+  overflow: hidden;
+}
+
+.gameEvent {
+  width: 220px; /* = 5.5 * whiteSquare.width */
+  margin-right: 20px; /* = 1/2 * whiteSquare.width */
+  text-align: left;
+  color: gray;
+}
+
+.gameDateAdjusted {
+  width: 80px; /* = 2 * whiteSquare.width */
+  cursor: pointer;
+}
+
+.gameLiveStatus {
+  width: 80px; /* = 2 * whiteSquare.width */
+  text-align: right;
+  color: gray;
+}
+
+.gameWhite, .gameBlack {
+  width: 80px; /* = 2 * whiteSquare.width */
+  text-decoration: none;
+  color: black;
+  cursor: pointer;
+}
+
+.gameWhiteClock, .gameBlackClock {
+  width: 50px; /* defined as gameWhiteClock.width */
+  margin-left: 15px; /* = 1/2 * (2 * whiteSquare.width - gameWhiteClock.width) */
+  margin-right: 15px; /* = 1/2 * (2 * whiteSquare.width - gameWhiteClock.width) */
+}
+
+.gameWhite, .gameBlackClock {
+  text-align: left;
+}
+
+.gameWhiteClock, .gameBlack {
+  text-align: right;
+}
+
+.gameSideToMove, .gameText, .gameResult {
+  white-space: nowrap;
+  display: inline-block;
+  overflow-x: hidden;
+}
+
+.gameSideToMove, .gameResult {
+  width: 50px; /* = gameWhiteClock.width */
+}
+
+.gameSideToMove {
+  text-align: left;
+}
+
+.gameResult {
+  text-align: right;
+  cursor: pointer;
+}
+
+.gameText {
+  width: 220px; /* = 8 * whiteSquare.width - 2 * gameWhiteClock.width */
+  text-align: center;
+}
+
+.sideToMove {
+  display: inline-block;
+  height: 1ex;
+  width: 1ex;
+  border-style: solid;
+  border-color: black;
+  border-width: 1px;
+  margin-bottom: 1px;
+}
+
+.sideToMoveHidden {
+  visibility: hidden;
+}
+
+</style>
+
+<script src="pgn4web.js" type="text/javascript"></script>
+<script src="engine.js" type="text/javascript"></script>
+
+<script src="fide-lookup.js" type="text/javascript"></script>
+
+<script src="crc32.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+  "use strict";
+
+  var pgn4web_engineWindowUrlParameters = "lch=FFFFFF&dch=E4E4E4&hch=BCDEB4&ctch=888888&ss=28&ps=24&fms=11&fcs=19&fpr=0";
+  var pgn4web_engineWindowTarget = "pgn4webAnalysisBoardForLiveResultsViewer";
+  var pgn4web_engineWindowHeight = "";
+  var pgn4web_engineWindowWidth = "";
+
+  var pgnFile;
+  var pgnFile_default = detectBaseLocation() ?
+    location.protocol + "//" + location.hostname + location.pathname.replace(/\/[^\/]*$/, "/live/live.pgn") :
+    "live/live.pgn";
+  // accepts pgnData as alias for pgnFile for consistency with board.html
+  if ((pgnFile = gup("pgnData")) === "") {
+    if ((pgnFile = gup("pgnFile")) === "") {
+      pgnFile = pgnFile_default;
+    }
+  }
+
+  var demoFlag = false;
+  var alertFlag = false;
+  if ((gup("demo") == "true") || (gup("demo") == "t") ||
+      (gup("refreshDemo") == "true") || (gup("refreshDemo") == "t")) {
+    demoFlag = true; alertFlag = true;
+  }
+
+  var refreshMinutes;
+  if ((refreshMinutes = gup("refreshMinutes")) === "") {
+    refreshMinutes = 1;
+  } else {
+    refreshMinutes = parseFloat(refreshMinutes);
+    if (isNaN(refreshMinutes) || (refreshMinutes < 0)) {
+      if (alertFlag) {
+        alert("ERROR: refreshMinutes parameter must be a positive number: defaulting to 1.\n");
+      }
+      refreshMinutes = 1;
+    }
+  }
+
+  var iniGame;
+  var delayIniGame = false;
+  if ((iniGame = gup("initialGame")) === "") {iniGame = 1; }
+  if (!(isNaN(parseInt(iniGame, 10)))) {
+    iniGame = parseInt(iniGame, 10);
+    delayIniGame = (iniGame > 0);
+  }
+
+  var showBoard = true;
+  if ((gup("showBoard") == "false") || (gup("showBoard") == "f")) { showBoard = false; }
+
+  var adjustBoard = true;
+  if ((gup("adjustBoard") == "false") || (gup("adjustBoard") == "f")) { adjustBoard = false; }
+
+  var showEvent = true;
+  if ((gup("showEvent") == "false") || (gup("showEvent") == "f")) { showEvent = false; }
+
+  var roundReverse = false;
+  if ((gup("roundReverse") == "true") || (gup("roundReverse") == "t")) { roundReverse = true; }
+
+  var showTeams = true;
+  if ((gup("showTeams") == "false") || (gup("showTeams") == "f")) { showTeams = false; }
+
+  var showPlayersInfo = true;
+  if ((gup("showPlayersInfo") == "false") || (gup("showPlayersInfo") == "f")) { showPlayersInfo = false; }
+
+  var showLastMoves = false;
+  if ((gup("showLastMoves") == "true") || (gup("showLastMoves") == "t")) { showLastMoves = true; }
+
+  var autoSwitchNewgames = false;
+  if ((gup("autoSwitchNewgames") == "true") || (gup("autoSwitchNewgames") == "t")) { autoSwitchNewgames = true; }
+
+  var highlightMode = false;
+  if ((gup("highlightMode") == "true") || (gup("highlightMoves") == "t") || (gup("highlightMode") == "border") || (gup("highlightMoves") == "b")) { highlightMode = true; }
+
+  var showAnalysis = false; // does not fit the design to allow this as URL parameter
+
+  var disableEngine = true; // does not fit the design to allow this as URL parameter; preset as true to preload the analysis board
+
+  var autoUpdateAnalysis = false;
+  if ((gup("autoUpdateAnalysis") == "true") || (gup("autoUpdateAnalysis") == "t")) { autoUpdateAnalysis = true; }
+
+  var headlessPage = false;
+  if ((gup("headlessPage") == "true") || (gup("headlessPage") == "t")) { headlessPage = true; }
+
+  if ((gup("help") == "true") || (gup("help") == "t")) {
+      document.write("<pre style='font-size:11px;'>" +
+      "pgn4web live-results.html parameters" + "\n\n" +
+      " - pgnData = " + pgnFile + "; PGN file to load (default " + pgnFile_default + ")" + "\n" +
+      " - refreshMinutes = " + refreshMinutes + "; refresh interval in minutes, decimals allowed (default 1)" + "\n" +
+      " - refreshDemo = " + demoFlag + "; sets live demo mode (default false)" + "\n" +
+      " - initialGame = " + iniGame + "; initial game to load, a number or first, last, random or a search string (default 1)" + "\n" +
+      " - showBoard = " + showBoard + "; shows the chessboard (default true)" + "\n" +
+      " - adjustBoard = " + adjustBoard + "; dynamically adjusts the board position (default true)" + "\n" +
+      " - showEvent = " + showEvent + "; shows event information (default true)" + "\n" +
+      " - roundReverse = " + roundReverse + "; reverse round ordering (default false)" + "\n" +
+      " - showTeams = " + showTeams + "; shows teams information (default true)" + "\n" +
+      " - showPlayersInfo = " + showPlayersInfo + "; shows title/elo players information (default true)" + "\n" +
+      " - showLastMoves = " + showLastMoves + "; shows last moves information (default false)" + "\n" +
+      " - autoSwitchNewgames = " + autoSwitchNewgames + "; automatically switches to games with new moves (default false)" + "\n" +
+      " - highlightMode = " + highlightMode + "; highlight moves (default false)" + "\n" +
+      " - autoUpdateAnalysis = " + autoUpdateAnalysis + "; automatically updates analysis board from main board (default false)" + "\n" +
+      " - headlessPage = " + headlessPage + "; displays a page without heading (default false)" + "\n" +
+      " - help = true" + "\n\n" +
+      "</pre>");
+  }
+
+  SetPgnUrl(pgnFile);
+  SetImagePath ("images/alpha/32");
+  SetImageType("png");
+  SetHighlightOption(highlightMode);
+  SetCommentsIntoMoveText(false);
+  SetCommentsOnSeparateLines(false);
+  SetAutoplayDelay(1000);
+  SetAutostartAutoplay(false);
+  SetAutoplayNextGame(false);
+  SetInitialHalfmove("end", true);
+  SetInitialVariation(0);
+  SetInitialGame(delayIniGame ? "first" : iniGame);
+  SetShortcutKeysEnabled(showBoard);
+  if (refreshMinutes !== 0) { SetLiveBroadcast(refreshMinutes, alertFlag, demoFlag, true); }
+
+  function customFunctionOnCheckLiveBroadcastStatus() {
+    var theObj, theObjFrom, theObjTo;
+    if ((theObjFrom = document.getElementById("GameLiveStatus")) && (theObjTo = document.getElementById("GameLiveStatus2"))) {
+      theObjTo.innerHTML = theObjFrom.innerHTML;
+      theObjTo.title = theObjFrom.title;
+    }
+    for (var gg in gameId) {
+      if (theObj = document.getElementById("newMoves_" + gameId[gg])) {
+        theObj.className = "noNewMoves";
+      }
+    }
+    gameNewMoves = new Array();
+  }
+
+  var gameId;
+  var gameWhiteTeam;
+  var gameBlackTeam;
+  var gameWhiteTitle;
+  var gameBlackTitle;
+  var gameWhiteElo;
+  var gameBlackElo;
+  var gameMatchId;
+  var gameMatchKey;
+  var gameBoard;
+  var newGameLengthFromCrc = new Array();
+  var gameLengthFromCrc = new Array();
+  var gameNewMoves = new Array();
+  var firstCustomFunctionOnPgnTextLoad = true;
+  function customFunctionOnPgnTextLoad() {
+    var theObj;
+
+    gameId = new Array();
+
+    gameWhiteTeam = new Array();
+    gameBlackTeam = new Array();
+    gameWhiteTitle = new Array();
+    gameBlackTitle = new Array();
+    gameWhiteElo = new Array();
+    gameBlackElo = new Array();
+    gameMatchId = new Array();
+    gameMatchKey = new Array();
+    gameMatchKey[0] = -1;
+    gameBoard = new Array();
+    gameNewMoves = new Array();
+    var maxCrc = 1000000;
+    for (var gg = 0; gg < numberOfGames; gg++) {
+      gameId[gg] = gg;
+      gameWhiteTeam[gg] = customPgnHeaderTag("WhiteTeam", null, gg);
+      gameBlackTeam[gg] = customPgnHeaderTag("BlackTeam", null, gg);
+      gameWhiteTitle[gg] = customPgnHeaderTag("WhiteTitle", null, gg);
+      gameBlackTitle[gg] = customPgnHeaderTag("BlackTitle", null, gg);
+      gameWhiteElo[gg] = customPgnHeaderTag("WhiteElo", null, gg);
+      gameBlackElo[gg] = customPgnHeaderTag("BlackElo", null, gg);
+      gameMatchId[gg] = (gameWhiteTeam[gg] + gameBlackTeam[gg] !== "") ? ((crc32(gameWhiteTeam[gg]) + crc32(gameBlackTeam[gg])) % maxCrc) + maxCrc : 0;
+      if (typeof(gameMatchKey[gameMatchId[gg]]) == "undefined") { gameMatchKey[gameMatchId[gg]] = gg; }
+      gameBoard[gg] = customPgnHeaderTag("Board", null, gg);
+      var thisCrc = (typeof(pgnHeader[gg]) == "string") ? (crc32((gameEvent[gg] + "," + gameSite[gg] + "," + gameRound[gg] + "," + gameWhite[gg] + "," + gameBlack[gg] + ";").replace(/(^\s*|\s*$)/g, "")) % maxCrc) + maxCrc : 0;
+      newGameLengthFromCrc[thisCrc] = LiveBroadcastDemo ? gameDemoMaxPly[gg] : pgnGame[gg].replace(/(^\s*|\s*$)/g, "").length;
+      gameNewMoves[gg] = ((newGameLengthFromCrc[thisCrc] !== gameLengthFromCrc[thisCrc]) && (LiveBroadcastStarted) && (LiveBroadcastTicker > 0) && (!LiveBroadcastEnded));
+    }
+    gameLengthFromCrc = newGameLengthFromCrc.splice(0, newGameLengthFromCrc.length);
+    gameId.sort(sortGameId);
+
+    printGames();
+
+    if ((LiveBroadcastTicker < 2) && delayIniGame) {
+      Init(typeof(gameId[iniGame - 1]) != "undefined" ? gameId[iniGame - 1] : "0");
+    }
+
+    if (autoSwitchNewgames && ((typeof(gameNewMoves) == "undefined") || (!gameNewMoves[currentGame]))) { searchGameWithNewMoves(false); }
+
+    if (firstCustomFunctionOnPgnTextLoad) {
+      firstCustomFunctionOnPgnTextLoad = false;
+      if (theObj = document.getElementById("SideToMove")) { theObj.className = "sideToMove"; }
+      showEngineAnalysisBoard(disableEngine, true); // prepare analysis frame with an idle board
+    }
+  }
+
+  function myCompare(AA, ZZ) {
+    if ((typeof(AA) == "undefined") && (typeof(ZZ) == "undefined")) { return 0; }
+    if (typeof(ZZ) == "undefined") { return 1; }
+    if (typeof(AA) == "undefined") { return -1; }
+    if (AA > ZZ) { return 1; }
+    if (AA < ZZ) { return -1; }
+    return 0;
+  }
+
+  function myCompareRound(AA, ZZ) {
+    var AA_A = AA.split(".");
+    var ZZ_Z = ZZ.split(".");
+    var AA_a, ZZ_z;
+    var jm = Math.max(AA_A.length, ZZ_Z.length);
+    for (var jj = 0; jj < jm; jj++) {
+      if (typeof(ZZ_Z[jj]) == "undefined") { return 1; }
+      if (typeof(AA_A[jj]) == "undefined") { return -1; }
+      AA_a = parseInt(AA_A[jj], 10);
+      ZZ_z = parseInt(ZZ_Z[jj], 10);
+      if (isNaN(AA_a) || isNaN(ZZ_z)) {
+        if (!isNaN(ZZ_z)) { return 1; }
+        if (!isNaN(AA_a)) { return -1; }
+        if (AA_A[jj] > ZZ_Z[jj]) { return 1; }
+        if (AA_A[jj] < ZZ_Z[jj]) { return -1; }
+      } else {
+        if (AA_a > ZZ_z) { return 1; }
+        if (AA_a < ZZ_z) { return -1; }
+      }
+    }
+    return 0;
+  }
+
+  function sortGameId(aa, zz) {
+    var res;
+
+    res = myCompare(gameEvent[aa], gameEvent[zz]);
+    if (res !== 0) { return res; }
+
+    res = myCompareRound(fixRound(gameRound[aa]), fixRound(gameRound[zz]));
+    if (res !== 0) { return roundReverse ? -res : res; }
+
+    res = myCompare(gameMatchKey[gameMatchId[aa]], gameMatchKey[gameMatchId[zz]]);
+    if (res !== 0) { return res; }
+
+    res = myCompareRound(gameRound[aa], gameRound[zz]);
+    if (res !== 0) { return res; }
+
+    res = myCompare(gameBoard[aa], gameBoard[zz]);
+    if (res !== 0) { return res; }
+
+    if (aa > zz) { return 1; }
+    if (aa < zz) { return -1; }
+
+    return 0;
+
+  }
+
+  function fixRound(thisRound) {
+    return thisRound.replace(/\..*$/, ""); // only use the first number of rounds like 1.2.3
+  }
+
+  function printGames() {
+    firstTeam = "";
+    secondTeam = "";
+    var firstRow = true;
+    var lastEventRound = "";
+    var lastMatchId = 0;
+    var theObj = document.getElementById("results");
+    if (theObj) {
+      var resultTable = "";
+      var ggId, fixedRound, currentEventRound, whitePlayer, whiteTitle, whiteElo, blackPlayer, blackTitle, blackElo, lastMoves;
+      for (var gg in gameId) {
+        ggId = gameId[gg];
+        fixedRound = fixRound(gameRound[ggId]);
+        currentEventRound = gameEvent[ggId] + fixedRound;
+        if (showEvent && currentEventRound && (currentEventRound !== lastEventRound)) {
+          resultTable += '<div class="eventRound"' + (firstRow ? ' style="margin-top:0px;"' : '') + '><span class="event" title="' + gameEvent[ggId] + '">' + gameEvent[ggId] + '</span><span class="round" title="' + 'round ' + fixedRound + '">' + fixedRound + '</span></div>';
+          if (firstRow) { firstRow = false; }
+          lastEventRound = currentEventRound;
+          lastMatchId = 0;
+        }
+        if (showTeams && gameMatchId[ggId] && (gameMatchId[ggId] !== lastMatchId)) {
+          resultTable += matchRow(gameEvent[ggId], gameRound[ggId], gameMatchId[ggId], firstRow);
+          if (firstRow) { firstRow = false; }
+          lastMatchId = gameMatchId[ggId];
+        }
+        whiteTitle = gameWhiteTitle[ggId];
+        whiteElo = gameWhiteElo[ggId];
+        whitePlayer = gameWhite[ggId] + (showPlayersInfo ? (whiteTitle ? " &nbsp; " + whiteTitle : "") + (whiteElo ? " &nbsp; " + whiteElo : "") : "");
+        blackTitle = gameBlackTitle[ggId];
+        blackElo = gameBlackElo[ggId];
+        blackPlayer = gameBlack[ggId] + (showPlayersInfo ? (blackTitle ? " &nbsp; " + blackTitle : "") + (blackElo ? " &nbsp; " + blackElo : "") : "");
+        if (showLastMoves) {
+          lastMoves = pgnGame[ggId].replace(/\n/g, " ").replace(/{.*?}|\$\d+/g, " ").replace(/[^\sa-wyzA-WYZ0-9.\/#-]+/g, "").replace(/\d+\.{2,}|1-0|0-1|1\/2-1\/2|\*/g, "").match(/((\b\d+\.?)?(\s*\S+)?(\s*\S+)|(\S+\s*)?(\b\d+\.?)?(\s*\S+))\s*$/);
+          if (lastMoves) { lastMoves = lastMoves[0].replace(/\s\s+/g, " ").replace(/^\s+|\s+$/g, ""); }
+        }
+        resultTable += '<div class="game" id="gameRow_' + ggId + '" style="' + ((showBoard && (ggId === oldSelectedGame)) ? 'font-weight:bold;' : '') + (firstRow ? 'margin-top:0px;' : '') + '"><span class="gameItem" onclick="selectGame(' + ggId + ');"><span class="player"><span class="firstPlayer' + ((firstTeam && gameWhiteTeam[ggId] === firstTeam) ? ' firstTeamPlayer' : '') + ((secondTeam && gameWhiteTeam[ggId] === secondTeam) ? ' secondTeamPlayer' : '') + '" title="' + whitePlayer.replace(/&nbsp;/, ' ') + '">' + whitePlayer + '</span></span><span class="player"><span class="secondPlayer' + ((firstTeam && gameBlackTeam[ggId] === firstTeam) ? ' firstTeamPlayer' : '') + ((secondTeam && gameBlackTeam[ggId] === secondTeam) ? ' secondTeamPlayer' : '') + '" title="' + blackPlayer.replace(/&nbsp;/, ' ') + '">' + blackPlayer + '</span></span><span class="result" title="' + gameResult[ggId] + '">' + gameResult[ggId] + '</span><span id="newMoves_' + ggId + '" class="' + (gameNewMoves[ggId] ? 'newMoves' : 'noNewMoves') + '" title="new moves received">*</span><span class="lastMoves"><span' + (lastMoves ? ' title="last moves">' + lastMoves : '>&nbsp;')  + '</span></span></span></div>';
+        if (firstRow) { firstRow = false; }
+      }
+      theObj.innerHTML = resultTable;
+    }
+  }
+
+  var firstTeam = "";
+  var secondTeam = "";
+  function matchRow(eventStr, roundStr, matchId, firstRow) {
+    firstTeam = "";
+    secondTeam = "";
+    if (matchId === 0) { return ""; }
+    var firstTeamScore = 0;
+    var secondTeamScore = 0;
+    for (var ii in gameId) {
+      if ((gameEvent[gameId[ii]] === eventStr) && (fixRound(gameRound[gameId[ii]]) === fixRound(roundStr)) && (gameMatchId[gameId[ii]] === matchId)) {
+        if (!firstTeam || !secondTeam) {
+          firstTeam = gameWhiteTeam[gameId[ii]];
+          secondTeam = gameBlackTeam[gameId[ii]];
+        }
+        switch (gameResult[gameId[ii]]) {
+          case "1-0":
+            if (firstTeam == gameWhiteTeam[gameId[ii]]) { firstTeamScore += 1; }
+            else if (secondTeam == gameWhiteTeam[gameId[ii]]) { secondTeamScore += 1; }
+            break;
+          case "0-1":
+            if (firstTeam == gameBlackTeam[gameId[ii]]) { firstTeamScore += 1; }
+            else if (secondTeam == gameBlackTeam[gameId[ii]]) { secondTeamScore += 1; }
+            break;
+          case "1/2-1/2":
+            firstTeamScore += 0.5;
+            secondTeamScore += 0.5;
+            break;
+          default:
+            break;
+        }
+      }
+    }
+    return '<div class="matchScore"' + (firstRow? ' style="margin-top:0px;"' : '') + '><span class="match" title="' + firstTeam + ' - ' + secondTeam + '"><span class="team"><span class="firstTeam">' + firstTeam + '</span></span><span class="team"><span class="secondTeam">' + secondTeam + '</span></span></span><span class="score" title="' + firstTeamScore + '-' + secondTeamScore + '">' + firstTeamScore + '-' + secondTeamScore + '</span></div>';
+  }
+
+  var oldSelectedGame = -1;
+  function selectGame(gameNum) {
+    if (!showBoard) { return; }
+    Init(gameNum);
+    highlightGame(gameNum);
+  }
+
+  function highlightGame(gameNum) {
+    var theObj;
+    if (!showBoard) { return; }
+    if (theObj = document.getElementById("gameRow_" + oldSelectedGame)) {
+      if (oldSelectedGame !== gameNum) {
+        theObj.style.fontWeight = "";
+      }
+    }
+    if (theObj = document.getElementById("gameRow_" + gameNum)) {
+       theObj.style.fontWeight = "bold";
+    }
+    oldSelectedGame = gameNum;
+  }
+
+  function customFunctionOnPgnGameLoad() {
+    var theObj;
+
+    highlightGame(currentGame);
+
+    if (theObj = document.getElementById("GameWhite")) {
+      var whiteTitle = customPgnHeaderTag("WhiteTitle");
+      var whiteElo = customPgnHeaderTag("WhiteElo");
+      var whiteTeam = customPgnHeaderTag("WhiteTeam");
+      theObj.title = simpleHtmlentitiesDecode("white player:  " + gameWhite[currentGame] + (showPlayersInfo ? (whiteTitle ? "  " + whiteTitle : "") + (whiteElo ? "  " + whiteElo : "") + (whiteTeam ? "  " + whiteTeam : "") : ""));
+      if (theObj.innerHTML === "") { theObj.innerHTML = "&nbsp;"; }
+    }
+    if (theObj = document.getElementById("GameBlack")) {
+      var blackTitle = customPgnHeaderTag("BlackTitle");
+      var blackElo = customPgnHeaderTag("BlackElo");
+      var blackTeam = customPgnHeaderTag("BlackTeam");
+      theObj.title = simpleHtmlentitiesDecode("black player:  " + gameBlack[currentGame] + (showPlayersInfo ? (blackTitle ? "  " + blackTitle : "") + (blackElo ? "  " + blackElo : "") + (blackTeam ? "  " + blackTeam : "") : ""));
+      if (theObj.innerHTML === "") { theObj.innerHTML = "&nbsp;"; }
+    }
+
+    if (theObj = document.getElementById("GameEvent")) {
+      if (theObj.innerHTML == gameEvent[currentGame]) {
+        theObj.innerHTML += " &nbsp; &nbsp; " + gameRound[currentGame];
+        theObj.title = simpleHtmlentitiesDecode("event:  " + gameEvent[currentGame] + (gameSite[currentGame] ? "\nsite:  " + gameSite[currentGame] : "") + (gameDate[currentGame] ? "\ndate:  " + gameDate[currentGame] : "") + (gameRound[currentGame] ? "\nround:  " + gameRound[currentGame] : ""));
+      }
+      if (refreshMinutes === 0) {
+        var theOther = document.getElementById("GameDate");
+        if (theOther) { theOther.title = theObj.title; }
+      }
+    }
+
+    if ((refreshMinutes !== 0) && (theObj = document.getElementById("GameDateAdjusted"))) {
+      theObj.innerHTML = (gameDate[currentGame].match(/live/i)) ? "live" : "&nbsp;";
+      theObj.title = (gameDate[currentGame].match(/live/i)) ? "live event" : "";
+    }
+  }
+
+  function customFunctionOnMove() {
+    var extraMoves = 2;
+
+    document.getElementById("GamePrevMoves").innerHTML = "";
+    document.getElementById("GameCurrMove").innerHTML = "";
+    document.getElementById("GameNextMoves").innerHTML = "";
+    var theObj = document.getElementById("GamePrevMoves");
+    var thisPly = Math.max(CurrentPly - extraMoves - 1, StartPly);
+    if (thisPly > StartPly) { theObj.innerHTML += "... "; }
+    for (; thisPly < Math.min(CurrentPly + extraMoves, StartPly + PlyNumber); thisPly++) {
+      if (thisPly == CurrentPly) {
+        theObj = document.getElementById("GameNextMoves");
+      }
+      if (thisPly % 2 === 0) { theObj.innerHTML += Math.floor(1 + thisPly / 2) + ". "; }
+      if (thisPly == CurrentPly - 1) {
+        theObj = document.getElementById("GameCurrMove");
+      }
+      theObj.innerHTML += Moves[thisPly] + " ";
+    }
+    if (thisPly < StartPly + PlyNumber) { theObj.innerHTML += "..."; }
+
+    if (theObj = document.getElementById("SideToMove")) {
+      theObj.style.backgroundColor = CurrentPly % 2 ? "black" : "white";
+    }
+
+    if (showBoard && showAnalysis && autoUpdateAnalysis) {
+      showAnalysisBoard(disableEngine);
+    }
+  }
+
+  function searchGameWithNewMoves(backward) {
+    if (typeof(gameId) == "undefined") { return; }
+    if (typeof(gameNewMoves) == "undefined") { return; }
+
+    for (var thisGameIndex = 0; thisGameIndex < gameId.length; thisGameIndex++) {
+      if (gameId[thisGameIndex] == currentGame) { break; }
+    }
+    if (thisGameIndex === gameId.length) { return; }
+
+    var indexIncrement = backward ? -1 : 1;
+    for (var thisIndex = (thisGameIndex + indexIncrement + gameId.length) % gameId.length; thisIndex !== thisGameIndex; thisIndex = (thisIndex + indexIncrement + gameId.length) % gameId.length) {
+      if ((typeof(gameNewMoves[gameId[thisIndex]]) != "undefined") && (gameNewMoves[gameId[thisIndex]])) { break; }
+    }
+    if (thisIndex !== thisGameIndex) { Init(gameId[thisIndex]); }
+  }
+
+  function searchLiveGame(backward) {
+    searchPgnGame("\\[\\s*Date\\s*\"[^\"]*live[^\"]*\"\\s*\\]", backward);
+  }
+
+  function customDebugInfo() {
+    return "autoSwitchNewgames=" + b2s(autoSwitchNewgames) + " roundReverse=" + b2s(roundReverse);
+  }
+  function b2s(b) { return b ? "true" : "false"; }
+
+  // customShortcutKey_Shift_1 defined by fide-lookup.js
+  // customShortcutKey_Shift_2 defined by fide-lookup.js
+
+  function customShortcutKey_Shift_3() { searchLiveGame(false); }
+  function customShortcutKey_Shift_4() { searchPgnGame('\\[\\s*Result\\s*"\\*"\\s*\\]', false); }
+  function customShortcutKey_Shift_5() { searchGameWithNewMoves(false); }
+  function customShortcutKey_Shift_6() { toggleAdjustBoard(); }
+  function customShortcutKey_Shift_7() { toggleShowBoard(); }
+
+  // overwriting engine.js definitions of customShortcutKey_Shift_8 9 0
+  function customShortcutKey_Shift_8() { showAnalysisBoard(true); }
+  function customShortcutKey_Shift_9() { showAnalysisBoard(false); }
+  function customShortcutKey_Shift_0() { if (showAnalysis) { hideAnalysisBoard(); } else { showAnalysisBoard(disableEngine); } }
+
+  boardShortcut("F5", "toggle event information", function(t,e){ if (e.shiftKey) { toggleRoundReverse(); } else { toggleShowEvent(); } });
+  boardShortcut("G5", "toggle teams information", function(t,e){ toggleShowTeams(); });
+  boardShortcut("H5", "toggle title/elo players information", function(t,e){ toggleShowPlayersInfo(); });
+  boardShortcut("G6", "toggle last moves information", function(t,e){ toggleShowLastMoves(); });
+
+  if (LiveBroadcastDelay > 0) {
+    boardShortcut("B7", "search previous game with new moves", function(t,e){ searchGameWithNewMoves(true); });
+    boardShortcut("C7", "search next game with new moves", function(t,e){ searchGameWithNewMoves(false); });
+    boardShortcut("G7", "toggle autoswitch to games with new moves", function(t,e){ autoSwitchNewgames = !autoSwitchNewgames && !e.shiftKey; });
+  } else { clearShortcutSquares("G", "7"); }
+  clearShortcutSquares("F", "7");
+
+  if (!pgn4web_engineWindowDisableAnalysisBoard) {
+    boardShortcut("E8", "open/update analysis board", function(t,e){ showAnalysisBoard(e.shiftKey); });
+    boardShortcut("F8", "close/pause analysis board", function(t,e){ if (!e.shiftKey) { hideAnalysisBoard(); } });
+  }
+
+
+  function toggleShowEvent() {
+    showEvent = !showEvent;
+    printGames();
+  }
+
+  function toggleRoundReverse() {
+    roundReverse = !roundReverse;
+    gameId.sort(sortGameId);
+    printGames();
+  }
+
+  function toggleShowTeams() {
+    showTeams = !showTeams;
+    printGames();
+  }
+
+  function toggleShowPlayersInfo() {
+    showPlayersInfo = !showPlayersInfo;
+    printGames();
+    customFunctionOnPgnGameLoad();
+  }
+
+  function toggleShowLastMoves() {
+    showLastMoves = !showLastMoves;
+    printGames();
+  }
+
+  function toggleShowBoard() {
+    var theObj;
+    showBoard = !showBoard;
+    if (theObj = document.getElementById("GameFloatingContainer")) {
+      theObj.style.display = showBoard ? "" : "none";
+    }
+    if (theObj = document.getElementById("GameLiveStatus2")) {
+      theObj.style.display = showBoard ? "none" : "";
+    }
+    if (showBoard) { Init(currentGame); }
+    printGames();
+  }
+
+  function toggleAdjustBoard() {
+    var theObj;
+    adjustBoard = !adjustBoard;
+    if (adjustBoard) { myOnResize(); }
+    else {
+      if (theObj = document.getElementById("GameFloatingContainer")) { theObj.style.marginRight = 0; }
+    }
+  }
+
+  var thisEngineWin;
+  function showAnalysisBoard(de) {
+    if (pgn4web_engineWindowDisableAnalysisBoard) { return; }
+    var theObj;
+    if (!showBoard) { return; }
+    thisEngineWin = showEngineAnalysisBoard(de);
+    if (thisEngineWin) {
+      disableEngine = de;
+      if (theObj = document.getElementById('GameAnalysisContainer')) {
+        theObj.style.width = "304px"; // defined as gameAnalysisContainer.width.open = gameAnalysisFrame.width + gameAnalysisFrame.marginLeft + body.padding
+      }
+      showAnalysis = true;
+    }
+  }
+
+  function hideAnalysisBoard() {
+    if (pgn4web_engineWindowDisableAnalysisBoard) { return; }
+    var theObj;
+    if (theObj = document.getElementById('GameAnalysisContainer')) {
+      theObj.style.width = "40px"; // = gameAnalysisContainer.width.closed
+    }
+    if (typeof(thisEngineWin) != "undefined") {
+      if (typeof(thisEngineWin.StopBackgroundEngine) == "function") { thisEngineWin.StopBackgroundEngine(); }
+      if (typeof(thisEngineWin.autoUpdate) != "undefined") { thisEngineWin.autoUpdate = false; }
+    }
+    showAnalysis = false;
+  }
+
+  function gup(name) {
+
+    name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+    var regexS = "[\\?&]"+name+"=([^&#]*)";
+    // commented below to match first occurrence (to avoid users overruling setting)
+    // regexS = regexS+"(?!.*"+regexS+")"; // matches the LAST occurrence
+    var regex = new RegExp( regexS, "i" );
+    var results = regex.exec( window.location.href );
+    if (results !== null) { return decodeURIComponent(results[1]); }
+
+    // allows for short version of the URL parameters, for instance sC matches squareColor
+    var compact_name = name.charAt(0);
+    for (var i=1; i<name.length; i++) {
+      if (name.charAt(i).match(/[A-Z]/)) { compact_name = compact_name + name.charAt(i).toLowerCase(); }
+    }
+    name = compact_name;
+
+    name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+    regexS = "[\\?&]"+name+"=([^&#]*)";
+    // commented below to match first occurrence (to avoid users overruling setting)
+    // regexS = regexS+"(?!.*"+regexS+")"; // matches the LAST occurrence
+    regex = new RegExp( regexS, "i" );
+
+    results = regex.exec( window.location.href );
+    if (results !== null) { return decodeURIComponent(results[1]); }
+
+    return "";
+  }
+
+</script>
+
+</head>
+
+<body onResize="myOnResize();" onLoad="myOnResize();">
+
+<h1 class="pageHeader" id="pageHeader">pgn4web <a class="pageHeader" href="#games">live chess broadcast</a></h1>
+
+<table class="gameFloatingContainer" id="GameFloatingContainer" cellspacing="0" cellpadding="0" border="0"><tr valign="top"><td align="leftt">
+<div class="gameAnalysisContainer" id="GameAnalysisContainer">
+<div class="gameAnalysisButtons" id="GameAnalysisButtons" title="analysis board: try moves clicking from/to squares" onclick="hideAnalysisBoard();"></div>
+<iframe class="gameAnalysisFrame" id="GameAnalysisFrame" name="pgn4webAnalysisBoardForLiveResultsViewer" src="./blank.html" frameborder="0" scrolling="no" marginheight="0" marginwidth="0">your web browser and/or your host do not support iframes as required</iframe>
+</div>
+</td><td align="left">
+<div class="gameBoardContainer" id="GameBoardContainer">
+<div class="header"><span class="gameEvent" id="GameEvent">&nbsp;</span><span class="gameLiveStatus"><span style="display: none;" id="GameDate"></span><span id="GameLiveStatus" style="cursor:pointer;"></span></span></div>
+<div class="header"><span class="gameWhite" id="GameWhite" title="white player" onclick="openFidePlayerUrl(this.innerHTML, customPgnHeaderTag('WhiteFideId')); this.blur();"></span><span class="gameWhiteClock" id="GameWhiteClock" title="white clock"></span><span class="gameBlackClock" id="GameBlackClock" title="black clock"></span><span class="gameBlack" id="GameBlack" title="black player" onclick="openFidePlayerUrl(this.innerHTML, customPgnHeaderTag('BlackFideId')); this.blur();"></span></div>
+<div class="gameBoard" id="GameBoard"></div>
+<div class="footer"><span class="gameSideToMove"><span class="sideToMove sideToMoveHidden" id="SideToMove" title="side to move"></span>&nbsp;</span><span class="gameText">&nbsp;<span id="GamePrevMoves" style="cursor:pointer;" onclick="GoToMove(CurrentPly - 1); this.blur();" title="previous moves"></span><span id="GameCurrMove" style="font-weight: bold; cursor:pointer;" onclick="SetHighlight(!highlightOption); this.blur();" title="current move as shown on chessboard"></span><span id="GameNextMoves" style="cursor:pointer;" onclick="GoToMove(CurrentPly + 1); this.blur();" title="next moves"></span><span style="font-weight: bold;">&nbsp;</span></span><span class="gameResult" id="GameResult" onclick="GoToMove(StartPlyVar[0] + PlyNumberVar[0], 0); this.blur();" title="go to game end"></span></div>
+<div class="footer"><span class="gameDateAdjusted" id="GameDateAdjusted" onclick="searchLiveGame(event.shiftKey);"></span></div>
+</div>
+</td></tr></table>
+
+<a name="games" class="gamesAnchor" id="gamesAnchor"></a>
+
+<div id="results"></div>
+<span class="gameLiveStatus2" id="GameLiveStatus2"></span>
+
+<script type="text/javascript">
+  "use strict";
+
+  var theObj;
+
+  if (theObj = document.getElementById("GameFloatingContainer")) {
+    theObj.style.display = showBoard ? "" : "none";
+  }
+  if (theObj = document.getElementById("GameLiveStatus2")) {
+      theObj.style.display = showBoard ? "none" : "";
+  }
+  if (theObj = document.getElementById("pageHeader")) {
+    theObj.style.display = headlessPage ? "none" : "";
+  }
+  if (theObj = document.getElementById("gamesAnchor")) {
+    theObj.style.display = headlessPage ? "none" : "";
+  }
+  if (theObj = document.getElementById("GameDate")) {
+    if (refreshMinutes === 0) { theObj.style.display = ""; }
+  }
+
+  function myOnResize() {
+    if (!adjustBoard) { return false; }
+    var ww, wh;
+    if (window.innerWidth && window.innerHeight) { ww = window.innerWidth; wh = window.innerHeight; }
+    else if (document.documentElement && document.documentElement.clientWidth) { ww = document.documentElement.clientWidth; wh = document.documentElement.clientHeight; }
+    else if (document.body && document.body.clientWidth) { ww = document.body.clientWidth; wh = document.body.clientHeight; }
+    else { return false; }
+
+    var theObj = document.getElementById("GameFloatingContainer");
+    if (theObj) {
+      // targetMargin = 0.5 * (ww - 2 * body.padding - event.width - 2 * player.paddingLeft - round.width - player.marginRight - 12 * game.fontSize - gameBoardContainer.width - gameBoardContainer.paddingRight - gameFloatingContainer.right - extra);
+      var targetMargin = 0.5 * (ww - 40 - 420 - 2 * 5 - 50 - 20 - 324 - 12 * 14 - 40 - 0 - 40);
+      theObj.style.marginRight = targetMargin > 0 ? targetMargin + "px" : 0;
+      return true;
+    } else { return false; }
+  }
+
+  function pgn4web_handleTouchEnd_FloatingContainer(e) {
+    e.stopPropagation();
+    var jj, deltaX, deltaY;
+    for (var ii = 0; ii < e.changedTouches.length; ii++) {
+      if ((jj = pgn4webOngoingTouchIndexById(e.changedTouches[ii].identifier)) != -1) {
+        if (pgn4webOngoingTouches.length == 1) {
+          deltaX = e.changedTouches[ii].clientX - pgn4webOngoingTouches[jj].clientX;
+          deltaY = e.changedTouches[ii].clientY - pgn4webOngoingTouches[jj].clientY;
+          if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) >= 13) {
+            if (Math.abs(deltaX) > 1.5 * Math.abs(deltaY)) {
+              if (deltaX > 0) { // horizontal right
+                hideAnalysisBoard();
+              } else { // horizontal left
+                showAnalysisBoard(false);
+              }
+            } else if (Math.abs(deltaY) > 1.5 * Math.abs(deltaX)) { // vertical up or down
+              refreshPgnSource();
+            }
+          }
+          pgn4webMaxTouches = 0;
+        }
+        pgn4webOngoingTouches.splice(jj, 1);
+      }
+    }
+    clearSelectedText();
+  }
+
+  if (touchEventEnabled) {
+    if (theObj = document.getElementById("GameFloatingContainer")) {
+      simpleAddEvent(theObj, "touchstart", pgn4web_handleTouchStart);
+      simpleAddEvent(theObj, "touchmove", pgn4web_handleTouchMove);
+      simpleAddEvent(theObj, "touchend", pgn4web_handleTouchEnd_FloatingContainer);
+      simpleAddEvent(theObj, "touchleave", pgn4web_handleTouchEnd_FloatingContainer);
+      simpleAddEvent(theObj, "touchcancel", pgn4web_handleTouchCancel);
+    }
+    if ((LiveBroadcastDelay > 0) || (!pgn4web_engineWindowDisableAnalysisBoard)) {
+      touchGestures_helpActions =  touchGestures_helpActions.concat([ "&nbsp;" ]);
+      touchGestures_helpText = touchGestures_helpText.concat([ "" ]);
+    }
+    if (LiveBroadcastDelay > 0) {
+      touchGestures_helpActions =  touchGestures_helpActions.concat([ "game header vertical swipe" ]);
+      touchGestures_helpText = touchGestures_helpText.concat([ "force live broadcast games refresh" ]);
+    }
+    if (!pgn4web_engineWindowDisableAnalysisBoard) {
+      touchGestures_helpActions =  touchGestures_helpActions.concat([ "game header left-right swipe", "game header right-left swipe" ]);
+      touchGestures_helpText = touchGestures_helpText.concat([ "close/pause analysis board", "open/update analysis board" ]);
+    }
+    touchGestures_helpActions =  touchGestures_helpActions.concat([ "&nbsp;", "games list swipe" ]);
+    touchGestures_helpText = touchGestures_helpText.concat([ "", "scroll the games list" ]);
+  }
+
+</script>
+
+</body>
+
+</html>

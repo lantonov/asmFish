@@ -1,0 +1,144 @@
+/*
+ *  pgn4web javascript chessboard
+ *  copyright (C) 2009-2013 Paolo Casaschi
+ *  see README file and http://pgn4web.casaschi.net
+ *  for credits, license and more details
+ */
+
+@import url("fonts/pgn4web-font-LiberationSans.css");
+@import url("fonts/pgn4web-font-ChessSansUsual.css");
+
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  font-family: 'pgn4web Liberation Sans', sans-serif;
+  color: black;
+  background: white;
+}
+
+div, span, table, tr, td {
+  font-family: 'pgn4web Liberation Sans', sans-serif; /* fixes IE9 body css issue */
+}
+
+a {
+  color: black;
+  text-decoration: none;
+}
+
+.boardTable {
+  width: 366px;
+  height: 366px;
+  border-style: double;
+  border-color: black;
+  border-width: 3px;
+}
+
+.pieceImage {
+  width: 36px;
+  height: 36px;
+}
+
+.whiteSquare,
+.blackSquare,
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  width: 41px;
+  height: 41px;
+  border-style: solid;
+  border-width: 2px;
+}
+
+.whiteSquare,
+.highlightWhiteSquare {
+  border-color: #ede8d5;
+  background: #ede8d5;
+}
+
+.blackSquare,
+.highlightBlackSquare {
+  border-color: #cfcbb3;
+  background: #cfcbb3;
+}
+
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  border-color: yellow;
+  border-style: solid;
+}
+
+.selectControl {
+/* a "width" attribute here must use the !important flag to override default settings */
+  width: 100% !important;
+}
+
+.optionSelectControl {
+}
+
+.buttonControlPlay,
+.buttonControlStop,
+.buttonControl {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.buttonControlSpace {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.searchPgnButton {
+/* a "width" attribute here must use the !important flag to override default settings */
+  width: 10% !important;
+}
+
+.searchPgnExpression {
+/* a "width" attribute here must use the !important flag to override default settings */
+  width: 90% !important;
+}
+
+.move,
+.variation,
+.comment {
+  color: black;
+  line-height: 1.3em;
+  font-weight: normal;
+  text-decoration: none;
+}
+
+.move,
+.variation,
+.commentMove {
+  font-family: 'pgn4web ChessSansUsual', 'pgn4web Liberation Sans', sans-serif;
+}
+
+a.move,
+a.variation,
+.commentMove {
+  white-space: nowrap;
+}
+
+.comment,
+.variation {
+  color: gray;
+}
+
+a.variation {
+  color: gray;
+}
+
+.moveOn,
+.variationOn {
+  background: yellow;
+}
+
+.label {
+  color: gray;
+}
+
+.loading {
+  color: gray;
+  white-space: nowrap;
+}
+

@@ -1,0 +1,139 @@
+/*
+ *  pgn4web javascript chessboard
+ *  copyright (C) 2009-2013 Paolo Casaschi
+ *  see README file and http://pgn4web.casaschi.net
+ *  for credits, license and more details
+ */
+
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  padding: 10px;
+  font-family: sans-serif;
+  font-size: 16px;
+  color: black;
+  background: white;
+}
+
+a {
+  text-decoration: none;
+  color: black;
+}
+
+ul {
+  margin-bottom: 0px;
+}
+
+.boardTable {
+  border-color: #C4B9A0;
+  border-width: 2px;
+  border-style: outset;
+}
+
+.pieceImage {
+  width: 32px;
+  height: 32px;
+}
+
+.whiteSquare,
+.blackSquare,
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  width: 42px;
+  height: 42px;
+  border-style: solid;
+  border-width: 1px;
+}
+
+.whiteSquare,
+.highlightWhiteSquare {
+  border-color: #EFE6D0;
+  background: #EFE6D0;
+}
+
+.blackSquare,
+.highlightBlackSquare {
+  border-color: #C4B9A0;
+  background: #C4B9A0;
+}
+
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  border-style: inset;
+}
+
+.selectControl {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.optionSelectControl {
+}
+
+.buttonControlPlay,
+.buttonControlStop,
+.buttonControl {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.buttonControlSpace {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.searchPgnButton {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.searchPgnExpression {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.move,
+.variation,
+.comment {
+  color: black;
+  font-family: sans-serif;
+  line-height: 1.3em;
+  font-weight: normal;
+  text-decoration: none;
+}
+
+.comment,
+.variation {
+  color: gray;
+}
+
+a.move,
+a.variation,
+.commentMove {
+  white-space: nowrap;
+}
+
+a.variation {
+  color: gray;
+}
+
+.moveOn,
+.variationOn {
+  background: #EFE6D0;
+}
+
+.label {
+  color: black;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.gameFEN {
+  font-size: 13px;
+  text-align: left;
+}
+
+.gameText {
+  font-size: 13px;
+  text-align: justify;
+}
+

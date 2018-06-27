@@ -1,0 +1,171 @@
+/*
+ *  pgn4web javascript chessboard
+ *  copyright (C) 2009-2013 Paolo Casaschi
+ *  see README file and http://pgn4web.casaschi.net
+ *  for credits, license and more details
+ */
+
+@import url("fonts/pgn4web-font-LiberationSans.css");
+@import url("fonts/pgn4web-font-ChessSansUscf.css");
+
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  font-family: 'pgn4web Liberation Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.4em;
+  color: black;
+  background: white;
+}
+
+div, span, table, tr, td {
+  font-family: 'pgn4web Liberation Sans', sans-serif; /* fixes IE9 body css issue */
+}
+
+a.gamelist,
+a.gamelistselected {
+  display: inline-block;
+  width: 100%;
+  font-weight: bold;
+  text-decoration: none;
+  background: #c3c3c3;
+  padding: 13px;
+  margin-bottom: 15px;
+  border-style: none;
+  border-radius: 10px;
+}
+
+a.gamelist {
+  color: #ffffff;
+  box-shadow: 1px 1px 15px #aaaaaa;
+}
+
+a.gamelistselected {
+  color: #666666;
+  box-shadow: 1px 1px 5px #cccccc;
+}
+
+.boardTable {
+  width: 388px;
+  height: 388px;
+  border-style: solid;
+  border-color: #c3c3c3;
+  border-width: 10px;
+  border-radius: 10px;
+  box-shadow: 1px 1px 30px #aaaaaa;
+  margin-right: 10px;
+}
+
+.pieceImage {
+  width: 34px;
+  height: 34px;
+}
+
+.whiteSquare,
+.blackSquare,
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  width: 44px;
+  height: 44px;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.whiteSquare,
+.highlightWhiteSquare {
+  background: #e3e3e3;
+  border-color: #e3e3e3;
+}
+
+.blackSquare,
+.highlightBlackSquare {
+  background: #c3c3c3;
+  border-color: #c3c3c3;
+}
+
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  border-style: inset;
+}
+
+.buttonControlPlay,
+.buttonControlStop,
+.buttonControl {
+/* a "width" attribute here must use the !important flag to override default settings */
+  width: 60px !important;
+}
+
+.buttonControlSpace {
+/* a "width" attribute here must use the !important flag to override default settings */
+  width: 22px !important;
+}
+
+.buttonControlPlay,
+.buttonControlStop,
+.buttonControl,
+.selectControl,
+.searchPgnButton,
+.searchPgnExpression {
+/* a "width" attribute here must use the !important flag to override default settings */
+  font-size: 14px;
+  font-weight: bold;
+  color: #ffffff;
+  background: #c3c3c3;
+  padding: 13px;
+  border-style: none;
+  border-radius: 10px;
+  box-shadow: 1px 1px 15px #aaaaaa;
+}
+
+.buttonControlPlay:active,
+.buttonControlStop:active,
+.buttonControl:active {
+  color: #666666;
+  box-shadow: 1px 1px 5px #cccccc;
+}
+
+.optionSelectControl {
+  background-color: #c3c3c3;
+}
+
+.move,
+.variation {
+  font-weight: normal;
+  text-decoration: none;
+}
+
+.move,
+.variation,
+.commentMove {
+  font-family: 'pgn4web ChessSansUscf', 'pgn4web Liberation Sans', sans-serif;
+}
+
+a.move,
+a.variation,
+.commentMove {
+  white-space: nowrap;
+}
+
+.move {
+  color: black;
+}
+
+.comment,
+.variation {
+  color: gray;
+}
+
+a.variation {
+  color: gray;
+}
+
+.moveOn,
+.variationOn {
+  background: #e3e3e3;
+  box-shadow: 0px 0px 15px #c3c3c3;
+}
+

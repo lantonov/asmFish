@@ -1,0 +1,15 @@
+{
+  "name": "Live Games",
+  "start_url": "/live-games-app.php",
+  "display": "fullscreen",
+  "icons": [{
+        "src": "live-games-app-icon-60x60.png",
+        "sizes": "60x60",
+        "type": "image/png"
+      }, {
+        "src": "live-games-app-icon-128x128.png",
+        "sizes": "128x128",
+        "type": "image/png"
+      }],
+  "pgn4web_notes": "copyright (C) 2009-2017 Paolo Casaschi; add to .htacess to serve *.json properly: 'AddType application/x-web-app-manifest+json .json'"
+}

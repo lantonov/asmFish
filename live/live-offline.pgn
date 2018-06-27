@@ -1,0 +1,9 @@
+% this is a placeholder pgn file for the live boradcast
+% it allows to announce the live games service as offline
+% if the Result tag is set to "*" games will automatically refresh
+
+[Event "live games service offline"]
+% [Result "*"]
+
+*
+

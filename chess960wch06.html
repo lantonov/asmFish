@@ -1,0 +1,161 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2014 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<title>Chess960 World Championship 2006</title>
+
+<link href="chess960wch06.css" type="text/css" rel="stylesheet" />
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+<script src="pgn4web.js" type="text/javascript"></script>
+<script type="text/javascript">
+  "use strict";
+
+  SetPgnUrl("chess960wch06.pgn");
+  SetImagePath("images/uscf/32");
+  SetImageType("png");
+  SetHighlightOption(true);
+  SetGameSelectorOptions(null, false, 0, 0, 1, 7, 7, 3, 0); // (head, num, chEvent, chSite, chRound, chWhite, chBlack, chResult, chDate);
+  SetCommentsIntoMoveText(true);
+  SetCommentsOnSeparateLines(true);
+  SetAutoplayDelay(2500); // milliseconds
+  SetAutostartAutoplay(false);
+  SetAutoplayNextGame(false);
+  SetInitialVariation(0);
+  SetInitialGame("first");
+  SetInitialHalfmove(2, true);
+  SetShortcutKeysEnabled(true);
+
+function customFunctionOnPgnGameLoad() {
+  var theObj;
+  if (theObj = document.getElementById('GameFEN'))
+  { if (gameFEN[currentGame]) { theObj.innerHTML = gameFEN[currentGame].match(/\s*\S*/); } }
+  if (theObj = document.getElementById('GameWhite'))
+  { theObj.innerHTML = theObj.innerHTML.match(/\s*[^,]*/); }
+  if (theObj = document.getElementById('GameBlack'))
+  { theObj.innerHTML = theObj.innerHTML.match(/\s*[^,]*/); }
+}
+
+</script>
+
+</head>
+
+<body>
+
+<!-- paste your PGN below and make sure you dont specify an external source with SetPgnUrl() -->
+<form style="display: none;"><textarea style="display: none;" id="pgnText">
+
+</textarea></form>
+<!-- paste your PGN above and make sure you dont specify an external source with SetPgnUrl() -->
+
+<table width="100%" cellspacing="0" cellpadding="0" border="0">
+<tr valign=top>
+
+<td width="356" align="left">
+
+<div id="GameHeader">
+<div class="label" style="text-align: center;">
+Mainz GER, 2006
+<br/>
+Chess960 rapid WCh
+<div>&nbsp;</div>
+</div>
+<table width="100%"><tr><td align="left" width="15%">
+<div class="label">#<span id="GameRound"></span></div>
+</td><td align="center" width="70%">
+<div class="label">
+<span id="GameWhite"></span>
+&nbsp;-&nbsp;
+<span id="GameBlack"></span>
+</div>
+</td><td align="right" width="15%">
+<div class="label"><span id="GameResult"></span></div>
+</td></tr></table>
+<div>&nbsp;</div>
+</div>
+
+<div id="GameBoard"></div>
+<div>&nbsp;</div>
+<div id="GameButtons"></div>
+<div>&nbsp;</div>
+<div id="GameSelector"></div>
+<div>&nbsp;</div>
+<div class="gameFEN" id="GameFEN"></div>
+<div>&nbsp;</div>
+<div class="gameText" id="GameText"></div>
+
+</td>
+<td align="left">
+
+<div id="TextHeader" style="text-align: justify; margin-left: 40px; margin-right: 5px;">
+These are the games for the <a target="_blank" href="http://en.wikipedia.org/wiki/Chess960">Chess960</a> rapid World Championship 2006 in Mainz (Germany) between Levon Aronian (Armenia) and Peter Svidler (Russia). Aronian won the match 5-3, with no draws!
+<div>&nbsp;</div>
+<div>&nbsp;</div>
+</div>
+
+<div style="text-align: justify; margin-left: 40px; margin-right: 5px;">
+<script type="text/javascript">
+document.write('This page shows pgn4web support for <a target="_blank" href="http://en.wikipedia.org/wiki/Chess960"><b>Chess960</b></a>, a.k.a. <b>Fischer random chess</b>.');
+</script>
+This chess variant uses the same board and pieces as standard chess, with extended options for the starting position and castling rules adapted accordingly.
+<div>&nbsp;</div>
+Starting position:
+<ul style="margin-top:0px; list-style-type:square;">
+  <li>pawns start in the same position as in standard chess</li>
+  <li>White pieces are placed randomly on the first rank
+  <ul style="list-style-type:square;">
+    <li>the King must be placed somewhere between the Rooks</li>
+    <li>the Bishops must be on opposite color squares</li>
+  </ul></li>
+  <li>Black pieces are placed equal and opposite to the White pieces</li>
+</ul>
+<div>&nbsp;</div>
+Castling rules:
+<ul style="margin-top:0px; list-style-type:square;">
+  <li>castling is allowed under the following conditions
+  <ul style="list-style-type:square;">
+     <li>the King and the castling Rook must not have moved before</li>
+     <li>no square between the King's initial and final squares may be under attack by any opposing piece</li>
+     <li>all the squares between the King's initial and final squares and all the squares between the Rook's initial and final squares must be vacant except for the King and the castling Rook</li>
+  </ul></li>
+  <li>after castling, the Rook and King's final positions are exactly the same as they would be in standard chess</li>
+</ul>
+<div>&nbsp;</div>
+Games notation:
+<ul style="margin-top:0px; list-style-type:square;">
+  <li>games are recorded using the <a target="_blank" href="http://en.wikipedia.org/wiki/Portable_Game_Notation">PGN notation</a>, with an extension to the <a target="_blank" href="http://en.wikipedia.org/wiki/Forsyth-Edwards_Notation">FEN notation</a> in order to support castling information</li>
+  <li>two very similar <a target="_blank" href="http://en.wikipedia.org/wiki/Forsyth-Edwards_Notation">FEN</a> extensions have been proposed: <a target="_blank" href="http://en.wikipedia.org/wiki/X-FEN">X-FEN</a> and Shredder-FEN</li>
+<script type="text/javascript">
+document.write('  <li>pgn4web understands both extensions and generates <a target="_blank" href="http://en.wikipedia.org/wiki/X-FEN">X-FEN</a> strings when clicking the associated shortcut square</li>');
+</script>
+</ul>
+</div>
+
+</td>
+</tr>
+</table>
+
+<div>&nbsp;</div>
+
+<script type="text/javascript">
+  "use strict";
+
+  var gameHeaderObj = document.getElementById("GameHeader");
+  var textHeaderObj = document.getElementById("TextHeader");
+  if (gameHeaderObj && gameHeaderObj.offsetHeight && textHeaderObj) {
+    textHeaderObj.style.minHeight = gameHeaderObj.offsetHeight + "px";
+  }
+</script>
+
+</body>
+
+</html>

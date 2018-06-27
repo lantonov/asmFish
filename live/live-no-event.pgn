@@ -1,0 +1,12 @@
+% this is a placeholder pgn file for the live boradcast
+% it allows to announce the next broadcast on pgn4web live pages
+% if the Result tag is set to "*" games will automatically refresh
+
+[Event "no live event"]
+[Date "check back later"]
+% [Result "*"]
+
+{[%pgn4web click square H6 to check for the next event]}
+
+*
+

@@ -1,0 +1,56 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2014 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<title>Chess Informant symbols</title>
+
+<link href="template.css" type="text/css" rel="stylesheet" />
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+<script src="pgn4web.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+"use strict";
+
+var NAG_text = new Array();
+for (var ii = 0; ii < NAG.length; ii++) {
+  if (!NAG[ii]) { continue; }
+  NAG_text[ii] = NAG[ii];
+}
+</script>
+
+<script src="fonts/chess-informant-NAG-symbols.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+if (location.search == "?alternative") { document.write('<script src="chess-informant-NAG-symbols-alternative.js" type="text/javascript"><\/script>'); }
+</script>
+
+</head>
+
+<body>
+
+<script type="text/javascript">
+"use strict";
+
+document.write("<table cellpadding='5'>");
+var ix = Math.max(NAG.length, NAG_text.length);
+for (var ii = 0; ii < ix; ii++) {
+  if ((!NAG[ii]) && (!NAG_text[ii])) { continue; }
+  document.write("<tr><td>$" + ii + "</td><td>" + (NAG[ii] ? NAG[ii] : "") + "</td><td>" + (NAG_text[ii] ? NAG_text[ii] : "") + "</td></tr>");
+}
+document.write("</table>");
+
+</script>
+
+</body>
+
+</html>

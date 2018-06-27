@@ -1,0 +1,178 @@
+/*
+ *  pgn4web javascript chessboard
+ *  copyright (C) 2009-2013 Paolo Casaschi
+ *  see README file and http://pgn4web.casaschi.net
+ *  for credits, license and more details
+ */
+
+@import url("fonts/pgn4web-font-LiberationSans.css");
+@import url("fonts/pgn4web-font-ChessSansUsual.css");
+
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  padding: 10px;
+  font-family: 'pgn4web Liberation Sans', sans-serif;
+  color: black;
+  background: white;
+}
+
+div, span, table, tr, td {
+  font-family: 'pgn4web Liberation Sans', sans-serif; /* fixes IE9 body css issue */
+}
+
+.containerTable {
+  width: 100%;
+}
+
+.containerCell {
+  padding: 20px;
+}
+
+.gametextContainerCell {
+  padding-left: 20px;
+}
+
+.gametextDiv {
+  padding-right: 20px;
+  height: 470px;
+  overflow: auto;
+  scrollbar-base-color: white;
+}
+
+.boardTable {
+  width: 376px;
+  height: 376px;
+  border-style: solid;
+  border-color: #663300;
+  border-width: 3px;
+  box-shadow: 0px 0px 20px #663300;
+}
+
+.pieceImage {
+  width: 36px;
+  height: 36px;
+}
+
+.whiteSquare,
+.blackSquare,
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  width: 43px;
+  height: 43px;
+  border-style: solid;
+  border-width: 2px;
+}
+
+.whiteSquare,
+.highlightWhiteSquare {
+  border-color: #FFCC99;
+  background: #FFCC99;
+}
+
+.blackSquare,
+.highlightBlackSquare {
+  border-color: #CC9966;
+  background: #CC9966;
+}
+
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  border-color: #663300;
+  border-style: solid;
+}
+
+.selectControl {
+/* a "width" attribute here must use the !important flag to override default settings */
+  width: 100% !important;
+}
+
+.optionSelectControl {
+}
+
+.buttonControlPlay,
+.buttonControlStop,
+.buttonControl {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.buttonControlSpace {
+/* a "width" attribute here must use the !important flag to override default settings */
+}
+
+.searchPgnButton {
+/* a "width" attribute here must use the !important flag to override default settings */
+  width: 10% !important;
+}
+
+.searchPgnExpression {
+/* a "width" attribute here must use the !important flag to override default settings */
+  width: 90% !important;
+}
+
+.move,
+.variation,
+.comment {
+  color: black;
+  line-height: 1.4em;
+  font-weight: normal;
+  text-decoration: none;
+}
+
+a.move:hover, a.variation:hover {
+  text-decoration: underline;
+}
+
+.move,
+.variation,
+.commentMove {
+  font-family: 'pgn4web ChessSansUsual', 'pgn4web Liberation Sans', sans-serif;
+}
+
+a.move,
+a.variation,
+.commentMove {
+  white-space: nowrap;
+}
+
+.comment,
+.variation {
+  color: gray;
+}
+
+a.variation {
+  color: gray;
+}
+
+.moveOn,
+.variationOn {
+  background: #FFCC99;
+}
+
+.label {
+  color: gray;
+  padding-right: 10px;
+  text-align: right;
+}
+
+.boldItem {
+  font-weight: bold;
+}
+
+.linkItem {
+  text-decoration: none;
+  color: black;
+}
+
+.linkItem:hover {
+  text-decoration: underline;
+}
+
+.rowSpace {
+  height: 8px;
+}
+

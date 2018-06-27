@@ -1,0 +1,158 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2014 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<title>dynamic frame test</title>
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+<style type="text/css">
+
+html, body {
+  margin: 0px;
+  padding: 0px;
+}
+
+span {
+  white-space:nowrap;
+}
+
+input {
+  height:20px;
+  font-size:9px;
+}
+
+</style>
+
+</head>
+
+<body style="overflow:hidden; font-size:9px; font-family:sans-serif;" onload="atLoad();">
+
+<center>
+
+<div style="padding:10px;" id="header">
+<span>&nbsp; width <input id="width" style="width:6em;" type="number" onchange="change_w(this.value);"> &nbsp;</span>
+<span>&nbsp; height <input id="height" style="width:6em;" type="number" onchange="change_h(this.value);"> &nbsp;</span>
+<span>&nbsp; <input type="button" value="swap" onclick="swap_wh();"/> &nbsp;</span>
+<span>&nbsp;&nbsp;</span>
+<span>&nbsp; <input type="button" value="2:1" onclick="preselect(2,1);"/> &nbsp;</span>
+<span>&nbsp; <input type="button" value="16:9" onclick="preselect(16,9);"/> &nbsp;</span>
+<span>&nbsp; <input type="button" value="4:3" onclick="preselect(4,3);"/> &nbsp;</span>
+<span>&nbsp; <input type="button" value="1:1" onclick="preselect(1,1);"/> &nbsp;</span>
+<span>&nbsp; <input type="button" value="3:4" onclick="preselect(3,4);"/> &nbsp;</span>
+<span>&nbsp; <input type="button" value="9:16" onclick="preselect(9,16);"/> &nbsp;</span>
+<span>&nbsp; <input type="button" value="1:2" onclick="preselect(1,2);"/> &nbsp;</span>
+<span>&nbsp;&nbsp;</span>
+<span>&nbsp; <input type="button" value="narrow" onclick="modify(1/1.05, 1);"/> &nbsp;</span>
+<span>&nbsp; <input type="button" value="wide" onclick="modify(1.05, 1);"/> &nbsp;</span>
+<span>&nbsp; <input type="button" value="short" onclick="modify(1, 1/1.05);"/> &nbsp;</span>
+<span>&nbsp; <input type="button" value="tall" onclick="modify(1, 1.05);"/> &nbsp;</span>
+<span>&nbsp;&nbsp;</span>
+<span>&nbsp; <input type="button" value="poke" onclick="modify(0, 0);"/>&nbsp;</span>
+<span>&nbsp;&nbsp;</span>
+<span>&nbsp; <input type="button" value="refresh" onclick="frameRefresh();"/> &nbsp;</span>
+</div>
+
+<iframe id="frame" src="" height="" width="" style="margin:10px;" frameborder="no" scrolling='no' marginheight='0' marginwidth='0'></iframe>
+
+</center>
+
+<script type="text/javascript">
+"use strict";
+
+var thisRegExp;
+var minBoardSize = 200;
+
+var frameWidth = "";
+thisRegExp = /(&|\?)(frameWidth|fw)=([^&]*)(&|$)/i;
+if (window.location.search.match(thisRegExp) !== null) {
+  frameWidth = unescape(window.location.search.match(thisRegExp)[3]);
+}
+
+var frameHeight = "";
+thisRegExp = /(&|\?)(frameHeight|fh)=([^&]*)(&|$)/i;
+if (window.location.search.match(thisRegExp) !== null) {
+  frameHeight = unescape(window.location.search.match(thisRegExp)[3]);
+}
+
+try {
+  document.getElementById("width").min = minBoardSize;
+  document.getElementById("height").min = minBoardSize;
+} catch(e) {}
+
+function atLoad() {
+  if (frameHeight || frameWidth) {
+    if (frameWidth && !frameHeight) { try { frameHeight = Math.floor(frameWidth * 9 / 16); } catch(e) {} }
+    if (frameHeight && !frameWidth) { try { frameWidth = Math.ceil(frameHeight / 9 * 16); } catch(e) {} }
+    change_w(frameWidth);
+    change_h(frameHeight);
+  } else { preselect(16, 9); }
+  frameRefresh();
+}
+
+var frameUrlSearch = location.search.replace(/(&|\?)(frameWidth|fw|frameHeight|fh)=([^&]*)/ig, "$1").replace(/(&|\?)&+/ig, "$1");
+function frameRefresh() {
+  document.getElementById("frame").src = "dynamic-frame.html" + frameUrlSearch;
+}
+
+function preselect(w, h) {
+  var ww, wh, aw, ah, fw, fh;
+  if (window.innerWidth && window.innerHeight) { ww = window.innerWidth; wh = window.innerHeight; }
+  else if (document.documentElement && document.documentElement.clientWidth) { ww = document.documentElement.clientWidth; wh = document.documentElement.clientHeight; }
+  else if (document.body && document.body.clientWidth) { ww = document.body.clientWidth; wh = document.body.clientHeight; }
+  else { throw("failed to get window size"); }
+  aw = ww - 20;
+  ah = wh - document.getElementById("header").offsetHeight - 20;
+  if (w > h) {
+    fw = Math.ceil(Math.min(aw, ah * w / h));
+    fh = Math.floor(fw * h / w);
+  } else if (w < h) {
+    fw = Math.floor(Math.min(aw, ah * w / h));
+    fh = Math.ceil(fw * h / w);
+  } else {
+    fw = fh = Math.floor(Math.min(aw, ah));
+  }
+  change_w(fw);
+  change_h(fh);
+}
+
+function change_w(w) {
+  if (isNaN(w) || (w < minBoardSize)) { w = document.getElementById("width").value = minBoardSize; }
+  document.getElementById("frame").width = w;
+  if (w !== document.getElementById("width").value) { document.getElementById("width").value = w; }
+}
+
+function change_h(h) {
+  if (isNaN(h) || (h < minBoardSize)) { h = document.getElementById("height").value = minBoardSize; }
+  document.getElementById("frame").height = h;
+  if (h !== document.getElementById("height").value) { document.getElementById("height").value = h; }
+}
+
+function modify(dw, dh) {
+  if (dw === 0) { dw = (95 + 10 * Math.random()) / 100; }
+  if (dh === 0) { dh = (95 + 10 * Math.random()) / 100; }
+  if (dw != 1) { change_w(Math.round(document.getElementById("width").value * dw)); }
+  if (dh != 1) { change_h(Math.round(document.getElementById("height").value * dh)); }
+}
+
+function swap_wh() {
+  var fw = document.getElementById("height").value;
+  var fh = document.getElementById("width").value;
+  change_w(fw);
+  change_h(fh);
+}
+
+</script>
+
+</body>
+
+</html>
+

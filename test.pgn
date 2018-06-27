@@ -1,0 +1,139 @@
+
+% test.pgn file showing a number of PGN features
+
+some garbage at the start of the PGN file
+
+[Event "Testing PGN header tags, comments and clock information"]
+[Site "Some site"]
+[Date "1234.56.78"]
+[Round "1"]
+[White "Some White player"]
+[Black "Some Black player"]
+[Result "1/2-1/2"]
+[WhiteTitle "IM"]
+[BlackTitle "FM"]
+[WhiteElo "2468"]
+[BlackElo "2345"]
+[ECO "A00"]
+[Opening "Some opening"]
+[Variation "Some variation"]
+[SubVariation "Some subvariation"]
+[TimeControl "40/3600:900+30"]
+[Section "Some section"]
+[Stage "Some stage"]
+[Board "1"]
+[Termination "normal"]
+[WhiteClock "1:00:00"]
+[BlackClock "1:00:00"]
+[Clock "W/00:41:19"]
+
+1. e4 { [%clk 00:59:01] } 1... e5 { [%clk 00:58:02] this is an inline
+comment } 2. Nf3 { [%clk 00:57:03] } 2... Nf6 { [%clk 00:56:04] } (2... Nc6
+%
+% this line should not be passed through by the PGN viewer
+%
+3. Bb5 (3. Bc4)) 3. d4 { [%clk 00:55:05] } 3... exd4 { [%clk 00:54:06] } 4.
+e5 { [%clk 00:53:07] } 4... Ne4 { [%clk 00:52:08] } 5. Qxd4 { [%clk
+00:51:09] } 5... d5 { $5 [%clk 00:50:10] } 6. exd6 { [%clk 00:49:11] } 6...
+Nxd6 { [%clk 00:48:12] } 7. Bd3 { [%clk 00:47:13] } 7... Nc6 { [%clk
+00:46:14] } 8. Qf4 { [%clk 00:45:15] } ; the rest of this line is a comment
+8... Be7 { [%clk 00:44:16] [%pgn4web pgn4web message] } 9. O-O { [%clk
+00:43:17] } 9... O-O { [%clk 00:42:18] } 1/2-1/2
+
+[Event "Testing non standard initial position, NAG comments and basic variations"]
+[Site "Another site"]
+[Date "2345.67.89"]
+[Round "2"]
+[White "Another White player"]
+[Black "Another Black player"]
+[Result "*"]
+[SetUp "1"]
+[FEN "rnbqkb1r/pppppppp/5n2/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2"]
+
+2. Nc3 d5 { $140 3. exd5 Nxd5 $10 } 3. e5 $5 d4 $1 4. exf6 dxc3 5. d4 (  $142
+5. fxg7 $10) 5... cxb2 $15 6. fxg7 bxa1=Q 7. gxh8=Q Qb1 { ?? } 8. Qxf8+  $1
+Kxf8 9. Bh6+ $18 { special characters within comments: áâãäå } *
+
+[Event "Testing non standard initial position with Black to move and more variations"]
+[Round "3"]
+[Result "0-1"]
+[SetUp "1"]
+[FEN "rq4k1/6pp/p1p2r2/7R/4n3/1P2QP2/1P3P1P/RN4K1 b - - 0 1"]
+
+1... Rg6+ 2. Kh1 (2. Kf1 Qd6 3. Nc3 Nd2+ 4. Ke2 Nxb3) 2... Qf4 3. fxe4 (3.
+Qxf4 Nxf2#) (3. Qxe4 Qc1+) (3. Nc3 Qxe3 4. fxe3 Nf2#) 3... Qg4 0-1
+
+[Event "Testing advanced variations: nesting and siblings"]
+[Round "4"]
+
+1. d4 (1. c4 (1. b4 (1. a4 a5) 1... b5) 1... c5) (1. e4 (1. f4 (1. g4 (1. h4
+h5) 1... g5) 1... f5) 1... e5) 1... d5 (1... c5 (1... b5 (1... a5))) (1... e5
+(1... f5 (1... g5 2. g3) 2. f3) 2. e3) e3 (f3 f6) (g3 g6) (h3 h6) e6 *
+
+[Event "Testing non standard initial position with tablebase ending"]
+[Round "5"]
+[Result "1/2-1/2"]
+[SetUp "1"]
+[FEN "2k5/5p2/6Pp/7p/6P1/8/8/2K5 b - - 0 1"]
+
+1... fxg6 2. gxh5 Kb7 3. Kd2 gxh5 4. Ke3 h4 1/2-1/2
+
+[Event "Testing advanced variations: comments before/after variations"]
+[Round "6"]
+
+1. d4 { this comment is right after White's first move } ( { this also, but
+already inside a variation } e4 { this is after the variation } ) { this is
+is outside the variation } d5 c4 *
+
+[Event "Testing advanced variations: empty variations"]
+[Round "7"]
+
+1. d4 () d5 ( ) 2. c4 ({ variations without moves should become comments })
+(2. Nf3) 2... dxc4 ( ( { accepting the gambit } ) ) 3. e4 (3. Nf3 1/2-1/2) e5 *
+
+[Event "Testing null moves"]
+[Round "8"]
+
+1. e4 e5 2. Bc4 ($140 2. Bc4 -- 3. Qf3 -- 4. Qxf7#) Nf6 3. d3 ({ defending
+against } 3. -- Nxe4) 3... Bc5 *
+
+[Event "Testing continuations"]
+[Round "9"]
+[SetUp "1"]
+[FEN "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq d6 0 2"]
+
+2. c4 dxc4 (* $140 3. e4 e5 { this is a continuation }) 3. Nf3 Nf6
+(* 4. e3 Bg4 { another continuation }) (3... b5 4. a4 {this is a
+variation}) *
+
+[Event "Testing header patterns in comments"]
+[Round "10"]
+
+1. e4 e6 { [White "Another White player"] [Black "Another Black player"] }
+d4 d5 *
+
+[Event"Testing very odd game"][Round "11"]a4(b4$6)a6!?{comment}a5*[Event"Testing another very odd game"][Round "12"]h4(g4)h6{comment}h5*
+
+[ Event  "Testing malformed header (extra spaces and extra line)"]
+
+[ Round"13"]
+
+e4 e6 *
+
+[Event "Testing a basic NAG before variation start"]
+[Round "14"]
+[SetUp "1"]
+[FEN "3k4/3P4/4K3/8/8/8/8/8 w - - 0 1"]
+
+$22 {this is a draw} 1. Kd6 ($22 1. Kf7 ($11 Kf6 Kd7) Kd7) ({ if only White
+could pass } 1. -- Kc7 ({ a simple win } $18 1.. Kc7 2. Ke7)) -- (* { also
+lost if Black passes} $18 2. Kc6 Ke7) 2. Kd5?? { this is a blunder } Kd7 $11
+Kd4 Kd6 Ke4 Ke6 *
+
+[Event "Testing FEN castling rights"]
+[Round "15"]
+[SetUp "1"]
+[FEN "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w Qk - 0 1"]
+
+1. O-O-O O-O
+

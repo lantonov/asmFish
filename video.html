@@ -1,0 +1,501 @@
+<!DOCTYPE HTML>
+<html>
+
+<!--
+  pgn4web javascript chessboard
+  copyright (C) 2009-2015 Paolo Casaschi
+  see README file and http://pgn4web.casaschi.net
+  for credits, license and more details
+-->
+
+<head>
+
+<title>pgn4web integration with HTML5 video</title>
+
+<link rel="icon" sizes="16x16" href="pawn.ico" />
+
+<style type="text/css">
+
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  color: black;
+  background: white;
+  font-family: sans-serif;
+}
+
+a {
+  color: black;
+  text-decoration: none;
+}
+
+.boardTable {
+  height: 272px;
+  width: 272px;
+  box-shadow: 0px 0px 15px #663300;
+}
+
+.boardBox {
+  width: 272px;
+  text-align:left;
+  font-weight:bold;
+  text-shadow: 1px 1px 3px #C4C4C4
+}
+
+.videoBox {
+  box-shadow: 0px 0px 16px #663300;
+}
+
+.pieceImage {
+  height: 26px;
+  width: 26px;
+}
+
+.whiteSquare,
+.blackSquare,
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  width: 32px;
+  height: 32px;
+  border-style: solid;
+  border-width: 1px;
+}
+
+.whiteSquare,
+.highlightWhiteSquare {
+  border-color: #FFCC99;
+  background: #FFCC99;
+}
+
+.blackSquare,
+.highlightBlackSquare {
+  border-color: #CC9966;
+  background: #CC9966;
+}
+
+.highlightWhiteSquare,
+.highlightBlackSquare {
+  border-style: inset;
+  border-color: #CC9966;
+}
+
+</style>
+
+<script src="pgn4web.js" type="text/javascript"></script>
+
+</head>
+
+<body>
+
+<!-- paste your PGN below and make sure you dont specify an external source with SetPgnUrl() -->
+<form style="display: none;"><textarea style="display: none;" id="pgnText">
+
+</textarea></form>
+
+<script type="text/javascript">
+"use strict";
+
+function gup(name) {
+
+  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  var regexS = "[\\?&]"+name+"=([^&#]*)";
+  // commented below to match first occurrence (to avoid users overruling setting)
+  // regexS = regexS+"(?!.*"+regexS+")"; // matches the LAST occurrence
+  var regex = new RegExp( regexS, "i" );
+  var results = regex.exec( window.location.href );
+  if (results !== null) { return decodeURIComponent(results[1]); }
+
+  // allows for short version of the URL parameters, for instance sC matches squareColor
+  var compact_name = name.charAt(0);
+  for (var i=1; i<name.length; i++) {
+    if (name.charAt(i).match(/[A-Z]/)) { compact_name = compact_name + name.charAt(i).toLowerCase(); }
+  }
+  name = compact_name;
+
+  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  regexS = "[\\?&]"+name+"=([^&#]*)";
+  // commented below to match first occurrence (to avoid users overruling setting)
+  // regexS = regexS+"(?!.*"+regexS+")"; // matches the LAST occurrence
+  regex = new RegExp( regexS, "i" );
+
+  results = regex.exec( window.location.href );
+  if (results !== null) { return decodeURIComponent(results[1]); }
+
+  return "";
+}
+
+SetCommentsIntoMoveText(false);
+
+var pgnFile_default = "";
+var videoUrl_default = "";
+var videoWidth_default = "480";
+var videoHeight_default = "270";
+function print_default(value) { return value ? value : "null"; }
+
+var videoHelp = ((gup("help") == "true") || (gup("help") == "t"));
+
+if (videoHelp) {
+  document.write("<PRE>");
+  document.write("pgn4web video.html URL parameters:\n");
+  document.write("\n");
+  document.write(" - pgnData = PGN URL to load as PGN data source (required); default " + print_default(pgnFile_default) + "\n");
+  document.write(" - videoUrl = video URL to load as video source (required); default " + print_default(videoUrl_default) + "\n");
+  document.write("\n");
+  document.write(" - videoWidth = video width; default " + print_default(videoWidth_default) + "\n");
+  document.write(" - videoHeigth = video height; default " + print_default(videoHeight_default) + "\n");
+  document.write(" - videoAutoplay = if set true video autoplays at page load; default true\n");
+  document.write(" - videoLoop = if set true video loops; default false\n");
+  document.write(" - horizontalLayout = if set true the chessboard is next to the video, otherwise underneath; default true\n");
+  document.write(" - headerDisplay = if set true game header info is shown; default true\n");
+  document.write("\n");
+  document.write(" - setupVideotimes = if set true, setup special mode to add video times info to the PGN data; default false\n");
+  document.write(" - testVideotimes = if set true, detects missing/wrong video times info in the PGN data; default false\n");
+  document.write(" - ignoreVideotimes = if set true, video times info is ignored; default false\n");
+  document.write("\n");
+  document.write(" - help = true\n");
+  document.write("\n");
+  document.write("URL parameters can be shortened: for example pgnData => pd, videoUrl => vu\n");
+  document.write("Also supplied textual values can be shortened: true => t, false => f\n");
+  document.write("\n");
+  document.write("</PRE>\n<HR>\n");
+}
+
+var horizontalLayout = ((gup("horizontalLayout") != "false") && (gup("hl") != "f"));
+var headerDisplay = ((gup("headerDisplay") != "false") && (gup("hd") != "f"));
+
+</script>
+
+<center>
+
+<table>
+
+<tr><td height="20"></td></tr>
+
+<tr><td>
+
+<div id="videoBox" class="videoBox">
+<div id="videodiv" style="text-align:center; font-style:italic;">
+<video id="videoPlayer" controls="controls"><br/><br/>warning: HTML5 video support required</video>
+</div>
+</div>
+
+</td>
+
+<script type="text/javascript">
+"use strict";
+
+if (horizontalLayout) { document.write('<td width="20"></td>'); }
+else { document.write('</tr><tr><td height="20"></td></tr><tr>'); }
+
+</script>
+
+<td align="center">
+
+<div class="boardBox">
+<div id="GameBlackHeader" style="margin-bottom:1em;">
+<div id="GameBlackClock" style="float:right;"></div>
+<span id="GameBlack"></span>&nbsp;
+</div>
+<div id="GameBoard"><div style="width:272px; height:272px;"></div></div>
+<div id="GameWhiteHeader" style="margin-top:1em;">
+<div id="GameWhiteClock" style="float:right;"></div>
+<span id="GameWhite"></span>&nbsp;
+</div>
+</div>
+
+</td></tr></table>
+
+<form id="setupBox" style="display:none;">
+<table style="width:100%;"><tr valign="bottom"><td>
+
+<div id="videoTimeInfo" style="font-weight:bold; font-size:small; margin-top:2em;"></div>
+
+</td><td>
+
+</td><td>
+
+<div style="text-align:right; margin-top:2em;">
+<span style="font-weight:bold; font-size:small; margin-right:0.5em; margin-left:0.5em;">time correction:</span>
+<input id="timeCorrection" type="text" value="-0.3" style="width:6em;" title="time correction in seconds to be added to the captured video time, usually negative to take into account the lag between seeing a move and clicking the capture button, default -0.3" />
+</div>
+
+</td></tr><tr valign="bottom"><td style="width:30%">
+
+<div style="font-weight:bold; font-size:small; margin-right:0.5em;">next move: <span id="GameNextMove"></span></div>
+
+</td><td style="width:40%">
+
+<input id="captureButton" type="button" value="capture videotime into the PGN data" disabled="1" onclick="getVideotime();" style="width:100%;" />
+
+</td><td style="width:30%">
+
+<input id="togglevideoButton" type="button" value="play/pause video" disabled="1" onclick="toggleVideoPlayPause();" style="width:100%;" />
+
+</td></tr><tr><td colspan="3">
+
+<textarea id="setupOutput" style="height:200px; width:100%; padding: 10px; border-color: lightgray;">
+% you can add video times information to the PGN file by pressing the capture button
+% each time a new game starts, including the first game, and each time a move is made;
+
+</textarea>
+
+</td></tr></table>
+</form>
+
+</center>
+
+<script type="text/javascript">
+"use strict";
+
+var theObj;
+
+if (!headerDisplay) {
+  if (theObj = document.getElementById("GameBlackHeader")) { theObj.style.display = "none"; }
+  if (theObj = document.getElementById("GameWhiteHeader")) { theObj.style.display = "none"; }
+}
+
+// accepts pgnData as alias for pgnFile for consistency with board.html
+var pgnFile;
+if ((pgnFile = gup("pgnData")) === "") {
+  if ((pgnFile = gup("pgnFile")) === "") {
+    pgnFile = pgnFile_default;
+  }
+}
+
+var videoUrl = gup("videoUrl");
+if (videoUrl === "") { videoUrl = videoUrl_default; }
+
+var videoWidth = gup("videoWidth");
+if (videoWidth === "") { videoWidth = videoWidth_default; }
+
+var videoHeight = gup("videoHeight");
+if (videoHeight === "") { videoHeight = videoHeight_default; }
+
+var videoAutoplay = ((gup("videoAutoplay") != "false") && (gup("videoAutoplay") != "f"));
+
+var videoLoop = ((gup("videoLoop") == "true") || (gup("videoLoop") == "t"));
+
+var ignoreVideotimes = ((gup("ignoreVideotimes") == "true") || (gup("ignoreVideotimes") == "t"));
+
+var testVideotimes = ((gup("testVideotimes") == "true") || (gup("testVideotimes") == "t"));
+
+var setupVideotimes = ((gup("setupVideotimes") == "true") || (gup("setupVideotimes") == "t"));
+document.getElementById("setupBox").style.display = setupVideotimes ? "inline" : "none";
+
+
+var paramError = "";
+
+if (theObj = document.getElementById("videoBox")) {
+  if (videoWidth) { theObj.style.width = videoWidth + "px"; }
+  if (videoHeight) { theObj.style.height = videoHeight + "px"; }
+}
+
+if (videoUrl) {
+  if (theObj = document.getElementById("videoPlayer")) {
+    theObj.src = videoUrl;
+    if (videoWidth) { theObj.width = videoWidth; }
+    if (videoHeight) { theObj.height = videoHeight; }
+    if (videoAutoplay) { theObj.autoplay = "autoplay"; }
+    if (videoLoop) { theObj.loop = "loop"; }
+  }
+} else {
+  paramError += "error: videoUrl parameter required as video source\n\n";
+}
+
+if (pgnFile) {
+  SetPgnUrl(pgnFile);
+} else {
+  paramError += "error: pgnData parameter required as PGN data source\n\n";
+}
+
+if (paramError && (!videoHelp)) {
+  if (confirm("pgn4web video.html\n\n" + paramError + "click OK for more help")) {
+    window.location.search += (window.location.search ? "&" : "?") + "help=true";
+  }
+}
+
+SetImagePath ("images/alpha/26");
+SetImageType("png");
+SetHighlightOption(true);
+SetShortcutKeysEnabled(ignoreVideotimes);
+
+if (!ignoreVideotimes) {
+  clearShortcutSquares("A", "123456");
+  clearShortcutSquares("BCDEFGH", "1234567");
+}
+
+var videotimeForGame = new Array();
+function getVideotimeForGame() {
+  videotimeForGame = new Array();
+  for (var thisGame=0; thisGame<numberOfGames; thisGame++) {
+    videotimeForGame[thisGame] = parseFloat(customPgnHeaderTag("VideoTime", null, thisGame));
+    if (!videotimeForGame[thisGame]) { videotimeForGame[thisGame] = 0; }
+  }
+}
+
+var videotimeAtPly = new Array();
+function getVideotimeAtPly() {
+  videotimeAtPly = new Array();
+  for (var thisPly=StartPly; thisPly<=StartPly+PlyNumber; thisPly++) {
+    videotimeAtPly[thisPly] = parseFloat(customPgnCommentTag("vt", null, thisPly));
+    if (!videotimeAtPly[thisPly]) { videotimeAtPly[thisPly] = 0; }
+  }
+}
+
+function customFunctionOnPgnGameLoad() {
+  if (setupVideotimes) {
+    document.getElementById("togglevideoButton").disabled = 0;
+    document.getElementById("captureButton").disabled = 0;
+    document.getElementById("captureButton").focus();
+  }
+  getVideotimeAtPly();
+}
+
+function runTestVidoetimes() {
+  for (var thisGame=0; thisGame<numberOfGames; thisGame++) {
+    if ((thisGame>0) && (videotimeForGame[thisGame] <= videotimeForGame[thisGame-1])) {
+      alert("warning: " + pgnFile + " missing/wrong VideoTime header tag for game " + (thisGame+1));
+      return false;
+    }
+    Init(thisGame);
+    for (var thisPly=StartPly; thisPly<=StartPly+PlyNumber; thisPly++) {
+      if ((thisPly>StartPly) && (videotimeAtPly[thisPly] <= videotimeAtPly[thisPly-1])) {
+        alert("warning: " + pgnFile + " missing/wrong %vt comment at ply " + thisPly + " of game " + (thisGame+1));
+        return false;
+      }
+    }
+  }
+  alert("info: " + pgnFile + " video time values looks ok");
+  return true;
+}
+
+var syncInterval = 456; // milliseconds
+var syncTimer = null;
+function customFunctionOnPgnTextLoad() {
+  getVideotimeForGame();
+  if (testVideotimes) { runTestVidoetimes(); }
+  if (syncTimer) { clearTimeout(syncTimer); }
+  if (!ignoreVideotimes) { syncTimer = setTimeout("syncBoard();", syncInterval); }
+}
+
+// assumes arrayValues ordered
+function findIndexInOrderedArray(target, arrayValues, arrayFirst, arrayLast, previous) {
+  if (previous < arrayFirst) { previous = arrayFirst; }
+  if (previous > arrayLast ) { previous = arrayLast ; }
+  var found = previous;
+  /*jsl:ignore*/
+  if ((previous > arrayFirst) && (target < arrayValues[previous])) {
+    for (var index=previous; (index>arrayFirst) && (target < arrayValues[index]); index--) {}
+    found = index;
+  } else if ((previous < arrayLast) && (target > arrayValues[previous+1])) {
+    for (index=previous; (index<arrayLast) && (target > arrayValues[index+1]); index++) {}
+    found = index;
+  }
+  /*jsl:end*/
+  return found;
+}
+
+function videoPlayerCurrentTime() {
+  var videoPlayer = document.getElementById("videoPlayer");
+  var videoCurrentTime = 0;
+  if (videoPlayer && videoPlayer.currentTime) { videoCurrentTime = videoPlayer.currentTime; }
+  else if (videoPlayer && videoPlayer.getCurrentTime) { videoCurrentTime = videoPlayer.getCurrentTime(); }
+  document.getElementById("videoTimeInfo").innerHTML = "video time: " + (Math.round(videoCurrentTime * 1000) / 1000);
+  return videoCurrentTime;
+}
+
+function syncBoard() {
+  if (syncTimer) { clearTimeout(syncTimer); }
+
+  var videoCurrentTime = videoPlayerCurrentTime();
+
+  if (!setupVideotimes) {
+    var foundGame = findIndexInOrderedArray(videoCurrentTime, videotimeForGame, 0, numberOfGames-1, currentGame);
+    if (foundGame !== currentGame) { Init(foundGame); }
+
+    var foundPly = findIndexInOrderedArray(videoCurrentTime, videotimeAtPly, StartPly, StartPly+PlyNumber, CurrentPly);
+    if (foundPly != CurrentPly) { GoToMove(foundPly); }
+  }
+
+  syncTimer = setTimeout("syncBoard();", syncInterval);
+}
+
+var setupOutputBox = document.getElementById("setupOutput");
+function writeSetupOutput(text) {
+  if (setupOutputBox) { setupOutputBox.value += text; }
+  setupOutputBox.scrollTop = setupOutputBox.scrollHeight;
+}
+
+function newGameHeader(thisGame, videotime) {
+  var newHeader = pgnHeader[thisGame] ? pgnHeader[thisGame] : "";
+  newHeader = newHeader.replace(/\[\s*VideoTime\s*"([^"]*)"\s*\]\s*/g, "");
+  newHeader = newHeader.replace(/(^\s*|\s*$)/g, "");
+  newHeader += "\n[VideoTime \"" + videotime + "\"]";
+  return newHeader;
+}
+
+var startedVideotimes = false;
+var endedVideotimes = false;
+function getVideotime() {
+  if (!setupVideotimes || endedVideotimes) { return; }
+  var storedVideotime = videoPlayerCurrentTime();
+  var timeCorrection = parseFloat(document.getElementById("timeCorrection").value);
+  if (timeCorrection) { storedVideotime += timeCorrection; }
+  storedVideotime = Math.round(storedVideotime * 10) / 10;
+  if (!startedVideotimes) {
+    writeSetupOutput("\n" + newGameHeader(currentGame, storedVideotime) + "\n\n");
+    startedVideotimes = true;
+    return;
+  }
+  if (CurrentPly === StartPly+PlyNumber) {
+    if (currentGame+1 < numberOfGames) {
+      Init(currentGame + 1);
+      writeSetupOutput("\n" + newGameHeader(currentGame, storedVideotime) + "\n\n");
+    }
+  } else {
+    GoToMove(CurrentPly + 1);
+    var moreText = "";
+    moreText += Math.ceil(CurrentPly/2) + ".";
+    if (!(CurrentPly % 2)) { moreText += ".."; }
+    moreText += " " + Moves[CurrentPly-1] + " {[%vt " + storedVideotime + "]";
+    var comment = MoveComments[CurrentPly].replace(/\s*\[%vt [\.0-9]*\]\s*/g, "");
+    if (comment) { moreText += " " + comment.replace(/[{}]/g, ""); }
+    moreText += "}\n";
+    writeSetupOutput(moreText);
+  }
+  if (CurrentPly === StartPly+PlyNumber) {
+    if (gameResult[currentGame]) { writeSetupOutput(gameResult[currentGame] + "\n"); }
+    if (currentGame+1 === numberOfGames) {
+      writeSetupOutput("\n\n% end of games and moves");
+      endedVideotimes = true;
+    }
+  }
+}
+
+function customShortcutKey_Shift_0() {
+  getVideotime();
+}
+
+function toggleVideoPlayPause() {
+  var videoPlayer = document.getElementById("videoPlayer");
+  if (videoPlayer && videoPlayer.playVideo) {
+    if (videoPlayer.getPlayerState() == 2) {
+      videoPlayer.playVideo();
+    } else {
+      videoPlayer.pauseVideo();
+    }
+  } else if (videoPlayer && videoPlayer.play) {
+    if (videoPlayer.paused) { videoPlayer.play(); }
+    else { videoPlayer.pause(); }
+  }
+}
+
+</script>
+
+</body>
+
+</html>
