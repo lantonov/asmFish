@@ -1,6 +1,42 @@
-version: 1.0.{build}
+version: 3.0.{build}
+pull_requests:
+  do_not_increment_build_number: true
+max_jobs: 11
+platform: Any CPU
+clone_folder: C:\Projects\asmFish
 build_script:
-- cmd:  "set include=x86\\include\\\n  fasmg.exe \"x86\\fish.asm\" \"asmFishW_popcnt.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'popcnt'\" \n fasmg.exe \"x86\\fish.asm\" \"asmFishW_bmi2.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'bmi2'\"\n fasmg.exe \"x86\\fish.asm\" \"asmFishW_base.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'base'\" " 
+- cmd: "@echo off\ncls\nfor /f \"tokens=2 delims==\" %%a in ('wmic OS Get localdatetime /value') do set \"dt=%%a\"\nset \"YY=%dt:~2,2%\" & set \"YYYY=%dt:~0,4%\" & set \"MM=%dt:~4,2%\" & set \"DD=%dt:~6,2%\"\nset \"HH=%dt:~8,2%\" & set \"Min=%dt:~10,2%\" & set \"Sec=%dt:~12,2%\"\nset \"datestamp=%YYYY%-%MM%-%DD%\" & set \"timestamp=%HH%%Min%%Sec%\" & set \"fullstamp=%YYYY%-%MM%-%DD%_%HH%%Min%%Sec%\"\n    set t0=%time: =0%\n    ECHO === Building Windows Executables ===\n    cd WindowsOS_binaries\n    if exist *bmi2.exe del *bmi2.exe\n    if exist *popcnt.exe del *popcnt.exe\n    cd ..\n    set include=x86\\include\\\n    fasmg.exe \"x86\\fish.asm\" \"asmFishW_%datestamp%_popcnt.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'popcnt'\" %debug%\n    fasmg.exe \"x86\\fish.asm\" \"asmFishW_%datestamp%_bmi2.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'bmi2'\" %debug%\n    cd LinuxOS_binaries\n    if exist asm* del asm*\n    cd ..\n    ECHO === Building Linux Executables ===\n    fasmg.exe \"x86\\fish.asm\" \"asmFishL_%datestamp%_popcnt\" -e 1000 -i \"VERSION_OS='L'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'popcnt'\" %debug%\n    fasmg.exe \"x86\\fish.asm\" \"asmFishL_%datestamp%_bmi2\" -e 1000 -i \"VERSION_OS='L'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'bmi2'\" %debug%\n    cd MacOS_binaries\n    if exist asm* del asm*\n    cd ..\n    ECHO === Building MacOS Executables ===\n    fasmg.exe \"x86\\fish.asm\" \"asmFishX_%datestamp%_popcnt\" -e 1000 -i \"VERSION_OS='X'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'popcnt'\" %debug%\n    fasmg.exe \"x86\\fish.asm\" \"asmFishX_%datestamp%_bmi2\" -e 1000 -i \"VERSION_OS='X'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'bmi2'\" %debug%\n    cd LinuxOS_binaries\n    if exist arm* del arm*\n    cd ..\n    set include=arm\\include\\\n    ECHO === Building ARM Executable ===\n    fasmg.exe \"arm\\fish.arm\" \"armFishL_%datestamp%_v8\" -e 1000 -i \"VERSION_OS='L'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'v8'\" %debug%\n    cd Matefinder_binaries\n    if exist mateFishW* del mateFishW*\n    if exist *base del *base\n    cd ..\n    set include=x86\\include\\\n    ECHO === Building Windows Matefinder Executables ===\n    fasmg.exe \"x86\\fish.asm\" \"mateFishW_%datestamp%_popcnt.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"VERSION_POST = 'popcnt'\" -i \"USE_MATEFINDER = 1\" %debug%\n    fasmg.exe \"x86\\fish.asm\" \"mateFishW_%datestamp%_bmi2.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"VERSION_POST = 'bmi2'\" -i \"USE_MATEFINDER = 1\" %debug%\n    cd Matefinder_binaries\n    if exist mateFishL* del mateFishL*\n    cd ..\n    ECHO === Building Linux Matefinder Executables ===\n    fasmg.exe \"x86\\fish.asm\" \"mateFishL_%datestamp%_bmi2\" -e 1000 -i \"VERSION_OS='L'\" -i \"VERSION_POST = 'bmi2'\" -i \"USE_MATEFINDER = 1\" %debug%\n    fasmg.exe \"x86\\fish.asm\" \"mateFishL_%datestamp%_popcnt\" -e 1000 -i \"VERSION_OS='L'\" -i \"VERSION_POST = 'popcnt'\" -i \"USE_MATEFINDER = 1\" %debug%\n    set include=arm\\include\\\n    start /min fasmg.exe \"arm\\fish.arm\" \"mateFishL_%datestamp%_v8\" -e 1000 -i \"VERSION_OS='L'\" -i \"VERSION_POST = 'v8'\" -i \"USE_MATEFINDER = 1\" %debug%\n    cd Matefinder_binaries\n    if exist mateFishX* del mateFishX*\n    cd ..\n    ECHO === Building MacOS Matefinder Executables ===\n    fasmg.exe \"x86\\fish.asm\" \"mateFishX_%datestamp%_bmi2\" -e 1000 -i \"VERSION_OS='X'\" -i \"VERSION_POST = 'bmi2'\" -i \"USE_MATEFINDER = 1\" %debug%\n    fasmg.exe \"x86\\fish.asm\" \"mateFishX_%datestamp%_popcnt\" -e 1000 -i \"VERSION_OS='X'\" -i \"VERSION_POST = 'popcnt'\" -i \"USE_MATEFINDER = 1\" %debug%\n    cd WindowsOS_binaries\n    if exist *base.exe del *base.exe\n    cd ..\n    ECHO === Building Windows Base Executables ===\n    fasmg.exe \"x86\\fish.asm\" \"asmFishW_%datestamp%_base.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'base'\" %debug%\n    fasmg.exe \"x86\\fish.asm\" \"mateFishW_%datestamp%_base.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'base'\" -i \"USE_MATEFINDER = 1\" %debug%\n    cd LinuxOS_binaries\n    if exist *base del *base\n    cd ..\n    ECHO === Building Linux Base Executables ===\n    fasmg.exe \"x86\\fish.asm\" \"asmFishL_%datestamp%_base\" -e 1000 -i \"VERSION_OS='L'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'base'\" %debug%\n    fasmg.exe \"x86\\fish.asm\" \"mateFishL_%datestamp%_base\" -e 1000 -i \"VERSION_OS='L'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'base'\" -i \"USE_MATEFINDER = 1\" %debug%\n    cd MacOS_binaries\n    if exist *base del *base\n    cd ..\n    ECHO === Building MacOS Base Executables ===\n    fasmg.exe \"x86\\fish.asm\" \"asmFishX_%datestamp%_base\" -e 1000 -i \"VERSION_OS='X'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'base'\" %debug%\n    fasmg.exe \"x86\\fish.asm\" \"mateFishX_%datestamp%_base\" -e 1000 -i \"VERSION_OS='X'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'base'\" -i \"USE_MATEFINDER = 1\" %debug%\n    timeout 5\n    move asmFishW_%datestamp%* WindowsOS_binaries\n    move asmFishL_%datestamp%* LinuxOS_binaries\n    move asmFishX_%datestamp%* MacOS_binaries\n    move mateFish* Matefinder_binaries\n    move armFishL_%datestamp%_v8 LinuxOS_binaries\n    set t=%time: =0%\n    set /a h=1%t0:~0,2%-100\n    set /a m=1%t0:~3,2%-100\n    set /a s=1%t0:~6,2%-100\n    set /a c=1%t0:~9,2%-100\n    set /a starttime = %h% * 360000 + %m% * 6000 + 100 * %s% + %c%\n    set /a h=1%t:~0,2%-100\n    set /a m=1%t:~3,2%-100\n    set /a s=1%t:~6,2%-100\n    set /a c=1%t:~9,2%-100\n    set /a endtime = %h% * 360000 + %m% * 6000 + 100 * %s% + %c%\n    set /a runtime = %endtime% - %starttime%\n    echo Build time: %runtime:~0,-2%.%runtime:~-2% seconds \n    \n    exit /b"
 test_script:
-- cmd: "asmFishW_bmi2.exe bench \n asmFishW_popcnt.exe bench \n asmFishW_base.exe bench"
+- cmd: >-
+    cd WindowsOS_binaries
+            asmFishW_%datestamp%_bmi2.exe bench
+            asmFishW_%datestamp%_popcnt.exe bench
+            asmFishW_%datestamp%_base.exe bench
+            cd..
+    
+    cd Matefinder_binaries
+            mateFishW_%datestamp%_bmi2.exe bench
+            mateFishW_%datestamp%_popcnt.exe bench
+            mateFishW_%datestamp%_base.exe bench
+            cd..
+artifacts:
+- path: WindowsOS_binaries
+  name: Windows
+- path: Matefinder_binaries
+  name: Matefinder
+- path: LinuxOS_binaries
+  name: Linux
+- path: MacOS_binaries
+  name: Mac
 
+notifications:
+- provider: GitHubPullRequest
+  template: Benches match!
+  on_build_success: true
+  on_build_failure: false
+  on_build_status_changed: false
+- provider: GitHubPullRequest
+  template: Benches do not match!
+  on_build_success: false
+  on_build_failure: true
+  on_build_status_changed: false
