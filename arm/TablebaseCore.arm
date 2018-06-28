@@ -70,7 +70,7 @@ calc_key:
             add  x4, x1, Pos.typeBB
             ldr  x4, [x4, x2]
             and  x9, x9, x4
-         Popcnt  x9, x9, x4
+         _popcnt  x9, x9, x4
            subs  x9, x9, 1
             bmi  .Done
 .Next:
