@@ -12,34 +12,6 @@ macro ClampSigned Reg, RegMin, RegMax
            csel  Reg, Reg, RegMax, le
 end macro
 
-macro Popcnt Reg0, Reg1, Temp2 ; its ok if Reg0 and Reg1 are the same
-            lsr  Temp2, Reg1, 1
-            and  Temp2, Temp2, 6148914691236517205
-            sub  Temp2, Reg1, Temp2
-            and  Reg0, Temp2, 3689348814741910323
-            lsr  Temp2, Temp2, 2
-            and  Temp2, Temp2, 3689348814741910323
-            add  Temp2, Reg0, Temp2
-            mov  Reg0, 72340172838076673
-            add  Temp2, Temp2, Temp2, lsr 4
-            and  Temp2, Temp2, 1085102592571150095
-            mul  Reg0, Temp2, Reg0
-            lsr  Reg0, Reg0, 56
-end macro
-
-macro Popcnt16 Reg0, Reg1, Temp2 ; its ok if Reg0 and Reg1 are the same
-            lsr  Temp2, Reg1, 1
-            and  Temp2, Temp2, 6148914691236517205
-            sub  Temp2, Reg1, Temp2
-            lsr  Reg0, Temp2, 2
-            and  Temp2, Temp2, 3689348814741910323
-            and  Reg0, Reg0, 3689348814741910323
-            add  Temp2, Reg0, Temp2
-            mov  Reg0, 72340172838076673
-            mul  Reg0, Temp2, Reg0
-            lsr  Reg0, Reg0, 56
-end macro
-
 macro _popcnt Reg0, Reg1, Temp2 ; its ok if Reg0 and Reg1 are the same
             lsr  Temp2, Reg1, 1
             and  Temp2, Temp2, 6148914691236517205
@@ -68,9 +40,6 @@ macro _popcnt16 Reg0, Reg1, Temp2 ; its ok if Reg0 and Reg1 are the same
             lsr  Reg0, Reg0, 56
 end macro
 
-
-
-
 ; this gets the address of a label that is too far away for adr instruction
 macro lea Reg, Addr
            adrp  Reg, Addr
@@ -81,7 +50,6 @@ macro _lea Reg, Addr
            ;adrp  Reg, Addr
            ; add  Reg, Reg, :lo12:Addr
 end macro
-
 
 ; this loads a 32bit quantity into a register when one instruction is not enough
 macro mov32 reg, num
@@ -117,7 +85,7 @@ macro addsub? T, A, B, C, D:0
             add  A, B, C, lsl D
     else
             sub  A, B, C, lsl D
-    end if    
+    end if
 end macro
 
 macro muladdsub? T, A, B, C, D
@@ -195,7 +163,7 @@ macro PushAll
             stp  x0, x1, [sp, -16]!
             add  x0, sp, 8*32 + 16*32
             str  x0, [sp, 8*31]
-            ldr  x0, [sp] 
+            ldr  x0, [sp]
 end macro
 
 macro PopAll
@@ -336,7 +304,7 @@ macro BuildTimeData
   local time, day, year, month, febdays
   time = %t
   day = time/(24*3600)
-  day = day - (day + 365)/(3*365+366) 
+  day = day - (day + 365)/(3*365+366)
   year = 1970 + day/365
   day = day mod 365 + 1
   month = 1
@@ -351,7 +319,7 @@ macro BuildTimeData
       month = month + 1
     end if
   end iterate
-        db '0' + (year / 1000) 
+        db '0' + (year / 1000)
         db '0' + (year mod 1000) / 100
         db '0' + (year mod 100) / 10
         db '0' + (year mod 10)
@@ -362,5 +330,3 @@ macro BuildTimeData
         db '0' + (day / 10)
         db '0' + (day mod 10)
 end macro
-
-

@@ -1,22 +1,22 @@
-Overload       =  (10 shl 16) + (5)
-Connectivity   =  (3 shl 16) + (1)
-KnightOnQueen		= ( 21 shl 16) + ( 11)
-MinorBehindPawn		= ( 16 shl 16) + (  0)
-BishopPawns             = (  8 shl 16) + ( 12)
-LongRangedBishop	= ( 22 shl 16) + (  0)
-RookOnPawn              = (  8 shl 16) + ( 24)
-TrappedRook             = ( 92 shl 16) + (  0)
-WeakQueen               = ( 50 shl 16) + ( 10)
-CloseEnemies		= (  7 shl 16) + (  0)
-PawnlessFlank		= ( 20 shl 16) + ( 80)
-ThreatBySafePawn	= (175 shl 16) + (168)
-ThreatByRank		= ( 16 shl 16) + (  3)
-Hanging                        = ( 52 shl 16) + ( 30)
-WeakUnopposedPawn	= (  5 shl 16) + ( 25)
-ThreatByPawnPush	= ( 47 shl 16) + ( 26)
-SliderOnQueen		= ( 42 shl 16) + ( 21)
-HinderPassedPawn	= (  8 shl 16) + (  1)
-TrappedBishopA1H1	= ( 50 shl 16) + ( 50)
+Overload            = ( 10 shl 16) + (  5)
+Connectivity        = (  3 shl 16) + (  1)
+KnightOnQueen       = ( 21 shl 16) + ( 11)
+MinorBehindPawn     = ( 16 shl 16) + (  0)
+BishopPawns         = (  3 shl 16) + (  5)
+LongRangedBishop    = ( 22 shl 16) + (  0)
+RookOnPawn          = (  8 shl 16) + ( 24)
+TrappedRook         = ( 92 shl 16) + (  0)
+WeakQueen           = ( 50 shl 16) + ( 10)
+CloseEnemies        = (  7 shl 16) + (  0)
+PawnlessFlank       = ( 20 shl 16) + ( 80)
+ThreatBySafePawn    = (175 shl 16) + (168)
+ThreatByRank        = ( 16 shl 16) + (  3)
+Hanging             = ( 52 shl 16) + ( 30)
+WeakUnopposedPawn   = (  5 shl 16) + ( 25)
+ThreatByPawnPush    = ( 47 shl 16) + ( 26)
+SliderOnQueen       = ( 42 shl 16) + ( 21)
+HinderPassedPawn    = (  8 shl 16) + (  1)
+TrappedBishopA1H1   = ( 50 shl 16) + ( 50)
 
 LazyThreshold = 1500
 
@@ -139,6 +139,7 @@ macro EvalPieces Us, Pt
 
   if Us = White
         Them = Black
+        Down = DELTA_S
         OutpostRanks = 0x0000FFFFFF000000
 	AttackedBy_Us       = x12
 	AttackedBy_Them     = x13
@@ -153,6 +154,7 @@ macro EvalPieces Us, Pt
         Pieces_Them         = x29
   else
         Them = White
+        Down = DELTA_N
 	OutpostRanks = 0x000000FFFFFF0000
 	AttackedBy_Us       = x13
 	AttackedBy_Them     = x12
@@ -259,7 +261,7 @@ NoPinned:
 
             ldr  x0, [sp, EvalInfo.attackedBy + 8*(8*Them + King)]
             and  x0, x0, x9
-         Popcnt  x0, x0, x1
+         _popcnt  x0, x0, x1
 
             ldr  w4, [sp, EvalInfo.kingAdjacentZoneAttacksCount + 4*Us]
             add  w4, w4, w0
@@ -269,7 +271,7 @@ NoKingRing:
              ldr  x0, [sp, EvalInfo.mobilityArea + 8*Us]
              and  x0, x0, x9
 
-         Popcnt  x10, x0, x1
+         _popcnt  x10, x0, x1
            _lea  x6, MobilityBonus
             ldr  w4, [x6, x10, lsl 2]
             ldr  w5, [sp, EvalInfo.mobilityDiff]
@@ -334,14 +336,23 @@ OutpostDone:
 
     ; Penalty for pawns on the same color square as the bishop
     if Pt = Bishop
-          mov64  x0, DarkSquares
-            tst  x0, x7
-           cinc  x1, x27, ne
-          mov48  x8, (FileDBB or FileEBB) and (Rank4BB or Rank5BB)
+           mov64  x0, DarkSquares
+           tst    x0, x7
+           cinc   x1, x27, ne
            ldrb  w0, [x1, PawnEntry.pawnsOnSquares + 2*Us]
-          mov32  w4, BishopPawns
-            mul  w0, w0, w4
-         AddSub  Them, w26, w26, w0
+           mov32  w4, BishopPawns
+           mul  w0, w0, w4
+           ldr  x8, [x20, Pos.typeBB + 8*Pawn]
+           and  x8, x8, Pieces_Us
+           mov  x9, Pieces_All
+           ShiftBB  Down, x9, x9
+           and  x8, x8, x9
+           mov  x9, (FileCBB or FileDBB or FileEBB or FileFBB)
+           and  x8, x8, x9
+           _popcnt  x8, x8, x1
+           add  x8, x8, 1
+           mul  x0, x0, x8
+           AddSub  Them, w26, w26, w0
 
     ; Bonus for bishop on a long diagonal which can "see" both center squares
             ldr  x2, [x20, Pos.typeBB + 8*Pawn]
@@ -350,6 +361,7 @@ OutpostDone:
    BishopAttacks  x0, x24, x2, x1, x4
             orr  x0, x0, x5
          _mov32  w4, LongRangedBishop
+          mov48  x8, (FileDBB or FileEBB) and (Rank4BB or Rank5BB)
          AddSub  Us, w2, w26, w4
             and  x0, x0, x8
             sub  x1, x0, 1
@@ -402,7 +414,7 @@ OutpostDone:
            _lea  x6, RookAttacksPDEP
             ldr  x4, [x6, x24, lsl 3]
             and  x0, x0, x4
-         Popcnt  x0, x0, x1
+         _popcnt  x0, x0, x1
           mov32  w4, RookOnPawn
             mul  w0, w0, w4
          AddSub  Us, w26, w26, w0
@@ -1030,7 +1042,7 @@ macro EvalThreats Us
             orr  x9, x9, x2
             and  x9, x9, x8
     ; x9 = safeThreats
-         Popcnt  x1, x9, x0
+         _popcnt  x1, x9, x0
           mov32  w4, ThreatBySafePawn
             mul  w1, w1, w4
          AddSub  Us, w26, w26, w1
@@ -1114,7 +1126,7 @@ ThreatRookLoop:
 ThreatRookDone:
 
             bic  x0, x9, AttackedBy_Them
-         Popcnt  x0, x0, x1
+         _popcnt  x0, x0, x1
           mov32  w4, Hanging
             mul  w0, w0, w4
          Addsub  Us, w26, w26, w0
@@ -1171,7 +1183,7 @@ WeakDone:
             orr  x0, x0, x2
             and  x0, x0, Pieces_Them
             bic  x0, x0, AttackedBy_UsPawn
-         Popcnt  x0, x0, x2
+         _popcnt  x0, x0, x2
           mov32  w4, ThreatByPawnPush
       Muladdsub  Us, w26, w0, w4, w26
 
@@ -1191,7 +1203,7 @@ WeakDone:
             bic  x1, x1, x5
             and  x0, x0, x1
 
-            Popcnt x0, x0, x2
+            _popcnt x0, x0, x2
             mov32  w4, KnightOnQueen
             Muladdsub  Us, w26, w0, w4, w26
 
@@ -1293,7 +1305,7 @@ NextPawn:
             add  w8, w8, Up
             orr  x2, AttackedBy_Them, Pieces_Them
             and  x0, x0, x2
-         Popcnt  x0, x0, x10
+         _popcnt  x0, x0, x10
           mov32  w4, HinderPassedPawn
             mul  w0, w0, w4
             ldr  w4, [sp, EvalInfo.score]
@@ -1506,11 +1518,11 @@ macro EvalSpace Us
             lsr  x0, x0, 32
   end if
             orr  x0, x0, x1
-         Popcnt  x0, x0, x2
+         _popcnt  x0, x0, x2
 
            ldrb  w1, [x27, PawnEntry.openFiles]
             add  w1, w1, w1
-         Popcnt  x2, Pieces_Us, x8
+         _popcnt  x2, Pieces_Us, x8
             sub  w2, w2, w1
             mul  w2, w2, w2
 
@@ -1538,8 +1550,8 @@ Evaluate_Cold:
             and  w2, w2, w0
             ldr  w0, [x27, PawnEntry.score]
             sub  w0, w0, w26
-         Popcnt  x1, x1, x9
-         Popcnt  x2, x2, x9
+         _popcnt  x1, x1, x9
+         _popcnt  x2, x2, x9
             str  x8, [x27, PawnEntry.key]
             str  w0, [x27, PawnEntry.score]
             add  w14, w14, w1
@@ -1710,19 +1722,19 @@ Evaluate.DoPawnEvalReturn:
             and  x2, x2, x9
             orr  x0, x0, x17
             orr  x2, x2, x16
-            
+
             ldr  x5, [x20, Pos.typeBB + 8*King]
             ldr  x9, [x20, Pos.typeBB + 8*Queen]
-            
+
             and  x4, x5, x28
             and  x5, x5, x29
-            
+
             and  x8, x9, x28
             and  x9, x9, x29
-            
+
             orr  x4, x4, x8
             orr  x5, x5, x9
-            
+
 
             orr  x0, x0, x4
             orr  x2, x2, x5
@@ -1795,7 +1807,7 @@ Evaluate.SkipSpace:
            ands  x8, x8, x1
            csel  w8, w0, w8, ne
 
-         Popcnt  x0, x11, x1
+         _popcnt  x0, x11, x1
            ldrb  w2, [x27, PawnEntry.asymmetry]
             add  w2, w2, w0
             sub  w2, w2, 17
@@ -1902,7 +1914,7 @@ Evaluate.NotOppBishop:
            add  x6, x20, Pos.typeBB
            ldr  x4, [x6, x23, lsl 3]
            and  x11, x19, x4
-         Popcnt  x1, x11, x9
+         _popcnt  x1, x11, x9
             mov  w4, 7
             mov  w5, 40
             mul  w1, w1, w4
@@ -2109,17 +2121,17 @@ DoMaterialEval:
             ldr  x2, [x6, x8]
             ldr  x0, [x20, Pos.typeBB + 8*Pawn]
             and  x0, x0, x2
-         Popcnt  x0, x0, x1
+         _popcnt  x0, x0, x1
             add  x7, sp, x8, lsl 2
             str  w0, [x7, 4*Pawn]
             ldr  x0, [x20, Pos.typeBB + 8*Knight]
             and  x0, x0, x2
-         Popcnt  x0, x0, x1
+         _popcnt  x0, x0, x1
             add  x7, sp, x8, lsl 2
             str  w0, [x7, 4*Knight]
             ldr  x0, [x20, Pos.typeBB + 8*Bishop]
             and  x0, x0, x2
-         Popcnt  x0, x0, x1
+         _popcnt  x0, x0, x1
             add  x7, sp, x8, lsl 2
             str  w0, [x7, 4*Bishop]
             cmp  w0, 2
@@ -2128,12 +2140,12 @@ DoMaterialEval:
             str  w0, [x7, 4*1]
             ldr  x0, [x20, Pos.typeBB + 8*Rook]
             and  x0, x0, x2
-         Popcnt  x0, x0, x1
+         _popcnt  x0, x0, x1
             add  x7, sp, x8, lsl 2
             str  w0, [x7, 4*Rook]
             ldr  x0, [x20, Pos.typeBB + 8*Queen]
             and  x0, x0, x2
-         Popcnt  x0, x0, x1
+         _popcnt  x0, x0, x1
             add  x7, sp, x8, lsl 2
             str  w0, [x7, 4*Queen]
 
