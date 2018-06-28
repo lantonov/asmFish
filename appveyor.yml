@@ -1,6 +1,42 @@
-version: 1.0.{build}
+version: 3.0.{build}
+pull_requests:
+  do_not_increment_build_number: true
+max_jobs: 11
+platform: Any CPU
+clone_folder: C:\Projects\asmFish
 build_script:
-- cmd:  "set include=x86\\include\\\n  fasmg.exe \"x86\\fish.asm\" \"asmFishW_popcnt.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'popcnt'\" \n fasmg.exe \"x86\\fish.asm\" \"asmFishW_bmi2.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'bmi2'\"\n fasmg.exe \"x86\\fish.asm\" \"asmFishW_base.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'base'\" " 
+- cmd: "fasmg.exe \"x86\\fish.asm\" \"asmFishW_bmi2.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'bmi2'\"\nasmFishW_bmi2.exe bench\nfor /f \"tokens=2 delims==\" %%a in ('wmic OS Get localdatetime /value') do set \"dt=%%a\"\nset \"YY=%dt:~2,2%\" & set \"YYYY=%dt:~0,4%\" & set \"MM=%dt:~4,2%\" & set \"DD=%dt:~6,2%\"\nset \"HH=%dt:~8,2%\" & set \"Min=%dt:~10,2%\" & set \"Sec=%dt:~12,2%\"\nset \"datestamp=%YYYY%-%MM%-%DD%\" & set \"timestamp=%HH%%Min%%Sec%\" & set \"fullstamp=%YYYY%-%MM%-%DD%_%HH%%Min%%Sec%\"\nECHO === Building Windows Executables ===\ncd WindowsOS_binaries\nif exist *bmi2.exe del *bmi2.exe\nif exist *popcnt.exe del *popcnt.exe\ncd ..\nset include=x86\\include\\\nfasmg.exe \"x86\\fish.asm\" \"asmFishW_%datestamp%_popcnt.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'popcnt'\" \nfasmg.exe \"x86\\fish.asm\" \"asmFishW_%datestamp%_bmi2.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'bmi2'\" \ncd LinuxOS_binaries\nif exist asm* del asm*\ncd ..\nECHO === Building Linux Executables ===\nfasmg.exe \"x86\\fish.asm\" \"asmFishL_%datestamp%_popcnt\" -e 1000 -i \"VERSION_OS='L'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'popcnt'\" \nfasmg.exe \"x86\\fish.asm\" \"asmFishL_%datestamp%_bmi2\" -e 1000 -i \"VERSION_OS='L'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'bmi2'\" \ncd MacOS_binaries\nif exist asm* del asm*\ncd ..\nECHO === Building MacOS Executables ===\nfasmg.exe \"x86\\fish.asm\" \"asmFishX_%datestamp%_popcnt\" -e 1000 -i \"VERSION_OS='X'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'popcnt'\" \nfasmg.exe \"x86\\fish.asm\" \"asmFishX_%datestamp%_bmi2\" -e 1000 -i \"VERSION_OS='X'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'bmi2'\" \ncd LinuxOS_binaries\nif exist arm* del arm*\ncd ..\nset include=arm\\include\\\nECHO === Building ARM Executable ===\nfasmg.exe \"arm\\fish.arm\" \"armFishL_%datestamp%_v8\" -e 1000 -i \"VERSION_OS='L'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'v8'\" \ncd Matefinder_binaries\nif exist mateFishW* del mateFishW*\nif exist *base del *base\ncd ..\nset include=x86\\include\\\nECHO === Building Windows Matefinder Executables ===\nfasmg.exe \"x86\\fish.asm\" \"mateFishW_%datestamp%_popcnt.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"VERSION_POST = 'popcnt'\" -i \"USE_MATEFINDER = 1\" \nfasmg.exe \"x86\\fish.asm\" \"mateFishW_%datestamp%_bmi2.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"VERSION_POST = 'bmi2'\" -i \"USE_MATEFINDER = 1\" \ncd Matefinder_binaries\nif exist mateFishL* del mateFishL*\ncd ..\nECHO === Building Linux Matefinder Executables ===\nfasmg.exe \"x86\\fish.asm\" \"mateFishL_%datestamp%_bmi2\" -e 1000 -i \"VERSION_OS='L'\" -i \"VERSION_POST = 'bmi2'\" -i \"USE_MATEFINDER = 1\" \nfasmg.exe \"x86\\fish.asm\" \"mateFishL_%datestamp%_popcnt\" -e 1000 -i \"VERSION_OS='L'\" -i \"VERSION_POST = 'popcnt'\" -i \"USE_MATEFINDER = 1\" \nset include=arm\\include\\\nstart /min fasmg.exe \"arm\\fish.arm\" \"mateFishL_%datestamp%_v8\" -e 1000 -i \"VERSION_OS='L'\" -i \"VERSION_POST = 'v8'\" -i \"USE_MATEFINDER = 1\" \ncd Matefinder_binaries\nif exist mateFishX* del mateFishX*\ncd ..\nECHO === Building MacOS Matefinder Executables ===\nfasmg.exe \"x86\\fish.asm\" \"mateFishX_%datestamp%_bmi2\" -e 1000 -i \"VERSION_OS='X'\" -i \"VERSION_POST = 'bmi2'\" -i \"USE_MATEFINDER = 1\" \nfasmg.exe \"x86\\fish.asm\" \"mateFishX_%datestamp%_popcnt\" -e 1000 -i \"VERSION_OS='X'\" -i \"VERSION_POST = 'popcnt'\" -i \"USE_MATEFINDER = 1\" \ncd WindowsOS_binaries\nif exist *base.exe del *base.exe\ncd ..\nECHO === Building Windows Base Executables ===\nfasmg.exe \"x86\\fish.asm\" \"asmFishW_%datestamp%_base.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'base'\" \nfasmg.exe \"x86\\fish.asm\" \"mateFishW_%datestamp%_base.exe\" -e 1000 -i \"VERSION_OS='W'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'base'\" -i \"USE_MATEFINDER = 1\" \ncd LinuxOS_binaries\nif exist *base del *base\ncd ..\nECHO === Building Linux Base Executables ===\nfasmg.exe \"x86\\fish.asm\" \"asmFishL_%datestamp%_base\" -e 1000 -i \"VERSION_OS='L'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'base'\" \nfasmg.exe \"x86\\fish.asm\" \"mateFishL_%datestamp%_base\" -e 1000 -i \"VERSION_OS='L'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'base'\" -i \"USE_MATEFINDER = 1\" \ncd MacOS_binaries\nif exist *base del *base\ncd ..\nECHO === Building MacOS Base Executables ===\nfasmg.exe \"x86\\fish.asm\" \"asmFishX_%datestamp%_base\" -e 1000 -i \"VERSION_OS='X'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'base'\" \nfasmg.exe \"x86\\fish.asm\" \"mateFishX_%datestamp%_base\" -e 1000 -i \"VERSION_OS='X'\" -i \"PEDANTIC = 1\" -i \"VERSION_POST = 'base'\" -i \"USE_MATEFINDER = 1\" \ntimeout 5\nmove asmFishW_%datestamp%* WindowsOS_binaries\nmove asmFishL_%datestamp%* LinuxOS_binaries\nmove asmFishX_%datestamp%* MacOS_binaries\nmove mateFish* Matefinder_binaries\nmove armFishL_%datestamp%_v8 LinuxOS_binaries"
 test_script:
-- cmd: "asmFishW_bmi2.exe bench \n asmFishW_popcnt.exe bench \n asmFishW_base.exe bench"
 
+- cmd: >-
+    cd WindowsOS_binaries
+            asmFishW_%datestamp%_bmi2.exe bench
+            asmFishW_%datestamp%_popcnt.exe bench
+            asmFishW_%datestamp%_base.exe bench
+            cd..
+    
+    cd Matefinder_binaries
+            mateFishW_%datestamp%_bmi2.exe bench
+            mateFishW_%datestamp%_popcnt.exe bench
+            mateFishW_%datestamp%_base.exe bench
+            cd..
+artifacts:
+- path: WindowsOS_binaries
+  name: Windows
+- path: Matefinder_binaries
+  name: Matefinder
+- path: LinuxOS_binaries
+  name: Linux
+- path: MacOS_binaries
+  name: Mac
+notifications:
+- provider: GitHubPullRequest
+  template: Benches match!
+  on_build_success: true
+  on_build_failure: false
+  on_build_status_changed: false
+- provider: GitHubPullRequest
+  template: Benches do not match!
+  on_build_success: false
+  on_build_failure: true
+  on_build_status_changed: false
