@@ -830,15 +830,19 @@ macro ShelterStorm Us
  if Us = White
     Them = Black
     Up = DELTA_N
+    Down = DELTA_S
         Pieces_Pawn = x19
 	Pieces_Us   = x28
 	Pieces_Them = x29
+  BlockRanks = Rank1BB or Rank2BB
  else
     Them = White
     Up = DELTA_S
+    Down = DELTA_N
         Pieces_Pawn = x19
 	Pieces_Us   = x29
 	Pieces_Them = x28
+  BlockRanks = Rank8BB or Rank7BB
  end if
 
             stp  x26, x27, [sp, -16]!
@@ -869,6 +873,23 @@ macro ShelterStorm Us
      cmp  x2, 0
      csneg w0, w0, w0, eq
     ; w0 = saftey
+
+	;if ((shift<Down>(theirPawns) & (FileABB | FileHBB) & BlockRanks) & ksq)
+     mov  x11, x10
+     ShiftBB  Down, x11, x11
+     mov  x22, x11 ; r12 = shift<Down>(theirPawns)
+     mov  x11, FileABB or FileHBB
+     and   x22, x22, x11 ; r12 & (FileABB|FileHBB)
+     mov  x11, BlockRanks
+     and  x22, x22, x11 ; r12 & BlockRanks
+     mov  x11, Pieces_Us
+     ldr  x2, [x20, Pos.typeBB + 8*King]
+     and  x11, x11, x2
+     and  x22, x22, x11 ; r12 & ksq
+     cmp  x22, 0
+     beq  @f
+     add w0, w0, 374
+@@:
   if Us = Black
             eor  w23, w23, 7
   end if
@@ -932,18 +953,12 @@ macro ShelterStorm Us
             add  w26, w26, 1
     ; esi = rkUs+1
 
-           _lea  x11, StormDanger_BlockedByKing
-           _lea  x8, ShelterStrengthArray - 4*1
-            add  x8, x8, x2
-            add  x11, x11, x2
             cmp  w1, w22
-            add  w22, w22, 1
             bne  @1f
-           _lea  x8, ShelterStrengthArray - 4*1
-            add  x8, x8, x2
-            cmp  w27, w23
-            beq  @2f
+; Rank Comparisons
     @1:
+           _lea  x8, ShelterStrengthArray - 4*1
+           add  x8, x8, x2
            _lea  x11, StormDanger_NoFriendlyPawn
             add  x11, x11, x2
             cmp  w26, 1
@@ -959,6 +974,7 @@ macro ShelterStorm Us
             add  w0, w0, w4
             ldr  w4, [x11, x27, lsl 2]
             sub  w0, w0, w4
+            add  x22, x22, 1
 
   end repeat
 

@@ -743,13 +743,17 @@ macro ShelterStorm Us
   if Us = White
 	Them		= Black
 	Up		= DELTA_N
+    Down    = DELTA_S
 	PiecesUs	equ r14
 	PiecesThem	equ r15
+    BlockRanks  = Rank1BB or Rank2BB
   else
 	Them		= White
 	Up		= DELTA_S
+    Down    = DELTA_N
 	PiecesUs	equ r15
 	PiecesThem	equ r14
+    BlockRanks  = Rank8BB or Rank7BB
   end if
 
 		push   rsi rdi r11 r12 r13
@@ -768,18 +772,35 @@ macro ShelterStorm Us
 		mov   r9, PiecesUs
 		and   r9, r8
 	; r9 = ourPawns
-  and   ecx, 7
-; ecx = file of ksq
+        and   ecx, 7
+    ; ecx = file of ksq
 		mov   r10, PiecesThem
 		and   r10, r8
 	; r10 = theirPawns
-    mov  rax, qword[FileBB+8*rcx]
+        mov  rax, qword[FileBB+8*rcx]
 		and  rax, r9
 		cmp  rax, 1
 		sbb  eax, eax
-		and  eax, -10
+		and  eax, -10 ; saves instructions and keeps code linear
 		add  eax, 5
 	; eax = saftey
+
+;  if ((shift<Down>(theirPawns) & (FileABB | FileHBB) & BlockRanks) & ksq)
+        mov  r11, r10
+        ShiftBB  Down, r11, r11
+        mov  r12, r11 ; r12 = shift<Down>(theirPawns)
+        mov  r11, FileABB or FileHBB
+        and  r12, r11 ; r12 & (FileABB|FileHBB)
+        mov  r11, BlockRanks
+        and  r12, r11 ; r12 & BlockRanks
+        mov  r11, PiecesUs
+        and  r11, qword [rbp+Pos.typeBB+8*King]
+        and  r12, r11 ; r12 & ksq
+        test r12, r12
+        jz  @f
+        add eax, 374
+
+@@:
 	if Us eq Black
 		xor   r13d, 7
 	end if
@@ -844,15 +865,12 @@ macro ShelterStorm Us
 		add   esi, 1
 	; esi = rkUs+1
 
-		lea   r11, [StormDanger_BlockedByKing+rdx]
-		lea   r8, [ShelterStrengthArray - 4*1 + rdx]
 		cmp   ecx, r12d
-		lea   r12d, [r12+1]
 		jne   @f
-		lea   r8, [ShelterStrengthArray - 4*1 + rdx]
-		cmp   edi, r13d
-		je   @1f
+
+; Rank Comparisons
 	@@:
+    	lea   r8, [ShelterStrengthArray - 4*1 + rdx]
 		lea   r11, [StormDanger_NoFriendlyPawn + rdx]
 		cmp   esi, 1
 		je   @1f
@@ -863,6 +881,7 @@ macro ShelterStorm Us
 	@1:
 		add   eax, dword[r8 + 4*rsi]
 		sub   eax, dword[r11 + 4*rdi]
+        lea   r12d, [r12+1]
   end macro
 
     ShelterStormAcc
