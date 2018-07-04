@@ -19,24 +19,26 @@ echo    6 - Base
 echo    7 - Matefinder
 echo.  
 echo    D - Toggle Debug Mode
+echo    U - Update fasmg.exe
 echo    Q - Quit
 echo.
-choice /c:1234567QpbD>NUL
+choice /c:1234567QpbDU>NUL
 
 :: Debug = OFF [default]
 
 :: OPTIONS
+if errorlevel 12 goto update
 if errorlevel 11 goto debug
 if errorlevel 10 goto WinBmi2
-if errorlevel 9 goto WinPopcnt
-if errorlevel 8 goto done
-if errorlevel 7 goto matefinder
-if errorlevel 6 goto base
-if errorlevel 5 goto arm
-if errorlevel 4 goto mac
-if errorlevel 3 goto linux
-if errorlevel 2 goto windows
-if errorlevel 1 goto allBinaries
+if errorlevel 9  goto WinPopcnt
+if errorlevel 8  goto done
+if errorlevel 7  goto matefinder
+if errorlevel 6  goto base
+if errorlevel 5  goto arm
+if errorlevel 4  goto mac
+if errorlevel 3  goto linux
+if errorlevel 2  goto windows
+if errorlevel 1  goto allBinaries
 echo CHOICE missing
 goto done
 
@@ -386,6 +388,12 @@ cls
 set "default=2>NUL"
 if defined debug (ECHO Debug Mode = ON) else (ECHO Debug Mode = OFF)
 if defined debug (SET "debug=") else (SET "debug=%default%")
+goto menu
+
+:update
+if exist fasmg.exe del fasmg.exe
+call cscript /nologo "%~dp0download.vbs" https://flatassembler.net fasmg.zip fasmg.exe fasmg.exe "The latest fasmg assembler"
+echo.
 goto menu
 
 :END
