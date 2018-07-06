@@ -111,29 +111,70 @@ NextPiece:
             mov   rax, qword[PawnAttacks+8*(64*Us+rcx)]
            test   r9, r9
              jz   Neighbours_False
-Neighbours_True:
-           test   rax, r14
-            jnz   Neighbours_True__Lever_True
-Neighbours_True__Lever_False:
-            mov   rax, r9
-             or   rax, r10
-  if Us = White
-            cmp   ecx, SQ_A5
-            jae   Neighbours_True__Lever_False__RelRank_big
-         _tzcnt   rax, rax
-  else
-            cmp   ecx, SQ_A5
-             jb   Neighbours_True__Lever_False__RelRank_big
-            bsr   rax, rax
-  end if
+
 Neighbours_True__Lever_False__RelRank_small:
-            shr   eax, 3
-            mov   rax, qword[RankBB+8*rax]
-            and   rdx, rax
-        ShiftBB   Up, rdx
-             or   rdx, rax
+             mov   rdx, qword[PawnAttacks+8*(64*Us+rcx)]
+             and   rdx, r14
+             ; rdx = lever
+
+        ; (rdx == 0)? 1 : 0
+        ; logical NOT (!)       ; [Latency, Reciprocal Throughput]
+             xor  r9, r9        ; [1, .25]
+             mov  rax, 1        ; [0, .25]
+             test  rdx, rdx     ; [1, .25]
+             cmovz  rdx, rax    ; [2, .50]
+             cmovnz  rdx, r9    ; [1, .50]
+                                ; --------
+                                ; Total: [5,  1.75 clock-cycles/instruction]
+
+        ; (rdx == 0)? 1 : 0
+        ; Alternate form of logical NOT (!)
+        ; Slightly less efficient, but has less dependencies (useful later)
+             ; neg  rdx         ; [6,   1]
+             ; sbb  rdx, rdx    ; [2,   1]
+             ; add  rdx, 1      ; [1, .25]
+                                ; --------
+        ; rdx = !lever = !A     ; Total: [9,  2.25 clock-cycles/instruction]
+
+        ; logical AND (&&)
+             mov  r9, [PawnAttackSpan+8*(64*Them+rcx+Up)]
+             and  r9, r13 ; & ourPawns
+             ; final logical NOT (!)
+                neg  r9
+                sbb  r9, r9
+                add  r9, 1 ; r9 = !r9 = !B
+             xor  rax, rax
+             test  rdx, rdx
+             setne al
+             xor  rdx, rdx
+             test r9, r9
+             setne dl
+             and  edx, eax
+        ; edx = !A && !B
+
+        ; Prepare for final logical AND (&&)
+             mov  r9, qword[PawnAttacks+8*(64*Us+rcx+Up)]
+             and  r9, r14
+             mov  eax, ecx
+             lea  rax, [rcx+Up]
+             shr  rax, 3
+             mov  rax, qword[RankBB+8*rax] ; handles tricky (s + Up) expression
+             and  rax, r14
+             or   r9, rax
+             and  r9, r10
+
+        ; Final logical AND (&&)
+            xor  rax, rax
+            ; r9 is already here
+            test  rdx, rdx
+            setne  al
+            xor  rdx, rdx
+            test  r9, r9
+            setne  dl
+            and  edx, eax
+        ; edx = !A && !B && C
+
             mov   eax, -Backward
-            and   rdx, r10
          cmovnz   edx, eax
     ; edx = backwards ? Backward[opposed] : 0
             lea   eax, [r11 + 1]
@@ -142,12 +183,7 @@ Neighbours_True__Lever_False__RelRank_small:
 Neighbours_False:
             mov   edx, -Isolated
             lea   r10d, [r11 + 1]
-            jmp   Continue
 
-Neighbours_True__Lever_True:
-Neighbours_True__Lever_False__RelRank_big:
-            xor   edx, edx
-            xor   r10, r10
 Continue:
         _popcnt   rax, r8, r9
     if CPU_HAS_POPCNT = 1
