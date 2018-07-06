@@ -113,10 +113,6 @@ NextPiece:
             cbz  x9, Neighbours_False
 
 Neighbours_True__Lever_False__RelRank_small:
-         and  x2, x0, x24
-         mov  x4, 1
-         tst  x2, x2
-        csel  x2, x4, xzr, eq
         _lea  x6, PawnAttackSpan + 8*(64*Them + Up)
          ldr  x9, [x6, x1, lsl 3]
          and  x9, x9, x23
@@ -127,14 +123,18 @@ Neighbours_True__Lever_False__RelRank_small:
          tst  x9, x9
         csel  x2, xzr, x4, eq
          and  x2, x2, x0
-        _lea  x6, PawnAttacks + 8*(64*Us + Up)
-         ldr  x9, [x6, x1, lsl 3]
-         and  x9, x9, x24
          add  w0, w1, Up
          lsr  w0, w0, 3
         _lea  x6, RankBB
+         ldr  x9, [x6, x0, lsl 3]
+         add  w0, w1, Up
+         and  w0, w0, 7
+        _lea  x6, FileBB
          ldr  x0, [x6, x0, lsl 3]
-         and  x0, x0, x24
+         and  x0, x0, x9
+        _lea  x6, PawnAttacks + 8*(64*Us + Up)
+         ldr  x9, [x6, x1, lsl 3]
+         and  x9, x9, x24
          orr  x9, x9, x0
          and  x9, x9, x10
          tst  x2, x2
