@@ -172,7 +172,6 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   dword[rbx+1*sizeof.State+State.excludedMove], eax
 		mov   dword[rbx+0*sizeof.State+State.currentMove], eax
 		mov   qword[rbx+0*sizeof.State+State.counterMoves], rcx
-		mov   byte[rbx+1*sizeof.State+State.skipEarlyPruning], al
 		mov   qword[rbx+2*sizeof.State+State.killers], rax
 		mov   dword[rbx + 2*sizeof.State + State.statScore], eax
 
@@ -310,8 +309,8 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		Assert   b, al, 2,	'assertion al<2	in Search failed'
 		mov   byte[.improving],	al   ; should be 0 or 1
 
-		mov   al, byte[rbx+State.skipEarlyPruning]
-		test   al, al
+        mov   eax, dword[.excludedMove]
+        test  eax, eax
 		jnz   .moves_loop
 		xor   rcx,rcx
 		mov   ecx, dword[rbp+Pos.sideToMove]
@@ -392,8 +391,11 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 
 	    ; Step 8. Null move	search with verification search	(is omitted in PV nodes)
   if PvNode = 0
-		mov   edx, dword[.depth]
-	       imul   eax, edx,	36
+        mov   edx, dword[rbx-1*sizeof.State+State.currentMove]
+        cmp   edx, MOVE_NULL
+        je  .8skip
+        mov   edx, dword[.depth]
+        imul   eax, edx,	36
 		add   eax, dword[rbx+State.staticEval]
 		mov   esi, dword[.beta]
 		cmp   esi, dword[.evalu]
@@ -478,7 +480,6 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 	; esi = depth-R
 
 		call   Move_DoNull
-		mov   byte[rbx+State.skipEarlyPruning],	-1
 		mov   r8d, esi
 		xor   eax, eax
 		lea   r12, [QSearch_NonPv_NoCheck]
@@ -493,7 +494,6 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		not   r9d		; not used in qsearch case
 		call   r12
 		neg   eax
-		mov   byte[rbx+State.skipEarlyPruning],	0
 		xor   dword[rbp+Pos.sideToMove], 1	  ;undo	null move
 		sub   rbx, sizeof.State			  ;
 
@@ -527,7 +527,6 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   dword[rbp - Thread.rootPos + Thread.nmp_ply], eax
 		mov   dword[rbp - Thread.rootPos + Thread.nmp_odd], ecx
 
-		mov   byte[rbx+State.skipEarlyPruning],	-1
 		mov   r8d, esi
 		xor   eax, eax
 		lea   r12, [QSearch_NonPv_NoCheck]
@@ -540,7 +539,6 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		call   r12
 		xor  ecx, ecx
 		mov  qword[rbp - Thread.rootPos + Thread.nmp_ply], rcx
-		mov   byte[rbx+State.skipEarlyPruning],	0
 		cmp   eax, dword[.beta]
 		mov   eax, edi
 		jge   .Return
@@ -658,14 +656,12 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		xor  r8, r8
 		movzx  r9d, byte[.cutNode]
 		not  r9d
-		mov  byte[rbx+State.skipEarlyPruning],	-1
 		lea   r10, [QSearch_NonPv_InCheck]
 		lea   r11, [QSearch_NonPv_NoCheck]
 		cmp   byte[rbx-1*sizeof.State+State.givesCheck], 0
 	    cmovne   r11, r10
 		call  r11
 		neg  eax
-		mov  byte[rbx+State.skipEarlyPruning],	0
 		mov  esi, eax
 		cmp  eax, dword[.rbeta]
 		jge  @f
@@ -711,16 +707,13 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   ecx, dword[.alpha]
 		mov   edx, dword[.beta]
 		movzx   r9d, byte[.cutNode]
-		mov   byte[rbx+State.skipEarlyPruning],	-1
 		call   Search_Pv
   else
 		mov   ecx, dword[.alpha]
 		mov   edx, dword[.beta]
 		movzx   r9d, byte[.cutNode]
-		mov   byte[rbx+State.skipEarlyPruning],	-1
 		call   Search_NonPv
   end if
-		mov   byte[rbx+State.skipEarlyPruning],	0
 		mov   rcx, qword[.posKey]
 		call   MainHash_Probe
 		mov   qword[.tte], rax
@@ -947,7 +940,6 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		sar   r8d, 1
 		mov   eax, dword[.move]
 		mov   dword[rbx+State.excludedMove], eax
-		mov   byte[rbx+State.skipEarlyPruning], -1
     ; The call to search_NonPV with the same value of ss messed up our
     ; move picker data. So we fix it.
 		mov   r12, qword[rbx+State.stage]
@@ -956,7 +948,6 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   r15, qword[rbx+State.mpKillers]
 		call   Search_NonPv
 		xor   ecx, ecx
-		mov   byte[rbx+State.skipEarlyPruning],	cl
 		mov   dword[rbx+State.excludedMove], ecx
 		cmp   eax, edi
 		setl   cl

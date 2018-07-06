@@ -189,7 +189,7 @@ _stack_start rb 0
  staticEval	  rd 1
  statScore        rd 1
  ply		  rb 1
- skipEarlyPruning rb 1
+ rb 1
 		  rb 2
 _stack_end rb 0
 ; move picker data
