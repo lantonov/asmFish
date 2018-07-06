@@ -113,57 +113,47 @@ NextPiece:
              jz   Neighbours_False
 
 Neighbours_True__Lever_False__RelRank_small:
-             mov   rdx, qword[PawnAttacks+8*(64*Us+rcx)]
-             and   rdx, r14
-             ; rdx = lever
 
-        ; (rdx == 0)? 1 : 0
-        ; logical NOT (!)       ; [Latency, Reciprocal Throughput]
-             xor  r9, r9        ; [1, .25]
-             mov  rax, 1        ; [0, .25]
-             test  rdx, rdx     ; [1, .25]
-             cmovz  rdx, rax    ; [2, .50]
-             cmovnz  rdx, r9    ; [1, .50]
-                                ; --------
-                                ; Total: [5,  1.75 clock-cycles/instruction]
+             mov  rdx, [PawnAttackSpan+8*(64*Them+rcx+Up)]
+             and  rdx, r13 ; & ourPawns
 
-        ; (rdx == 0)? 1 : 0
-        ; Alternate form of logical NOT (!)
-        ; Slightly less efficient, but has less dependencies (useful later)
-             ; neg  rdx         ; [6,   1]
-             ; sbb  rdx, rdx    ; [2,   1]
-             ; add  rdx, 1      ; [1, .25]
-                                ; --------
-        ; rdx = !lever = !A     ; Total: [9,  2.25 clock-cycles/instruction]
+         ; logical NOT (!)
+         ; (rdx == 0)? 1 : 0
+         ; logical NOT (!)         ; [Latency, Reciprocal Throughput]
+             xor  r9, r9           ; [1, .25]
+             mov  rax, 1           ; [0, .25]
+             test  rdx, rdx        ; [1, .25]
+             cmovz  rdx, rax       ; [2, .50]
+             cmovnz  rdx, r9       ; [1, .50]
+                                   ; --------
+             ; rdx = !A            ; Total: [5,  1.75 clock-cycles/instruction]
 
-        ; logical AND (&&)
-             mov  r9, [PawnAttackSpan+8*(64*Them+rcx+Up)]
-             and  r9, r13 ; & ourPawns
-             ; final logical NOT (!)
-                neg  r9
-                sbb  r9, r9
-                add  r9, 1 ; r9 = !r9 = !B
-             xor  rax, rax
-             test  rdx, rdx
-             setne al
-             xor  rdx, rdx
-             test r9, r9
-             setne dl
-             and  edx, eax
-        ; edx = !A && !B
+         ; Alternate form of logical NOT (!)
+            ; (rdx == 0)? 1 : 0
+            ; - Slightly less efficient, but has less dependencies
+            ; - Use this when available registers are scarce
+             ; neg  rdx            ; [6,   1]
+             ; sbb  rdx, rdx       ; [2,   1]
+             ; add  rdx, 1         ; [1, .25]
+                                   ; --------
+             ; rdx = !A            ; Total: [9,  2.25 clock-cycles/instruction]
 
-        ; Prepare for final logical AND (&&)
-             mov  r9, qword[PawnAttacks+8*(64*Us+rcx+Up)]
-             and  r9, r14
+        ; Prepare for logical AND (&&)
              mov  eax, ecx
              lea  rax, [rcx+Up]
              shr  rax, 3
-             mov  rax, qword[RankBB+8*rax] ; handles tricky (s + Up) expression
-             and  rax, r14
+             mov  r9, qword[RankBB+8*rax]
+             lea  rax, [rcx+Up]
+             and  rax, 7
+             mov  rax, qword[FileBB+8*rax]
+             and  rax, r9
+
+             mov  r9, qword[PawnAttacks+8*(64*Us+rcx+Up)]
+             and  r9, r14
              or   r9, rax
              and  r9, r10
 
-        ; Final logical AND (&&)
+        ; logical AND (&&)
             xor  rax, rax
             ; r9 is already here
             test  rdx, rdx
@@ -172,7 +162,7 @@ Neighbours_True__Lever_False__RelRank_small:
             test  r9, r9
             setne  dl
             and  edx, eax
-        ; edx = !A && !B && C
+        ; edx = !A && B
 
             mov   eax, -Backward
          cmovnz   edx, eax
@@ -186,13 +176,8 @@ Neighbours_False:
 
 Continue:
         _popcnt   rax, r8, r9
-    if CPU_HAS_POPCNT = 1
-         popcnt   r9, rbx
-    else
-           push   r10             
         _popcnt   r9, rbx, r10
-            pop   r10
-    end if
+
             neg   r11d
             neg   rbx
             adc   r11d, r11d
