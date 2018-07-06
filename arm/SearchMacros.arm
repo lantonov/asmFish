@@ -152,7 +152,6 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             str  w0, [x21, 1*sizeof.State + State.excludedMove]
             str  w0, [x21, 0*sizeof.State + State.currentMove]
             str  x1, [x21, 0*sizeof.State + State.counterMoves]
-           strb  w0, [x21, 1*sizeof.State + State.skipEarlyPruning]
             str  x0, [x21, 2*sizeof.State + State.killers]
             str  w0, [x21, 2*sizeof.State + State.statScore]
 
@@ -293,8 +292,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
            orr  w0, w0, w2
            orr  w0, w0, w1
           strb  w0, [sp, .improving]
-
-          ldrb  w0, [x21, State.skipEarlyPruning]
+          ldr  w0, [sp, .excludedMove]
           cbnz  w0, .moves_loop
            ldr  w1, [x20, Pos.sideToMove]
            add  x6, x21, x1, lsl 1
@@ -377,6 +375,10 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
   end if
     ; Step 8. Null move search with verification search (is omitted in PV nodes)
   if PvNode = 0
+            ldr  w2, [x21, -1*sizeof.State + State.currentMove]
+            mov  w4, MOVE_NULL
+            cmp  w2, w4
+            beq  .8skip
             ldr  w2, [sp, .depth]
             ldr  w4, [x21, State.staticEval]
             mov  w5, 36
@@ -470,8 +472,6 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             sub  w26, w26, w0
     ; esi = depth-R
              bl  Move_DoNull
-            mov  w4, -1
-           strb  w4, [x21, State.skipEarlyPruning]
             mov  w8, w26
             mov  w0, 0
             adr  x22, QSearch_NonPv_NoCheck
@@ -486,7 +486,6 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             mvn  w9, w9
             blr  x22
             neg  w0, w0
-           strb  wzr, [x21, State.skipEarlyPruning]
             ldr  w4, [x20, Pos.sideToMove]
             eor  w4, w4, 1
             str  w4, [x20, Pos.sideToMove]
@@ -522,8 +521,6 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
                 str  w0, [x7, Thread.nmp_ply]
                 str  w1, [x7, Thread.nmp_odd]
 
-            mov  w4, -1
-           strb  w4, [x21, State.skipEarlyPruning]
             mov  w8, w26
             mov  w0, 0
             adr  x22, QSearch_NonPv_NoCheck
@@ -538,7 +535,6 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
                 add  x7, x20, -Thread.rootPos
                 str  xzr, [x7, Thread.nmp_ply]
 
-           strb  wzr, [x21, State.skipEarlyPruning]
             ldr  w4, [sp, .beta]
             cmp  w0, w4
             mov  w0, w27
@@ -651,8 +647,6 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
 
                ldrb  w9, [sp, .cutNode]
                 mvn  w9, w9
-                mov  w4, -1
-               strb  w4, [x21, State.skipEarlyPruning]
 
                adr  x10, QSearch_NonPv_InCheck
                adr  x11, QSearch_NonPv_NoCheck
@@ -662,7 +656,6 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
                 blr  x11
                 neg  w26, w0
 
-               strb  wzr, [x21, State.skipEarlyPruning]
                ldr  w4, [sp, .rbeta]
                cmp  w26, w4
                bge  @f
@@ -702,18 +695,13 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             ldr  w1, [sp, .alpha]
             ldr  w2, [sp, .beta]
            ldrb  w9, [sp, .cutNode]
-            mov  w4, -1
-           strb  w4, [x21, State.skipEarlyPruning]
              bl  Search_Pv
   else
             ldr  w1, [sp, .alpha]
             ldr  w2, [sp, .beta]
            ldrb  w9, [sp, .cutNode]
-            mov  w4, -1
-           strb  w4, [x21, State.skipEarlyPruning]
              bl  Search_NonPv
   end if
-           strb  wzr, [x21, State.skipEarlyPruning]
             ldr  x1, [sp, .posKey]
              bl  MainHash_Probe
             str  x0, [sp, .tte]
@@ -940,8 +928,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             asr  w8, w8, 1
             ldr  w0, [sp, .move]
             str  w0, [x21, State.excludedMove]
-            mov  w4, -1
-           strb  w4, [x21, State.skipEarlyPruning]
+
     ; The call to search_NonPV with the same value of ss messed up our
     ; move picker data. So we fix it.
             ldr  x22, [x21, State.stage]
@@ -949,8 +936,7 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             ldr  x24, [x21, State.countermove]      ; counter move and gives check
             ldr  x25, [x21, State.mpKillers]
              bl  Search_NonPv
-            mov  w1, 0
-           strb  w1, [x21, State.skipEarlyPruning]
+             mov  w1, 0
             str  w1, [x21, State.excludedMove]
             cmp  w0, w27
            cset  w1, lt
