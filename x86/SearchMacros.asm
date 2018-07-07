@@ -391,6 +391,9 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 
 	    ; Step 8. Null move	search with verification search	(is omitted in PV nodes)
   if PvNode = 0
+        mov  edx, dword[rbx-1*sizeof.State+State.statScore]
+        cmp  edx, 30000
+        jge  .8skip
         mov   edx, dword[rbx-1*sizeof.State+State.currentMove]
         cmp   edx, MOVE_NULL
         je  .8skip

@@ -375,6 +375,10 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
   end if
     ; Step 8. Null move search with verification search (is omitted in PV nodes)
   if PvNode = 0
+            ldr  w2, [x21, -1*sizeof.State + State.statScore]
+            mov  w4, 30000
+            cmp  w2, w4
+            bge  .8skip
             ldr  w2, [x21, -1*sizeof.State + State.currentMove]
             mov  w4, MOVE_NULL
             cmp  w2, w4
