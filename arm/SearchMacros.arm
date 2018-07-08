@@ -278,27 +278,6 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             str  w0, [sp, .evalu]
 .StaticValueDone:
 
-           ldr  w2, [x21, -0*sizeof.State + State.staticEval]
-           add  x6, x21, -2*sizeof.State
-           ldr  w1, [x6, State.staticEval]
-           cmp  w2, w1
-          cset  w0, ge
-           mov  w4, VALUE_NONE
-           cmp  w2, w4
-          cset  w2, eq
-           mov  w4, VALUE_NONE
-           cmp  w1, w4
-          cset  w1, eq
-           orr  w0, w0, w2
-           orr  w0, w0, w1
-          strb  w0, [sp, .improving]
-          ldr  w0, [sp, .excludedMove]
-          cbnz  w0, .moves_loop
-           ldr  w1, [x20, Pos.sideToMove]
-           add  x6, x21, x1, lsl 1
-          ldrh  w1, [x6, State.npMaterial]
-           cbz  w1, .moves_loop
-
     ; Step 6. Razoring (skipped when in check)
   if PvNode = 0
             ldr  w2, [sp, .depth]
@@ -337,6 +316,21 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             ble  .Return
 .6skip:
   end if
+
+            ldr  w2, [x21, -0*sizeof.State + State.staticEval]
+            add  x6, x21, -2*sizeof.State
+            ldr  w1, [x6, State.staticEval]
+            cmp  w2, w1
+            cset  w0, ge
+            mov  w4, VALUE_NONE
+            cmp  w2, w4
+            cset  w2, eq
+            mov  w4, VALUE_NONE
+            cmp  w1, w4
+            cset  w1, eq
+            orr  w0, w0, w2
+            orr  w0, w0, w1
+            strb  w0, [sp, .improving] ; should be 0 or 1
 
     ; Step 7. Futility pruning: child node (skipped when in check)
   if (RootNode = 0 & USE_MATEFINDER = 0) | (PvNode = 0 & USE_MATEFINDER = 1)
@@ -392,6 +386,13 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             cmp  w26, w4
             bgt  .8skip
             add  w26, w26, 225
+
+            ldr  w8, [sp, .excludedMove]
+            cbnz  w8, .8skip
+            ldr  w1, [x20, Pos.sideToMove]
+            add  x6, x21, x1, lsl 1
+            ldrh  w1, [x6, State.npMaterial]
+            cbz  w1, .8skip
 
     if USE_MATEFINDER = 0
             ldr  w1, [x21, State.ply]
