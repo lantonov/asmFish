@@ -4,7 +4,7 @@ macro EvalPawns Us
 	;     rdi address of pawn table entry
 	; out esi score
   local Them, Up, Right, Left
-  local Isolated0, Isolated1, Backward0, Backward1, Doubled
+  local Isolated, Backward, Doubled
   local NextPiece, AllDone, Done, WritePawnSpan
   local Neighbours_True, Neighbours_True__Lever_False
   local Neighbours_True__Lever_False__RelRank_small, Neighbours_False
@@ -22,15 +22,11 @@ macro EvalPawns Us
 	Left  = DELTA_SE
   end if
 
-  Isolated0    = (27 shl 16) + (30)
-  Isolated1    = (13 shl 16) + (18)
-  Isolated     = (13 shl 16) + (18)
+  Isolated     = (13 shl 16) + (16)
 
-  Backward0    = (40 shl 16) + (26)
-  Backward1    = (24 shl 16) + (12)
-  Backward     = (24 shl 16) + (12)
+  Backward     = (17 shl 16) + (11)
 
-  Doubled     = ((18 shl 16) + (38))
+  Doubled     =  (13 shl 16) + (40)
 
             xor   eax, eax
             mov   qword[rdi+PawnEntry.passedPawns+8*Us], rax
@@ -248,7 +244,7 @@ PopLoop:
             mov   r9, qword[PawnAttacks+8*(64*Us+r9)]
             and   r9, r14
           _blsr   r11, r9
-           setz   al                
+           setz   al
              or   edx, eax
             shl   rax, cl
              or   qword[rdi+PawnEntry.passedPawns+8*Us], rax

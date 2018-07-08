@@ -1249,9 +1249,9 @@ NextPawn:
 		imul   eax, HinderPassedPawn
 		subadd   dword[.ei.score], eax
 
-                mov  edi, dword[RankFactor + 4*rcx]
+                mov  edi, dword[PassedDanger + 4*rcx]
 	; ecx = r
-        ; edi = RankFactor[r]
+        ; edi = PassedDanger[r]
 
 
   if Us = White
