@@ -126,7 +126,7 @@ DoMaterialEval_Data:
 .QuadraticOurs:            rd 8*6
 .QuadraticTheirs:          rd 8*6
 QueenMinorsImbalance       rd 16
-RankFactor              rd 8
+PassedDanger              rd 8
 
 Eval_Contempt              rd 1
 Reserved                   rd 1 ; explicitly pad to 64-bit alignment. Can be used.

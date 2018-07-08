@@ -1327,10 +1327,10 @@ NextPawn:
             ldr  w4, [sp, EvalInfo.score]
          AddSub  Them, w4, w4, w0
             str  w4, [sp, EvalInfo.score]
-           _lea  x27, RankFactor
+           _lea  x27, PassedDanger
             ldr  w27, [x27, x1, lsl 2]
     ; w1 = r
-    ; w27 = rr = RankFactor[r]
+    ; w27 = rr = PassedDanger[r]
 
  if Us = White
             cmp  w8, SQ_A4 + Up

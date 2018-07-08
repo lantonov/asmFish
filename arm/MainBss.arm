@@ -117,7 +117,7 @@ DoMaterialEval_Data:
 DoMaterialEval_Data.QuadraticOurs:     rb 4*8*6
 DoMaterialEval_Data.QuadraticTheirs:   rb 4*8*6
 QueenMinorsImbalance:   rb 4*16
-RankFactor              rd 8
+PassedDanger              rd 8
 Eval_Contempt           rd 1
 
 
