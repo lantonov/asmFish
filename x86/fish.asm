@@ -46,10 +46,17 @@ if VERSION_POST = 'base'
   CPU_HAS_BMI2 = 0
 else if VERSION_POST = 'popcnt'
   CPU_HAS_POPCNT = 1
+  CPU_HAS_TZCNT = 0
   CPU_HAS_BMI1 = 0
+  CPU_HAS_BMI2 = 0
+else if VERSION_POST = 'bmi1'
+  CPU_HAS_POPCNT = 1
+  CPU_HAS_TZCNT = 1
+  CPU_HAS_BMI1 = 1
   CPU_HAS_BMI2 = 0
 else if VERSION_POST = 'bmi2'
   CPU_HAS_POPCNT = 1
+  CPU_HAS_TZCNT = 1
   CPU_HAS_BMI1 = 1
   CPU_HAS_BMI2 = 1
 end if
@@ -58,6 +65,7 @@ end if
 
 FASMG_INC = 'include/'
 include string 'format.inc'             shl (8*lengthof FASMG_INC) + FASMG_INC
+include string 'instructions/bmi1.inc'  shl (8*lengthof FASMG_INC) + FASMG_INC
 include string 'instructions/bmi2.inc'  shl (8*lengthof FASMG_INC) + FASMG_INC
 include string 'instructions/avx.inc'   shl (8*lengthof FASMG_INC) + FASMG_INC
 
