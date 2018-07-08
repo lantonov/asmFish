@@ -296,28 +296,6 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   dword[.evalu], eax
 .StaticValueDone:
 
-		mov   edx, dword[rbx-0*sizeof.State+State.staticEval]
-		mov   ecx, dword[rbx-2*sizeof.State+State.staticEval]
-		cmp   edx, ecx
-		setge   al
-		cmp   edx, VALUE_NONE
-		sete   dl
-		cmp   ecx, VALUE_NONE
-		sete   cl
-		or   al, dl
-		or   al, cl
-		Assert   b, al, 2,	'assertion al<2	in Search failed'
-		mov   byte[.improving],	al   ; should be 0 or 1
-
-        mov   eax, dword[.excludedMove]
-        test  eax, eax
-		jnz   .moves_loop
-		xor   rcx,rcx
-		mov   ecx, dword[rbp+Pos.sideToMove]
-		movzx   ecx, word[rbx+State.npMaterial+2*rcx]
-		test   ecx, ecx
-		jz   .moves_loop
-
 	    ; Step 6. Razoring (skipped	when in	check)
   if PvNode = 0
 		mov   edx, dword[.depth]
@@ -346,11 +324,23 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		sub   ecx, RazorMargin2
 		lea   edx, [rcx+1]
 		mov   esi, ecx
-	       call   QSearch_NonPv_NoCheck
+		call   QSearch_NonPv_NoCheck
 		cmp   eax, esi
 		jle   .Return
 .6skip:
   end if
+		mov   edx, dword[rbx-0*sizeof.State+State.staticEval]
+		mov   ecx, dword[rbx-2*sizeof.State+State.staticEval]
+		cmp   edx, ecx
+		setge   al
+		cmp   edx, VALUE_NONE
+		sete   dl
+		cmp   ecx, VALUE_NONE
+		sete   cl
+		or   al, dl
+		or   al, cl
+		Assert   b, al, 2,	'assertion al<2	in Search failed'
+		mov   byte[.improving],	al   ; should be 0 or 1
 
 	    ; Step 7. Futility pruning:	child node (skipped when in check)
   if (RootNode = 0 & USE_MATEFINDER = 0) | (PvNode = 0 & USE_MATEFINDER	= 1)
@@ -391,19 +381,27 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 
 	    ; Step 8. Null move	search with verification search	(is omitted in PV nodes)
   if PvNode = 0
-        mov  edx, dword[rbx-1*sizeof.State+State.statScore]
-        cmp  edx, 30000
-        jge  .8skip
-        mov   edx, dword[rbx-1*sizeof.State+State.currentMove]
-        cmp   edx, MOVE_NULL
-        je  .8skip
-        mov   edx, dword[.depth]
-        imul   eax, edx,	36
+		mov  edx, dword[rbx-1*sizeof.State+State.statScore]
+		cmp  edx, 30000
+		jge  .8skip
+		mov   edx, dword[rbx-1*sizeof.State+State.currentMove]
+		cmp   edx, MOVE_NULL
+		je  .8skip
+		mov   edx, dword[.depth]
+		imul   eax, edx,	36
 		add   eax, dword[rbx+State.staticEval]
 		mov   esi, dword[.beta]
 		cmp   esi, dword[.evalu]
-		 jg   .8skip
+		jg   .8skip
 		add   esi, 225
+		mov   r8d, dword[.excludedMove]
+		test  r8d, r8d
+		jnz   .8skip
+		xor   rcx,rcx
+		mov   ecx, dword[rbp+Pos.sideToMove]
+		movzx   ecx, word[rbx+State.npMaterial+2*rcx]
+		test   ecx, ecx
+		jz   .8skip
     if USE_MATEFINDER =	0
                 mov   ecx, dword[rbx + State.ply]
                 cmp   ecx, dword[rbp - Thread.rootPos + Thread.nmp_ply]
