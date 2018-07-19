@@ -832,56 +832,62 @@ macro ShelterStorm Us
 		mov   r8, qword[FileBB+8*r12]
 		and   r8, r10
 		bsr   rdi, r8
-		cmovz   edi, edx
+		cmovz edi, edx
 		shr   edi, 3
 		xor   edi, 7
 	end if
-	; edi = rkThem
-
+	; edi = theirRank
 
 	if Us eq White
 		mov   r8, qword[FileBB+8*r12]
 		and   r8, r9
 		bsf   rsi, r8
-		cmovz   esi, edx
+		cmovz  esi, edx
 		shr   esi, 3
 	else
 		mov   r8, qword[FileBB+8*r12]
 		and   r8, r9
 		bsr   rsi, r8
-		cmovz   esi, edx
+		cmovz  esi, edx
 		shr   esi, 3
 		xor   esi, 7
 	end if
-	; esi = rkUs
-
-
+	; esi = ourRank
 		mov   edx, r12d
 		shl   edx, 3+2
 	; ShelterStrength and StormDanger are twice as big
 	; to avoid an annoying min(f,FILE_H-f) in ShelterStorm
 
 
+ ; save ourRank in r8d for later comparisons since "sub esi, 1" does not work
+		mov   r8d, esi
 		add   esi, 1
-	; esi = rkUs+1
+		; r8d = ourRank
+		; esi = ourRank + 1
 
-		cmp   ecx, r12d
-		jne   @f
+; if (ourRank || theirRank)
+		test rdi, rdi
+		jnz  @1f
+		test r8d, r8d
+		jz  @f
 
-; Rank Comparisons
-	@@:
-    	lea   r8, [ShelterStrengthArray - 4*1 + rdx]
-		lea   r11, [StormDanger_NoFriendlyPawn + rdx]
-		cmp   esi, 1
-		je   @1f
-		lea   r11, [StormDanger_BlockedByPawn +	rdx]
-		cmp   esi, edi
-		je   @1f
-		lea   r11, [StormDanger_Unblocked + rdx]
+; safety -=  StormDanger[ ourRank && (ourRank == theirRank - 1) ? BlockedByPawn : Unblocked ][d][theirRank];
 	@1:
-		add   eax, dword[r8 + 4*rsi]
+		test  r8d, r8d ; (ourRank = true)
+		jz  @2f
+		lea  r11, [StormDanger_BlockedByPawn + rdx]
+		cmp  esi, edi ; (ourRank == theirRank - 1)
+		je  @3f
+	@2:
+		lea   r11, [StormDanger_Unblocked + rdx]
+	@3:
 		sub   eax, dword[r11 + 4*rdi]
-        lea   r12d, [r12+1]
+
+; safety +=  ShelterStrength[d][ourRank];
+	@@:
+		lea   r8, [ShelterStrengthArray - 4*1 + rdx]
+		add   eax, dword[r8 + 4*rsi]
+		lea   r12d, [r12+1]
   end macro
 
     ShelterStormAcc

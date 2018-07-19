@@ -53,7 +53,7 @@ BishopAttacksMOFF:   rb 8*64
 BishopAttacksPDEP:   rb 8*64
 
 
-; bitboards 
+; bitboards
         balign 4096
 BetweenBB:	   rb 8*64*64
 LineBB:            rb 8*64*64
@@ -104,7 +104,6 @@ ShelterStrength:
 ShelterStrengthArray    rd 8*8
 rd 8*8
 StormDanger:
-StormDanger_NoFriendlyPawn: rb 4*8*8
 StormDanger_Unblocked:	    rb 4*8*8
 StormDanger_BlockedByPawn:  rb 4*8*8
 StormDanger_BlockedByKing:  rb 4*8*8
@@ -113,6 +112,7 @@ Threat_Minor:               rb 4*16
 Threat_Rook:                rb 4*16
 PassedRank:                 rb 4*8
 PassedFile:                 rb 4*8
+rb 4*8*8
 DoMaterialEval_Data:
 DoMaterialEval_Data.QuadraticOurs:     rb 4*8*6
 DoMaterialEval_Data.QuadraticTheirs:   rb 4*8*6

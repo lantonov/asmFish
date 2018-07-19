@@ -922,7 +922,7 @@ macro ShelterStorm Us
             lsr  w27, w27, 3
             eor  w27, w27, 7
     end if
-    ; w27 = rkThem
+    ; w27 = theirRank
 
     if Us = White
            _lea  x6, FileBB
@@ -943,37 +943,51 @@ macro ShelterStorm Us
             eor  w26, w26, 7
     end if
 
-    ; w26 = rkUs
+    ; w26 = ourRank
 
             lsl  w2, w22, 5
     ; ShelterStrength and StormDanger are twice as big
     ; to avoid an anoying min(f,FILE_H-f) in ShelterStorm
 
-
+            mov  w8, w26
             add  w26, w26, 1
-    ; esi = rkUs+1
 
-            cmp  w1, w22
+    ; esi = ourRank+1
+
+            cmp  w27, 0
             bne  @1f
-; Rank Comparisons
+            cmp  w8, 0
+            beq  @f
+
+; if (ourRank || theirRank)
+            cmp  w4, 0
+            bne  @1f
+            cmp  w8, 0
+            beq  @f
+
     @1:
-           _lea  x8, ShelterStrengthArray - 4*1
-           add  x8, x8, x2
-           _lea  x11, StormDanger_NoFriendlyPawn
-            add  x11, x11, x2
-            cmp  w26, 1
+            cmp  w8, 0
             beq  @2f
            _lea  x11, StormDanger_BlockedByPawn
             add  x11, x11, x2
             cmp  w26, w27
-            beq  @2f
+            beq  @3f
+
+    @2:
            _lea  x11, StormDanger_Unblocked
             add  x11, x11, x2
-    @2:
-            ldr  w4, [x8, x26, lsl 2]
-            add  w0, w0, w4
+
+    @3:
             ldr  w4, [x11, x27, lsl 2]
             sub  w0, w0, w4
+
+    @@:
+            _lea  x8, ShelterStrengthArray - 4*1
+            add  x8, x8, x2
+
+            ldr  w4, [x8, x26, lsl 2]
+            add  w0, w0, w4
+
             add  x22, x22, 1
 
   end repeat

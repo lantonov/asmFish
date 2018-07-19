@@ -172,13 +172,7 @@ Neighbours_False:
 
 Continue:
         _popcnt   rax, r8, r9
-    if CPU_HAS_POPCNT = 1
-         popcnt   r9, rbx
-    else
-           push   r10             
-         _popcnt   r9, rbx, r10
-            pop   r10
-    end if
+         _popcnt  r9, rbx, rbx
 
             neg   r11d
             neg   rbx

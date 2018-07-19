@@ -113,7 +113,6 @@ ShelterStrength:
 ShelterStrengthArray rd 8*8
 rd 8*8
 StormDanger:
-StormDanger_NoFriendlyPawn rd 8*8
 StormDanger_Unblocked	   rd 8*8
 StormDanger_BlockedByPawn  rd 8*8
 StormDanger_BlockedByKing  rd 8*8
@@ -122,6 +121,7 @@ Threat_Minor               rd 16
 Threat_Rook                rd 16
 PassedRank                 rd 8
 PassedFile                 rd 8
+rd 8*8
 DoMaterialEval_Data:
 .QuadraticOurs:            rd 8*6
 .QuadraticTheirs:          rd 8*6
