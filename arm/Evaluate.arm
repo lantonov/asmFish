@@ -680,8 +680,8 @@ KnightDone:
            ldr  x10, [sp, EvalInfo.mobilityArea + 8*Them]
            and  x9, x9, x10
 
-           ldr  x2, [sp, EvalInfo.pinnedPieces + 8*Us]
-           orr x2, x2, x9
+           ldr  x2, [x21, State.blockersForKing + 8*Us]
+           orr  x2, x2, x9
 
            _popcnt x4, x2, x1
            mov  w1, 143

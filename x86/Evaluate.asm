@@ -615,7 +615,7 @@ KingSafetyDoneRet:
 		mov   r10, qword[.ei.mobilityArea+8*Them]
 		and   r9, r10
 
-		mov   rdx, qword[.ei.pinnedPieces+8*Us]
+		mov   rdx, qword[rbx+State.blockersForKing+8*Us]
 		or    rdx, r9
 
 		_popcnt rax, rdx, rcx
