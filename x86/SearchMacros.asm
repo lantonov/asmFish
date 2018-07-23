@@ -1542,9 +1542,15 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		jmp .20TTStore
 .20CheckBonus:
     ; we already checked that bestMove = 0
+	if PvNode = 1
+		jmp @f
+	else
 		lea   edx, [r13-3*ONE_PLY]
 		or   edx, esi
 		js   .20TTStore
+	end if
+
+	@@:
 		cmp   byte[rbx+State.capturedPiece], 0
 		jne   .20TTStore
 		imul   r11d,	r10d, 32

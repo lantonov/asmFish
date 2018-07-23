@@ -1601,9 +1601,14 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
               b  .20TTStore
 .20CheckBonus:
     ; we already checked that bestMove = 0
+        if PvNode = 1
+            b @f
+        else
             sub  w2, w23, 3*ONE_PLY
             orr  w2, w2, w26
            tbnz  w2, 31, .20TTStore
+        end if
+        @@:
            ldrb  w4, [x21, State.capturedPiece]
            cbnz  w4, .20TTStore
             lsl  w11, w10, 5
