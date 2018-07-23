@@ -97,8 +97,8 @@ FileHSkip:
             ShiftBB  East, x8, x8
             orr  x8, x8, x2
 FileASkip:
-            and  x9, x9, AttackedBy_UsPawn
-        _popcnt  x2, x9, x1
+            and  x0, x8, AttackedBy_UsPawn
+        _popcnt  x2, x0, x1
             mov  w0, 0
             str  w0, [sp, EvalInfo.kingAttackersWeight + 4*Us]
             str  w0, [sp, EvalInfo.kingAdjacentZoneAttacksCount + 4*Us]
@@ -175,21 +175,21 @@ macro EvalPieces Us, Pt
   if Pt = Knight
         Outpost0 = ((22 shl 16) + ( 6))
         Outpost1 = ((36 shl 16) + (12))
-        KingAttackWeight = 78
+        KingAttackWeight = 77
         MobilityBonus equ MobilityBonus_Knight
         KingProtector_Pt = ((-3 shl 16) + (-5))
   else if Pt = Bishop
         Outpost0 = (( 9 shl 16) + (2))
         Outpost1 = ((15 shl 16) + (5))
-        KingAttackWeight = 56
+        KingAttackWeight = 55
         MobilityBonus equ MobilityBonus_Bishop
         KingProtector_Pt = ((-4 shl 16) + (-3))
   else if Pt = Rook
-	KingAttackWeight = 45
+	KingAttackWeight = 44
 	MobilityBonus equ MobilityBonus_Rook
         KingProtector_Pt = ((-3 shl 16) + (0))
   else if Pt = Queen
-	KingAttackWeight = 11
+	KingAttackWeight = 10
 	MobilityBonus equ MobilityBonus_Queen
         KingProtector_Pt = ((-1 shl 16) + (1))
   else

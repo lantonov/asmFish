@@ -95,8 +95,9 @@ macro EvalInit Us
 		or  r8, rdx
 
 	@@:
-		and   r9, r10
-		_popcnt   rdx, r9, rcx
+		mov  rax, r8
+		and  rax, r10 ; kingRing & pawnAttacks
+		_popcnt  rdx, rax, rcx
 		xor   eax, eax
 		mov   dword[.ei.kingAttackersWeight+4*Us], eax
 		mov   dword[.ei.kingAdjacentZoneAttacksCount+4*Us], eax
@@ -164,21 +165,21 @@ macro EvalPieces Us, Pt
   if Pt	= Knight
 	Outpost0	  = ((22 shl 16) + ( 6))
 	Outpost1	  = ((36 shl 16) + (12))
-	KingAttackWeight  = 78
+	KingAttackWeight  = 77
 	MobilityBonus	  equ MobilityBonus_Knight
 	KingProtector_Pt  = ((-3 shl 16) + (-5))
   else if Pt = Bishop
 	Outpost0	  = (( 9 shl 16) + (2))
 	Outpost1	  = ((15 shl 16) + (5))
-	KingAttackWeight  = 56
+	KingAttackWeight  = 55
 	MobilityBonus	  equ MobilityBonus_Bishop
         KingProtector_Pt  = ((-4 shl 16) + (-3))
   else if Pt = Rook
-	KingAttackWeight  = 45
+	KingAttackWeight  = 44
 	MobilityBonus	  equ MobilityBonus_Rook
 	KingProtector_Pt  = ((-3 shl 16) + (0))
   else if Pt = Queen
-	KingAttackWeight  = 11
+	KingAttackWeight  = 10
 	MobilityBonus	  equ MobilityBonus_Queen
 	KingProtector_Pt  = ((-1 shl 16) + (1))
   else
