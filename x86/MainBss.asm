@@ -101,6 +101,11 @@ FutilityMoveCounts      rd 16*2
 _CaptureOrPromotion_or  rb 4
 _CaptureOrPromotion_and rb 4
 
+; Cuckoo tables with Zobrist hashes of valid reversible moves, and the moves themselves
+              align   4096
+cuckoo              rq 8192
+cuckooMove          rd 8192
+
 
 ;;;;;;;;;;;;;;;;;;;; data for evaluation ;;;;;;;;;;;;;;;;;;;;
               align   64

@@ -449,8 +449,226 @@ end if
 		pop   rdi rbx
 		ret
 
+; Position::has_game_cycle() - tests if the position has a move which draws by repetition,
+; or an earlier position has a move that directly reaches the current position.
+;
+;	in:  rbx:   address of State
+;		 r12d:  ss->ply
+;	out: eax =  1 if has game cycle
+;		 eax =  0 if does not have game cycle
 
+Position_HasGameCycle:
+virtual at rsp
+  .stp         rq 1
+  .next_stp    rq 1
+  .orig_key    rq 1
+  .move_key    rq 1
+  .progressKey rq 1
+  .ply         rd 1
+  .pad1        rd 1
+  .prv_mv_idx  rw 1 ; variable i in stockfish version of code
+  .pad2        rw 3
+  .end         rw 1
+  .pad3        rw 3
 
+  .lend rb 0
+end virtual
+.localsize = (((.lend-rsp)+15) and (-16))
+
+		push rdi r8 r9 r10 r11 r12 r13 r14 r15 rbx rcx rdx
+		_chkstk_ms  rsp, .localsize
+		sub   rsp, .localsize
+		mov   dword[.ply], r12d ; save ply to local variable
+
+	; int cuckoo_index; // stockfish calls this variable "j"
+	; int end = std::min(st->rule50, st->pliesFromNull);
+		xor   r12, r12
+		mov   r12w, word[rbx+State.rule50]
+		mov   cx, word[rbx+State.pliesFromNull]
+		cmp   r12w, cx
+		jle .HasGameCycle_1
+		mov   r12w, cx
+		;   r12d <- end
+
+	.HasGameCycle_1:
+		mov   word[.end], r12w
+
+	; if (end < 3)
+	; return false;
+		cmp r12w, 3
+		jb .HasGameCycle_returnFalse
+
+	; Key originalKey = st->key;
+		mov r14, qword[rbx+State.key]
+		mov qword[.orig_key], r14
+
+	; StateInfo* stp = st->previous;
+		mov rdi, rbx ; get address of current state
+		sub rdi, sizeof.State ; back up to previous state.
+		mov qword[.stp], rdi
+
+	; Key progressKey = stp->key ^ Zobrist::side;
+		mov r14, qword[rdi+State.key]
+		mov r9, qword[Zobrist_side]
+		xor r9, r14
+		mov qword[.progressKey], r9
+
+	; for (int i = 3; i <= end; i += 2)
+		xor r8,r8
+		mov r8w, 3 ; "int i = 3"
+		mov word[.prv_mv_idx], r8w
+
+	.HasGameCycle_2:
+		cmp r8w, r12w ; "i <= end;"
+		jle .HasGameCycle_2A
+		jmp .HasGameCycle_mainLoopEnd
+
+	.HasGameCycle_2A:
+	; stp = stp->previous;
+		mov rdi, qword[.stp]
+		sub rdi, sizeof.State
+		mov qword[.stp], rdi
+
+	; progressKey ^= stp->key ^ Zobrist::side;
+		mov r9, qword[Zobrist_side]
+		mov r14, qword[rdi+State.key]
+		xor r9, r14
+		mov r14, qword[.progressKey]
+		xor r14, r9
+		mov qword[.progressKey], r14
+
+	; stp = stp->previous;
+		mov rdi, qword[.stp]
+		sub rdi, sizeof.State
+		mov qword[.stp], rdi
+
+	; if (   originalKey == (progressKey ^ stp->key)
+	;       || progressKey == Zobrist::side)
+		mov r9, qword[rdi+State.key]
+		mov r14, qword[.progressKey]
+		xor r14, r9
+		mov rax, qword[.orig_key]
+		cmp rax, r14
+		je  .HasGameCycle_2ndCheckInLoop
+
+		mov r9, qword[Zobrist_side]
+		mov r14, qword[.progressKey]
+		cmp r14, r9
+		jne .HasGameCycle_H1orH2EqualsMoveKeyEnd
+
+	.HasGameCycle_2ndCheckInLoop:
+	; Key moveKey = originalKey ^ stp->key;
+		mov rdi, qword[.stp]
+		mov r9, qword[rdi+State.key]
+		mov r14, qword[.orig_key]
+		xor r9, r14
+		mov qword[.move_key], r9
+
+	; if (  (cuckoo_index = H1(moveKey), cuckoo[cuckoo_index] == moveKey)
+	; || (cuckoo_index = H2(moveKey), cuckoo[cuckoo_index] == moveKey))
+		cuckoo_H1 r11, r9
+		lea   r10, [cuckoo]
+		mov   rax, qword[r10+8*r11]
+		cmp   rax, r9
+		je .HasGameCycle_checkCuckooMove
+
+		cuckoo_H2 r11, r9
+		mov   rax, qword[r10+8*r11]
+		cmp   rax, r9
+		jne   .HasGameCycle_H1orH2EqualsMoveKeyEnd
+
+	.HasGameCycle_checkCuckooMove:
+	; Move move = cuckooMove[cuckoo_index];
+		lea   r10, [cuckooMove]
+		xor   r9, r9
+		mov   r9d, dword[r10+4*r11]
+		and   r9d, 0x0000ffff
+
+	; Square from = from_sq(move);
+		cuckoo_moveFromSq r13d, r9d
+
+	; Square to = to_sq(move);
+		cuckoo_moveToSq r15d, r9d
+
+	; if (!(between_bb(fr, to) & pieces()))
+		sal  r13, 6
+		add  r13, r15
+		mov  rcx, qword[BetweenBB+r13*8]
+		mov  r9, qword[rbp+Pos.typeBB+8*White]
+		or   r9, qword[rbp+Pos.typeBB+8*Black]
+		and  rcx, r9
+		jnz  .HasGameCycle_rootRepsEnd
+
+	.HasGameCycle_checkPly:
+	; if (ply > i)
+	; return true;
+		xor rcx, rcx
+		mov ecx, dword[.ply]
+		xor r8, r8
+		mov r8w, word[.prv_mv_idx]
+		cmp rcx, r8
+		jg .HasGameCycle_returnTrue
+
+	; // For repetitions before or at the root, require one more
+	; StateInfo* next_stp = stp;
+		mov rdi, qword[.stp]
+		mov qword[.next_stp], rdi
+
+	; for (int k = i + 2;  k <= end; k += 2)
+		mov dx, r8w
+		add dx, 2   ; "int k = i + 2"
+		mov r12w, word[.end]
+
+	.HasGameCycle_rootRepsTest:
+		cmp dx, r12w ; "k <= end;"
+		jg .HasGameCycle_rootRepsEnd
+
+	; next_stp = next_stp->previous->previous;
+		mov rdi, qword[.next_stp]
+		sub rdi, 2*sizeof.State
+		mov qword[.next_stp], rdi
+
+	; if (next_stp->key == stp->key)
+	; return true;
+		mov r14, [rdi+State.key] ; r14 == next_stp->key
+		mov rdi, qword[.stp]
+		mov r9, [rdi+State.key]  ; r9 == stp->key
+		cmp r9,r14
+		je .HasGameCycle_returnTrue
+
+	; // k <= end; k += 2
+		add dx, 2
+		jmp .HasGameCycle_rootRepsTest
+
+	.HasGameCycle_rootRepsEnd:
+	.HasGameCycle_betweenBBandPiecesEnd:
+	.HasGameCycle_H1orH2EqualsMoveKeyEnd:
+		mov r14, qword[.progressKey]
+		mov rdi, qword[.stp]
+		mov r9, [rdi+State.key]
+		xor r14, r9
+		mov qword[.progressKey], r14
+
+	; // "i += 2"
+		xor r8, r8
+		mov r8w, word[.prv_mv_idx]
+		add r8w, 2
+		mov word[.prv_mv_idx], r8w
+		jmp .HasGameCycle_2
+
+	.HasGameCycle_mainLoopEnd:
+	.HasGameCycle_returnFalse:
+	; return false;
+		xor eax, eax
+		jmp .HasGameCycle_end
+
+	.HasGameCycle_returnTrue:
+		mov eax, 1
+
+	.HasGameCycle_end:
+		add   rsp, .localsize
+		pop rdx rcx rbx r15 r14 r13 r12 r11 r10 r9 r8 rdi
+		ret
 
 ;;;;;;;;;;;;;; fen ;;;;;;;;;;;;;;;;;;
 

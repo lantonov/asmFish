@@ -929,3 +929,56 @@ PrintDouble:
                 ret
 
 end if
+
+macro PrintRegister reg
+		lea   rdi, [Output]
+		mov   al, '('
+	      stosb
+		mov   rax, reg
+	       call   PrintUnsignedInteger
+		mov   eax, ') '
+	      stosw
+end macro
+
+macro PrintPieceType reg
+        push reg r8 r9 r11 rsi rdi rax rbx rcx rdx
+		cmp reg, Pawn
+		jne @f
+		mov cl,'P'
+		jmp .PrintPieceTypeEnd
+@@:
+		cmp reg, Knight
+		jne @f
+		mov cl,'N'
+		jmp .PrintPieceTypeEnd
+@@:
+		cmp reg, Bishop
+		jne @f
+		mov cl,'B'
+		jmp .PrintPieceTypeEnd
+@@:
+		cmp reg, Rook
+		jne @f
+		mov cl,'R'
+		jmp .PrintPieceTypeEnd
+@@:
+		cmp reg, Queen
+		jne @f
+		mov cl,'Q'
+		jmp .PrintPieceTypeEnd
+@@:
+		mov cl,'K'
+.PrintPieceTypeEnd:
+        test ebx, ebx
+		jz @f
+
+		add cl, 32 ; shift to lower case (black pieces)
+@@:
+		lea   rdi, [Output]
+
+		mov   al,cl
+		stosb
+
+		call  Os_WriteOut_Output
+		pop rdx rcx rbx rax rdi rsi r11 r9 r8 reg
+end macro

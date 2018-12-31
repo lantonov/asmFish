@@ -104,6 +104,7 @@ include 'Debug.asm'
 
 ; engine macros
 include 'AttackMacros.asm'
+include 'cuckooMacros.asm'
 include 'GenMacros.asm'
 include 'MovePickMacros.asm'
 include 'SearchMacros.asm'
