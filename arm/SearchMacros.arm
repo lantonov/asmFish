@@ -143,6 +143,25 @@ Display 2, "Search(alpha=%i1, beta=%i2, depth=%i8, cutNode=%i9) called%n"
             mov  w0, w1
             cmp  w1, w2
             bge  .Return
+
+            cmp   w1, VALUE_DRAW
+            bge   @f
+
+            ldrh  w22, [x21, State.rule50]
+            cmp   w22, 3
+            bl    @f
+
+            bl  Position_HasGameCycle
+            cmp   w0, 1
+            bne   @f
+
+            mov  w1, VALUE_DRAW
+            str  w1, [sp, .alpha]
+            ldr  w2, [sp, .beta]
+            mov  w0, w1
+            cmp  w1, w2
+            bge  .Return
+  @@:
   end if
             mov  w0, 0
             mov  w1, CmhDeadOffset

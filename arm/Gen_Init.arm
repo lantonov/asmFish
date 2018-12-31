@@ -137,7 +137,7 @@ Init_Attacks.NextSquare:
             and  x0, x0, x23
             str  x0, [x17, x21, lsl 3]
 
-            lsl  x21, x21, 4        
+            lsl  x21, x21, 4
            _lea  x19, SlidingAttacksBB
             adr  x16, Init_Attacks.RookData
             adr  x17, Init_Attacks.BishopData
@@ -151,9 +151,9 @@ Init_Attacks.NextSquare:
             lsr  x21, x21, 4
 
            _lea  x16, RookAttacksIMUL
-           _lea  x17, RookAttacksMOFF       
+           _lea  x17, RookAttacksMOFF
             str  x0, [x16, x21,lsl 3]
-            str  x1, [x17, x21,lsl 3]
+            str  x1, [x17, x21, lsl 3]
            _lea  x16, BishopAttacksIMUL
            _lea  x17, BishopAttacksMOFF
             str  x2, [x16,x21,lsl 3]
@@ -177,7 +177,7 @@ Init_Attacks.NextRookSubset:
             sub  x7, x7, x1
            ands  x7, x7, x1
             bne  Init_Attacks.NextRookSubset
-            
+
             mov  x7, 0
 Init_Attacks.NextBishopSubset:
             adr  x14, Directions.BishopAttacks
@@ -192,7 +192,7 @@ Init_Attacks.NextBishopSubset:
             and  x3, x1, x7
             mul  x3, x3, x2
             lsr  x3, x3, 64-9
-            str  x0, [x9,x3,lsl 3]
+            str  x0, [x9, x3, lsl 3]
             sub  x7, x7, x1
             ands  x7, x7, x1
             bne  Init_Attacks.NextBishopSubset
@@ -336,4 +336,3 @@ Init_Attacks.BishopData:
        dq 0x0000000040408020,  24732
        dq 0x0000004040404040,  25468
        dq 0x0000404040404040,  10186
-

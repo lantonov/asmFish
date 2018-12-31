@@ -1,71 +1,224 @@
 
-
 Position_Init:
-.prng = 0
-.localsize = 16
+
+PushAll
+
+virtual at 0
+  .prng        rq 1
+  .ckoo_key    rq 1
+  .ckoo_index  rd 1
+  .ckoo_move   rd 1
+  .localend rb 0
+end virtual
+.localsize = ((.localend+15) and (-16))
 
             stp  x29, x30, [sp, -16]!
             sub  sp, sp, .localsize
-          mov32  x0, 1070372
-            str  x0, [sp, .prng]
 
-            mov  x21, 0
-.PieceLoop0:
+            mov32  x0, 1070372
+            str  x0, [sp, .prng]
+            mov  x21, 0 ; xor  ebx, ebx
+
+; // This is the double-for loop
+.HashKeyInitLoopA:
             lsl  x14, x21, 6+3
            _lea  x15, Zobrist_Pieces
             add  x15, x15, x14, lsl 3
             mov  x14, 64*Pawn
-.PieceLoop1:
-            add  x1, sp, .prng
-             bl  Math_Rand_i
-            str  x0, [x15, x14, lsl 3]
-            add  x14, x14, 1
-            cmp  x14, 64*(King+1)
-            blo  .PieceLoop1
-            add  x21, x21, 1
-            cmp  x21, 2
-            blo  .PieceLoop0
+            mov  x8, 0
 
-           _lea  x15, Zobrist_Ep
-            mov  x14, 0
-.l3:
-            add  x1, sp, .prng
+.HashKeyInitLoopB:
+            mov x9, 0
+
+.HashKeyInitLoopC:
+            add  x1, sp, .prng  ; lea   rcx, [.prng]
              bl  Math_Rand_i
+            str  x0, [x15, x14, lsl 3] ; mov   qword[rdi+8*rsi], rax
+
+            add  x14, x14, 1 ; add esi, 1
+
+            add  x9, x9, 1
+            cmp  x9, 64
+            blo .HashKeyInitLoopC
+
+            add  x8, x8, 1
+            cmp  x8, 6
+            blo  .HashKeyInitLoopB
+
+            add  x21, x21, 1 ; add ebx, 1
+            cmp  x21, 2 ; add ebx, 2
+            blo  .HashKeyInitLoopA
+
+; // end of double-for loop
+
+           _lea  x15, Zobrist_Ep ; lea   rdi, [Zobrist_Ep]
+            mov  x14, 0 ; xor   esi, esi
+
+.l3: ; for-loop for files and Zobrist_Ep
+            add  x1, sp, .prng
+            bl  Math_Rand_i
             str  x0, [x15, x14, lsl 3]
             add  x14, x14, 1
             cmp  x14, 8
-            blo  .l3
+            blo .l3
 
-           _lea  x15, Zobrist_Castling
-            mov  x14, 0
-            mov  x24, 1
-.CastlingLoop0:
+; Prepare for CastlingLoop:
+           _lea  x15, Zobrist_Castling ; lea   rdi, [Zobrist_Castling]
+            mov  x14, 0 ; xor   esi, esi
+            mov  x24, 1 ; temporary register
+
+.l2: ; This is the castling for-loop
             add  x1, sp, .prng
              bl  Math_Rand_i
             mov  x21, 0
-.CastlingLoop1:
-            tst  x21, x24
-           csel  x1, xzr, x0, eq
+
+.l1:
+            tst  x21, x24 ; bt    ebx, esi
+           csel  x1, xzr, x0, eq ; sbb   rcx, rcx
             ldr  x16, [x15, x21, lsl 3]
             eor  x16, x16, x1
             str  x16, [x15, x21, lsl 3]
             add  x21, x21, 1
             cmp  x21, 16
-            blo  .CastlingLoop1
+            blo  .l1
+
             add  x14, x14, 1
             lsl  x24, x24, 1
             cmp  x14, 4
-            blo  .CastlingLoop0
+            blo  .l2
 
             add  x1, sp, .prng
              bl  Math_Rand_i
            _lea  x16, Zobrist_side
-            str  x0, [x16]
+            str  x0, [x16] ; mov   qword[Zobrist_side], rax
 
             add  x1, sp, .prng
              bl  Math_Rand_i
            _lea  x16, Zobrist_noPawns
-            str  x0, [x16]
+            str  x0, [x16] ; mov   qword[Zobrist_noPawns], rax
+
+            mov  x21, 0
+
+.CuckooLoopColor:
+            mov  x8, Pawn
+
+.CuckooLoopPieceType:
+            mov  x24, 0
+
+.CuckooLoopS1Squares:
+            mov  x11, x24
+            add  x11, x11, 1
+
+.CuckooLoopS2Squares:
+            cmp  x8, Pawn
+            beq  .cuckoo_init_end
+
+            PseudoAttacksAtFreshBoardState x9, x8, x24, x10
+
+            mov  x25, 1
+            mov  x1, x11
+            lsl  x25, x25, x1
+            ands  x25, x25, x9 ; enable flag setting
+            beq  .cuckoo_init_end
+
+    ;-------------------------------------------
+		; <*><*><*><*><*><*><*><*><*><*><*><*><*><*>
+		; <*>      Cuckoo table init logic       <*>
+		; <*><*><*><*><*><*><*><*><*><*><*><*><*><*>
+		;-------------------------------------------
+
+    ; Move move = make_move(s1, s2);
+  		cuckoo_makeMove x0, x24, x11
+      str  x0, [sp, .ckoo_move]
+
+      mov  x21, 2
+      lsl  x21, x21, 6+3
+      mov  x14, x21
+      _lea  x15, Zobrist_Pieces
+       add  x15, x15, x14, lsl 3
+       mov  x14, x8
+       lsl  x14, x14, 6
+       add  x14, x14, x24 ; add in s1 square offset within addressed table
+
+       add  x10, x15, x14, lsl 3
+
+       mov  x2, x1  ; save the s1 component
+
+       sub  x14, x14, x24
+       add  x14, x14, x11
+       add  x10, x15, x14, lsl 3
+       mov  x1, x10 ; get the s2 component of the key
+
+       eor  x1, x1, x2
+       ldr  x2, [x16] ; mov   rdx, qword[Zobrist_side]
+       eor  x1, x1, x2
+       str  x1, [sp, .ckoo_move]
+
+       cuckoo_H1  x22, x1
+       str  x22, [sp, .ckoo_index]
+
+.cuckoo_swapping_loop:
+      ; Swap Move
+            ldr  x1, [sp, .ckoo_move]
+            _lea  x16, cuckooMove
+
+           ldr  w25, [x16, x22, lsl 2]
+
+            mov  x2, x25
+
+            str  w1, [x16, x22, lsl 2]
+            str  x2,  [sp, .ckoo_move]
+
+            ldr  x1, [sp, .ckoo_key]
+
+            _lea  x16, cuckoo
+             ldr  w2, [x16, x22, lsl 2]
+             str  w1, [x16, x22, lsl 2]
+
+             str  x2, [sp, .ckoo_key]
+
+             ldr  x2, [sp, .ckoo_move]
+             tst  x2, x2
+             beq  .cuckoo_init_end
+
+; i = (i == H1(key)) ? H2(key) : H1(key); // Push victim to alternative slot
+             ldr  x1, [sp, .ckoo_key]
+             ldr  x22, [sp, .ckoo_index]
+             cuckoo_H1 x2, x1
+
+             cmp x22, x2
+             bne @f
+
+             cuckoo_H2  x22, x1
+
+             str  x22, [sp, .ckoo_index]
+             b  .cuckoo_swapping_loop
+
+         @@:
+            ; else i = H1(key)
+            cuckoo_H1  x22, x1 ; new index is h1-based
+            str  x22, [sp, .ckoo_index]
+            b .cuckoo_swapping_loop
+
+.cuckoo_init_end:
+          add x11, x11, 1 ; s2++
+          cmp x11, 64
+          blo .CuckooLoopS2Squares
+
+          add  x24, x24, 1 ; s1++
+          cmp  x24, 63
+          blo  .CuckooLoopS1Squares
+
+          add  x8, x8, 1
+          cmp  x8, (King+1)
+          blo  .CuckooLoopPieceType
+
+          add  x21, x21, 1
+          cmp  x21, 2
+          blo  .CuckooLoopColor
+
+; End of cuckoo init processing
+;======================================================
 
             mov  x0, 0x00ff0000
            _lea  x16, IsPawnMasks
@@ -74,11 +227,11 @@ Position_Init:
             mvn  x0, x0
            _lea  x16, IsNotPawnMasks
             str  x0, [x16, 0]
-            str  x0, [x16, 8]    
+            str  x0, [x16, 8]
             mov  x0, 0x0ff
            _lea  x16, IsNotPieceMasks
             str  x0, [x16, 0]
-            str  x0, [x16, 8]     
+            str  x0, [x16, 8]
 
            _lea  x16, PieceValue_MG
            _lea  x17, PieceValue_EG
@@ -143,6 +296,7 @@ Position_Init:
 
             add  sp, sp, .localsize
             ldp  x29, x30, [sp], 16
+            PopAll
             ret
 
 

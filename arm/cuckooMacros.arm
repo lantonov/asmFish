@@ -1,0 +1,30 @@
+; The following macros assist with initilization and execution of the cuckoo tables in
+; Position_Init.asm and Position.asm:
+
+macro cuckoo_H1 rg1, rg2
+	mov rg1, rg2
+	and rg1, rg1, 0x1fff
+end macro
+
+macro cuckoo_H2 rg1,rg2
+	mov rg1, rg2
+	lsr rg1, rg1, 16
+	and rg1, rg1, 0x1fff
+end macro
+
+macro cuckoo_makeMove reg, fromSq, toSq
+	mov reg, fromSq
+	lsl reg, reg, 6 ; make room in register to pack in the toSquare
+	orr reg, reg, toSq
+end macro
+
+macro cuckoo_moveFromSq reg, move
+	mov reg, move
+	lsr reg, reg, 6
+	and reg, reg, 0x03f
+end macro
+
+macro cuckoo_moveToSq reg, move
+	mov reg, move
+	and reg, reg, 0x03f
+end macro

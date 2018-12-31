@@ -43,8 +43,8 @@ RookAttacksPDEP:     rb 8*64
 PawnAttacks:
 WhitePawnAttacks:    rb 8*64
 BlackPawnAttacks:    rb 8*64
-KnightAttacks:	     rb 8*64
-KingAttacks:	     rb 8*64
+KnightAttacks:       rb 8*64
+KingAttacks:         rb 8*64
 
         balign 4096
 BishopAttacksPEXT:   rb 8*64
@@ -92,6 +92,10 @@ _CaptureOrPromotion_or:  rb 1*4
 _CaptureOrPromotion_and: rb 1*4
 SeeSignBitMask:          rb 8
 
+; Cuckoo tables with Zobrist hashes of valid reversible moves, and the moves themselves
+              balign   4096
+cuckoo              rb 8*8192
+cuckooMove          rb 4*8192
 
 ; data for evaluation
         balign 64
@@ -196,4 +200,3 @@ end if
 
         balign 64
 SlidingAttacksBB:    rb 8*89524
-

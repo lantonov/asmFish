@@ -7,7 +7,6 @@ if VERSION_OS <> 'L'
 end if
 
 VERSION_PRE = 'armFish'
-
 macro SetDefault val*, sym*
   if ~ defined sym
     restore sym
@@ -54,6 +53,7 @@ include 'Structs.arm'
 
 ; engine macros
 include 'AttackMacros.arm'
+include 'cuckooMacros.arm'
 include 'GenMacros.arm'
 include 'MovePickMacros.arm'
 include 'SearchMacros.arm'
@@ -147,4 +147,3 @@ include 'Endgame_Init.arm'
 segment readable writeable
 include 'MainData.arm'
 include 'MainBss.arm'
-

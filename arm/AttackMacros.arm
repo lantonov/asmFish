@@ -41,3 +41,45 @@ macro BishopAttacksV X, Sq, Occ, T, S, PEXT, IMUL, MOFF
             lsr  T, T, 64-9
             ldr  X, [X, T, lsl 3]
 end macro
+
+;    PseudoAttacksAtFreshBoardState x9, x8, x24, x10
+macro PseudoAttacksAtFreshBoardState a, Pt, sq, t
+		cmp  Pt, Knight
+		bne  @f
+
+		_lea  x6, KnightAttacks
+		ldr  a, [x6, sq,lsl 3] ; x9 = qword[KnightAttacks+8*sq]
+		b  @1f
+
+@@:
+		cmp  Pt, Bishop
+		bne  @f
+
+		_lea  x19, BishopAttacksMOFF
+		ldr  x9, [x19, x21,lsl 3]
+		b  @1f
+
+@@:
+		cmp  Pt, Rook
+		bne  @f
+
+		_lea  x19, RookAttacksMOFF
+		ldr  a, [x19, x21,lsl 3]
+		b  @1f
+
+@@:
+		cmp  Pt, Queen
+		bne  @f
+
+		_lea  x19, BishopAttacksMOFF
+		ldr  a, [x19, x21,lsl 3]
+		_lea  x19, RookAttacksMOFF
+		ldr  t, [x19, x21,lsl 3]
+		orr  a, a, t
+		b  @1f
+
+@@:
+		_lea  x17, KingAttacks
+		ldr  a, [x17, sq,lsl 3]
+@1:
+end macro

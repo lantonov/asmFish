@@ -329,7 +329,7 @@ Position_IsLegal:
             ldr  x1, [x20, Pos.typeBB + 8*Black]
             tst  x0, x1
             bne  Position_IsLegal.Failed
-            
+
     mov x28,1
 
         _popcnt  x0, x0, x8
@@ -575,7 +575,214 @@ Position_IsLegal.Failed:
             ldp  x21, x30, [sp], 16
             ret
 
+; Position::has_game_cycle() - tests if the position has a move which draws by repetition,
+; or an earlier position has a move that directly reaches the current position.
+;
+; in:  x21:   address of State
+;      w22:  ss->ply
+; out: eax =  1 if has game cycle
+;      eax =  0 if does not have game cycle
 
+Position_HasGameCycle:
+virtual at 0
+.stp         rq 1
+.next_stp    rq 1
+.orig_key    rq 1
+.move_key    rq 1
+.progressKey rq 1
+.ply         rd 1
+.pad1        rd 1
+.prv_mv_idx  rd 1 ; variable i in stockfish version of code
+.pad2        rw 3
+.end         rw 1
+.pad3        rw 3
+  .localend rb 0
+end virtual
+.localsize = ((.localend+15) and (-16))
+
+            PushAll
+            stp  x29, x30, [sp, -16]!
+            sub  sp, sp, .localsize
+
+            str  w22, [sp, .ply]
+
+            mov  x22, 0
+            ldrh  w22, [x21, State.rule50]
+            ldrh  w1, [x11, State.pliesFromNull]
+            cmp  w22, w1
+            ble  .HasGameCycle_1
+            mov  w22, w1
+
+.HasGameCycle_1:
+            strh  w22, [sp, .end]
+
+            ; if (end < 3)
+            ; return false
+            cmp  w22, 3
+            blo  .HasGameCycle_returnFalse
+
+            ; Key originalKey = st->key;
+            ldr  x24, [x21, State.key]
+            str  x24, [sp, .orig_key]
+
+          ; StateInfo* stp = st->previous;
+            mov  x15, x21
+            sub  x15, x15, sizeof.State
+            str  x15, [sp, .stp]
+
+          ; Key progressKey = stp->key ^ Zobrist::side;
+            ldr  x24, [x21, State.key]
+            _lea  x16, Zobrist_side
+            ldr  x9, [x16] ; mov  qword[Zobrist_side], rax
+            eor  x9, x9, x24
+            str  x9, [sp, .progressKey]
+
+           ; for (int i = 3; i <= end; i+= 2)
+            mov  x8, 0
+            mov  w8, 3
+            ldr  w8, [sp, .prv_mv_idx]
+
+.HasGameCycle_2:
+            cmp  w8, w22
+            ble .HasGameCycle_2A
+            b  .HasGameCycle_mainLoopEnd
+
+.HasGameCycle_2A:
+            ; stp = stp->previous;
+            ldr  x15, [sp, .stp]
+            sub  x15, x15, sizeof.State
+            str  x15, [sp, .stp]
+
+  ; progressKey ^= stp->key ^ Zobrist::side;
+            _lea  x16, Zobrist_side
+            ldr  x9, [x16] ; mov  qword[Zobrist_side], rax
+            ldr  x24, [x21, State.key]
+            eor  x9, x9, x24
+            ldr  x24, [sp, .progressKey]
+            eor  x24, x24, x9
+            str  x24, [sp, .progressKey]
+
+  ; stp = stp->previous;
+            ldr  x15, [sp, .stp]
+            sub  x15, x15, sizeof.State
+            str  x15, [sp, .stp]
+
+            ldr  x9, [x21, State.key]
+            ldr  x24, [sp, .progressKey]
+            eor  x24, x24, x9
+            ldr  x0, [sp, .orig_key]
+            cmp  x0, x24
+            beq  .HasGameCycle_2ndCheckInLoop
+
+            _lea  x16, Zobrist_side
+            ldr  x9, [x16]
+            ldr  x24, [sp, .progressKey]
+            cmp  x24,  x9
+            bne  .HasGameCycle_H1orH2EqualsMoveKeyEnd
+
+.HasGameCycle_2ndCheckInLoop:
+            ; Key moveKey = originalKey ^ stp->key;
+            ldr  x15, [sp, .stp]
+            ldr  x9, [x21, State.key]
+            ldr  x24, [sp, .orig_key]
+            eor  x9, x9, x24
+            str  x9, [sp, .move_key]
+
+            cuckoo_H1  x11, x9
+            _lea  x17, cuckoo
+            ldr  x10, [x17]
+            add  x0, x10, x11, lsl 3
+            cmp  x0, x9
+            beq .HasGameCycle_checkCuckooMove
+
+            cuckoo_H2  x11, x9
+            add  x0, x10, x11, lsl 3
+            cmp  x0, x9
+            bne  .HasGameCycle_H1orH2EqualsMoveKeyEnd
+
+.HasGameCycle_checkCuckooMove:
+; Move move = cuckooMove[cuckoo_index];
+            _lea  x17, cuckoo
+            ldr  x10, [x17]
+            mov  x9, 0
+            add  w9, w10, w11, lsl 3
+            and  w9, w9, 0x0000ffff
+
+            cuckoo_moveFromSq  w23, w9
+            cuckoo_moveToSq  w25, w9
+
+            lsl  x23, x23, 6
+            add x23, x23, x25
+
+            _lea  x6, BetweenBB
+             ldr  x1, [x6, x23, lsl 3]
+             ldr  x6, [x20, Pos.typeBB + 8*White]
+             ldr  x7, [x20, Pos.typeBB + 8*White]
+             orr  x9, x6, x7
+             ands  x1, x1, x9
+             bne  .HasGameCycle_rootRepsEnd
+
+.HasGameCycle_checkPly:
+            mov  x1, 0
+            ldr  w1, [sp, .ply]
+            mov  x8, 0
+            ldrh  w8, [sp, .prv_mv_idx]
+            cmp  w1, w8
+            bhi .HasGameCycle_returnTrue
+
+            ldr  x15, [sp, .stp]
+            str  x15, [sp, .next_stp]
+
+            mov  w2, w8
+            mov  w6, 2
+            add  w2, w2, w6
+            ldrh  w22, [sp, .end]
+
+.HasGameCycle_rootRepsTest:
+            cmp  w2, w22
+            bhi  .HasGameCycle_rootRepsEnd
+
+            ldr  x15, [sp, .next_stp]
+            sub  x15, x15, 2*sizeof.State
+            str  x15, [sp, .next_stp]
+
+            ldr  x24, [x21, State.key]
+            ldr  x15, [sp, .stp]
+            ldr  x9,  [x21, State.key]
+            cmp  x9, x24
+            beq  .HasGameCycle_returnTrue
+
+            add  w2, w2, 2
+            b  .HasGameCycle_rootRepsTest
+
+.HasGameCycle_rootRepsEnd:
+.HasGameCycle_betweenBBandPiecesEnd:
+.HasGameCycle_H1orH2EqualsMoveKeyEnd:
+            ldr  x24, [sp, .progressKey]
+            ldr  x15, [sp, .stp]
+            ldr  x9, [x21, State.key]
+            eor  x24, x24, x9
+            str  x24, [sp, .progressKey]
+
+            mov  x8, 0
+            ldrh  w8, [sp, .prv_mv_idx]
+            add  w8, w8, 2
+            str  w8, [sp, .prv_mv_idx]
+            b  .HasGameCycle_2
+
+.HasGameCycle_mainLoopEnd:
+.HasGameCycle_returnFalse:
+            mov  w0, 0
+            b  .HasGameCycle_end
+
+.HasGameCycle_returnTrue:
+            mov  w0, 1
+
+.HasGameCycle_end:
+            add  sp, sp, .localsize
+            ldp  x29, x30, [sp], 16
+            PopAll
+            ret
 
 Position_ParseFen:
 
@@ -665,7 +872,7 @@ Position_ParseFen.ExpectPiece:
             bmi  Position_ParseFen.Failed
             cmp  x0, 8
             bhi  Position_ParseFen.Failed
-        
+
 Position_ParseFen.Spaces:
             add  x1, x1, x0
               b  Position_ParseFen.PieceDone
@@ -761,9 +968,9 @@ Position_ParseFen.EpSquare:
             add  x1, x0, x1, lsl 1
             lsr  x4, x10, x1
             tbz  x4, 0, Position_ParseFen.EpSquareBad
-            
+
               b  Position_ParseFen.FiftyMoves
-        
+
 
 Position_ParseFen.EpSquareBad:
 
@@ -884,7 +1091,7 @@ SetCastlingRights.have_rook_sq:
            csel  x12, x7, x9, lo
            csel  x13, x7, x9, hi
             sub  x12, x12, 1
-        
+
 
 SetCastlingRights.king_loop:
 
@@ -1137,7 +1344,7 @@ Position_CopyTo.copy_states:
 
             sub  x27, x27, sizeof.State
             str  x27, [x23, Pos.state]
-            
+
             ldp  x26, x27, [sp], 16
             ldp  x23, x24, [sp], 16
             ldp  x21, x30, [sp], 16
@@ -1194,7 +1401,7 @@ Position_CopyToSearch.loop:
            ldrh  w0, [x11, State.pliesFromNull]
             cmp  w0, w2
            csel  w0, w2, w0, hi
-           strh  w0, [x11, State.pliesFromNull]        
+           strh  w0, [x11, State.pliesFromNull]
             sub  x10, x10, sizeof.State
             sub  x11, x11, sizeof.State
             cmp  x11, x9
@@ -1268,7 +1475,7 @@ PrintBitboardCompact:
             stp  x26, x30, [sp, -16]!
             mov  x26, x1
             mov  x0, x26
-             bl  PrintHex 
+             bl  PrintHex
             mov  w0, ' '
            strb  w0, [x27], 1
 PrintBitboardCompact.Loop:
@@ -1308,7 +1515,7 @@ Position_PrintSmall:
             tst  w0, w0
            csel  w0, w1, w2, eq
            strb  w0, [x27], 1
-   PrintNewLine        
+   PrintNewLine
 
             mov  x1, 0
     @1:
@@ -1316,7 +1523,7 @@ Position_PrintSmall:
             add  x6, x20, Pos.board
            ldrb  w2, [x6, x3]
            _lea  x6, PieceToChar
-           ldrb  w2, [x6, x2] 
+           ldrb  w2, [x6, x2]
             add  w2, w2, (' ' shl 8) + 10 shl 16
             mov  w0, '*'
             add  w0, w0, (' ' shl 8) + 10 shl 16
@@ -1354,7 +1561,7 @@ Position_Print.localsize = (Position_Print.localsize+15) and -16
         add  x16, x20, Pos.board
        ldrb  w2, [x16, x3]
        _lea  x16, PieceToChar
-       ldrb  w2, [x16, x2] 
+       ldrb  w2, [x16, x2]
         add  w2, w2, (' ' shl 8) + 10 shl 16
         mov  w0, '*'
         add  w0, w0, (' ' shl 8) + 10 shl 16
@@ -1711,4 +1918,3 @@ Position_Print.sz_Gen_Legal:  db "Gen_Legal:      ",0
         balign 4
 
 end if
-
