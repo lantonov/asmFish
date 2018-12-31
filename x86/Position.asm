@@ -470,7 +470,6 @@ virtual at rsp
   .pad2        rw 3
   .end         rw 1
   .pad3        rw 3
-
   .lend rb 0
 end virtual
 .localsize = (((.lend-rsp)+15) and (-16))
@@ -478,6 +477,7 @@ end virtual
 		push rdi r8 r9 r10 r11 r12 r13 r14 r15 rbx rcx rdx
 		_chkstk_ms  rsp, .localsize
 		sub   rsp, .localsize
+
 		mov   dword[.ply], r12d ; save ply to local variable
 
 	; int cuckoo_index; // stockfish calls this variable "j"
@@ -514,7 +514,7 @@ end virtual
 		mov qword[.progressKey], r9
 
 	; for (int i = 3; i <= end; i += 2)
-		xor r8,r8
+		xor r8, r8
 		mov r8w, 3 ; "int i = 3"
 		mov word[.prv_mv_idx], r8w
 
@@ -807,7 +807,7 @@ end virtual
 
 	     szcall   PrintString, 'pieceList: '
 		xor   esi, esi
-       .l3:    
+       .l3:
                test   esi, 15
                 jnz   @1f
        PrintNewLine
@@ -1204,7 +1204,7 @@ Position_ParseFEN:
 		shl   ecx, 6+3
 		and   r9, qword[rbp+Pos.typeBB+8*Pawn]
 	       test   r9, qword[PawnAttacks+rcx+8*rax]
-		 jz   .EpSquareBad    
+		 jz   .EpSquareBad
 
 	; make sure square below has their pawn
 		and   r10, qword[rbp+Pos.typeBB+8*Pawn]
@@ -1338,7 +1338,7 @@ SetCastlingRights:
 		cmp   r12, r13
 		 jb   @f
 	       xchg   r12, r13
-	@@:	
+	@@:
                 sub   r12, 1
 .king_loop:
 		add   r12, 1
@@ -1364,7 +1364,7 @@ SetCastlingRights:
 		cmp   r12, r13
 		 jb   @f
 	       xchg   r12, r13
-	@@:	
+	@@:
                 sub   r12, 1
 .rook_loop:
 		add   r12, 1
@@ -1711,4 +1711,3 @@ Position_SetExtraCapacity:
 	       call   Os_VirtualFree
 		pop   rdi rsi rbx
 		ret
-

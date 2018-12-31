@@ -1,12 +1,12 @@
 ; The following macros assist with initilization and execution of the cuckoo tables in
 ; Position_Init.asm and Position.asm:
 
-macro cuckoo_H1 rg1,rg2
+macro cuckoo_H1 rg1, rg2
     mov rg1, rg2
 	and rg1, 0x1fff
 end macro
 
-macro cuckoo_H2 rg1,rg2
+macro cuckoo_H2 rg1, rg2
     mov rg1, rg2
 	shr rg1, 16
 	and rg1, 0x1fff

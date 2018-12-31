@@ -1588,7 +1588,7 @@ end virtual
 		mov   qword[.ei.attackedBy+8*(8*White+King)], rax
 		mov   qword[.ei.attackedBy+8*(8*Black+0   )], rcx
 		mov   qword[.ei.attackedBy+8*(8*Black+King)], rdx
-                mov   dword[.ei.mobilityDiff], ecx
+		mov   dword[.ei.mobilityDiff], ecx
 
 		mov   rax, qword[rbp+Pos.typeBB+8*White]
 		mov   rdx, qword[rbp+Pos.typeBB+8*Black]
@@ -1677,13 +1677,13 @@ end virtual
 
 		or   rax, qword[.ei.attackedBy+8*(8*Black+Pawn)]
 		or   rdx, qword[.ei.attackedBy+8*(8*White+Pawn)]
-		
+
 		or   rax, rcx
 		or   rdx, rsi
 
 		not   rax
 		not   rdx
-		
+
 		mov   qword[.ei.mobilityArea+8*White], rax
 		mov   qword[.ei.mobilityArea+8*Black], rdx
 

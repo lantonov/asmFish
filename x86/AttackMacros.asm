@@ -1,4 +1,3 @@
-
 macro RookAttacks x, sq, occ, t
 ; x = bitboard of pseudo legal moves for a piece on sq with occ pieces occluding its movement on the board
   if CPU_HAS_BMI2
@@ -49,7 +48,7 @@ macro QueenAttacks x, sq, occ, t, s
 		mov   t, qword[RookAttacksPEXT+8*(sq)]
 		and   t, occ
 		mov   s#d, dword[RookAttacksMOFF+4*(sq)]
-	       imul   t, qword[RookAttacksIMUL+8*(sq)]
+		imul   t, qword[RookAttacksIMUL+8*(sq)]
 		shr   t, 64-12
 		 or   x, qword[s+8*(t)]
   end if
@@ -66,7 +65,7 @@ macro PseudoAttacksAtFreshBoardState x, Pt, sq, t
 		cmp  Pt, Bishop
 		jne  @f
 
-		mov   x#d, dword[BishopAttacksMOFF+4*(sq)]
+		mov   x#d, dword[BishopAttacksMOFF+4*sq]
 		mov   x, qword[x]
 		jmp  @1f
 
@@ -74,7 +73,7 @@ macro PseudoAttacksAtFreshBoardState x, Pt, sq, t
 		cmp  Pt, Rook
 		jne  @f
 
-		mov   x#d, dword[RookAttacksMOFF+4*(sq)]
+		mov   x#d, dword[RookAttacksMOFF+4*sq]
 		mov   x, qword[x]
 
 		jmp  @1f

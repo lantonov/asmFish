@@ -1,7 +1,9 @@
 
 Position_Init:
 
-		push   rbx rsi rdi r11 r12 r13 r14 r15
+ push   rbx rsi rdi r11 r12 r13 r14 r15
+ ; PushAll
+
 virtual at rsp
   .prng        rq 1
   .ckoo_key    rq 1
@@ -20,7 +22,8 @@ end virtual
 
 ; This is the double-for loop
 	.HashKeyInitLoopA:
-		imul  esi, ebx, 64*8
+		shl   ebx, 6+3
+		mov   esi, ebx
 		lea   rdi, [Zobrist_Pieces+8*rsi]
 		mov   esi, 64*Pawn
 		xor   r8, r8
@@ -91,60 +94,16 @@ end virtual
 		xor  ebx, ebx
 
 	.CuckooLoopColor:
-;       Here, we are simply setting up for the next inner loop, CuckooLoopPieceType
-;       r8 - will play the part of PieceType (commonly abbreviated as 'pt'), as we loop through
-;            the canonical PieceTypes, defined in Def.asm as:
-;             - Pawn (we use this to init r8),
-;             - Knight, Bishop, Rook, Queen (the 4 intermediate values as we iterate thru the loop)
-;             - and finally, King (used in our cmp instruction at the bottm of the loop)
-
 		mov   r8, Pawn
 
 	.CuckooLoopPieceType:
 		xor   r14, r14
 
-		; r14 is used to represent what Stockfih calls 's1', which is
-		; the index of a square within the
-		; "Attacks" bitboards of the current piece type (represented by r8).
-		; We init r14 to an index value of 0 (or what Stockfish refs as
-		; 'SQ_A1' in the Square enum).
-		; Stockfish loops s1 from SQ_A1 - SQ-H8.
-		; This logic loops r14 from 0-63. (same thing).
-
 	.CuckooLoopS1Squares:
-
-		; r11 will be used to represent what Stockfih calls 's2'. But instead of
-		; looping from SQ_A1 to SQ_H8 (as S1 does), s2 only loops from s1+1 to SQ_H8.
-		; In terms of our local asm code, r11 loops from r14+1 to 63.
-
-	; for (Square s2 = Square(s1 + 1); s2 <= SQ_H8; ++s2)
 		mov  r11, r14
 		add  r11, 1 ; Square s2 = Square(s1+1)
 
 	.CuckooLoopS2Squares:
-
-	; We are inside the s2 for loop, and now we finally get down to business..
-
-	; First, we have to simulate this if-test, shown from StockFish.
-	;
-	;  ===>  if (PseudoAttacks[type_of(pc)][s1] & s2) <===
-	;        {
-	;        <snip>
-	;        }
-	;
-	; Note: To understand the meaning of the '&' operator in the above C++ if test, you have
-	;       to be familiar with operator overloads in C++. There's some auto-magical stuff going on there
-	;       that, upon first glance, may not seem readily translatable to asm. For convenience, the relevant
-	;       overload is repeated here:
-	;
-	;     inline Bitboard operator&(Bitboard b, Square s) {
-    ;          assert(s >= SQ_A1 && s <= SQ_H8);             <====== Ignore this line
-    ;          return b & SquareBB[s];                       <====== This is what we need to simulate
-    ;     }
-	;
-    ; First, this call to a new PseudoAttacks macro in asmFish populates r9 with the BitBoard of Attackable Squares
-	; for the current PieceType (r8) from the s1 Square (r14).
-
 		cmp r8, Pawn
 		je .cuckoo_init_end
 
@@ -154,13 +113,6 @@ end virtual
 		; r10 = a safe register for the PseudoAttacks macro to use internally (related to queen processing)
 
 		PseudoAttacksAtFreshBoardState r9, r8, r14, r10
-
-		; This is the equivalent of:
-		;      ====> b & SquareBB[s]
-		; ... potentially jumping to cuckoo_init_end.
-		;
-		; You won't find the equivalent of "SquareBB" in asmfish. It's just a series of power-of-2 bitflags
-		; so we just emulate it in assembler by shifting a 1-bit to the appropriate position (indicated by r11)
 
 		mov r15, 1
 		mov rcx, r11
@@ -185,20 +137,21 @@ end virtual
 		shl   rsi, 6						; get offset to polyglots for current pieceType (64*pt)
 		add   rsi, r14						; add in s1 square offset within addressed table
 
-		mov   rcx, qword[rdi+8*rsi]			; get the s1 component of the key;
+		mov  r10, qword[rdi+8*rsi]
+		mov   rcx, r10 			; get the s1 component of the key;
+
 		mov   rdx, rcx						; save the s1 component
 
 		sub   rsi, r14						; back out the s1 offset
 		add   rsi, r11						; add in the s2 offset
-		mov   rcx, qword[rdi+8*rsi]			; get the s2 component of the key;
+		mov  r10, qword[rdi+8*rsi]
+		mov   rcx, r10			; get the s2 component of the key;
 
 		xor   rcx, rdx						; xor the s1 and s2 components together.
 		mov   rdx, qword[Zobrist_side]
 		xor   rcx, rdx						; xor the zobrist side to obtain the key
 		mov   qword[.ckoo_key], rcx 		; save the cuckoo key
 
-	; unsigned int i = H1(key);
-	;  eax will be the current cuckoo index, "i" (as it is called in stockfish)
 		cuckoo_H1 r12, rcx
 		mov dword[.ckoo_index], r12d
 
@@ -206,34 +159,36 @@ end virtual
 	; Swap move
 		mov   ecx, dword[.ckoo_move]
 		lea   rdi, [cuckooMove]
-		mov   edx, dword[rdi+4*r12]
+		mov  r15d, dword[rdi+4*r12]
+
+		mov   edx, r15d
+
 		mov   dword[rdi+4*r12], ecx
 		mov   dword[.ckoo_move], edx
 
-	; Swap key
-	;  std::swap(cuckoo[i], key);
 		mov   rcx, qword[.ckoo_key]
 		lea   rdi, [cuckoo]
+
 		mov   rdx, qword[rdi+8*r12]
 		mov   qword[rdi+8*r12], rcx
 		mov   qword[.ckoo_key], rdx
 
 	; if (move == 0)   // Arrived at empty slot ?
 		mov   edx, dword[.ckoo_move]
-		test edx,edx
-		jz .cuckoo_init_end
+		test edx, edx
+		je .cuckoo_init_end
 
 	; i = (i == H1(key)) ? H2(key) : H1(key); // Push victim to alternative slot
 		mov   rcx, qword[.ckoo_key]
 		mov   r12d, dword[.ckoo_index]
-		cuckoo_H1 rdx,rcx
+		cuckoo_H1 rdx, rcx
 
 	; (i == H1(key)) ?
 		cmp   r12,rdx
 		jne   @f
 
 	; then i = H2(key)
-		cuckoo_H2 r12,rcx  ; new index is h2-based
+		cuckoo_H2 r12, rcx  ; new index is h2-based
 
 		mov   dword[.ckoo_index],r12d
 		jmp .cuckoo_swapping_loop
@@ -241,20 +196,17 @@ end virtual
 	@@:
 	; else i = H1(key)
 		cuckoo_H1 r12,rcx ; new index is h1-based
-		mov   dword[.ckoo_index],r12d
+		mov   dword[.ckoo_index], r12d
 		jmp .cuckoo_swapping_loop
 		; } // end while loop
 
 	.cuckoo_init_end:
-		add   r11, 1  ; <- s2++
+		add   r11, 1  ; s2++
 		cmp   r11, 64
 		jb   .CuckooLoopS2Squares
 
 		add   r14, 1  ; s1++
-		cmp   r14, 63 ; if s1 is 63, then s2 would
-					  ; be init'd to 64 at the start of the s2 loop.
-					  ; so we instead cut the s1 loop 1 short.
-
+		cmp   r14, 63
 		jb   .CuckooLoopS1Squares
 
 		add   r8, 1
@@ -357,6 +309,7 @@ end virtual
 	      .Return:
 		add   rsp, .localsize
 		pop   r15 r14 r13 r12 r11 rdi rsi rbx
+		; PopAll
 		ret
 
 
