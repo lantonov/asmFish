@@ -54,3 +54,43 @@ macro QueenAttacks x, sq, occ, t, s
 		 or   x, qword[s+8*(t)]
   end if
 end macro
+
+macro PseudoAttacksAtFreshBoardState x, Pt, sq, t
+		cmp  Pt, Knight
+		jne  @f
+
+		mov   x, qword[KnightAttacks+8*sq]
+		jmp  @1f
+
+@@:
+		cmp  Pt, Bishop
+		jne  @f
+
+		mov   x#d, dword[BishopAttacksMOFF+4*(sq)]
+		mov   x, qword[x]
+		jmp  @1f
+
+@@:
+		cmp  Pt, Rook
+		jne  @f
+
+		mov   x#d, dword[RookAttacksMOFF+4*(sq)]
+		mov   x, qword[x]
+
+		jmp  @1f
+
+@@:
+		cmp  Pt, Queen
+		jne  @f
+
+		mov   x#d, dword[BishopAttacksMOFF+4*sq]
+		mov   x, qword[x]
+		mov   t#d, dword[RookAttacksMOFF+4*sq]
+		or    x, qword[t]
+		jmp  @1f
+
+@@:
+		mov   x, qword[KingAttacks+8*sq]
+
+@1:
+end macro

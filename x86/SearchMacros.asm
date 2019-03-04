@@ -161,6 +161,28 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   eax, ecx
 		cmp   ecx, edx
 		jge   .Return
+
+	; Check if there exists a move which draws by repetition, or an alternative
+	; earlier move to this position.
+		cmp   ecx, VALUE_DRAW
+		jge   @f
+
+		mov   dx, word[rbx+State.rule50]
+		cmp   dx, 3
+		jl    @f
+
+		call  Position_HasGameCycle
+		cmp   eax, 1
+		jne   @f
+
+		mov   ecx, VALUE_DRAW
+		mov   dword[.alpha], ecx
+		mov   edx, dword[.beta]
+		mov   eax, ecx
+		cmp   ecx, edx
+		jge   .Return
+
+	@@:
   end if
 
              Assert   b, r12d, MAX_PLY, 'assertion 0 <= ss->ply < MAX_PLY failed in Search'
