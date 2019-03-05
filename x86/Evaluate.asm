@@ -866,12 +866,6 @@ macro ShelterStorm Us
 		; r8d = ourRank
 		; esi = ourRank + 1
 
-; if (ourRank || theirRank)
-		test rdi, rdi
-		jnz  @1f
-		test r8d, r8d
-		jz  @f
-
 ; safety -=  StormDanger[ ourRank && (ourRank == theirRank - 1) ? BlockedByPawn : Unblocked ][d][theirRank];
 	@1:
 		test  r8d, r8d ; (ourRank = true)
@@ -1860,12 +1854,8 @@ end virtual
 		jz   .NotOppBishop
 		or   r8, r9
 		jnz   .NotOppBishop
-		_blsr   rcx, r11, r8
 		mov   eax, 46
-		neg   rcx
-		sbb   ecx, ecx
-		and   ecx, 31-9
-		add   ecx, 9
+		mov   ecx, 31
 		cmp   edi, (BishopValueMg shl 16) + BishopValueMg
 		cmove   eax, ecx
 		jmp   .ScaleFactorDone
