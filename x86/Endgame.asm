@@ -1185,25 +1185,9 @@ weakKingSq_	equ r11
 		 jz   .ReturnNone
 		cmp   eax, 01001b
 		 je   .ReturnNone
-		mov   eax, pawnSq
-		shr   eax, 3
-		xor   eax, ebx
-		cmp   eax, RANK_5
-		jbe   .ReturnDraw
-		and   ebx, 1
-		shl   ebx, 6+3
-		mov   rbx, qword[ForwardBB+rbx+8*pawnSq_]
-		 bt   rbx, weakKingSq_
-		 jc   .ReturnDraw
-	       imul   eax, weakBishopSq, 64
-	      movzx   eax, byte[SquareDistance+rax+pawnSq_]
-		cmp   eax, 3
-		 jb   .ReturnNone
-		mov   r8, qword[rbp+Pos.typeBB+8*White]
-		 or   r8, qword[rbp+Pos.typeBB+8*Black]
-      BishopAttacks   rax, weakBishopSq, r8, rdx
-	       test   rax, rbx
-		jnz   .ReturnDraw
+
+		jmp   .ReturnDraw
+
 .ReturnNone:
 		mov   eax, SCALE_FACTOR_NONE
 		pop   rbx
