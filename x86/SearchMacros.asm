@@ -93,7 +93,80 @@ macro search RootNode, PvNode
   end if
 
 Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
+ if RootNode = 0
+		cmp   ecx, VALUE_DRAW
+		jge   @1f
 
+		mov   dx, word[rbx+State.rule50]
+		cmp   dx, 3
+		jl    @1f
+
+		movzx r12d, byte[rbx + State.ply]
+		call  Position_HasGameCycle
+		cmp   eax, 1
+		jne   @1f
+
+ if PvNode = 1
+		mov   ecx, VALUE_DRAW
+		mov   dword[.alpha], ecx
+		mov   edx, dword[.beta]
+		mov   eax, ecx
+		cmp   ecx, edx
+		jl   @1f
+else
+		mov   eax, VALUE_DRAW
+end if
+
+		jmp .Return
+@1:
+end if
+
+		mov   r8d, dword[.depth]
+		cmp   r8d, 1
+		jge   .skipdownto_step1
+
+if PvNode = 1
+		mov   rcx, qword[rbx+State.checkersBB]
+		test  rcx, rcx
+		jz  .S0_pv_noCheck
+
+		lea   r12, [QSearch_Pv_InCheck]
+		mov   ecx,  dword[.alpha]
+		mov   edx,  dword[.beta]
+		xor   r8d, r8d
+		call   r12
+		jmp .Return
+
+.S0_pv_noCheck:
+		lea   r12, [QSearch_Pv_NoCheck]
+		mov   ecx,  dword[.alpha]
+		mov   edx,  dword[.beta]
+		xor   r8d, r8d
+		call   r12
+		jmp .Return
+
+else
+		mov   rcx, qword[rbx+State.checkersBB]
+		test  rcx, rcx
+		jz  .S0_nonpv_noCheck
+
+		lea   r12, [QSearch_NonPv_InCheck]
+		mov   ecx,  dword[.alpha]
+		mov   edx,  dword[.beta]
+		xor   r8d, r8d
+		call   r12
+		jmp .Return
+
+.S0_nonpv_noCheck:
+		lea   r12, [QSearch_NonPv_NoCheck]
+		mov   ecx,  dword[.alpha]
+		mov   edx,  dword[.beta]
+		xor   r8d, r8d
+		call   r12
+		jmp .Return
+end if
+
+.skipdownto_step1:
 	; Step 1. initialize node
 		xor   eax, eax
 		mov   dword[.moveCount], eax
@@ -162,28 +235,6 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   eax, ecx
 		cmp   ecx, edx
 		jge   .Return
-
-	; Check if there exists a move which draws by repetition, or an alternative
-	; earlier move to this position.
-		cmp   ecx, VALUE_DRAW
-		jge   @f
-
-		mov   dx, word[rbx+State.rule50]
-		cmp   dx, 3
-		jl    @f
-
-		call  Position_HasGameCycle
-		cmp   eax, 1
-		jne   @f
-
-		mov   ecx, VALUE_DRAW
-		mov   dword[.alpha], ecx
-		mov   edx, dword[.beta]
-		mov   eax, ecx
-		cmp   ecx, edx
-		jge   .Return
-
-	@@:
   end if
 
              Assert   b, r12d, MAX_PLY, 'assertion 0 <= ss->ply < MAX_PLY failed in Search'
@@ -266,13 +317,13 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 
 
   if USE_SYZYGY	& RootNode = 0
-    ; Step 4a. Tablebase probe
+    ; Step 5. Tablebase probe
 	       test   r15d, r15d
 		jns   .CheckTablebase
 .CheckTablebaseReturn:
   end if
 
-    ; step 5. evaluate the position statically
+    ; step 6. evaluate the position statically
 		mov   eax, VALUE_NONE
 		mov   dword [.evalu], eax
 		mov   dword[rbx+State.staticEval], eax
@@ -319,7 +370,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   dword[.evalu], eax
 .StaticValueDone:
 
-	    ; Step 6. Razoring (skipped	when in	check)
+		; Step 7. Razoring (skipped	when in	check)
   if PvNode = 0
 		mov   edx, dword[.depth]
 		cmp   edx, 2*ONE_PLY
@@ -365,7 +416,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		Assert   b, al, 2,	'assertion al<2	in Search failed'
 		mov   byte[.improving],	al   ; should be 0 or 1
 
-	    ; Step 7. Futility pruning:	child node (skipped when in check)
+		; Step 8. Futility pruning:	child node (skipped when in check)
   if (RootNode = 0 & USE_MATEFINDER = 0) | (PvNode = 0 & USE_MATEFINDER	= 1)
 		mov   edx, dword[.depth]
 		mov   ecx, dword[rbp+Pos.sideToMove]
@@ -402,7 +453,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 
 
 
-	    ; Step 8. Null move	search with verification search	(is omitted in PV nodes)
+	; Step 9. Null move search with verification search (is omitted in PV nodes)
   if PvNode = 0
 		mov  edx, dword[rbx-1*sizeof.State+State.statScore]
 		cmp  edx, 22500
@@ -505,12 +556,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 
 		call   Move_DoNull
 		mov   r8d, esi
-		xor   eax, eax
-		lea   r12, [QSearch_NonPv_NoCheck]
-		lea   rcx, [Search_NonPv]
-		cmp   esi, ONE_PLY
-		cmovge   r12, rcx
-		cmovl   r8d, eax
+		lea   r12, [Search_NonPv]
 		mov   ecx, dword[.beta]
 		neg   ecx
 		lea   edx, [rcx+1]
@@ -552,14 +598,13 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   dword[rbp - Thread.rootPos + Thread.nmp_odd], ecx
 
 		mov   r8d, esi
-		xor   eax, eax
-		lea   r12, [QSearch_NonPv_NoCheck]
-		lea   rcx, [Search_NonPv]
-		cmp   esi, ONE_PLY
-		cmovge   r12, rcx
-		cmovl   r8d, eax
+		lea   r12, [Search_NonPv]
 		lea   ecx, [rdx-1]
 		xor   r9d, r9d
+			;  ecx:	alpha
+			;  edx:	beta
+			;  r8d:	depth
+			;  r9l:	cutNode must be 0 or -1 (=FFh)
 		call   r12
 		xor  ecx, ecx
 		mov  qword[rbp - Thread.rootPos + Thread.nmp_ply], rcx
@@ -570,7 +615,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
   end if
 
 
-	; Step 9. ProbCut (skipped when	in check)
+	; Step 10. ProbCut (skipped when	in check)
   if PvNode = 0
 		mov   eax, dword[.depth]
 		cmp   eax, 5*ONE_PLY
@@ -717,7 +762,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
   end if
 
 
-    ; Step 10. Internal iterative deepening (skipped when in check)
+    ; Step 11. Internal iterative deepening (skipped when in check)
 		mov   r8d, dword[.depth]
 		mov   ecx, dword[.ttMove]
 		test   ecx, ecx
@@ -867,7 +912,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   dword[.pvExact], eax
   end if
 
-    ; Step 11. Loop through moves
+  ; Step 12. Loop through moves
 	 calign	  8
 .MovePickLoop:	     ; this is the head	of the loop
 		movsx   esi, byte[.skipQuiets]
@@ -939,7 +984,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   byte[.moveCountPruning], dil
 		not   edi
 		and   edi, eax  ; edi = givesCheck && !moveCountPruning
-    ; Step 12. Extend checks
+    ; Step 13. Extend checks
 		mov   al, byte[.singularExtensionNode]
 		mov   ecx, dword[.move]
 		test   al, al
@@ -993,7 +1038,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 .12dont_extend:
 .12done:
 
-    ; Step 13. Pruning at shallow depth
+    ; Step 14. Pruning at shallow depth
 		mov   r12d, dword[.move]
 		shr   r12d, 6
 		and   r12d, 63				; r12d = from
@@ -1172,23 +1217,23 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		and   eax, edx
 		 or   dword[.ttCapture], eax
 
-    ; Step 14. Make the move
+    ; Step 15. Make the move
 	       call   Move_Do__Search
 
-    ; Step 15. Reduced depth search (LMR)
+    ; Step 16. Reduced depth search (LMR)
 		mov   edx, dword[.depth]
 		mov   ecx, dword[.moveCount]
 		cmp   edx, 3*ONE_PLY
-		 jl   .15skip
+		jl   .StartStep17
 		cmp   ecx, 1
-		jbe   .15skip
+		jbe   .StartStep17
   if USE_MATEFINDER = 1
 		cmp   dl, byte[rbp-Thread.rootPos+Thread.selDepth]
-		jae   .15skip
+		jae   .StartStep17
 		cmp   byte[rbx-1*sizeof.State+State.ply], 3
 		 ja   @1f
 		cmp   edx, 16
-		jae   .15skip
+		jae   .StartStep17
     @1:
   end if
 		mov   r8l, byte[.captureOrPromotion]
@@ -1202,7 +1247,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		sub  edi, r9d
 		lea   eax, [rdi	- 1]
 		cmp   byte[.moveCountPruning], 0
-		 je   .15skip
+		je   .StartStep17
 	       test   edi, edi
 	     cmovnz   edi, eax
 		jmp   .15ReadyToSearch
@@ -1289,64 +1334,17 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		neg   eax
 		xor   r9, r9
 		cmp   eax, dword[.alpha]
-		jle   .17entry
+		jle   .CheckFullPvSearch
 		cmp   edi, dword[.newDepth]
   if PvNode = 1
-		 je   .15dontdofulldepthsearch
+		je   .CheckFullPvSearch
   else
-		 je   .17entry
+		je   .18entry
   end if
-		mov   r8d, dword[.newDepth]
-		lea   r10, [QSearch_NonPv_InCheck]
-		lea   r11, [QSearch_NonPv_NoCheck]
-		cmp   byte[rbx-1*sizeof.State+State.givesCheck], 0
-	     cmovne   r11, r10
-		lea   rax, [Search_NonPv]
-		cmp   r8d, 1
-	      cmovl   rax, r11
-	      cmovl   r8d, r9d
-		mov   edx, dword[.alpha]
-		neg   edx
-		lea   ecx, [rdx-1]
-	      movzx   r9d, byte[.cutNode]
-		not   r9d
-	       call   rax
-		neg   eax
- if PvNode = 1
-		cmp   eax, dword[.alpha]
-		jle   .17entry
- else
-		jmp   .17entry
- end if
-.15dontdofulldepthsearch:
-  if PvNode = 1
-	if RootNode = 0
-		cmp   eax, dword[.beta]
-		jge   .17entry
-	end if
-		lea   rax, [.pv]
-		xor   r9, r9
-		mov   qword[rbx+State.pv], rax
-		mov   dword[rax], r9d
-		mov   r8d, dword [.newDepth]
-		lea   r10, [QSearch_Pv_InCheck]
-		lea   r11, [QSearch_Pv_NoCheck]
-		cmp   byte[rbx-1*sizeof.State+State.givesCheck], 0
-	     cmovne   r11, r10
-		lea   rax, [Search_Pv]
-		cmp   r8d, 1
-	      cmovl   rax, r11
-	      cmovl   r8d, r9d
-		mov   ecx, dword[.beta]
-		neg   ecx
-		mov   edx, dword[.alpha]
-		neg   edx
-	       call   rax
-		neg   eax
-		jmp   .17entry
-  end if
-.15skip:
-    ; Step 16. full depth search   this is for when step 15 is skipped
+
+.StartStep17:
+; CheckFullDepthSearch
+    ; Step 17. full depth search   this is for when step 15 is skipped
 		xor   r9, r9
 		mov   r8d, dword[.newDepth]
   if PvNode = 1
@@ -1354,13 +1352,8 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		jbe   .DoFullPvSearch
   end if
     ; do full depth search
-		lea   r10, [QSearch_NonPv_InCheck]
-		lea   r11, [QSearch_NonPv_NoCheck]
-		cmp   byte[rbx-1*sizeof.State+State.givesCheck], 0
-	     cmovne   r11, r10
 		lea   rax, [Search_NonPv]
 		cmp   r8d, 1
-	      cmovl   rax, r11
 	      cmovl   r8d, r9d
 		mov   edx, dword[.alpha]
 		neg   edx
@@ -1369,7 +1362,10 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		not   r9d
 	       call   rax
 		neg   eax
+.CheckFullPvSearch:
   if PvNode = 1
+		cmp   dword[.moveCount], 1
+		je   .DoFullPvSearch
 		cmp   eax, dword[.alpha]
 		jle   .SkipFullPvSearch
     if RootNode	= 0
@@ -1382,13 +1378,8 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   qword[rbx+State.pv], rax
 		mov   dword[rax], r9d
 		mov   r8d, dword[.newDepth]
-		lea   r10, [QSearch_Pv_InCheck]
-		lea   r11, [QSearch_Pv_NoCheck]
-		cmp   byte[rbx-1*sizeof.State+State.givesCheck], 0
-	     cmovne   r11, r10
 		lea   rax, [Search_Pv]
 		cmp   r8d, 1
-	      cmovl   rax, r11
 	      cmovl   r8d, r9d
 		mov   ecx, dword[.beta]
 		neg   ecx
@@ -1399,14 +1390,14 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		neg   eax
 .SkipFullPvSearch:
   end if
-    ; Step 17. Undo move
-.17entry:
+    ; Step 18. Undo move
+.18entry:
 		mov   ecx, dword[.move]
 		mov   edi, eax
 		mov   dword[.value], eax
 	       call   Move_Undo
 
-    ; Step 18. Check for new best move
+   ; Step 19. Check for new best move
 		xor   eax, eax
 		cmp   al, byte[signals.stop]
 		jne   .Return
