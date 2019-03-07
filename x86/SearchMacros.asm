@@ -43,6 +43,7 @@ macro search RootNode, PvNode
     .alpha		rd 1
     .beta		rd 1
     .depth		rd 1
+	.statBonusDepth  rd 1
     .bestValue		rd 1
     .value		rd 1
     .evalu		rd 1
@@ -723,9 +724,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		jnz   .10skip
 		cmp   r8d, 8*ONE_PLY
 		 jl   .10skip
-		lea   r8d, [3*r8]
-		sar   r8d, 2
-		sub   r8d, 2*ONE_PLY
+		sub   r8d, 7*ONE_PLY
   if PvNode = 1
 		mov   ecx, dword[.alpha]
 		mov   edx, dword[.beta]
@@ -1197,6 +1196,10 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		mov   ecx, 15
 	       test   r8l, r8l
 		 jz   .15NotCaptureOrPromotion
+		 mov  r9d, dword[rbx-2*sizeof.State+State.statScore] ; (ss-1)->statScore >= 0
+		shr  r9d, 31
+		add  edi, 1
+		sub  edi, r9d
 		lea   eax, [rdi	- 1]
 		cmp   byte[.moveCountPruning], 0
 		 je   .15skip
@@ -1511,6 +1514,7 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		lea   r15d,	[rax+rcx]
 		mov   r12d,	dword[.bestMove]
 		mov   eax, dword[.depth]
+		mov   edi, dword[.bestValue]
 		mov   r13d,	eax
 	       imul   eax, eax
 		lea   r10d,	[rax+2*r13-2]
@@ -1537,7 +1541,18 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 	UpdateStats   r12d, .quietsSearched, dword[.quietCount], r11d, r10d, r15
 		jmp   .20Quiet_UpdateStatsDone
 .20Quiet_UpdateCaptureStats:
+ 		mov  dword[.statBonusDepth], r10d
+ 		mov  eax, dword[.beta]
+ 		add  eax, KnightValueMg
+ 		cmp dword[.bestValue], eax
+ 		jle @f
+
+ 		lea   r10d, [r10+2*(r13+1)+1]
+
+  	@@:
 		UpdateCaptureStats   r12d, .capturesSearched, dword[.captureCount],	r11d, r10d
+		mov  r10d, dword[.statBonusDepth]
+
 .20Quiet_UpdateStatsDone:
 		lea   r10d, [r10+2*(r13+1)+1]
     ; r10d = penalty
