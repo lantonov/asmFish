@@ -2,15 +2,6 @@
 RazorMargin1 = 590
 RazorMargin2 = 604
 
-; CapturePruneMargin[] =
-CapturePruneMargin0 = 0    ; 0
-CapturePruneMargin1 = 253  ; 1 * PawnValueEg * 1055 / 1000
-CapturePruneMargin2 = 500  ; 2 * PawnValueEg * 1042 / 1000
-CapturePruneMargin3 = 693  ; 3 * PawnValueEg * 963  / 1000
-CapturePruneMargin4 = 996  ; 4 * PawnValueEg * 1038 / 1000
-CapturePruneMargin5 = 1140 ; 5 * PawnValueEg * 950  / 1000
-CapturePruneMargin6 = 1339 ; 6 * PawnValueEg * 930  / 1000
-
 macro search RootNode, PvNode
 	; in:
 	;  rbp:	address	of Pos struct in thread	struct
@@ -1139,41 +1130,7 @@ end if
 		cmp   byte[.extension],	0
 		jne   .13done
 
-		; Todo: The following may be restructured (to be more aesthetically pleasing)
-		; and/or reordered (for speed optimization).
-		cmp  edx, 0
-		jne  @f
-		mov  edx, -CapturePruneMargin0
-		jmp  @1f
-	@@:
-		cmp  edx, 1
-		jne  @f
-		mov  edx, -CapturePruneMargin1
-		jmp  @1f
-	@@:
-		cmp  edx, 2
-		jne  @f
-		mov  edx, -CapturePruneMargin2
-		jmp  @1f
-	@@:
-		cmp  edx, 3
-		jne  @f
-		mov  edx, -CapturePruneMargin3
-		jmp  @1f
-	@@:
-		cmp  edx, 4
-		jne  @f
-		mov  edx, -CapturePruneMargin4
-		jmp  @1f
-	@@:
-		cmp  edx, 5
-		jne  @f
-		mov  edx, -CapturePruneMargin5
-		jmp  @1f
-	@@:
-		mov  edx, -CapturePruneMargin6
-		jmp  @1f
-	@1:
+		imul  edx, -PawnValueEg
 	    call   SeeTestGe
 	    test   eax, eax
 		jz   .MovePickLoop
