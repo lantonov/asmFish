@@ -1533,10 +1533,6 @@ end if
 		jmp   .20Quiet_UpdateStatsDone
 .20Quiet_UpdateCaptureStats:
  		mov  dword[.statBonusDepth], r10d
- 		mov  eax, dword[.beta]
- 		add  eax, KnightValueMg
- 		cmp dword[.bestValue], eax
- 		jle @f
 
  		lea   r10d, [r10+2*(r13+1)+1]
 
