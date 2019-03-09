@@ -1509,7 +1509,7 @@ end if
 		mov   r13d,	eax
 	       imul   eax, eax
 		lea   r10d,	[rax+2*r13-2]
-		mov   r14d,	dword[.excludedMove]
+		lea   r14d, [r10+2*(r13+1)+1]
     ; r15d = offset of [piece_on(prevSq),prevSq]
     ; r12d = move
     ; r13d = depth
@@ -1529,19 +1529,17 @@ end if
 		 or   al, byte[_CaptureOrPromotion_or+rdx]
 	       test   al, byte[_CaptureOrPromotion_and+rdx]
 		jnz   .20Quiet_UpdateCaptureStats
+		mov  eax, dword[.beta]
+		add  eax, PawnValueMg
+		cmp  edi, eax
+		cmovg  r10d, r14d
 	UpdateStats   r12d, .quietsSearched, dword[.quietCount], r11d, r10d, r15
 		jmp   .20Quiet_UpdateStatsDone
 .20Quiet_UpdateCaptureStats:
- 		mov  dword[.statBonusDepth], r10d
-
- 		lea   r10d, [r10+2*(r13+1)+1]
-
-  	@@:
-		UpdateCaptureStats   r12d, .capturesSearched, dword[.captureCount],	r11d, r10d
-		mov  r10d, dword[.statBonusDepth]
+		UpdateCaptureStats   r12d, .capturesSearched, dword[.captureCount],	r11d, r14d
 
 .20Quiet_UpdateStatsDone:
-		lea   r10d, [r10+2*(r13+1)+1]
+		mov   r10d, r14d
     ; r10d = penalty
 		cmp   dword[rbx-1*sizeof.State+State.moveCount], 1
 		jne   .20TTStore
@@ -1553,6 +1551,7 @@ end if
 		UpdateCmStats   (rbx-1*sizeof.State), r15, r11d, r10d, r8
 		jmp   .20TTStore
 .20Mate:
+		mov   r14d, dword[.excludedMove]
 		mov   rax, qword[rbx+State.checkersBB]
 		movzx edi, byte[rbx+State.ply]
 		sub   edi, VALUE_MATE
@@ -1580,6 +1579,7 @@ end if
       UpdateCmStats   (rbx-1*sizeof.State),	r15, r11d, r10d, r8
 .20TTStore:
     ; edi = bestValue
+		mov   r14d, dword[.excludedMove]
 		mov   r9, qword[.posKey]
 		lea   ecx, [rdi+VALUE_MATE_IN_MAX_PLY]
 		mov   r8, qword[.tte]
