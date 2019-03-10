@@ -129,6 +129,9 @@ macro UpdateCaptureStats move, captures, captureCnt, bonusW, absbonus
             cmp  absbonus, 324
             jae  BonusTooBig
 
+            test r8b, dl
+            jz   @1f
+
             mov  eax, move
             mov  ecx, move
             shr  ecx, 6
@@ -144,6 +147,7 @@ macro UpdateCaptureStats move, captures, captureCnt, bonusW, absbonus
             lea  r8, [r9 + 4*rcx]
     apply_bonus  r8, bonusW, absbonus, 324
 
+@1:
   match =0, quiets
   else
             neg  bonusW

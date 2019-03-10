@@ -1476,23 +1476,25 @@ end if
 		 jz   .20CheckBonus
 .20Quiet:
 		mov   edx, r12d
-		mov   eax, r12d
-		and   eax, 63
+		mov   r8d, r12d
+		and   r8d, 63
 		shr   edx, 14
-	      movzx   eax, byte[rbp+Pos.board+rax]
-		 or   al, byte[_CaptureOrPromotion_or+rdx]
-	       test   al, byte[_CaptureOrPromotion_and+rdx]
-		jnz   .20Quiet_UpdateCaptureStats
+		movzx   r8d, byte[rbp+Pos.board+r8]
+		or   r8b, byte[_CaptureOrPromotion_or+rdx]
+		mov  dl, byte[_CaptureOrPromotion_and+rdx]
+		test   r8b, dl
+		jnz   @1f
+
 		mov  eax, dword[.beta]
 		add  eax, PawnValueMg
 		cmp  edi, eax
 		cmovg  r10d, r14d
-	UpdateStats   r12d, .quietsSearched, dword[.quietCount], r11d, r10d, r15
-		jmp   .20Quiet_UpdateStatsDone
-.20Quiet_UpdateCaptureStats:
-		UpdateCaptureStats   r12d, .capturesSearched, dword[.captureCount],	r11d, r14d
 
-.20Quiet_UpdateStatsDone:
+		UpdateStats   r12d, .quietsSearched, dword[.quietCount], r11d, r10d, r15
+ @1:
+		UpdateCaptureStats  r12d, .capturesSearched, dword[.captureCount], r11d, r14d
+
+ @2:
 		mov   r10d, r14d
     ; r10d = penalty
 		cmp   dword[rbx-1*sizeof.State+State.moveCount], 1
