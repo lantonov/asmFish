@@ -9,13 +9,13 @@ TrappedRook         = ( 92 shl 16) + (  0)
 WeakQueen           = ( 50 shl 16) + ( 10)
 CloseEnemies        = (  8 shl 16) + (  0)
 PawnlessFlank       = ( 20 shl 16) + ( 80)
-ThreatBySafePawn    = (186 shl 16) + (140)
+ThreatBySafePawn    = (165 shl 16) + (133)
 ThreatByRank        = ( 16 shl 16) + (  3)
 Hanging             = ( 52 shl 16) + ( 30)
-WeakUnopposedPawn   = ( 14 shl 16) + ( 19)
+WeakUnopposedPawn   = ( 5 shl  16) + ( 26)
 ThreatByPawnPush    = ( 49 shl 16) + ( 30)
 SliderOnQueen       = ( 42 shl 16) + ( 21)
-HinderPassedPawn    = (  5 shl 16) + (  2)
+HinderPassedPawn    = (  5 shl 16) + ( -1)
 TrappedBishopA1H1   = ( 50 shl 16) + ( 50)
 
 LazyThreshold = 1500
@@ -167,17 +167,17 @@ macro EvalPieces Us, Pt
 	Outpost1	  = ((36 shl 16) + (12))
 	KingAttackWeight  = 77
 	MobilityBonus	  equ MobilityBonus_Knight
-	KingProtector_Pt  = ((-3 shl 16) + (-5))
+	KingProtector_Pt  = ((-4 shl 16) + (-6))
   else if Pt = Bishop
 	Outpost0	  = (( 9 shl 16) + (2))
 	Outpost1	  = ((15 shl 16) + (5))
 	KingAttackWeight  = 55
 	MobilityBonus	  equ MobilityBonus_Bishop
-        KingProtector_Pt  = ((-5 shl 16) + (-3))
+        KingProtector_Pt  = ((-6 shl 16) + (-3))
   else if Pt = Rook
 	KingAttackWeight  = 44
 	MobilityBonus	  equ MobilityBonus_Rook
-	KingProtector_Pt  = ((-3 shl 16) + (0))
+	KingProtector_Pt  = ((-1 shl 16) + (0))
   else if Pt = Queen
 	KingAttackWeight  = 10
 	MobilityBonus	  equ MobilityBonus_Queen
@@ -535,17 +535,17 @@ KingSafetyDoneRet:
 		add   edi, eax
 
 		_popcnt rax, r9, rcx
-		imul    eax, 182
+		imul    eax, 183
 		add     edi, eax
 		test    PiecesThem, qword[rbp+Pos.typeBB+8*Queen]
-		lea     eax, [rdi-857]
+		lea     eax, [rdi-860]
 		cmovz   edi, eax
 
-	; the following	does edi += - 9*mg_value(score)/8 + 40
+	; the following	does edi += - 8*mg_value(score)/8 + 40
 		lea   ecx, [rsi+0x08000]
-		add   edi, 31
+		add   edi, 17
 		sar   ecx, 16
-		shl   ecx, 3
+		imul  ecx, 7
 		lea   edx, [rcx]
 		lea   eax, [rcx+7]
 		cmovs edx, eax
@@ -621,7 +621,7 @@ KingSafetyDoneRet:
 		or    rdx, r9
 
 		_popcnt rax, rdx, rcx
-		imul  eax, 128
+		imul  eax, 122
 		add   edi, eax
 
 	; Compute the king danger score and subtract it from the evaluation
@@ -915,8 +915,8 @@ macro EvalThreats Us
   local ThreatMinorLoop, ThreatMinorDone, ThreatRookLoop, ThreatRookDone
   local ThreatMinorSkipPawn, ThreatRookSkipPawn
 
-        ThreatByKing0 = (( 25 shl 16) + ( 57))
-        ThreatByKing1 = ((  4 shl 16) + (139))
+        ThreatByKing0 = (( 30 shl 16) + ( 62))
+        ThreatByKing1 = ((  -9 shl 16) + (160))
 
   if Us	= White
 	;addsub		equ add
