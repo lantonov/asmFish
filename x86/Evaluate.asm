@@ -1814,7 +1814,6 @@ end virtual
 
 		movzx ecx, byte[r15+MaterialEntry.scalingFunction+r13]
 		movzx eax, byte[r15+MaterialEntry.factor+r13]
-		movzx edx, byte[r15+MaterialEntry.gamePhase]
 		add   esi, 0x08000
 		sar   esi, 16
 		test  ecx, ecx
@@ -1829,7 +1828,6 @@ end virtual
 
 ; Check for Scale Factor
 		cmp   eax, SCALE_FACTOR_NONE
-		movzx  edx, byte[r15+MaterialEntry.gamePhase]
 		movzx  ecx, byte[r15+MaterialEntry.factor+r13]
 		cmove  eax, ecx
 
@@ -1848,29 +1846,29 @@ end virtual
 		mov   r11, qword[rbp+Pos.typeBB+8*Pawn]
 		mov   rcx, DarkSquares
 		test   rcx, r10
-		jz   .NotOppBishop
+		mov  edx, 7
+		jz   @f
 		mov   rcx, LightSquares
 		test   rcx, r10
-		jz   .NotOppBishop
+		jz   @f
 		or   r8, r9
-		jnz   .NotOppBishop
-		mov   eax, 46
-		mov   ecx, 31
+		jnz  @f
 		cmp   edi, (BishopValueMg shl 16) + BishopValueMg
-		cmove   eax, ecx
+		mov  edx, 2
+		jne  @f
+		mov   eax, 31
 		jmp   .ScaleFactorDone
 
-.NotOppBishop:
+	@@:
 		and   r11, qword[rbp+Pos.typeBB+8*r13]
 		_popcnt   rcx, r11, r9 ;  pos.count<PAWN>(strongSide)
-		imul  ecx, 7
+		imul  ecx, edx
 		add   ecx, 40
 		cmp   eax, ecx
 		cmovg eax, ecx
 
 .ScaleFactorDone:
 	; eax = scale factor
-	; edx = phase
 	; esi = mg_score(score)
 	; r12d = eg_value(score)
 	; adjust score for side to move
@@ -1879,6 +1877,7 @@ end virtual
   ;Value v =  mg_value(score) * int(ei.me->game_phase())
   ;         + eg_value(score) * int(PHASE_MIDGAME - ei.me->game_phase()) * sf / SCALE_FACTOR_NORMAL;
   ;v /= int(PHASE_MIDGAME);
+		movzx edx, byte[r15+MaterialEntry.gamePhase] ; edx = phase
 		mov   ecx, dword[rbp+Pos.sideToMove]
 		mov   edi, 128
 		sub   edi, edx
