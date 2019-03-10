@@ -261,11 +261,6 @@ NoKingRing:
 		addsub   esi, eax
 		; r10 = mob
 
-		lea   eax, [8*r8]
-		movzx   eax, byte[SquareDistance+8*rax+r14]
-		imul   eax, KingProtector_Pt
-		addsub   esi, eax
-
 
   if Pt	= Knight | Pt =	Bishop
 
@@ -306,6 +301,12 @@ OutpostElse:
 		test   rdx, qword[.ei.attackedBy+8*(8*Us+Pawn)]
 		cmovnz   esi, ecx
 OutpostDone:
+
+; score -= KingProtector[Pt == BISHOP] * distance(s, pos.square<KING>(Us));
+		lea   eax, [8*r8]
+		movzx   eax, byte[SquareDistance+8*rax+r14]
+		imul   eax, KingProtector_Pt
+		addsub   esi, eax
 
 	; Penalty for pawns on the same color square as the bishop
     if Pt = Bishop
