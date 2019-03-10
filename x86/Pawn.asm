@@ -22,11 +22,11 @@ macro EvalPawns Us
 	Left  = DELTA_SE
   end if
 
-  Isolated     = (13 shl 16) + (16)
+  Isolated     = (6 shl 16) + (16)
 
-  Backward     = (17 shl 16) + (11)
+  Backward     = (15 shl 16) + (21)
 
-  Doubled     =  (13 shl 16) + (40)
+  Doubled     =  (8 shl 16) + (44)
 
             xor   eax, eax
             mov   qword[rdi+PawnEntry.passedPawns+8*Us], rax
