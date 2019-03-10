@@ -1244,8 +1244,7 @@ NextPawn:
 		mov   rax, qword[ForwardBB+8*(64*Us+r8)]
 		add   r8d, Up
 	; r8d = blockSq
-		mov   rdx, AttackedByThem
-		or   rdx, PiecesThem
+		mov   rdx, PiecesThem
 		and   rax, rdx
 		_popcnt   rax, rax, r10
 		imul   eax, HinderPassedPawn
