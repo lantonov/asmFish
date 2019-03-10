@@ -1774,25 +1774,27 @@ end virtual
 		sub   edi, r9d
 		neg   edi
 
-		movzx   eax, byte[rbp+Pos.pieceList+16*(8*White+King)]
+		movzx   r11d, byte[rbp+Pos.pieceList+16*(8*White+King)]
 		movzx   ecx, byte[rbp+Pos.pieceList+16*(8*Black+King)]
-		and   eax, 0111000b
-		and   ecx, 0111000b
-		sub   eax, ecx
-		cdq
-		xor   eax, edx
-		sub   eax, edx
-		sub   r8d, eax
+		and   r11d, 56
+		and   ecx, 56
+		shr   r11d, 3
+		shr   ecx, 3
+		sub   r11d, ecx
+		abs   r11
 
 		movzx   eax, byte[rbp+Pos.pieceList+16*(8*White+King)]
 		movzx   ecx, byte[rbp+Pos.pieceList+16*(8*Black+King)]
 		and   eax, 7
 		and   ecx, 7
 		sub   eax, ecx
-		cdq
-		xor   eax, edx
-		sub   eax, edx
-		lea   eax, [r8+8*rax]
+		abs  rax
+
+		sub  eax, r11d
+		lea  eax, [rax+2*rax]
+		shl  eax, 2
+		add  eax, r8d
+
 	; eax = initiative
 
 		cmp   eax, edi
@@ -1809,7 +1811,7 @@ end virtual
 
 		movsx   r12d, si ; r12 = temp (score)
 		lea   r13d, [r12-1] ; r13d = [score-1]
-		shr   r13d, 31 ; isolates top bit,
+		shr   r13d, 31 ; isolates top bit
 
 	; r13d = 1 or 0 where 1 = black's winning and 0 = white's winning
 

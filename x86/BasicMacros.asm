@@ -417,3 +417,18 @@ macro cuckoo_moveToSq reg, move
     mov reg, move
     and reg, 0x03f
 end macro
+
+; Absolute function (a >= 0? a : -a)
+ macro abs a
+ if a eq rax
+		cdq
+		add a#d, edx
+		xor a#d, edx
+ else
+		mov eax, a#d
+		cdq
+		xor eax, edx
+		sub eax, edx
+		mov a#d, eax
+ end if
+ end macro 
