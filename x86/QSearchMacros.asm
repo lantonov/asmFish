@@ -230,6 +230,10 @@ end if
     end if ; InCheck = 1
 
 
+;   ss->history = &(*pos->counterMoveHistory)[0][0];
+	mov   ecx, CmhDeadOffset
+	add   rcx, qword[rbp+Pos.counterMoveHistory]
+	mov   qword[rbx+0*sizeof.State+State.counterMoves], rcx
 
 	; initialize move picker
 		mov   ecx, dword[.ttMove]
@@ -399,6 +403,20 @@ end if
 	; make the move
 		mov   ecx, dword[.move]
 		mov   dword[rbx+State.currentMove], ecx
+		mov   edx, ecx
+		shr   edx, 6
+		and   edx, 63
+		movzx   edx, byte[rbp+Pos.board+rdx]
+		mov   eax, ecx
+		and   eax, 63
+		shl   edx, 6
+		add   edx, eax
+
+		; ss->history = &(*pos->counterMoveHistory)[moved_piece(move)][to_sq(move)];
+		mov   eax, edx
+		shl   eax, 2+4+6
+		add   rax, qword[rbp+Pos.counterMoveHistory]
+		mov   qword[rbx+State.counterMoves], rax
 		mov   rsi, qword[.searchFxn]
 		call   Move_Do__QSearch
 

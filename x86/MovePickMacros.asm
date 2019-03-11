@@ -328,34 +328,42 @@ end macro
 
 
 macro ScoreEvasions start, ender
+  local cmh
   local history_get_c
   local WhileLoop, Normal, Special, Done, Capture
 
+		mov   r9, qword[rbx-1*sizeof.State+State.counterMoves]
 		mov   edi, dword[rbp+Pos.sideToMove]
 		shl   edi, 12+2
 		add   rdi, qword[rbp+Pos.history]
 
-	history_get_c equ rdi
+		history_get_c equ rdi
+		cmh equ r9
 
 		cmp   start, ender
 		jae   Done
 WhileLoop:
 		mov   ecx, dword[start+ExtMove.move]
 		mov   r10d, ecx 	; r10d = move
+		mov   eax, ecx
 		mov   r8d, ecx
-		shr   r8d, 6
-		and   r8d, 63
+		shr   eax, 6
+		and   eax, 63
 		and   ecx, 63
 		lea   start, [start+sizeof.ExtMove]
-	      movzx   ecx, byte[rbp+Pos.board+rcx]	; ecx = to piece
-	      movzx   edx, byte[rbp+Pos.board+r8]	; edx = from piece
+		movzx   ecx, byte[rbp+Pos.board+rcx]
+		movzx   edx, byte[rbp+Pos.board+rax]
 		cmp   r10d, MOVE_TYPE_EPCAP shl 12
 		jae   Special
-	       test   ecx, ecx
+		test   ecx, ecx
 		jnz   Capture
 Normal:
 		and   r10d, 64*64-1
 		mov   eax, dword[history_get_c+4*r10]
+		shl   edx, 6
+		and   r8d, 63 ; to_sq = move & 63
+		add   edx, r8d
+		add   eax, dword[cmh+4*rdx]
 		mov   dword[start-1*sizeof.ExtMove+ExtMove.value], eax
 		cmp   start, ender
 		 jb   WhileLoop
