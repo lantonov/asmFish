@@ -1012,9 +1012,8 @@ ThreatMinorLoop:
 		jnz   ThreatMinorLoop
 ThreatMinorDone:
 
-		mov   rdx, PiecesThem
-		and   rdx, qword[rbp+Pos.typeBB+8*Queen]
-		or   rdx, r9
+; b = (weak) & attackedBy[Us][ROOK];
+		mov   rdx, r9 ; r9 = weak
 		and   rdx, qword[.ei.attackedBy+8*(8*Us+Rook)]
 		jz   ThreatRookDone
 ThreatRookLoop:
