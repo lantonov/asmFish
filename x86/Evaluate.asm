@@ -1,15 +1,14 @@
 BishopPawns         = (  3 shl 16) + (  7)
 CloseEnemies        = (  6 shl 16) + (  0)
-Connectivity        = (  3 shl 16) + (  1)
 Hanging             = ( 52 shl 16) + ( 30)
 HinderPassedPawn    = (  4 shl 16) + (  0)
 KingProtector_Pt    = ( -6 shl 16) + ( -6)
 KnightOnQueen       = ( 21 shl 16) + ( 11)
 LongRangedBishop    = ( 22 shl 16) + (  0)
 MinorBehindPawn     = ( 16 shl 16) + (  0)
-Overload            = ( 10 shl 16) + (  5)
 PawnlessFlank       = ( 20 shl 16) + ( 80)
 RookOnPawn          = (  8 shl 16) + ( 24)
+Overload            = ( 16 shl 16) + (  7)
 SliderOnQueen       = ( 42 shl 16) + ( 21)
 ThreatByKing        = (23 shl 16)  + ( 76)
 ThreatByPawnPush    = ( 45 shl 16) + ( 40)
@@ -1138,14 +1137,6 @@ WeakDone:
 		addsub  esi, eax
 
 	@@:
-		 mov  rax, qword[rbp+Pos.typeBB+8*King]
-		 or   rax, PiecesPawn
-		 and  rax, PiecesUs
-		 xor  rax, PiecesUs
-		 and  rax, qword[.ei.attackedBy+8*(8*Us+0)]
-		_popcnt  rax, rax, rdx
-		imul   eax, Connectivity
-		addsub  esi, eax
 
 ; // Bonus for overload (non-pawn enemies attacked once or more and defended exactly once)
 		mov    r8, PiecesPawn
