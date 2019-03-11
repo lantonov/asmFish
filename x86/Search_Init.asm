@@ -16,13 +16,6 @@ Search_Init:
 	     _vpxor   xmm0, xmm0, xmm0
 	 _vcvtsi2sd   xmm0, xmm0, edi
 		xor   r13d, r13d
-		cmp  edi, 2
-		jbe  @f
-		_vmovsd  xmm6, qword[.constd_0p88]
-		_vmovsd  xmm8, qword[.constd_0p36]
-		_vmulsd  xmm0, xmm0, xmm6
-		_vaddsd  xmm0, xmm0, xmm8
-	@@:
 	       call   Math_Log_d_d
 	   _vmovapd   xmm7, xmm0
 ._0050:
@@ -106,8 +99,6 @@ Search_Init:
 .constd_1p0     dq 1.0
 .constd_1p78    dq 1.78
 .constd_2p0     dq 2.0
-.constd_0p88    dq 0.88
-.constd_0p36    dq 0.36
 
 ._CaptureOrPromotion_or  db  0,-1,-1, 0
 ._CaptureOrPromotion_and db -1,-1,-1, 0
