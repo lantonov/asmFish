@@ -2,7 +2,8 @@ BishopPawns         = (  3 shl 16) + (  7)
 CloseEnemies        = (  6 shl 16) + (  0)
 Connectivity        = (  3 shl 16) + (  1)
 Hanging             = ( 52 shl 16) + ( 30)
-HinderPassedPawn    = (  4 shl 16) + ( 0)
+HinderPassedPawn    = (  4 shl 16) + (  0)
+KingProtector_Pt    = ( -6 shl 16) + ( -6)
 KnightOnQueen       = ( 21 shl 16) + ( 11)
 LongRangedBishop    = ( 22 shl 16) + (  0)
 MinorBehindPawn     = ( 16 shl 16) + (  0)
@@ -168,21 +169,17 @@ macro EvalPieces Us, Pt
 	Outpost1	  = ((36 shl 16) + (12))
 	KingAttackWeight  = 77
 	MobilityBonus	  equ MobilityBonus_Knight
-	KingProtector_Pt  = ((-5 shl 16) + (-6))
   else if Pt = Bishop
 	Outpost0	  = (( 9 shl 16) + (2))
 	Outpost1	  = ((15 shl 16) + (5))
 	KingAttackWeight  = 55
 	MobilityBonus	  equ MobilityBonus_Bishop
-        KingProtector_Pt  = ((-6 shl 16) + (-5))
   else if Pt = Rook
 	KingAttackWeight  = 44
 	MobilityBonus	  equ MobilityBonus_Rook
-	KingProtector_Pt  = ((-1 shl 16) + (0))
   else if Pt = Queen
 	KingAttackWeight  = 10
 	MobilityBonus	  equ MobilityBonus_Queen
-	KingProtector_Pt  = ((0 shl 16) + (2))
   else
     err	'bad Pt	in Eval	Pieces'
   end if
