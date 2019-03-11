@@ -1,23 +1,23 @@
-Overload            = ( 10 shl 16) + (  5)
+BishopPawns         = (  3 shl 16) + (  7)
+CloseEnemies        = (  6 shl 16) + (  0)
 Connectivity        = (  3 shl 16) + (  1)
+Hanging             = ( 52 shl 16) + ( 30)
+HinderPassedPawn    = (  4 shl 16) + ( 0)
 KnightOnQueen       = ( 21 shl 16) + ( 11)
-MinorBehindPawn     = ( 16 shl 16) + (  0)
-BishopPawns         = (  3 shl 16) + (  5)
 LongRangedBishop    = ( 22 shl 16) + (  0)
+MinorBehindPawn     = ( 16 shl 16) + (  0)
+Overload            = ( 10 shl 16) + (  5)
+PawnlessFlank       = ( 20 shl 16) + ( 80)
 RookOnPawn          = (  8 shl 16) + ( 24)
+SliderOnQueen       = ( 42 shl 16) + ( 21)
+ThreatByKing        = (23 shl 16)  + ( 76)
+ThreatByPawnPush    = ( 45 shl 16) + ( 40)
+ThreatByRank        = ( 16 shl 16) + (  3)
+ThreatBySafePawn    = (173 shl 16) + (102)
+TrappedBishopA1H1   = ( 50 shl 16) + ( 50)
 TrappedRook         = ( 92 shl 16) + (  0)
 WeakQueen           = ( 50 shl 16) + ( 10)
-CloseEnemies        = (  8 shl 16) + (  0)
-PawnlessFlank       = ( 20 shl 16) + ( 80)
-ThreatBySafePawn    = (165 shl 16) + (133)
-ThreatByRank        = ( 16 shl 16) + (  3)
-Hanging             = ( 52 shl 16) + ( 30)
-WeakUnopposedPawn   = ( 5 shl  16) + ( 26)
-ThreatByPawnPush    = ( 49 shl 16) + ( 30)
-SliderOnQueen       = ( 42 shl 16) + ( 21)
-HinderPassedPawn    = (  5 shl 16) + ( -1)
-TrappedBishopA1H1   = ( 50 shl 16) + ( 50)
-ThreatByKing        = (31 shl 16)  + ( 75)
+WeakUnopposedPawn   = ( 5 shl  16) + ( 29)
 
 LazyThreshold = 1500
 
@@ -168,13 +168,13 @@ macro EvalPieces Us, Pt
 	Outpost1	  = ((36 shl 16) + (12))
 	KingAttackWeight  = 77
 	MobilityBonus	  equ MobilityBonus_Knight
-	KingProtector_Pt  = ((-4 shl 16) + (-6))
+	KingProtector_Pt  = ((-5 shl 16) + (-6))
   else if Pt = Bishop
 	Outpost0	  = (( 9 shl 16) + (2))
 	Outpost1	  = ((15 shl 16) + (5))
 	KingAttackWeight  = 55
 	MobilityBonus	  equ MobilityBonus_Bishop
-        KingProtector_Pt  = ((-6 shl 16) + (-3))
+        KingProtector_Pt  = ((-6 shl 16) + (-5))
   else if Pt = Rook
 	KingAttackWeight  = 44
 	MobilityBonus	  equ MobilityBonus_Rook
@@ -533,21 +533,22 @@ KingSafetyDoneRet:
 
 		jb   AllDone
 		imul  edi, dword[.ei.kingAttackersWeight+4*Them]
-		imul  eax, dword[.ei.kingAdjacentZoneAttacksCount+4*Them], 64
+		imul  eax, dword[.ei.kingAdjacentZoneAttacksCount+4*Them], 69
 		add   edi, eax
 
 		_popcnt rax, r9, rcx
-		imul    eax, 183
+		imul    eax, 185
 		add     edi, eax
 		test    PiecesThem, qword[rbp+Pos.typeBB+8*Queen]
-		lea     eax, [rdi-860]
+		lea     eax, [rdi-873]
 		cmovz   edi, eax
 
 	; the following	does edi += - 9*mg_value(score)/8 + 40
 		lea   ecx, [rsi+0x08000]
-		add   edi, 17
+		sub   edi, 2
 		sar   ecx, 16
-		imul  ecx, 7
+		lea   ecx, [2*rcx+rcx]
+		shl   ecx, 1
 		mov   edx, ecx
 		lea   eax, [rcx+7]
 		cmovs edx, eax
@@ -623,7 +624,7 @@ KingSafetyDoneRet:
 		or    rdx, r9
 
 		_popcnt rax, rdx, rcx
-		imul  eax, 122
+		imul  eax, 129
 		add   edi, eax
 
 	; Compute the king danger score and subtract it from the evaluation
