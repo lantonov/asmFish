@@ -1049,8 +1049,10 @@ ThreatRookDone:
 		neg   rdx
 		sbb   edx, edx
 		_blsr   rcx, rcx, rax
+
 		xor  r8, r8
 		cassign  rax, rcx, r8
+
 		add   eax, ThreatByKing
 		and   eax, edx
 		addsub   esi, eax
@@ -1148,12 +1150,10 @@ WeakDone:
 		imul   eax, Connectivity
 		addsub  esi, eax
 
-; // Bonus for overload (non-pawn enemies attacked and defended exactly once)
+; // Bonus for overload (non-pawn enemies attacked once or more and defended exactly once)
 		mov    r8, PiecesPawn
 		_andn  r8, r8, PiecesThem ; r8 = nonPawnEnemies
 		and    r8, AttackedByUs
-		mov    r9, qword[.ei.attackedBy2+8*Us]
-		_andn  r8, r9, r8
 		and    r8, AttackedByThem
 		mov    r9, qword[.ei.attackedBy2+8*Them]
 		_andn  r8, r9, r8
@@ -1662,13 +1662,13 @@ end virtual
 
 		or   rax, qword[.ei.attackedBy+8*(8*Black+Pawn)]
 		or   rdx, qword[.ei.attackedBy+8*(8*White+Pawn)]
-		
+
 		or   rax, rcx
 		or   rdx, rsi
 
 		not   rax
 		not   rdx
-		
+
 		mov   qword[.ei.mobilityArea+8*White], rax
 		mov   qword[.ei.mobilityArea+8*Black], rdx
 
