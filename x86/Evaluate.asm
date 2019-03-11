@@ -266,19 +266,11 @@ NoKingRing:
   if Pt	= Knight | Pt =	Bishop
 
 	; Bonus	when behind a pawn
-    if Us = White
-		cmp   r14d, SQ_A5
-		jae   NoBehindPawnBonus
-    else
-		cmp   r14d, SQ_A5
-		jb   NoBehindPawnBonus
-    end	if
 		mov   rax, qword[rbp+Pos.typeBB+8*Pawn]
-		lea   ecx, [r14+8*(Them-Us)]
-		bt   rax, rcx
+		ShiftBB  Down, rax, rax
+		bt   rax, r14
 		lea   eax, [rsi+MinorBehindPawn*(Them-Us)]
 		cmovc   esi, eax
-NoBehindPawnBonus:
 
 	; Bonus for outpost squares
 		mov   rax, OutpostRanks
