@@ -432,3 +432,10 @@ end macro
 		mov a#d, eax
  end if
  end macro 
+
+ ; Conditional assign (a = c ? d : 0)
+ macro cassign a, c, t
+		neg  c
+		sbb  a, a
+		and  a, t
+ end macro
