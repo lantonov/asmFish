@@ -1092,11 +1092,23 @@ end if
 		lea   r11, [8*r11+r13]
 		mov   eax, dword[r8+4*r11]
 		mov   ecx, dword[r9+4*r11]
-		cmp   edi, 3*ONE_PLY
+		cmp   edi, 4*ONE_PLY
 		jge   @f
-    if CounterMovePruneThreshold <> 0     ; code assumes
-	err
-    end if
+		cmp  edi, 3*ONE_PLY
+		jl   @1f
+
+  if PvNode = 1
+		jmp @f
+  else
+		mov  edx, dword[rbx-1*sizeof.State+State.statScore]
+		cmp  edx, 0
+		jle  @f
+  end if
+
+@1:
+  if CounterMovePruneThreshold <> 0     ; code assumes
+		err
+  end if
 		and   eax, ecx
 		 js   .MovePickLoop
 	@@:
