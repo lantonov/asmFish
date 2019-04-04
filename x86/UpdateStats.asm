@@ -1,36 +1,37 @@
 
-macro UpdateCmStats ss, offset, bonus32, absbonus, t1
-	; bonus32 is 32*bonus
+macro UpdateCmStats ss, offset, weightedbonus, absbonus, t1
+	; weightedbonus is bonus * BONUS_MULTIPLIER
 	; absbonus is abs(bonus)
 	; clobbers rax, rcx, rdx, t1
-  local over1, over2, over3
-	     Assert   b, absbonus, 324, 'assertion abs(bonus)<324 failed in UpdateCmStats'
+		local over1, over2, over3
+		Assert   b, absbonus, BONUS_MAX, 'assertion abs(bonus)<BONUS_MAX failed in UpdateCmStats'
 
 		mov   t1, qword[ss-1*sizeof.State+State.counterMoves]
 		cmp   dword[ss-1*sizeof.State+State.currentMove], 1
-		 jl   over1
-	apply_bonus   (t1+4*(offset)), bonus32, absbonus, 936
-over1:
+		jl   over1
 
+		cms_update   (t1+4*(offset)), weightedbonus, absbonus
+
+over1:
 		mov   t1, qword[ss-2*sizeof.State+State.counterMoves]
 		cmp   dword[ss-2*sizeof.State+State.currentMove], 1
-		 jl   over2
-	apply_bonus   (t1+4*(offset)), bonus32, absbonus, 936
-over2:
+		jl   over2
 
+		cms_update  (t1+4*(offset)), weightedbonus, absbonus
+
+over2:
 		mov   t1, qword[ss-4*sizeof.State+State.counterMoves]
 		cmp   dword[ss-4*sizeof.State+State.currentMove], 1
-		 jl   over3
-	apply_bonus   (t1+4*(offset)), bonus32, absbonus, 936
+		jl   over3
+
+		cms_update   (t1+4*(offset)), weightedbonus, absbonus
+
 over3:
 end macro
 
-
-
-
-macro UpdateStats move, quiets, quietsCnt, bonus32, absbonus, prevOffset
+macro UpdateStats move, quiets, quietsCnt, weightedbonus, absbonus, prevOffset
 	; clobbers rax, rcx, rdx, r8, r9
-	; it also might clobber rsi and change the sign of bonus32
+	; it also might clobber rsi and change the sign of weightedbonus
   local DontUpdateKillers, DontUpdateOpp, BonusTooBig, NextQuiet, Return
 
 
@@ -57,8 +58,8 @@ DontUpdateKillers:
 		mov   dword[r8+4*prevOffset], move
 DontUpdateOpp:
 
-	       imul   bonus32, absbonus, 32
-		cmp   absbonus, 324
+		imul   weightedbonus, absbonus, BONUS_MULTIPLIER
+		cmp   absbonus, BONUS_MAX
 		jae   BonusTooBig
 
 		mov   eax, move
@@ -67,7 +68,8 @@ DontUpdateOpp:
 		shl   r8d, 12+2
 		add   r8, qword[rbp+Pos.history]
 		lea   r8, [r8+4*rax]
-	apply_bonus   r8, bonus32, absbonus, 324
+		abs_bonus weightedbonus, r9d
+		history_update r8, weightedbonus, r9d
 
 		mov   r9d, move
 		and   r9d, 63
@@ -77,13 +79,13 @@ DontUpdateOpp:
 	      movzx   eax, byte[rbp+Pos.board+rax]
 		shl   eax, 6
 		add   r9d, eax
-      UpdateCmStats   (rbx-0*sizeof.State), r9, bonus32, absbonus, r8
-
+		abs_bonus weightedbonus, r12d
+		UpdateCmStats  (rbx-0*sizeof.State), r9, weightedbonus, r12d, r8
 
   match =0, quiets
   else
 	; Decrease all the other played quiet moves
-		neg   bonus32
+		neg   weightedbonus
 		xor   esi, esi
 		cmp   esi, quietsCnt
 		 je   Return
@@ -105,9 +107,11 @@ NextQuiet:
 		shl   eax, 6
 		lea   r9d, [rax+rcx]
 
-	apply_bonus   r8, bonus32, absbonus, 324
+		abs_bonus weightedbonus, r10d
 
-      UpdateCmStats   (rbx-0*sizeof.State), r9, bonus32, absbonus, r8
+		history_update r8, weightedbonus, r10d
+
+		UpdateCmStats (rbx-0*sizeof.State), r9, weightedbonus, r10d, r8
 
 		add   esi, 1
 		cmp   esi, quietsCnt
@@ -124,9 +128,9 @@ macro UpdateCaptureStats move, captures, captureCnt, bonusW, absbonus
 	; it also might clobber rsi
   local BonusTooBig, NextCapture, Return
 
-           imul  bonusW, absbonus, 32
+            imul  bonusW, absbonus, BONUS_MULTIPLIER;
             mov  r9, qword[rbp + Pos.captureHistory]
-            cmp  absbonus, 324
+            cmp  absbonus, BONUS_MAX
             jae  BonusTooBig
 
             test r8b, dl
@@ -145,7 +149,8 @@ macro UpdateCaptureStats move, captures, captureCnt, bonusW, absbonus
             shl  ecx, 3
             add  ecx, eax
             lea  r8, [r9 + 4*rcx]
-    apply_bonus  r8, bonusW, absbonus, 324
+            abs_bonus bonusW, r10d
+            apply_capture_bonus  r8, bonusW, r10d
 
 @1:
   match =0, quiets
@@ -169,7 +174,8 @@ NextCapture:
             shl  ecx, 3
             add  ecx, eax
             lea  r8, [r9 + 4*rcx]
-    apply_bonus  r8, bonusW, absbonus, 324
+            abs_bonus bonusW, r10d
+            apply_capture_bonus  r8, bonusW, r10d
             cmp  esi, captureCnt
              jb  NextCapture
   end match
