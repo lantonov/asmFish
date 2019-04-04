@@ -1,23 +1,58 @@
+macro abs_bonus bonus, t
+		mov edx, bonus
+		sar edx, 31
+		mov t, edx
+		xor t, bonus
+		sub t, edx
+end macro
 
-macro apply_bonus address, bonus32, absbonus, denominator
+macro history_update address, bonus, absbonus
 		mov   eax, dword[address]
-	       imul   eax, absbonus
-		cdq
-		mov   ecx, denominator
-	       idiv   ecx
-		mov   ecx, bonus32
-
-;SD_String 'v'
-;SD_Int rcx
-
-		sub   ecx, eax
+		imul   eax, absbonus
+		mov   ecx, eax
+		mov  edx, 0x62123261
+		imul edx
+		sar  edx, 12
+		mov  eax, ecx
+		sar  eax, 31
+		sub  edx, eax
+		mov   ecx, bonus
+		sub   ecx, edx
 		add   ecx, dword[address]
 		mov   dword[address], ecx
+end macro
 
-;SD_String 'u'
-;SD_Int rcx
-;SD_String "|"
+macro apply_capture_bonus address, bonus, absbonus
+		mov   eax, dword[address]
+		imul  eax, absbonus
+		mov   ecx, eax
+		mov  edx, 0x62123261
+		imul edx
+		sar  edx, 12
+		mov  eax, ecx
+		sar  eax, 31
+		sub  edx, eax
+		mov   ecx, bonus
+		sub   ecx, edx
+		add   ecx, dword[address]
+		mov   dword[address], ecx
+end macro
 
+macro cms_update address, bonus, absbonus
+		mov   eax, dword[address]
+		imul  eax, absbonus
+		mov   ecx, eax
+		mov  edx, 0x8C08C08D
+		imul edx
+		add  edx, ecx
+		sar  edx, 14
+		mov  eax, ecx
+		sar  eax, 31
+		sub  edx, eax
+		mov   ecx, bonus
+		sub   ecx, edx
+		add   ecx, dword[address]
+		mov   dword[address], ecx
 end macro
 
 macro GetNextMove

@@ -1513,9 +1513,10 @@ end if
 		jne   .20TTStore
 		cmp   byte[rbx+State.capturedPiece], 0
 		jne   .20TTStore
-		imul   r11d,	r10d, -32
-		cmp   r10d,	324
+		imul  r11d, r10d, -BONUS_MULTIPLIER
+		cmp   r10d, BONUS_MAX
 		jae   .20TTStore
+		abs_bonus r11d, r10d
 		UpdateCmStats   (rbx-1*sizeof.State), r15, r11d, r10d, r8
 		jmp   .20TTStore
 .20Mate:
@@ -1541,10 +1542,11 @@ end if
 	@@:
 		cmp   byte[rbx+State.capturedPiece], 0
 		jne   .20TTStore
-		imul   r11d,	r10d, 32
-		cmp   r10d,	324
+		imul   r11d, r10d, BONUS_MULTIPLIER
+		cmp   r10d, BONUS_MAX
 		jae   .20TTStore
-      UpdateCmStats   (rbx-1*sizeof.State),	r15, r11d, r10d, r8
+		abs_bonus r11d, r10d
+		UpdateCmStats   (rbx-1*sizeof.State), r15, r11d, r10d, r8
 .20TTStore:
     ; edi = bestValue
 		mov   r14d, dword[.excludedMove]
@@ -1659,10 +1661,11 @@ Display	2, "Search returning %i0%n"
 		jne   .Return
 		cmp   byte[rbx+State.capturedPiece], 0
 		jne   .Return
-	       imul   r11d,	r10d, -32
-		cmp   r10d,	324
+		imul   r11d, r10d, -BONUS_MULTIPLIER
+		cmp   r10d, BONUS_MAX
 		jae   .Return
-  UpdateCmStats	  (rbx-1*sizeof.State),	r15, r11d, r10d, r8
+		abs_bonus r11d, r10d
+		UpdateCmStats (rbx-1*sizeof.State), r15, r11d, r10d, r8
 		mov   eax, edi
 		jmp   .Return
 .ReturnTTValue_Penalty:
@@ -1671,25 +1674,27 @@ Display	2, "Search returning %i0%n"
 		shl   r8d, 12+2
 		add   r8, qword[rbp+Pos.history]
 		lea   r8, [r8+4*rcx]
-    ; r8 = offset in history table
-	       test   dl, dl
+		; r8 = offset in history table
+		test   dl, dl
 		jnz   .Return
-	       imul   r11d,	r10d, -32
-		cmp   r10d,	324
+		imul   r11d, r10d, -BONUS_MULTIPLIER
+		cmp   r10d, BONUS_MAX
 		jae   .Return
-	apply_bonus   r8, r11d,	r10d, 324
+		abs_bonus r11d, r10d
+		history_update r8, r11d, r10d
 		mov   r9d, r12d
 		and   r9d, 63
 		mov   eax, r12d
 		shr   eax, 6
 		and   eax, 63
-	      movzx   eax, byte[rbp+Pos.board+rax]
+		movzx   eax, byte[rbp+Pos.board+rax]
 		shl   eax, 6
 		add   r9d, eax
     ; r9 = offset in cm table
-      UpdateCmStats   (rbx-0*sizeof.State),	r9, r11d, r10d,	r8
-		mov   eax, edi
-		jmp   .Return
+		abs_bonus r11d, r10d
+		UpdateCmStats   (rbx-0*sizeof.State), r9, r11d, r10d, r8
+		mov  eax, edi
+		jmp  .Return
   end if
 	 calign   8
 .20ValueToTT:

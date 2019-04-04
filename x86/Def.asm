@@ -212,3 +212,6 @@ EndgameScale_KPKP_index    = 13 ; KP vs KP
 
 ENDGAME_SCALE_MAX_INDEX = 16
 
+; Bonus calculation constants
+BONUS_MAX = 324
+BONUS_MULTIPLIER = 33
