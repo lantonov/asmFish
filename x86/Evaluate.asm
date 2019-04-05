@@ -997,6 +997,7 @@ SafeThreatsDone:
 		jz   ThreatMinorDone
 ThreatMinorLoop:
 		bsf   rax, r8
+		mov   rdx, rax
 		movzx   ecx, byte[rbp+Pos.board+rax]
 		addsub   esi, dword[Threat_Minor+4*rcx]
 		shr   eax, 3
@@ -1008,6 +1009,22 @@ ThreatMinorLoop:
 		and   eax, dword[IsNotPawnMasks+rcx]
 		imul   eax, ThreatByRank
 		addsub   esi, eax
+		test eax, eax
+		jnz @f
+
+		mov  rax, qword[.ei.pinnedPieces+8*Them]
+		bt  rax, rdx
+		jnc @f
+
+		shr   edx, 3
+		if Us eq White
+			xor   edx, Them*7
+		end if
+		imul   edx, ThreatByRank
+		shr   edx, 1
+		addsub   esi, edx
+
+	@@:
 		_blsr   r8, r8, rcx
 		jnz   ThreatMinorLoop
 ThreatMinorDone:
@@ -1018,6 +1035,7 @@ ThreatMinorDone:
 		jz   ThreatRookDone
 ThreatRookLoop:
 		bsf   rax, rdx
+		mov   r8, rax
 		movzx   ecx, byte[rbp+Pos.board+rax]
 		addsub   esi, dword[Threat_Rook+4*rcx]
 
@@ -1028,7 +1046,22 @@ ThreatRookLoop:
 		and   eax, dword[IsNotPawnMasks+rcx]
 		imul   eax, ThreatByRank
 		addsub   esi, eax
+		test  eax, eax
+		jnz  @f
 
+		mov  rax, qword[.ei.pinnedPieces+8*Them]
+		bt  rax, r8
+		jnc @f
+
+		shr   r8d, 3
+		if Us eq White
+			xor   r8d, Them*7
+		end if
+		imul   r8d, ThreatByRank
+		shr   r8d, 1
+		addsub   esi, r8d
+
+	@@:
 		_blsr   rdx, rdx, rcx
 		jnz   ThreatRookLoop
 ThreatRookDone:
