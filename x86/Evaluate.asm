@@ -6,7 +6,7 @@ KnightOnQueen       = ( 21 shl 16) + ( 11)
 LongDiagonalBishop  = ( 46 shl 16) + (  0)
 MinorBehindPawn     = ( 16 shl 16) + (  0)
 PawnlessFlank       = ( 19 shl 16) + ( 84)
-RookOnPawn          = ( 10 shl 16) + ( 30)
+RookOnPawn          = ( 10 shl 16) + ( 29)
 Overload            = ( 13 shl 16) + (  6)
 SliderOnQueen       = ( 42 shl 16) + ( 21)
 ThreatByKing        = ( 22 shl 16) + ( 78)
@@ -14,7 +14,7 @@ ThreatByPawnPush    = ( 45 shl 16) + ( 40)
 ThreatByRank        = ( 16 shl 16) + (  3)
 ThreatBySafePawn    = (173 shl 16) + (102)
 TrappedBishopA1H1   = ( 50 shl 16) + ( 50)
-TrappedRook         = ( 92 shl 16) + (  0)
+TrappedRook         = ( 96 shl 16) + (  5)
 WeakQueen           = ( 50 shl 16) + ( 10)
 WeakUnopposedPawn   = ( 15 shl 16) + ( 19)
 
@@ -159,8 +159,8 @@ macro EvalPieces Us, Pt
 	OutpostRanks	  = 0x000000FFFFFF0000
   end if
 
-	RookOnFile0	  = ((20 shl 16) + (7))
-	RookOnFile1	  = ((45 shl 16) + (20))
+	RookOnFile0	  = (18 shl 16) + ( 7)
+	RookOnFile1	  = (44 shl 16) + (20)
 
   if Pt	= Knight
 	Outpost0	  = ((22 shl 16) + ( 6))
