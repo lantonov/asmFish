@@ -708,7 +708,8 @@ end if
 .9moveloop:
 		xor   esi, esi
 	GetNextMove
-		mov   dword[.move], eax
+		mov   r12d, eax
+		; r12d = move
 		mov   ecx, eax
 		mov   r13d, dword[.rbeta]
         ; r13d = rbeta
@@ -717,11 +718,14 @@ end if
 		call   Move_IsLegal
 		test   eax, eax
 		 jz   .9moveloop
+		mov  eax, r12d
+		cmp  dword[.excludedMove], r12d
+		je   .9moveloop
 
 		cmp    dword[.probCutCount], 3
 		jge   .9moveloop_done
 		add    dword[.probCutCount], 1
-		mov   ecx, dword[.move]
+		mov   ecx, r12d
 		mov   dword[rbx+State.currentMove], ecx
 		mov   eax, ecx
 		shr   eax, 6
@@ -734,9 +738,9 @@ end if
 		add   rax, qword[rbp+Pos.counterMoveHistory]
 		mov   qword[rbx+State.counterMoves], rax
 
-		mov   ecx, dword[.move]
+		mov   ecx, r12d
 		call   Move_GivesCheck
-		mov   ecx, dword[.move]
+		mov   ecx, r12d
 		mov   byte[rbx+State.givesCheck], al
 		call   Move_Do__ProbCut
 
@@ -756,7 +760,7 @@ end if
 		mov  esi, eax
 		cmp  eax, dword[.rbeta]
 		jge  @f
-		mov   ecx, dword[.move]
+		mov   ecx, r12d
 		call   Move_Undo
 		mov   eax, esi
 		cmp   esi, r13d
@@ -772,7 +776,7 @@ end if
 		neg  eax
 		mov  esi, eax
 
-		mov   ecx, dword[.move]
+		mov   ecx, r12d
 		call   Move_Undo
 		mov   eax, esi
 		cmp   esi, r13d
