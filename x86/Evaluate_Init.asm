@@ -94,15 +94,15 @@ Evaluate_Init:
  dd 0, 0, 0, 3, 7, 11, 20, 0
 
 .MobilityBonus_Knight:
- dd (-75 shl 16) + (-76)
- dd (-57 shl 16) + (-54)
- dd (- 9 shl 16) + (-28)
- dd ( -2 shl 16) + (-10)
- dd (  6 shl 16) + (5)
- dd ( 14 shl 16) + (12)
- dd ( 22 shl 16) + (26)
- dd ( 29 shl 16) + (29)
- dd ( 36 shl 16) + (29)
+ dd (-62 shl 16) + (-81)
+ dd (-53 shl 16) + (-56)
+ dd (-12 shl 16) + (-30)
+ dd ( -4 shl 16) + (-14)
+ dd (  3 shl 16) + (  8)
+ dd ( 13 shl 16) + ( 15)
+ dd ( 22 shl 16) + ( 23)
+ dd ( 28 shl 16) + ( 27)
+ dd ( 33 shl 16) + ( 33)
 
 .MobilityBonus_Bishop:
  dd (-48 shl 16) + (-59)
