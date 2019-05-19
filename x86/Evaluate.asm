@@ -790,28 +790,22 @@ macro ShelterStorm Us
 		mov   r10, PiecesThem
 		and   r10, r8
 	; r10 = theirPawns
-        mov  rax, qword[FileBB+8*rcx]
-		and  rax, r9
-		cmp  rax, 1
-		sbb  eax, eax
-		and  eax, -10 ; saves instructions and keeps code linear
-		add  eax, 5
-	; eax = saftey
 
 ;  if ((shift<Down>(theirPawns) & (FileABB | FileHBB) & BlockRanks) & ksq)
         mov  r11, r10
         ShiftBB  Down, r11, r11
-        mov  r12, r11 ; r12 = shift<Down>(theirPawns)
+        mov  rax, r11 ; rax = shift<Down>(theirPawns)
         mov  r11, FileABB or FileHBB
-        and  r12, r11 ; r12 & (FileABB|FileHBB)
+        and  rax, r11 ; rax & (FileABB|FileHBB)
         mov  r11, BlockRanks
-        and  r12, r11 ; r12 & BlockRanks
+        and  rax, r11 ; rax & BlockRanks
         mov  r11, PiecesUs
         and  r11, qword [rbp+Pos.typeBB+8*King]
-        and  r12, r11 ; r12 & ksq
-        test r12, r12
-        jz  @f
-        add eax, 374
+        and  rax, r11 ; rax & ksq
+        cmp  rax, 1
+        sbb  eax, eax  ; dest = dest - (src + CF);
+        and  eax, -369 ; saves instructions and keeps code linear
+        add  eax, 374  ; eax = safety
 
 @@:
 	if Us eq Black
