@@ -1010,8 +1010,7 @@ end if
 		and   edi, ecx
 		sar   edi, 31
 		mov   byte[.moveCountPruning], dil
-		not   edi
-		and   edi, eax  ; edi = givesCheck && !moveCountPruning
+		mov   edi, eax  ; edi = givesCheck
     ; Step 13. Extend checks
 		mov   al, byte[.singularExtensionNode]
 		mov   ecx, dword[.move]
@@ -1437,7 +1436,7 @@ end if
 		jle   .18NoNewValue
 		mov   dword[.bestValue], edi
 		cmp   edi, dword[.alpha]
-		jle   .18trackdownpv
+		jle   .18NoNewValue
 		mov   dword[.bestMove],	ecx
   if PvNode = 1	& RootNode = 0
 		mov   r8, qword[rbx+0*sizeof.State+State.pv]
@@ -1467,26 +1466,6 @@ end if
 		xor  eax, eax
 		mov  dword[rbx + State.statScore], eax
 		jmp  .MovePickDone
-.18trackdownpv:
-  if PvNode = 1 & RootNode = 0
-		cmp  edi, dword[.alpha]
-		jne .18NoNewValue
-		mov   r8, qword[rbx+0*sizeof.State+State.pv]
-		mov   r9, qword[rbx+1*sizeof.State+State.pv]
-		xor   eax, eax
-		mov   dword[r8], ecx
-		add   r8, 4
-		test   r9, r9
-		 jz   @2f
-   @1:
-		mov   eax, dword[r9]
-		add   r9, 4
-   @2:
-		mov   dword[r8], eax
-		add   r8, 4
-		test   eax, eax
-		jnz   @1b
-  end if
 .18NoNewValue:
 		mov   ecx, dword[.move]
 		mov   eax, dword[.quietCount]
