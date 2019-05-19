@@ -1634,13 +1634,6 @@ Display	2, "Search returning %i0%n"
                test  rcx, rcx
                  jz  .Return
 	       call  Evaluate
-	; Simplified Later
-		xor  edx, edx
-		cmp   edx, dword[rbx-1*sizeof.State+State.statScore]
-		setl  dl
-		imul  edx, 10
-		sub  eax, edx
-		jmp  .Return
 
              calign   8
 .AbortSearch_PlySmaller:
