@@ -317,8 +317,8 @@ WhileLoop:
             shl  ecx, 3
             add  ecx, eax
             mov  eax, dword[r8 + 4*rcx]
-            mov  r9d, edx ; prepares for signed division by 16
-            mov  ecx, 16
+            mov  r9d, edx ; prepares for signed division by 8
+            mov  ecx, 8
             cdq
             idiv  ecx ; hammers edx
             mov  edx, r9d ; reloads edx
