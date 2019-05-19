@@ -332,6 +332,11 @@ end if
 		cmp   edx, MOVE_NULL
 		je   @1f
 		call   Evaluate
+		xor  edx, edx
+		cmp   edx, dword[rbx-1*sizeof.State+State.statScore]
+		setl  dl
+		imul  edx, 10
+		sub  eax, edx
 	@1:
 		mov   r8d, eax
 		mov   dword[rbx+State.staticEval], eax
@@ -345,6 +350,12 @@ end if
 		cmp   eax, VALUE_NONE
 		jne   @1f
 		call   Evaluate
+	; Simplified Later
+		xor  edx, edx
+		cmp   edx, dword[rbx-1*sizeof.State+State.statScore]
+		setl  dl
+		imul  edx, 10
+		sub  eax, edx
 	@1:
 		xor   ecx, ecx
 		mov   dword[rbx+State.staticEval], eax
@@ -1586,6 +1597,12 @@ Display	2, "Search returning %i0%n"
                test  rcx, rcx
                  jz  .Return
 	       call  Evaluate
+	; Simplified Later
+		xor  edx, edx
+		cmp   edx, dword[rbx-1*sizeof.State+State.statScore]
+		setl  dl
+		imul  edx, 10
+		sub  eax, edx
 		jmp  .Return
 
              calign   8
