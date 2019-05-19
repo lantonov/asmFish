@@ -240,10 +240,17 @@ end if
 
 	; Start with a small aspiration window and, in the case of a fail high/low,
         ; re-search with a bigger window until we're not failing high/low anymore.
+		xor  r13d, r13d
+		; r13d = failedHighCnt
 .search_loop:
 		mov   ecx, dword[.alpha]
 		mov   edx, dword[.beta]
+		mov   r9d, 1
 		mov   r8d, r15d
+		sub   r8d, r13d
+		test   r8d, r8d
+		cmovle  r8d, r9d
+		; r8d = adjustedDepth
 		xor   r9d, r9d
 	       call   Search_Root ; rootPos is in rbp, ss is in rbx
 		mov   r12d, eax
@@ -313,6 +320,9 @@ end if
 	      cmovg   edx, ecx
 		mov   dword[.beta], edx
 		mov   dword[.delta], r10d
+		cmp   dword[rbp-Thread.rootPos+Thread.idx], 0
+		jne   .search_loop
+		add   r13d, 1
 		jmp   .search_loop
     .fail_low:
 		sub   edx, dword[.delta]
@@ -324,6 +334,7 @@ end if
 		mov   dword[.delta], r10d
 		cmp   dword[rbp-Thread.rootPos+Thread.idx], 0
 		jne   .search_loop
+		xor   r13d, r13d
 		mov   byte[rbp-Thread.rootPos+Thread.failedLow], -1
 		mov   byte[signals.stopOnPonderhit], 0
 		jmp   .search_loop
