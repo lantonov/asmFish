@@ -202,8 +202,6 @@ Continue:
             and   rdx, r14
 	; rdx = leverPush
             mov   r12, r10
-           test   r13, qword[ForwardBB+8*(64*Us+rcx)]
-            jnz   NoPassed
             xor   r10, r11
             xor   r10, rdx
             jnz   NoPassed
