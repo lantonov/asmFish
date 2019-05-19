@@ -332,12 +332,32 @@ end if
 		cmp   edx, MOVE_NULL
 		je   @1f
 		call   Evaluate
-		xor  edx, edx
-		cmp   edx, dword[rbx-1*sizeof.State+State.statScore]
-		setl  dl
-		imul  edx, 10
-		sub  eax, edx
+		mov  r11d, dword[rbx-1*sizeof.State+State.statScore]
+		; r11d = p = (ss-1)->statScore
+		test r11d, r11d
+		jle  @1f
+		mov  edx, r11d
+		add  edx, 5000
+		lea  r8d, [rdx + 1023]
+		test  edx, edx
+		cmovs  edx, r8d
+		sar  edx, 10
+		jmp  @2f
+
 	@1:
+		test  r11d, r11d
+		mov  edx, 0
+		jns  @2f
+
+		mov  edx, r11d
+		sub  edx, 5000
+		lea  r9d, [rdx + 1023]
+		test  edx, edx
+		cmovs  edx, r9d
+		sar  edx, 10
+
+	@2:
+		sub  eax, edx ; eval(P) - malus
 		mov   r8d, eax
 		mov   dword[rbx+State.staticEval], eax
 		mov   dword[.evalu], eax
