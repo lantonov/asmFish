@@ -1435,7 +1435,7 @@ end if
 		jle   .18NoNewValue
 		mov   dword[.bestValue], edi
 		cmp   edi, dword[.alpha]
-		jle   .18NoNewValue
+		jle   .18trackdownpv
 		mov   dword[.bestMove],	ecx
   if PvNode = 1	& RootNode = 0
 		mov   r8, qword[rbx+0*sizeof.State+State.pv]
@@ -1465,6 +1465,26 @@ end if
 		xor  eax, eax
 		mov  dword[rbx + State.statScore], eax
 		jmp  .MovePickDone
+.18trackdownpv:
+  if PvNode = 1 & RootNode = 0
+		cmp  edi, dword[.alpha]
+		jne .18NoNewValue
+		mov   r8, qword[rbx+0*sizeof.State+State.pv]
+		mov   r9, qword[rbx+1*sizeof.State+State.pv]
+		xor   eax, eax
+		mov   dword[r8], ecx
+		add   r8, 4
+		test   r9, r9
+		 jz   @2f
+   @1:
+		mov   eax, dword[r9]
+		add   r9, 4
+   @2:
+		mov   dword[r8], eax
+		add   r8, 4
+		test   eax, eax
+		jnz   @1b
+  end if
 .18NoNewValue:
 		mov   ecx, dword[.move]
 		mov   eax, dword[.quietCount]
