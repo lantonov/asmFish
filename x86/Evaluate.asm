@@ -1,7 +1,7 @@
 BishopPawns         = (  3 shl 16) + (  7)
 CloseEnemies        = (  6 shl 16) + (  0)
 Hanging             = ( 52 shl 16) + ( 30)
-HinderPassedPawn    = (  4 shl 16) + (  0)
+HinderPassedPawn    = (  8 shl 16) + (  0)
 KingProtector_Pt    = ( -6 shl 16) + ( -6)
 KnightOnQueen       = ( 21 shl 16) + ( 11)
 LongRangedBishop    = ( 22 shl 16) + (  0)
@@ -1254,7 +1254,8 @@ NextPawn:
 	; r8d = blockSq
 		mov   rdx, PiecesThem
 		and   rax, rdx
-		_popcnt   rax, rax, r10
+		setnz  al
+		movzx  eax, al
 		imul   eax, HinderPassedPawn
 		subadd   dword[.ei.score], eax
 
