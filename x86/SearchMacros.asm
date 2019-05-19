@@ -1092,20 +1092,13 @@ end if
 		lea   r11, [8*r11+r13]
 		mov   eax, dword[r8+4*r11]
 		mov   ecx, dword[r9+4*r11]
-		cmp   edi, 4*ONE_PLY
-		jge   @f
-		cmp  edi, 3*ONE_PLY
-		jl   @1f
-
-  if PvNode = 1
-		jmp @f
-  else
-		mov  edx, dword[rbx-1*sizeof.State+State.statScore]
-		cmp  edx, 0
-		jle  @f
-  end if
-
-@1:
+		xor   edx, edx
+		mov   r10d, 2
+		mov   r9d, 3
+		cmp   edx, dword[rbx-1*sizeof.State+State.statScore]
+		cmovl  r10d, r9d
+		cmp   edi, r10d
+		jg  @f
   if CounterMovePruneThreshold <> 0     ; code assumes
 		err
   end if
