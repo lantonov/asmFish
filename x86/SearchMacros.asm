@@ -97,17 +97,19 @@ Display	2, "Search(alpha=%i1, beta=%i2, depth=%i8) called%n"
 		jne   @1f
 
  if PvNode = 1
-		mov   ecx, VALUE_DRAW
-		mov   dword[.alpha], ecx
-		mov   edx, dword[.beta]
-		mov   eax, ecx
-		cmp   ecx, edx
+		value_draw  rax, dword[.depth], qword[rbp-Thread.rootPos+Thread.nodes]
+		cmp   eax, dword[.beta]
+		mov   dword[.alpha], eax
 		jl   @1f
 else
-		mov   eax, VALUE_DRAW
+		value_draw  rax, dword[.depth], qword[rbp-Thread.rootPos+Thread.nodes]
+		cmp   eax, dword[.beta]
+		jl   @2f
 end if
 
 		jmp .Return
+@2:
+		mov   dword[.alpha], eax
 @1:
 end if
 
@@ -1649,15 +1651,15 @@ Display	2, "Search returning %i0%n"
 
              calign  8
 .AbortSearch_PlyBigger:
+		value_draw  rax, dword[.depth], qword[rbp-Thread.rootPos+Thread.nodes]
 		mov  rcx, qword[rbx + State.checkersBB]
-		xor  eax, eax  ; mov eax, VALUE_DRAW
                test  rcx, rcx
                  jz  .Return
 	       call  Evaluate
 
              calign   8
 .AbortSearch_PlySmaller:
-                xor  eax, eax  ;mov   eax, VALUE_DRAW
+		value_draw  rax, dword[.depth], qword[rbp-Thread.rootPos+Thread.nodes]
                 jmp  .Return
   end if
 

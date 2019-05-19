@@ -439,3 +439,13 @@ end macro
 		sbb  a, a
 		and  a, t
  end macro
+
+macro value_draw  reg, depth, thread
+		xor  r10, r10
+		mov  reg, thread
+		and  reg, 1
+		add  reg, reg
+		sub  reg, 1
+		cmp  depth, 4
+		cmovl  reg, r10
+end macro
