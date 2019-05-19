@@ -1130,9 +1130,6 @@ WeakDone:
 		ShiftBB   Right,	rdx, rcx
 		or   rax, rdx
 		and   rax, PiecesThem
-		mov   rcx, qword[.ei.attackedBy+8*(8*Us+Pawn)]
-		not   rcx
-		and   rax, rcx
 		_popcnt   rax, rax,	rdx
 		imul   eax, ThreatByPawnPush
 		addsub   esi, eax
