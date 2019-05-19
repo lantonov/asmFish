@@ -1758,7 +1758,6 @@ end virtual
 		EvalSpace   White
 .SkipSpace:
 
-		mov   r14, rdi
 		mov   r15, qword[.ei.me]
 
 	; Evaluate position potential for the winning side
@@ -1775,7 +1774,8 @@ end virtual
 
 		_popcnt   rax, r11, rcx
 		movzx  edx, byte[rdi+PawnEntry.asymmetry]
-		add    edx, eax
+		mov  r14d, edx ; save for later
+		add  edx, eax
 		lea   r8d, [r8+4*rax]
 		lea   r8d, [r8+8*rdx-118]
 
@@ -1826,7 +1826,7 @@ end virtual
 		add   esi, eax
 
 	; esi = score
-	; r14 = ei.pi
+	; r14d = byte[rdi+PawnEntry.asymmetry]
 
 	; scale_factor() computes the scale factor for the winning side
 
@@ -1860,7 +1860,6 @@ end virtual
 		mov   r10, qword[rbp+Pos.typeBB+8*Bishop]
 		mov   r8, qword[rbp+Pos.typeBB+8*White]
 		mov   r9, qword[rbp+Pos.typeBB+8*Black]
-		mov   edi, dword[rbx+State.npMaterial]
 		and   r8, r10
 		and   r9, r10
 		test   ecx, -17 ; not 16
@@ -1877,10 +1876,11 @@ end virtual
 		jz   @f
 		or   r8, r9
 		jnz  @f
-		cmp   edi, (BishopValueMg shl 16) + BishopValueMg
+		mov   r8d, dword[rbx+State.npMaterial]
+		cmp   r8d, (BishopValueMg shl 16) + BishopValueMg
 		mov  edx, 2
 		jne  @f
-		mov   eax, 31
+		lea  eax, [4*r14+8]
 		jmp   .ScaleFactorDone
 
 	@@:
@@ -1903,18 +1903,18 @@ end virtual
   ;v /= int(PHASE_MIDGAME);
 		movzx edx, byte[r15+MaterialEntry.gamePhase] ; edx = phase
 		mov   ecx, dword[rbp+Pos.sideToMove]
-		mov   edi, 128
-		sub   edi, edx
-		imul   edi, r12d
+		mov   r8d, 128
+		sub   r8d, edx
+		imul   r8d, r12d
 		mov   r11d, ecx
-		imul   edi, eax
-		lea   r14d, [rdi+3FH]
-		test   edi, edi
-		cmovs   edi, r14d
+		imul   r8d, eax
+		lea   r10d, [r8+63]
+		test   r8d, r8d
+		cmovs   r8d, r10d
 		imul   esi, edx
-		sar   edi, 6
-		lea   edx, [rdi+rsi]
-		lea   eax, [rdx+7FH]
+		sar   r8d, 6
+		lea   edx, [r8+rsi]
+		lea   eax, [rdx+127]
 		test   edx, edx
 		cmovs   edx, eax
 		neg   r11d
