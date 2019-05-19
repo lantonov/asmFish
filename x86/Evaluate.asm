@@ -531,9 +531,29 @@ KingSafetyDoneRet:
 		lea     eax, [rdi-873]
 		cmovz   edi, eax
 
+		mov    rcx, r11
+		and    rcx, 7
+		mov   rcx, qword[KingFlank+8*rcx]
+		mov   rax, Camp
+		and   rax, rcx
+		and   rax, AttackedByThem
+		mov   rdx, qword[.ei.attackedBy+8*(8*Us+Pawn)]
+		not   rdx
+		and   rdx, qword[.ei.attackedBy2+8*Them]
+		and   rdx, rax
+	if Us eq White
+		shl   rax, 4
+	else
+		shr   rax, 4
+	end if
+		or   rax, rdx
+		_popcnt   rax, rax, r9
+		shl  eax, 2
+		add  edi, eax
+
 	; the following	does edi += - 9*mg_value(score)/8 + 40
 		lea   ecx, [rsi+0x08000]
-		sub   edi, 2
+		sub   edi, 30
 		sar   ecx, 16
 		lea   ecx, [2*rcx+rcx]
 		shl   ecx, 1
