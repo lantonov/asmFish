@@ -1,7 +1,5 @@
 
 macro UpdateCmStats ss, offset, weightedbonus, absbonus, t1
-	; weightedbonus is bonus * BONUS_MULTIPLIER
-	; absbonus is abs(bonus)
 	; clobbers rax, rcx, rdx, t1
 		local over1, over2, over3
 		Assert   b, absbonus, BONUS_MAX, 'assertion abs(bonus)<BONUS_MAX failed in UpdateCmStats'
@@ -58,7 +56,7 @@ DontUpdateKillers:
 		mov   dword[r8+4*prevOffset], move
 DontUpdateOpp:
 
-		imul   weightedbonus, absbonus, BONUS_MULTIPLIER
+		mov   weightedbonus, absbonus
 		cmp   absbonus, BONUS_MAX
 		jae   BonusTooBig
 
@@ -128,7 +126,7 @@ macro UpdateCaptureStats move, captures, captureCnt, bonusW, absbonus
 	; it also might clobber rsi
   local BonusTooBig, NextCapture, Return
 
-            imul  bonusW, absbonus, BONUS_MULTIPLIER;
+            mov  bonusW, absbonus
             mov  r9, qword[rbp + Pos.captureHistory]
             cmp  absbonus, BONUS_MAX
             jae  BonusTooBig

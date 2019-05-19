@@ -434,7 +434,7 @@ end if
 	; Step 9. Null move search with verification search (is omitted in PV nodes)
   if PvNode = 0
 		mov  edx, dword[rbx-1*sizeof.State+State.statScore]
-		cmp  edx, 22500
+		cmp  edx, 23200
 		jge  .8skip
 		mov   edx, dword[rbx-1*sizeof.State+State.currentMove]
 		cmp   edx, MOVE_NULL
@@ -1448,12 +1448,12 @@ end if
 		shl   ecx, 6
 		lea   r15d,	[rax+rcx]
 		mov   r12d,	dword[.bestMove]
-		mov   eax, dword[.depth]
+		mov   r13d, dword[.depth]
 		mov   edi, dword[.bestValue]
-		mov   r13d,	eax
-	       imul   eax, eax
-		lea   r10d,	[rax+2*r13-2]
-		lea   r14d, [r10+2*(r13+1)+1]
+		stat_bonus  r10d, rax, r13
+		add   r13, 1
+		stat_bonus  r14d, rax, r13
+		sub   r13, 1
     ; r15d = offset of [piece_on(prevSq),prevSq]
     ; r12d = move
     ; r13d = depth
@@ -1491,7 +1491,8 @@ end if
 		jne   .20TTStore
 		cmp   byte[rbx+State.capturedPiece], 0
 		jne   .20TTStore
-		imul  r11d, r10d, -BONUS_MULTIPLIER
+		mov  r11d, r10d
+		neg  r11d ; negative bonus
 		cmp   r10d, BONUS_MAX
 		jae   .20TTStore
 		abs_bonus r11d, r10d
@@ -1520,7 +1521,7 @@ end if
 	@@:
 		cmp   byte[rbx+State.capturedPiece], 0
 		jne   .20TTStore
-		imul   r11d, r10d, BONUS_MULTIPLIER
+		mov   r11d, r10d
 		cmp   r10d, BONUS_MAX
 		jae   .20TTStore
 		abs_bonus r11d, r10d
@@ -1598,10 +1599,8 @@ Display	2, "Search returning %i0%n"
 .ReturnTTValue:
     ; edi = ttValue
 		mov   r12d,	ecx
-		mov   eax, dword[.depth]
-		mov   r13d,	eax
-	       imul   eax, eax
-		lea   r10d,	[rax+2*r13-2]
+		mov   r13d, dword[.depth]
+		stat_bonus  r10d, rax, r13
     ; r12d = move
     ; r13d = depth
     ; r10d = bonus
@@ -1632,14 +1631,17 @@ Display	2, "Search returning %i0%n"
 .ReturnTTValue_UpdateCaptureStats:
 ;UpdateCaptureStats   r12d, 0, 0, r11d,	r10d
 .ReturnTTValue_UpdateStatsDone:
-		mov   eax, edi
-		lea   r10d,	[r10+2*(r13+1)+1]
+		add   r13, 1
+		stat_bonus  r10d, rax, r13
+		sub   r13, 1
     ; r10d = penalty
 		cmp   dword[rbx-1*sizeof.State+State.moveCount], 1
+		mov   eax, edi
 		jne   .Return
 		cmp   byte[rbx+State.capturedPiece], 0
 		jne   .Return
-		imul   r11d, r10d, -BONUS_MULTIPLIER
+		mov   r11d, r10d
+		neg   r11d ; negative bonus
 		cmp   r10d, BONUS_MAX
 		jae   .Return
 		abs_bonus r11d, r10d
@@ -1655,7 +1657,8 @@ Display	2, "Search returning %i0%n"
 		; r8 = offset in history table
 		test   dl, dl
 		jnz   .Return
-		imul   r11d, r10d, -BONUS_MULTIPLIER
+		mov   r11d, r10d
+		neg   r11d
 		cmp   r10d, BONUS_MAX
 		jae   .Return
 		abs_bonus r11d, r10d

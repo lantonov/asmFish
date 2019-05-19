@@ -93,15 +93,15 @@ ALL_PIECES     = 0
 QUEEN_DIAGONAL = 1
 
 ; piece values
-PawnValueMg   = 171
+PawnValueMg   = 175
 KnightValueMg = 764
-BishopValueMg = 826
+BishopValueMg = 815
 RookValueMg   = 1282
 QueenValueMg  = 2500
 
 PawnValueEg   = 240
 KnightValueEg = 848
-BishopValueEg = 891
+BishopValueEg = 905
 RookValueEg   = 1373
 QueenValueEg  = 2670
 
@@ -213,5 +213,4 @@ EndgameScale_KPKP_index    = 13 ; KP vs KP
 ENDGAME_SCALE_MAX_INDEX = 16
 
 ; Bonus calculation constants
-BONUS_MAX = 324
-BONUS_MULTIPLIER = 33
+BONUS_MAX = 10692
