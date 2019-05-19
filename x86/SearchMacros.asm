@@ -485,7 +485,7 @@ end if
 		je  .8skip
 		mov   edx, dword[.depth]
 		imul   eax, edx,	36
-		add   eax, dword[rbx+State.staticEval]
+		add   eax, dword[.pureStaticEval]
 		mov   esi, dword[.beta]
 		cmp   esi, dword[.evalu]
 		jg   .8skip
