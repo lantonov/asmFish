@@ -67,16 +67,18 @@ Evaluate_Init:
           rep movsd
 
 		lea   rdi, [KingFlank]
+		mov   rax, (FileABB or FileBBB or FileCBB or FileDBB) xor FileDBB
+	      stosq
 		mov   rax, (FileABB or FileBBB or FileCBB or FileDBB)
 	      stosq
 	      stosq
-	      stosq
 		shl   rax, 2
 	      stosq
 	      stosq
 		shl   rax, 2
 	      stosq
 	      stosq
+		mov   rax, (FileEBB or FileFBB or FileGBB or FileHBB) xor FileEBB
 	      stosq
 
                 lea   rdi, [QueenMinorsImbalance]
