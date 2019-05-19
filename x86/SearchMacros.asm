@@ -1198,34 +1198,27 @@ end if
 		mov   r8l, byte[.captureOrPromotion]
 		mov   edi, dword[.reduction]
 		mov   ecx, 15
-	       test   r8l, r8l
-		 jz   .15NotCaptureOrPromotion
-		 mov  r9d, dword[rbx-2*sizeof.State+State.statScore] ; (ss-1)->statScore >= 0
-		shr  r9d, 31
-		add  edi, 1
-		sub  edi, r9d
-		lea   eax, [rdi	- 1]
+		test   r8l, r8l
+		 jz   @f
 		cmp   byte[.moveCountPruning], 0
 		je   .StartStep17
-	       test   edi, edi
-	     cmovnz   edi, eax
-		jmp   .15ReadyToSearch
-
-.15NotCaptureOrPromotion:
     ; r12d = from
     ; r13d = to
     ; r14d = from piece
     ; r15d = to	piece
     ; ecx = 15
 
+@@:
     ; Decrease reduction if opponent's move count is high
-		cmp   ecx, dword[rbx	- 2*sizeof.State + State.moveCount]
+		cmp  ecx, dword[rbx - 2*sizeof.State + State.moveCount]
+		sbb  edi, 0
+		test   r8l, r8l
+		jnz   .15ReadyToSearch
+    ; Decrease reduction for exact PV nodes
   if PvNode = 1
-		sbb   edi, dword[.pvExact]
-  else
-		sbb   edi, 0
-  end if
-    ; Increase reduction if ttMove is a	capture
+		sub   edi, dword[.pvExact]
+	end if
+    ; Increase reduction if ttMove is a capture
 		add   edi, dword[.ttCapture]
     ; Increase reduction for cut nodes
 		cmp   byte[.cutNode], 0
@@ -1260,6 +1253,7 @@ end if
 		add   eax, dword[r9+4*rdx]
 		add   eax, dword[r10+4*rdx]
 		add   eax, dword[r11+4*rdx]
+		mov   dword[rbx - 1*sizeof.State + State.statScore], eax
 
    ; Decrease/increase reduction by comparing opponent's stat score
 		mov   edx, ecx
@@ -1270,15 +1264,19 @@ end if
 		and   edx, eax
 		shr   edx, 31
 		add   edi, edx
-		mov   dword[rbx	- 1*sizeof.State + State.statScore], eax
 
-		cdq
-		mov   ecx, 20000
-	       idiv   ecx
-		xor   ecx, ecx
-		sub   edi, eax
-	      cmovs   edi, ecx
+; // Decrease/increase reduction for moves with a good/bad history.
+		mov   ecx, eax
+		mov   edx,  0x68DB8BAD
+		imul  edx
+		sar   edx, 13
+		sar   ecx, 31
+		sub   edx, ecx
+		sub   edi, edx
 .15ReadyToSearch:
+		xor  eax, eax
+		test  edi, edi
+		cmovs  edi, eax
 		mov   eax, 1
 		mov   r8d, dword[.newDepth]
 		sub   r8d, edi
