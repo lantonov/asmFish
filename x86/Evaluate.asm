@@ -1,7 +1,6 @@
 BishopPawns         = (  3 shl 16) + (  7)
 CloseEnemies        = (  6 shl 16) + (  0)
 Hanging             = ( 57 shl 16) + ( 32)
-HinderPassedPawn    = (  8 shl 16) + (  0)
 KingProtector_Pt    = ( -6 shl 16) + ( -6)
 KnightOnQueen       = ( 21 shl 16) + ( 11)
 LongDiagonalBishop  = ( 46 shl 16) + (  0)
@@ -1265,16 +1264,10 @@ NextPawn:
 		mov   rax, qword[ForwardBB+8*(64*Us+r8)]
 		add   r8d, Up
 	; r8d = blockSq
-		mov   rdx, PiecesThem
-		and   rax, rdx
-		setnz  al
-		movzx  eax, al
-		imul   eax, HinderPassedPawn
-		subadd   dword[.ei.score], eax
 
                 mov  edi, dword[PassedDanger + 4*rcx]
 	; ecx = r
-        ; edi = PassedDanger[r]
+        ; edi = int w = PassedDanger[r]
 
 
   if Us = White
@@ -1310,7 +1303,7 @@ NextPawn:
 		add   esi, eax
 
 		mov   r10, qword[ForwardBB+8*(64*Us+s)]
-		lea   eax, [rdi+2*rcx]
+		xor  eax, eax
 		bt   PiecesUs, r8
 		jc   AddToBonus	; the pawn is blocked by us
 		mov   r11, r10
