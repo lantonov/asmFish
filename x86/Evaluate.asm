@@ -635,17 +635,16 @@ KingSafetyDoneRet:
 
 	; Compute the king danger score and subtract it from the evaluation
 
-                mov   ecx, dword[.ei.mobilityDiff]
+		mov   ecx, dword[.ei.mobilityDiff]
 		add   ecx, 0x08000
 		sar   ecx, 16
-		cmp   edi, 0
-		jle   AllDone
-        if Us = White
-                sub   edi, ecx
-        else
-                add   edi, ecx
-        end if
-                 js   AllDone
+		if Us = White
+				sub   edi, ecx
+		else
+				add   edi, ecx
+		end if
+		test  edi, edi
+		js   AllDone
 		mov   eax, edi
 		shr   eax, 4		; kingDanger / 16
 		sub   esi, eax
