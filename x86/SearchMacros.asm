@@ -559,7 +559,7 @@ end if
 
 		mov   eax, dword[.evalu]
 		sub   eax, dword[.beta]
-		mov   ecx, PawnValueMg
+		mov   ecx, 200
 		xor   edx, edx
 		idiv  ecx
 		mov   ecx, 3
