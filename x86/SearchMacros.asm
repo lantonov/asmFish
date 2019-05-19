@@ -340,11 +340,12 @@ end if
 		test r11d, r11d
 		jle  @1f
 		mov  edx, r11d
-		add  edx, 5000
-		lea  r8d, [rdx + 1023]
+		neg  edx
+		sub  edx, 2500
+		lea  r8d, [rdx + 511]
 		test  edx, edx
 		cmovs  edx, r8d
-		sar  edx, 10
+		sar  edx, 9
 		jmp  @2f
 
 	@1:
@@ -353,15 +354,16 @@ end if
 		jns  @2f
 
 		mov  edx, r11d
-		sub  edx, 5000
-		lea  r9d, [rdx + 1023]
+		neg  edx
+		add  edx, 2500
+		lea  r9d, [rdx + 511]
 		test  edx, edx
 		cmovs  edx, r9d
-		sar  edx, 10
+		sar  edx, 9
 
 	@2:
 		mov  dword[.pureStaticEval], eax
-		sub  eax, edx
+		add  eax, edx
 		mov   dword[rbx+State.staticEval], eax
 		mov   dword[.evalu], eax
 		mov   r9, qword [.posKey]
