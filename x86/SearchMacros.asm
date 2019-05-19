@@ -36,6 +36,7 @@ macro search RootNode, PvNode
     .bestValue		rd 1
     .value		rd 1
     .evalu		rd 1
+    .pureStaticEval		rd 1
     .nullValue		rd 1
     .futilityValue	rd 1
     .extension		rd 1
@@ -316,14 +317,16 @@ end if
 		mov   eax, VALUE_NONE
 		mov   dword [.evalu], eax
 		mov   dword[rbx+State.staticEval], eax
+		mov   dword[.pureStaticEval], eax
 		mov   rcx, qword[rbx+State.checkersBB]
 		mov   byte[.improving],	0
 		test   rcx, rcx
 		jnz   .moves_loop
 		mov   edx, dword[rbx-1*sizeof.State+State.currentMove]
 		movsx   eax, word[.ltte+MainHashEntry.eval_]
-		test   r13d, r13d
+		test   r13d, r13d ; if (ttHit)
 		jnz   .StaticValueYesTTHit
+
 .StaticValueNoTTHit:
 		mov   eax, dword[rbx-1*sizeof.State+State.staticEval]
 		neg   eax
@@ -357,39 +360,47 @@ end if
 		sar  edx, 10
 
 	@2:
-		sub  eax, edx ; eval(P) - malus
-		mov   r8d, eax
+		mov  dword[.pureStaticEval], eax
+		sub  eax, edx
 		mov   dword[rbx+State.staticEval], eax
 		mov   dword[.evalu], eax
-		mov   r9, qword	[.posKey]
+		mov   r9, qword [.posKey]
 		shr   r9, 48
 		mov   edx, VALUE_NONE
-      MainHash_Save   .ltte, r12, r9w, edx, BOUND_NONE,	DEPTH_NONE, 0, r8w
+      MainHash_Save   .ltte, r12, r9w, edx, BOUND_NONE,	DEPTH_NONE, 0, word[.pureStaticEval]
 		jmp   .StaticValueDone
+
 .StaticValueYesTTHit:
-		cmp   eax, VALUE_NONE
-		jne   @1f
+; Structure:
+		; else if (ttHit)
+				; If_1a
+				; If_2a && (If_2b & If_2c)
+
+; else if (ttHit)
+  .If_1a:
+		cmp   eax, VALUE_NONE ; eax = word[.ltte+MainHashEntry.eval_] = tte->eval()
+		jne   @f
 		call   Evaluate
-	; Simplified Later
-		xor  edx, edx
-		cmp   edx, dword[rbx-1*sizeof.State+State.statScore]
-		setl  dl
-		imul  edx, 10
-		sub  eax, edx
-	@1:
+   @@:
 		xor   ecx, ecx
+		mov   dword[.pureStaticEval], eax
 		mov   dword[rbx+State.staticEval], eax
+
+  .If_2c:
 		cmp   edi, eax
 		setg   cl
 		add   ecx, BOUND_UPPER
 		cmp   edi, VALUE_NONE
-		je   @1f
-		test   cl, byte[.ltte+MainHashEntry.genBound]
-		cmovnz   eax, edi
-	@1:
-		mov   dword[.evalu], eax
-.StaticValueDone:
+		je   .If_1a_ctd
 
+  .If_2b:
+		test   cl, byte[.ltte+MainHashEntry.genBound]
+		cmovnz   eax, edi ; eval = ttValue;
+
+  .If_1a_ctd:
+		mov   dword[.evalu], eax ; eval = ss->staticEval = evaluate(pos)
+
+.StaticValueDone:
 		; Step 7. Razoring (skipped when in check)
 		mov  edx, dword[.depth]
 		cmp  edx, 1*ONE_PLY
@@ -398,7 +409,7 @@ end if
 		lea  eax, [rcx+2*VALUE_KNOWN_WIN-1]
 		cmp  eax, 4*VALUE_KNOWN_WIN-1
 		jae  .7skip
-	end	if
+	end if
 		mov  ecx, dword[.alpha]
 		lea  eax, [ecx - RazorMargin]
 		cmp  eax, dword[.evalu]
@@ -1585,7 +1596,7 @@ end if
 		cmp   edi, dword[.beta]
 	     cmovge   esi, ecx
   end if
-      MainHash_Save   .ltte, r8, r9w, edx, sil,	byte[.depth], eax, word[rbx+State.staticEval]
+      MainHash_Save   .ltte, r8, r9w, edx, sil,	byte[.depth], eax, word[.pureStaticEval]
 .ReturnBestValue:
 		mov   eax, edi
 .Return:
