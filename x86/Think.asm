@@ -174,7 +174,7 @@ end if
 
 	; Reset aspiration window starting size
 	       imul   r8d, r14d, sizeof.RootMove
-		mov   edx, 18
+		mov   edx, 20
 		add   r8, qword[rbp+Pos.rootMovesVec+RootMovesVec.table]
 		cmp   r15d, 5
 		 jl   .reset_window_done

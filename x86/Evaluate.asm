@@ -9,14 +9,14 @@ PawnlessFlank       = ( 19 shl 16) + ( 84)
 RookOnPawn          = ( 10 shl 16) + ( 30)
 Overload            = ( 13 shl 16) + (  6)
 SliderOnQueen       = ( 42 shl 16) + ( 21)
-ThreatByKing        = (23 shl 16)  + ( 76)
+ThreatByKing        = ( 22 shl 16) + ( 78)
 ThreatByPawnPush    = ( 45 shl 16) + ( 40)
 ThreatByRank        = ( 16 shl 16) + (  3)
 ThreatBySafePawn    = (173 shl 16) + (102)
 TrappedBishopA1H1   = ( 50 shl 16) + ( 50)
 TrappedRook         = ( 92 shl 16) + (  0)
 WeakQueen           = ( 50 shl 16) + ( 10)
-WeakUnopposedPawn   = ( 5 shl  16) + ( 29)
+WeakUnopposedPawn   = ( 15 shl 16) + ( 19)
 
 LazyThreshold = 1500
 
