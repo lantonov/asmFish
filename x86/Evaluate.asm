@@ -4,7 +4,7 @@ Hanging             = ( 57 shl 16) + ( 32)
 HinderPassedPawn    = (  8 shl 16) + (  0)
 KingProtector_Pt    = ( -6 shl 16) + ( -6)
 KnightOnQueen       = ( 21 shl 16) + ( 11)
-LongRangedBishop    = ( 22 shl 16) + (  0)
+LongDiagonalBishop  = ( 46 shl 16) + (  0)
 MinorBehindPawn     = ( 16 shl 16) + (  0)
 PawnlessFlank       = ( 19 shl 16) + ( 84)
 RookOnPawn          = ( 10 shl 16) + ( 30)
@@ -320,8 +320,7 @@ OutpostDone:
     ; Bonus for	bishop on a long diagonal which	can "see" both center squares
 		mov   rdx, qword[rbp	+ Pos.typeBB + 8*Pawn]
       BishopAttacks   rax, r14,	rdx,	rcx
-		bts   rax, r14
-		lea   edx, [rsi	+ (Them	- Us)*LongRangedBishop]
+		lea   edx, [rsi + (Them - Us)*LongDiagonalBishop]
 		mov   r8, (FileDBB or FileEBB) and (Rank4BB or Rank5BB)
 		and   rax, r8
 		lea   rcx, [rax	- 1]
@@ -1774,11 +1773,11 @@ end virtual
 		and   r8, rcx
 		cmovnz   r8d, eax
 
-		_popcnt   rax, r11,	rcx
-		movzx   edx, byte[rdi+PawnEntry.asymmetry]
-		lea   edx, [rdx+rax-17]
+		_popcnt   rax, r11, rcx
+		movzx  edx, byte[rdi+PawnEntry.asymmetry]
+		add    edx, eax
 		lea   r8d, [r8+4*rax]
-		lea   r8d, [r8+8*rdx]
+		lea   r8d, [r8+8*rdx-118]
 
 		movzx   r9d, word[rbx+State.npMaterial+2*0]
 		movzx   ecx, word[rbx+State.npMaterial+2*1]
