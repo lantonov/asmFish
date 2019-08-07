@@ -36,24 +36,20 @@ end if
 szUciResponse:
     db 'id name '
 szGreeting:
+    db VERSION_PRE
+    db VERSION_OS
+    db '_10'
+    ;db '_'
+    ;BuildTimeData
+    db '_'
+    db VERSION_POST
   if USE_MATEFINDER = 1
-	db 'mFish'
-	db VERSION_OS
-	db '_'
-	BuildTimeData
-	db '_'
-	db VERSION_POST
-  else
-	db VERSION_PRE
-	db VERSION_OS
-	db '_'
-	BuildTimeData
-	db '_'
-	db VERSION_POST
+    db '_'
+    db 'mf'
   end if
     NewLineData
 szGreetingEnd:
-    db 'id author TypingALot'
+    db 'id author M. Li, L. Antonov, J. Dehorty'
     NewLineData
     db 'option name Hash type spin default 16 min 1 max '
     IntegerStringData MAX_HASH

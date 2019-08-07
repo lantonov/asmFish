@@ -20,7 +20,7 @@ CURRMOVE_MIN_TIME = 3000
 
 ; options options
 OPTIONS_CONTEMPT_MIN     = -100
-OPTIONS_CONTEMPT_DEFAULT = 21
+OPTIONS_CONTEMPT_DEFAULT = 24
 OPTIONS_CONTEMPT_MAX     = 100
 OPTIONS_SLOWMOVER_DEFAULT = 84
 
@@ -93,15 +93,15 @@ ALL_PIECES     = 0
 QUEEN_DIAGONAL = 1
 
 ; piece values
-PawnValueMg   = 142
-KnightValueMg = 784
-BishopValueMg = 828
-RookValueMg   = 1286
 QueenValueMg  = 2529
 
-PawnValueEg   = 207
-KnightValueEg = 868
-BishopValueEg = 916
+PawnValueMg   = 136
+KnightValueMg = 782
+BishopValueMg = 830
+RookValueMg   = 1289
+PawnValueEg   = 208
+KnightValueEg = 865
+BishopValueEg = 918
 RookValueEg   = 1378
 QueenValueEg  = 2687
 

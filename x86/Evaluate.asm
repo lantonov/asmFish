@@ -1,22 +1,23 @@
-BishopPawns         = (  3 shl 16) + (  7)
-CloseEnemies        = (  6 shl 16) + (  0)
-Hanging             = ( 57 shl 16) + ( 32)
-KingProtector_Pt    = ( -6 shl 16) + ( -6)
-KnightOnQueen       = ( 21 shl 16) + ( 11)
-LongDiagonalBishop  = ( 46 shl 16) + (  0)
+BishopPawns         = (  3 shl 16) + (  8)
+CloseEnemies        = (  7 shl 16) + (  0)
+Hanging             = ( 62 shl 16) + ( 34)
+KingProtector_Pt    = ( -6 shl 16) + ( -7)
+KnightOnQueen       = ( 20 shl 16) + ( 12)
+LongDiagonalBishop  = ( 44 shl 16) + (  0)
 MinorBehindPawn     = ( 16 shl 16) + (  0)
-PawnlessFlank       = ( 19 shl 16) + ( 84)
-RookOnPawn          = ( 10 shl 16) + ( 29)
-Overload            = ( 13 shl 16) + (  6)
-SliderOnQueen       = ( 42 shl 16) + ( 21)
-ThreatByKing        = ( 22 shl 16) + ( 78)
-ThreatByPawnPush    = ( 45 shl 16) + ( 40)
-ThreatByRank        = ( 16 shl 16) + (  3)
-ThreatBySafePawn    = (173 shl 16) + (102)
+PawnlessFlank       = ( 18 shl 16) + ( 94)
+RestrictedPiece     = (  7 shl 16) + (  6)
+RookOnPawn          = ( 10 shl 16) + ( 28)
+Overload            = ( 12 shl 16) + (  6)
+SliderOnQueen       = ( 49 shl 16) + ( 21)
+ThreatByKing        = ( 21 shl 16) + ( 84)
+ThreatByPawnPush    = ( 48 shl 16) + ( 42)
+ThreatByRank        = ( 14 shl 16) + (  3)
+ThreatBySafePawn    = (169 shl 16) + ( 99)
 TrappedBishopA1H1   = ( 50 shl 16) + ( 50)
-TrappedRook         = ( 96 shl 16) + (  5)
-WeakQueen           = ( 50 shl 16) + ( 10)
-WeakUnopposedPawn   = ( 15 shl 16) + ( 19)
+TrappedRook         = ( 98 shl 16) + (  5)
+WeakQueen           = ( 51 shl 16) + ( 10)
+WeakUnopposedPawn   = ( 14 shl 16) + ( 20)
 
 LazyThreshold = 1500
 
@@ -455,6 +456,7 @@ macro EvalKing Us
   local PiecesUs, PiecesThem
   local QueenCheck, RookCheck, BishopCheck, KnightCheck
   local AllDone, DoKingSafety, KingSafetyDoneRet
+	local SetTropism
   local RookDone, BishopDone, KnightDone
   local NoKingSide, NoQueenSide, NoPawns
 
@@ -466,6 +468,9 @@ macro EvalKing Us
 	PiecesUs        = r14
 	PiecesThem      = r15
 	Camp            = Rank1BB or Rank2BB or Rank3BB or Rank4BB or Rank5BB
+	macro ShiftAttackBits reg
+		shl  reg, 4
+	end macro
   else
 	Them            = White
 	Up              = DELTA_S
@@ -474,6 +479,9 @@ macro EvalKing Us
 	PiecesUs        = r15
 	PiecesThem      = r14
 	Camp            = Rank4BB or Rank5BB or Rank6BB or Rank7BB or Rank8BB
+	macro ShiftAttackBits reg
+		shr  reg, 4
+	end macro
   end if
 
 	QueenCheck      = 780
@@ -500,6 +508,28 @@ macro EvalKing Us
 		jne   DoKingSafety	; 0.68%
 KingSafetyDoneRet:
 
+SetTropism:
+		mov   rcx, r11
+		and   rcx, 7
+		mov   rcx, qword[KingFlank+8*rcx] ; rcx = kingFlank = KingFlank[file_of(ksq)];
+		mov   r10, Camp
+		and   r10, rcx
+		and   r10, AttackedByThem ; r10 = b1
+		mov   rdx, qword[.ei.attackedBy2+8*Them]
+		and   rdx, r10 ; rdx = b2
+
+  if CPU_HAS_POPCNT = 0  ; Limit older processors to a single popcount
+		ShiftAttackBits  r10
+		or  r10, rdx
+		_popcnt  r10, r10, r9
+  else   ; Allow modern processors to use two consecutive popcounts
+		popcnt  r10, r10
+		popcnt  rdx, rdx
+		add  r10, rdx
+  end if
+
+	tropism = r10
+
 		mov   edi, dword[.ei.kingAttackersCount+4*Them]
 		movzx ecx, byte[rbp+Pos.pieceEnd+(8*Them+Queen)]
 		and   ecx, 15
@@ -522,32 +552,19 @@ KingSafetyDoneRet:
 		imul  eax, dword[.ei.kingAdjacentZoneAttacksCount+4*Them], 69
 		add   edi, eax
 
+		kingDanger = edi
+
 		_popcnt rax, r9, rcx
 		imul    eax, 185
 		add     edi, eax
 		test    PiecesThem, qword[rbp+Pos.typeBB+8*Queen]
 		lea     eax, [rdi-873]
-		cmovz   edi, eax
+		cmovz   kingDanger, eax
 
-		mov    rcx, r11
-		and    rcx, 7
-		mov   rcx, qword[KingFlank+8*rcx]
-		mov   rax, Camp
-		and   rax, rcx
-		and   rax, AttackedByThem
-		mov   rdx, qword[.ei.attackedBy+8*(8*Us+Pawn)]
-		not   rdx
-		and   rdx, qword[.ei.attackedBy2+8*Them]
-		and   rdx, rax
-	if Us eq White
-		shl   rax, 4
-	else
-		shr   rax, 4
-	end if
-		or   rax, rdx
-		_popcnt   rax, rax, r9
-		shl  eax, 2
-		add  edi, eax
+		mov  rax, tropism
+		imul  rax, tropism
+		shr  eax, 2
+		add  kingDanger, eax
 
 	; the following	does edi += - 9*mg_value(score)/8 + 40
 		lea   ecx, [rsi+0x08000]
@@ -559,56 +576,62 @@ KingSafetyDoneRet:
 		lea   eax, [rcx+7]
 		cmovs edx, eax
 		sar   edx, 3
-		sub   edi, edx ; edi =	kingDanger
+		sub   kingDanger, edx
 
 		and   r8, qword[.ei.attackedBy2+8*Them]
 		_andn r8, r8, AttackedByUs
 		or    r8, PiecesThem
-		not   r8 ; r8 = safe
+		not   r8
+
+		safe = r8
 
 		mov   r9, qword[rbp+Pos.typeBB+8*Pawn]
 		mov   rax, PiecesThem
 		and   rax, r9
-		xor   r9, r9 ; other = 0
 
+; Juggle r9/r11/rax to preserve r10 (tropism). May be confusing.
+; r9 = tmp_r11 = tmp_ksq
+; r10 = tropism
+; r11 = RookAttacks &= (attackedBy[Them][ROOK] & safe)
+		mov   r9, r11  ; hammers r9, which needs to be zeroed anyway
 		mov   rcx, qword[rbp+Pos.typeBB+8*Queen]
 		and   rcx, PiecesUs
 		xor   rcx, PiecesUs
 		xor   rcx, PiecesThem
-		RookAttacks   r10, r11, rcx, rax
-		BishopAttacks rdx, r11, rcx, rax
+		RookAttacks   r11, r9, rcx, rax ; hammers r11
+		BishopAttacks rdx, r9, rcx, rax
 
 	; Enemy	queen safe checks
-		mov    rax, r10
+		mov    rax, r11
 		or     rax, rdx
 		and    rax, qword[.ei.attackedBy+8*(8*Them+Queen)]
-		and    rax, r8
+		and    rax, safe
 		mov    rcx, qword[.ei.attackedBy+8*(8*Us+Queen)]
 		not    rcx
 		test   rax, rcx
 		lea    ecx, [rdi+QueenCheck]
 		cmovnz edi, ecx
 
-
-		and   r10, qword[.ei.attackedBy+8*(8*Them+Rook)]
-	; r10 = b1 & ei.attackedBy[Them][ROOK]
+		and   r11, qword[.ei.attackedBy+8*(8*Them+Rook)]
 		and   rdx, qword[.ei.attackedBy+8*(8*Them+Bishop)]
-	; rdx = b1 & ei.attackedBy[Them][BISHOP]
-		mov   rcx, qword[KnightAttacks+8*r11]
+		mov   rcx, qword[KnightAttacks+8*r9]
 		and   rcx, qword[.ei.attackedBy+8*(8*Them+Knight)]
 	; rcx = b
 
 
 	; Enemy rooks safe and other checks
-		test   r10, r8
+		test   r11, safe
 		lea    eax, [rdi+RookCheck]
 		cmovnz edi, eax
-		jnz    RookDone
-		or     r9, r10
+		mov  rax, r11
+		mov  r11, r9 ; restore r11
+		mov  r9, 0 ; restore r9
+		jnz   RookDone
+		or   r9, rax ; end of juggling
   RookDone:
 
 	; Enemy bishops safe and other checks
-		test   rdx, r8
+		test   rdx, safe
 		lea    eax, [rdi+BishopCheck]
 		cmovnz edi, eax
 		jnz    BishopDone
@@ -616,15 +639,15 @@ KingSafetyDoneRet:
   BishopDone:
 
 	; Enemy knights safe and other checks
-		test   rcx, r8
+		test   rcx, safe
 		lea    eax, [rdi+KnightCheck]
 		cmovnz edi, eax
 		jnz    KnightDone
 		or     r9, rcx
   KnightDone:
 
-		mov   r10, qword[.ei.mobilityArea+8*Them]
-		and   r9, r10
+		mov   rcx, qword[.ei.mobilityArea+8*Them]
+		and   r9, rcx
 
 		mov   rdx, qword[rbx+State.blockersForKing+8*Us]
 		or    rdx, r9
@@ -707,13 +730,8 @@ NoQueenSide:
 
 AllDone:
 
-		and   r11d, 7
-		mov   r11, qword[KingFlank+8*r11]
-	; r11 = KingFlank[kf]   ksq is not used anymore
-
-		mov   rax, Camp
-		and   rax, r11
-		and   rax, AttackedByThem
+		and   r11d, 7  ; hammers r11 (ksq)
+		mov   r11, qword[KingFlank+8*r11] ; r11 = KingFlank[kf]
 
 		mov   rdi, qword[.ei.pi]	; we may have clobbered rdi with kingDanger
 
@@ -721,19 +739,9 @@ AllDone:
 		lea   ecx, [rsi-PawnlessFlank]
 		cmovz   esi, ecx		; pawnless flank
 
-		mov   rdx, qword[.ei.attackedBy+8*(8*Us+Pawn)]
-		not   rdx
-		and   rdx, qword[.ei.attackedBy2+8*Them]
-		and   rdx, rax
-  if Us eq White
-		shl   rax, 4
-  else
-		shr   rax, 4
-  end if
-		or   rax, rdx
-		_popcnt   rax, rax, r9
-		imul   eax, CloseEnemies
-		sub   esi, eax		; king tropism
+; // King tropism bonus, to anticipate slow motion attacks on our king
+		imul  tropism, CloseEnemies  ; hammers tropism (r10)
+		sub   esi, r10d
 
   if Us eq White
 		add   dword[.ei.score], esi
@@ -1156,6 +1164,16 @@ WeakDone:
 		_popcnt  r8, r8, rdx
 		imul   r8d, Overload
 		addsub  esi, r8d
+
+; // Bonus for restricting their piece moves
+		mov  r9, qword[.ei.attackedBy+8*(8*Them+Pawn)]
+		mov  rax, qword[.ei.attackedBy2+8*Them]
+		_andn  r10, r9, AttackedByThem
+		_andn  r10, rax, r10
+		and    r10, AttackedByUs
+		_popcnt  r10, r10, rdx
+		imul  r10d, RestrictedPiece
+		addsub  esi, r10d
 
 end macro
 

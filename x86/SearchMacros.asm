@@ -1054,7 +1054,6 @@ end if
 		mov   qword[rbx+State.mpKillers], r15
 		jmp   .12done
 .12else:
-		mov   ecx, dword[.move]
 		test   edi, edi
 		 jz   .12dont_extend
     SeeSignTest	     .12extend_oneply
@@ -1062,8 +1061,15 @@ end if
 		 jz   .12dont_extend
 .12extend_oneply:
 		mov   dword[.extension], 1
+		jmp  .12done
 .12dont_extend:
+		mov   ecx, dword[.move]
+		and  ecx, 0xC000
+		cmp  ecx, 0xC000
+		jne @f
+		mov   dword[.extension], 1
 .12done:
+@@:
 
     ; Step 14. Pruning at shallow depth
 		mov   r12d, dword[.move]
