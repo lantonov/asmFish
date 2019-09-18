@@ -85,14 +85,14 @@ end if
              Assert   le, r8d, 0, 'assertion depth<=0 failed in qsearch'
 
 		movzx   eax, byte[rbx+State.ply]
-		xor   edx, edx
 	if PvNode = 1
-		lea   r8, [._pv]
 		mov   r9, qword[rbx+State.pv]
+		xor   r9d, r9d
 		mov   dword[.oldAlpha], ecx
+		lea   r8, [._pv]
 		mov   qword[rbx+1*sizeof.State+State.pv], r8
-		mov   dword[r9], edx
 	end if
+		xor   edx, edx
 		lea   ecx, [rax + 1]
 		mov   dword[.moveCount], 2
 		mov   dword[.bestMove], edx
